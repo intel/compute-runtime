@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
@@ -123,6 +125,78 @@ HWTEST2_F(MutableHwCommandTestXe3p,
 
     auto *cpuBufferScratchAddressPatch = reinterpret_cast<uint64_t *>(ptrOffset(mutableWalker->getHostMemoryInlineDataPointer(), this->scratchOffset));
     EXPECT_EQ(scratchPatchAddress, *cpuBufferScratchAddressPatch);
+}
+
+HWTEST2_F(MutableHwCommandTestXe3p,
+          givenNonZeroHostAndImportedArgsWhenUpdateL3FlushAfterWalkerThenFlushEnabled,
+          IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
+
+    this->stageCommit = true;
+    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
+    auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
+    auto walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
+
+    mutableWalker->updateL3FlushAfterWalker(1u, 1u);
+
+    EXPECT_TRUE(cpuBuffer->getPostSync().getL2TransientFlush());
+    EXPECT_TRUE(cpuBuffer->getPostSync().getL2Flush());
+    EXPECT_TRUE(walkerCmd->getPostSync().getL2TransientFlush());
+    EXPECT_TRUE(walkerCmd->getPostSync().getL2Flush());
+}
+
+HWTEST2_F(MutableHwCommandTestXe3p,
+          givenZeroHostAndImportedArgsWhenUpdateL3FlushAfterWalkerThenBothThenFlushDisabled,
+          IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
+    walkerTemplate.getPostSync().setL2Flush(true);
+    walkerTemplate.getPostSync().setL2TransientFlush(true);
+
+    this->stageCommit = true;
+    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
+    auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
+    auto walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
+
+    mutableWalker->updateL3FlushAfterWalker(0u, 0u);
+
+    EXPECT_FALSE(cpuBuffer->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(cpuBuffer->getPostSync().getL2Flush());
+    EXPECT_FALSE(walkerCmd->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(walkerCmd->getPostSync().getL2Flush());
+}
+
+HWTEST2_F(MutableHwCommandTestXe3p,
+          givenFlushAllCachesDebugFlagWhenUpdateL3FlushAfterWalkerThenFlushesAreCorrect,
+          IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    DebugManagerStateRestore restorer;
+
+    auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
+
+    debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2Flush));
+    this->stageCommit = true;
+    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
+    auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
+    auto walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
+
+    mutableWalker->updateL3FlushAfterWalker(0u, 0u);
+    EXPECT_FALSE(cpuBuffer->getPostSync().getL2TransientFlush());
+    EXPECT_TRUE(cpuBuffer->getPostSync().getL2Flush());
+    EXPECT_TRUE(walkerCmd->getPostSync().getL2Flush());
+
+    debugManager.flags.FlushAllCaches.set(static_cast<int32_t>(NEO::FlushCachesBitmask::l2TransientFlush));
+    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
+    cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
+    walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
+
+    mutableWalker->updateL3FlushAfterWalker(0u, 0u);
+    EXPECT_TRUE(cpuBuffer->getPostSync().getL2TransientFlush());
+    EXPECT_FALSE(cpuBuffer->getPostSync().getL2Flush());
+    EXPECT_TRUE(walkerCmd->getPostSync().getL2TransientFlush());
 }
 
 } // namespace ult

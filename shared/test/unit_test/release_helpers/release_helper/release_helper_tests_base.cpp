@@ -1,0 +1,195 @@
+/*
+ * Copyright (C) 2023-2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/test/unit_test/release_helpers/release_helper/release_helper_tests_base.h"
+
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+
+#include "gtest/gtest.h"
+
+using namespace NEO;
+
+ReleaseHelperTestsBase::ReleaseHelperTestsBase() = default;
+ReleaseHelperTestsBase ::~ReleaseHelperTestsBase() = default;
+
+void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValue128Returned() {
+    SupportedNumGrfs expectedValues{128u};
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(expectedValues, releaseHelper->getSupportedNumGrfs());
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValues128And256Returned() {
+    SupportedNumGrfs expectedValues{128u, 256u};
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(expectedValues, releaseHelper->getSupportedNumGrfs());
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThen4And8AreReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        auto &configs = releaseHelper->getThreadsPerEUConfigs(8u);
+
+        EXPECT_EQ(2U, configs.size());
+        EXPECT_EQ(4U, configs[0]);
+        EXPECT_EQ(8U, configs[1]);
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingTotalMemBankSizeThenReturn32GB() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(32u * MemoryConstants::gigaByte, releaseHelper->getTotalMemBankSize());
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingPreferredSlmSizeThenAllEntriesEmpty() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
+        for (const auto &elem : preferredSlmValueArray) {
+            EXPECT_EQ(0u, elem.upperLimit);
+            EXPECT_EQ(0u, elem.valueToProgram);
+        }
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValuesUpTo256Returned() {
+    SupportedNumGrfs expectedValues{32u, 64u, 96u, 128u, 160u, 192u, 256u};
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(expectedValues, releaseHelper->getSupportedNumGrfs());
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        {
+            auto &configs = releaseHelper->getThreadsPerEUConfigs(8);
+
+            EXPECT_EQ(2U, configs.size());
+            EXPECT_EQ(4U, configs[0]);
+            EXPECT_EQ(8U, configs[1]);
+        }
+        {
+            auto &configs = releaseHelper->getThreadsPerEUConfigs(10);
+
+            EXPECT_EQ(5U, configs.size());
+            EXPECT_EQ(4U, configs[0]);
+            EXPECT_EQ(5U, configs[1]);
+            EXPECT_EQ(6U, configs[2]);
+            EXPECT_EQ(8U, configs[3]);
+            EXPECT_EQ(10U, configs[4]);
+        }
+    }
+}
+
+void ReleaseHelperTestsBase::whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        for (auto grfCount : releaseHelper->getSupportedNumGrfs()) {
+            uint32_t maxThreadsPerEuCount = 17;
+            EXPECT_EQ(maxThreadsPerEuCount, releaseHelper->adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, grfCount));
+        }
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned() {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        for (auto isImmediate : {false, true}) {
+            for (auto kernelUsesImageOrSampler : {false, true}) {
+                EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(isImmediate, kernelUsesImageOrSampler));
+            }
+        }
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned() {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        for (auto isImmediate : {false, true}) {
+            for (auto kernelUsesImageOrSampler : {false, true}) {
+                EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired(isImmediate, kernelUsesImageOrSampler));
+            }
+        }
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTrueOnlyForImmediateAndImageOrSampler() {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(false, false));
+        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(false, true));
+        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired(true, false));
+        EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired(true, true));
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned() {
+    DebugManagerStateRestore restorer;
+    for (auto enableStateCacheInvalidationWa : {0, 1}) {
+        debugManager.flags.EnableStateCacheInvalidationWa.set(enableStateCacheInvalidationWa);
+        for (auto &revision : getRevisions()) {
+            ipVersion.revision = revision;
+            releaseHelper = ReleaseHelper::create(ipVersion);
+            ASSERT_NE(nullptr, releaseHelper);
+            for (auto isImmediate : {false, true}) {
+                for (auto kernelUsesImageOrSampler : {false, true}) {
+                    EXPECT_EQ(static_cast<bool>(enableStateCacheInvalidationWa),
+                              releaseHelper->isStateCacheInvalidationWaRequired(isImmediate, kernelUsesImageOrSampler));
+                }
+            }
+        }
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValuesUpTo512Returned() {
+    SupportedNumGrfs expectedValues{32u, 64u, 96u, 128u, 160u, 192u, 256u, 512u};
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(expectedValues, releaseHelper->getSupportedNumGrfs());
+    }
+}

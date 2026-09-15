@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
+
 #include "cmdlist_memory_copy_params_ext.h"
 
 #include <cstddef>
@@ -25,6 +27,7 @@ struct MemAllocInfo {
     NEO::SvmAllocationData *svmAlloc{nullptr};
     NEO::GraphicsAllocation *importedHostAlloc{nullptr};
     NEO::GraphicsAllocation *cachedHostAlloc{nullptr};
+    NEO::GraphicsAllocation *explicitAlloc{nullptr};
 };
 
 struct CmdListMemoryCopyParams {
@@ -39,6 +42,13 @@ struct CmdListMemoryCopyParams {
     bool taskCountUpdateRequired = false;
     bool bscSplitEnabled = false;
     CmdListMemoryCopyParamsExt paramsExt{};
+    CmdListWaitEventParameters waitEventsParameters{};
+    MemAllocInfo dstAllocInfo{};
+    MemAllocInfo srcAllocInfo{};
+
+    bool hasExplicitAllocs() const {
+        return (dstAllocInfo.explicitAlloc != nullptr) || (srcAllocInfo.explicitAlloc != nullptr);
+    }
 };
 
 } // namespace L0

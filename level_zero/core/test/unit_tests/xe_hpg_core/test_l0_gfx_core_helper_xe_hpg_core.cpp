@@ -59,16 +59,6 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForPla
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
 }
 
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingSupportedRTASFormatExpThenExpectedFormatIsReturned) {
-    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(RTASDeviceFormatInternal::version1, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExp()));
-}
-
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingSupportedRTASFormatExtThenExpectedFormatIsReturned) {
-    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(RTASDeviceFormatInternal::version1, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExt()));
-}
-
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingCmdlistUpdateCapabilityThenReturnCorrectValue) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(62u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());

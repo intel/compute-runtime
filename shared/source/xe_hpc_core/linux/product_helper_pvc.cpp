@@ -19,7 +19,9 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
-#include <limits>
+#include <map>
+#include <string>
+#include <utility>
 
 constexpr static auto gfxProduct = IGFX_PVC;
 
@@ -34,38 +36,6 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
 #include "shared/source/xe_hpc_core/os_agnostic_product_helper_xe_hpc_core.inl"
 #include "shared/source/xe_hpc_core/pvc/os_agnostic_product_helper_pvc.inl"
 namespace NEO {
-
-template <>
-uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const {
-
-    if (osIface == nullptr) {
-        return 0;
-    }
-    auto pDrm = osIface->getDriverModel()->as<Drm>();
-    uint64_t memoryPhysicalSize = 0;
-    if (pDrm->getDeviceMemoryPhysicalSizeInBytes(subDeviceIndex, memoryPhysicalSize) == false) {
-        return 0;
-    }
-
-    return memoryPhysicalSize;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    if (osIface == nullptr) {
-        return 0;
-    }
-    auto driverModel = osIface->getDriverModel();
-    if (driverModel == nullptr || driverModel->getDriverModelType() != DriverModelType::drm) {
-        return 0;
-    }
-    auto pDrm = driverModel->as<Drm>();
-    uint32_t memoryMaxClkRateInMhz = 0;
-    if (pDrm->getDeviceMemoryMaxClockRateInMhz(subDeviceIndex, memoryMaxClkRateInMhz) == false) {
-        return 0;
-    }
-    return memoryMaxClkRateInMhz;
-}
 
 template <>
 uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {

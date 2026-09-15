@@ -90,7 +90,7 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 
-    auto enableStatelessToStatefulWithOffset = pClDevice->getGfxCoreHelper().isStatelessToStatefulWithOffsetSupported();
+    bool enableStatelessToStatefulWithOffset = true;
     if (debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         enableStatelessToStatefulWithOffset = debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
@@ -108,16 +108,15 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     }
 
-    if (pClDevice->getDevice().getExecutionEnvironment()->isFP64EmulationEnabled()) {
+    if (debugManager.flags.NEO_FP64_EMULATION.get()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableFP64GenEmu);
     }
 
-    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
     auto isDebuggerActive = pClDevice->getDevice().getDebugger() != nullptr;
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     CompilerOptions::applyExtraInternalOptions(internalOptions, hwInfo, compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
 
-    if (pClDevice->getDevice().getExecutionEnvironment()->isOneApiPvcWaEnv() == false) {
+    if (debugManager.flags.EnvOneapiPvcSendWarWa.get() == false) {
         NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::optDisableSendWarWa);
     }
     return internalOptions;
@@ -153,11 +152,11 @@ void Program::freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocati
     auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
 
     for (const auto &device : clDevices) {
-        if (NEO::UsmMemAllocPool::freeIfOwned(device->getDevice().getUsmConstantSurfaceAllocPool(), gpuAddress, false)) {
+        if (NEO::UsmMemAllocPool::freeIfOwned(device->getDevice().getUsmConstantSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::none)) {
             return;
         }
 
-        if (NEO::UsmMemAllocPool::freeIfOwned(device->getDevice().getUsmGlobalSurfaceAllocPool(), gpuAddress, false)) {
+        if (NEO::UsmMemAllocPool::freeIfOwned(device->getDevice().getUsmGlobalSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::none)) {
             return;
         }
 
@@ -289,7 +288,7 @@ cl_int Program::createProgramFromBinary(
             this->indirectAccessBufferMajorVersion = singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection;
 
             bool rebuild = AddressingModeHelper::containsBindlessKernel(decodedSingleDeviceBinary.programInfo.kernelInfos);
-            rebuild |= !clDevice.getDevice().getExecutionEnvironment()->isOneApiPvcWaEnv();
+            rebuild |= !debugManager.flags.EnvOneapiPvcSendWarWa.get();
 
             bool flagRebuild = debugManager.flags.RebuildPrecompiledKernels.get();
 
@@ -330,7 +329,13 @@ cl_int Program::createProgramFromBinary(
             }
         }
     } else {
-        retVal = this->createFromILExt(context, pBinary, binarySize);
+        this->intermediateRepresentation = NEO::pisaCodeType;
+        this->irBinary = std::make_unique_for_overwrite<char[]>(binarySize);
+        memcpy(this->irBinary.get(), pBinary, binarySize);
+        this->irBinarySize = binarySize;
+        this->isGeneratedByIgc = true;
+        this->createdFrom = CreatedFrom::il;
+        retVal = CL_SUCCESS;
     }
 
     return retVal;
@@ -920,6 +925,10 @@ NEO::GraphicsAllocation *Program::getGlobalSurfaceGA(uint32_t rootDeviceIndex) c
 
 NEO::GraphicsAllocation *Program::getExportedFunctionsSurface(uint32_t rootDeviceIndex) const {
     return buildInfos[rootDeviceIndex].exportedFunctionsSurface;
+}
+
+const std::vector<Program *> &Program::getRequiredLibPrograms(uint32_t rootDeviceIndex) const {
+    return buildInfos[rootDeviceIndex].requiredLibPrograms;
 }
 
 } // namespace NEO

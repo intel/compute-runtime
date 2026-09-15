@@ -324,7 +324,7 @@ HWTEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThe
     auto previousTaskCount = pCmdQ->taskCount;
     auto previousTaskLevel = pCmdQ->taskLevel;
 
-    auto userEvent = clCreateUserEvent(pContext, &retVal);
+    auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clSetUserEventStatus(userEvent, CL_COMPLETE);

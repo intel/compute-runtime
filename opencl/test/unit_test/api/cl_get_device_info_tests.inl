@@ -7,12 +7,17 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
+#include "shared/test/common/mocks/mock_compiler_interface.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 
 #include "cl_api_tests.h"
+#include "spirv/unified1/spirv.hpp"
 
+#include <algorithm>
 #include <cstring>
+#include <vector>
 
 using namespace NEO;
 
@@ -273,6 +278,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_subgroup_shuffle ",
         "cl_khr_subgroup_shuffle_relative ",
         "cl_khr_subgroup_clustered_reduce ",
+        "cl_khr_subgroup_rotate ",
         "cl_intel_device_attribute_query ",
         "cl_khr_suggested_local_work_size ",
         "cl_intel_split_work_group_barrier "};
@@ -331,6 +337,11 @@ TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvExtensionsReturnsSpirvExtensions)
     for (auto extension : spirvExtensions) {
         EXPECT_EQ(0, std::strncmp(extension, "SPV_", 4));
     }
+
+    const auto subgroupRotateIt = std::find_if(spirvExtensions.begin(), spirvExtensions.end(), [](const char *extension) {
+        return std::strcmp(extension, "SPV_KHR_subgroup_rotate") == 0;
+    });
+    EXPECT_NE(spirvExtensions.end(), subgroupRotateIt);
 }
 
 TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvExtendedInstructionSetsReturnsSpirvExtendedInstructionSets) {
@@ -393,6 +404,70 @@ TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvCapabilitiesReturnsSpirvCapabilit
         }
     }
     EXPECT_TRUE(found);
+
+    const auto subgroupRotateIt = std::find(spirvCapabilities.begin(), spirvCapabilities.end(),
+                                            static_cast<cl_uint>(spv::CapabilityGroupNonUniformRotateKHR));
+    EXPECT_NE(spirvCapabilities.end(), subgroupRotateIt);
+}
+
+TEST_F(clGetDeviceInfoTests, GivenMockedIgcYamlWhenQueryingSpirvInfoThroughApiThenIgcSourcedExtensionsAndCapabilitiesAreReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSpirvQueriesFromIgc.set(1);
+    auto *mockCompilerInterface = new MockCompilerInterface();
+    mockCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
+    executionEnvironment->rootDeviceEnvironments[testedRootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
+
+    // Extensions through the real clGetDeviceInfo entry point (two-call convention).
+    size_t extRetSize = 0;
+    cl_int retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENSIONS_KHR,
+        0,
+        nullptr,
+        &extRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockCompilerInterface->getSpirvExtensionsYAMLCalled);
+
+    std::vector<const char *> spirvExtensions(extRetSize / sizeof(const char *));
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENSIONS_KHR,
+        extRetSize,
+        spirvExtensions.data(),
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(std::any_of(spirvExtensions.begin(), spirvExtensions.end(),
+                            [](const char *extension) { return std::strcmp(extension, "SPV_KHR_shader_clock") == 0; }));
+
+    // Capabilities through the real entry point: numeric SPIR-V IDs sourced from IGC YAML.
+    size_t capRetSize = 0;
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_CAPABILITIES_KHR,
+        0,
+        nullptr,
+        &capRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<cl_uint> spirvCapabilities(capRetSize / sizeof(cl_uint));
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_CAPABILITIES_KHR,
+        capRetSize,
+        spirvCapabilities.data(),
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto hasCapability = [&spirvCapabilities](cl_uint cap) {
+        return std::any_of(spirvCapabilities.begin(), spirvCapabilities.end(), [cap](cl_uint c) { return c == cap; });
+    };
+    // IGC-sourced capability from the mocked YAML.
+    constexpr cl_uint spirvCapabilityShaderClockKHR = 5055;
+    EXPECT_TRUE(hasCapability(spirvCapabilityShaderClockKHR));
+    // Mandatory base capabilities are always present, even on the IGC path (Addresses=4,
+    // Linkage=5, Kernel=6, Vector16=7, Float16Buffer=8, Int64=11, Int16=22, Int8=39).
+    for (cl_uint baseCap : {4u, 5u, 6u, 7u, 8u, 11u, 22u, 39u}) {
+        EXPECT_TRUE(hasCapability(baseCap)) << "missing required base capability " << baseCap;
+    }
 }
 
 using matcherAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;

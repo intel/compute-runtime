@@ -34,4 +34,12 @@ ze_result_t ZE_APICALL
 zeIntelKernelGetBinaryExp(
     ze_kernel_handle_t hKernel, size_t *pSize, char *pKernelBinary);
 
+ze_result_t ZE_APICALL
+zeKernelGetModuleHandleExt(
+    ze_kernel_handle_t hKernel, ze_module_handle_t *phModule);
+
+ze_result_t ZE_APICALL
+zeModuleGetDeviceHandleExt(
+    ze_module_handle_t hModule, ze_device_handle_t *phDevice);
+
 } // namespace L0

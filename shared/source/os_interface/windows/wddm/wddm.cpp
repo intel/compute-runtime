@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/client_context/map_gpu_va_gmm.h"
@@ -24,6 +25,7 @@
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/mt_helpers.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -42,6 +44,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
 
 namespace NEO {
@@ -120,7 +123,8 @@ bool Wddm::init() {
     productHelper.adjustPlatformForProductFamily(hardwareInfo);
     rootDeviceEnvironment.initApiGfxCoreHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
-    rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper();
+    bool hwQueuesSupported = featureTable->flags.ftrWddmHwQueues;
+    rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper(hwQueuesSupported);
     rootDeviceEnvironment.initializeGfxCoreHelperFromHwInfo();
     rootDeviceEnvironment.initAilConfigurationHelper();
     if (false == rootDeviceEnvironment.initAilConfiguration()) {
@@ -129,6 +133,8 @@ bool Wddm::init() {
 
     populateIpVersion(*hardwareInfo);
     rootDeviceEnvironment.initReleaseHelper();
+    setupCaps(*hardwareInfo);
+    rootDeviceEnvironment.initCompilerReleaseHelper();
     rootDeviceEnvironment.setRcsExposure();
 
     if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {
@@ -816,7 +822,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         }
 
         if (status != STATUS_SUCCESS) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", NEO_FUNCTION_NAME, status);
             DEBUG_BREAK_IF(status != STATUS_GRAPHICS_NO_VIDEO_MEMORY);
             break;
         }
@@ -830,7 +836,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 
             if (!success) {
                 osHandles.fragmentStorageData[allocationIndex].freeTheFragment = true;
-                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", __FUNCTION__, success);
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", NEO_FUNCTION_NAME, success);
                 DEBUG_BREAK_IF(true);
                 return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
             }
@@ -1105,7 +1111,7 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
     if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(submitArguments.contextHandle)) {
         return false;
     }
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", submitArguments.monitorFence->currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "currentFenceValue =", submitArguments.monitorFence->currentFenceValue);
 
     PRINT_STRING(debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get(), stdout,
                  "%u: Wddm Submission with context handle %u and HwQueue handle %u\n", SysCalls::getProcessId(), submitArguments.contextHandle, submitArguments.hwQueueHandle);
@@ -1170,7 +1176,7 @@ bool Wddm::getDeviceState() {
                                  pageFaultState.FaultedPipelineStage, pageFaultState.FaultedBindTableEntry, pageFaultState.PageFaultFlags,
                                  pageFaultState.FaultErrorCode.IsDeviceSpecificCode, pageFaultState.FaultErrorCode.IsDeviceSpecificCode ? pageFaultState.FaultErrorCode.DeviceSpecificCode : static_cast<UINT>(pageFaultState.FaultErrorCode.GeneralErrorCode));
 
-                    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Page fault detected at address = ", std::hex, pageFaultState.FaultedVirtualAddress);
+                    DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Page fault detected at address = ", std::hex, pageFaultState.FaultedVirtualAddress);
                 }
             } else if (executionState != D3DKMT_DEVICEEXECUTION_ACTIVE) {
                 PRINT_STRING(true, stderr, "Device execution error %d\n", executionState);
@@ -1204,17 +1210,22 @@ bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
     return status == STATUS_SUCCESS;
 }
 
+CommandStreamReceiver *Wddm::getCsrForMonitoredFence(const MonitoredFence &monitoredFence) {
+    CommandStreamReceiver *csr = nullptr;
+    this->forEachContextWithinWddm<false>([&monitoredFence, &csr](const EngineControl &engine) {
+        auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getMonitoredFence();
+        if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
+            csr = engine.commandStreamReceiver;
+        }
+    });
+    return csr;
+}
+
 bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait) {
     NTSTATUS status = STATUS_SUCCESS;
 
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
-        CommandStreamReceiver *csr = nullptr;
-        this->forEachContextWithinWddm<false>([&monitoredFence, &csr](const EngineControl &engine) {
-            auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getMonitoredFence();
-            if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
-                csr = engine.commandStreamReceiver;
-            }
-        });
+        auto csr = getCsrForMonitoredFence(monitoredFence);
 
         if (csr != nullptr && lastFenceValue > monitoredFence.lastSubmittedFence) {
             auto lock = csr->obtainUniqueOwnership();
@@ -1235,7 +1246,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
             if (csr != nullptr) {
                 // Flush monitor fence to emit KMD interrupt.
                 auto lock = csr->obtainUniqueOwnership();
-                csr->flushMonitorFence(true);
+                csr->flushMonitorFence(isNativeFenceAvailable());
             }
             D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
             waitFromCpu.ObjectCount = 1;
@@ -1248,6 +1259,102 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
         }
     }
     return status == STATUS_SUCCESS;
+}
+
+WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds) {
+    auto &monitoredFence = osContext.getMonitoredFence();
+    if (skipResourceCleanup()) {
+        return WaitStatus::ready;
+    }
+    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+        return WaitStatus::gpuHang;
+    }
+    if (lastFenceValue <= *monitoredFence.cpuAddress) {
+        return WaitStatus::ready;
+    }
+
+    auto csr = getCsrForMonitoredFence(monitoredFence);
+    if (csr != nullptr && lastFenceValue > monitoredFence.lastSubmittedFence) {
+        auto lock = csr->obtainUniqueOwnership();
+        csr->flushMonitorFence(false);
+    }
+
+    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+        return WaitStatus::gpuHang;
+    }
+    if (lastFenceValue <= *monitoredFence.cpuAddress) {
+        return WaitStatus::ready;
+    }
+
+    auto &waitData = osContext.getMonitoredFenceKmdWaitData();
+    auto lock = std::unique_lock<std::mutex>(waitData.mutex, std::try_to_lock);
+    if (!lock.owns_lock()) {
+        return WaitStatus::notReady;
+    }
+
+    auto pendingFenceValue = waitData.pendingFenceValue;
+    if (pendingFenceValue == 0 || *monitoredFence.cpuAddress >= pendingFenceValue) {
+        auto eventHandle = waitData.eventHandle;
+        const bool pendingWaitCompleted = pendingFenceValue != 0 &&
+                                          *monitoredFence.cpuAddress >= pendingFenceValue &&
+                                          eventHandle != nullptr &&
+                                          this->waitForMonitoredFenceKmdWaitEvent(eventHandle, 0);
+        if (pendingFenceValue == 0 || pendingWaitCompleted) {
+            if (eventHandle == nullptr) {
+                eventHandle = this->createMonitoredFenceKmdWaitEvent();
+                waitData.eventHandle = eventHandle;
+            }
+
+            waitData.pendingFenceValue = 0;
+            if (eventHandle != nullptr && this->resetMonitoredFenceKmdWaitEvent(eventHandle)) {
+                if (csr != nullptr) {
+                    auto csrLock = csr->obtainUniqueOwnership();
+                    csr->flushMonitorFence(isNativeFenceAvailable());
+                }
+                D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
+                waitFromCpu.ObjectCount = 1;
+                waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
+                waitFromCpu.FenceValueArray = &lastFenceValue;
+                waitFromCpu.hDevice = device;
+                waitFromCpu.hAsyncEvent = eventHandle;
+                const auto status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
+                if (status == STATUS_SUCCESS) {
+                    waitData.pendingFenceValue = lastFenceValue;
+                }
+            }
+        }
+        pendingFenceValue = waitData.pendingFenceValue;
+    }
+
+    if (lastFenceValue <= *monitoredFence.cpuAddress) {
+        return *monitoredFence.cpuAddress == gpuHangIndication ? WaitStatus::gpuHang : WaitStatus::ready;
+    }
+
+    if (pendingFenceValue == 0 || pendingFenceValue > lastFenceValue) {
+        return WaitStatus::notReady;
+    }
+
+    constexpr uint64_t nanosecondsPerMillisecond = 1000000;
+    auto timeoutMilliseconds = timeoutNanoseconds / nanosecondsPerMillisecond;
+    if (timeoutMilliseconds == 0) {
+        return WaitStatus::notReady;
+    }
+    constexpr uint64_t maximumFiniteTimeoutMilliseconds = std::numeric_limits<uint32_t>::max() - 1u;
+    timeoutMilliseconds = std::min(timeoutMilliseconds, maximumFiniteTimeoutMilliseconds);
+
+    const auto eventHandle = waitData.eventHandle;
+    if (eventHandle == nullptr) {
+        return WaitStatus::notReady;
+    }
+
+    if (!this->waitForMonitoredFenceKmdWaitEvent(eventHandle, static_cast<uint32_t>(timeoutMilliseconds))) {
+        return WaitStatus::notReady;
+    }
+
+    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+        return WaitStatus::gpuHang;
+    }
+    return lastFenceValue <= *monitoredFence.cpuAddress ? WaitStatus::ready : WaitStatus::notReady;
 }
 
 bool Wddm::isGpuHangDetected(OsContext &osContext) {
@@ -1455,6 +1562,11 @@ PhysicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
 }
 
 void Wddm::populateIpVersion(HardwareInfo &hwInfo) {
+    if (debugManager.flags.OverrideHwIpVersion.get() != -1) {
+        hwInfo.ipVersion.value = static_cast<uint32_t>(debugManager.flags.OverrideHwIpVersion.get());
+        return;
+    }
+
     hwInfo.ipVersion.value = gfxPlatform->sRenderBlockID.Value;
     if (hwInfo.ipVersion.value == 0) {
         auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();

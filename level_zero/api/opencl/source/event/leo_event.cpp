@@ -20,10 +20,12 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/api/internal/l0_event.h"
+#include "level_zero/api/opencl/source/event/leo_async_events_handler.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/driver_experimental/zex_event.h"
 
 namespace NEO {
 namespace LEO {
@@ -63,13 +65,13 @@ Event::Event(cl_command_type commandType, NEO::LEO::CommandQueue *commandQueue) 
         auto deviceHandle = l0CmdList->getDevice();
         auto contextHandle = l0CmdList->getCmdListContext();
 
-        zex_counter_based_event_desc_t eventDesc{ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, nullptr, ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
+        ze_event_counter_based_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC, nullptr, ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
         if (profiling) {
-            eventDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
+            eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
         }
 
         ze_event_handle_t hSignalEvent{};
-        L0::zexCounterBasedEventCreate2(contextHandle, deviceHandle, &eventDesc, &hSignalEvent);
+        zeEventCounterBasedCreate(contextHandle, deviceHandle, &eventDesc, &hSignalEvent);
         this->eventHandle = hSignalEvent;
     }
 
@@ -86,6 +88,15 @@ Event::Event(NEO::LEO::Context *context) : commandType(CL_COMMAND_USER), oclObj(
 }
 
 Event::~Event() {
+    auto lastStatus = this->eventStatus.load();
+    if (lastStatus > CL_COMPLETE) {
+        lastStatus = executionTerminatedOnDestruction;
+        this->eventStatus.store(lastStatus);
+    }
+    if (this->peekHasCallbacks()) {
+        this->executeCallbacks(lastStatus);
+    }
+
     this->arbEvent.reset(nullptr);
 
     if (perfCounterNode != nullptr) {
@@ -110,77 +121,67 @@ cl_int Event::getProfilingInfo(cl_profiling_info paramName, size_t paramValueSiz
         return CL_PROFILING_INFO_NOT_AVAILABLE;
     }
 
-    const void *src = nullptr;
-    size_t srcSize = GetInfo::invalidSourceSize;
-    uint64_t timestamp = 0;
-
-    ze_kernel_timestamp_result_t ts{};
-    auto queryResult = this->queryKernelTimestamp(ts);
-    if (queryResult != ZE_RESULT_SUCCESS) {
-        return L0ToClResultMapper(queryResult);
-    }
-
     auto device = getL0Object()->getDevice();
     auto neoDevice = device->getNEODevice();
     auto resolution = neoDevice->getDeviceInfo().profilingTimerResolution;
 
-    // Rebase raw packet start/end onto the submit epoch, restoring high bits a narrow packet drops.
-    // Computed once: the derivation may adjust the submit/queue anchors.
-    if (!dataCalculated) {
-        auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-        const uint32_t kernelTimestampValidBits = neoDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits;
-        uint64_t contextCompleteTS = 0; // no separate device-enqueue completion writeback -> complete == end
-        NEO::calculateProfilingData(gfxCoreHelper, *neoDevice->getOSTime(), resolution, kernelTimestampValidBits,
-                                    queueTimeStamp, submitTimeStamp, startTimeStamp, endTimeStamp, completeTimeStamp,
-                                    ts.global.kernelStart, ts.global.kernelEnd, &contextCompleteTS, ts.global.kernelStart);
-        dataCalculated = true;
-    }
-
+    const ProfilingInfo *anchor = nullptr;
     switch (paramName) {
     case CL_PROFILING_COMMAND_QUEUED:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(queueTimeStamp.gpuTimeStamp, resolution);
+        anchor = &queueTimeStamp;
         break;
-
     case CL_PROFILING_COMMAND_SUBMIT:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(submitTimeStamp.gpuTimeStamp, resolution);
+        anchor = &submitTimeStamp;
         break;
-
     case CL_PROFILING_COMMAND_START:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(startTimeStamp.gpuTimeStamp, resolution);
+        anchor = &startTimeStamp;
         break;
-
     case CL_PROFILING_COMMAND_END:
     case CL_PROFILING_COMMAND_COMPLETE:
-        timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(endTimeStamp.gpuTimeStamp, resolution);
+        anchor = &endTimeStamp;
         break;
-
-    case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL:
+    case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL: {
         if (!perfCountersEnabled) {
             return CL_INVALID_VALUE;
         }
-        {
-            auto cmdQ = getCommandQueue();
-            if (!cmdQ->getPerfCounters()->getApiReport(perfCounterNode,
-                                                       paramValueSize,
-                                                       paramValue,
-                                                       paramValueSizeRet,
-                                                       queryAndUpdateEventStatus() == CL_COMPLETE)) {
-                return CL_PROFILING_INFO_NOT_AVAILABLE;
-            }
-            return CL_SUCCESS;
+        auto cmdQ = getCommandQueue();
+        if (!cmdQ->getPerfCounters()->getApiReport(perfCounterNode, paramValueSize, paramValue, paramValueSizeRet,
+                                                   queryAndUpdateEventStatus() == CL_COMPLETE)) {
+            return CL_PROFILING_INFO_NOT_AVAILABLE;
         }
+        return CL_SUCCESS;
+    }
     default:
         return CL_INVALID_VALUE;
     }
 
-    src = &timestamp;
-    srcSize = sizeof(srcSize);
+    // calculateProfilingData can move the submit/queue anchors, so a second pass would shift them again.
+    // The query can wait for the timestamp writeback, so it runs before ownership is taken.
+    if (!dataCalculated.load(std::memory_order_acquire)) {
+        ze_kernel_timestamp_result_t ts{};
+        auto queryResult = this->queryKernelTimestamp(ts);
+        if (queryResult != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(queryResult);
+        }
 
-    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, src, srcSize);
-    auto retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
-    GetInfo::setParamValueReturnSize(paramValueSizeRet, srcSize, getInfoStatus);
+        auto lock = this->takeOwnership();
+        if (!dataCalculated) {
+            auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+            const uint32_t kernelTimestampValidBits = neoDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits;
+            uint64_t contextCompleteTS = 0; // no separate device-enqueue completion writeback -> complete == end
+            NEO::calculateProfilingData(gfxCoreHelper, *neoDevice->getOSTime(), resolution, kernelTimestampValidBits,
+                                        queueTimeStamp, submitTimeStamp, startTimeStamp, endTimeStamp, completeTimeStamp,
+                                        ts.global.kernelStart, ts.global.kernelEnd, &contextCompleteTS, ts.global.kernelStart);
+            dataCalculated.store(true, std::memory_order_release);
+        }
+    }
 
-    return retVal;
+    const uint64_t timestamp = device->getGfxCoreHelper().getGpuTimeStampInNS(anchor->gpuTimeStamp, resolution);
+
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &timestamp, sizeof(timestamp));
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, sizeof(timestamp), getInfoStatus);
+
+    return changeGetInfoStatusToCLResultType(getInfoStatus);
 }
 
 ze_result_t Event::queryKernelTimestamp(ze_kernel_timestamp_result_t &result) {
@@ -223,28 +224,94 @@ cl_int Event::getEventInfo(cl_event_info paramName, size_t paramValueSize, void 
     }
 }
 
-ze_result_t Event::wait() {
-    return zeEventHostSynchronize(this->eventHandle, std::numeric_limits<uint64_t>::max());
+ze_result_t Event::wait(uint64_t timeout) {
+    return zeEventHostSynchronize(this->eventHandle, timeout);
 }
 
-ze_result_t Event::signal() {
-    return zeEventHostSignal(this->eventHandle);
+ze_result_t Event::signal(cl_int executionStatus) {
+    auto ret = zeEventHostSignal(this->eventHandle);
+    if (ret == ZE_RESULT_SUCCESS) {
+        this->eventStatus = executionStatus;
+        this->executeCallbacks(executionStatus);
+    }
+    return ret;
+}
+
+void Event::updateExecutionStatus() {
+    auto status = this->queryAndUpdateEventStatus();
+    if (status <= CL_COMPLETE) {
+        this->executeCallbacks(status);
+    }
+}
+
+void Event::abortExecutionDueToGpuHang() {
+    this->eventStatus = executionAbortedDueToGpuHang;
+    this->executeCallbacks(executionAbortedDueToGpuHang);
+}
+
+bool Event::peekHasCallbacks() {
+    auto lock = std::unique_lock<std::mutex>(callbacksMtx);
+    return !callbacks.empty();
+}
+
+void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
+    DEBUG_BREAK_IF((type != CL_RUNNING) && (type != CL_COMPLETE));
+    {
+        auto lock = std::unique_lock<std::mutex>(callbacksMtx);
+        callbacks.emplace_back(this, fn, type, data);
+    }
+
+    auto status = this->peekExecutionStatus();
+    if (status <= CL_COMPLETE) {
+        this->executeCallbacks(status);
+    }
+
+    if (!isUserEvent()) {
+        getContext()->getClDevice()->getPlatform()->getAsyncEventsHandler().registerEvent(this);
+    }
+}
+
+void Event::executeCallbacks(cl_int executionStatus) {
+    bool terminated = executionStatus < 0;
+
+    std::vector<Callback> detachedCallbacks;
+    {
+        auto lock = std::unique_lock<std::mutex>(callbacksMtx);
+        detachedCallbacks.swap(callbacks);
+    }
+
+    for (auto &callback : detachedCallbacks) {
+        if (terminated) {
+            callback.overrideCallbackExecutionStatusTarget(executionStatus);
+        }
+        callback.execute();
+    }
 }
 
 cl_int Event::queryAndUpdateEventStatus() {
-    if (zeEventQueryStatus(this->eventHandle) == ZE_RESULT_SUCCESS) {
-        if (!this->isUserEvent()) {
-            auto cmdList = this->getCommandQueue()->getL0Object();
-
-            if (!cmdList->getPrintfKernelContainer().empty()) {
-
-                auto ret = this->wait();
-                this->getCommandQueue()->getL0Object()->handlePostSyncPrintfAndAssert(ret != ZE_RESULT_SUCCESS);
-            }
-        }
-        this->eventStatus = CL_COMPLETE;
+    auto status = this->eventStatus.load();
+    if (status <= CL_COMPLETE) {
+        return status;
     }
-    return this->eventStatus;
+
+    if (zeEventQueryStatus(this->eventHandle) != ZE_RESULT_SUCCESS) {
+        return this->eventStatus.load();
+    }
+
+    if (!this->eventStatus.compare_exchange_strong(status, CL_COMPLETE)) {
+        return status;
+    }
+
+    if (!this->isUserEvent()) {
+        auto cmdList = this->getCommandQueue()->getL0Object();
+
+        if (!cmdList->getPrintfKernelContainer().empty()) {
+
+            auto ret = this->wait();
+            cmdList->handlePostSyncPrintfAndAssert(ret != ZE_RESULT_SUCCESS);
+        }
+    }
+    return CL_COMPLETE;
 }
 
 void Event::setQueueTimeStamp() {
@@ -307,6 +374,7 @@ std::pair<EventHandleSpan, ze_event_handle_t> Event::setupEvents(cl_uint numEven
 }
 
 TagNodeBase *Event::getHwPerfCounterNode() {
+    auto lock = this->takeOwnership();
     if (!perfCounterNode) {
         auto cmdQ = getCommandQueue();
         auto perfCounters = cmdQ->getPerfCounters();

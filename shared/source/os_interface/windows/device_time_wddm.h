@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ class DeviceTimeWddm : public DeviceTime {
   public:
     DeviceTimeWddm(Wddm *wddm);
     TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
+    volatile uint64_t *getTimestampPtr() override;
     double getDynamicDeviceTimerResolution() const override;
     uint64_t getDynamicDeviceTimerClock() const override;
 

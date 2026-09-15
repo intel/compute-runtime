@@ -19,10 +19,11 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/utilities/directory.h"
 
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <sstream>
 
 namespace NEO {
@@ -43,8 +44,7 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     if (debugManager.flags.GenerateAubFilePerProcessId.get()) {
         strExtendedFileName << "_PID_" << SysCalls::getProcessId();
     }
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    const auto deviceConfig = AubHelper::getDeviceConfigString(releaseHelper->isDeviceConfigStringTileCountIncluded(), releaseHelper->isDeviceConfigStringXeCuSegmentIncluded(), subDevicesCount, gtSystemInfo.SliceCount, subSlicesPerSlice, gtSystemInfo.MaxEuPerSubSlice);
+    const auto deviceConfig = AubHelper::getDeviceConfigString(hwInfo.caps.deviceConfigStringTileCountIncluded, hwInfo.caps.deviceConfigStringXeCuSegmentIncluded, subDevicesCount, gtSystemInfo.SliceCount, subSlicesPerSlice, gtSystemInfo.MaxEuPerSubSlice);
     strfilename << deviceConfig << "_" << rootDeviceIndex << "_" << strExtendedFileName.str() << ".aub";
 
     // clean-up any fileName issues because of the file system incompatibilities
@@ -62,6 +62,24 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     filePath.append(fileName);
 
     return filePath;
+}
+
+// Returns an empty string when there is nothing to create - no directory part at all,
+// the filesystem root or the current directory.
+std::string AUBCommandStreamReceiver::getDirectoryPathForFilePath(const std::string &filePath) {
+    const std::filesystem::path directoryPath = std::filesystem::path(filePath).parent_path();
+    if (directoryPath == directoryPath.root_path() || directoryPath == ".") {
+        return {};
+    }
+
+    return directoryPath.string();
+}
+
+void AUBCommandStreamReceiver::createDirectoriesForFilePath(const std::string &filePath) {
+    const auto directoryPath = getDirectoryPathForFilePath(filePath);
+    if (!directoryPath.empty()) {
+        Directory(directoryPath).parseDirectories(Directory::createDirs);
+    }
 }
 
 CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseName,

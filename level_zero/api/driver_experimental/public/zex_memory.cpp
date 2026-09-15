@@ -16,7 +16,7 @@ zexMemGetIpcHandles(
     const void *ptr,
     uint32_t *numIpcHandles,
     ze_ipc_mem_handle_t *pIpcHandles) {
-    return L0::Context::fromHandle(toInternalType(hContext))->getIpcMemHandles(ptr, numIpcHandles, pIpcHandles);
+    return L0::Context::fromHandle(hContext)->getIpcMemHandles(ptr, numIpcHandles, pIpcHandles);
 }
 
 ze_result_t ZE_APICALL
@@ -27,7 +27,7 @@ zexMemOpenIpcHandles(
     ze_ipc_mem_handle_t *pIpcHandles,
     ze_ipc_memory_flags_t flags,
     void **pptr) {
-    return L0::Context::fromHandle(toInternalType(hContext))->openIpcMemHandles(toInternalType(hDevice), numIpcHandles, pIpcHandles, flags, pptr);
+    return L0::Context::fromHandle(hContext)->openIpcMemHandles(hDevice, numIpcHandles, pIpcHandles, flags, pptr);
 }
 
 ze_result_t ZE_APICALL

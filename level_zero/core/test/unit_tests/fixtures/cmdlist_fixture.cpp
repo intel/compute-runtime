@@ -364,7 +364,15 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
     ze_result_t result;
 
     if (operation == NonKernelOperation::Barrier) {
-        result = currentCmdList->appendBarrier(nullptr, 0, nullptr, false);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        result = currentCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::SignalEvent) {
         result = currentCmdList->appendSignalEvent(event->toHandle(), false);
@@ -374,13 +382,29 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::WaitOnEvents) {
         auto eventHandle = event->toHandle();
-        result = currentCmdList->appendWaitOnEvents(1, &eventHandle, nullptr, false, false, false, false, false, false);
+        CmdListWaitEventParameters waitEventsParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = false,
+            .waitForImplicitInOrderDependency = false,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+            .apiRequest = false,
+            .skipFlush = false};
+        result = currentCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::WriteGlobalTimestamp) {
         uint64_t timestampAddress = 0xfffffffffff0L;
         uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
-
-        result = currentCmdList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        result = currentCmdList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::MemoryRangesBarrier) {
         uint8_t dstPtr[64] = {};
@@ -388,7 +412,15 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
 
         size_t rangeSizes = 1;
         const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
-        result = currentCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        result = currentCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         driverHandle->releaseImportedPointer(dstPtr);
@@ -418,6 +450,7 @@ bool AppendFillFixture::MockDriverFillHandle::findAllocationDataForRange(const v
         return false;
     }
     mockAllocation.reset(new NEO::MockGraphicsAllocation(const_cast<void *>(buffer), size));
+    mockAllocation->setAllocationType(allocationTypeToReturn);
     data.gpuAllocations.addAllocation(mockAllocation.get());
     allocData = &data;
     return true;
@@ -443,13 +476,6 @@ void AppendFillFixture::setUp() {
 void AppendFillFixture::tearDown() {
     delete[] immediateDstPtr;
     delete[] dstPtr;
-}
-
-void CommandListEventUsedPacketSignalFixture::setUp() {
-    NEO::debugManager.flags.SignalAllEventPackets.set(0);
-    NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
-
-    CommandListFixture::setUp();
 }
 
 void CommandListSecondaryBatchBufferFixture::setUp() {
@@ -598,7 +624,7 @@ void CommandQueueThreadArbitrationPolicyFixture::setUp() {
     std::vector<std::unique_ptr<NEO::Device>> devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    auto driverHandleUlt = whiteboxCast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
+    auto driverHandleUlt = whiteboxCast(DriverHandle::create(std::move(devices), &returnValue));
     driverHandle.reset(driverHandleUlt);
 
     ASSERT_NE(nullptr, driverHandle);
@@ -642,6 +668,7 @@ void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode
     commandListImmediate->heaplessModeEnabled = true;
     commandQueue->heaplessModeEnabled = true;
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = true;
     mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = scratchInlinePointerSize;
     mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = scratchInlineOffset;
 }

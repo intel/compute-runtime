@@ -21,13 +21,15 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/image/image_surface_state.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -52,31 +54,6 @@ size_t GfxCoreHelperHw<Family>::getMax3dImageWidthOrHeight() const {
 }
 
 template <typename Family>
-uint64_t GfxCoreHelperHw<Family>::getMaxMemAllocSize() const {
-    // With stateful messages we have an allocation cap of 4GB
-    // Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching
-    return (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
-}
-
-template <typename Family>
-bool GfxCoreHelperHw<Family>::isStatelessToStatefulWithOffsetSupported() const {
-    return true;
-}
-
-template <typename Family>
-SipKernelType GfxCoreHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
-    if (!debuggingActive) {
-        return SipKernelType::csr;
-    }
-    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::dbgBindless : SipKernelType::dbgCsr;
-}
-
-template <typename Family>
-size_t GfxCoreHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
-    return 32;
-}
-
-template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return 4u;
 }
@@ -84,6 +61,18 @@ uint32_t GfxCoreHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvi
 template <typename GfxFamily>
 inline bool GfxCoreHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const {
     return true;
+}
+
+template <typename Family>
+size_t GfxCoreHelperHw<Family>::getRenderSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
+    return sizeof(RENDER_SURFACE_STATE);
+}
+
+template <typename Family>
+size_t GfxCoreHelperHw<Family>::getBindlessSurfaceStateSlotSize() const {
+    using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
+    return sizeof(RENDER_SURFACE_STATE);
 }
 
 template <typename Family>
@@ -98,6 +87,22 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
                                                                       uint32_t surfaceType,
                                                                       bool forceNonAuxMode,
                                                                       bool useL1Cache) const {
+    programScratchSurfaceState(rootDeviceEnvironment, surfaceStateBuffer, bufferSize, gpuVa, offset, pitch,
+                               gfxAlloc, isReadOnly, surfaceType, forceNonAuxMode, useL1Cache);
+}
+
+template <typename Family>
+void GfxCoreHelperHw<Family>::programScratchSurfaceState(const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                         void *surfaceStateBuffer,
+                                                         size_t bufferSize,
+                                                         uint64_t gpuVa,
+                                                         size_t offset,
+                                                         uint32_t pitch,
+                                                         GraphicsAllocation *gfxAlloc,
+                                                         bool isReadOnly,
+                                                         uint32_t surfaceType,
+                                                         bool forceNonAuxMode,
+                                                         bool useL1Cache) const {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -161,17 +166,6 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
 
 template <typename GfxFamily>
 void NEO::GfxCoreHelperHw<GfxFamily>::setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const {}
-
-template <typename Family>
-bool GfxCoreHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const {
-    if (debugManager.flags.EnableLocalMemory.get() != -1) {
-        return debugManager.flags.EnableLocalMemory.get();
-    } else if (debugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
-        return true;
-    }
-
-    return isLocalMemoryEnabled(hwInfo);
-}
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const {
@@ -255,6 +249,15 @@ void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args) {
 }
 
 template <class GfxFamily>
+typename GfxFamily::RESOURCE_BARRIER::SIGNAL_STAGE getStallingBarrierSignalStage()
+    requires(UsesResourceBarrier<GfxFamily>)
+{
+    using RESOURCE_BARRIER = typename GfxFamily::RESOURCE_BARRIER;
+
+    return RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU;
+}
+
+template <class GfxFamily>
 void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
     requires(UsesResourceBarrier<GfxFamily>)
 {
@@ -263,7 +266,7 @@ void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
     auto resourceBarrier = GfxFamily::cmdInitResourceBarrier;
     resourceBarrier.setBarrierType(RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
     resourceBarrier.setWaitStage(RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
-    resourceBarrier.setSignalStage(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
+    resourceBarrier.setSignalStage(getStallingBarrierSignalStage<GfxFamily>());
     auto invalidateL1Cache = args.isL1InvalidateRequired;
     auto flushL1Cache = args.isL1FlushRequired;
     auto l1FlushMode = debugManager.flags.ResourceBarrierL1FlushMode.get();
@@ -274,6 +277,11 @@ void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args)
     resourceBarrier.setL1DataportCacheInvalidate(invalidateL1Cache);
     resourceBarrier.setL1DataportUavFlush(flushL1Cache);
     EncodeCommandLevelMocs<GfxFamily>::apply(resourceBarrier);
+    if constexpr (requires { resourceBarrier.setQueueDrainMode(false); }) {
+        if (debugManager.flags.PcQueueDrainMode.get() != -1) {
+            resourceBarrier.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
+        }
+    }
     *reinterpret_cast<RESOURCE_BARRIER *>(commandsBuffer) = resourceBarrier;
 }
 
@@ -371,7 +379,7 @@ template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
         MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(&cmd);
@@ -379,7 +387,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffe
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
 
         MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
-    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper.programmAdditionalStallPriorToBarrierWithTimestamp()) {
+    } else if (postSyncMode == PostSyncMode::timestamp && hwInfo.caps.programAdditionalStallPriorToBarrierWithTimestamp) {
         PipeControlArgs additionalArgs = {};
         additionalArgs.csStallOnly = true;
 
@@ -428,11 +436,11 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOp
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     size_t size = 0;
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         size = getSizeForSingleBarrier() +
                getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
-    } else if (postSyncMode == PostSyncMode::timestamp && releaseHelper.programmAdditionalStallPriorToBarrierWithTimestamp()) {
+    } else if (postSyncMode == PostSyncMode::timestamp && hwInfo.caps.programAdditionalStallPriorToBarrierWithTimestamp) {
         size = getSizeForStallingBarrier();
     }
     return size;
@@ -480,66 +488,6 @@ bool GfxCoreHelperHw<GfxFamily>::isWaDisableRccRhwoOptimizationRequired() const 
 template <typename GfxFamily>
 inline uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalSIMDSize() const {
     return 8u;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthChar(uint32_t vectorWidthSize) const {
-    return 16;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthShort(uint32_t vectorWidthSize) const {
-    return 8;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthInt(uint32_t vectorWidthSize) const {
-    return 4;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthLong(uint32_t vectorWidthSize) const {
-    return 1;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthFloat(uint32_t vectorWidthSize) const {
-    return 1;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthHalf(uint32_t vectorWidthSize) const {
-    return 8;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthChar(uint32_t vectorWidthSize) const {
-    return 16;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthShort(uint32_t vectorWidthSize) const {
-    return 8;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthInt(uint32_t vectorWidthSize) const {
-    return 4;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthLong(uint32_t vectorWidthSize) const {
-    return 1;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthFloat(uint32_t vectorWidthSize) const {
-    return 1;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthHalf(uint32_t vectorWidthSize) const {
-    return 8;
 }
 
 template <typename GfxFamily>
@@ -644,11 +592,6 @@ bool GfxCoreHelperHw<GfxFamily>::useOnlyGlobalTimestamps() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const {
-    return !getEnableLocalMemory(hwInfo);
-}
-
-template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
 }
@@ -690,6 +633,35 @@ void GfxCoreHelperHw<GfxFamily>::setSipKernelData(uint32_t *&sipKernelBinary, si
 
 template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+}
+
+template <typename GfxFamily>
+void GfxCoreHelperHw<GfxFamily>::encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const {
+}
+
+template <typename GfxFamily>
+void GfxCoreHelperHw<GfxFamily>::applyImageSurfaceStateMipAndMediaBlock(void *outMemory,
+                                                                        const ImageInfo &imageInfo,
+                                                                        Gmm *gmm,
+                                                                        uint32_t mipLevel,
+                                                                        bool isMediaBlockImage,
+                                                                        const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(outMemory);
+
+    if (imageInfo.mipCount > 1u) {
+        const uint32_t mipCountLod = imageInfo.mipCount - 1u;
+        const uint32_t clampedMip = std::min(mipLevel, mipCountLod);
+        surfaceState->setSurfaceMinLOD(clampedMip);
+        surfaceState->setMIPCountLOD(mipCountLod);
+        if (gmm != nullptr) {
+            ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(surfaceState, gmm);
+        }
+    }
+
+    if (isMediaBlockImage) {
+        ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(surfaceState, imageInfo);
+    }
 }
 
 template <typename GfxFamily>
@@ -775,19 +747,6 @@ DeviceHierarchyMode GfxCoreHelperHw<GfxFamily>::getDefaultDeviceHierarchy() cons
 }
 
 template <typename GfxFamily>
-uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const {
-    auto numBitsForResolution = Math::log2(static_cast<uint64_t>(resolution)) + 1u;
-    UNRECOVERABLE_IF(numBitsForResolution > 64U);
-    auto timestampMask = maxNBitValue(64 - numBitsForResolution);
-    return static_cast<uint64_t>(static_cast<uint64_t>(timeStamp & timestampMask) * resolution);
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::areSecondaryContextsSupported() const {
-    return getContextGroupContextsCount() > 1;
-}
-
-template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupContextsCount() const {
     if (debugManager.flags.ContextGroupSize.get() != -1) {
         return debugManager.flags.ContextGroupSize.get();
@@ -818,8 +777,8 @@ void GfxCoreHelperHw<GfxFamily>::initializeDefaultHpCopyEngine(const HardwareInf
 }
 
 template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::initializeFromProductHelper(const ProductHelper &productHelper) {
-    secondaryContextsEnabled = productHelper.areSecondaryContextsSupported();
+void GfxCoreHelperHw<GfxFamily>::initializeFromProductHelper(const ProductHelper &productHelper, bool hwQueuesSupported) {
+    secondaryContextsEnabled = productHelper.areSecondaryContextsSupported() && hwQueuesSupported;
 }
 
 template <typename GfxFamily>
@@ -848,10 +807,16 @@ bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled() const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const {
+uint64_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStateBaseAddress(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    return reinterpret_cast<RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStatePitch(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(renderSurfaceState);
-    return EncodeSurfaceState<GfxFamily>::getPitchForScratchInBytes(surfaceState, productHelper);
+    return EncodeSurfaceState<GfxFamily>::getPitchForScratchInBytes(surfaceState, rootDeviceEnvironment.getHelper<ProductHelper>());
 }
 
 template <typename GfxFamily>

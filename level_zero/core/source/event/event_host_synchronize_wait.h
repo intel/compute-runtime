@@ -19,6 +19,8 @@
 
 namespace L0::EventHostSynchronize {
 
+constexpr uint64_t maxMicrosecondsConvertibleToNanoseconds = std::numeric_limits<uint64_t>::max() / 1000u;
+
 inline bool isNativeWddm(const NEO::CommandStreamReceiver &csr) {
     auto osInterface = csr.getOSInterface();
     auto driverModel = osInterface ? osInterface->getDriverModel() : nullptr;
@@ -34,6 +36,32 @@ inline bool isDrm(const NEO::CommandStreamReceiver &csr) {
     auto osInterface = csr.getOSInterface();
     auto driverModel = osInterface ? osInterface->getDriverModel() : nullptr;
     return driverModel && (driverModel->getDriverModelType() == NEO::DriverModelType::drm);
+}
+
+inline uint64_t getKmdWaitTimeout(uint64_t timeout, uint64_t elapsedNanoseconds) {
+    if (timeout == std::numeric_limits<uint64_t>::max()) {
+        return timeout;
+    }
+    if (elapsedNanoseconds >= timeout) {
+        return 0;
+    }
+
+    const auto remainingNanoseconds = timeout - elapsedNanoseconds;
+    const auto finalPollMicroseconds = NEO::debugManager.flags.EventHostSynchronizeWaitStrategyMinTimeoutMicroseconds.get();
+    if (finalPollMicroseconds <= 0) {
+        return remainingNanoseconds;
+    }
+
+    const auto finalPollMicrosecondsAsUint = static_cast<uint64_t>(finalPollMicroseconds);
+    if (finalPollMicrosecondsAsUint > maxMicrosecondsConvertibleToNanoseconds) {
+        return 0;
+    }
+
+    const auto finalPollNanoseconds = finalPollMicrosecondsAsUint * 1000u;
+    // WDDM wait timeouts are expressed in whole milliseconds.
+    constexpr uint64_t minimumWindowsWaitNanoseconds = 1000000u;
+    const auto kmdWaitNanoseconds = remainingNanoseconds > finalPollNanoseconds ? remainingNanoseconds - finalPollNanoseconds : 0;
+    return kmdWaitNanoseconds >= minimumWindowsWaitNanoseconds ? kmdWaitNanoseconds : 0;
 }
 
 struct WaitAction {
@@ -83,7 +111,7 @@ class WaitController {
         }
 
         const auto minTimeoutUsAsUint = static_cast<uint64_t>(minTimeoutUs);
-        if (minTimeoutUsAsUint > std::numeric_limits<uint64_t>::max() / 1000u) {
+        if (minTimeoutUsAsUint > maxMicrosecondsConvertibleToNanoseconds) {
             return false;
         }
 

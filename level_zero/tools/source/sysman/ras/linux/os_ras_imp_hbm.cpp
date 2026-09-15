@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
@@ -35,7 +36,7 @@ ze_result_t LinuxRasSourceHbm::osRasGetState(zes_ras_state_t &state, ze_bool_t c
         uint64_t errorCount = 0;
         ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting fwGetMemoryErrorCount() for RasErrorType:%d, SubDeviceCount:%d, SubdeviceId:%d, errorBaseline update:%d and returning error:0x%x \n", __FUNCTION__, osRasErrorType, subDeviceCount, subdeviceId, clear, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting fwGetMemoryErrorCount() for RasErrorType:%d, SubDeviceCount:%d, SubdeviceId:%d, errorBaseline update:%d and returning error:0x%x \n", NEO_FUNCTION_NAME, osRasErrorType, subDeviceCount, subdeviceId, clear, result);
             return result;
         }
         errorBaseline = errorCount; // during clear update the error baseline value
@@ -43,7 +44,7 @@ ze_result_t LinuxRasSourceHbm::osRasGetState(zes_ras_state_t &state, ze_bool_t c
     uint64_t errorCount = 0;
     ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting fwGetMemoryErrorCount() for RasErrorType:%d, SubDeviceCount:%d, SubdeviceId:%d, errorBaseline update:%d and returning error:0x%x \n", __FUNCTION__, osRasErrorType, subDeviceCount, subdeviceId, clear, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting fwGetMemoryErrorCount() for RasErrorType:%d, SubDeviceCount:%d, SubdeviceId:%d, errorBaseline update:%d and returning error:0x%x \n", NEO_FUNCTION_NAME, osRasErrorType, subDeviceCount, subdeviceId, clear, result);
         return result;
     }
     state.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS] = errorCount - errorBaseline;

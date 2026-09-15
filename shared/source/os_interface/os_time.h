@@ -38,7 +38,10 @@ class DeviceTime {
     virtual double getDynamicDeviceTimerResolution() const;
     virtual uint64_t getDynamicDeviceTimerClock() const;
     virtual bool isTimestampsRefreshEnabled() const;
+    virtual volatile uint64_t *getTimestampPtr() { return nullptr; }
     TimeQueryStatus getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
+    void initTimestampPtr();
+    bool isTimestampPtrAvailable() const { return timestampPtr != nullptr; }
     void setDeviceTimerResolution();
     void setRefreshTimestampsFlag() {
         refreshTimestamps = true;
@@ -47,6 +50,7 @@ class DeviceTime {
         return timestampRefreshTimeoutNS;
     };
 
+    volatile uint64_t *timestampPtr = nullptr;
     std::optional<uint64_t> initialGpuTimeStamp{};
     bool waitingForGpuTimeStampOverflow = false;
     uint64_t gpuTimeStampOverflowCounter = 0;
@@ -96,6 +100,14 @@ class OSTime {
 
     void setRefreshTimestampsFlag() const {
         deviceTime->setRefreshTimestampsFlag();
+    }
+
+    void initTimestampPtr() const {
+        deviceTime->initTimestampPtr();
+    }
+
+    bool isTimestampPtrAvailable() const {
+        return deviceTime->isTimestampPtrAvailable();
     }
 
     uint64_t getTimestampRefreshTimeout() const {

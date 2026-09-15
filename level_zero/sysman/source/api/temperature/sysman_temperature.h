@@ -9,7 +9,6 @@
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
-#include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -25,6 +24,7 @@ class Temperature : _zes_temp_handle_t {
     virtual ze_result_t temperatureGetConfig(zes_temp_config_t *pConfig) = 0;
     virtual ze_result_t temperatureSetConfig(const zes_temp_config_t *pConfig) = 0;
     virtual ze_result_t temperatureGetState(double *pTemperature) = 0;
+    virtual void reInit() = 0;
 
     static Temperature *fromHandle(zes_temp_handle_t handle) {
         return static_cast<Temperature *>(handle);
@@ -40,6 +40,8 @@ struct TemperatureHandleContext {
 
     ze_result_t init(uint32_t subDeviceCount);
 
+    void reInit();
+
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature);
     void releaseTemperatureHandles();
 
@@ -51,7 +53,7 @@ struct TemperatureHandleContext {
     }
 
   private:
-    void createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type);
+    void createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type, uint32_t sensorIndex);
     std::once_flag initTemperatureOnce;
     bool tempInitDone = false;
 };

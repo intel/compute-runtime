@@ -10,6 +10,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/const_stringref_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/containers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/containers_tests_helpers.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/cpuinfo_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cpuintrinsics_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_file_reader_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader_tests.cpp

@@ -115,6 +115,29 @@ TEST_F(SysmanDeviceFanFixture, GivenFanHandleContextWhenCallingFanGetThenCorrect
     EXPECT_EQ(2u, fanCount);
 }
 
+TEST_F(SysmanDeviceFanFixture, GivenFanHandleContextWhenCallingFanGetThenFanInitDoneFlagIsSet) {
+    EXPECT_FALSE(pSysmanDeviceImp->pFanHandleContext->isFanInitDone());
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumFans(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_TRUE(pSysmanDeviceImp->pFanHandleContext->isFanInitDone());
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenFanHandleContextWithHandlesWhenCallingReInitThenHandlesAreReInitializedAndRemainValid) {
+    auto fanContext = std::make_unique<MockFanHandleContext>(pOsSysman);
+    fanContext->mockSupportedFanCount = 2;
+    fanContext->init();
+    ASSERT_EQ(2u, fanContext->handleList.size());
+
+    fanContext->reInit();
+
+    EXPECT_EQ(2u, fanContext->handleList.size());
+    for (auto &handle : fanContext->handleList) {
+        EXPECT_NE(nullptr, handle);
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

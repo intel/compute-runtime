@@ -259,12 +259,14 @@
         void testBodyHw();                                                                                                                  \
                                                                                                                                             \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
-        auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                                                   \
+            requires(ShouldBeTested)                                                                                                        \
+        void runCmdTestHwIfSupported() {                                                                                                    \
             testBodyHw<FamilyType>();                                                                                                       \
         }                                                                                                                                   \
                                                                                                                                             \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
-        auto runCmdTestHwIfSupported() -> typename std::enable_if<false == ShouldBeTested>::type {                                          \
+            requires(false == ShouldBeTested)                                                                                               \
+        void runCmdTestHwIfSupported() {                                                                                                    \
             /* do nothing */                                                                                                                \
         }                                                                                                                                   \
                                                                                                                                             \
@@ -314,12 +316,14 @@
         void testBodyHw();                                                                                                                  \
                                                                                                                                             \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
-        auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                                                   \
+            requires(ShouldBeTested)                                                                                                        \
+        void runCmdTestHwIfSupported() {                                                                                                    \
             testBodyHw<FamilyType>();                                                                                                       \
         }                                                                                                                                   \
                                                                                                                                             \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
-        auto runCmdTestHwIfSupported() -> typename std::enable_if<false == ShouldBeTested>::type {                                          \
+            requires(false == ShouldBeTested)                                                                                               \
+        void runCmdTestHwIfSupported() {                                                                                                    \
             /* do nothing */                                                                                                                \
         }                                                                                                                                   \
                                                                                                                                             \
@@ -473,12 +477,14 @@
         void testBodyHw();                                                                                                                                \
                                                                                                                                                           \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                                 \
-        auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                                                                 \
+            requires(ShouldBeTested)                                                                                                                      \
+        void runCmdTestHwIfSupported() {                                                                                                                  \
             testBodyHw<FamilyType>();                                                                                                                     \
         }                                                                                                                                                 \
                                                                                                                                                           \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                                 \
-        auto runCmdTestHwIfSupported() -> typename std::enable_if<false == ShouldBeTested>::type {                                                        \
+            requires(false == ShouldBeTested)                                                                                                             \
+        void runCmdTestHwIfSupported() {                                                                                                                  \
             /* do nothing */                                                                                                                              \
         }                                                                                                                                                 \
                                                                                                                                                           \

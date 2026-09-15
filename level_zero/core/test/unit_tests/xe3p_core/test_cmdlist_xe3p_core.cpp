@@ -87,6 +87,100 @@ XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenCmdListWhenAskingForQwor
     EXPECT_TRUE(commandList->isQwordInOrderCounter());
 }
 
+XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenScratchPointerBeyondInlineDataWhenAddPatchScratchAddressThenPatchTargetsCrossThreadData) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr auto inlineDataSize = WalkerType::getInlineDataSize();
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    pCommandList->heaplessModeEnabled = true;
+    pCommandList->scratchAddressPatchingEnabled = true;
+
+    NEO::KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelAttributes.flags.passInlineData = true;
+    const auto scratchOffset = static_cast<NEO::InlineDataOffset>(inlineDataSize + 8u);
+    kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = scratchOffset;
+    kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+    uint64_t crossThreadStorage[8] = {};
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs{};
+    dispatchKernelArgs.outWalkerPtr = reinterpret_cast<void *>(0x1000);
+    dispatchKernelArgs.outWalkerGpuVa = 0x1000u;
+    dispatchKernelArgs.outCrossThreadDataPtr = crossThreadStorage;
+    dispatchKernelArgs.outCrossThreadDataGpuVa = 0x555000u;
+
+    CmdListKernelLaunchParams launchParams{};
+    pCommandList->addPatchScratchAddress(pCommandList->commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, true, false);
+
+    ASSERT_EQ(1u, pCommandList->commandsToPatch.size());
+    auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(pCommandList->commandsToPatch[0]);
+    EXPECT_EQ(static_cast<void *>(crossThreadStorage), patch.pDestination);
+    EXPECT_EQ(dispatchKernelArgs.outCrossThreadDataGpuVa, patch.gpuAddress);
+    EXPECT_EQ(static_cast<size_t>(scratchOffset - inlineDataSize), patch.offset);
+    EXPECT_EQ(8u, patch.patchSize);
+}
+
+XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenScratchPointerWithinInlineDataWhenAddPatchScratchAddressThenPatchTargetsWalkerInlineData) {
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    pCommandList->heaplessModeEnabled = true;
+    pCommandList->scratchAddressPatchingEnabled = true;
+
+    NEO::KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelAttributes.flags.passInlineData = true;
+    constexpr NEO::InlineDataOffset scratchOffset = 8u;
+    kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = scratchOffset;
+    kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+    uint64_t crossThreadStorage[8] = {};
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs{};
+    dispatchKernelArgs.outWalkerPtr = reinterpret_cast<void *>(0x1000);
+    dispatchKernelArgs.outWalkerGpuVa = 0x1000u;
+    dispatchKernelArgs.outCrossThreadDataPtr = crossThreadStorage;
+    dispatchKernelArgs.outCrossThreadDataGpuVa = 0x555000u;
+
+    CmdListKernelLaunchParams launchParams{};
+    pCommandList->addPatchScratchAddress(pCommandList->commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, true, false);
+
+    ASSERT_EQ(1u, pCommandList->commandsToPatch.size());
+    auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(pCommandList->commandsToPatch[0]);
+    EXPECT_EQ(dispatchKernelArgs.outWalkerPtr, patch.pDestination);
+    EXPECT_EQ(dispatchKernelArgs.outWalkerGpuVa, patch.gpuAddress);
+    const auto expectedOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs) + scratchOffset;
+    EXPECT_EQ(expectedOffset, patch.offset);
+    EXPECT_EQ(8u, patch.patchSize);
+}
+
+XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenScratchPointerAndInlineDataDisabledWhenAddPatchScratchAddressThenPatchTargetsCrossThreadData) {
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    pCommandList->heaplessModeEnabled = true;
+    pCommandList->scratchAddressPatchingEnabled = true;
+
+    NEO::KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelAttributes.flags.passInlineData = false;
+    constexpr NEO::InlineDataOffset scratchOffset = 8u;
+    kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = scratchOffset;
+    kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+    uint64_t crossThreadStorage[8] = {};
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs{};
+    dispatchKernelArgs.outWalkerPtr = reinterpret_cast<void *>(0x1000);
+    dispatchKernelArgs.outWalkerGpuVa = 0x1000u;
+    dispatchKernelArgs.outCrossThreadDataPtr = crossThreadStorage;
+    dispatchKernelArgs.outCrossThreadDataGpuVa = 0x555000u;
+
+    CmdListKernelLaunchParams launchParams{};
+    pCommandList->addPatchScratchAddress(pCommandList->commandsToPatch, dispatchKernelArgs, kernelDescriptor, launchParams, true, false);
+
+    ASSERT_EQ(1u, pCommandList->commandsToPatch.size());
+    auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(pCommandList->commandsToPatch[0]);
+    EXPECT_EQ(static_cast<void *>(crossThreadStorage), patch.pDestination);
+    EXPECT_EQ(dispatchKernelArgs.outCrossThreadDataGpuVa, patch.gpuAddress);
+    EXPECT_EQ(static_cast<size_t>(scratchOffset), patch.offset);
+    EXPECT_EQ(8u, patch.patchSize);
+}
+
 XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty) {
     DebugManagerStateRestore restorer;
 
@@ -581,8 +675,8 @@ XE3P_CORETEST_F(MultiTileSynchronizedDispatchTestsXe3p, givenLimitedSyncDispatch
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
         EXPECT_NE(nullptr, semaphoreCmd);
 
-        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(device->getSyncDispatchTokenAllocation()->getGpuAddress() + sizeof(uint32_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+        EXPECT_EQ(device->getSyncDispatchTokenAllocation()->getGpuAddress() + sizeof(uint32_t), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
         EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
         EXPECT_EQ(expectedInitCalls++, immCmdList->initCalled);
@@ -622,7 +716,15 @@ XE3P_CORETEST_F(MultiTileSynchronizedDispatchTestsXe3p, givenLimitedSyncDispatch
     offset = cmdStream->getUsed();
     size_t rangeSizes = 1;
     const void **ranges = const_cast<const void **>(&alloc);
-    immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_TRUE(verifyTokenCheck(1, 0));
 
     offset = cmdStream->getUsed();
@@ -640,13 +742,29 @@ XE3P_CORETEST_F(MultiTileSynchronizedDispatchTestsXe3p, givenLimitedSyncDispatch
     EXPECT_TRUE(verifyTokenCheck(1, 0));
 
     offset = cmdStream->getUsed();
-    immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(alloc), nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(alloc), nullptr, 0, nullptr, waitEventsParametersForGlobalTs);
     EXPECT_TRUE(verifyTokenCheck(1, 0));
 
     offset = cmdStream->getUsed();
     auto handle = events[0]->toHandle();
     events[0]->unsetCmdQueue();
-    immCmdList->appendBarrier(nullptr, 1, &handle, false);
+    CmdListWaitEventParameters waitEventsParametersForBarrier = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    immCmdList->appendBarrier(nullptr, 1, &handle, waitEventsParametersForBarrier);
     EXPECT_TRUE(verifyTokenCheck(2, 0));
 
     context->freeMem(alloc);

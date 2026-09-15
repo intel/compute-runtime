@@ -23,7 +23,6 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/header/common_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -409,8 +408,8 @@ HWTEST2_F(BlitTests, givenEnabledGlobalCacheInvalidationWhenProgrammingGlobalSeq
     auto semaphoreCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(++lriCmd);
     EXPECT_EQ(MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL, semaphoreCmd->getRegisterPollMode());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-    EXPECT_EQ(0xB404u, semaphoreCmd->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+    EXPECT_EQ(0xB404u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
+    EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
 }
 
 HWTEST2_F(BlitTests, givenDisabledGlobalCacheInvalidationWhenProgrammingGlobalSequencerFlushThenCommandsAreProgrammed, IsXeHPOrAbove) {
@@ -511,9 +510,8 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenDummyBlitI
     debugManager.flags.ForceDummyBlitWa.set(-1);
 
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
-    auto releaseHelper = new MockReleaseHelper();
-    releaseHelper->isDummyBlitWaRequiredResult = true;
-    rootDeviceEnvironment.releaseHelper.reset(releaseHelper);
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.caps.dummyBlitWaRequired = true;
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -613,7 +611,8 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaNotRequiredThenAdditio
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceDummyBlitWa.set(-1);
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
-    rootDeviceEnvironment.releaseHelper = std::make_unique<MockReleaseHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.caps.dummyBlitWaRequired = false;
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));

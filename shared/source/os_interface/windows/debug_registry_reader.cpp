@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/debug_settings_reader.h"
@@ -55,6 +55,39 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
     return static_cast<int32_t>(getSetting(settingName, static_cast<int64_t>(defaultValue)));
 }
 
+bool RegistryReader::hasRegistryValue(const char *settingName) {
+    HKEY key{};
+    bool retVal = false;
+
+    if (ERROR_SUCCESS == SysCalls::regOpenKeyExA(hkeyType,
+                                                 registryReadRootKey.c_str(),
+                                                 0,
+                                                 KEY_READ,
+                                                 &key)) {
+        DWORD regType = REG_NONE;
+        DWORD regSize = 0;
+
+        retVal = (ERROR_SUCCESS == SysCalls::regQueryValueExA(key,
+                                                              settingName,
+                                                              NULL,
+                                                              &regType,
+                                                              NULL,
+                                                              &regSize));
+        RegCloseKey(key);
+    }
+    return retVal;
+}
+
+bool RegistryReader::hasSetting(const char *settingName, DebugVarPrefix &type) {
+    if (hasRegistryValue(settingName)) {
+        type = DebugVarPrefix::none;
+        return true;
+    }
+
+    EnvironmentVariableReader envReader;
+    return envReader.hasSetting(settingName, type);
+}
+
 bool RegistryReader::getSettingIntCommon(const char *settingName, int64_t &value) {
     HKEY key{};
     DWORD success = ERROR_SUCCESS;
@@ -89,22 +122,8 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
     int64_t value = defaultValue;
 
     if (!(getSettingIntCommon(settingName, value))) {
-        char *envValue;
-
-        auto prefixString = ApiSpecificConfig::getPrefixStrings();
-        auto prefixType = ApiSpecificConfig::getPrefixTypes();
-
-        uint32_t i = 0;
-        for (const auto &prefix : prefixString) {
-            std::string neoKey = prefix;
-            neoKey += settingName;
-            envValue = IoFunctions::getenvPtr(neoKey.c_str());
-            if (envValue) {
-                value = atoll(envValue);
-                type = prefixType[i];
-                return value;
-            }
-            i++;
+        if (auto envValue = EnvironmentVariableReader::findEnvironmentVariable(settingName, type)) {
+            return atoll(envValue);
         }
     }
     type = DebugVarPrefix::none;
@@ -115,7 +134,7 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
     int64_t value = defaultValue;
 
     if (!(getSettingIntCommon(settingName, value))) {
-        const char *envValue = IoFunctions::getenvPtr(settingName);
+        const char *envValue = EnvironmentVariableReader::getEnvironmentVariable(settingName);
         if (envValue) {
             value = atoll(envValue);
         }
@@ -187,22 +206,8 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     std::string keyValue = value;
 
     if (!(getSettingStringCommon(settingName, keyValue))) {
-
-        auto prefixString = ApiSpecificConfig::getPrefixStrings();
-        auto prefixType = ApiSpecificConfig::getPrefixTypes();
-
-        uint32_t i = 0;
-        for (const auto &prefix : prefixString) {
-            std::string neoKey = prefix;
-            neoKey += settingName;
-            auto envValue = IoFunctions::getEnvironmentVariable(neoKey.c_str());
-
-            if (envValue) {
-                keyValue.assign(envValue);
-                type = prefixType[i];
-                return keyValue;
-            }
-            i++;
+        if (auto envValue = EnvironmentVariableReader::findEnvironmentVariable(settingName, type)) {
+            return std::string(envValue);
         }
     }
     type = DebugVarPrefix::none;
@@ -213,7 +218,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     std::string keyValue = value;
 
     if (!(getSettingStringCommon(settingName, keyValue))) {
-        const char *envValue = IoFunctions::getEnvironmentVariable(settingName);
+        const char *envValue = EnvironmentVariableReader::getEnvironmentVariable(settingName);
 
         if (envValue) {
             keyValue.assign(envValue);

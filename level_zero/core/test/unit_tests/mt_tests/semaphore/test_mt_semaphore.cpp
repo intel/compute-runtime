@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -35,8 +36,8 @@ class MockNEOExternalSemaphore : public NEO::ExternalSemaphore {
         return true;
     }
 
-    bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override {
-        return true;
+    ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override {
+        return ImportResult::success;
     }
 
     bool enqueueSignal(uint64_t *fenceValue) override {
@@ -46,6 +47,9 @@ class MockNEOExternalSemaphore : public NEO::ExternalSemaphore {
 };
 
 HWTEST_F(ExternalSemaphoreMTTest, givenNEOExternalSemaphoreWhenAppendWaitExternalSemaphoresExpIsCalledThenExpectedSemaphoreStateIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);

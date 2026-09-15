@@ -59,6 +59,7 @@ struct EncodeCaptureCommandData {
     size_t cmdSize = 0;
 
     bool makeCommandView = false;
+    bool noopSpace = false;
 };
 
 struct EncodePostSyncArgs {
@@ -67,6 +68,7 @@ struct EncodePostSyncArgs {
     uint64_t eventAddress = 0;
     uint64_t postSyncImmValue = 0;
     uint64_t inOrderCounterValue = 0;
+    uint64_t inOrderAtomicSignallingValue = 1;
     uint64_t inOrderIncrementGpuAddress = 0;
     uint64_t inOrderIncrementValue = 0;
     Device *device = nullptr;
@@ -135,6 +137,8 @@ struct EncodeDispatchKernelArgs {
     void *cpuPayloadBuffer = nullptr;
     void *outImplicitArgsPtr = nullptr;
     uint64_t outImplicitArgsGpuVa = 0;
+    void *outCrossThreadDataPtr = nullptr;
+    uint64_t outCrossThreadDataGpuVa = 0;
     std::list<void *> *additionalCommands = nullptr;
     EncodeKernelArgsExt *extendedArgs = nullptr;
     NEO::EncodePostSyncArgs postSyncArgs{};
@@ -157,6 +161,7 @@ struct EncodeDispatchKernelArgs {
     bool isFlushL3AfterPostSyncForExternalAllocationRequired = false;
     bool isFlushL3AfterPostSyncForHostUsmRequired = false;
     bool kernelUsesRayTracing = false;
+    bool threadDataCacheHitOnPrefetch = false;
 };
 
 struct EncodeStoreMMIOParams {
@@ -241,14 +246,14 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
     template <typename InterfaceDescriptorType>
-    static void encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
-                                         const uint32_t threadsPerThreadGroup, const uint32_t totalDispatchedThreadGroupCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy);
+    static void encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs);
 
     template <typename InterfaceDescriptorType>
     static void encodeSlmSizePerThreadGroup(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSizePerThreadGroup, bool heaplessModeEnabled);
 
-    static uint32_t getThreadCountPerSubslice(const HardwareInfo &hwInfo);
-    static uint32_t calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t totalDispatchedThreadGroupCount);
+    static uint32_t getMaxConcurrentThreadCountPerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t grfCount);
+    static uint32_t calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t workloadThreadGroupCount);
+    static uint32_t calculateThreadGroupCountSharingSubsliceSlm(const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs);
 
     template <typename InterfaceDescriptorType>
     static void encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy);
@@ -292,7 +297,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
                                           const uint32_t grfCount, const uint32_t threadsPerThreadGroup, WalkerType &walkerCmd);
 
     template <typename WalkerType>
-    static void adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo);
 
     static void programInlineDataHeapless(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData, uint64_t scratchPtr);
 
@@ -305,7 +310,8 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
         return GfxFamily::cacheLineSize;
     }
 
-    static size_t getDefaultIOHAlignment(bool isLocalMemory);
+    static size_t getCrossThreadDataAlignment(bool isLocalMemory, const HardwareInfo &hwInfo);
+    static size_t getDefaultIOHAlignment(bool isLocalMemory, const HardwareInfo &hwInfo);
 
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
     static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args);
@@ -602,7 +608,9 @@ struct EncodeSemaphore {
     static void *allocateSemaphoreWaitCommand(bool native64bCmd);
     static void deallocateSemaphoreWaitCommand(void *cmdBuffer, bool native64bCmd);
 
-    static size_t getSizeMiSemaphoreWait();
+    static constexpr size_t getSizeMiSemaphoreWait() {
+        return sizeof(MI_SEMAPHORE_WAIT);
+    }
 };
 
 template <typename GfxFamily>

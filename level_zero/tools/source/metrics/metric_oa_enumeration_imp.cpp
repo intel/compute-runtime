@@ -23,6 +23,7 @@
 namespace L0 {
 
 const char *MetricEnumeration::oaConcurrentGroupName = "OA";
+const char *MetricEnumeration::oaMertConcurrentGroupName = "OAMERT";
 
 MetricEnumeration::MetricEnumeration(OaMetricSourceImp &metricSourceInput)
     : metricSource(metricSourceInput) {}
@@ -321,8 +322,9 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
             pConcurrentGroup->GetParams();
         DEBUG_BREAK_IF(pConcurrentGroupParams == nullptr);
 
-        // 2. Find "OA" concurrent group.
-        if (strcmp(pConcurrentGroupParams->SymbolName, oaConcurrentGroupName) == 0) {
+        // 2. Find "OA" or "OAMERT" concurrent group.
+        if (strcmp(pConcurrentGroupParams->SymbolName, oaConcurrentGroupName) == 0 ||
+            strcmp(pConcurrentGroupParams->SymbolName, oaMertConcurrentGroupName) == 0) {
 
             // Find the oaBufferOverflowInformation and store in member variable pOaBufferOverflowInformation
             const uint32_t measurementInfoCount = pConcurrentGroupParams->IoMeasurementInformationCount;
@@ -856,8 +858,8 @@ ze_result_t OaMetricGroupImp::calculateMetricValues(const zet_metric_group_calcu
                                                     const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                                     zet_typed_value_t *pMetricValues) {
 
-    const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
-    if (pRawHeader->magic == MetricGroupCalculateHeader::magicValue) {
+    const OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const OaMetricGroupCalculateHeader *>(pRawData);
+    if (pRawHeader->magic == OaMetricGroupCalculateHeader::magicValue) {
         METRICS_LOG_ERR("%s", "The call is not supported for multiple devices");
         METRICS_LOG_ERR("%s", "Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -875,10 +877,10 @@ ze_result_t OaMetricGroupImp::calculateMetricValuesImpl(const zet_metric_group_c
                                                         const uint8_t *pRawData, uint32_t *pSetCount,
                                                         uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
                                                         zet_typed_value_t *pMetricValues) {
-    const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
+    const OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const OaMetricGroupCalculateHeader *>(pRawData);
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    if (pRawHeader->magic != MetricGroupCalculateHeader::magicValue) {
+    if (pRawHeader->magic != OaMetricGroupCalculateHeader::magicValue) {
 
         const bool calculationCountOnly = *pTotalMetricValueCount == 0;
         result = calculateMetricValues(type, rawDataSize, pRawData, pTotalMetricValueCount, pMetricValues);

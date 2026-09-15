@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,8 +50,4 @@ XE3_CORETEST_F(Xe3CoreProductHelperLinux, givenProductHelperWhenAskedIfPatIndexP
 
 XE3_CORETEST_F(Xe3CoreProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isPageFaultSupported());
-}
-
-XE3_CORETEST_F(Xe3CoreProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }

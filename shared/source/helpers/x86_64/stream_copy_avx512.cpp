@@ -5,11 +5,14 @@
  *
  */
 
-#if defined(__AVX512F__) || defined(_MSC_VER)
+#include "shared/source/helpers/x86_64/stream_copy.h"
 #include "shared/source/helpers/x86_64/stream_copy.inl"
+#include "shared/source/helpers/x86_64/stream_copy_blocks.h"
 
 namespace NEO {
-template void streamCopyImpl<true, true>(void *dst, const void *src, size_t bytes) noexcept;
-template void streamCopyImpl<true, false>(void *dst, const void *src, size_t bytes) noexcept;
+
+void streamCopyFromWriteCombinedAvx512(void *dst, const void *src, size_t bytes) noexcept {
+    streamCopyFromWriteCombinedImpl<StreamBlockAvx512>(dst, src, bytes);
+}
+
 } // namespace NEO
-#endif

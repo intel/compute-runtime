@@ -89,18 +89,24 @@ struct UuidRegisterResult {
     uint32_t handle;
 };
 
-struct ResetStatsFault {
+struct ContextFault {
     uint64_t addr;
     uint16_t type;
     uint16_t level;
     uint16_t access;
-    uint16_t flags;
 };
-struct ResetFaultContext {
-    ResetStatsFault fault;
-    uint32_t id;
-    bool banned;
-    bool vmFault;
+
+enum class ContextBanReason : uint32_t {
+    none = 0,
+    gpuHang,
+};
+
+struct ContextHealth {
+    uint32_t contextId = 0;
+    ContextBanReason banReason = ContextBanReason::none;
+    ContextFault fault = {};
+    bool banned = false;
+    bool faultValid = false;
 };
 
 using IoctlFunc = std::function<int(void *, int, unsigned long int, void *, bool)>;
@@ -114,6 +120,11 @@ using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 using VmBindExtSetPatT = uint8_t[40];
 using VmBindExtUserFenceT = uint8_t[56];
 
+enum class GemCreateExtHint : uint32_t {
+    none = 0,
+    noCompression = 1,
+};
+
 class IoctlHelper {
   public:
     IoctlHelper(Drm &drmArg) : drm(drmArg) {};
@@ -121,6 +132,7 @@ class IoctlHelper {
     static std::unique_ptr<IoctlHelper> getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm);
     virtual int ioctl(DrmIoctl request, void *arg);
     virtual int ioctl(int fd, DrmIoctl request, void *arg);
+    virtual int ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName);
     virtual void setExternalContext(ExternalCtx *ctx);
     virtual bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) = 0;
 
@@ -128,9 +140,15 @@ class IoctlHelper {
     virtual bool isSetPairAvailable() = 0;
     virtual bool isChunkingAvailable() = 0;
     virtual bool isVmBindAvailable() = 0;
+    // True when the KMD derives the object page index from vm_pgoff, so mremap can move a mapping window.
+    virtual bool isMmapWindowRelocationSupported() const { return false; }
     virtual bool isVmBindDecompressAvailable(uint32_t vmId) { return false; }
     virtual bool isUserptrCoherencyRequired() const { return false; }
-    virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) = 0;
+    virtual bool useKmdAllocationForIsa() const { return false; }
+    virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) = 0;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint = GemCreateExtHint::none) {
+        return createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, memPolicyMode, memPolicyNodemask, isCoherent, hint, std::nullopt);
+    }
     virtual uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) = 0;
     virtual CacheRegion closAlloc(CacheLevel cacheLevel) = 0;
     virtual uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
@@ -179,7 +197,7 @@ class IoctlHelper {
     virtual std::optional<uint32_t> getVmAdviseAtomicAttribute() = 0;
     virtual int vmBind(const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
-    virtual int getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) = 0;
+    virtual int getContextHealth(ContextHealth &contextHealth) = 0;
     virtual bool isEuStallSupported() = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
     virtual bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) = 0;
@@ -204,6 +222,7 @@ class IoctlHelper {
 
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
     virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) = 0;
+    virtual void onFirstSubmission(OsContextLinux &osContext) {}
 
     virtual void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) = 0;
     virtual void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) = 0;
@@ -220,6 +239,7 @@ class IoctlHelper {
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool requiresUserFenceSetup(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
+    virtual void *getTimestampPtr() { return nullptr; };
     void setupIpVersion();
     virtual bool isImmediateVmBindRequired() const { return false; }
 
@@ -231,6 +251,7 @@ class IoctlHelper {
     uint32_t getFlagsForPrimeHandleToFd() const;
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo() = 0;
     virtual size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const = 0;
+    virtual bool hasEnoughDeviceMemory(size_t size, uint32_t memoryBanks) { return true; }
     virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) = 0;
     virtual bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) = 0;
     virtual bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) = 0;
@@ -247,8 +268,6 @@ class IoctlHelper {
     virtual int getEuDebugSysFsEnable() { return false; }
     virtual bool isVmBindPatIndexExtSupported() { return false; }
 
-    virtual bool validPageFault(uint16_t flags) { return false; }
-    virtual uint32_t getStatusForResetStats(bool banned) { return 0u; }
     virtual void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) { return; }
 
     virtual void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) = 0;
@@ -271,7 +290,7 @@ class IoctlHelper {
     virtual bool isTimestampsRefreshEnabled() { return false; }
     virtual uint32_t getNumProcesses() const { return 1; }
 
-    virtual bool makeResidentBeforeLockNeeded() const { return false; }
+    virtual bool isDeferBackingEnabledForSize(size_t allocationSize) const { return false; }
     virtual bool hasContextFreqHint() { return false; }
     virtual void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) { return; }
     virtual bool isSmallBarConfigAllowed() const = 0;
@@ -341,13 +360,14 @@ class IoctlHelperI915 : public IoctlHelper {
 
 class IoctlHelperUpstream : public IoctlHelperI915 {
   public:
+    using IoctlHelper::createGemExt;
     using IoctlHelperI915::IoctlHelperI915;
 
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
     bool isVmBindAvailable() override;
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) override;
     CacheRegion closAlloc(CacheLevel cacheLevel) override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
@@ -380,7 +400,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) override;
+    int getContextHealth(ContextHealth &contextHealth) override;
     bool isEuStallSupported() override;
     uint32_t getEuStallFdParameter() override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
@@ -404,13 +424,14 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
 
 class IoctlHelperPrelim20 : public IoctlHelperI915 {
   public:
+    using IoctlHelper::createGemExt;
     using IoctlHelperI915::IoctlHelperI915;
 
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
     bool isVmBindAvailable() override;
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) override;
     CacheRegion closAlloc(CacheLevel cacheLevel) override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
@@ -443,7 +464,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) override;
+    int getContextHealth(ContextHealth &contextHealth) override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
     bool perfDisableEuStallStream(int32_t *stream) override;
     bool isEuStallSupported() override;
@@ -475,8 +496,6 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     int getEuDebugSysFsEnable() override;
     bool isVmBindPatIndexExtSupported() override { return true; }
 
-    bool validPageFault(uint16_t flags) override;
-    uint32_t getStatusForResetStats(bool banned) override;
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     EngineCapabilities::Flags getEngineCapabilitiesFlags(uint64_t capabilities) const override;
     uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;

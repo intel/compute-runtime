@@ -9,7 +9,8 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/xe_hpc_core/hw_info_xe_hpc_core.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -53,16 +54,17 @@ PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenRelease1261WhenAskingForDeviceFeatures
     deviceHwInfo->ipVersion.architecture = 12;
     deviceHwInfo->ipVersion.release = 61;
     deviceHwInfo->ipVersion.revision = deviceHwInfo->platform.usRevId;
+    setupCaps(*deviceHwInfo);
 
-    rootEnv->releaseHelper.reset();
-    rootEnv->initReleaseHelper();
+    rootEnv->compilerReleaseHelper.reset();
+    rootEnv->initCompilerReleaseHelper();
 
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
-    EXPECT_EQ(static_cast<cl_device_feature_capabilities_intel>(CL_DEVICE_FEATURE_FLAG_DP4A_INTEL), clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(*rootEnv));
+    EXPECT_EQ(static_cast<cl_device_feature_capabilities_intel>(CL_DEVICE_FEATURE_FLAG_DP4A_INTEL), clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(*deviceHwInfo));
 
     auto &compilerHelper = getHelper<CompilerProductHelper>();
-    std::string extensions = compilerHelper.getDeviceExtensions(*deviceHwInfo, *rootEnv->releaseHelper);
+    std::string extensions = compilerHelper.getDeviceExtensions(*deviceHwInfo);
 
     EXPECT_EQ(std::string::npos, extensions.find("cl_intel_subgroup_matrix_multiply_accumulate"));
     EXPECT_EQ(std::string::npos, extensions.find("cl_intel_subgroup_split_matrix_multiply_accumulate"));

@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -46,7 +47,7 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
 
     auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, numGrfRequired, rootDeviceEnvironment);
     auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hwInfo.capabilityTable.maxProgrammableSlmSize);
-    auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
+    constexpr auto maxBarrierCount = CommonConstants::maxBarrierRegisterPerSlice;
 
     UNRECOVERABLE_IF((workDim == 0) || (workDim > 3));
     UNRECOVERABLE_IF(localWorkSize == nullptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,6 +93,18 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidOsTemperatureObjectWhenSettingT
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidOsTemperatureObjectWhenCheckingIfTempModuleSupportedThenCallSucceeds) {
     std::unique_ptr<PublicWddmTemperatureImp> pWddmTemperatureImp = std::make_unique<PublicWddmTemperatureImp>(pOsSysman);
     EXPECT_TRUE(pWddmTemperatureImp->isTempModuleSupported());
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandlesWhenCallingReInitOnTemperatureHandleContextThenHandlesRemainValid) {
+    auto handles = getTempHandles(temperatureHandleComponentCount);
+    ASSERT_EQ(temperatureHandleComponentCount, static_cast<uint32_t>(handles.size()));
+
+    pSysmanDeviceImp->pTempHandleContext->reInit();
+
+    EXPECT_EQ(temperatureHandleComponentCount, static_cast<uint32_t>(pSysmanDeviceImp->pTempHandleContext->handleList.size()));
+    for (auto &handle : pSysmanDeviceImp->pTempHandleContext->handleList) {
+        EXPECT_NE(nullptr, handle);
+    }
 }
 
 } // namespace ult

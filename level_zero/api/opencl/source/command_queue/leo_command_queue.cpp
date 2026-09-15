@@ -8,6 +8,9 @@
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/os_interface/os_context.h"
@@ -19,6 +22,7 @@
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
 #include "level_zero/core/source/cmdqueue/internal_queue_throttle_ext.h"
 
@@ -26,6 +30,13 @@
 
 namespace NEO {
 namespace LEO {
+
+namespace {
+bool isAllocationDisplayable(const NEO::GraphicsAllocation &graphicsAllocation) {
+    auto gmm = graphicsAllocation.getDefaultGmm();
+    return (gmm != nullptr) && (gmm->gmmResourceInfo != nullptr) && gmm->gmmResourceInfo->isDisplayable();
+}
+} // namespace
 
 CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties, ze_command_list_handle_t cmdListHandle) : clDevice(device), context(context), externalHandle(true), cmdListHandle(cmdListHandle) {
     context->incRefInternal();
@@ -225,12 +236,143 @@ void CommandQueue::releaseHelper(void *userData) {
     delete sharingUserData;
 }
 
+bool CommandQueue::isInPlaceSharingAcquireReleaseEnabled(cl_uint cmdType) {
+    auto inPlaceMode = debugManager.flags.LeoInPlaceSharingAcquireRelease.get();
+    if (inPlaceMode != -1) {
+        return inPlaceMode != 0;
+    }
+
+    switch (cmdType) {
+    case CL_COMMAND_ACQUIRE_GL_OBJECTS:
+    case CL_COMMAND_RELEASE_GL_OBJECTS:
+#if defined(_WIN32)
+    case CL_COMMAND_ACQUIRE_D3D10_OBJECTS_KHR:
+    case CL_COMMAND_RELEASE_D3D10_OBJECTS_KHR:
+    case CL_COMMAND_ACQUIRE_D3D11_OBJECTS_KHR:
+    case CL_COMMAND_RELEASE_D3D11_OBJECTS_KHR:
+    case CL_COMMAND_ACQUIRE_DX9_MEDIA_SURFACES_KHR:
+    case CL_COMMAND_RELEASE_DX9_MEDIA_SURFACES_KHR:
+    case CL_COMMAND_ACQUIRE_DX9_OBJECTS_INTEL:
+    case CL_COMMAND_RELEASE_DX9_OBJECTS_INTEL:
+#endif
+        return true;
+    default:
+        return false;
+    }
+}
+
+cl_int CommandQueue::acquireSharedObjectsInPlace(cl_uint numObjects,
+                                                 const cl_mem *memObjects,
+                                                 cl_uint numEventsInWaitList,
+                                                 const cl_event *eventWaitList,
+                                                 cl_event *oclEvent,
+                                                 cl_uint cmdType) {
+    if ((memObjects == nullptr && numObjects != 0) || (memObjects != nullptr && numObjects == 0)) {
+        return CL_INVALID_VALUE;
+    }
+
+    const auto rootDeviceIndex = this->clDevice->getDevice().getRootDeviceIndex();
+    for (cl_uint object = 0; object < numObjects; object++) {
+        auto memObject = castToObject<MemObj>(memObjects[object]);
+        if (memObject == nullptr || memObject->peekSharingHandler() == nullptr) {
+            return CL_INVALID_MEM_OBJECT;
+        }
+
+        auto result = memObject->peekSharingHandler()->acquire(memObject, rootDeviceIndex);
+        if (result != CL_SUCCESS) {
+            return result;
+        }
+        ++memObject->acquireCount;
+    }
+
+    auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, oclEvent, cmdType, this);
+
+    auto lock = this->takeOwnership();
+    return L0ToClResultMapper(zeCommandListAppendBarrier(this->cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data()));
+}
+
+cl_int CommandQueue::releaseSharedObjectsInPlace(cl_uint numObjects,
+                                                 const cl_mem *memObjects,
+                                                 cl_uint numEventsInWaitList,
+                                                 const cl_event *eventWaitList,
+                                                 cl_event *oclEvent,
+                                                 cl_uint cmdType) {
+    if ((memObjects == nullptr && numObjects != 0) || (memObjects != nullptr && numObjects == 0)) {
+        return CL_INVALID_VALUE;
+    }
+
+    for (cl_uint i = 0; i < numEventsInWaitList; i++) {
+        auto eventObject = castToObject<Event>(eventWaitList[i]);
+        if (eventObject == nullptr) {
+            return CL_INVALID_EVENT_WAIT_LIST;
+        }
+        if (eventObject->isUserEvent()) {
+            continue;
+        }
+
+        auto result = eventObject->wait();
+        if (result != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(result);
+        }
+    }
+
+    if (!this->isOutOfOrder()) {
+        auto result = this->hostSynchronize(std::numeric_limits<uint64_t>::max());
+        if (result != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(result);
+        }
+    }
+
+    bool isImageReleased = false;
+    bool isDisplayableReleased = false;
+    const auto rootDeviceIndex = this->clDevice->getDevice().getRootDeviceIndex();
+    for (cl_uint object = 0; object < numObjects; object++) {
+        auto memObject = castToObject<MemObj>(memObjects[object]);
+        if (memObject == nullptr || memObject->peekSharingHandler() == nullptr) {
+            return CL_INVALID_MEM_OBJECT;
+        }
+
+        auto graphicsAllocation = memObject->getGraphicsAllocation(rootDeviceIndex);
+        if (graphicsAllocation != nullptr) {
+            isImageReleased |= graphicsAllocation->getAllocationType() == NEO::AllocationType::sharedImage;
+            isDisplayableReleased |= isAllocationDisplayable(*graphicsAllocation);
+        }
+
+        memObject->peekSharingHandler()->release(memObject, rootDeviceIndex);
+        DEBUG_BREAK_IF(memObject->acquireCount == 0);
+        --memObject->acquireCount;
+    }
+
+    if (isImageReleased || isDisplayableReleased) {
+        auto csr = this->getL0Object()->getCsr(false);
+        if (csr != nullptr && csr->isDirectSubmissionEnabled()) {
+            csr->sendRenderStateCacheFlush();
+
+            if (isDisplayableReleased) {
+                auto result = this->hostSynchronize(std::numeric_limits<uint64_t>::max());
+                if (result != ZE_RESULT_SUCCESS) {
+                    return L0ToClResultMapper(result);
+                }
+            }
+        }
+    }
+
+    auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, oclEvent, cmdType, this);
+
+    auto lock = this->takeOwnership();
+    return L0ToClResultMapper(zeCommandListAppendBarrier(this->cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data()));
+}
+
 cl_int CommandQueue::enqueueAcquireSharedObjects(cl_uint numObjects,
                                                  const cl_mem *memObjects,
                                                  cl_uint numEventsInWaitList,
                                                  const cl_event *eventWaitList,
                                                  cl_event *oclEvent,
                                                  cl_uint cmdType) {
+    if (isInPlaceSharingAcquireReleaseEnabled(cmdType)) {
+        return this->acquireSharedObjectsInPlace(numObjects, memObjects, numEventsInWaitList, eventWaitList, oclEvent, cmdType);
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, oclEvent, cmdType, this);
 
     for (unsigned int object = 0; object < numObjects; object++) {
@@ -256,6 +398,10 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects,
                                                  const cl_event *eventWaitList,
                                                  cl_event *oclEvent,
                                                  cl_uint cmdType) {
+    if (isInPlaceSharingAcquireReleaseEnabled(cmdType)) {
+        return this->releaseSharedObjectsInPlace(numObjects, memObjects, numEventsInWaitList, eventWaitList, oclEvent, cmdType);
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, oclEvent, cmdType, this);
 
     for (unsigned int object = 0; object < numObjects; object++) {
@@ -280,21 +426,19 @@ void CommandQueue::storeDependencies(cl_uint numEvents, const cl_event *eventWai
         return;
     }
 
-    for (cl_uint i = 0; i < numEvents; ++i) {
-        NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i])->incRefInternal();
-    }
-
     auto lock = this->takeOwnership();
     for (cl_uint i = 0; i < numEvents; ++i) {
-        this->dependencyEvents.push_back(NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i]));
+        auto *pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i]);
+        pEvent->incRefInternal();
+        this->dependencyEvents.push_back(pEvent);
     }
 }
 
 void CommandQueue::clearDependencies() {
+    auto lock = this->takeOwnership();
     for (auto *pEvent : this->dependencyEvents) {
         pEvent->decRefInternal();
     }
-    auto lock = this->takeOwnership();
     this->dependencyEvents.clear();
 }
 

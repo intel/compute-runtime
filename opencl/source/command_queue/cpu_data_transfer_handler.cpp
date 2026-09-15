@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/logger.h"
 
@@ -76,7 +77,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         *eventsRequest.outEvent = outEventObj;
     }
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "taskLevel", taskLevel);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "taskLevel", taskLevel);
 
     if (outEventObj) {
         outEventObj->taskLevel = taskLevel;

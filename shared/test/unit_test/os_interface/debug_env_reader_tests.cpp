@@ -500,7 +500,7 @@ TEST_F(DebugEnvReaderTests, givenTooLongEnvValueWhenGetEnvironmentVariableIsCall
             veryLongPath.back() = '\0';
             std::unordered_map<std::string, std::string> mockableEnvs = {{testingVariableName, veryLongPath.c_str()}};
             VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-            auto envValue = IoFunctions::getEnvironmentVariable(testingVariableName);
+            auto envValue = EnvironmentVariableReader::getEnvironmentVariable(testingVariableName);
 
             ASSERT_NE(nullptr, veryLongPath.c_str());
             EXPECT_EQ(nullptr, envValue);
@@ -511,7 +511,7 @@ TEST_F(DebugEnvReaderTests, givenTooLongEnvValueWhenGetEnvironmentVariableIsCall
             goodPath.back() = '\0';
             std::unordered_map<std::string, std::string> mockableEnvs = {{testingVariableName, goodPath.c_str()}};
             VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-            auto envValue = IoFunctions::getEnvironmentVariable(testingVariableName);
+            auto envValue = EnvironmentVariableReader::getEnvironmentVariable(testingVariableName);
 
             ASSERT_NE(nullptr, goodPath.c_str());
             EXPECT_EQ(mockableEnvs.at(testingVariableName).c_str(), envValue);

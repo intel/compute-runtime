@@ -55,6 +55,14 @@ void mockCpuidEnableAllExceptAvx2Bit(int *cpuInfo, int functionId) {
     }
 }
 
+size_t mockGetLastLevelCacheSize() {
+    return mockLastLevelCacheSize;
+}
+
+size_t mockGetLastLevelCacheSizeUnavailable() {
+    return 0u;
+}
+
 uint64_t mockXgetbvEnableAll(uint32_t) {
     return ~static_cast<uint64_t>(0);
 }

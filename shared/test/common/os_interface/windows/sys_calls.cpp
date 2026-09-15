@@ -27,6 +27,12 @@ unsigned int getCurrentProcessId() {
     return 0xABCEDF;
 }
 
+std::string getProcessNameResult = "process_name";
+
+std::string getProcessName() {
+    return getProcessNameResult;
+}
+
 unsigned long getNumThreads() {
     return 1;
 }
@@ -42,6 +48,7 @@ const wchar_t *currentLibraryPath = L"\\";
 uint32_t regOpenKeySuccessCount = 0u;
 uint32_t regQueryValueSuccessCount = 0u;
 uint64_t regQueryValueExpectedData = 0ull;
+uint32_t remainingRegReadCount = 0u;
 const HKEY validHkey = reinterpret_cast<HKEY>(0);
 bool getNumThreadsCalled = false;
 bool mmapAllowExtendedPointers = false;
@@ -276,6 +283,15 @@ BOOL closeHandle(HANDLE hObject) {
 BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr) {
     systemPowerStatusPtr->ACLineStatus = systemPowerStatusACLineStatusOverride;
     return systemPowerStatusRetVal;
+}
+
+BOOL (*sysCallsGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP relationshipType, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer, PDWORD returnedLength) = nullptr;
+
+BOOL getLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationshipType, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer, PDWORD returnedLength) {
+    if (sysCallsGetLogicalProcessorInformationEx != nullptr) {
+        return sysCallsGetLogicalProcessorInformationEx(relationshipType, buffer, returnedLength);
+    }
+    return FALSE;
 }
 
 BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
@@ -570,8 +586,12 @@ HANDLE openProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
-    if (regOpenKeySuccessCount > 0) {
-        regOpenKeySuccessCount--;
+    if (regOpenKeySuccessCount > 0 || remainingRegReadCount > 0) {
+        if (regOpenKeySuccessCount > 0) {
+            regOpenKeySuccessCount--;
+        } else {
+            remainingRegReadCount--;
+        }
         if (phkResult) {
             *phkResult = validHkey;
         }
@@ -581,8 +601,12 @@ LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDes
 };
 
 LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {
-    if (hKey == validHkey && regQueryValueSuccessCount > 0) {
-        regQueryValueSuccessCount--;
+    if (hKey == validHkey && (regQueryValueSuccessCount > 0 || remainingRegReadCount > 0)) {
+        if (regQueryValueSuccessCount > 0) {
+            regQueryValueSuccessCount--;
+        } else {
+            remainingRegReadCount--;
+        }
 
         if (lpcbData) {
             if (strcmp(lpValueName, "settingSourceString") == 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ class RegistryReader : public SettingsReader {
     RegistryReader(bool userScope, const std::string &regKey);
     bool getSettingIntCommon(const char *settingName, int64_t &value);
     bool getSettingStringCommon(const char *settingName, std::string &keyValue);
+    bool hasSetting(const char *settingName, DebugVarPrefix &type) override;
     int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) override;
     int32_t getSetting(const char *settingName, int32_t defaultValue) override;
     int64_t getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) override;
@@ -34,6 +35,7 @@ class RegistryReader : public SettingsReader {
 
   protected:
     void setUpProcessName();
+    bool hasRegistryValue(const char *settingName);
 
     std::string registryReadRootKey;
     std::string processName;

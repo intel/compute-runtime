@@ -88,12 +88,8 @@ Kernel *BuiltInKernelLibImpl::getImageFunction(ImageBuiltIn func, const NEO::Bui
 std::unique_ptr<BuiltInKernelLibImpl::BuiltInKernelData> BuiltInKernelLibImpl::loadBuiltIn(NEO::BuiltIn::BaseKernel baseKernel, const NEO::BuiltIn::AddressingMode &mode, const char *kernelName) {
     using BuiltInCodeType = NEO::BuiltIn::CodeType;
 
-    if (!NEO::BuiltIn::EmbeddedStorageRegistry::exists) {
-        return nullptr;
-    }
-
     StackVec<BuiltInCodeType, 2> supportedTypes{};
-    bool requiresRebuild = !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
+    bool requiresRebuild = !NEO::debugManager.flags.EnvOneapiPvcSendWarWa.get();
     if (!requiresRebuild && !NEO::debugManager.flags.RebuildPrecompiledKernels.get()) {
         supportedTypes.push_back(BuiltInCodeType::binary);
     }

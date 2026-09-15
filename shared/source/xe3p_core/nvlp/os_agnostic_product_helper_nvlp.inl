@@ -9,8 +9,18 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 
 #include "aubstream/product_family.h"
+#include "neo_aot_platforms.h"
+
+#include <algorithm>
+#include <array>
 
 namespace NEO {
+
+template <>
+bool ProductHelperHw<gfxProduct>::isPatIndexValidForUserptr(uint64_t patIndex) const {
+    constexpr std::array<uint64_t, 6> validPatIndices = {2, 7, 19, 23, 27, 31};
+    return std::find(validPatIndices.begin(), validPatIndices.end(), patIndex) != validPatIndices.end();
+}
 
 template <>
 bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
@@ -54,6 +64,28 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 template <>
 bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
     return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
+    return true;
+}
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
+    auto adjustedMaxThreadsPerThreadGroup = maxThreadsPerThreadGroup;
+
+    if (hwInfo.ipVersion.value == AOT::NVL_P_A0) {
+        return adjustedMaxThreadsPerThreadGroup;
+    }
+
+    if (grfCount == 448) {
+        adjustedMaxThreadsPerThreadGroup = 16u;
+    } else if (grfCount == 320) {
+        adjustedMaxThreadsPerThreadGroup = 24u;
+    }
+
+    return adjustedMaxThreadsPerThreadGroup;
 }
 
 template <>

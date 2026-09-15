@@ -9,7 +9,7 @@
 
 namespace L0 {
 
-bool DriverHandle::peerRequiresReservedHandleData(Device *srcDevice, Device *peerDevice) {
+bool DriverHandle::peerReservedHandleDataAvailable(Device *srcDevice, Device *peerDevice) {
     return false;
 }
 

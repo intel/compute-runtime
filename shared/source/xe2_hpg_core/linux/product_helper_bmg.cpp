@@ -34,14 +34,6 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDeferBackingEnabled() const {
-    if (debugManager.flags.EnableDeferBacking.get() != -1) {
-        return debugManager.flags.EnableDeferBacking.get();
-    }
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
     return false;
 }
@@ -92,28 +84,6 @@ BmgPublicSkuMemoryConfig getBmgPublicSkuMemoryConfig(unsigned short deviceId) {
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
     return getBmgPublicSkuMemoryConfig(hwInfo.platform.usDeviceID).memoryClockRateInMhz;
-}
-
-template <>
-uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(
-    const OSInterface *osIface, uint32_t subDeviceIndex) const {
-
-    if (osIface == nullptr) {
-        return 0;
-    }
-
-    auto driverModel = osIface->getDriverModel();
-    if (driverModel->getDriverModelType() != DriverModelType::drm) {
-        return 0;
-    }
-
-    auto pDrm = driverModel->as<Drm>();
-    uint64_t memoryPhysicalSize = 0;
-    if (pDrm->getDeviceMemoryPhysicalSizeInBytes(subDeviceIndex, memoryPhysicalSize) == false) {
-        return 0;
-    }
-
-    return memoryPhysicalSize;
 }
 
 template <>

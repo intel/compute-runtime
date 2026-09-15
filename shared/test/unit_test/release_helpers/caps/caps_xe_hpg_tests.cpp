@@ -1,0 +1,157 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/release_helpers/caps/caps_xe_hpg.h"
+
+#include "gtest/gtest.h"
+
+#include <cstdint>
+#include <optional>
+
+using namespace NEO;
+
+namespace {
+HardwareIpVersion withUnsupportedRevision(uint32_t ipVersionValue) {
+    HardwareIpVersion ipVersion{ipVersionValue};
+    ipVersion.revision = 0x3f;
+    return ipVersion;
+}
+} // namespace
+
+TEST(CapsXeHpgTest, givenDg2G10IpVersionWhenResolvingCapsThenReleaseCapsAreReturned) {
+    EXPECT_EQ(materializeCaps<CapsDg2G10>(), resolveCapsDg2G10(AOT::DG2_G10_A0));
+    EXPECT_EQ(materializeCaps<CapsDg2G10>(), resolveCapsDg2G10(AOT::DG2_G10_A1));
+    EXPECT_EQ(materializeCaps<CapsDg2G10>(), resolveCapsDg2G10(AOT::DG2_G10_B0));
+    EXPECT_EQ(materializeCaps<CapsDg2G10>(), resolveCapsDg2G10(AOT::DG2_G10_C0));
+    EXPECT_EQ(std::nullopt, resolveCapsDg2G10(withUnsupportedRevision(AOT::DG2_G10_A0)));
+}
+
+TEST(CapsXeHpgTest, givenDg2G11IpVersionWhenResolvingCapsThenReleaseCapsAreReturned) {
+    EXPECT_EQ(materializeCaps<CapsDg2G11>(), resolveCapsDg2G11(AOT::DG2_G11_A0));
+    EXPECT_EQ(materializeCaps<CapsDg2G11>(), resolveCapsDg2G11(AOT::DG2_G11_B0));
+    EXPECT_EQ(materializeCaps<CapsDg2G11>(), resolveCapsDg2G11(AOT::DG2_G11_B1));
+    EXPECT_EQ(std::nullopt, resolveCapsDg2G11(withUnsupportedRevision(AOT::DG2_G11_A0)));
+}
+
+TEST(CapsXeHpgTest, givenDg2G12IpVersionWhenResolvingCapsThenReleaseCapsAreReturned) {
+    EXPECT_EQ(materializeCaps<CapsDg2G12>(), resolveCapsDg2G12(AOT::DG2_G12_A0));
+    EXPECT_EQ(std::nullopt, resolveCapsDg2G12(withUnsupportedRevision(AOT::DG2_G12_A0)));
+}
+
+TEST(CapsXeHpgTest, givenDg2G10ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
+    constexpr auto capsDg2G10 = materializeCaps<CapsDg2G10>();
+    EXPECT_EQ(0u, capsDg2G10.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsDg2G10.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(0u, capsDg2G10.stackSizePerRay);
+    EXPECT_EQ(1u, capsDg2G10.rtasFormat);
+    EXPECT_FALSE(capsDg2G10.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsDg2G10.auxSurfaceModeOverrideRequired);
+    EXPECT_FALSE(capsDg2G10.availableSemaphore64);
+    EXPECT_TRUE(capsDg2G10.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsDg2G10.bindlessAddressingDisabled);
+    EXPECT_FALSE(capsDg2G10.blitImageAllowedForDepthFormat);
+    EXPECT_FALSE(capsDg2G10.deviceConfigStringTileCountIncluded);
+    EXPECT_FALSE(capsDg2G10.deviceConfigStringXeCuSegmentIncluded);
+    EXPECT_FALSE(capsDg2G10.directSubmissionLightSupported);
+    EXPECT_TRUE(capsDg2G10.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsDg2G10.dummyBlitWaRequired);
+    EXPECT_FALSE(capsDg2G10.forceEmuInt32DivRemSPRequired);
+    EXPECT_FALSE(capsDg2G10.ftrXe2Compression);
+    EXPECT_TRUE(capsDg2G10.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsDg2G10.latePreemptionStartSupported);
+    EXPECT_TRUE(capsDg2G10.localOnlyAllowed);
+    EXPECT_TRUE(capsDg2G10.matrixMultiplyAccumulateSupported);
+    EXPECT_TRUE(capsDg2G10.numRtStacksPerDssFixedValue);
+    EXPECT_TRUE(capsDg2G10.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsDg2G10.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_TRUE(capsDg2G10.postImageWriteFlushRequired);
+    EXPECT_FALSE(capsDg2G10.preImageReadFlushRequired);
+    EXPECT_FALSE(capsDg2G10.programAdditionalStallPriorToBarrierWithTimestamp);
+    EXPECT_TRUE(capsDg2G10.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsDg2G10.queryPeerAccess);
+    EXPECT_TRUE(capsDg2G10.rayTracingSupported);
+    EXPECT_TRUE(capsDg2G10.rcsExposureDisabled);
+    EXPECT_FALSE(capsDg2G10.reducedSurfaceStateSupported);
+    EXPECT_FALSE(capsDg2G10.singleDispatchRequiredForMultiCCS);
+    EXPECT_TRUE(capsDg2G10.splitMatrixMultiplyAccumulateSupported);
+}
+
+TEST(CapsXeHpgTest, givenDg2G11ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
+    constexpr auto capsDg2G11 = materializeCaps<CapsDg2G11>();
+    EXPECT_EQ(0u, capsDg2G11.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsDg2G11.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(0u, capsDg2G11.stackSizePerRay);
+    EXPECT_EQ(1u, capsDg2G11.rtasFormat);
+    EXPECT_FALSE(capsDg2G11.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsDg2G11.auxSurfaceModeOverrideRequired);
+    EXPECT_FALSE(capsDg2G11.availableSemaphore64);
+    EXPECT_TRUE(capsDg2G11.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsDg2G11.bindlessAddressingDisabled);
+    EXPECT_FALSE(capsDg2G11.blitImageAllowedForDepthFormat);
+    EXPECT_FALSE(capsDg2G11.deviceConfigStringTileCountIncluded);
+    EXPECT_FALSE(capsDg2G11.deviceConfigStringXeCuSegmentIncluded);
+    EXPECT_FALSE(capsDg2G11.directSubmissionLightSupported);
+    EXPECT_TRUE(capsDg2G11.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsDg2G11.dummyBlitWaRequired);
+    EXPECT_FALSE(capsDg2G11.forceEmuInt32DivRemSPRequired);
+    EXPECT_FALSE(capsDg2G11.ftrXe2Compression);
+    EXPECT_TRUE(capsDg2G11.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsDg2G11.latePreemptionStartSupported);
+    EXPECT_TRUE(capsDg2G11.localOnlyAllowed);
+    EXPECT_TRUE(capsDg2G11.matrixMultiplyAccumulateSupported);
+    EXPECT_TRUE(capsDg2G11.numRtStacksPerDssFixedValue);
+    EXPECT_TRUE(capsDg2G11.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsDg2G11.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_TRUE(capsDg2G11.postImageWriteFlushRequired);
+    EXPECT_FALSE(capsDg2G11.preImageReadFlushRequired);
+    EXPECT_FALSE(capsDg2G11.programAdditionalStallPriorToBarrierWithTimestamp);
+    EXPECT_TRUE(capsDg2G11.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsDg2G11.queryPeerAccess);
+    EXPECT_TRUE(capsDg2G11.rayTracingSupported);
+    EXPECT_TRUE(capsDg2G11.rcsExposureDisabled);
+    EXPECT_FALSE(capsDg2G11.reducedSurfaceStateSupported);
+    EXPECT_FALSE(capsDg2G11.singleDispatchRequiredForMultiCCS);
+    EXPECT_TRUE(capsDg2G11.splitMatrixMultiplyAccumulateSupported);
+}
+
+TEST(CapsXeHpgTest, givenDg2G12ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
+    constexpr auto capsDg2G12 = materializeCaps<CapsDg2G12>();
+    EXPECT_EQ(0u, capsDg2G12.kernelBFloat16AtomicCapabilities);
+    EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsDg2G12.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(0u, capsDg2G12.stackSizePerRay);
+    EXPECT_EQ(1u, capsDg2G12.rtasFormat);
+    EXPECT_FALSE(capsDg2G12.adjustWalkOrderAvailable);
+    EXPECT_FALSE(capsDg2G12.auxSurfaceModeOverrideRequired);
+    EXPECT_FALSE(capsDg2G12.availableSemaphore64);
+    EXPECT_TRUE(capsDg2G12.bFloat16ConversionSupported);
+    EXPECT_FALSE(capsDg2G12.bindlessAddressingDisabled);
+    EXPECT_FALSE(capsDg2G12.blitImageAllowedForDepthFormat);
+    EXPECT_FALSE(capsDg2G12.deviceConfigStringTileCountIncluded);
+    EXPECT_FALSE(capsDg2G12.deviceConfigStringXeCuSegmentIncluded);
+    EXPECT_FALSE(capsDg2G12.directSubmissionLightSupported);
+    EXPECT_TRUE(capsDg2G12.dotProductAccumulateSystolicSupported);
+    EXPECT_TRUE(capsDg2G12.dummyBlitWaRequired);
+    EXPECT_FALSE(capsDg2G12.forceEmuInt32DivRemSPRequired);
+    EXPECT_FALSE(capsDg2G12.ftrXe2Compression);
+    EXPECT_TRUE(capsDg2G12.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsDg2G12.latePreemptionStartSupported);
+    EXPECT_TRUE(capsDg2G12.localOnlyAllowed);
+    EXPECT_TRUE(capsDg2G12.matrixMultiplyAccumulateSupported);
+    EXPECT_TRUE(capsDg2G12.numRtStacksPerDssFixedValue);
+    EXPECT_TRUE(capsDg2G12.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
+    EXPECT_FALSE(capsDg2G12.pipeControlPriorToPipelineSelectWaRequired);
+    EXPECT_TRUE(capsDg2G12.postImageWriteFlushRequired);
+    EXPECT_FALSE(capsDg2G12.preImageReadFlushRequired);
+    EXPECT_FALSE(capsDg2G12.programAdditionalStallPriorToBarrierWithTimestamp);
+    EXPECT_TRUE(capsDg2G12.programAllStateComputeCommandFieldsWARequired);
+    EXPECT_FALSE(capsDg2G12.queryPeerAccess);
+    EXPECT_TRUE(capsDg2G12.rayTracingSupported);
+    EXPECT_TRUE(capsDg2G12.rcsExposureDisabled);
+    EXPECT_FALSE(capsDg2G12.reducedSurfaceStateSupported);
+    EXPECT_FALSE(capsDg2G12.singleDispatchRequiredForMultiCCS);
+    EXPECT_TRUE(capsDg2G12.splitMatrixMultiplyAccumulateSupported);
+}

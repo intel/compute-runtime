@@ -31,7 +31,6 @@ UltDeviceFactory::UltDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevice
 
     debugManager.flags.CreateMultipleRootDevices.set(rootDevicesCount);
     debugManager.flags.CreateMultipleSubDevices.set(subDevicesCount);
-    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, defaultHwInfo->platform.eRenderCoreFamily);
     createRootDeviceFuncBackup = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
         for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
             UnitTestSetter::setRcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
@@ -79,6 +78,7 @@ bool UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
              executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE)) {
             executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         }
+        quitOclInitIfLeoEnabled(*executionEnvironment.rootDeviceEnvironments[i]);
         executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
         if (debugManager.flags.ExposeSingleDevice.get() != -1) {
             executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(!!debugManager.flags.ExposeSingleDevice.get());

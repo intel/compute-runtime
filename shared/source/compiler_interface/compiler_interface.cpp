@@ -13,6 +13,7 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
+#include "shared/source/compiler_interface/spirv_capabilities_parser.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -418,6 +419,14 @@ CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> CompilerInterface::getIgcFe
     return getIgcDeviceCtx(device)->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
 }
 
+std::string CompilerInterface::getSpirvExtensionsYAML(const NEO::Device &device) {
+    auto *igc = getIgc(&device);
+    if (igc == nullptr) {
+        return "";
+    }
+    return SpirvCapabilitiesParser::getSpirvExtensionsYAMLFromDeviceCtx(getIgcDeviceCtx(device), igc->entryPoint.get());
+}
+
 bool CompilerInterface::loadFcl() {
     return NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fcl.library, fcl.entryPoint);
 }
@@ -433,7 +442,6 @@ bool CompilerInterface::loadIgcBasedCompiler(CompilerLibraryEntry &entry, const 
         auto igcDeviceCtx = entry.entryPoint->CreateInterface<NEO::IgcOclDeviceCtxTag>();
         if (igcDeviceCtx) {
             entry.revision = igcDeviceCtx->GetIGCRevision();
-
             auto igcRegKeysBuffer = entry.entryPoint->CreateBuiltin<CIF::Builtins::BufferLatest>();
             if (igcRegKeysBuffer) {
                 igcDeviceCtx->GetIGCRegKeys(igcRegKeysBuffer.get());
@@ -517,7 +525,7 @@ NEO::IgcOclDeviceCtxTag *CompilerInterface::getIgcDeviceCtx(const Device &device
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
 
-    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo, &device.getCompilerProductHelper())) {
+    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo)) {
         DEBUG_BREAK_IF(true); // could not initialize device context
         return nullptr;
     }
@@ -552,7 +560,7 @@ NEO::IgcOclDeviceCtxTag *CompilerInterface::getFinalizerDeviceCtx(const Device &
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
 
-    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo, &device.getCompilerProductHelper())) {
+    if (!initializeIgcDeviceContext(newDeviceCtx.get(), *hwInfo)) {
         DEBUG_BREAK_IF(true); // could not initialize device context
         return nullptr;
     }
@@ -649,7 +657,7 @@ const CompilerInterface::CompilerLibraryEntry *CompilerInterface::getFinalizer(c
         return nullptr;
     }
 
-    const char *finalizerLibName = device->getCompilerProductHelper().getFinalizerLibraryName();
+    const char *finalizerLibName = nullptr;
     if (debugManager.flags.FinalizerLibraryName.get() != "unk") {
         finalizerLibName = debugManager.flags.FinalizerLibraryName.getRef().c_str();
     }

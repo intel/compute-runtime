@@ -20,17 +20,15 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
-#include <array>
 #include <atomic>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <span>
 #include <unordered_map>
 
 static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
-struct _ze_device_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_DEVICE> {};
+struct _ze_device_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_device_handle_t>);
 
 namespace aub_stream {
@@ -122,6 +120,8 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t getPciProperties(ze_pci_ext_properties_t *pPciProperties);
     MOCKABLE_VIRTUAL ze_result_t getRootDevice(ze_device_handle_t *phRootDevice);
     MOCKABLE_VIRTUAL ze_result_t getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties);
+    uint32_t getEnabledSubDeviceCount() const;
+    uint64_t getDeviceMemoryPhysicalSizeInBytes() const;
     MOCKABLE_VIRTUAL ze_result_t getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties);
     MOCKABLE_VIRTUAL ze_result_t getProperties(ze_device_properties_t *pDeviceProperties);
     MOCKABLE_VIRTUAL ze_result_t getVectorWidthPropertiesExt(uint32_t *pCount, ze_device_vector_width_properties_ext_t *pVectorWidthProperties);
@@ -206,7 +206,6 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     NEO::Device *getActiveDevice() const;
     MOCKABLE_VIRTUAL ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex);
     MOCKABLE_VIRTUAL uint32_t getEventMaxPacketCount() const;
-    MOCKABLE_VIRTUAL uint32_t getEventMaxKernelCount() const;
     MOCKABLE_VIRTUAL void bcsSplitReleaseResources();
     NEO::TagAllocatorBase *getDeviceInOrderCounterAllocator();
     NEO::TagAllocatorBase *getHostInOrderCounterAllocator();
@@ -263,6 +262,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     std::mutex printfKernelMutex;
 
     NEO::SpinLock peerImageAllocationsMutex;
+    NEO::SpinLock memAdviseAllocationsMutex;
     std::map<NEO::SvmAllocationData *, NEO::MemAdviseFlags> memAdviseSharedAllocations;
     std::map<NEO::SvmAllocationData *, ze_memory_atomic_attr_exp_flags_t> atomicAccessAllocations;
     std::vector<Device *> subDevices;

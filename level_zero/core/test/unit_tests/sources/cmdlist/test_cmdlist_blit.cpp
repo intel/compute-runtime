@@ -48,11 +48,28 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
 
     AlignedAllocationData resolveAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, const L0::MemAllocInfo *bufferAllocInfo, const L0::ResolveAlignedAllocationFlags &flags) override {
         auto allocationData = BaseClass::resolveAlignedAllocation(device, buffer, bufferSize, bufferAllocInfo, flags);
-        if (allocationData.alloc) {
+        if ((allocationData.alloc) || (flags.sharedSystemEnabled)) {
+            resolveAlignedAllocationCalledTimes++;
+            if ((allocationData.alloc == nullptr) && (flags.sharedSystemEnabled)) {
+                sharedSystemUsmSeen++;
+                if (allocationData.offset) {
+                    sharedSystemUsmNonZeroOffset++;
+                }
+            }
             return allocationData;
         }
         return {nullptr, 0, 0, nullptr, true};
     }
+
+    uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData) override {
+        uint32_t offset = BaseClass::getRegionOffsetForAppendMemoryCopyBlitRegion(allocationData);
+        getRegionOffsetForAppendMemoryCopyBlitRegionCalledTimes++;
+        if ((allocationData->alloc == nullptr) && (offset)) {
+            sharedSystemUsmNonZeroBlitRegionOffset++;
+        }
+        return offset;
+    }
+
     ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
                                      NEO::GraphicsAllocation *dstPtrAlloc,
                                      uint64_t dstOffset, uintptr_t srcPtr,
@@ -63,6 +80,11 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
         return ZE_RESULT_SUCCESS;
     }
     uint32_t appendMemoryCopyBlitCalledTimes = 0;
+    uint32_t resolveAlignedAllocationCalledTimes = 0;
+    uint32_t sharedSystemUsmSeen = 0;
+    uint32_t sharedSystemUsmNonZeroOffset = 0;
+    uint32_t getRegionOffsetForAppendMemoryCopyBlitRegionCalledTimes = 0;
+    uint32_t sharedSystemUsmNonZeroBlitRegionOffset = 0;
 };
 class MockDriverHandle : public L0::DriverHandle {
   public:
@@ -315,6 +337,56 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemor
     EXPECT_EQ(genCmdList.end(), itor);
 }
 
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndSharedSystemUsmInputWithEvenAlignmentWhenMemoryCopyRegionCalledThenVerifyZeroOffset) {
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
+
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1000);
+    void *dstPtr = reinterpret_cast<void *>(0x2000);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    CmdListMemoryCopyParams copyParams = {};
+    commandList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(2u, commandList.resolveAlignedAllocationCalledTimes);
+    EXPECT_EQ(2u, commandList.sharedSystemUsmSeen);
+    EXPECT_EQ(0u, commandList.sharedSystemUsmNonZeroOffset);
+    EXPECT_EQ(2u, commandList.getRegionOffsetForAppendMemoryCopyBlitRegionCalledTimes);
+    EXPECT_EQ(0u, commandList.sharedSystemUsmNonZeroBlitRegionOffset);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndSharedSystemUsmInputWithOddAlignmentWhenMemoryCopyRegionCalledThenVerifyNonzeroOffset) {
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
+
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1237);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    CmdListMemoryCopyParams copyParams = {};
+    commandList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(2u, commandList.resolveAlignedAllocationCalledTimes);
+    EXPECT_EQ(2u, commandList.sharedSystemUsmSeen);
+    EXPECT_EQ(2u, commandList.sharedSystemUsmNonZeroOffset);
+    EXPECT_EQ(2u, commandList.getRegionOffsetForAppendMemoryCopyBlitRegionCalledTimes);
+    EXPECT_EQ(2u, commandList.sharedSystemUsmNonZeroBlitRegionOffset);
+}
+
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlitCalledWithZeroDepthThenCopyRegionPathSelected) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
@@ -339,7 +411,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlit
     Vec3<size_t> dstSize = {16, 16, 0};
 
     auto result = commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
-                                                          copySize, 0, 0, 0, 0, srcSize, dstSize, nullptr, 0, nullptr, copyParams, false);
+                                                          copySize, 0, 0, 0, 0, srcSize, dstSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &commandContainer = commandList->getCmdContainer();
@@ -379,7 +451,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlit
     Vec3<size_t> dstSize = {16, 16, 0};
 
     auto result = commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
-                                                          copySize, 16, 0, 16, 0, srcSize, dstSize, nullptr, 0, nullptr, copyParams, false);
+                                                          copySize, 16, 0, 16, 0, srcSize, dstSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &commandContainer = commandList->getCmdContainer();
@@ -451,7 +523,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryC
 
     AlignedAllocationData srcAllocationData = {nullptr, mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
     AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
-    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event.get(), 0, nullptr, copyParams, false);
+    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event.get(), 0, nullptr, copyParams);
     GenCmdList cmdList;
 
     auto baseAddr = event->getGpuAddress(device);
@@ -603,7 +675,8 @@ HWTEST_F(AppendMemoryCopyFromContext, givenCommandListThenUpOnPerformingAppendMe
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    auto result = commandList->appendMemoryCopyFromContext(dstPtr, nullptr, srcPtr, 8, nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    auto result = commandList->appendMemoryCopyFromContext(dstPtr, nullptr, srcPtr, 8, nullptr, 0, nullptr, memoryCopyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -935,7 +1008,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenEventAllocationWhenAppendCalledThenMakeR
 
     cmdList->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
 
-    auto eventAlloc = bcsSplit->events.getEventResources().subcopy[0]->getInOrderExecEventHelper().getDeviceCounterAllocation();
+    auto eventAlloc = bcsSplit->events.getEventResources().packages[0]->subcopyEvents[0]->getInOrderExecEventHelper().getDeviceCounterAllocation();
 
     for (auto &subCmdList : bcsSplit->cmdLists) {
         auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(subCmdList);
@@ -965,8 +1038,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedEventWithMatchingCounterValueW
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, event->toHandle(), 0, nullptr, copyParams);
 
-    EXPECT_EQ(cmdListHw->isUsingAdditionalBlitProperties(), bcsSplit->events.getEventResources().subcopy.empty());
-    EXPECT_EQ(cmdListHw->isUsingAdditionalBlitProperties(), bcsSplit->events.getEventResources().marker.empty());
+    EXPECT_EQ(cmdListHw->isUsingAdditionalBlitProperties(), bcsSplit->events.getEventResources().packages.empty());
 
     GenCmdList genCmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(mainCmdStream->getCpuBase(), mainOffset), (mainCmdStream->getUsed() - mainOffset)));
@@ -1004,8 +1076,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedEventWithMatchingCounterValueW
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, event2->toHandle(), 0, nullptr, copyParams);
 
-    EXPECT_FALSE(bcsSplit->events.getEventResources().subcopy.empty());
-    EXPECT_FALSE(bcsSplit->events.getEventResources().marker.empty());
+    EXPECT_FALSE(bcsSplit->events.getEventResources().packages.empty());
 
     context->freeMem(ptr);
     context->freeMem(reinterpret_cast<void *>(devAddress));
@@ -1081,62 +1152,63 @@ HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhen
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, IsAtLeastXeHpcCore) {
-    EXPECT_EQ(0u, bcsSplit->events.getEventResources().subcopy.size());
+    auto &eventResources = bcsSplit->events.getEventResources();
+    EXPECT_EQ(0u, eventResources.packages.size());
     EXPECT_TRUE(bcsSplit->events.isAggregatedEventMode());
 
     const auto deviceIncValue = static_cast<uint64_t>(device->getAggregatedCopyOffloadIncrementValue());
     const auto subCopySplitValue = deviceIncValue / static_cast<uint64_t>(bcsSplit->cmdLists.size());
 
     for (size_t i = 0; i < 8; i++) {
-        auto index = bcsSplit->events.obtainForImmediateSplit(context, 123);
-        ASSERT_TRUE(index.has_value());
-        EXPECT_EQ(i, *index);
+        auto package = bcsSplit->events.obtainForImmediateSplit(context, 123);
+        ASSERT_NE(nullptr, package);
+        EXPECT_EQ(package, eventResources.packages[i].get());
 
-        EXPECT_EQ(0u, *bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
-        EXPECT_FALSE(bcsSplit->events.getEventResources().subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-        EXPECT_TRUE(bcsSplit->events.getEventResources().subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
-        EXPECT_EQ(subCopySplitValue, bcsSplit->events.getEventResources().subcopy[i]->getInOrderIncrementValue(1));
-        EXPECT_EQ(deviceIncValue, bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecBaseSignalValue());
+        auto subcopyEvent = eventResources.packages[i]->subcopyEvents[0];
+        EXPECT_EQ(0u, *subcopyEvent->getInOrderExecEventHelper().getBaseHostCpuAddress());
+        EXPECT_FALSE(subcopyEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+        EXPECT_TRUE(subcopyEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
+        EXPECT_EQ(subCopySplitValue, subcopyEvent->getInOrderIncrementValue(1));
+        EXPECT_EQ(deviceIncValue, subcopyEvent->getInOrderExecBaseSignalValue());
 
-        EXPECT_TRUE(bcsSplit->events.getEventResources().marker[i].event->isCounterBased());
-        EXPECT_TRUE(bcsSplit->events.getEventResources().marker[i].event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-        EXPECT_FALSE(bcsSplit->events.getEventResources().marker[i].event->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
+        auto markerEvent = eventResources.packages[i]->marker;
+        EXPECT_TRUE(markerEvent->isCounterBased());
+        EXPECT_TRUE(markerEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+        EXPECT_FALSE(markerEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
 
         // already reserved for this obtainForImmediateSplit() call
-        EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.getEventResources().marker[i].event->queryStatus(0));
-        EXPECT_EQ(8u, bcsSplit->events.getEventResources().subcopy.size());
-        EXPECT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
-        EXPECT_EQ(8u, bcsSplit->events.getEventResources().marker.size());
-        EXPECT_EQ(0u, bcsSplit->events.getEventResources().barrier.size());
+        EXPECT_EQ(ZE_RESULT_NOT_READY, markerEvent->queryStatus(0));
+        EXPECT_EQ(nullptr, eventResources.packages[i]->barrier);
+        EXPECT_EQ(8u, eventResources.packages.size());
+        EXPECT_EQ(1u, eventResources.allocsForAggregatedEvents.size());
     }
 
-    auto index = bcsSplit->events.obtainForImmediateSplit(context, 123);
-    ASSERT_TRUE(index.has_value());
-    EXPECT_EQ(8u, *index);
-    EXPECT_EQ(16u, bcsSplit->events.getEventResources().subcopy.size());
-    EXPECT_EQ(16u, bcsSplit->events.getEventResources().marker.size());
-    EXPECT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
+    auto package = bcsSplit->events.obtainForImmediateSplit(context, 123);
+    ASSERT_NE(nullptr, package);
+    EXPECT_EQ(package, eventResources.packages[8].get());
+    EXPECT_EQ(16u, eventResources.packages.size());
+    EXPECT_EQ(1u, eventResources.allocsForAggregatedEvents.size());
 
     for (size_t i = 0; i < 16; i++) {
-        EXPECT_EQ(0u, *bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
+        EXPECT_EQ(0u, *eventResources.packages[i]->subcopyEvents[0]->getInOrderExecEventHelper().getBaseHostCpuAddress());
 
         if (i <= 8) {
-            EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.getEventResources().marker[i].event->queryStatus(0));
+            EXPECT_EQ(ZE_RESULT_NOT_READY, eventResources.packages[i]->marker->queryStatus(0));
         } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, bcsSplit->events.getEventResources().marker[i].event->queryStatus(0));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, eventResources.packages[i]->marker->queryStatus(0));
         }
     }
 
-    bcsSplit->events.resetAggregatedEventState(1, true, false);
+    bcsSplit->events.resetAggregatedEventState(*eventResources.packages[1], true, false);
 
-    index = bcsSplit->events.obtainForImmediateSplit(context, 123);
-    ASSERT_TRUE(index.has_value());
-    EXPECT_EQ(1u, *index);
-    EXPECT_EQ(16u, bcsSplit->events.getEventResources().subcopy.size());
-    EXPECT_EQ(16u, bcsSplit->events.getEventResources().marker.size());
-    EXPECT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
+    package = bcsSplit->events.obtainForImmediateSplit(context, 123);
+    ASSERT_NE(nullptr, package);
+    EXPECT_EQ(package, eventResources.packages[1].get());
+    EXPECT_EQ(16u, eventResources.packages.size());
+    EXPECT_EQ(1u, eventResources.allocsForAggregatedEvents.size());
 
-    for (auto &event : bcsSplit->events.getEventResources().subcopy) {
+    for (auto &splitPackage : eventResources.packages) {
+        auto event = splitPackage->subcopyEvents[0];
         EXPECT_TRUE(event->isCounterBased());
         EXPECT_EQ(subCopySplitValue, event->getInOrderIncrementValue(1));
         EXPECT_EQ(deviceIncValue, event->getInOrderExecBaseSignalValue());
@@ -1144,43 +1216,48 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenMultipleEventsWhenObtainIsCalledTheAssignNewDeviceAlloc, IsAtLeastXeHpcCore) {
-    auto index = bcsSplit->events.obtainForImmediateSplit(context, 123);
-    EXPECT_EQ(8u, bcsSplit->events.getEventResources().subcopy.size());
-    ASSERT_EQ(1u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
-    auto alloc = bcsSplit->events.getEventResources().allocsForAggregatedEvents[0];
+    auto &eventResources = bcsSplit->events.getEventResources();
 
-    for (size_t i = 0; i < bcsSplit->events.getEventResources().subcopy.size(); i++) {
-        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
-        EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress(), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostGpuAddress());
+    auto package = bcsSplit->events.obtainForImmediateSplit(context, 123);
+    EXPECT_EQ(8u, eventResources.packages.size());
+    ASSERT_EQ(1u, eventResources.allocsForAggregatedEvents.size());
+    auto alloc = eventResources.allocsForAggregatedEvents[0];
+
+    for (size_t i = 0; i < eventResources.packages.size(); i++) {
+        auto subcopyEvent = eventResources.packages[i]->subcopyEvents[0];
+        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), subcopyEvent->getInOrderExecEventHelper().getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), subcopyEvent->getInOrderExecEventHelper().getBaseHostCpuAddress());
+        EXPECT_EQ(subcopyEvent->getInOrderExecEventHelper().getBaseDeviceAddress(), subcopyEvent->getInOrderExecEventHelper().getBaseHostGpuAddress());
     }
 
-    auto &eventResource = const_cast<BcsSplitParams::EventsResources &>(bcsSplit->events.getEventResources());
+    auto &mutableEventResources = const_cast<BcsSplitParams::EventsResources &>(eventResources);
 
-    eventResource.currentAggregatedAllocOffset = MemoryConstants::pageSize64k - (MemoryConstants::cacheLineSize - 1);
+    mutableEventResources.currentAggregatedAllocOffset = MemoryConstants::pageSize64k - (MemoryConstants::cacheLineSize - 1);
 
-    while (bcsSplit->events.getEventResources().subcopy.size() == 8) {
-        index = bcsSplit->events.obtainForImmediateSplit(context, 123);
+    while (eventResources.packages.size() == 8) {
+        package = bcsSplit->events.obtainForImmediateSplit(context, 123);
     }
 
-    EXPECT_EQ(16u, bcsSplit->events.getEventResources().subcopy.size());
-    EXPECT_EQ(8u, *index);
+    EXPECT_EQ(16u, eventResources.packages.size());
+    EXPECT_EQ(package, eventResources.packages[8].get());
 
-    ASSERT_EQ(2u, bcsSplit->events.getEventResources().allocsForAggregatedEvents.size());
-    auto alloc2 = bcsSplit->events.getEventResources().allocsForAggregatedEvents[1];
+    ASSERT_EQ(2u, eventResources.allocsForAggregatedEvents.size());
+    auto alloc2 = eventResources.allocsForAggregatedEvents[1];
 
     for (size_t i = 0; i < 8; i++) {
-        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
-        EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress(), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostGpuAddress());
+        auto subcopyEvent = eventResources.packages[i]->subcopyEvents[0];
+        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), subcopyEvent->getInOrderExecEventHelper().getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), subcopyEvent->getInOrderExecEventHelper().getBaseHostCpuAddress());
+        EXPECT_EQ(subcopyEvent->getInOrderExecEventHelper().getBaseDeviceAddress(), subcopyEvent->getInOrderExecEventHelper().getBaseHostGpuAddress());
     }
 
     for (size_t i = 8; i < 16; i++) {
         auto offset = MemoryConstants::cacheLineSize * (i - 8);
 
-        EXPECT_EQ(castToUint64(ptrOffset(alloc2, offset)), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress());
-        EXPECT_EQ(ptrOffset(alloc2, offset), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostCpuAddress());
-        EXPECT_EQ(bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseDeviceAddress(), bcsSplit->events.getEventResources().subcopy[i]->getInOrderExecEventHelper().getBaseHostGpuAddress());
+        auto subcopyEvent = eventResources.packages[i]->subcopyEvents[0];
+        EXPECT_EQ(castToUint64(ptrOffset(alloc2, offset)), subcopyEvent->getInOrderExecEventHelper().getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc2, offset), subcopyEvent->getInOrderExecEventHelper().getBaseHostCpuAddress());
+        EXPECT_EQ(subcopyEvent->getInOrderExecEventHelper().getBaseDeviceAddress(), subcopyEvent->getInOrderExecEventHelper().getBaseHostGpuAddress());
     }
 }
 
@@ -1191,14 +1268,14 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[0].event->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[0]->marker->getInOrderExecBaseSignalValue());
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[1].event->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[1]->marker->getInOrderExecBaseSignalValue());
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[0].event->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[0]->marker->getInOrderExecBaseSignalValue());
 
     context->freeMem(ptr);
 
@@ -1281,10 +1358,10 @@ HWTEST2_F(MultiRootAggregatedBcsSplitTests, givenRemoteAllocWhenCopyRequestedThe
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
 
     cmdListHw->appendMemoryCopy(remoteAlloc, ptr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[0].event->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[0]->marker->getInOrderExecBaseSignalValue());
 
     cmdListHw->appendMemoryCopy(ptr, remoteAlloc, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().marker[1].event->getInOrderExecBaseSignalValue());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[1]->marker->getInOrderExecBaseSignalValue());
 
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
 
@@ -1438,7 +1515,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenZeroWidthWhenAppendMemoryCopyRegionThenNoC
     AlignedAllocationData dstAllocationData = {nullptr, mockAllocationDst.getGpuAddress(), 0, &mockAllocationDst, false};
 
     commandList.appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
-                                           {0, 1, 1}, 0, 0, 0, 0, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams, false);
+                                           {0, 1, 1}, 0, 0, 0, 0, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(

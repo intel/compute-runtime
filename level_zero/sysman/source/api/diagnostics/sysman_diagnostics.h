@@ -24,6 +24,7 @@ class Diagnostics : _zes_diag_handle_t {
     virtual ze_result_t diagnosticsGetProperties(zes_diag_properties_t *pProperties) = 0;
     virtual ze_result_t diagnosticsGetTests(uint32_t *pCount, zes_diag_test_t *pTests) = 0;
     virtual ze_result_t diagnosticsRunTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) = 0;
+    virtual void reInit() = 0;
     inline zes_diag_handle_t toHandle() { return this; }
 
     static Diagnostics *fromHandle(zes_diag_handle_t handle) {
@@ -37,6 +38,7 @@ struct DiagnosticsHandleContext {
     MOCKABLE_VIRTUAL ~DiagnosticsHandleContext();
 
     MOCKABLE_VIRTUAL void init();
+    void reInit();
 
     ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics);
     std::vector<std::string> supportedDiagTests = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,11 +41,22 @@ class ExternalSemaphore {
         Signaled
     };
 
-    static std::unique_ptr<ExternalSemaphore> create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name);
+    enum class ImportResult {
+        success,
+        unsupported,
+        invalidResource
+    };
+
+    static std::unique_ptr<ExternalSemaphore> create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name, ImportResult &importResult);
+
+    static std::unique_ptr<ExternalSemaphore> create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name) {
+        ImportResult importResult = ImportResult::success;
+        return create(osInterface, type, handle, fd, name, importResult);
+    }
 
     virtual ~ExternalSemaphore() = default;
 
-    virtual bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) = 0;
+    virtual ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) = 0;
 
     virtual bool enqueueWait(uint64_t *fenceValue) = 0;
     virtual bool enqueueSignal(uint64_t *fenceValue) = 0;
@@ -53,6 +64,9 @@ class ExternalSemaphore {
     OSInterface *osInterface = nullptr;
 
     SemaphoreState getState() { return state; }
+
+    virtual uint64_t acquireWaitFenceValue(uint64_t fenceValue) { return fenceValue; }
+    virtual uint64_t acquireSignalFenceValue(uint64_t fenceValue) { return fenceValue; }
 
   protected:
     Type type = Type::Invalid;

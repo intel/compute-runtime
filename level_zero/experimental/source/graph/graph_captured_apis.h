@@ -72,15 +72,15 @@ struct Event;
     RR_CAPTURED_API(zeCommandListAppendImageCopyToMemoryExt)          \
     RR_CAPTURED_API(zeCommandListAppendImageCopyFromMemoryExt)        \
     RR_CAPTURED_API(zeCommandListAppendMemoryCopyWithParameters)      \
-    RR_CAPTURED_API(zexCommandListAppendMemoryCopyWithParameters)     \
     RR_CAPTURED_API(zeCommandListAppendMemoryFillWithParameters)      \
-    RR_CAPTURED_API(zexCommandListAppendMemoryFillWithParameters)     \
     RR_CAPTURED_API(zeCommandListAppendHostFunction)                  \
     RR_CAPTURED_API(zetCommandListAppendMetricStreamerMarker)         \
     RR_CAPTURED_API(zetCommandListAppendMetricQueryBegin)             \
     RR_CAPTURED_API(zetCommandListAppendMetricQueryEnd)               \
     RR_CAPTURED_API(zetCommandListAppendMetricMemoryBarrier)          \
     RR_CAPTURED_API(zetCommandListAppendMarkerExp)                    \
+    RR_CAPTURED_API(zeCommandListAppendSignalEventWithParameters)     \
+    RR_CAPTURED_API(zeCommandListAppendWaitOnEventsWithParameters)    \
     RR_CAPTURED_APIS_EXT()
 
 enum class CaptureApi {
@@ -118,6 +118,8 @@ constexpr bool isAllowedPostJoin(CaptureApi api) {
     case CaptureApi::zetCommandListAppendMetricQueryEnd:
     case CaptureApi::zetCommandListAppendMetricMemoryBarrier:
     case CaptureApi::zetCommandListAppendMarkerExp:
+    case CaptureApi::zeCommandListAppendSignalEventWithParameters:
+    case CaptureApi::zeCommandListAppendWaitOnEventsWithParameters:
         return true;
     default:
         return false;
@@ -141,25 +143,32 @@ struct ExternalCbEventInfo {
 
 using PatchPreambleCounter = uint64_t;
 using PatchPreambleHostAddress = uint64_t *;
-using PatchPreambleDeviceAddress = uint64_t;
-using PatchPreambleGraphicsAllocation = NEO::GraphicsAllocation *;
+using PatchPreambleHostGpuAddress = uint64_t;
+using PatchPreambleHostGraphicsAllocation = NEO::GraphicsAllocation *;
+using PatchPreambleDeviceGpuAddress = uint64_t;
+using PatchPreambleDeviceGraphicsAllocation = NEO::GraphicsAllocation *;
 
-using PatchPreambleData = std::tuple<PatchPreambleCounter, PatchPreambleHostAddress, PatchPreambleDeviceAddress, PatchPreambleGraphicsAllocation>;
+using PatchPreambleData = std::tuple<PatchPreambleCounter, PatchPreambleHostAddress, PatchPreambleHostGpuAddress, PatchPreambleHostGraphicsAllocation, PatchPreambleDeviceGpuAddress, PatchPreambleDeviceGraphicsAllocation>;
 struct PatchPreambleItem {
-    PatchPreambleItem(uint64_t counter, uint64_t *hostAddress, uint64_t deviceAddress, NEO::GraphicsAllocation *allocation, L0::CommandList *key)
+    PatchPreambleItem(uint64_t counter, uint64_t *hostAddress, uint64_t hostGpuAddress, NEO::GraphicsAllocation *hostAllocation,
+                      uint64_t deviceGpuAddress, NEO::GraphicsAllocation *deviceAllocation, L0::CommandList *key)
         : key(key),
-          data(counter, hostAddress, deviceAddress, allocation) {}
-    PatchPreambleItem() : PatchPreambleItem(0, nullptr, 0, nullptr, nullptr) {}
+          data(counter, hostAddress, hostGpuAddress, hostAllocation, deviceGpuAddress, deviceAllocation) {}
+    PatchPreambleItem() : PatchPreambleItem(0, nullptr, 0, nullptr, 0, nullptr, nullptr) {}
 
     PatchPreambleCounter &counter() { return std::get<0>(data); }
     PatchPreambleHostAddress &hostAddress() { return std::get<1>(data); }
-    PatchPreambleDeviceAddress &deviceAddress() { return std::get<2>(data); }
-    PatchPreambleGraphicsAllocation &allocation() { return std::get<3>(data); }
+    PatchPreambleHostGpuAddress &hostGpuAddress() { return std::get<2>(data); }
+    PatchPreambleHostGraphicsAllocation &hostAllocation() { return std::get<3>(data); }
+    PatchPreambleDeviceGpuAddress &deviceGpuAddress() { return std::get<4>(data); }
+    PatchPreambleDeviceGraphicsAllocation &deviceAllocation() { return std::get<5>(data); }
 
     const PatchPreambleCounter &counter() const { return std::get<0>(data); }
     const PatchPreambleHostAddress &hostAddress() const { return std::get<1>(data); }
-    const PatchPreambleDeviceAddress &deviceAddress() const { return std::get<2>(data); }
-    const PatchPreambleGraphicsAllocation &allocation() const { return std::get<3>(data); }
+    const PatchPreambleHostGpuAddress &hostGpuAddress() const { return std::get<2>(data); }
+    const PatchPreambleHostGraphicsAllocation &hostAllocation() const { return std::get<3>(data); }
+    const PatchPreambleDeviceGpuAddress &deviceGpuAddress() const { return std::get<4>(data); }
+    const PatchPreambleDeviceGraphicsAllocation &deviceAllocation() const { return std::get<5>(data); }
 
     L0::CommandList *key = nullptr;
 
@@ -167,6 +176,12 @@ struct PatchPreambleItem {
     PatchPreambleData data;
 };
 using PatchPreambleDataContainer = std::vector<PatchPreambleItem>;
+
+struct ExternalWaitCbEventsInfo {
+    std::vector<ze_event_handle_t> waitEvents;
+    uint64_t commandId = 0;
+    L0::CommandList *executor = nullptr;
+};
 
 struct ExternalCbEventInfoContainer {
     void addCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList) {
@@ -211,15 +226,87 @@ struct ExternalCbEventInfoContainer {
         auto it = getExecutorInfo(executor);
         return it == executorStorage.end() ? 0u : it->counter();
     }
+    void getPreambleCounterAndDeviceGpuAddress(L0::CommandList *executor, uint64_t &counter, uint64_t &deviceGpuAddress) {
+        auto it = getExecutorInfo(executor);
+        if (it == executorStorage.end()) {
+            counter = 0;
+            deviceGpuAddress = 0;
+        } else {
+            counter = it->counter();
+            deviceGpuAddress = it->deviceGpuAddress();
+        }
+    }
+
+    void addWaitCbEventsInfo(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, uint64_t commandId, L0::CommandList *executor) {
+        ExternalWaitCbEventsInfo &info = waitEventsContainer.emplace_back();
+        info.waitEvents.assign(phWaitEvents, phWaitEvents + numWaitEvents);
+        info.commandId = commandId;
+        info.executor = executor;
+    }
+    const std::vector<ExternalWaitCbEventsInfo> &getCbWaitEventInfos() const {
+        return waitEventsContainer;
+    }
+    bool externalCbWaitEventsPresent() const {
+        return false == waitEventsContainer.empty();
+    }
+    void refreshExternalCbWaitEvents();
 
   protected:
     std::vector<ExternalCbEventInfo> storage;
+    std::vector<ExternalWaitCbEventsInfo> waitEventsContainer;
     PatchPreambleDataContainer executorStorage;
 };
+
+class GraphInternalEvents {
+  public:
+    GraphInternalEvents() = default;
+    GraphInternalEvents(const GraphInternalEvents &) = delete;
+    GraphInternalEvents &operator=(const GraphInternalEvents &) = delete;
+    GraphInternalEvents(GraphInternalEvents &&) = default;
+    GraphInternalEvents &operator=(GraphInternalEvents &&) = default;
+
+    ~GraphInternalEvents() {
+        for (const auto &entry : originalToInternal) {
+            entry.second->destroy();
+        }
+    }
+
+    static bool isInternalEventDependency(const L0::Event *event) {
+        return event->isCounterBasedExplicitlyEnabled() && (false == event->isIpcImported()) &&
+               (0 == (event->getCounterBasedFlags() & ZE_EVENT_COUNTER_BASED_FLAG_IPC)) &&
+               (false == event->isExternalEvent()) && (false == L0::Event::isAggregatedEvent(event));
+    }
+
+    ze_result_t addInternalEvent(L0::Event *originalEvent, ze_context_handle_t hContext);
+
+    L0::Event *getInternal(L0::Event *originalEvent) const {
+        auto it = originalToInternal.find(originalEvent);
+        if (it == originalToInternal.end()) {
+            return nullptr;
+        }
+
+        return it->second;
+    }
+
+    ze_event_handle_t getInternal(ze_event_handle_t hOriginalEvent) const {
+        if (nullptr == hOriginalEvent) {
+            return nullptr;
+        }
+
+        auto *internalEvent = getInternal(L0::Event::fromHandle(hOriginalEvent));
+        return (nullptr == internalEvent) ? hOriginalEvent : internalEvent->toHandle();
+    }
+
+  protected:
+    std::unordered_map<L0::Event *, L0::Event *> originalToInternal;
+};
+
+using SubstitutedWaitEvents = StackVec<ze_event_handle_t, 8>;
 
 struct CbExternalEventInstantiateContext {
     ExternalCbEventInfoContainer *cbEventInfoContainer = nullptr;
     L0::CommandList *executorCommandList = nullptr;
+    const GraphInternalEvents *internalEvents = nullptr;
 };
 
 struct ClosureExternalStorage {
@@ -403,14 +490,14 @@ inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
 }
 
 template <CaptureApi api, typename... TArgs>
-    requires(api == CaptureApi::zeCommandListAppendSignalEvent)
+    requires(api == CaptureApi::zeCommandListAppendSignalEvent || api == CaptureApi::zeCommandListAppendSignalEventWithParameters)
 inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
     typename Closure<api>::ApiArgs structuredApiArgs{args...};
     return structuredApiArgs.hEvent;
 }
 
 template <CaptureApi api, typename... TArgs>
-    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent))
+    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent && api != CaptureApi::zeCommandListAppendSignalEventWithParameters))
 inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
     return nullptr;
 }
@@ -440,13 +527,13 @@ inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiA
 }
 
 template <CaptureApi api>
-    requires(api == CaptureApi::zeCommandListAppendSignalEvent)
+    requires(api == CaptureApi::zeCommandListAppendSignalEvent || api == CaptureApi::zeCommandListAppendSignalEventWithParameters)
 inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiArgs &structuredApiArgs) {
     return structuredApiArgs.hEvent;
 }
 
 template <CaptureApi api>
-    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent))
+    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent && api != CaptureApi::zeCommandListAppendSignalEventWithParameters))
 inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiArgs &structuredApiArgs) {
     return nullptr;
 }
@@ -580,6 +667,30 @@ struct Closure<CaptureApi::zeCommandListAppendWaitOnEvents> {
 
     using IndirectArgs = IndirectArgsWithWaitEvents;
     IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const void *pNext;
+        uint32_t numEvents;
+        ze_event_handle_t *phEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage),
+                                                                                                 pNext(apiArgs.pNext) {}
+
+        const void *pNext;
+    } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
@@ -883,6 +994,29 @@ struct Closure<CaptureApi::zeCommandListAppendSignalEvent> {
 
     using IndirectArgs = EmptyIndirectArgs;
     IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const void *pNext;
+        ze_event_handle_t hEvent;
+    } apiArgs;
+
+    struct IndirectArgs : EmptyIndirectArgs {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : EmptyIndirectArgs(apiArgs, externalStorage),
+                                                                                                 pNext(apiArgs.pNext) {}
+
+        const void *pNext;
+    } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
 
@@ -1347,68 +1481,7 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopyWithParameters> {
 };
 
 template <>
-struct Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters> {
-    static constexpr bool isSupported = true;
-
-    struct ApiArgs {
-        ze_command_list_handle_t hCommandList;
-        void *dstptr;
-        const void *srcptr;
-        size_t size;
-        const void *pNext;
-        uint32_t numWaitEvents;
-        ze_event_handle_t *phWaitEvents;
-        ze_event_handle_t hSignalEvent;
-    } apiArgs;
-
-    struct IndirectArgs : IndirectArgsWithWaitEvents {
-        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
-        ~IndirectArgs();
-        void *pNext;
-    } indirectArgs;
-
-    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
-
-    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
-    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
-};
-
-template <>
 struct Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters> {
-    static constexpr bool isSupported = true;
-
-    struct ApiArgs {
-        ze_command_list_handle_t hCommandList;
-        void *ptr;
-        const void *pattern;
-        size_t patternSize;
-        size_t size;
-        const void *pNext;
-        ze_event_handle_t hSignalEvent;
-        uint32_t numWaitEvents;
-        ze_event_handle_t *phWaitEvents;
-    } apiArgs;
-
-    struct IndirectArgs : IndirectArgsWithWaitEvents {
-        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
-        ~IndirectArgs();
-
-        StackVec<uint8_t, 16> pattern;
-        void *pNext;
-    } indirectArgs;
-
-    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
-
-    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
-    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
-};
-
-template <>
-struct Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters> {
     static constexpr bool isSupported = true;
 
     struct ApiArgs {

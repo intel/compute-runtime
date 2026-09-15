@@ -929,6 +929,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
+            givenRuntimeAdjustedSlmAllocationModeWithInlineSlmWhenMutatingSlmArgumentThenInlineSlmIsNotAddedTwice) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    createMutableComputeWalker<FamilyType, WalkerType>(0);
+
+    constexpr uint32_t inlineSlmSize = 256;
+    constexpr uint32_t slmArgSize = 1024;
+    constexpr uint32_t expectedSlmTotalSize = 2 * MemoryConstants::kiloByte;
+
+    this->slmInlineSize = inlineSlmSize;
+    this->slmOffset = inlineSlmSize;
+    this->mockKernelImmData->kernelDescriptor->kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+
+    createVariableDispatch(false, false, false, true);
+    Variable *slmArgument = getVariable(L0::MCL::VariableType::slmBuffer);
+
+    auto ret = slmArgument->setValue(slmArgSize, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    slmArgument->commitVariable();
+    EXPECT_EQ(expectedSlmTotalSize, this->kernelDispatch->slmTotalSizePerThreadGroup);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
             givenTwoSlmArgumentsWhenMutatingSlmArgumentsStartingFirstThenTotalSlmSizeChanged) {
     using WalkerType = typename FamilyType::PorWalkerType;
 
@@ -1150,13 +1175,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         initialGlobalOffset, // globalOffset
     };
 
-    auto result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), groupCount, nullptr, nullptr, nullptr, nullptr, dispatchParams);
+    auto result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), groupCount, nullptr, nullptr, nullptr, nullptr, nullptr, dispatchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
-    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, groupSize, nullptr, nullptr, nullptr, dispatchParams);
+    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, groupSize, nullptr, nullptr, nullptr, nullptr, dispatchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
-    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, nullptr, groupCount, nullptr, nullptr, dispatchParams);
+    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, nullptr, groupCount, nullptr, nullptr, nullptr, dispatchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1421,7 +1446,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 
     ret = this->variable->setValue(0, 0, newEvent);
@@ -1464,7 +1489,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(this->variable->desc.eventValue.noopState);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 }
 
@@ -1748,7 +1773,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto expectedWaitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset() + this->semWaitOffset;
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 }
 
@@ -1791,7 +1816,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_NE(nullptr, this->variable->desc.eventValue.cbEventDeviceCounterAllocation);
 
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
-    auto testWaitAddress = semWaitCmd->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 }
 
@@ -1875,7 +1900,7 @@ void VariableInOrderFixture::testAsyncMutationWaitEventTest(bool indirect) {
 
     auto semWait = genCmdCast<MI_SEMAPHORE_WAIT *>(this->mutableSemaphoreWait->getCommandView());
     EXPECT_NE(nullptr, semWait);
-    auto testWaitAddress = semWait->getSemaphoreGraphicsAddress();
+    auto testWaitAddress = UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWait);
     EXPECT_EQ(expectedWaitAddress, testWaitAddress);
 
     if (this->qwordIndirect) {
@@ -1897,6 +1922,490 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCounterBasedWaitWithIndirectOffEventWhenNoopAndRestoreThenCommandViewUpdatedAndAsyncPatchlistFilled) {
     testAsyncMutationWaitEventTest<FamilyType>(false);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenCounterBasedExternalWaitWhenEmptyPatchPreambleUsedAndIsSetWithEmptyPatchPreambleThenNoopPatchPreambleSemWaitRemains) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    alignas(uint32_t) uint8_t noopLriSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {};
+
+    auto otherCmdList = this->createMutableCmdList();
+
+    auto event = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, event);
+    this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    auto newEvent = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, newEvent);
+    this->attachCbEvent(newEvent, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    this->semWaitOffset = 0;
+    preparePatchPreambleWaitCommands<FamilyType>();
+
+    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+    auto ret = this->variable->setAsWaitEvent(event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto &eventValue = this->variable->getDesc().eventValue;
+    EXPECT_TRUE(eventValue.isExternalFlag);
+
+    EXPECT_EQ(0u, eventValue.patchPreambleCounterValue);
+    EXPECT_TRUE(eventValue.patchPreambleNoopState);
+
+    if (this->qwordIndirect) {
+        this->mutableLoadRegisterImms[0]->noop();
+        this->mutableLoadRegisterImms[1]->noop();
+
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
+    }
+
+    this->mutableSemaphoreWait->noop();
+    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
+
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(0u, eventValue.patchPreambleCounterValue);
+    EXPECT_TRUE(eventValue.patchPreambleNoopState);
+
+    if (this->qwordIndirect) {
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[0], sizeof(MI_LOAD_REGISTER_IMM)));
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[1], sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+    EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenCounterBasedExternalWaitWhenEmptyPatchPreambleUsedAndIsSetWithCounterPatchPreambleThenPatchPreambleSemWaitRestored) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto otherCmdList = this->createMutableCmdList();
+
+    auto event = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, event);
+    this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    auto newEvent = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, newEvent);
+    this->attachCbEvent(newEvent, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    uint64_t newCounterValue = 0x1234;
+    auto newCounterLow = getLowPart(newCounterValue);
+
+    uint64_t newGpuAddress = 0x10000;
+    MockGraphicsAllocation newCounterAlloc(0, reinterpret_cast<void *>(newGpuAddress), 0x1000);
+    newEvent->getInOrderExecEventHelper().assignPatchPreambleData(newCounterValue, nullptr, 0, nullptr, newGpuAddress, &newCounterAlloc);
+
+    this->semWaitOffset = 0;
+    preparePatchPreambleWaitCommands<FamilyType>();
+
+    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+    auto ret = this->variable->setAsWaitEvent(event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto &eventValue = this->variable->getDesc().eventValue;
+    EXPECT_TRUE(eventValue.isExternalFlag);
+
+    EXPECT_EQ(0u, eventValue.patchPreambleCounterValue);
+    EXPECT_TRUE(eventValue.patchPreambleNoopState);
+
+    if (this->qwordIndirect) {
+        this->mutableLoadRegisterImms[0]->noop();
+        this->mutableLoadRegisterImms[1]->noop();
+
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
+    }
+
+    this->mutableSemaphoreWait->noop();
+    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
+
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(newCounterValue, eventValue.patchPreambleCounterValue);
+    EXPECT_FALSE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(&newCounterAlloc, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &newCounterAlloc));
+
+    if (this->qwordIndirect) {
+        constexpr uint32_t firstRegister = 0x2600;
+        constexpr uint32_t secondRegister = 0x2604;
+
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->loadRegisterImmBuffers[0]);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
+        EXPECT_EQ(newCounterLow, lriCmd->getDataDword());
+
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->loadRegisterImmBuffers[1]);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(secondRegister, lriCmd->getRegisterOffset());
+    }
+    auto semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
+    ASSERT_NE(nullptr, semWaitCmd);
+    EXPECT_EQ(newGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+    if (this->qwordIndirect == false) {
+        EXPECT_EQ(newCounterValue, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenCounterBasedExternalWaitWhenCounterPatchPreambleUsedAndIsSetWithEmptyPatchPreambleThenPatchPreambleSemWaitNooped) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    alignas(uint32_t) uint8_t noopLriSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {};
+
+    auto otherCmdList = this->createMutableCmdList();
+
+    auto event = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, event);
+    this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    uint64_t counterValue = 0x1234;
+    uint64_t gpuAddress = 0x10000;
+    MockGraphicsAllocation counterAlloc(0, reinterpret_cast<void *>(gpuAddress), 0x1000);
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, nullptr, 0, nullptr, gpuAddress, &counterAlloc);
+
+    auto newEvent = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, newEvent);
+    this->attachCbEvent(newEvent, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    this->semWaitOffset = 0;
+    preparePatchPreambleWaitCommands<FamilyType>();
+
+    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+    auto ret = this->variable->setAsWaitEvent(event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    // adding counter allocation to residency container is done at MCL level
+    mutableCommandList->addToResidencyContainer(&counterAlloc);
+
+    auto &eventValue = this->variable->getDesc().eventValue;
+    EXPECT_TRUE(eventValue.isExternalFlag);
+
+    EXPECT_EQ(counterValue, eventValue.patchPreambleCounterValue);
+    EXPECT_FALSE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(&counterAlloc, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        this->mutableLoadRegisterImms[0]->restore();
+        this->mutableLoadRegisterImms[1]->restore();
+
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
+    }
+
+    this->mutableSemaphoreWait->restoreWithSemaphoreAddress(gpuAddress);
+    this->mutableSemaphoreWait->setSemaphoreValue(counterValue);
+    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
+
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(0u, eventValue.patchPreambleCounterValue);
+    EXPECT_TRUE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(nullptr, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[0], sizeof(MI_LOAD_REGISTER_IMM)));
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[1], sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+    EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenCounterBasedExternalWaitWhenCounterPatchPreambleUsedAndIsSetWithNewCounterPatchPreambleThenPatchPreambleSemWaitUpdated) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto otherCmdList = this->createMutableCmdList();
+
+    auto event = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, event);
+    this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    uint64_t counterValue = 0x1000;
+    auto counterLow = getLowPart(counterValue);
+    uint64_t gpuAddress = 0x1A000;
+    MockGraphicsAllocation counterAlloc(0, reinterpret_cast<void *>(gpuAddress), 0x1000);
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, nullptr, 0, nullptr, gpuAddress, &counterAlloc);
+
+    auto newEvent = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, newEvent);
+    this->attachCbEvent(newEvent, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    uint64_t newCounterValue = 0x1234;
+    auto newCounterLow = getLowPart(newCounterValue);
+    uint64_t newGpuAddress = 0x10000;
+    MockGraphicsAllocation newCounterAlloc(0, reinterpret_cast<void *>(newGpuAddress), 0x1000);
+    newEvent->getInOrderExecEventHelper().assignPatchPreambleData(newCounterValue, nullptr, 0, nullptr, newGpuAddress, &newCounterAlloc);
+
+    this->semWaitOffset = 0;
+    preparePatchPreambleWaitCommands<FamilyType>();
+
+    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+    auto ret = this->variable->setAsWaitEvent(event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    // adding counter allocation to residency container is done at MCL level
+    mutableCommandList->addToResidencyContainer(&counterAlloc);
+
+    auto &eventValue = this->variable->getDesc().eventValue;
+    EXPECT_TRUE(eventValue.isExternalFlag);
+
+    EXPECT_EQ(counterValue, eventValue.patchPreambleCounterValue);
+    EXPECT_FALSE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(&counterAlloc, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        this->mutableLoadRegisterImms[0]->restore();
+        this->mutableLoadRegisterImms[0]->setValue(counterLow);
+        this->mutableLoadRegisterImms[1]->restore();
+
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
+    }
+
+    this->mutableSemaphoreWait->restoreWithSemaphoreAddress(gpuAddress);
+    if (this->qwordIndirect == false) {
+        this->mutableSemaphoreWait->setSemaphoreValue(counterValue);
+    }
+    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
+
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(newCounterValue, eventValue.patchPreambleCounterValue);
+    EXPECT_FALSE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(&newCounterAlloc, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &newCounterAlloc));
+    EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        constexpr uint32_t firstRegister = 0x2600;
+        constexpr uint32_t secondRegister = 0x2604;
+
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->loadRegisterImmBuffers[0]);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
+        EXPECT_EQ(newCounterLow, lriCmd->getDataDword());
+
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->loadRegisterImmBuffers[1]);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(secondRegister, lriCmd->getRegisterOffset());
+    }
+    auto semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
+    ASSERT_NE(nullptr, semWaitCmd);
+    EXPECT_EQ(newGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+    if (this->qwordIndirect == false) {
+        EXPECT_EQ(newCounterValue, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenCounterBasedExternalWaitWhenCounterPatchPreambleUsedAndIsNoopedAndRestoredWithNewCounterPatchPreambleThenPatchPreambleSemWaitRestored) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    alignas(uint32_t) uint8_t noopLriSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {};
+
+    auto otherCmdList = this->createMutableCmdList();
+
+    auto event = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, event);
+    this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    uint64_t counterValue = 0x1000;
+    auto counterLow = getLowPart(counterValue);
+    uint64_t gpuAddress = 0x1A000;
+    MockGraphicsAllocation counterAlloc(0, reinterpret_cast<void *>(gpuAddress), 0x1000);
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, nullptr, 0, nullptr, gpuAddress, &counterAlloc);
+
+    auto newEvent = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, newEvent);
+    this->attachCbEvent(newEvent, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    uint64_t newCounterValue = 0x1234;
+    auto newCounterLow = getLowPart(newCounterValue);
+    uint64_t newGpuAddress = 0x10000;
+    MockGraphicsAllocation newCounterAlloc(0, reinterpret_cast<void *>(newGpuAddress), 0x1000);
+    newEvent->getInOrderExecEventHelper().assignPatchPreambleData(newCounterValue, nullptr, 0, nullptr, newGpuAddress, &newCounterAlloc);
+
+    this->semWaitOffset = 0;
+    preparePatchPreambleWaitCommands<FamilyType>();
+
+    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+    auto ret = this->variable->setAsWaitEvent(event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    // adding counter allocation to residency container is done at MCL level
+    mutableCommandList->addToResidencyContainer(&counterAlloc);
+
+    auto &eventValue = this->variable->getDesc().eventValue;
+    EXPECT_TRUE(eventValue.isExternalFlag);
+
+    EXPECT_EQ(counterValue, eventValue.patchPreambleCounterValue);
+    EXPECT_FALSE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(&counterAlloc, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        this->mutableLoadRegisterImms[0]->restore();
+        this->mutableLoadRegisterImms[0]->setValue(counterLow);
+        this->mutableLoadRegisterImms[1]->restore();
+
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
+    }
+
+    this->mutableSemaphoreWait->restoreWithSemaphoreAddress(gpuAddress);
+    if (this->qwordIndirect == false) {
+        this->mutableSemaphoreWait->setSemaphoreValue(counterValue);
+    }
+    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
+
+    // noop wait event by providing nullptr event
+    ret = this->variable->setValue(0, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(0u, eventValue.patchPreambleCounterValue);
+    EXPECT_TRUE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(nullptr, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[0], sizeof(MI_LOAD_REGISTER_IMM)));
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[1], sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+    EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
+
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(newCounterValue, eventValue.patchPreambleCounterValue);
+    EXPECT_FALSE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(&newCounterAlloc, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &newCounterAlloc));
+
+    if (this->qwordIndirect) {
+        constexpr uint32_t firstRegister = 0x2600;
+        constexpr uint32_t secondRegister = 0x2604;
+
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->loadRegisterImmBuffers[0]);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(firstRegister, lriCmd->getRegisterOffset());
+        EXPECT_EQ(newCounterLow, lriCmd->getDataDword());
+
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->loadRegisterImmBuffers[1]);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(secondRegister, lriCmd->getRegisterOffset());
+    }
+    auto semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
+    ASSERT_NE(nullptr, semWaitCmd);
+    EXPECT_EQ(newGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+    if (this->qwordIndirect == false) {
+        EXPECT_EQ(newCounterValue, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderTest,
+            givenCounterBasedExternalWaitWhenCounterPatchPreambleUsedAndIsNoopedAndRestoredWithZeroCounterPatchPreambleThenPatchPreambleSemWaitRemainsNooped) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    alignas(uint32_t) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    alignas(uint32_t) uint8_t noopLriSpace[sizeof(MI_LOAD_REGISTER_IMM)] = {};
+
+    auto otherCmdList = this->createMutableCmdList();
+
+    auto event = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, event);
+    this->attachCbEvent(event, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    uint64_t counterValue = 0x1000;
+    auto counterLow = getLowPart(counterValue);
+    uint64_t gpuAddress = 0x1A000;
+    MockGraphicsAllocation counterAlloc(0, reinterpret_cast<void *>(gpuAddress), 0x1000);
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, nullptr, 0, nullptr, gpuAddress, &counterAlloc);
+
+    auto newEvent = this->createTestEvent(true, false, false, false, true);
+    ASSERT_NE(nullptr, newEvent);
+    this->attachCbEvent(newEvent, static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase()));
+
+    this->semWaitOffset = 0;
+    preparePatchPreambleWaitCommands<FamilyType>();
+
+    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+    auto ret = this->variable->setAsWaitEvent(event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    // adding counter allocation to residency container is done at MCL level
+    mutableCommandList->addToResidencyContainer(&counterAlloc);
+
+    auto &eventValue = this->variable->getDesc().eventValue;
+    EXPECT_TRUE(eventValue.isExternalFlag);
+
+    EXPECT_EQ(counterValue, eventValue.patchPreambleCounterValue);
+    EXPECT_FALSE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(&counterAlloc, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        this->mutableLoadRegisterImms[0]->restore();
+        this->mutableLoadRegisterImms[0]->setValue(counterLow);
+        this->mutableLoadRegisterImms[1]->restore();
+
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
+        this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
+    }
+
+    this->mutableSemaphoreWait->restoreWithSemaphoreAddress(gpuAddress);
+    if (this->qwordIndirect == false) {
+        this->mutableSemaphoreWait->setSemaphoreValue(counterValue);
+    }
+    this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
+
+    // noop wait event by providing nullptr event
+    ret = this->variable->setValue(0, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(0u, eventValue.patchPreambleCounterValue);
+    EXPECT_TRUE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(nullptr, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[0], sizeof(MI_LOAD_REGISTER_IMM)));
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[1], sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+    EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
+
+    ret = this->variable->setValue(0, 0, newEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(0u, eventValue.patchPreambleCounterValue);
+    EXPECT_TRUE(eventValue.patchPreambleNoopState);
+    EXPECT_EQ(nullptr, eventValue.patchPreambleCounterDeviceAllocation);
+    EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), &counterAlloc));
+
+    if (this->qwordIndirect) {
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[0], sizeof(MI_LOAD_REGISTER_IMM)));
+        EXPECT_EQ(0, memcmp(noopLriSpace, this->loadRegisterImmBuffers[1], sizeof(MI_LOAD_REGISTER_IMM)));
+    }
+    EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
 }
 
 } // namespace ult

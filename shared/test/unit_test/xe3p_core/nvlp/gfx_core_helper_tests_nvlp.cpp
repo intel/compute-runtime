@@ -11,9 +11,11 @@
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
+#include "neo_aot_platforms.h"
 #include "per_product_test_definitions.h"
 
 using GfxCoreHelperTestsNvlp = GfxCoreHelperTest;
@@ -43,4 +45,21 @@ NVLPTEST_F(GfxCoreHelperTestsNvlp, whenGetL1CachePolicyThenReturnCorrectValue) {
 NVLPTEST_F(GfxCoreHelperTestsNvlp, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isStagingBuffersEnabled());
+}
+
+NVLPTEST_F(GfxCoreHelperTestsNvlp, givenLargeGrfCountWhenCalculateNumThreadsPerThreadGroupThenAdjustOnlyForPlatformsSupportingThoseGrfCounts) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+
+    constexpr uint32_t simd = 32u;
+    constexpr uint32_t totalWorkItems = 2048u;
+
+    rootDeviceEnvironment.getMutableHardwareInfo()->ipVersion.value = AOT::NVL_P_B0;
+    EXPECT_EQ(16u, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, totalWorkItems, 448u, rootDeviceEnvironment));
+    EXPECT_EQ(24u, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, totalWorkItems, 320u, rootDeviceEnvironment));
+
+    rootDeviceEnvironment.getMutableHardwareInfo()->ipVersion.value = AOT::NVL_P_A0;
+    EXPECT_EQ(32u, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, totalWorkItems, 448u, rootDeviceEnvironment));
+    EXPECT_EQ(32u, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, totalWorkItems, 320u, rootDeviceEnvironment));
 }

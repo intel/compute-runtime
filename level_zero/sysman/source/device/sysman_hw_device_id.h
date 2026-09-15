@@ -7,7 +7,6 @@
 
 #pragma once
 #include <memory>
-#include <vector>
 
 namespace NEO {
 class HwDeviceId;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,10 +30,6 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->addArgImage(0, 0);
     auto &img0 = pKernelInfo->argAsImg(0);
     img0.metadataPayload.imgWidth = 0x4;
-    img0.metadataPayload.flatBaseOffset = 0x8;
-    img0.metadataPayload.flatWidth = 0x10;
-    img0.metadataPayload.flatHeight = 0x18;
-    img0.metadataPayload.flatPitch = 0x24;
     img0.metadataPayload.numSamples = 0x3c;
     img0.metadataPayload.numMipLevels = offsetNumMipLevelsImage0;
 

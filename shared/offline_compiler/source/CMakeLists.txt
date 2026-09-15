@@ -10,8 +10,8 @@ set(OCLOC_NAME "ocloc")
 set(OCLOC_FOLDER_NAME "offline_compiler")
 
 append_sources_from_properties(RELEASE_HELPER_SOURCES
-                               NEO_CORE_RELEASE_HELPER
-                               NEO_CORE_ENABLE_RELEASE_HELPER
+                               NEO_CORE_COMPILER_RELEASE_HELPER
+                               NEO_CORE_ENABLE_COMPILER_RELEASE_HELPER
 )
 
 set(CLOC_LIB_SRCS_LIB
@@ -95,8 +95,6 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/multi_command.h
     ${OCLOC_DIRECTORY}/source/ocloc_api.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_api.h
-    ${OCLOC_DIRECTORY}/source/offline_compiler_ext.h
-    ${OCLOC_DIRECTORY}/source${BRANCH_DIR_SUFFIX}/offline_compiler_ext.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
     ${OCLOC_DIRECTORY}/source/ocloc_concat.cpp
@@ -524,7 +522,7 @@ if(WIN32)
   foreach(TARGET_tmp ${NEO__IGC_TARGETS})
     add_custom_command(
                        TARGET copy_compiler_files
-                       PRE_BUILD
+                       POST_BUILD
                        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${OCLOC_NAME}_lib>
                        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:${OCLOC_NAME}_lib>
     )

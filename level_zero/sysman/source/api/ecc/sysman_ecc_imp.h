@@ -21,6 +21,7 @@ static constexpr uint8_t eccStateNone = 0xFF;
 class EccImp : public Ecc, NEO::NonCopyableAndNonMovableClass {
   public:
     void init() override {}
+    void reInit() override { pFwInterface = nullptr; }
     ze_result_t deviceEccAvailable(ze_bool_t *pAvailable) override;
     ze_result_t deviceEccConfigurable(ze_bool_t *pConfigurable) override;
     ze_result_t getEccState(zes_device_ecc_properties_t *pState) override;

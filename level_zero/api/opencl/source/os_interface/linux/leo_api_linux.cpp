@@ -23,13 +23,15 @@ void NEO::LEO::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, 
 }
 
 void NEO::LEO::Image::getOsSpecificImageInfo(const cl_image_info &paramName, size_t *srcParamSize, void **srcParam) {
-    this->mediaPlane = static_cast<cl_uint>(static_cast<L0::ImageImp *>(L0::Image::fromHandle(this->imageHandle))->getImageInfo().plane) - 1;
     switch (paramName) {
 #ifdef LIBVA
-    case CL_IMAGE_VA_API_PLANE_INTEL:
+    case CL_IMAGE_VA_API_PLANE_INTEL: {
+        auto imagePlane = static_cast<L0::ImageImp *>(L0::Image::fromHandle(this->imageHandle))->getImageInfo().plane;
+        this->mediaPlane = (imagePlane == NEO::ImagePlane::noPlane) ? 0u : static_cast<cl_uint>(imagePlane) - 1u;
         *srcParamSize = sizeof(cl_uint);
         *srcParam = &this->mediaPlane;
         break;
+    }
 #endif
     default:
         break;

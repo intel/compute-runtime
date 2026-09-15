@@ -15,6 +15,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <atomic>
+#include <functional>
 #include <mutex>
 
 namespace NEO {
@@ -163,6 +164,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     bool allocInUse(GraphicsAllocation &graphicsAllocation) override {
         allocInUseCalled++;
+
+        if (allocInUseCallback) {
+            allocInUseCallback();
+        }
 
         if (callBaseAllocInUse) {
             return OsAgnosticMemoryManager::allocInUse(graphicsAllocation);
@@ -351,13 +356,18 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return retVal;
     }
 
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override {
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override {
         // Need to call actual unMapPhysicalDeviceMemoryFromVirtualMemory to ensure the virtual memory is unmapped.
-        bool retVal = OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize);
+        bool retVal = OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, true);
         if (failUnMapPhysicalToVirtualMemory) { // Return false if unmapping is supposed to fail.
             return false;
         }
         return retVal;
+    }
+
+    [[nodiscard]] std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() override {
+        lockVirtualMemoryReservationMapCalled++;
+        return MemoryManager::lockVirtualMemoryReservationMap();
     }
 
     void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override {
@@ -388,8 +398,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
     uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
-    mutable uint32_t allocInUseCalled = 0u;
+    std::atomic<uint32_t> allocInUseCalled{0u};
     uint32_t registerIpcExportedAllocationCalled = 0;
+    std::atomic<uint32_t> lockVirtualMemoryReservationMapCalled{0u};
     int32_t overrideAllocateAsPackReturn = -1;
     std::vector<GraphicsAllocation *> allocationsFromExistingStorage{};
     AllocationData alignAllocationData;
@@ -406,6 +417,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t getSharedSystemAtomicAccessCalledCount = 0;
     std::atomic<uint32_t> allocateGraphicsMemoryWithPropertiesCalledCount{0};
     osHandle capturedSharedHandle = 0u;
+    uint64_t capturedPhysicalOffset = std::numeric_limits<uint64_t>::max();
     std::vector<bool> capturedIsHostIpcAllocation;
     std::atomic<bool> allocationCreated{false};
     bool allocation64kbPageCreated = false;
@@ -442,6 +454,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool isMockHostMemoryManager = false;
     bool deferAllocInUse = false;
     bool callBaseAllocInUse = false;
+    std::function<void()> allocInUseCallback;
     bool isMockEventPoolCreateMemoryManager = false;
     bool limitedGPU = false;
     bool returnFakeAllocation = false;

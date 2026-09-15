@@ -172,6 +172,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
 
   protected:
     ze_result_t getFirstDevice(IgscDeviceInfo *);
+    static ze_result_t getIgscResult(int igscError);
     ze_result_t fwGetVersion(std::string &fwVersion);
     ze_result_t fwDataGetVersion(std::string &fwDataVersion);
     ze_result_t opromGetVersion(std::string &fwVersion);

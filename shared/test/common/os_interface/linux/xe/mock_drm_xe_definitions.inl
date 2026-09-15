@@ -137,63 +137,11 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::getparam:
         ret = -2;
         break;
-    case DrmIoctl::getResetStats: {
-        if (getResetStatsReturn != 0) {
-            ret = getResetStatsReturn;
-            break;
-        }
+    case DrmIoctl::queryContextHealth: {
         auto execQueueProperty = static_cast<drm_xe_exec_queue_get_property *>(arg);
         EXPECT_EQ(execQueueProperty->property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN));
         execQueueProperty->value = execQueueBanPropertyReturn;
         ret = 0;
-    } break;
-    case DrmIoctl::vmGetProperty: {
-        vmGetPropertyCallCount++;
-        if (vmGetPropertyFailOnCall > 0 && vmGetPropertyCallCount >= vmGetPropertyFailOnCall) {
-            ret = -1;
-            break;
-        }
-        // Use local struct definitions to work across all Xe mock variants (XeDrm, XeDrmPrelim)
-        struct VmFault {
-            __u64 address;
-            __u32 addressPrecision;
-            __u8 accessType;
-            __u8 faultType;
-            __u8 faultLevel;
-            __u8 pad;
-            __u64 reserved[4];
-        };
-        struct VmGetProperty {
-            __u64 extensions;
-            __u32 vmId;
-            __u32 property;
-            __u32 size;
-            __u32 pad;
-            __u64 data;
-            __u64 reserved[3];
-        };
-        constexpr __u32 vmGetPropertyFaults = 0;
-        auto vmProperty = static_cast<VmGetProperty *>(arg);
-        if (vmProperty->property == vmGetPropertyFaults) {
-            if (mockVmFaults.empty()) {
-                vmProperty->size = 0;
-            } else {
-                vmProperty->size = static_cast<__u32>(mockVmFaults.size() * sizeof(VmFault));
-                if (vmProperty->data != 0) {
-                    auto *faultData = reinterpret_cast<VmFault *>(vmProperty->data);
-                    for (size_t i = 0; i < mockVmFaults.size(); i++) {
-                        faultData[i].address = mockVmFaults[i].address;
-                        faultData[i].addressPrecision = mockVmFaults[i].addressPrecision;
-                        faultData[i].accessType = mockVmFaults[i].accessType;
-                        faultData[i].faultType = mockVmFaults[i].faultType;
-                        faultData[i].faultLevel = mockVmFaults[i].faultLevel;
-                        faultData[i].pad = 0;
-                        memset(faultData[i].reserved, 0, sizeof(faultData[i].reserved));
-                    }
-                }
-            }
-            ret = 0;
-        }
     } break;
     case DrmIoctl::query: {
         struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
@@ -241,6 +189,13 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
         ret = gemVmBindReturn;
         auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
         vmBindInputs.push_back(*vmBindInput);
+
+        if (vmBindInput->num_binds > 1) {
+            auto bindOps = reinterpret_cast<drm_xe_vm_bind_op *>(vmBindInput->vector_of_binds);
+            for (uint32_t i = 0; i < vmBindInput->num_binds; i++) {
+                vmBindOpsInputs.push_back(bindOps[i]);
+            }
+        }
 
         if (vmBindInput->num_syncs == 1) {
             auto &syncInput = reinterpret_cast<drm_xe_sync *>(vmBindInput->syncs)[0];

@@ -5,18 +5,18 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/stdio.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/mock_sip_listener.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -27,7 +27,6 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_os_thread.h"
 #include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/test_stats.h"
 #include "shared/test/common/tests_configuration.h"
 
@@ -156,10 +155,7 @@ void applyCommonWorkarounds() {
     }
 
     // Create FileLogger to prevent false memory leaks
-    {
-        NEO::fileLoggerInstance();
-        NEO::usmReusePerfLoggerInstance();
-    }
+    NEO::fileLoggerInstance();
 
     // Force initialization of inverted compatibility mapping here so its allocations happen before memory-leak listener is enabled.
     // This prevents false-positive leak reports.
@@ -443,17 +439,11 @@ int main(int argc, char **argv) {
         MockCompilerDebugVars fclDebugVars;
         MockCompilerDebugVars igcDebugVars;
 
-        std::string builtInsFileName;
-        if (TestChecks::supportsImages(defaultHwInfo)) {
-            builtInsFileName = KernelBinaryHelper::BUILT_INS_WITH_IMAGES;
-        } else {
-            builtInsFileName = KernelBinaryHelper::BUILT_INS;
-        }
-        std::string options;
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv", options);
-        retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin", options);
+        static uint8_t mockBuiltInIrPlaceholder[64] = {};
+        memcpy_s(mockBuiltInIrPlaceholder, sizeof(mockBuiltInIrPlaceholder), NEO::spirvMagic.data(), NEO::spirvMagic.size());
+        fclDebugVars.binaryToReturn = mockBuiltInIrPlaceholder;
+        fclDebugVars.binaryToReturnSize = sizeof(mockBuiltInIrPlaceholder);
 
-        gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
         gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
         int sigOut = setSegv(enableSegv);
@@ -503,64 +493,29 @@ int main(int argc, char **argv) {
             VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtellSetter(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int { return ftell(stream); });
             VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFreadSetter(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t { return fread(ptr, size, count, stream); });
             VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFcloseSetter(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return fclose(stream); });
-            for (const std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
-                                                           "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16",
-                                                           "system_memfence",
-                                                           "simple_spill_fill_kernel", "spill_fill_kernel_large_grf", "simple_kernel_large_grf"}) {
-                std::string testFilename;
-                retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin", "");
-                size_t retFileNsize = 0;
-                auto retFiledata = NEO::loadDataFromFile(testFilename.c_str(), retFileNsize);
-                if (retFiledata) {
-                    if (retFileNsize == 0) {
-                        std::cout << "ERROR: kernel file is empty: " << testFilename << "\n";
-                        return -1;
-                    }
-                    virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
-                    if (retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size()) {
-                        std::cout << "ERROR: failed to load kernel file: " << testFilename << "\n";
-                        return -1;
-                    }
-                }
-            }
-            std::string kernelOptions = CompilerOptions::kernelOptions;
-            std::replace(kernelOptions.begin(), kernelOptions.end(), ' ', '_');
-            std::string kernelStatelessOptions = CompilerOptions::kernelStatelessOptions;
-            std::replace(kernelStatelessOptions.begin(), kernelStatelessOptions.end(), ' ', '_');
-            std::string kernelWideStatelessOptions = CompilerOptions::kernelWideStatelessOptions;
-            std::replace(kernelWideStatelessOptions.begin(), kernelWideStatelessOptions.end(), ' ', '_');
-            std::string kernelTypeOptions;
-            if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
-                kernelTypeOptions = std::string("-heapless_") + CompilerOptions::kernelStatelessOptions;
-                std::replace(kernelTypeOptions.begin(), kernelTypeOptions.end(), ' ', '_');
-            }
-            auto loadBuiltInsKernels = [&](const std::string &name) -> bool {
-                for (const std::string &opts : {options, kernelOptions, kernelStatelessOptions, kernelWideStatelessOptions, kernelTypeOptions}) {
-                    for (const std::string &extension : {std::string(".spv"), std::string(".bin")}) {
-                        std::string filename;
-                        retrieveBinaryKernelFilename(filename, name + "_", extension, opts);
-                        size_t retFileNsize = 0;
-                        auto retFiledata = NEO::loadDataFromFile(filename.c_str(), retFileNsize);
-                        if (retFiledata) {
-                            if (retFileNsize == 0) {
-                                std::cout << "ERROR: built-in kernel file is empty: " << filename << "\n";
-                                return false;
-                            }
-                            virtualFileListTestKernelsOnly[filename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
-                            if (retFileNsize != virtualFileListTestKernelsOnly[filename].str().size()) {
-                                std::cout << "ERROR: failed to load built-in kernel file: " << filename << "\n";
-                                return false;
-                            }
+            if (isAubTestMode(testMode)) {
+                for (const std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
+                                                               "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16",
+                                                               "system_memfence",
+                                                               "simple_spill_fill_kernel", "spill_fill_kernel_large_grf", "simple_kernel_large_grf"}) {
+                    std::string testFilename;
+                    retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin");
+                    size_t retFileNsize = 0;
+                    auto retFiledata = NEO::loadDataFromFile(testFilename.c_str(), retFileNsize);
+                    if (retFiledata) {
+                        if (retFileNsize == 0) {
+                            std::cout << "ERROR: kernel file is empty: " << testFilename << "\n";
+                            return -1;
+                        }
+                        virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
+                        if (retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size()) {
+                            std::cout << "ERROR: failed to load kernel file: " << testFilename << "\n";
+                            return -1;
                         }
                     }
                 }
-                return true;
-            };
-            if (!loadBuiltInsKernels(KernelBinaryHelper::BUILT_INS) ||
-                !loadBuiltInsKernels(KernelBinaryHelper::BUILT_INS_WITH_IMAGES)) {
-                return -1;
+                populateApiSpecificVirtualFileList(hwInfoForTests);
             }
-            populateApiSpecificVirtualFileList(hwInfoForTests);
         }
 
         retVal = RUN_ALL_TESTS();

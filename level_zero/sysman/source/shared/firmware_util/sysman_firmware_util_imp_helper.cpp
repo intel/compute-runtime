@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
@@ -64,7 +65,9 @@ ze_result_t FirmwareUtilImp::fwCallGetstatusExt(uint32_t &supportedTests, uint32
 
     int ret = deviceIfrGetStatusExt(&fwDeviceHandle, &supportedTests, &hwCapabilities, &ifrApplied, &prevErrors, &pendingReset);
     if (ret) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc get ifr status ext failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -80,7 +83,7 @@ ze_result_t FirmwareUtilImp::fwGetMemoryErrorCount(zes_ras_error_type_t type, ui
 
     if (ret != IGSC_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): Could not retrieve tile count from igsc\n", __FUNCTION__);
+                     "Error@ %s(): Could not retrieve tile count from igsc\n", NEO_FUNCTION_NAME);
         // igsc_gfsp_count_tiles returns max tile info rather than actual count, igsc behaves in such a way that
         // it expects buffer (igsc_gfsp_mem_err) to be allocated for max tile count and not actual tile count.
         // This is fallback path when igsc_gfsp_count_tiles fails, where buffer for actual tile count is used to
@@ -97,13 +100,13 @@ ze_result_t FirmwareUtilImp::fwGetMemoryErrorCount(zes_ras_error_type_t type, ui
         ret = gfspMemoryErrors(&fwDeviceHandle, tiles);
         if (ret != IGSC_SUCCESS) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Error@ %s(): Could not retrieve memory errors from igsc (error:0x%x) \n", __FUNCTION__, ret);
-            return ZE_RESULT_ERROR_UNINITIALIZED;
+                         "Error@ %s(): Could not retrieve memory errors from igsc (error:0x%x) \n", NEO_FUNCTION_NAME, ret);
+            return getIgscResult(ret);
         }
 
         if (tiles->num_of_tiles < subDeviceCount) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Error@ %s(): Inappropriate tile count \n", __FUNCTION__);
+                         "Error@ %s(): Inappropriate tile count \n", NEO_FUNCTION_NAME);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         if (type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
@@ -144,7 +147,7 @@ void FirmwareUtilImp::fwGetMemoryHealthIndicator(zes_mem_health_t *health) {
         }
     }
 
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(); Could not get memory health indicator from igsc\n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(); Could not get memory health indicator from igsc\n", NEO_FUNCTION_NAME);
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState, uint8_t *defaultState) {
@@ -256,11 +259,12 @@ ze_result_t FirmwareUtilImp::fwSetGfspConfig(uint32_t gfspHeciCmdCode, std::vect
         size_t receivedSize = 0;
         int ret = gfspHeciCmd(&fwDeviceHandle, gfspHeciCmdCode, inBuf.data(), maxGfspHeciInBuffer, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
 
-        if (ret == IGSC_SUCCESS) {
-            return ZE_RESULT_SUCCESS;
+        if (ret != IGSC_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s(): Could not successfully call gfspHeciCmd number %x from igsc (error:0x%x) \n", NEO_FUNCTION_NAME, gfspHeciCmdCode, ret);
+            return getIgscResult(ret);
         }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): Could not successfully call gfspHeciCmd number %x from igsc (error:0x%x) \n", __FUNCTION__, gfspHeciCmdCode, ret);
+        return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -272,11 +276,12 @@ ze_result_t FirmwareUtilImp::fwGetGfspConfig(uint32_t gfspHeciCmdCode, std::vect
         size_t receivedSize = 0;
         int ret = gfspHeciCmd(&fwDeviceHandle, gfspHeciCmdCode, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
 
-        if (ret == IGSC_SUCCESS) {
-            return ZE_RESULT_SUCCESS;
+        if (ret != IGSC_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s(): Could not successfully call gfspHeciCmd number %x from igsc (error:0x%x) \n", NEO_FUNCTION_NAME, gfspHeciCmdCode, ret);
+            return getIgscResult(ret);
         }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): Could not successfully call gfspHeciCmd number %x from igsc (error:0x%x) \n", __FUNCTION__, gfspHeciCmdCode, ret);
+        return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -305,7 +310,9 @@ ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_re
     if (osDiagType.compare("MEMORY_PPR") == 0) {
         int ret = deviceIfrRunMemPPRTest(&fwDeviceHandle, &status, &pendingReset, &errorCode);
         if (ret) {
-            return ZE_RESULT_ERROR_UNINITIALIZED;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s(): igsc run mem ppr test failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+            return getIgscResult(ret);
         }
         if (status == 1) {
             *pDiagResult = ZES_DIAG_RESULT_REBOOT_FOR_REPAIR;
@@ -330,7 +337,9 @@ ze_result_t FirmwareUtilImp::fwFlashIafPsc(void *pImage, uint32_t size) {
     }
     int ret = iafPscUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, this);
     if (ret != IGSC_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): igsc iaf psc update failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -424,7 +433,7 @@ ze_result_t FirmwareUtilImp::fwGetSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_
     deviceGetOemSerialNumber = reinterpret_cast<pIgscDeviceOemSerialNumber>(libraryHandle->getProcAddress(fwDeviceOemSerialNumber));
     if (deviceGetOemSerialNumber == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): igsc_device_oem_serial_number function not available\n", __FUNCTION__);
+                     "Error@ %s(): igsc_device_oem_serial_number function not available\n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -432,8 +441,8 @@ ze_result_t FirmwareUtilImp::fwGetSerialNumber(std::array<uint8_t, IGSC_MAX_OEM_
     int ret = deviceGetOemSerialNumber(&fwDeviceHandle, &oemSerialNumber);
     if (ret != IGSC_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): Failed to get OEM serial number from igsc (error:0x%x)\n", __FUNCTION__, ret);
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+                     "Error@ %s(): Failed to get OEM serial number from igsc (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
+        return getIgscResult(ret);
     }
 
     serialNumberLen = oemSerialNumber.length;

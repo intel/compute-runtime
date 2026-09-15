@@ -15,12 +15,13 @@
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "RelocationInfo.h"
 
@@ -54,7 +55,7 @@ bool LinkerInput::decodeGlobalVariablesSymbolTable(const void *data, uint32_t nu
     auto symbolEntryEnd = symbolEntryIt + numEntries;
     symbols.reserve(symbols.size() + numEntries);
     for (; symbolEntryIt != symbolEntryEnd; ++symbolEntryIt) {
-        DEBUG_BREAK_IF(symbols.count(symbolEntryIt->s_name) > 0);
+        DEBUG_BREAK_IF(symbols.contains(symbolEntryIt->s_name));
         SymbolInfo &symbolInfo = symbols[symbolEntryIt->s_name];
         symbolInfo.offset = symbolEntryIt->s_offset;
         symbolInfo.size = symbolEntryIt->s_size;
@@ -175,6 +176,15 @@ void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uin
     outRelocInfo.push_back(std::move(relocationInfo));
 }
 
+template void LinkerInput::addSymbolIfMissing(Elf::Elf<Elf::EI_CLASS_32> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_32>::RelocationInfo &reloc);
+template void LinkerInput::addSymbolIfMissing(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_64>::RelocationInfo &reloc);
+template <Elf::ElfIdentifierClass numBits>
+void LinkerInput::addSymbolIfMissing(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &reloc) {
+    if (!symbols.contains(reloc.symbolName)) {
+        addSymbol(elf, nameToSegmentId, reloc.symbolTableIndex);
+    }
+}
+
 template bool LinkerInput::addRelocation(Elf::Elf<Elf::EI_CLASS_32> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_32>::RelocationInfo &reloc);
 template bool LinkerInput::addRelocation(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_64>::RelocationInfo &reloc);
 template <Elf::ElfIdentifierClass numBits>
@@ -193,6 +203,7 @@ bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegme
         auto kernelName = Zebin::getKernelNameFromSectionName(ConstStringRef(sectionName)).str();
         if (auto instructionSegmentId = getInstructionSegmentId(nameToSegmentId, kernelName)) {
             addElfTextSegmentRelocation(relocationInfo, *instructionSegmentId);
+            addSymbolIfMissing(elf, nameToSegmentId, reloc);
             parseRelocationForExtFuncUsage(relocationInfo, kernelName);
             return true;
         } else {
@@ -201,6 +212,7 @@ bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegme
         }
     } else if (isDataSegment(relocationInfo.relocationSegment)) {
         addDataRelocationInfo(relocationInfo);
+        addSymbolIfMissing(elf, nameToSegmentId, reloc);
         return true;
     }
     return false;
@@ -287,11 +299,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, con
     }
 
     for (auto &reloc : elf.getRelocations()) {
-        if (addRelocation(elf, nameToSegmentId, reloc)) {          // relocation was added
-            if (symbols.find(reloc.symbolName) == symbols.end()) { // symbol used in relocation is not present
-                addSymbol(elf, nameToSegmentId, reloc.symbolTableIndex);
-            }
-        }
+        addRelocation(elf, nameToSegmentId, reloc);
     }
 }
 
@@ -475,11 +483,11 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(std::pair<void *, RelocationInfo::Type>(relocAddress, relocation.type));
             } else if (relocation.symbolName == surfaceStateSizeRelocationSymbolName) {
                 UNRECOVERABLE_IF(!pDevice);
-                [[maybe_unused]] const auto &releaseHelper = pDevice->getReleaseHelper();
-                DEBUG_BREAK_IF(!(releaseHelper.isReducedSurfaceStateSupported()));
-                const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
+                DEBUG_BREAK_IF(!pDevice->getHardwareInfo().caps.reducedSurfaceStateSupported);
+                // The consumer steps between bindless slots with this value, so it has to be the slot stride.
+                const auto slotStride = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getBindlessSurfaceStateSlotSize());
                 auto patchSize = relocation.type == RelocationInfo::Type::address ? 8 : 4;
-                patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);
+                patchWithRequiredSize(relocAddress, patchSize, slotStride);
             } else if (relocation.symbolName.empty()) {
                 uint64_t patchValue = 0;
                 patchAddress(relocAddress, patchValue, relocation);
@@ -752,10 +760,10 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
         } else if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == surfaceStateSizeRelocationSymbolName) {
             auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
                                           static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
-            DEBUG_BREAK_IF(!(releaseHelper.isReducedSurfaceStateSupported()));
-            const auto surfaceStateSize = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize());
+            DEBUG_BREAK_IF(!pDevice->getHardwareInfo().caps.reducedSurfaceStateSupported);
+            const auto slotStride = static_cast<uint64_t>(pDevice->getGfxCoreHelper().getBindlessSurfaceStateSlotSize());
             auto patchSize = outUnresolvedExternals[vecIndex].unresolvedRelocation.type == RelocationInfo::Type::address ? 8 : 4;
-            patchWithRequiredSize(relocAddress, patchSize, surfaceStateSize);
+            patchWithRequiredSize(relocAddress, patchSize, slotStride);
             outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
             outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);
         }

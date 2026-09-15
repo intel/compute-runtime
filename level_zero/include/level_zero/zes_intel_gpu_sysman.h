@@ -22,6 +22,14 @@ extern "C" {
 #define ZES_INTEL_GPU_SYSMAN_VERSION_MINOR 1
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Experimental init flag to allow zesInit() to succeed when no GPU devices are present.
+/// @details
+///     - Enables deferred device discovery mode.
+///     - Device discovery is deferred until the first call to zesDeviceGet() or related APIs.
+///     - This flag uses bit 16 to avoid conflicts with standard flags (bits 0-15).
+#define ZES_INTEL_INIT_FLAG_EXP_NO_GPUS ZE_BIT(16)
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME
 /// @brief PCI link speed downgrade state extension name
 #define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME "ZES_intel_experimental_pci_link_speed_downgrade_state"
@@ -115,6 +123,59 @@ ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME
+/// @brief Driver device rescan extension name
+#define ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME "ZES_intel_experimental_driver_rescan_devices"
+#endif // ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver device rescan extension Version(s)
+typedef enum _zes_intel_driver_rescan_devices_exp_version_t {
+    ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_rescan_devices_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Rescan devices after BDF changes
+///
+/// @details
+///     - This function scans for devices that may have changed their PCI BDF
+///       (Domain:Bus:Device:Function) address after events like device reset or hot-plug.
+///     - The driver will update internal cached BDF information for devices that moved.
+///     - Device handles remain valid after this call - applications do not need to re-enumerate.
+///     - This is a synchronous operation that may take several milliseconds.
+///     - The application must not call any other sysman telemetry or query APIs
+///       concurrently with this call. While the rescan is in progress the driver
+///       is updating its cached BDF-dependent state, so the device objects are in
+///       a transient/inconsistent state and any concurrent sysman API may return
+///       stale or incorrect data.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///         + One or more devices were unplugged and are no longer available
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCount`
+ze_result_t ZE_APICALL zesIntelDriverRescanDevicesExp(
+    zes_driver_handle_t hDriver,   ///< [in] handle of the driver instance
+    uint32_t *pCount,              ///< [in,out] pointer to the number of devices.
+                                   ///< if count is zero, then the driver shall update the value with the
+                                   ///< total number of devices available.
+                                   ///< if count is greater than the number of devices available, then the
+                                   ///< driver shall update the value with the correct number of devices available.
+    zes_device_handle_t *phDevices ///< [in,out][optional][range(0, *pCount)] array of handle of devices.
+                                   ///< if count is less than the number of devices available, then driver
+                                   ///< shall only retrieve that number of device handles.
+);
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME
 /// @brief Driver name property extension name
 #define ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME "ZES_intel_experimental_driver_name_property"
@@ -141,37 +202,29 @@ typedef struct _zes_intel_driver_name_exp_properties_t {
 } zes_intel_driver_name_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTY_NAME
-/// @brief OEM serial number property extension name
-#define ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTY_NAME "ZES_intel_experimental_oem_serial_number_property"
-#endif // ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTY_NAME
+#ifndef ZES_INTEL_DEVICE_INDEX_EXP_PROPERTY_NAME
+/// @brief Device index property extension name
+#define ZES_INTEL_DEVICE_INDEX_EXP_PROPERTY_NAME "ZES_intel_experimental_device_index_property"
+#endif // ZES_INTEL_DEVICE_INDEX_EXP_PROPERTY_NAME
 
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef ZES_INTEL_OEM_SERIAL_NUMBER_SIZE
-/// @brief Maximum OEM serial number string size
-#define ZES_INTEL_OEM_SERIAL_NUMBER_SIZE 1024
-#endif // ZES_INTEL_OEM_SERIAL_NUMBER_SIZE
+/// @brief Query device index extension Version(s)
+typedef enum _zes_intel_device_index_exp_properties_version_t {
+    ZES_INTEL_DEVICE_INDEX_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_INDEX_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_INDEX_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_index_exp_properties_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Query OEM serial number extension Version(s)
-typedef enum _zes_intel_oem_serial_number_exp_properties_version_t {
-    ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                      ///< version 1.0
-    ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES_VERSION_CURRENT = ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES_VERSION_1_0, ///< latest known version
-    ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
-} zes_intel_oem_serial_number_exp_properties_version_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Query OEM serial number.
+/// @brief Query the device index (GPU ID) of a device.
 /// This structure can be passed in the 'pNext' of zes_device_properties_t
-typedef struct _zes_intel_oem_serial_number_exp_properties_t {
-    zes_structure_type_ext_t stype;                         ///< [in] type of this structure
-    void *pNext;                                            ///< [in][optional] must be null or a pointer to an extension-specific
-                                                            ///< structure (i.e. contains stype and pNext).
-    uint16_t length;                                        ///< [out] actual OEM serial number length (not including null terminator)
-    char oemSerialNumber[ZES_INTEL_OEM_SERIAL_NUMBER_SIZE]; ///< [out] OEM serial number (NULL terminated string value). Will be
-                                                            ///< set to the string "unknown" if this cannot be determined for the
-                                                            ///< device.
-} zes_intel_oem_serial_number_exp_properties_t;
+typedef struct _zes_intel_device_index_exp_properties_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    uint32_t deviceIndex;           ///< [out] Index of the device in the driver's device enumeration. The
+                                    ///< first device enumerated reports 0, the second reports 1, and so on.
+} zes_intel_device_index_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME
@@ -322,41 +375,94 @@ typedef struct _zes_intel_device_state_pending_action_exp_t {
 } zes_intel_device_state_pending_action_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef ZES_INTEL_DEVICE_STATE_EXP_NAME
-/// @brief Device state extension name
-#define ZES_INTEL_DEVICE_STATE_EXP_NAME "ZES_intel_device_state_exp"
-#endif // ZES_INTEL_DEVICE_STATE_EXP_NAME
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Device state extension Version(s)
-typedef enum _zes_intel_device_state_exp_version_t {
-    ZES_INTEL_DEVICE_STATE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
-    ZES_INTEL_DEVICE_STATE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
-    ZES_INTEL_DEVICE_STATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-} zes_intel_device_state_exp_version_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Device state flags extension
-typedef uint32_t zes_intel_device_state_flags_exp_t;
-typedef enum _zes_intel_device_state_flag_exp_t {
-    ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED = ZE_BIT(0),         ///< The device is wedged
-    ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY = ZE_BIT(1),  ///< The device is in survivability mode
-    ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE = ZE_BIT(2), ///< The device has flash override enabled
-    ZES_INTEL_DEVICE_STATE_FLAG_EXP_FORCE_UINT32 = 0x7fffffff
-} zes_intel_device_state_flag_exp_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Extension to provide device state information
+/// @brief Intel experimental extension to the standard ::zes_device_state_ext_flag_t
 ///
 /// @details
-///     - This structure can be passed in the 'pNext' of zes_device_state_t
-///     - Provides extended device state information
-typedef struct _zes_intel_device_state_exp_t {
-    zes_structure_type_ext_t stype;           ///< [in] type of this structure
-    void *pNext;                              ///< [in][optional] must be null or a pointer to an extension-specific
-                                              ///< structure (i.e. contains stype and pNext).
-    zes_intel_device_state_flags_exp_t flags; ///< [out] Device state flags. Returns 0 (none) or a combination of ::zes_intel_device_state_flag_exp_t
-} zes_intel_device_state_exp_t;
+///     - These flags extend the standard device state flags (bits 0-3 defined by
+///       ::zes_device_state_ext_flag_t)
+#define ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST ZE_BIT(4)          ///< The GPU is lost: the device PCI path is inaccessible
+#define ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED ZE_BIT(5) ///< No kernel driver is bound to the device
+#define ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING ZE_BIT(6) ///< The device is about to be powered off. Use
+                                                                    ///< ::zesIntelDeviceGetPowerOffReasonExp() to read the reason.
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME
+/// @brief Device power off reason extension name
+#define ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME "ZES_intel_experimental_device_power_off_reason"
+#endif // ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device power off reason extension Version(s)
+typedef enum _zes_intel_device_power_off_reason_exp_version_t {
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_power_off_reason_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device power off reason flags
+///
+/// @details
+///     - These flags describe why the device is about to be powered off when
+///       ::ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING is set in
+///       ::zes_device_ext_state_t.flags
+///     - More than one flag may be set if the device is being powered off for
+///       multiple concurrent reasons
+typedef uint32_t zes_intel_device_power_off_reason_exp_flags_t;
+typedef enum _zes_intel_device_power_off_reason_exp_flag_t {
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FIRMWARE_DOWNLOAD = ZE_BIT(0),  ///< The device is being powered off for firmware download
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP = ZE_BIT(1),       ///< The device is being powered off due to a thermal trip
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_ALERT = ZE_BIT(2),          ///< The device is being powered off due to an out-of-band alert
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_RESET = ZE_BIT(3),          ///< The device is being powered off due to an out-of-band reset
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_CATASTROPHIC_ERROR = ZE_BIT(4), ///< The device is being powered off due to a catastrophic error
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_power_off_reason_exp_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device power off reason
+///
+/// @details
+///     - This structure is returned from ::zesIntelDeviceGetPowerOffReasonExp()
+typedef struct _zes_intel_device_power_off_reason_exp_t {
+    zes_structure_type_ext_t stype;                        ///< [in] type of this structure
+    const void *pNext;                                     ///< [in][optional] must be null or a pointer to an extension-specific
+                                                           ///< structure (i.e. contains stype and pNext).
+    zes_intel_device_power_off_reason_exp_flags_t reasons; ///< [out] Reasons the device is being powered off, as a combination of
+                                                           ///< ::zes_intel_device_power_off_reason_exp_flags_t.
+} zes_intel_device_power_off_reason_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get the reason(s) the device is about to be powered off
+///
+/// @details
+///     - This function is intended to be called when
+///       ::ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING is set in
+///       ::zes_device_ext_state_t.flags.
+///     - An error is returned, and `pReason->reasons` is left unmodified, when no
+///       power off is pending or the platform cannot attribute a cause.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + The platform is not reporting an alert reason.
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///         + The platform reported no reason, or a reason that is not recognized.
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The platform does not support reporting the reason a device is being powered off.
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + User does not have permissions to query the reason the device is being powered off.
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pReason`
+ze_result_t ZE_APICALL zesIntelDeviceGetPowerOffReasonExp(
+    zes_device_handle_t hDevice,                     ///< [in] Sysman handle of the device.
+    zes_intel_device_power_off_reason_exp_t *pReason ///< [in,out] Will contain the reason(s) the device is being powered off.
+);
 
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME
@@ -381,103 +487,6 @@ typedef struct _zes_intel_mem_page_offline_properties_exp_t {
                                     ///< Returns 0 if page offline is not supported.
 } zes_intel_mem_page_offline_properties_exp_t;
 
-#define ZES_INTEL_MEM_TYPE_LPDDR5X 500 ///< LPDDR5X Memory Type
-
-///////////////////////////////////////////////////////////////////////////////
-#ifndef ZES_INTEL_DEVICE_HEALTH_EXP_NAME
-/// @brief Device Health Extension Name
-#define ZES_INTEL_DEVICE_HEALTH_EXP_NAME "ZES_intel_experimental_device_health"
-#endif // ZES_INTEL_DEVICE_HEALTH_EXP_NAME
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Device Health Extension Version(s)
-typedef enum _zes_intel_device_health_exp_version_t {
-    ZES_INTEL_DEVICE_HEALTH_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
-    ZES_INTEL_DEVICE_HEALTH_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
-    ZES_INTEL_DEVICE_HEALTH_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-} zes_intel_device_health_exp_version_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Device health status
-///
-/// @details
-///     - Device health represents a comprehensive assessment of a device's
-///       reliability and expected performance in upcoming operations.
-///     - The health indicator is stored in non-volatile memory (NVM) and
-///       persists across resets and firmware updates.
-typedef enum _zes_intel_device_health_status_exp_t {
-    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK = 0,       ///< No impending issues that indicate the device will fail or have an issue
-                                                     ///< imminently. This does not mean that in the past everything has been ok,
-                                                     ///< but rather that currently there is no indication of an issue.
-    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING = 1,  ///< Some heuristic has determined that there may or may not be an issue in
-                                                     ///< the device. It is still currently functioning properly but should probably
-                                                     ///< be taken offline eventually to run diagnostics.
-    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL = 2, ///< The device is either not functioning correctly anymore, or has a high
-                                                     ///< statistical likelihood to fail again in the near future. It is advisable
-                                                     ///< to not use the device until the proper level of maintenance and
-                                                     ///< diagnostics may be applied.
-    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED = 3,   ///< Permanent non-recoverable failure; FRU replacement required.
-    ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32 = 0x7fffffff
-} zes_intel_device_health_status_exp_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Get device health status
-///
-/// @details
-///     - This function retrieves the current health status of the device.
-///     - The health status is stored in non-volatile memory and persists across resets and updates.
-///     - The health indicator serves purely as telemetry without downstream functional effects.
-///     - The application may call this function from simultaneous threads.
-///     - The implementation of this function should be lock-free.
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_DEVICE_LOST
-///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
-///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
-///     - ::ZE_RESULT_ERROR_UNKNOWN
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hDevice`
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `nullptr == pHealth`
-ze_result_t ZE_APICALL zesIntelDeviceGetHealthExp(
-    zes_device_handle_t hDevice,                  ///< [in] Sysman handle of the device.
-    zes_intel_device_health_status_exp_t *pHealth ///< [out] Current health status of the device.
-);
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Set device health status
-///
-/// @details
-///     - This function sets the health status of the device.
-///     - The health status is persisted to non-volatile memory.
-///     - Setting health status requires appropriate permissions.
-///     - The application should not call this function from simultaneous threads.
-///     - The implementation of this function should be lock-free.
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_DEVICE_LOST
-///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
-///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
-///     - ::ZE_RESULT_ERROR_UNKNOWN
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hDevice`
-///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
-///         + `health` is not a recognized ::zes_intel_device_health_status_exp_t value.
-///         + `pReason != nullptr` and `strlen(pReason) > 256`.
-///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
-///         + User does not have permissions to set health status.
-ze_result_t ZE_APICALL zesIntelDeviceSetHealthExp(
-    zes_device_handle_t hDevice,                 ///< [in] Sysman handle of the device.
-    zes_intel_device_health_status_exp_t health, ///< [in] New health status to be set for the device.
-    const char *pReason,                         ///< [in][optional] Reason string (max 256 chars) printed to dmesg.
-    const uint32_t authTokenLength,              ///< [in] Length of pAuthToken in bytes; ignored when pAuthToken is nullptr.
-    const char *pAuthToken                       ///< [in][optional] Authorization token passed through to firmware.
-);
-
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME
 /// @brief Driver info logs extension name
@@ -487,14 +496,19 @@ ze_result_t ZE_APICALL zesIntelDeviceSetHealthExp(
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Driver info logs extension Version(s)
 typedef enum _zes_intel_driver_info_logs_exp_version_t {
-    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                          ///< version 1.0
-    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                          ///< version 1.0, no longer implemented
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0 = ZE_MAKE_VERSION(2, 0),                          ///< version 2.0, collection instances. Not backward compatible with version 1.0.
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0, ///< latest known version
     ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_driver_info_logs_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Handle to an info log instance
 typedef struct _zes_intel_info_log_handle_t *zes_intel_info_log_handle_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Handle to an info log collection instance
+typedef struct _zes_intel_info_log_instance_handle_t *zes_intel_info_log_instance_handle_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Get handles for Info Logs
@@ -543,16 +557,86 @@ typedef enum _zes_intel_info_log_format_exp_t {
 } zes_intel_info_log_format_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Info log record types
+///
+/// @details
+///     - The numeric values do not express an order of severity and must not be compared for magnitude.
+///     - A value the application does not recognize must be treated as
+///       ::ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN.
+typedef enum _zes_intel_info_log_record_type_exp_t {
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN = 0,           ///< The type of the record could not be determined.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_INFORMATIONAL = 1,     ///< The record does not report an error.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_CORRECTED = 2,   ///< The error was corrected by the device.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE = 3, ///< The error was not corrected and is not fatal.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_FATAL = 4,       ///< The error was not corrected and is fatal.
+    ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_FORCE_UINT32 = 0x7fffffff
+} zes_intel_info_log_record_type_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Info log properties structure
 typedef struct _zes_intel_info_log_properties_exp_t {
     zes_structure_type_ext_t stype;                ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP
     void *pNext;                                   ///< [in,out][optional] pointer to extension-specific structure
     zes_intel_info_log_type_exp_t infoLogType;     ///< [out] Type of the info log
     zes_intel_info_log_format_exp_t infoLogFormat; ///< [out] Format of the info log.
-    uint32_t maxSize;                              ///< [out] Maximum size of the info log in bytes. This is the maximum size
-                                                   ///< of the buffer that can be allocated to read the info log. The application should not
-                                                   ///< allocate a buffer larger than this size.
+    ze_bool_t isNamedInstancedCollectionSupported; ///< [out] true if this info log supports named collection instances, i.e.
+                                                   ///< ::zesIntelInfoLogCreateInstanceExp accepts a non-null pInstanceName.
+    ze_bool_t isPeekSupported;                     ///< [out] true if records can be read without being consumed, i.e.
+                                                   ///< ::zesIntelInfoLogInstancePeekWithMetadataExp is supported
 } zes_intel_info_log_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Info log collection instance descriptor
+///
+/// @details
+///     - Each member is optional. A nullptr member means "use the driver default".
+///     - On input a non-null member points to the requested value; on output the driver updates the
+///       pointed to value with the value which was actually applied, which may be rounded.
+typedef struct _zes_intel_info_log_instance_exp_desc_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC
+    void *pNext;                    ///< [in,out][optional] pointer to extension-specific structure
+    uint32_t *pBufferSize;          ///< [in,out][optional] pointer to the total size, in kilobytes, of the collection
+                                    ///< buffer of the instance, aggregated across all of its per-CPU buffers. On input
+                                    ///< the requested total size, which the driver splits evenly across the per-CPU
+                                    ///< buffers; zero keeps the current size. On output the total size which was
+                                    ///< actually applied, which may be rounded up, or zero if it could not be
+                                    ///< determined.
+} zes_intel_info_log_instance_exp_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Status of a read from an info log collection instance
+typedef struct _zes_intel_info_log_read_status_exp_t {
+    zes_structure_type_ext_t stype;      ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP
+    void *pNext;                         ///< [in,out][optional] pointer to extension-specific structure
+    uint32_t droppedRecordCount;         ///< [out] Number of records dropped because the collection buffer overflowed, since
+                                         ///< the previous read or peek on this instance. Reported as 0 when
+                                         ///< isDroppedRecordCountValid is false.
+    ze_bool_t isDroppedRecordCountValid; ///< [out] true when the driver could read every dropped record counter of this
+                                         ///< instance, so droppedRecordCount is the complete count for the interval. false when
+                                         ///< the driver could not determine the count: records may still have been dropped, and
+                                         ///< a count the driver could not report is reported by a later call which can read the
+                                         ///< counters.
+    ze_bool_t hasDataToRead;             ///< [out] true when the collection instance holds records this call did not return,
+                                         ///< for example because timeout elapsed or because pBuffer or pDescriptors was too
+                                         ///< small. This value is a hint, and is only meaningful when the call returned
+                                         ///< ::ZE_RESULT_SUCCESS; a failed call reports the reason through its return value.
+} zes_intel_info_log_read_status_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Per-record metadata returned when reading or peeking info log records
+typedef struct _zes_intel_info_log_metadata_exp {
+    zes_structure_type_ext_t stype;                  ///< [in] must be ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_METADATA_EXP
+    void *pNext;                                     ///< [in,out][optional]
+    zes_pci_address_t address;                       ///< [out] Device BDF (domain:bus:device.function)
+    zes_uuid_t uuid;                                 ///< [out] Device UUID (fru_id from trace event)
+    uint64_t timestamp;                              ///< [out] Event timestamp in nanoseconds. The reference point is implementation
+                                                     ///< specific and only consistent across records of the same info log.
+    uint32_t lengthOfData;                           ///< [out] CPER record byte length
+    uint32_t offset;                                 ///< [out] Byte offset of this record in pBuffer
+    zes_intel_info_log_record_type_exp_t recordType; ///< [out] Type of the information reported by the record, derived from the
+                                                     ///< severity it was reported with. ::ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN
+                                                     ///< means the severity was not known.
+} zes_intel_info_log_metadata_exp;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Get Info Log Properties
@@ -578,57 +662,317 @@ ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Read Info Log
+/// @brief Create a collection instance for an info log
 ///
 /// @details
-///     - This function reads the info log content for the supplied info log handle.
-///     - If `*pSize` is 0, the API returns the required buffer size in bytes.
-///     - If `*pSize` is non-zero, the API reads the info log into `pBuffer`.
-///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///     - Creating a collection instance starts the collection of records into a buffer owned by
+///       that instance. Collection continues until the instance is deleted with
+///       ::zesIntelInfoLogInstanceDeleteExp.
+///     - A named collection instance collects into a buffer which is not shared with other
+///       collection instances, and requires
+///       zes_intel_info_log_properties_exp_t.isNamedInstancedCollectionSupported.
+///     - A given name may only be collected from by one collection instance at a time, across all
+///       processes: while one instance holds a name, creating another instance with that name
+///       returns ::ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE. The name is released when the owning
+///       instance is deleted, or when the process owning it exits.
+///     - A named buffer which already exists but is not held by any collection instance, for
+///       example one provisioned outside of this driver, is collected from rather than rejected, and
+///       is left in place when the collection instance is deleted.
+///     - When pInstanceName is nullptr the records are collected from the default buffer, which may
+///       be shared with other consumers and may carry data from other sources.
+///     - A non-null pInstanceName must be a null terminated string. Names are compared and matched
+///       as byte sequences, so two different names never denote the same buffer.
+///     - The application must not call this function from simultaneous threads.
+///     - The application must pass a valid hInfoLog, a non-null pDesc whose stype is
+///       ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC, and a non-null phInfoLogInstance.
+///       The behaviour is undefined otherwise.
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_DEVICE_LOST
 ///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + `nullptr != pInstanceName` and named collection instances are not supported
+///     - ::ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE
+///         + a collection instance with the same name already exists, in this or in another process
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + the caller may not claim the named buffer
 ///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + the named buffer could not be located
 ///     - ::ZE_RESULT_ERROR_UNKNOWN
-///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
-///         + `*pSize` is less than required to hold the info log data.
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hInfoLog`
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `nullptr == pSize`
-ze_result_t ZE_APICALL zesIntelInfoLogReadExp(
-    zes_intel_info_log_handle_t hInfoLog, ///< [in] handle of the info log
-    uint32_t *pSize,                      ///< [in,out] size of info log data in bytes. The application should set this value < zes_intel_info_log_properties_exp_t.maxSize
-                                          ///< The API returns the size of info log data in bytes which can be <= zes_intel_info_log_properties_exp_t.maxSize
-    uint8_t *pBuffer                      ///< [in,out][optional][range(0, *pSize)] buffer to hold info log data.
+///         + the collection instance could not be created or configured
+ze_result_t ZE_APICALL zesIntelInfoLogCreateInstanceExp(
+    zes_intel_info_log_handle_t hInfoLog,                   ///< [in] handle of the info log
+    const char *pInstanceName,                              ///< [in][optional] name of the collection instance to create.
+                                                            ///< nullptr uses the default buffer of the info log.
+    zes_intel_info_log_instance_exp_desc_t *pDesc,          ///< [in,out] descriptor of the collection instance to create
+    zes_intel_info_log_instance_handle_t *phInfoLogInstance ///< [out] handle of the collection instance which was created
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Enable Tracefs Event
+/// @brief Read collected info log records and their metadata
 ///
 /// @details
-///     - This function enables an info log event for the supplied driver.
-///     - The event "xe_error_cper" can be enabled via this API to trace CPER error events.
-///     - This API is NOT thread-safe. It must be called from a single thread or process.
+///     - A call in which `*pSize` is zero or `*pRecordCount` is zero on input is a query call. A
+///       query call reports the total size in bytes of the record data and the total number of
+///       records found, writes to neither pBuffer nor pDescriptors, and consumes nothing. pBuffer
+///       and pDescriptors may be nullptr on a query call.
+///     - Records are consumed as they are returned, a record returned by one call is not returned
+///       again.
+///     - `timeout` bounds the search of the data held by the collection instance. This driver never
+///       waits for records to arrive: it stops as soon as the data currently held by the instance
+///       has been searched, even when the timeout has not elapsed.
+///     - The application must initialize the stype member of every pDescriptors element and of
+///       pReadStatus.
+///     - The application must not call this function from simultaneous threads, and must not call it
+///       simultaneously with ::zesIntelInfoLogInstancePeekWithMetadataExp on the same handle.
+///     - The application must pass a valid hInfoLogInstance, a non-null pSize and a non-null
+///       pRecordCount, and must pass a non-null pBuffer and pDescriptors whenever `*pSize` and
+///       `*pRecordCount` are both non-zero. The behaviour is undefined otherwise.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///         + a record which did not fit in the remaining space of pBuffer is not consumed and is
+///           returned by the next call.
+///           zes_intel_info_log_read_status_exp_t.hasDataToRead reports that records remain.
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///         + the collection data could not be read
+ze_result_t ZE_APICALL zesIntelInfoLogInstanceReadWithMetadataExp(
+    zes_intel_info_log_instance_handle_t hInfoLogInstance, ///< [in] handle of the info log collection instance
+    uint64_t timeout,                                      ///< [in] maximum time, in milliseconds, spent searching for records.
+                                                           ///< 0 returns immediately without searching, UINT64_MAX searches all
+                                                           ///< the data held by the instance.
+    uint32_t *pSize,                                       ///< [in,out] on input, size of pBuffer in bytes. On output, bytes written,
+                                                           ///< or total bytes found on a query call.
+    uint8_t *pBuffer,                                      ///< [in,out][optional][range(0, *pSize)] destination for the record data
+    uint32_t *pRecordCount,                                ///< [in,out] on input, number of elements in pDescriptors. On output,
+                                                           ///< records written, or total records found on a query call.
+    zes_intel_info_log_metadata_exp *pDescriptors,         ///< [in,out][optional][range(0, *pRecordCount)] per-record metadata
+    zes_intel_info_log_read_status_exp_t *pReadStatus      ///< [in,out][optional] status of this call
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Read collected info log records and their metadata without consuming them
+///
+/// @details
+///     - Equivalent to ::zesIntelInfoLogInstanceReadWithMetadataExp except that the records
+///       returned are not consumed and remain available to subsequent calls to either function.
+///     - Only supported when zes_intel_info_log_properties_exp_t.isPeekSupported is true.
+///     - A record which a previous read left partially buffered is not visible to this function.
+///     - The same argument requirements as ::zesIntelInfoLogInstanceReadWithMetadataExp apply.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + peek is not supported for this info log
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+ze_result_t ZE_APICALL zesIntelInfoLogInstancePeekWithMetadataExp(
+    zes_intel_info_log_instance_handle_t hInfoLogInstance, ///< [in] handle of the info log collection instance
+    uint64_t timeout,                                      ///< [in] maximum time, in milliseconds, spent searching for records
+    uint32_t *pSize,                                       ///< [in,out] size of pBuffer in bytes in, bytes found out
+    uint8_t *pBuffer,                                      ///< [in,out][optional][range(0, *pSize)] destination for the record data
+    uint32_t *pRecordCount,                                ///< [in,out] elements in pDescriptors in, records found out
+    zes_intel_info_log_metadata_exp *pDescriptors,         ///< [in,out][optional][range(0, *pRecordCount)] per-record metadata
+    zes_intel_info_log_read_status_exp_t *pReadStatus      ///< [in,out][optional] status of this call
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Delete a collection instance of an info log
+///
+/// @details
+///     - Stops collection into the instance and releases the resources it allocated.
+///     - The application must ensure that no other function is using the handle when calling this
+///       function, must not call it from simultaneous threads with the same handle, and must not
+///       call it twice with the same handle. The behaviour is undefined otherwise.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///         + the collection instance could not be fully torn down
+ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(
+    zes_intel_info_log_instance_handle_t hInfoLogInstance ///< [in][release] handle of the collection instance to delete
+);
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_EVENT_EXP_NAME
+/// @brief Driver scoped event extension name
+#define ZES_INTEL_DRIVER_EVENT_EXP_NAME "ZES_intel_experimental_driver_event"
+#endif // ZES_INTEL_DRIVER_EVENT_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver scoped event extension Version(s)
+typedef enum _zes_intel_driver_event_exp_version_t {
+    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                      ///< version 1.0
+    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_event_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver Scoped CPER Data Available Event
+#define ZES_INTEL_CPER_DATA_AVAILABLE ZE_BIT(16)
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Register driver scoped events to be notified about
+///
+/// @details
+///     - This function registers the driver scoped events the application wants to
+///       be notified about. Unlike ::zesDeviceEventRegister the registration is not
+///       tied to a device: the underlying data source is shared by all devices of
+///       the driver.
+///     - Only the Intel experimental driver scoped event flags are accepted, i.e.
+///       ::ZES_INTEL_CPER_DATA_AVAILABLE. Standard ::zes_event_type_flag_t values
+///       must be registered per device with ::zesDeviceEventRegister.
+///     - Unlike ::zesDeviceEventRegister, which adds to the events already registered
+///       for a device, this function replaces the set of registered driver scoped
+///       events. Calling it with `events` set to 0 therefore clears all previously
+///       registered driver scoped events.
+///     - Registered events are reported only by ::zesIntelDriverEventListenExp, in its
+///       `pDriverEvents` argument. As the events are driver scoped they have no device
+///       handle to be reported against, so ::zesDriverEventListen and
+///       ::zesDriverEventListenEx never report them.
+///     - Calling this function while another thread is blocked in a listen call updates
+///       that call, so an event registered after a listen has started can still be
+///       reported by it.
+///     - ::ZES_INTEL_CPER_DATA_AVAILABLE requires at least one info log collection
+///       instance to have been created with ::zesIntelInfoLogCreateInstanceExp *before*
+///       the listen call is made. It is reported when any live collection instance has
+///       data pending. The data itself is left in place and must be retrieved with
+///       ::zesIntelInfoLogInstanceReadWithMetadataExp.
+///     - The application may call this function from simultaneous threads. However,
+///       listening for ::ZES_INTEL_CPER_DATA_AVAILABLE must be serialized with
+///       ::zesIntelInfoLogInstanceReadWithMetadataExp on a single thread, as both
+///       operate on the same underlying trace buffer reader.
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_UNINITIALIZED
 ///     - ::ZE_RESULT_ERROR_DEVICE_LOST
 ///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
-///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
 ///     - ::ZE_RESULT_ERROR_UNKNOWN
-///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
-///         + User does not have permissions to enable tracefs events.
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hInfoLog`
-ze_result_t ZE_APICALL zesIntelInfoLogEnableExp(
-    zes_intel_info_log_handle_t hInfoLog, ///< [in] handle of the info log
-    bool state                            ///< [in] state of the info log. If state == true, info log collection is enabled,
-                                          ///< else info log collection is disabled.
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `events` contains a flag which is not a driver scoped event
+ze_result_t ZE_APICALL zesIntelDriverEventRegisterExp(
+    zes_driver_handle_t hDriver,  ///< [in] handle of the driver instance
+    zes_event_type_flags_t events ///< [in] list of driver scoped events to listen to. Must be 0 or a combination
+                                  ///< of the Intel experimental driver scoped event flags.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Listen for device scoped and driver scoped events
+///
+/// @details
+///     - This function extends ::zesDriverEventListenEx with the ability to report the
+///       driver scoped events registered with ::zesIntelDriverEventRegisterExp.
+///     - The `hDriver`, `timeout`, `count`, `phDevices`, `pNumDeviceEvents` and `pEvents`
+///       arguments behave exactly as in ::zesDriverEventListenEx: `pEvents` holds `count`
+///       entries, one per device handle, and `*pNumDeviceEvents` is an output only value.
+///     - `pDriverEvents` is optional. When it is `nullptr` this function behaves exactly
+///       like ::zesDriverEventListenEx and no driver scoped event source is listened to.
+///     - When `pDriverEvents` is not `nullptr` it is cleared on entry and, on return,
+///       contains the driver scoped events which occurred, i.e. 0 or a combination of the
+///       Intel experimental driver scoped event flags.
+///     - `*pNumDeviceEvents` accounts for device scoped events only and, as in
+///       ::zesDriverEventListenEx, is set to 1 when one or more device scoped events occurred,
+///       irrespective of the number of device handles they occurred for. It is not a count of
+///       the device handles which had events, so the application must scan `pEvents` to find
+///       them. A driver scoped event which occurs without any device scoped event therefore
+///       returns `*pNumDeviceEvents` set to 0 and `*pDriverEvents` set to the events which
+///       occurred, so an application must check both values.
+///     - ::ZES_INTEL_CPER_DATA_AVAILABLE requires at least one info log collection instance to
+///       have been created with ::zesIntelInfoLogCreateInstanceExp *before* this call is made.
+///       The data itself is left in place and must be retrieved with
+///       ::zesIntelInfoLogInstanceReadWithMetadataExp.
+///     - The application should not call this function from simultaneous threads with the
+///       same driver handle.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pNumDeviceEvents`
+///         + `nullptr == pEvents`
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + one of the handles in `phDevices` is not a valid device handle
+ze_result_t ZE_APICALL zesIntelDriverEventListenExp(
+    zes_driver_handle_t hDriver,          ///< [in] handle of the driver instance
+    uint64_t timeout,                     ///< [in] if non-zero, then indicates the maximum time (in milliseconds) to
+                                          ///< yield before returning ::ZE_RESULT_SUCCESS or ::ZE_RESULT_NOT_READY;
+                                          ///< if zero, then will check status and return immediately;
+                                          ///< if `UINT64_MAX`, then function will not return until events arrive.
+    uint32_t count,                       ///< [in] Number of device handles in phDevices.
+    zes_device_handle_t *phDevices,       ///< [in][range(0, count)] Device handles to listen to for events. Only
+                                          ///< devices from the provided driver handle can be specified in this list.
+    uint32_t *pNumDeviceEvents,           ///< [out] Set to 1 if one or more device scoped events occurred for any of
+                                          ///< the device handles in `phDevices`, 0 otherwise. Not a count of the
+                                          ///< device handles which had events, `pEvents` must be scanned to find them.
+    zes_event_type_flags_t *pEvents,      ///< [in,out][range(0, count)] Returns events that occurred for each device
+                                          ///< handle, in the same order as `phDevices`.
+    zes_event_type_flags_t *pDriverEvents ///< [in,out][optional] Returns the driver scoped events which occurred, i.e.
+                                          ///< 0 or a combination of the Intel experimental driver scoped event flags.
+                                          ///< When `nullptr`, driver scoped events are not listened to.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME
+/// @brief Driver properties extension name
+#define ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME "ZES_intel_experimental_driver_properties"
+#endif // ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver properties extension Version(s)
+typedef enum _zes_intel_driver_properties_exp_version_t {
+    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                           ///< version 1.0
+    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_properties_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver properties structure
+typedef struct _zes_intel_driver_properties_exp_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP
+    void *pNext;                    ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    zes_uuid_t uuid;                ///< [out] universal unique identifier of the driver instance.
+    uint32_t driverVersion;         ///< [out] sysman driver version
+                                    ///< The driver version is a monotonically increasing value where higher
+                                    ///< values always indicate a more recent version. It is an opaque value
+                                    ///< and must not be interpreted as a packed major/minor/patch triple.
+                                    ///< A value of 0 means that this version could not be retrieved.
+} zes_intel_driver_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get driver properties
+///
+/// @details
+///     - This function retrieves the properties of the sysman driver instance.
+///     - The properties are driver scoped, they do not describe any single device of
+///       the driver.
+///     - The application must initialize the stype member of pProperties.
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pProperties`
+ze_result_t ZE_APICALL zesIntelDriverGetPropertiesExp(
+    zes_driver_handle_t hDriver,                   ///< [in] handle of the driver instance
+    zes_intel_driver_properties_exp_t *pProperties ///< [in,out] pointer to the driver properties
 );
 
 #if defined(__cplusplus)

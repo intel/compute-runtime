@@ -12,7 +12,7 @@
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -492,6 +492,93 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeDifferentThantObjectOrFuncWhenDeco
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
     EXPECT_TRUE(linkerInput.isValid());
     EXPECT_EQ(0U, linkerInput.getSymbols().size());
+}
+
+TEST(LinkerInputTests, GivenInstructionRelocationAgainstLocalDataSymbolWhenDecodingElfThenSymbolIsNotRecordedAsExternalFunctionDependency) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.kernel";
+    sectionNames[1] = ".data.const";
+    elf64.setupSectionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 1, Elf::STT_OBJECT, Elf::STB_LOCAL);
+    elf64.addReloc(0x10, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"kernel", 0}};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    EXPECT_TRUE(linkerInput.isValid());
+    EXPECT_TRUE(linkerInput.getKernelDependencies().empty());
+}
+
+TEST(LinkerInputTests, GivenInstructionRelocationsAgainstBothLocalDataSymbolAndGlobalExternalFunctionWhenDecodingElfThenOnlyTheFunctionIsRecordedAsKernelDependency) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.kernel";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = Zebin::Elf::SectionNames::externalFunctions.str();
+    elf64.setupSectionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 1, Elf::STT_OBJECT, Elf::STB_LOCAL);
+    elf64.addSymbol(1, 0, 16, 2, Elf::STT_FUNC, Elf::STB_GLOBAL);
+
+    elf64.addReloc(0x10, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+    elf64.addReloc(0x20, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 1, "1");
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {
+        {"kernel", 0}, {Zebin::Elf::SectionNames::externalFunctions.str(), 2}};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    EXPECT_TRUE(linkerInput.isValid());
+    ASSERT_EQ(1u, linkerInput.getKernelDependencies().size());
+    EXPECT_EQ("1", linkerInput.getKernelDependencies()[0].usedFuncName);
+}
+
+TEST(LinkerInputTests, GivenKernelRelocatingAgainstLocalDataSymbolAndGlobalExternalFunctionWhenResolvingExternalFunctionsThenResolutionSucceeds) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.kernel";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = NEO::Zebin::Elf::SectionNames::externalFunctions.str();
+    elf64.setupSectionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 1, NEO::Elf::STT_OBJECT, NEO::Elf::STB_LOCAL);
+    elf64.addSymbol(1, 0, 16, 2, NEO::Elf::STT_FUNC, NEO::Elf::STB_GLOBAL);
+    elf64.addReloc(0x10, 0, NEO::Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+    elf64.addReloc(0x20, 0, NEO::Zebin::Elf::R_ZE_SYM_ADDR, 0, 1, "1");
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {
+        {"kernel", 0}, {NEO::Zebin::Elf::SectionNames::externalFunctions.str(), 2}};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    ASSERT_TRUE(linkerInput.isValid());
+
+    NEO::ExternalFunctionInfo externalFunction;
+    externalFunction.functionName = "1";
+    NEO::ExternalFunctionInfosT externalFunctions = {&externalFunction};
+
+    NEO::KernelDependenciesT kernelDependencies;
+    for (const auto &dep : linkerInput.getKernelDependencies()) {
+        kernelDependencies.push_back(&dep);
+    }
+    NEO::FunctionDependenciesT functionDependencies;
+    for (const auto &dep : linkerInput.getFunctionDependencies()) {
+        functionDependencies.push_back(&dep);
+    }
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelMetadata.kernelName = "kernel";
+    NEO::KernelDescriptorMapT nameToKernelDescriptor = {{"kernel", &kernelDescriptor}};
+
+    auto result = NEO::resolveExternalDependencies(externalFunctions, kernelDependencies, functionDependencies, nameToKernelDescriptor);
+    EXPECT_EQ(NEO::RESOLVE_SUCCESS, result);
 }
 
 TEST(LinkerInputTests, GivenGlobalSymbolPointingToSectionDifferentThanInstructionsOrDataWhenDecodingElfThenItIsIgnoredAndAddedToExternalSymbols) {
@@ -1257,7 +1344,7 @@ HWTEST_F(LinkerTests, givenSurfaceStateSizeSymbolInUnresolvedExternalSymbolsWhen
 
     uint32_t patchedValue = 0u;
     memcpy_s(&patchedValue, sizeof(patchedValue), instructionSegment.data() + relocationOffset, sizeof(patchedValue));
-    EXPECT_EQ(static_cast<uint32_t>(pDevice->getGfxCoreHelper().getRenderSurfaceStateSize()), patchedValue);
+    EXPECT_EQ(static_cast<uint32_t>(pDevice->getGfxCoreHelper().getBindlessSurfaceStateSlotSize()), patchedValue);
 }
 
 HWTEST_F(LinkerTests, givenUnresolvedExternalWhenPatchingInstructionsThenLinkPartially) {
@@ -2593,7 +2680,7 @@ TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsOrRequiredImplicitArg
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
-TEST_F(LinkerTests, givenSurfaceStateSizeRelocationWhenLinkingThenPatchRelocationWithRenderSurfaceStateSize) {
+TEST_F(LinkerTests, givenSurfaceStateSizeRelocationWhenLinkingThenPatchRelocationWithBindlessSlotStride) {
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
@@ -2637,12 +2724,12 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationWhenLinkingThenPatchRelocatio
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getRenderSurfaceStateSize(), *addressToPatch);
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getBindlessSurfaceStateSlotSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
 }
 
-TEST_F(LinkerTests, givenSurfaceStateSizeRelocationInElfWhenDecodingAndLinkingThenPatchRelocationWithRenderSurfaceStateSize) {
+TEST_F(LinkerTests, givenSurfaceStateSizeRelocationInElfWhenDecodingAndLinkingThenPatchRelocationWithBindlessSlotStride) {
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
     elf64.overrideSymbolName = true;
 
@@ -2695,7 +2782,7 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationInElfWhenDecodingAndLinkingTh
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + 8);
-    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getRenderSurfaceStateSize(), *addressToPatch);
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getBindlessSurfaceStateSlotSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
 }
@@ -2746,10 +2833,10 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationWith64BitTypeWhenLinkingThenP
     auto addressToPatch = (instructionSegment.data() + reloc.r_offset);
     uint64_t patchedValue = 0;
     memcpy_s(&patchedValue, sizeof(patchedValue), addressToPatch, sizeof(patchedValue));
-    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getRenderSurfaceStateSize(), patchedValue);
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getBindlessSurfaceStateSlotSize(), patchedValue);
 }
 
-TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsupportedWhenLinkingThenPatchRelocationWithRenderSurfaceStateSize) {
+TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsupportedWhenLinkingThenPatchRelocationWithBindlessSlotStride) {
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
@@ -2777,11 +2864,9 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsuppo
     KernelDescriptor kernelDescriptor;
     kernelDescriptors.push_back(&kernelDescriptor);
 
-    MockReleaseHelper mockReleaseHelper;
-    mockReleaseHelper.isReducedSurfaceStateSupportedResult = false;
-
     UltDeviceFactory deviceFactory{1, 0};
-    deviceFactory.rootDevices[0]->mockReleaseHelper = &mockReleaseHelper;
+    auto &hwInfo = *deviceFactory.rootDevices[0]->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.reducedSurfaceStateSupported = false;
 
     std::vector<char> instructionSegment;
     uint32_t initData = 0x77777777;
@@ -2797,7 +2882,7 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsuppo
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getRenderSurfaceStateSize(), *addressToPatch);
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getGfxCoreHelper().getBindlessSurfaceStateSlotSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
 }

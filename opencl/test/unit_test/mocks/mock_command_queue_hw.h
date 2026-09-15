@@ -267,6 +267,11 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return CommandQueue::isCompleted(gpgpuTaskCount, bcsStates);
     }
 
+    void takeOwnership() const override {
+        BaseClass::takeOwnership();
+        takeOwnershipCalls++;
+    }
+
     cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
         enqueueMarkerWithWaitListCalledCount++;
         return BaseClass::enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
@@ -303,6 +308,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     size_t finishCalledCount = 0;
     std::atomic<TaskCountType> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
     std::atomic<uint32_t> isCompletedCalled = 0;
+    mutable std::atomic<uint32_t> takeOwnershipCalls = 0;
     unsigned int lastCommandType;
     int setQueueBlocked = -1;
     int forceGpgpuSubmissionForBcsRequired = -1;

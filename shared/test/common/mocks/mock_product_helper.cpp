@@ -13,7 +13,7 @@
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "aubstream/stepping_values.h"
 
@@ -78,11 +78,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::overrideGfxPartitionLayoutForWsl() const {
 
 template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    return 0;
-}
-
-template <>
-uint64_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const {
     return 0;
 }
 
@@ -215,21 +210,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isCopyBufferRectSplitSupported() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isAdditionalMediaSamplerProgrammingRequired() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isInitialFlagsProgrammingRequired() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -307,10 +287,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const
 template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isVmBindDecompressionProbeAllowed(const HardwareInfo &hwInfo) const {
     return false;
-}
-
-template <>
-void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {
 }
 
 template <>

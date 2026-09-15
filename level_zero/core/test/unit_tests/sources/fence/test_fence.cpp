@@ -15,6 +15,8 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -475,5 +477,57 @@ HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroT
     delete fence;
     commandQueue->destroy();
 }
+
+HWTEST_F(FenceTest, givenFenceCreatedFromSingleCommandQueueWhenExecutedOnAnotherQueueThenExpectSynchronizationObjectError) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto otherCommandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                               device,
+                                                               neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                               &desc,
+                                                               false,
+                                                               false,
+                                                               false,
+                                                               returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto cmdList = whiteboxCast(CommandList::create(productFamily,
+                                                    device,
+                                                    NEO::EngineGroupType::compute,
+                                                    0u,
+                                                    returnValue,
+                                                    false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    cmdList->close();
+    auto cmdListHandle = cmdList->toHandle();
+
+    ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,
+                                 nullptr,
+                                 0};
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
+    auto fenceHandle = fence->toHandle();
+
+    CommandListExecutionInternalOptions internalOptions = {};
+
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, fenceHandle, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = otherCommandQueue->executeCommandLists(1, &cmdListHandle, fenceHandle, internalOptions);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT, returnValue);
+
+    cmdList->destroy();
+    fence->destroy();
+    commandQueue->destroy();
+    otherCommandQueue->destroy();
+}
+
 } // namespace ult
 } // namespace L0

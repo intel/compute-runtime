@@ -41,7 +41,8 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
@@ -111,7 +112,10 @@ bool tryGetTagNodeChunkOffsetInAllocation(const TagNodeBase &tagNode, const Grap
 CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                              uint32_t rootDeviceIndex,
                                              const DeviceBitfield deviceBitfield)
-    : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex), deviceBitfield(deviceBitfield) {
+    : executionEnvironment(executionEnvironment),
+      debugConfirmationFunction([]() { std::cin.get(); }),
+      rootDeviceIndex(rootDeviceIndex),
+      deviceBitfield(deviceBitfield) {
     residencyAllocations.reserve(startingResidencyContainerSize);
 
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
@@ -276,7 +280,7 @@ WaitStatus CommandStreamReceiver::waitForTaskCount(TaskCountType requiredTaskCou
     auto address = getTagAddress();
     if (!skipResourceCleanup() && address) {
         this->downloadTagAllocation(requiredTaskCount);
-        return baseWaitFunction(address, WaitParams{false, false, false, 0}, requiredTaskCount); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall) - when DRMCSR, resolves to DrmCommandStreamReceiver::baseWaitFunction, which is correct
+        return baseWaitFunction(address, WaitParams{false, false, false, 0}, requiredTaskCount);
     }
 
     return WaitStatus::ready;
@@ -791,10 +795,6 @@ bool CommandStreamReceiver::isTlbFlushRequiredForStateCacheFlush() {
 }
 
 void CommandStreamReceiver::downloadAllocation(GraphicsAllocation &gfxAllocation) {
-    if (!GraphicsAllocation::isSuitableForDownload(gfxAllocation.getAllocationType()) &&
-        !debugManager.flags.TbxDownloadAllAllocations.get()) {
-        return;
-    }
     if (this->downloadAllocationImpl) {
         this->downloadAllocationImpl(gfxAllocation, 0, gfxAllocation.getUnderlyingBufferSize());
     }
@@ -889,7 +889,7 @@ void CommandStreamReceiver::createHostFunctionStreamer(HostFunctionAllocator *al
     UNRECOVERABLE_IF(chunk.cpuPtr == nullptr);
     auto hostFunctionIdAddress = chunk.cpuPtr;
 
-    auto useSemaphore64bCmd = getReleaseHelper().isAvailableSemaphore64(peekHwInfo());
+    auto useSemaphore64bCmd = peekRootDeviceEnvironment().getCompilerReleaseHelper().isAvailableSemaphore64(peekHwInfo());
 
     auto dcFlushRequired = this->getDcFlushSupport();
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,
@@ -1624,8 +1624,6 @@ void CommandStreamReceiver::ensurePrimaryCsrInitialized(Device &device) {
 }
 
 void CommandStreamReceiver::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {}
-
-std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };
 
 DeferredFreeContext CommandStreamReceiver::createDeferredFreeContext() const {
     DeferredFreeContext ctx{};

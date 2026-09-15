@@ -597,7 +597,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
 };
 
 struct DriverHandleObtaindFdMock : public L0::DriverHandle {
-    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override {
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) override {
         DeviceBitfield deviceBitfield{0x0};
         AllocationProperties properties(0, MemoryConstants::pageSize,
                                         AllocationType::buffer,
@@ -816,12 +816,13 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
 
+    constexpr uint8_t unsupportedIpcMemoryType = std::numeric_limits<uint8_t>::max();
     if (context->settings.useOpaqueHandle) {
         IpcOpaqueMemoryData &ipcData = *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
-        ipcData.memoryType = static_cast<uint8_t>(ZE_MEMORY_TYPE_SHARED);
+        ipcData.memoryType = unsupportedIpcMemoryType;
     } else {
         IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
-        ipcData.type = static_cast<uint8_t>(ZE_MEMORY_TYPE_SHARED);
+        ipcData.type = unsupportedIpcMemoryType;
     }
 
     result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
@@ -904,7 +905,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandle *driverHandle = context->getDriverHandle();
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    ipcPtr = driverHandle->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal, false);
+    ipcPtr = driverHandle->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal, false, {});
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 
@@ -955,7 +956,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandle *driverHandle = context->getDriverHandle();
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    ipcPtr = driverHandle->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal, false);
+    ipcPtr = driverHandle->importFdHandles(device->getNEODevice(), flags, handles, nullptr, &ipcAlloc, allocDataInternal, false, {});
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 

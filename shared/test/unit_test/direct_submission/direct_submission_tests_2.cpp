@@ -1380,8 +1380,8 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
             }
 
             auto semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(++miPredicate);
-            if ((semaphore->getSemaphoreGraphicsAddress() != semaphoreGpuVa) ||
-                (semaphore->getSemaphoreDataDword() != semaphoreValue) ||
+            if ((NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore) != semaphoreGpuVa) ||
+                (NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphore) != semaphoreValue) ||
                 (semaphore->getCompareOperation() != MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD)) {
                 continue;
             }
@@ -2667,10 +2667,10 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDispatchBufferNotRequiresBlock
     hwParse.findHardwareCommands<FamilyType>();
     auto semaphoreIt = find<MI_SEMAPHORE_WAIT *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
     auto semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(*semaphoreIt);
-    EXPECT_EQ(10u, semaphore->getSemaphoreDataDword());
+    EXPECT_EQ(10u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphore));
 
     auto expectedGpuVa = directSubmission.semaphoreGpuVa + offsetof(RingSemaphoreData, pagingFenceCounter);
-    EXPECT_EQ(expectedGpuVa, semaphore->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(expectedGpuVa, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
 }
 
 HWTEST_F(DirectSubmissionTest, givenCsrWhenUnblockPagingFenceSemaphoreCalledThenSemaphoreUnblocked) {

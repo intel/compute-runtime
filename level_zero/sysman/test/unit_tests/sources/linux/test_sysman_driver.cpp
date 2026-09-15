@@ -6,16 +6,20 @@
  */
 
 #include "shared/source/helpers/string.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_driver.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_drm.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
+#include "driver_version.h"
 #include "gtest/gtest.h"
 
 #include <cstring>
@@ -278,14 +282,25 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_MEMORY_BANDWIDTH_COUNTER_BITS_EXP_PROPERTIES_NAME, ZES_MEM_BANDWIDTH_COUNTER_BITS_EXP_VERSION_CURRENT},
         {ZES_SYSMAN_DEVICE_MAPPING_EXP_NAME, ZES_SYSMAN_DEVICE_MAPPING_EXP_VERSION_CURRENT},
         {ZES_VIRTUAL_FUNCTION_MANAGEMENT_EXP_NAME, ZES_VF_MANAGEMENT_EXP_VERSION_CURRENT},
-        {ZES_INTEL_DEVICE_HEALTH_EXP_NAME, ZES_INTEL_DEVICE_HEALTH_EXP_VERSION_CURRENT},
+        {ZES_PCI_LINK_SPEED_DOWNGRADE_EXT_NAME, ZES_PCI_LINK_SPEED_DOWNGRADE_EXT_VERSION_CURRENT},
+        {ZES_DEVICE_EXT_STATE_NAME, ZES_DEVICE_EXT_STATE_VERSION_CURRENT},
+        {ZES_OEM_SERIAL_ID_EXT_NAME, ZES_OEM_SERIAL_ID_EXT_VERSION_CURRENT},
+        {ZES_DEVICE_HEALTH_EXT_NAME, ZES_DEVICE_HEALTH_EXT_VERSION_CURRENT},
+        {ZES_MEMORY_VENDOR_INFO_EXT_NAME, ZES_MEMORY_VENDOR_INFO_EXT_VERSION_CURRENT},
         {ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME, ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES_VERSION_CURRENT},
+        {ZES_INTEL_DEVICE_INDEX_EXP_PROPERTY_NAME, ZES_INTEL_DEVICE_INDEX_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME, ZES_INTEL_FREQ_THROTTLE_REASON_EXP_VERSION_CURRENT},
         {ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_NAME, ZES_INTEL_MEMORY_PAGE_OFFLINE_EXP_VERSION_CURRENT},
         {ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME, ZES_INTEL_MEM_PAGE_OFFLINE_PROPERTIES_EXP_VERSION_CURRENT},
         {ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTY_NAME, ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME, ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_VERSION_CURRENT},
-        {ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME, ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_CURRENT}};
+        {ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME, ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME, ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME, ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_NAME, ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DRIVER_EVENT_EXP_NAME, ZES_INTEL_DRIVER_EVENT_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME, ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME, ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_CURRENT}};
     for (uint32_t i = 0; i < count; i++) {
         if (extensionsReturned[i].name != supportedExtensions[i].first) {
             return false;
@@ -389,22 +404,265 @@ TEST_F(SysmanDriverHandleTest,
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceMemoryGetPageOfflineStateExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetHealthExp", &funPtr);
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverGetPropertiesExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceSetHealthExp", &funPtr);
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetPowerOffReasonExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportUnKnownPointer", &funPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+struct PublicSysmanDriverHandleImp : public L0::Sysman::SysmanDriverHandleImp {
+    using L0::Sysman::SysmanDriverHandleImp::uuidTimestamp;
+};
+
+TEST_F(SysmanDriverHandleTest, GivenSysmanOnlyInitWhenCallingGetDriverPropertiesEntrypointThenDriverVersionAndUuidAreReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.OverrideDriverVersion.set(-1);
+    NEO::debugManager.flags.OverrideVersionBuild.set(-1);
+
+    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    memset(properties.uuid.id, 0xFF, sizeof(properties.uuid.id));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverGetPropertiesExp(driverHandle->toHandle(), &properties));
+    EXPECT_EQ(0x01030000u + static_cast<uint32_t>(NEO_VERSION_BUILD), properties.driverVersion);
+
+    for (size_t i = sizeof(uint64_t); i < sizeof(properties.uuid.id); i++) {
+        EXPECT_EQ(0u, properties.uuid.id[i]);
+    }
+}
+
+TEST_F(SysmanDriverHandleTest, GivenKnownDriverVersionAndUuidTimestampWhenCallingGetDriverPropertiesEntrypointThenUuidPacksTimestampHighHalfOverDriverVersion) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.OverrideDriverVersion.set(0x0badf00d);
+
+    auto pDriverHandleImp = static_cast<PublicSysmanDriverHandleImp *>(driverHandle);
+    pDriverHandleImp->uuidTimestamp = 0x1122334455667788ull;
+
+    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    memset(properties.uuid.id, 0xFF, sizeof(properties.uuid.id));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverGetPropertiesExp(driverHandle->toHandle(), &properties));
+    EXPECT_EQ(0x0badf00du, properties.driverVersion);
+
+    uint64_t reportedUniqueId = 0u;
+    memcpy_s(&reportedUniqueId, sizeof(reportedUniqueId), properties.uuid.id, sizeof(reportedUniqueId));
+    EXPECT_EQ(0x112233440badf00dull, reportedUniqueId);
+
+    for (size_t i = sizeof(reportedUniqueId); i < sizeof(properties.uuid.id); i++) {
+        EXPECT_EQ(0u, properties.uuid.id[i]);
+    }
+}
+
+TEST_F(SysmanDriverHandleTest, GivenOverrideDriverVersionSetWhenCallingGetDriverPropertiesEntrypointThenOverriddenVersionIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.OverrideDriverVersion.set(1234);
+
+    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverGetPropertiesExp(driverHandle->toHandle(), &properties));
+    EXPECT_EQ(1234u, properties.driverVersion);
+}
+
+TEST_F(SysmanDriverHandleTest, GivenOverrideVersionBuildSetWhenCallingGetDriverPropertiesEntrypointThenOverriddenBuildIsUsed) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.OverrideVersionBuild.set(10);
+    NEO::debugManager.flags.OverrideDriverVersion.set(-1);
+
+    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverGetPropertiesExp(driverHandle->toHandle(), &properties));
+    EXPECT_EQ(0x0103000au, properties.driverVersion);
+}
+
+TEST_F(SysmanDriverHandleTest, GivenSysmanInitFromCoreWhenCallingGetDriverPropertiesEntrypointThenUnsupportedFeatureIsReturned) {
+    VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
+
+    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverGetPropertiesExp(driverHandle->toHandle(), &properties));
+}
+
+TEST_F(SysmanDriverHandleTest, GivenNeitherInitFlagSetWhenCallingGetDriverPropertiesEntrypointThenUninitializedIsReturned) {
+    VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, false);
+    VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
+
+    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverGetPropertiesExp(driverHandle->toHandle(), &properties));
+}
+
+TEST_F(SysmanDriverHandleTest, GivenInitializedDriverHandleWhenCallingGetUuidTimestampThenSameNonZeroTimestampIsReturned) {
+    auto pDriverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
+    auto uuidTimestamp = pDriverHandleImp->getUuidTimestamp();
+    EXPECT_NE(0u, uuidTimestamp);
+    EXPECT_EQ(uuidTimestamp, pDriverHandleImp->getUuidTimestamp());
+}
+
+TEST_F(SysmanDriverHandleTest, GivenUninitializedDriverHandleWhenCallingGetUuidTimestampThenZeroIsReturned) {
+    L0::Sysman::SysmanDriverHandleImp uninitializedDriverHandle;
+    EXPECT_EQ(0u, uninitializedDriverHandle.getUuidTimestamp());
 }
 
 TEST(SysmanDriverInit, GivenValidSysmanImpObjectWhenCallingInitWithSysmanInitFromCoreSetAsTrueThenSysmanInitFails) {
     L0::sysmanInitFromCore = true;
     std::unique_ptr<SysmanDriverImp> pSysmanDriverImp = std::make_unique<SysmanDriverImp>();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pSysmanDriverImp->driverInit());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pSysmanDriverImp->driverInit(0));
     EXPECT_FALSE(L0::Sysman::sysmanOnlyInit);
     L0::sysmanInitFromCore = false;
+}
+
+TEST(SysmanDriverDeferredDiscovery, GivenImmediateInitWithoutDevicesAndNoFlagThenInitFails) {
+    // Mock no devices found
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        return nullptr;
+    });
+
+    MockSysmanDriver driver;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    // Call initialize() without experimental flag - should fail when no devices present
+    driver.initialize(&result, 0);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+    EXPECT_EQ(nullptr, L0::Sysman::globalSysmanDriverHandle);
+
+    // Cleanup
+    L0::Sysman::globalSysmanDriver = nullptr;
+    L0::Sysman::globalSysmanDriverHandle = nullptr;
+    L0::Sysman::driverCount = 0;
+}
+
+TEST(SysmanDriverDeferredDiscovery, GivenDeferredInitWithoutDevicesWhenDiscoveryFindsZeroDevicesThenDeviceGetFailsWithZeroDevices) {
+    // Mock no devices found during both initial and deferred discovery
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        return nullptr;
+    });
+
+    MockSysmanDriver driver;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, L0::Sysman::globalSysmanDriverHandle);
+    EXPECT_EQ(1u, L0::Sysman::driverCount);
+
+    // Verify deferred mode is active
+    auto driverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
+    ASSERT_NE(nullptr, driverHandleImp);
+
+    // Trigger deferred discovery by enumerating devices - should still find 0 devices
+    uint32_t deviceCount = 0;
+    ze_result_t deviceResult = driverHandleImp->getDevice(&deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, deviceResult);
+    EXPECT_EQ(0u, deviceCount);
+
+    // Cleanup
+    delete L0::Sysman::globalSysmanDriver;
+    L0::Sysman::globalSysmanDriver = nullptr;
+    L0::Sysman::globalSysmanDriverHandle = nullptr;
+    L0::Sysman::driverCount = 0;
+}
+
+TEST(SysmanDriverDeferredDiscovery, GivenDeferredInitWithoutDevicesWhenDiscoveryFindsDevicesThenDevicesAreEnumerated) {
+    static int callCount = 0;
+    callCount = 0;
+
+    // Mock no devices initially, but devices present during deferred discovery
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+        callCount++;
+        if (callCount <= 2) { // First calls during init and survivability check
+            return nullptr;   // No devices during init
+        }
+        // Devices present during deferred discovery
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
+        return buf;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/drm/renderD128";
+        std::memcpy(buf, str.c_str(), str.size());
+        return static_cast<int>(str.size());
+    });
+
+    MockSysmanDriver driver;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, L0::Sysman::globalSysmanDriverHandle);
+    EXPECT_EQ(1u, L0::Sysman::driverCount);
+
+    auto driverHandleImp = static_cast<L0::Sysman::SysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
+    ASSERT_NE(nullptr, driverHandleImp);
+
+    // Trigger deferred discovery by enumerating devices - should find devices now
+    uint32_t deviceCount = 0;
+    ze_result_t deviceResult = driverHandleImp->getDevice(&deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceResult);
+    EXPECT_GT(deviceCount, 0u);
+
+    // Cleanup
+    delete L0::Sysman::globalSysmanDriver;
+    L0::Sysman::globalSysmanDriver = nullptr;
+    L0::Sysman::globalSysmanDriverHandle = nullptr;
+    L0::Sysman::driverCount = 0;
+}
+
+// Answers nothing; it exists only so that a driver can be given a udev library handle whose release
+// by the driver destructor can be observed.
+class SysmanDriverUdevLibMock : public L0::Sysman::UdevLib {
+  public:
+    SysmanDriverUdevLibMock(uint32_t *pDestructorCallCount) : pDestructorCallCount(pDestructorCallCount) {}
+    ~SysmanDriverUdevLibMock() override {
+        (*pDestructorCallCount)++;
+    }
+    int registerEventsFromSubsystemAndGetFd(std::vector<std::string> &subsystemList) override { return -1; }
+    dev_t getEventGenerationSourceDevice(void *dev) override { return 0; }
+    const char *getEventType(void *dev) override { return nullptr; }
+    const char *getEventPropertyValue(void *dev, const char *key) override { return nullptr; }
+    void *allocateDeviceToReceiveData() override { return nullptr; }
+    void dropDeviceReference(void *dev) override {}
+
+    uint32_t *pDestructorCallCount = nullptr;
+};
+
+TEST(LinuxSysmanDriverImpCleanup, GivenUdevLibraryHandleIsHeldWhenDestroyingTheDriverThenTheHandleIsReleased) {
+    uint32_t udevLibDestructorCallCount = 0;
+    {
+        PublicLinuxSysmanDriverImp driverImp;
+        driverImp.pUdevLib = new SysmanDriverUdevLibMock(&udevLibDestructorCallCount);
+        // A handle that is already held is handed back as it is, so the driver keeps owning this one.
+        EXPECT_EQ(driverImp.pUdevLib, driverImp.getUdevLibHandle());
+        EXPECT_EQ(0u, udevLibDestructorCallCount);
+    }
+    EXPECT_EQ(1u, udevLibDestructorCallCount);
+}
+
+TEST(LinuxSysmanDriverImpCleanup, GivenEventsUtilIsAlreadyReleasedWhenDestroyingTheDriverThenTheRemainingCleanupStillRuns) {
+    static int closedFd = 0;
+    closedFd = 0;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        closedFd = fileDescriptor;
+        return 0;
+    });
+
+    constexpr int mockRegisteredFd = 7;
+    {
+        PublicLinuxSysmanDriverImp driverImp;
+        ASSERT_NE(nullptr, driverImp.pLinuxEventsUtil);
+        delete driverImp.pLinuxEventsUtil;
+        driverImp.pLinuxEventsUtil = nullptr;
+        driverImp.registerCperTracePipeFd(mockRegisteredFd);
+    }
+    // The registered descriptor is closed by the last step of the destructor, so seeing it closed proves
+    // the destructor ran to the end instead of releasing the already released events utility again.
+    EXPECT_EQ(mockRegisteredFd, closedFd);
+}
+
+TEST(LinuxSysmanDriverImpCleanup, GivenNegativeDescriptorWhenRegisteringACperTracePipeFdThenItIsNotAddedToTheRegistry) {
+    PublicLinuxSysmanDriverImp driverImp;
+    driverImp.registerCperTracePipeFd(-1);
+    EXPECT_TRUE(driverImp.getCperTracePipeFds().empty());
+    EXPECT_EQ(-1, driverImp.getCperTracePipeFd());
 }
 
 } // namespace ult

@@ -81,10 +81,10 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     Module &getModule(uint64_t moduleHandle) override {
         auto connection = clientHandleToConnection[clientHandle].get();
         if (euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {
-            DEBUG_BREAK_IF(connection->elfHandleToModule.find(moduleHandle) == connection->elfHandleToModule.end());
+            DEBUG_BREAK_IF(!connection->elfHandleToModule.contains(moduleHandle));
             return connection->elfHandleToModule[moduleHandle];
         } else {
-            DEBUG_BREAK_IF(connection->metaDataToModule.find(moduleHandle) == connection->metaDataToModule.end());
+            DEBUG_BREAK_IF(!connection->metaDataToModule.contains(moduleHandle));
             return connection->metaDataToModule[moduleHandle];
         }
     }
@@ -99,6 +99,15 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
     int flushVmCache(int vmfd) override;
+    ze_result_t readRegsetForStoppedThread(const EuThread *thread, char *output, size_t size, uint64_t gpuVa) override;
+    void closeVmFd(int vmfd) override {};
+    void closeAllCachedVmFds() override {
+        this->closeVmFdCache();
+    }
+    void closeVmFdCache();
+
+    std::unordered_map<uint64_t, int> vmFdCache;
+    std::mutex vmFdCacheMutex;
 
     void attachTile() override {
         UNRECOVERABLE_IF(true);

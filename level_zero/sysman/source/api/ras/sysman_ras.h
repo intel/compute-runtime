@@ -31,6 +31,7 @@ class Ras : _zes_ras_handle_t {
     virtual ze_result_t rasGetSupportedCategoriesExp(uint32_t *pCount, zes_ras_error_category_exp_t *pCategories) = 0;
     virtual ze_result_t rasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) = 0;
     virtual ze_result_t rasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) = 0;
+    virtual void reInit() = 0;
 
     static Ras *fromHandle(zes_ras_handle_t handle) {
         return static_cast<Ras *>(handle);
@@ -46,6 +47,7 @@ struct RasHandleContext {
     MOCKABLE_VIRTUAL ~RasHandleContext();
 
     MOCKABLE_VIRTUAL void init(uint32_t subDeviceCount);
+    void reInit();
     void releaseRasHandles();
 
     ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas);

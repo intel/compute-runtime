@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,13 +28,15 @@ std::unique_ptr<CpuPageFaultManager> CpuPageFaultManager::create() {
     return pageFaultManager;
 }
 
-std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> PageFaultManagerWindows::pageFaultHandler = nullptr;
+constinit std::atomic<PageFaultManagerWindows *> PageFaultManagerWindows::activePageFaultManager{nullptr};
 
 PageFaultManagerWindows::PageFaultManagerWindows() {
     PageFaultManagerWindows::registerFaultHandler();
 }
 
 PageFaultManagerWindows::~PageFaultManagerWindows() {
+    auto expectedPageFaultManager = this;
+    activePageFaultManager.compare_exchange_strong(expectedPageFaultManager, nullptr);
     RemoveVectoredExceptionHandler(previousHandler);
 }
 
@@ -43,22 +45,24 @@ bool PageFaultManagerWindows::checkFaultHandlerFromPageFaultManager() {
 }
 
 void PageFaultManagerWindows::registerFaultHandler() {
-    pageFaultHandler = [this](struct _EXCEPTION_POINTERS *exceptionInfo) {
-        if (static_cast<long>(exceptionInfo->ExceptionRecord->ExceptionCode) == EXCEPTION_ACCESS_VIOLATION) {
-            if (this->verifyAndHandlePageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]), true)) {
-                // this is our fault that we serviced, continue app execution
-                return EXCEPTION_CONTINUE_EXECUTION;
-            }
-        }
-        // not our exception
-        return EXCEPTION_CONTINUE_SEARCH;
-    };
-
+    activePageFaultManager.store(this);
     previousHandler = AddVectoredExceptionHandler(1, pageFaultHandlerWrapper);
 }
 
 LONG PageFaultManagerWindows::pageFaultHandlerWrapper(_EXCEPTION_POINTERS *exceptionInfo) {
-    return pageFaultHandler(exceptionInfo);
+    auto pageFaultManager = activePageFaultManager.load();
+    if (pageFaultManager == nullptr) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+
+    if (static_cast<long>(exceptionInfo->ExceptionRecord->ExceptionCode) == EXCEPTION_ACCESS_VIOLATION) {
+        if (pageFaultManager->verifyAndHandlePageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]), true)) {
+            // this is our fault that we serviced, continue app execution
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
+    }
+    // not our exception
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 void PageFaultManagerWindows::allowCPUMemoryAccess(void *ptr, size_t size) {

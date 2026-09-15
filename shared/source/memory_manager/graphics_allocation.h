@@ -182,6 +182,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     void setGpuBaseAddress(uint64_t baseAddress) {
         gpuBaseAddress = baseAddress;
     }
+    uint64_t getGpuAddressWithoutOffset() const {
+        return gpuAddress;
+    }
     uint64_t getGpuAddress() const {
         DEBUG_BREAK_IF(gpuAddress < gpuBaseAddress);
         return gpuAddress + allocationOffset;
@@ -342,7 +345,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool isResidencyTaskCountBelow(TaskCountType taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
     virtual std::string getAllocationInfoString() const;
-    virtual std::string getPatIndexInfoString(const ProductHelper &) const;
+    virtual std::string getPatIndexInfoString() const;
     virtual int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) { return 0; }
     virtual int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle, void *reservedHandleData) { return 0; }
     virtual void clearInternalHandle(uint32_t handleId) { return; }

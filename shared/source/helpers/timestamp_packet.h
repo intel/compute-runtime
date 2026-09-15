@@ -11,13 +11,15 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/cpu_copy_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include <cstdint>
@@ -62,6 +64,13 @@ class TimestampPackets : public TagTypeBase {
     uint64_t getGlobalStartValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalStart); }
     uint64_t getContextEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].contextEnd); }
     uint64_t getGlobalEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalEnd); }
+
+    void getGlobalTimestampValues(uint32_t packetIndex, uint64_t &globalStart, uint64_t &globalEnd) const {
+        alignas(64) Packet local;
+        streamCopy(&local, &packets[packetIndex], sizeof(Packet));
+        globalStart = static_cast<uint64_t>(local.globalStart);
+        globalEnd = static_cast<uint64_t>(local.globalEnd);
+    }
 
     void const *getContextEndAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextEnd); }
     void const *getContextStartAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextStart); }
@@ -178,8 +187,8 @@ struct TimestampPacketHelper {
                 cacheFlushTimestampPacketGpuAddress, 0, rootDeviceEnvironment, args);
         }
 
-        const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-        const bool useSemaphore64bCmd = releaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+        const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
+        const bool useSemaphore64bCmd = compilerReleaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
 
         for (auto &node : container.peekNodes()) {
             TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node, useSemaphore64bCmd);

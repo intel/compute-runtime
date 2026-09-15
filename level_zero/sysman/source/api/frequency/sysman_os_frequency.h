@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ class OsFrequency {
     virtual ze_result_t setOcTjMax(double ocTjMax) = 0;
     static OsFrequency *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t type);
     static std::vector<zes_freq_domain_t> getNumberOfFreqDomainsSupported(OsSysman *pOsSysman);
+    virtual void reInit() = 0;
     virtual ~OsFrequency() {}
 };
 

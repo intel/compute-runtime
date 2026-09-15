@@ -122,6 +122,10 @@ bool WddmMock::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t si
     freeGpuVirtualAddressResult.called++;
     freeGpuVirtualAddressResult.uint64ParamPassed = gpuPtr;
     freeGpuVirtualAddressResult.sizePassed = size;
+    if (failFreeGpuVirtualAddress) {
+        gpuPtr = 0;
+        return freeGpuVirtualAddressResult.success = false;
+    }
     return freeGpuVirtualAddressResult.success = Wddm::freeGpuVirtualAddress(gpuPtr, size);
 }
 NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {
@@ -288,6 +292,39 @@ bool WddmMock::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monito
         return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence, busyWait);
     }
     return waitFromCpuResult.success = true;
+}
+
+WaitStatus WddmMock::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds) {
+    this->waitFromCpuWithTimeoutCalled++;
+    this->waitFromCpuWithTimeoutFenceValue = lastFenceValue;
+    this->waitFromCpuTimeoutNanoseconds = timeoutNanoseconds;
+    this->waitFromCpuWithTimeoutOsContext = &osContext;
+    if (this->callBaseWaitFromCpuWithTimeout) {
+        return Wddm::waitFromCpu(lastFenceValue, osContext, timeoutNanoseconds);
+    }
+    return this->waitFromCpuWithTimeoutReturnValue;
+}
+
+HANDLE WddmMock::createMonitoredFenceKmdWaitEvent() {
+    this->monitoredFenceKmdWaitEventResult.createCalled++;
+    return this->monitoredFenceKmdWaitEventResult.eventHandle;
+}
+
+bool WddmMock::resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) {
+    this->monitoredFenceKmdWaitEventResult.resetCalled++;
+    this->monitoredFenceKmdWaitEventResult.resetEventHandle = eventHandle;
+    return this->monitoredFenceKmdWaitEventResult.resetSuccess;
+}
+
+bool WddmMock::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) {
+    this->monitoredFenceKmdWaitEventResult.waitCalled++;
+    this->monitoredFenceKmdWaitEventResult.waitEventHandle = eventHandle;
+    this->monitoredFenceKmdWaitEventResult.timeoutMilliseconds = timeoutMilliseconds;
+    if (this->monitoredFenceKmdWaitEventResult.waitResult &&
+        this->monitoredFenceKmdWaitEventResult.fenceAddressToSignal != nullptr) {
+        *this->monitoredFenceKmdWaitEventResult.fenceAddressToSignal = this->monitoredFenceKmdWaitEventResult.fenceValueToSignal;
+    }
+    return this->monitoredFenceKmdWaitEventResult.waitResult;
 }
 
 void *WddmMock::virtualAlloc(void *inPtr, size_t size, bool topDownHint) {

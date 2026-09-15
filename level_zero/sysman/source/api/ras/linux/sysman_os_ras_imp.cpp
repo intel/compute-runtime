@@ -52,7 +52,7 @@ ze_result_t LinuxRasImp::osRasSetConfig(const zes_ras_config_t *config) {
         memcpy_s(categoryThreshold, maxRasErrorCategoryCount * sizeof(uint64_t), config->detailedThresholds.category, maxRasErrorCategoryCount * sizeof(uint64_t));
         return ZE_RESULT_SUCCESS;
     }
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
@@ -67,7 +67,7 @@ ze_result_t LinuxRasImp::osRasGetProperties(zes_ras_properties_t &properties) {
 ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) {
     if (clear == true) {
         if (pFsAccess->isRootUser() == false) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
             return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
         }
     }
@@ -77,6 +77,9 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) 
         zes_ras_state_t localState = {};
         ze_result_t localResult = rasSource->osRasGetState(localState, clear);
         if (localResult != ZE_RESULT_SUCCESS) {
+            if ((result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) && (localResult == ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS)) {
+                result = localResult;
+            }
             continue;
         }
         for (uint32_t i = 0; i < maxRasErrorCategoryCount; i++) {
@@ -108,6 +111,9 @@ ze_result_t LinuxRasImp::osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t 
         uint32_t numCategoriesRequested = std::min(remainingCategories, numCategoriesBySources[rasSourceIdx]);
         ze_result_t localResult = rasSource->osRasGetStateExp(numCategoriesRequested, &pState[numCategoriesAssigned]);
         if (localResult != ZE_RESULT_SUCCESS) {
+            if ((result == ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE) && (localResult == ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS)) {
+                result = localResult;
+            }
             continue;
         }
         remainingCategories -= numCategoriesRequested;
@@ -122,7 +128,7 @@ ze_result_t LinuxRasImp::osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t 
 
 ze_result_t LinuxRasImp::osRasClearStateExp(zes_ras_error_category_exp_t category) {
     if (pFsAccess->isRootUser() == false) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
 
@@ -209,6 +215,9 @@ ze_result_t LinuxRasImp::osRasGetStateExp2(const uint32_t categoryCount, const z
         }
         ze_result_t localResult = rasSource->osRasGetStateExp2(categoryCount, pCategories, sourceStates.data());
         if (localResult != ZE_RESULT_SUCCESS) {
+            if ((result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) && (localResult == ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS)) {
+                result = localResult;
+            }
             continue;
         }
         for (uint32_t i = 0; i < categoryCount; i++) {
@@ -222,6 +231,12 @@ ze_result_t LinuxRasImp::osRasGetStateExp2(const uint32_t categoryCount, const z
 LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) : osRasErrorType(type), isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    initSources();
+}
+
+void LinuxRasImp::reInit() {
+    rasSources.clear();
+    supportedErrorCategoriesExp.clear();
     initSources();
 }
 

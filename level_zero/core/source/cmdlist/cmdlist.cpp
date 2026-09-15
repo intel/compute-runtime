@@ -39,6 +39,33 @@ namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
 
+bool CommandList::containsSystemAllocation(const NEO::ResidencyContainer &residencyContainer) {
+    for (const auto allocation : residencyContainer) {
+        if (allocation != nullptr && isUsingSystemAllocation(allocation->getAllocationType())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CommandList::isKernelUsingSystemMemory(const KernelImp &kernel, bool sharedSystemAllocationsAllowed) {
+    const auto &argumentsResidencyContainer = kernel.getArgumentsResidencyContainer();
+
+    if (sharedSystemAllocationsAllowed) {
+        const auto &kernelArgInfos = kernel.getKernelArgInfos();
+        for (size_t index = 0; index < argumentsResidencyContainer.size(); index++) {
+            const auto argValue = index < kernelArgInfos.size() ? kernelArgInfos[index].value : nullptr;
+            if (isUsingSystemMemory(argValue, argumentsResidencyContainer[index], true)) {
+                return true;
+            }
+        }
+    } else if (containsSystemAllocation(argumentsResidencyContainer)) {
+        return true;
+    }
+
+    return containsSystemAllocation(kernel.getInternalResidencyContainer());
+}
+
 CommandList::~CommandList() {
     if (cmdQImmediate) {
         cmdQImmediate->destroy();
@@ -297,13 +324,6 @@ ze_result_t CommandList::setKernelState(Kernel *kernel, const ze_group_size_t gr
         }
     }
     return ZE_RESULT_SUCCESS;
-}
-
-uint32_t CommandList::getLimitIsaPrefetchSize() {
-    constexpr size_t defaultLimitValue = MemoryConstants::kiloByte;
-
-    uint32_t retrievedLimitValue = NEO::debugManager.flags.LimitIsaPrefetchSize.getIfNotDefault(static_cast<uint32_t>(defaultLimitValue));
-    return retrievedLimitValue;
 }
 
 void CommandList::executeCleanupCallbacks() {
@@ -739,6 +759,7 @@ uint64_t CommandList::getInOrderExecDeviceGpuAddress() const {
     uint64_t gpuAddress = 0;
     if (isInOrderExecutionEnabled()) {
         gpuAddress = inOrderExecInfo->getDeviceNodeGpuAddress();
+        UNRECOVERABLE_IF(!isAligned(gpuAddress, sizeof(uint64_t)));
     }
     return gpuAddress;
 }
@@ -755,6 +776,7 @@ uint64_t CommandList::getInOrderExecHostGpuAddress() const {
     uint64_t gpuAddress = 0;
     if (isInOrderExecutionEnabled()) {
         gpuAddress = inOrderExecInfo->getHostNodeGpuAddress();
+        UNRECOVERABLE_IF(!isAligned(gpuAddress, sizeof(uint64_t)));
     }
     return gpuAddress;
 }
@@ -834,8 +856,8 @@ void CommandList::ensureSubCmdLists(size_t count) {
     }
 }
 
-void CommandList::storeEventsForBcsSplit(const BcsSplitParams::MarkerEvent *markerEvent) {
-    eventsForRecordedBcsSplit.push_back(markerEvent);
+void CommandList::storeEventsForBcsSplit(BcsSplitParams::SplitEventPackage *package) {
+    eventsForRecordedBcsSplit.push_back(package);
 }
 
 void CommandList::destroyRecordedBcsSplitResources() {
@@ -848,9 +870,11 @@ void CommandList::destroyRecordedBcsSplitResources() {
 
 void CommandList::getPatchPreambleFullData(uint64_t &outCounterValue,
                                            uint64_t *&outHostAddress,
-                                           uint64_t &outDeviceAddress,
-                                           NEO::GraphicsAllocation *&outGraphicsAllocation) {
-    cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outDeviceAddress, outGraphicsAllocation);
+                                           uint64_t &outHostGpuAddress,
+                                           NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation,
+                                           uint64_t &outDeviceGpuAddress,
+                                           NEO::GraphicsAllocation *&outDeviceNodeGraphicsAllocation) {
+    cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outHostGpuAddress, outHostNodeGraphicsAllocation, outDeviceGpuAddress, outDeviceNodeGraphicsAllocation);
 }
 
 } // namespace L0

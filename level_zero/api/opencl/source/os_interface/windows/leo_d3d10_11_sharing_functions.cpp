@@ -26,6 +26,20 @@ void D3DSharingFunctions<D3D>::createQuery(D3DQuery **query) {
     d3dDevice->CreateQuery(&desc, query);
 }
 
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D10>::createFence(D3DFence **fence) {
+}
+
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D11>::createFence(D3DFence **fence) {
+    ID3D11Device5 *d3d11Device5 = nullptr;
+    d3dDevice->QueryInterface(__uuidof(ID3D11Device5), reinterpret_cast<void **>(&d3d11Device5));
+    if (d3d11Device5) {
+        d3d11Device5->CreateFence(0, D3D11_FENCE_FLAG_NONE, __uuidof(D3DFence), (void **)fence);
+        d3d11Device5->Release();
+    }
+}
+
 template <typename D3D>
 void D3DSharingFunctions<D3D>::updateDevice(D3DResource *resource) {
     resource->GetDevice(&d3dDevice);
@@ -313,7 +327,9 @@ void D3DSharingFunctions<D3D>::addRef(D3DResource *resource) {
 
 template <typename D3D>
 void D3DSharingFunctions<D3D>::release(IUnknown *resource) {
-    resource->Release();
+    if (resource) {
+        resource->Release();
+    }
 }
 
 template <typename D3D>
@@ -354,12 +370,28 @@ void D3DSharingFunctions<D3DTypesHelper::D3D10>::flushAndWait(D3DQuery *query) {
 }
 
 template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D10>::signalAndWait(D3DFence *fence) {
+}
+
+template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D11>::flushAndWait(D3DQuery *query) {
     d3d11DeviceContext->End(query);
     d3d11DeviceContext->Flush();
     while (d3d11DeviceContext->GetData(query, nullptr, 0, 0) != S_OK) {
         ;
     }
+}
+
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D11>::signalAndWait(D3DFence *fence) {
+    ID3D11DeviceContext4 *d3d11DeviceContext4 = nullptr;
+    d3d11DeviceContext->QueryInterface(__uuidof(ID3D11DeviceContext4), reinterpret_cast<void **>(&d3d11DeviceContext4));
+    auto valueToWait = fence->GetCompletedValue() + 1;
+    d3d11DeviceContext4->Signal(fence, valueToWait);
+    while (fence->GetCompletedValue() < valueToWait) {
+        ;
+    }
+    d3d11DeviceContext4->Release();
 }
 
 template <>

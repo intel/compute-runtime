@@ -36,8 +36,8 @@ struct ze_module_program_headers_exp_desc_t {
 
 constexpr ze_structure_type_t ZE_STRUCTURE_TYPE_MODULE_OCL_EXTENSIONS_EXT_DESC = static_cast<ze_structure_type_t>(0x00051002);
 
-// Carries LEO's -ocl-version + device-extensions options so its SPIR-V build/link uses the OpenCL-C
-// compiler contract; native L0 clients omit it.
+// Carries the OpenCL-C compiler contract options LEO needs for its SPIR-V build/link;
+// native L0 clients omit it.
 struct ze_module_ocl_extensions_exp_desc_t {
     ze_structure_type_t stype = ZE_STRUCTURE_TYPE_MODULE_OCL_EXTENSIONS_EXT_DESC;
     const void *pNext = nullptr;

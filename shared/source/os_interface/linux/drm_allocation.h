@@ -52,7 +52,7 @@ class DrmAllocation : public GraphicsAllocation {
     GraphicsAllocation *createView(size_t offsetInParentAllocation, size_t viewSize) override;
 
     std::string getAllocationInfoString() const override;
-    std::string getPatIndexInfoString(const ProductHelper &productHelper) const override;
+    std::string getPatIndexInfoString() const override;
 
     BufferObject *getBO() const {
         if (fragmentsStorage.fragmentCount) {

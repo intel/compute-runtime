@@ -5,9 +5,12 @@
  *
  */
 
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+
+#include "driver_version.h"
 
 namespace L0 {
 namespace Sysman {
@@ -279,6 +282,49 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingZesIntelDeviceMe
     zes_intel_mem_page_status_exp_t pageStatus = ZES_INTEL_MEM_PAGE_STATUS_EXP_OFFLINE;
     ze_result_t result = zesIntelDeviceMemoryGetPageOfflineStateExp(pSysmanDevice->toHandle(), pageStatus, &count, &pageOfflineInfo);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenOverrideVersionBuildWhenCallingGetDriverVersionThenForcedVersionBuildIsUsed, IsCRI) {
+    DebugManagerStateRestore restorer;
+    constexpr uint32_t versionBuild = 3900u;
+    NEO::debugManager.flags.OverrideVersionBuild.set(versionBuild);
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    char driverVersion[ZES_STRING_PROPERTY_SIZE] = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getDriverVersion(driverVersion));
+
+    auto expectedDriverVersion = static_cast<uint32_t>(L0::DriverHandle::initialDriverVersionValue) + versionBuild;
+    EXPECT_STREQ(std::to_string(expectedDriverVersion).c_str(), driverVersion);
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenOverrideDriverVersionWhenCallingGetDriverVersionThenOverriddenValueTakesPrecedence, IsCRI) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.OverrideVersionBuild.set(20);
+    NEO::debugManager.flags.OverrideDriverVersion.set(1234);
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    char driverVersion[ZES_STRING_PROPERTY_SIZE] = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getDriverVersion(driverVersion));
+    EXPECT_STREQ("1234", driverVersion);
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenCallingGetDriverVersionThenUnsupportedIsReturnedAndBufferIsUntouched, IsNotCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    char driverVersion[ZES_STRING_PROPERTY_SIZE] = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getDriverVersion(driverVersion));
+    EXPECT_STREQ("", driverVersion);
+}
+
+HWTEST2_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesThenUmdDriverVersionIsReportedInsteadOfKmdVersion, IsCRI) {
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties));
+
+    auto expectedDriverVersion = static_cast<uint32_t>(L0::DriverHandle::initialDriverVersionValue);
+    expectedDriverVersion += static_cast<uint32_t>(NEO_VERSION_BUILD);
+    EXPECT_STREQ(std::to_string(expectedDriverVersion).c_str(), properties.driverVersion);
 }
 
 HWTEST2_F(SysmanDeviceFixture, GivenValidExtensionStructureWhenCallingZesDeviceGetPropertiesThenProperValuesAndSuccessIsReturned, IsNotCRI) {

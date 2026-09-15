@@ -7,7 +7,10 @@
 
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
@@ -21,7 +24,6 @@ zexCommandListAppendWaitOnMemory(
     zex_event_handle_t hSignalEvent) {
     try {
         {
-            hCommandList = toInternalType(hCommandList);
             if (nullptr == hCommandList) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -44,7 +46,6 @@ zexCommandListAppendWaitOnMemory64(
     uint64_t data,
     zex_event_handle_t hSignalEvent) {
 
-    hCommandList = toInternalType(hCommandList);
     if (!hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -60,7 +61,6 @@ zexCommandListAppendWriteToMemory(
     uint64_t data) {
     try {
         {
-            hCommandList = toInternalType(hCommandList);
             if (nullptr == hCommandList) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -73,73 +73,6 @@ zexCommandListAppendWriteToMemory(
     } catch (std::exception &) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-}
-
-ze_result_t ZE_APICALL
-zexCommandListAppendMemoryCopyWithParameters(
-    ze_command_list_handle_t hCommandList,
-    void *dstptr,
-    const void *srcptr,
-    size_t size,
-    const void *pNext,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents,
-    ze_event_handle_t hSignalEvent) {
-
-    if (nullptr == hCommandList) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-    if (nullptr == dstptr) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-    if (nullptr == srcptr) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-    if ((nullptr == phWaitEvents) && (0 < numWaitEvents)) {
-        return ZE_RESULT_ERROR_INVALID_SIZE;
-    }
-
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(hCommandList, dstptr, srcptr, size, pNext, numWaitEvents, phWaitEvents, hSignalEvent);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
-
-ze_result_t ZE_APICALL
-zexCommandListAppendMemoryFillWithParameters(
-    ze_command_list_handle_t hCommandList,
-    void *ptr,
-    const void *pattern,
-    size_t patternSize,
-    size_t size,
-    const void *pNext,
-    ze_event_handle_t hEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-
-    if (nullptr == hCommandList) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-    if (nullptr == ptr) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-    if (nullptr == pattern) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-    if ((nullptr == phWaitEvents) && (0 < numWaitEvents)) {
-        return ZE_RESULT_ERROR_INVALID_SIZE;
-    }
-
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(hCommandList, ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t ZE_APICALL

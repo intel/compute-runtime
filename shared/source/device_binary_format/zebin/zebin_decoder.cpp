@@ -74,11 +74,8 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierCl
         auto targetDeviceProductConfig = static_cast<AOT::PRODUCT_CONFIG>(targetDevice.aotConfig.value);
         if (targetDeviceProductConfig == productConfig) {
             return true;
-        } else if (debugManager.flags.EnableCompatibilityMode.get() == true) {
-            return isTargetProductConfigCompatibleWithProductConfig(targetDeviceProductConfig, productConfig);
-        } else {
-            return false;
         }
+        return isTargetProductConfigCompatibleWithProductConfig(targetDeviceProductConfig, productConfig);
     }
 
     if (gfxCore == IGFX_UNKNOWN_CORE && productFamily == IGFX_UNKNOWN) {
@@ -211,9 +208,7 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
                 outWarning.append("DeviceBinaryFormat::zebin : Empty owner name.\n");
             } else {
                 std::string invalidOwnerName{ownerName, nameSz};
-                invalidOwnerName.erase(std::remove_if(invalidOwnerName.begin(),
-                                                      invalidOwnerName.end(),
-                                                      [](unsigned char c) { return '\0' == c; }));
+                std::erase(invalidOwnerName, '\0');
                 outWarning.append("DeviceBinaryFormat::zebin : Invalid owner name : " + invalidOwnerName + " for IntelGTNote - note will not be used.\n");
             }
             continue;

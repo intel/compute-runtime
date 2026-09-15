@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
@@ -27,7 +28,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     NEO::Drm *pDrm = &pLinuxSysmanImp->getDrm();
 
     if (pDrm->sysmanQueryEngineInfo() == false) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     auto engineInfo = pDrm->getEngineInfo();

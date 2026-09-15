@@ -13,4 +13,8 @@ void Context::initOpaqueHandleResourcesImpl() {
     // No-op for Windows - opaque handles use NT handles
 }
 
+uint32_t Context::getMaxIpcRangeHandleCount() {
+    return 0u;
+}
+
 } // namespace L0

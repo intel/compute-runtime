@@ -1097,6 +1097,6 @@ TEST_F(PageFaultManagerTest, givenHardwareModeWhenCallTbxInsertOrRemoveApiThenNo
 
     pageFaultManager2->memoryData[ptr] = {};
     pageFaultManager2->removeAllocation(gfxAlloc);
-    EXPECT_FALSE(pageFaultManager2->memoryData.find(ptr) == pageFaultManager2->memoryData.end());
+    EXPECT_TRUE(pageFaultManager2->memoryData.contains(ptr));
     pageFaultManager2->memoryData.erase(ptr);
 }

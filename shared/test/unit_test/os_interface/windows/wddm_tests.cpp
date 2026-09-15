@@ -8,9 +8,11 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -24,6 +26,18 @@ namespace NEO {
 std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t nodeMask);
 
 using WddmTests = WddmTestWithMockGdiDll;
+
+TEST_F(WddmTests, givenNonZeroRenderBlockIdAndOverrideHwIpVersionWhenPopulatingIpVersionThenOverrideIsUsed) {
+    DebugManagerStateRestore restorer;
+    constexpr int32_t overrideHwIpVersion = 0x12345678;
+    debugManager.flags.OverrideHwIpVersion.set(overrideHwIpVersion);
+    wddm->gfxPlatform->sRenderBlockID.Value = 0x01020304;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    wddm->populateIpVersion(hwInfo);
+
+    EXPECT_EQ(static_cast<uint32_t>(overrideHwIpVersion), hwInfo.ipVersion.value);
+}
 
 TEST_F(WddmTests, whenCreatingAllocation64kThenDoNotCreateResource) {
     init();
@@ -44,6 +58,23 @@ TEST_F(WddmTests, whenInitializingWddmThenSetTimestampFrequencyToCorrectValue) {
     EXPECT_EQ(0u, wddm->timestampFrequency);
     init();
     EXPECT_EQ(1u, wddm->timestampFrequency);
+}
+
+TEST_F(WddmTests, whenInitializingWddmThenCapsAreSetupBasedOnIpVersion) {
+    auto hardwareInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+    auto &compilerProductHelper = rootDeviceEnvironment->getHelper<CompilerProductHelper>();
+
+    HardwareIpVersion expectedIpVersion{};
+    expectedIpVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
+    auto expectedCaps = resolveCaps(expectedIpVersion);
+    ASSERT_TRUE(expectedCaps.has_value());
+
+    hardwareInfo->caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
+
+    init();
+
+    EXPECT_EQ(expectedIpVersion.value, hardwareInfo->ipVersion.value);
+    EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hardwareInfo->caps.dotProductAccumulateSystolicSupported);
 }
 
 TEST_F(WddmTests, givenWddmWhenPassesCorrectHandleToVerifySharedHandleThenReturnTrue) {
@@ -114,8 +145,8 @@ TEST_F(WddmTests, whenProgramDebugIsEnabledAndCreatingContextWithInternalEngineT
 }
 
 TEST_F(WddmTests, WhenCallingInitializeContextWithContextCreateDisabledFlagEnabledThenContextHandleIsNull) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.set(true);
     init();
     auto newContext = osContext.get();
     EXPECT_TRUE(newContext->ensureContextInitialized());
@@ -123,8 +154,8 @@ TEST_F(WddmTests, WhenCallingInitializeContextWithContextCreateDisabledFlagEnabl
 }
 
 TEST_F(WddmTests, WhenCallingReInitializeContextWithContextCreateDisabledFlagEnabledThenContextHandleIsNull) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.set(true);
     init();
     auto newContext = osContext.get();
     newContext->reInitializeContext();
@@ -902,10 +933,15 @@ TEST(WddmConstructorTest, givenEnableDeviceStateVerificationSetFalseWhenCreateWd
 }
 
 uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;
+HANDLE waitForSynchronizationObjectFromCpuAsyncEvent = nullptr;
+uint64_t waitForSynchronizationObjectFromCpuFenceValue = 0u;
+NTSTATUS waitForSynchronizationObjectFromCpuReturnValue = STATUS_SUCCESS;
 
 NTSTATUS __stdcall waitForSynchronizationObjectFromCpuNoOpMock(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {
     waitForSynchronizationObjectFromCpuCounter++;
-    return STATUS_SUCCESS;
+    waitForSynchronizationObjectFromCpuAsyncEvent = waitStruct->hAsyncEvent;
+    waitForSynchronizationObjectFromCpuFenceValue = *waitStruct->FenceValueArray;
+    return waitForSynchronizationObjectFromCpuReturnValue;
 }
 
 class WddmSkipResourceCleanupMock : public WddmMock {
@@ -967,6 +1003,8 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
 
 TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFromCpuWhenSkipResourceCleanupIsFalseThenSuccessIsReturnedAndGdiFunctionIsCalled) {
     VariableBackup<uint64_t> varBackup(&waitForSynchronizationObjectFromCpuCounter);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue);
     init();
     executionEnvironment->initializeMemoryManager();
     wddm->skipResourceCleanupVar = false;
@@ -994,6 +1032,206 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
     monitoredFence.lastSubmittedFence = 0u;
     monitoredFence.cpuAddress = &fenceValue;
     EXPECT_TRUE(wddm->waitFromCpu(1u, monitoredFence, true));
+    EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenFiniteTimeoutWhenWaitingFromCpuThenAsyncEventIsUsedAndTimeoutIsConvertedToMilliseconds) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 123456789u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_NE(nullptr, waitForSynchronizationObjectFromCpuAsyncEvent);
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuFenceValue);
+    EXPECT_EQ(1u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+    EXPECT_EQ(123u, wddm->monitoredFenceKmdWaitEventResult.timeoutMilliseconds);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenPendingFiniteWaitWhenWaitingAgainForSameFenceThenKmdWaitRegistrationIsReused) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(2u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenAsyncEventSignalWhenWaitingFromCpuThenReadyIsReturned) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+    wddm->monitoredFenceKmdWaitEventResult.waitResult = true;
+    wddm->monitoredFenceKmdWaitEventResult.fenceAddressToSignal = monitoredFence.cpuAddress;
+    wddm->monitoredFenceKmdWaitEventResult.fenceValueToSignal = 1u;
+
+    EXPECT_EQ(WaitStatus::ready, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenPendingWaitForNewerFenceWhenWaitingForOlderFenceThenActivePollingFallbackIsUsed) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 2u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(2u, *osContext, 10000000u));
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(1u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenSubMillisecondTimeoutWhenWaitingFromCpuThenAsyncWaitIsRegisteredWithoutBlocking) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 999999u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(0u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenCompletedPendingWaitWhenWaitingForNewerFenceThenAsyncWaitIsRegisteredAgain) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 2u;
+    wddm->monitoredFenceKmdWaitEventResult.waitResult = true;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    *monitoredFence.cpuAddress = 1u;
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(2u, *osContext, 10000000u));
+    EXPECT_EQ(2u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(3u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+    EXPECT_EQ(2u, waitForSynchronizationObjectFromCpuFenceValue);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenCompletedFenceWithPendingEventNotSignaledWhenWaitingForNewerFenceThenPendingRegistrationIsKept) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_SUCCESS);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 2u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    *monitoredFence.cpuAddress = 1u;
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(2u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(3u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuFenceValue);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenAsyncWaitRegistrationFailureWhenWaitingFromCpuThenNotReadyIsReturnedWithoutWaitingOnEvent) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&waitForSynchronizationObjectFromCpuAsyncEvent, nullptr);
+    VariableBackup<uint64_t> fenceValueBackup(&waitForSynchronizationObjectFromCpuFenceValue, 0u);
+    VariableBackup<NTSTATUS> waitReturnValueBackup(&waitForSynchronizationObjectFromCpuReturnValue, STATUS_UNSUCCESSFUL);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = 0u;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::notReady, wddm->waitFromCpu(1u, *osContext, 10000000u));
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+    EXPECT_EQ(0u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
+    EXPECT_EQ(0u, osContext->getMonitoredFenceKmdWaitData().pendingFenceValue);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenGpuHangIndicationWhenWaitingFromCpuThenGpuHangIsReturnedWithoutRegisteringWait) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    auto &monitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> monitoredFenceValueBackup(monitoredFence.cpuAddress);
+    *monitoredFence.cpuAddress = Wddm::gpuHangIndication;
+    monitoredFence.lastSubmittedFence = 1u;
+
+    EXPECT_EQ(WaitStatus::gpuHang, wddm->waitFromCpu(1u, *osContext, 10000000u));
     EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
 }
 
@@ -1408,6 +1646,89 @@ TEST_F(WddmCreateAllocationNTHandleTests, givenCreateNTHandleSucceedsThenSharedH
 
     // Cleanup
     EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, resourceHandle));
+}
+
+namespace {
+struct ShareObjectsCapture {
+    static NTSTATUS APIENTRY shareObjects(UINT cObjects, const D3DKMT_HANDLE *hObjects,
+                                          POBJECT_ATTRIBUTES pObjectAttributes, DWORD dwDesiredAccess,
+                                          HANDLE *phSharedNtHandle) {
+        callCount++;
+        lastObjectCount = cObjects;
+        lastResourceHandle = hObjects ? *hObjects : 0u;
+        lastObjectAttributes = pObjectAttributes;
+        lastDesiredAccess = dwDesiredAccess;
+        *phSharedNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x1234u));
+        return returnValue;
+    }
+
+    static void reset() {
+        callCount = 0u;
+        lastObjectCount = 0u;
+        lastResourceHandle = 0u;
+        lastObjectAttributes = nullptr;
+        lastDesiredAccess = 0u;
+        returnValue = STATUS_SUCCESS;
+    }
+
+    inline static uint32_t callCount = 0u;
+    inline static UINT lastObjectCount = 0u;
+    inline static D3DKMT_HANDLE lastResourceHandle = 0u;
+    inline static POBJECT_ATTRIBUTES lastObjectAttributes = nullptr;
+    inline static DWORD lastDesiredAccess = 0u;
+    inline static NTSTATUS returnValue = STATUS_SUCCESS;
+};
+
+constexpr DWORD expectedSharedResourceAccess = 0x000F0001u;
+} // namespace
+
+using WddmCreateNTHandleAccessTests = WddmTestWithMockGdiDll;
+
+TEST_F(WddmCreateNTHandleAccessTests, givenResourceHandleWhenCreatingNTHandleThenResourceIsSharedWithReadAndWriteAccess) {
+    ShareObjectsCapture::reset();
+    VariableBackup<decltype(wddm->getGdi()->shareObjects)> shareObjectsBackup(&wddm->getGdi()->shareObjects,
+                                                                              ShareObjectsCapture::shareObjects);
+
+    D3DKMT_HANDLE resourceHandle = 0x40u;
+    HANDLE ntHandle = nullptr;
+
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createNTHandle(&resourceHandle, &ntHandle));
+
+    EXPECT_EQ(1u, ShareObjectsCapture::callCount);
+    EXPECT_EQ(1u, ShareObjectsCapture::lastObjectCount);
+    EXPECT_EQ(resourceHandle, ShareObjectsCapture::lastResourceHandle);
+    EXPECT_EQ(expectedSharedResourceAccess, ShareObjectsCapture::lastDesiredAccess);
+    EXPECT_EQ(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x1234u)), ntHandle);
+}
+
+TEST_F(WddmCreateNTHandleAccessTests, givenResourceHandleWhenCreatingNTHandleThenWriteOnlyAccessIsNotRequested) {
+    ShareObjectsCapture::reset();
+    VariableBackup<decltype(wddm->getGdi()->shareObjects)> shareObjectsBackup(&wddm->getGdi()->shareObjects,
+                                                                              ShareObjectsCapture::shareObjects);
+
+    D3DKMT_HANDLE resourceHandle = 0x40u;
+    HANDLE ntHandle = nullptr;
+
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createNTHandle(&resourceHandle, &ntHandle));
+
+    EXPECT_NE(static_cast<DWORD>(SHARED_ALLOCATION_WRITE), ShareObjectsCapture::lastDesiredAccess);
+    EXPECT_EQ(static_cast<DWORD>(SHARED_ALLOCATION_WRITE),
+              ShareObjectsCapture::lastDesiredAccess & static_cast<DWORD>(SHARED_ALLOCATION_WRITE));
+    EXPECT_NE(0u, ShareObjectsCapture::lastDesiredAccess & 0x00020000u);
+}
+
+TEST_F(WddmCreateNTHandleAccessTests, givenShareObjectsFailureWhenCreatingNTHandleThenStatusIsPropagated) {
+    ShareObjectsCapture::reset();
+    ShareObjectsCapture::returnValue = STATUS_UNSUCCESSFUL;
+    VariableBackup<decltype(wddm->getGdi()->shareObjects)> shareObjectsBackup(&wddm->getGdi()->shareObjects,
+                                                                              ShareObjectsCapture::shareObjects);
+
+    D3DKMT_HANDLE resourceHandle = 0x40u;
+    HANDLE ntHandle = nullptr;
+
+    EXPECT_EQ(STATUS_UNSUCCESSFUL, wddm->createNTHandle(&resourceHandle, &ntHandle));
+    EXPECT_EQ(1u, ShareObjectsCapture::callCount);
+    EXPECT_EQ(expectedSharedResourceAccess, ShareObjectsCapture::lastDesiredAccess);
 }
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,7 @@
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/fixtures/mock_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 using namespace NEO;
@@ -31,13 +30,9 @@ static OOMSetting oomSettings[] = {
 struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
                                    public ClDeviceFixture,
                                    public CommandQueueFixture,
-                                   public SimpleArgKernelFixture,
-                                   public HelloWorldKernelFixture,
                                    public ::testing::TestWithParam<OOMSetting> {
 
     using CommandQueueFixture::setUp;
-    using HelloWorldKernelFixture::setUp;
-    using SimpleArgKernelFixture::setUp;
 
     void SetUp() override {
         MemoryManagement::breakOnAllocationEvent = 77;
@@ -46,8 +41,6 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         context = new MockContext(pClDevice);
         BufferDefaults::context = context;
         CommandQueueFixture::setUp(context, pClDevice, 0);
-        SimpleArgKernelFixture::setUp(pClDevice);
-        HelloWorldKernelFixture::setUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
 
         srcBuffer = BufferHelper<>::create();
         dstBuffer = BufferHelper<>::create();
@@ -75,8 +68,6 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         delete dstBuffer;
         delete srcBuffer;
         context->release();
-        HelloWorldKernelFixture::tearDown();
-        SimpleArgKernelFixture::tearDown();
         CommandQueueFixture::tearDown();
         ClDeviceFixture::tearDown();
         MemoryManagementFixture::tearDown();
@@ -207,8 +198,8 @@ HWTEST_P(OOMCommandQueueBufferTest, WhenWritingBufferRectThenMaxAvailableSpaceIs
     }
 }
 
-HWTEST_P(OOMCommandQueueBufferTest, GivenHelloWorldWhenEnqueingKernelThenMaxAvailableSpaceIsNotExceeded) {
-    typedef HelloWorldKernelFixture KernelFixture;
+HWTEST_P(OOMCommandQueueBufferTest, GivenBufferArgsKernelWhenEnqueingKernelThenMaxAvailableSpaceIsNotExceeded) {
+    auto bufferArgsKernelWithInternals = createBufferArgsKernel(*context);
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -218,11 +209,11 @@ HWTEST_P(OOMCommandQueueBufferTest, GivenHelloWorldWhenEnqueingKernelThenMaxAvai
 
     auto retVal1 = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
-        KernelFixture::pKernel);
+        bufferArgsKernelWithInternals->mockKernel);
 
     auto retVal2 = EnqueueKernelHelper<>::enqueueKernel(
         &cmdQ,
-        KernelFixture::pKernel);
+        bufferArgsKernelWithInternals->mockKernel);
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();
@@ -238,7 +229,7 @@ HWTEST_P(OOMCommandQueueBufferTest, GivenHelloWorldWhenEnqueingKernelThenMaxAvai
 }
 
 HWTEST_P(OOMCommandQueueBufferTest, GivenSimpleArgWhenEnqueingKernelThenMaxAvailableSpaceIsNotExceeded) {
-    typedef SimpleArgKernelFixture KernelFixture;
+    auto simpleArgKernelWithInternals = createSimpleArgKernel(*context);
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -248,11 +239,11 @@ HWTEST_P(OOMCommandQueueBufferTest, GivenSimpleArgWhenEnqueingKernelThenMaxAvail
 
     auto retVal1 = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
-        KernelFixture::pKernel);
+        simpleArgKernelWithInternals->mockKernel);
 
     auto retVal2 = EnqueueKernelHelper<>::enqueueKernel(
         &cmdQ,
-        KernelFixture::pKernel);
+        simpleArgKernelWithInternals->mockKernel);
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();

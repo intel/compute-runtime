@@ -12,18 +12,7 @@ if(BUILD_WITH_L0)
     get_filename_component(LEVEL_ZERO_ROOT "${LEVEL_ZERO_ROOT}" ABSOLUTE)
   else()
     get_filename_component(LEVEL_ZERO_ROOT_tmp "${NEO_SOURCE_DIR}/../level_zero" ABSOLUTE)
-    # Level Zero Headers have all includes in include folder and its subdirectories,
-    # while devel/sdk package has all the includes in include/level_zero subdirectory.
     if(IS_DIRECTORY "${LEVEL_ZERO_ROOT_tmp}")
-      set(CUSTOM_L0_INCLUDE_PATH "${LEVEL_ZERO_ROOT_tmp}/include/level_zero/")
-      file(GLOB LEVEL_ZERO_SOURCE_HEADERS
-           "${LEVEL_ZERO_ROOT_tmp}/include/*.h"
-      )
-      if(IS_DIRECTORY "${LEVEL_ZERO_ROOT_tmp}/include/loader")
-        list(APPEND LEVEL_ZERO_SOURCE_HEADERS ${LEVEL_ZERO_ROOT_tmp}/include/loader)
-      endif()
-      file(MAKE_DIRECTORY ${CUSTOM_L0_INCLUDE_PATH})
-      file(COPY ${LEVEL_ZERO_SOURCE_HEADERS} DESTINATION ${CUSTOM_L0_INCLUDE_PATH})
       set(LEVEL_ZERO_ROOT "${LEVEL_ZERO_ROOT_tmp}")
     endif()
   endif()
@@ -87,6 +76,19 @@ if(BUILD_WITH_L0)
       message(STATUS "libtracefs headers directory: ${LIBTRACEFS_INCLUDE_DIR}")
       include_directories(SYSTEM ${LIBTRACEFS_INCLUDE_DIR})
       set(LIBTRACEFS_FOUND TRUE)
+
+      set(LIBTRACEFS_MINIMUM_VERSION "1.8.0")
+      find_package(PkgConfig)
+      if(PkgConfig_FOUND)
+        pkg_check_modules(NEO__LIBTRACEFS QUIET libtracefs)
+        if(NEO__LIBTRACEFS_FOUND)
+          if(NEO__LIBTRACEFS_VERSION VERSION_LESS LIBTRACEFS_MINIMUM_VERSION)
+            message(STATUS "libtracefs ${NEO__LIBTRACEFS_VERSION} on the build host is older than ${LIBTRACEFS_MINIMUM_VERSION}, the info log reports unsupported on hosts below it")
+          else()
+            message(STATUS "libtracefs version: ${NEO__LIBTRACEFS_VERSION}")
+          endif()
+        endif()
+      endif()
     else()
       message(STATUS "libtracefs headers not available. Building without")
     endif()
@@ -107,80 +109,6 @@ if(BUILD_WITH_L0)
   endif()
   # Option to disable tests
   option(${PROJECT_NAME}_BUILD_TESTS "Build unit tests." ON)
-
-  # Copy third_party_binaries to output BIN folder
-  add_custom_target(copy_third_party_files)
-  set_target_properties(copy_third_party_files PROPERTIES FOLDER ${TARGET_NAME_L0})
-
-  if(DEFINED NEO__IGC_TARGETS)
-    if(WIN32)
-      add_dependencies(copy_third_party_files copy_compiler_files)
-    else()
-      add_dependencies(copy_third_party_files ${NEO__IGC_TARGETS})
-      foreach(TARGET_tmp ${NEO__IGC_TARGETS})
-        if(UNIX)
-          add_custom_command(
-                             TARGET copy_third_party_files
-                             PRE_BUILD
-                             COMMAND echo Running copy_third_party_files for igc targets. Copy from: $<TARGET_SONAME_FILE:${TARGET_tmp}> to: "${CUSTOM_COMMAND_BINARY_DIR}/"
-                             COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                             COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_SONAME_FILE:${TARGET_tmp}> "${CUSTOM_COMMAND_BINARY_DIR}/"
-          )
-        endif()
-        add_custom_command(
-                           TARGET copy_third_party_files
-                           PRE_BUILD
-                           COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                           COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> "${CUSTOM_COMMAND_BINARY_DIR}/"
-        )
-      endforeach()
-    endif()
-  else()
-    if(DEFINED IGC_DIR) # Only copy igc libs if available
-      message(STATUS "L0::Igc Dir: ${IGC_DIR}")
-      set(TEMP_IGC_DIRS "${NEO__IGC_LIBRARY_PATH}")
-      string(REPLACE ":" ";" TEMP_IGC_DIRS "${NEO__IGC_LIBRARY_PATH}")
-      foreach(TEMP_DIR ${TEMP_IGC_DIRS})
-        add_custom_command(
-                           TARGET copy_third_party_files
-                           PRE_BUILD
-                           COMMAND echo Running copy_third_party_files for igc dir. Copy from: "${TEMP_DIR}" to: "${CUSTOM_COMMAND_BINARY_DIR}/"
-                           COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                           COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}" "${CUSTOM_COMMAND_BINARY_DIR}/"
-        )
-      endforeach()
-    endif()
-  endif()
-
-  if(TARGET ${GMM_TARGET_NAME})
-    message(STATUS "L0::Gmm Target: ${GMM_TARGET_NAME}")
-    add_dependencies(copy_third_party_files ${GMM_TARGET_NAME})
-    if(UNIX)
-      add_custom_command(
-                         TARGET copy_third_party_files
-                         PRE_BUILD
-                         COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                         COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_SONAME_FILE:${GMM_TARGET_NAME}>" "${CUSTOM_COMMAND_BINARY_DIR}/"
-      )
-    endif()
-    add_custom_command(
-                       TARGET copy_third_party_files
-                       PRE_BUILD
-                       COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                       COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:${GMM_TARGET_NAME}>" "${CUSTOM_COMMAND_BINARY_DIR}/"
-    )
-  else()
-    if(DEFINED GMM_DIR) # Only copy gmm libs if available
-      message(STATUS "L0::Gmm Dir: ${GMM_DIR}")
-      add_custom_command(
-                         TARGET copy_third_party_files
-                         PRE_BUILD
-                         COMMAND echo Running copy_third_party_files for gmm dir. Copy from: "${NEO__GMM_LIBRARY_PATH}" to: "${CUSTOM_COMMAND_BINARY_DIR}/"
-                         COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                         COMMAND ${CMAKE_COMMAND} -E copy_directory "${NEO__GMM_LIBRARY_PATH}" "${CUSTOM_COMMAND_BINARY_DIR}/"
-      )
-    endif()
-  endif()
 
   # Get build type
   string(TOLOWER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
@@ -203,11 +131,7 @@ if(BUILD_WITH_L0)
   endif()
   message(STATUS "IGSC headers dir: ${NEO_IGSC_HEADERS_DIR}")
 
-  if(CUSTOM_L0_INCLUDE_PATH)
-    include_directories(${CUSTOM_L0_INCLUDE_PATH}/../)
-  else()
-    include_directories(${LevelZero_INCLUDE_DIRS})
-  endif()
+  include_directories(${LevelZero_INCLUDE_DIRS})
 
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX})
@@ -391,6 +315,9 @@ if(BUILD_WITH_L0)
                                  ${COMPUTE_RUNTIME_DEFINITIONS}
       )
     endif()
+
+    # LEO implements beta OpenCL extensions, whose declarations in CL/cl_ext.h are guarded by this macro
+    target_compile_definitions(${LIB_NAME} PUBLIC CL_ENABLE_BETA_EXTENSIONS)
 
     set_property(TARGET ${LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
     set_target_properties(${LIB_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})

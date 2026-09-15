@@ -7,12 +7,16 @@
 
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 
 namespace NEO {
@@ -38,6 +42,30 @@ void Buffer::resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) 
     newAllocData.gpuAllocations.addAllocation(newGraphicsAllocation);
     newAllocData.setAllocId(++context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
     context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->insertSVMAlloc(newAllocData);
+
+    this->allocData = nullptr;
+    this->usmPtr = reinterpret_cast<void *>(newGraphicsAllocation->getGpuAddress());
+}
+
+void Buffer::refreshDeviceAddress(uint32_t rootDeviceIndex) {
+    if (this->isSubBuffer()) {
+        static_cast<Buffer *>(this->associatedMemObject)->refreshDeviceAddress(rootDeviceIndex);
+        return;
+    }
+
+    auto lock = this->takeOwnership();
+
+    auto allocData = this->getAllocData();
+    if (nullptr == allocData) {
+        return;
+    }
+
+    auto graphicsAllocation = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    if (nullptr == graphicsAllocation) {
+        return;
+    }
+
+    this->usmPtr = reinterpret_cast<void *>(graphicsAllocation->getGpuAddress());
 }
 
 void Buffer::removeGraphicsAllocation(uint32_t rootDeviceIndex) {
@@ -73,6 +101,77 @@ Buffer *Buffer::createSharedBuffer(Context *context, cl_mem_flags flags, Sharing
     return sharedBuffer;
 }
 
+bool Buffer::isZeroCopyAllowedForHostPtr(const void *hostPtr, size_t size, MemoryManager *memoryManager) {
+    if (nullptr == hostPtr) {
+        return false;
+    }
+
+    if (debugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
+        return false;
+    }
+
+    // Sharing memory with the GPU requires cache line granularity, otherwise the buffer edges would
+    // share cache lines with unrelated CPU data.
+    if (!isL3Capable(hostPtr, size)) {
+        return false;
+    }
+
+    if (auto memRestrictions = memoryManager->getAlignedMallocRestrictions()) {
+        if (memRestrictions->minAddress > reinterpret_cast<uintptr_t>(hostPtr)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void *Buffer::allocateWithHostPtr(Context *context, void *hostPtr, size_t size, const MemoryProperties &memoryProperties) {
+    auto rootDeviceIndex = context->getClDevice()->getRootDeviceIndex();
+    auto driverHandle = context->getL0Object()->getDriverHandle();
+    auto memoryManager = driverHandle->getMemoryManager();
+    auto svmAllocsManager = driverHandle->getSvmAllocsManager();
+
+    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex,
+                                                                                memoryProperties,
+                                                                                false,
+                                                                                size,
+                                                                                AllocationType::bufferHostMemory,
+                                                                                false,
+                                                                                context->getClDevice()->getHardwareInfo(),
+                                                                                context->getDeviceBitfields().at(rootDeviceIndex),
+                                                                                context->isSingleDeviceContext());
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties, hostPtr);
+    if (nullptr == allocation) {
+        return nullptr;
+    }
+
+    SvmAllocationData allocData(rootDeviceIndex);
+    allocData.gpuAllocations.addAllocation(allocation);
+    allocData.cpuAllocation = nullptr;
+    allocData.size = allocation->getAllocationOffset() + size;
+    allocData.memoryType = InternalMemoryType::hostUnifiedMemory;
+    allocData.allocationFlagsProperty.hostptr = castToUint64(hostPtr);
+    allocData.device = nullptr;
+    allocData.setAllocId(++svmAllocsManager->allocationsCounter);
+    svmAllocsManager->insertSVMAlloc(allocData);
+
+    return reinterpret_cast<void *>(allocation->getGpuAddress());
+}
+
+void *Buffer::tryImportUserPtr(Context *context, void *hostPtr, size_t size, const MemoryProperties &memoryProperties, bool preferHostMemory) {
+    if (!memoryProperties.flags.useHostPtr || !preferHostMemory) {
+        return nullptr;
+    }
+
+    auto driverHandle = context->getL0Object()->getDriverHandle();
+    if (!isZeroCopyAllowedForHostPtr(hostPtr, size, driverHandle->getMemoryManager())) {
+        return nullptr;
+    }
+
+    return allocateWithHostPtr(context, hostPtr, size, memoryProperties);
+}
+
 Buffer::~Buffer() {
     if (associatedMemObject) {
         associatedMemObject->decRefInternal();
@@ -83,6 +182,9 @@ Buffer::~Buffer() {
         if (!externalHandle && !usesSvm) {
             ze_memory_free_ext_desc_t freeDesc{ZE_STRUCTURE_TYPE_MEMORY_FREE_EXT_DESC, nullptr, ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE};
             zeMemFreeExt(context->getL0ContextHandle(), &freeDesc, usmPtr);
+            if (usmPtr == cpuPtr) {
+                this->cpuPtr = nullptr;
+            }
         }
     }
 }
@@ -93,7 +195,7 @@ cl_mem_object_type Buffer::getClObjectType() {
 
 NEO::SvmAllocationData *Buffer::getAllocData() {
     if (!allocData) {
-        allocData = this->context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(this->usmPtr);
+        allocData = this->context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(this->getUsmPtr());
     }
     return allocData;
 }
@@ -123,10 +225,15 @@ cl_int Buffer::createMapAllocation() {
 }
 
 void *Buffer::getUsmPtr() const {
+    if (this->isSubBuffer()) {
+        auto parentPtr = static_cast<const Buffer *>(this->associatedMemObject)->getUsmPtr();
+        return parentPtr ? ptrOffset(parentPtr, this->offset) : nullptr;
+    }
     return usmPtr;
 }
 
 void **Buffer::getUsmPtrRef() {
+    this->usmPtr = this->getUsmPtr();
     return &this->usmPtr;
 }
 

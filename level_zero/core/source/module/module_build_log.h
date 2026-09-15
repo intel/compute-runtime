@@ -14,7 +14,7 @@
 
 #include <string>
 
-struct _ze_module_build_log_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_MODULE_BUILD_LOG> {};
+struct _ze_module_build_log_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_module_build_log_handle_t>);
 
 namespace L0 {

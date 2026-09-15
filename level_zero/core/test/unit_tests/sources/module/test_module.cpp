@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -23,7 +24,7 @@
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -45,6 +46,8 @@
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/core/ze_module_api_entrypoints.h"
+#include "level_zero/api/internal/l0_module.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/internal_core_program_ext.h"
@@ -63,6 +66,29 @@ namespace L0 {
 namespace ult {
 
 using ModuleTest = Test<ModuleFixture>;
+
+TEST_F(ModuleTest, givenValidModuleHandleWhenCallingZeModuleGetDeviceHandleThenParentDeviceHandleReturned) {
+    ze_device_handle_t deviceHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeModuleGetDeviceHandleExt(module->toHandle(), &deviceHandle));
+    EXPECT_EQ(device->toHandle(), deviceHandle);
+
+    deviceHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeModuleGetDeviceHandle(module->toHandle(), &deviceHandle));
+    EXPECT_EQ(device->toHandle(), deviceHandle);
+}
+
+TEST_F(ModuleTest, givenNullModuleHandleWhenCallingZeModuleGetDeviceHandleThenInvalidNullHandleReturned) {
+    ze_device_handle_t deviceHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeModuleGetDeviceHandleExt(nullptr, &deviceHandle));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ::zeModuleGetDeviceHandle(nullptr, &deviceHandle));
+}
+
+TEST_F(ModuleTest, givenNullDeviceHandlePointerWhenCallingZeModuleGetDeviceHandleThenInvalidNullPointerReturned) {
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeModuleGetDeviceHandleExt(module->toHandle(), nullptr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, ::zeModuleGetDeviceHandle(module->toHandle(), nullptr));
+}
 
 TEST_F(ModuleTest, GivenGeneralRegisterFileDescriptorWhenGetKernelPropertiesIsCalledThenDescriptorIsCorrectlySet) {
     zex_device_module_register_file_exp_t descriptor{ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP};
@@ -124,17 +150,17 @@ TEST_F(ModuleTest, GivenKernelRegisterFileDescriptorWhenGetPropertiesIsCalledThe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.numGrfRequired, descriptor.registerFileSize);
 }
 
-TEST_F(ModuleTest, GivenBfloat16AtomicPropertiesWhenGetKernelPropertiesIsCalledThenCorrectPropertiesFromReleaseHelperAreReturnedOrNone) {
+TEST_F(ModuleTest, GivenBfloat16AtomicPropertiesWhenGetKernelPropertiesIsCalledThenCorrectPropertiesFromCapsAreReturnedOrNone) {
     zex_bfloat16_atomic_ext_properties_t bfloat16Properties{ZEX_STRUCTURE_TYPE_BFLOAT16_ATOMIC_EXT_PROPERTIES};
     ze_device_module_properties_t properties{};
     properties.pNext = &bfloat16Properties;
 
-    const auto &releaseHelper = device->getNEODevice()->getReleaseHelper();
-    uint32_t extraCaps = releaseHelper.getAdditionalExtraCaps();
+    const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+    uint32_t bFloat16AtomicCapabilities = hwInfo.caps.kernelBFloat16AtomicCapabilities;
 
     ze_result_t result = device->getKernelProperties(&properties);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(extraCaps, bfloat16Properties.bfloat16Flags);
+    EXPECT_EQ(bFloat16AtomicCapabilities, bfloat16Properties.bfloat16Flags);
 }
 
 HWTEST_F(ModuleTest, givenBinaryWithDebugDataWhenModuleCreatedFromNativeBinaryThenDebugDataIsStored) {
@@ -1004,6 +1030,46 @@ TEST_F(ModuleSpecConstantsCharTests, givenSpecializationConstantsSetWithCharSize
     runTest();
 }
 
+using ModuleIlFormatTests = ModuleTest;
+
+TEST_F(ModuleIlFormatTests, givenLlvmBitcodePassedAsIlSpirVFormatThenCompilerReceivesLlvmBcCodeType) {
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
+
+    std::vector<uint8_t> llvmBc(NEO::llvmBcMagic.begin(), NEO::llvmBcMagic.end());
+    llvmBc.resize(64, 0u);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = llvmBc.data();
+    moduleDesc.inputSize = static_cast<uint32_t>(llvmBc.size());
+
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(mockTranslationUnit);
+    module->initialize(&moduleDesc, neoDevice);
+
+    EXPECT_EQ(IGC::CodeType::llvmBc, mockTranslationUnit->passedSrcType);
+}
+
+TEST_F(ModuleIlFormatTests, givenSpirVPassedAsIlSpirVFormatThenCompilerReceivesSpirVCodeType) {
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
+
+    std::vector<uint8_t> spirv(NEO::spirvMagic.begin(), NEO::spirvMagic.end());
+    spirv.resize(64, 0u);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = spirv.data();
+    moduleDesc.inputSize = static_cast<uint32_t>(spirv.size());
+
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(mockTranslationUnit);
+    module->initialize(&moduleDesc, neoDevice);
+
+    EXPECT_EQ(IGC::CodeType::spirV, mockTranslationUnit->passedSrcType);
+}
+
 TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompilerReturnsErrorThenModuleInitFails) {
     class FailingMockCompilerInterfaceWithSpecConstants : public MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t> {
       public:
@@ -1658,7 +1724,7 @@ TEST_F(ModulePropertyTest, whenZeModuleGetPropertiesIsCalledThenGetPropertiesIsC
     // returning error code that is unlikely to be returned by the function
     module.getPropertiesResult = ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
 
-    ze_result_t res = zeModuleGetProperties(module.toHandle(), &moduleProperties);
+    ze_result_t res = ::zeModuleGetProperties(module.toHandle(), &moduleProperties);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, res);
 }
 
@@ -1737,13 +1803,13 @@ TEST_F(ModuleInspectionTests, givenCallToInspectionOnModulesWithoutUnresolvedSym
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolWhenTheOtherModuleDefinesTheSymbolThenInspectedLinkageShowsSymbolsAreResolvedInTheLog) {
@@ -1793,13 +1859,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolWhenTheOtherModuleD
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithExportSymolsThenInspectedLinkageShowsSymbolsInTheLog) {
@@ -1826,13 +1892,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithExportSymolsThenInspectedLinkageSho
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithFunctionDependenciesWhenOtherModuleDefinesThisFunctionThenExportedFunctionsAreDefinedInLog) {
@@ -1859,13 +1925,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithFunctionDependenciesWhenOtherModule
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedImportsButFullyLinkedThenImportedFunctionsAreDefinedInLog) {
@@ -1885,13 +1951,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedImportsButFullyLinkedThen
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, linkModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolsNotPresentInOtherModulesWhenInspectLinkageThenUnresolvedSymbolsReturned) {
@@ -1912,13 +1978,13 @@ TEST_F(ModuleInspectionTests, givenModuleWithUnresolvedSymbolsNotPresentInOtherM
     ze_result_t res = module0->inspectLinkage(&inspectDesc, numModules, hModules.data(), &linkageLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(linkageLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(linkageLog);
+    ::zeModuleBuildLogDestroy(linkageLog);
 }
 
 TEST_F(ModuleDynamicLinkTests, givenCallToDynamicLinkOnModulesWithoutUnresolvedSymbolsThenSuccessIsReturned) {
@@ -2443,13 +2509,13 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(dynLinkLog);
+    ::zeModuleBuildLogDestroy(dynLinkLog);
 }
 
 TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnotherModuleWhenDynamicLinkThenLinkFailureIsReturnedAndLogged) {
@@ -2499,13 +2565,13 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), &dynLinkLog);
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(dynLinkLog);
+    ::zeModuleBuildLogDestroy(dynLinkLog);
 }
 
 TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnotherModuleWhenDynamicLinkWithoutRequiredFlagsThenLinkFailureIsReturnedAndLogged) {
@@ -2559,13 +2625,13 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
     EXPECT_NE(0, strcmp(pStr, emptyString.c_str()));
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
     size_t buildLogSize;
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);
     char *logBuffer = new char[buildLogSize]();
-    zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
+    ::zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer);
     EXPECT_NE(logBuffer, "");
     delete[] logBuffer;
-    zeModuleBuildLogDestroy(dynLinkLog);
+    ::zeModuleBuildLogDestroy(dynLinkLog);
 }
 
 using ModuleDynamicLinkTest = Test<ModuleFixture>;
@@ -4125,11 +4191,12 @@ HWTEST_F(ModuleTranslationUnitTest, GivenZebinWithSpecConstantsWhenCreatingFromN
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseAndFileWithIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiledWithInternalOption) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
 
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
-    this->neoDevice->executionEnvironment->setOneApiPvcWaEnv(false);
 
     auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
@@ -4155,11 +4222,12 @@ HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseAndFileWithIn
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseWhenCreatingModuleFromSpirvBinaryThenModuleIsCompiledWithInternalOption) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
 
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
-    this->neoDevice->executionEnvironment->setOneApiPvcWaEnv(false);
 
     uint8_t binary[10];
     ze_module_desc_t moduleDesc = {};
@@ -4405,8 +4473,8 @@ kernels:
         EXPECT_EQ(AllocationType::constantSurface, moduleTu.globalConstBuffer->getGraphicsAllocation()->getAllocationType());
         EXPECT_EQ(AllocationType::globalSurface, moduleTu.globalVarBuffer->getGraphicsAllocation()->getAllocationType());
 
-        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress())));
-        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress())));
     }
 
     EXPECT_EQ(1u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
@@ -4549,8 +4617,8 @@ kernels:
         auto retVal = moduleTu.processUnpackedBinary();
         EXPECT_EQ(retVal, ZE_RESULT_SUCCESS);
 
-        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress())));
-        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress())));
 
         L0::ModuleTranslationUnit moduleTu2(this->device);
         moduleTu2.unpackedDeviceBinarySize = zebin.size();
@@ -4560,8 +4628,8 @@ kernels:
         retVal = moduleTu2.processUnpackedBinary();
         EXPECT_EQ(retVal, ZE_RESULT_SUCCESS);
 
-        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu2.globalConstBuffer->getGpuAddress())));
-        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(moduleTu2.globalVarBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmConstantSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu2.globalConstBuffer->getGpuAddress())));
+        EXPECT_TRUE(neoDevice->getUsmGlobalSurfaceAllocPool()->isInPoolRange(reinterpret_cast<void *>(moduleTu2.globalVarBuffer->getGpuAddress())));
 
         EXPECT_EQ(moduleTu.globalConstBuffer->getGraphicsAllocation(), moduleTu2.globalConstBuffer->getGraphicsAllocation());
         EXPECT_EQ(moduleTu.globalVarBuffer->getGraphicsAllocation(), moduleTu2.globalVarBuffer->getGraphicsAllocation());
@@ -5426,6 +5494,9 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         this->mockModule.reset(new MockModule{this->device, nullptr, ModuleType::user});
         this->mockModule->translationUnit.reset(new MockModuleTranslationUnit{this->device});
         this->isaAllocationPageSize = this->mockModule->getIsaAllocationPageSize();
+        this->maxIsaSizeInPage = this->isaAllocationPageSize > this->isaPadding
+                                     ? alignDown(this->isaAllocationPageSize - this->isaPadding, this->kernelStartPointerAlignment)
+                                     : this->kernelStartPointerAlignment;
     }
 
     void tearDown() {
@@ -5465,7 +5536,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
 
     template <typename FamilyType>
     void givenMultipleKernelIsasWhichExceedSinglePageAndDebuggerEnabledWhenKernelImmutableDataAreInitializedThenKernelIsasGetSeparateAllocations() {
-        auto maxAllocationSizeInPage = alignDown(isaAllocationPageSize - this->isaPadding, this->kernelStartPointerAlignment);
+        auto maxAllocationSizeInPage = this->maxIsaSizeInPage;
         this->prepareKernelInfoAndAddToTranslationUnit(maxAllocationSizeInPage);
 
         auto tinyAllocationSize = 0x8;
@@ -5501,7 +5572,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
     }
 
     void givenMultipleKernelIsasWhichExceedSinglePageWhenKernelImmutableDataAreInitializedThenKernelIsasShareParentAllocation() {
-        auto maxAllocationSizeInPage = alignDown(isaAllocationPageSize - this->isaPadding, this->kernelStartPointerAlignment);
+        auto maxAllocationSizeInPage = this->maxIsaSizeInPage;
         this->prepareKernelInfoAndAddToTranslationUnit(maxAllocationSizeInPage);
 
         auto tinyAllocationSize = 0x8;
@@ -5569,6 +5640,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
     size_t isaPadding;
     size_t kernelStartPointerAlignment;
     size_t isaAllocationPageSize;
+    size_t maxIsaSizeInPage;
     NEO::Device *neoDevice = nullptr;
     MockMemoryManager *mockMemoryManager = nullptr;
     std::unique_ptr<MockModule> mockModule = nullptr;
@@ -5653,7 +5725,7 @@ TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhenKernelI
 
 using ModuleIsaAllocationsInSystemMemoryTest = Test<ModuleIsaAllocationsFixture<false>>;
 
-TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPages4KBWhenKernelImmutableDataInitializedThenKernelIsasCanGetSeparateAllocationsDependingOnPaddingSize) {
+TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPages4KBWhenKernelImmutableDataInitializedThenKernelIsasShareParentAllocationFromPoolOrModuleRegion) {
     EXPECT_EQ(this->mockModule->isaAllocationPageSize, isaAllocationPageSize);
 
     const auto requestedSize1 = 0x8;
@@ -5664,31 +5736,26 @@ TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPage
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize2);
     auto isaAllocationAlignedSize2 = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->neoDevice, requestedSize2, true);
 
-    // for 4kB pages, 2x isaPaddings alone could exceed isaAllocationPageSize, which precludes page sharing
+    // for 4kB pages, isaPadding alone can exceed isaAllocationPageSize, which precludes pool sharing
     const bool isasShouldShareSamePage = (isaAllocationAlignedSize1 + isaAllocationAlignedSize2 <= isaAllocationPageSize);
 
     this->mockModule->initializeKernelImmutableData();
     auto &kernelImmData = this->mockModule->getKernelImmutableDataVector();
+    EXPECT_NE(nullptr, this->mockModule->getKernelsIsaParentAllocation());
     if (isasShouldShareSamePage) {
-        EXPECT_EQ(kernelImmData[0]->getIsaGraphicsAllocation(), kernelImmData[0]->getIsaParentAllocation());
-        EXPECT_EQ(kernelImmData[0]->getIsaOffsetInParentAllocation(), 0lu);
-        EXPECT_EQ(kernelImmData[0]->getIsaSize(), isaAllocationAlignedSize1);
-        EXPECT_EQ(kernelImmData[1]->getIsaGraphicsAllocation(), kernelImmData[1]->getIsaParentAllocation());
-        EXPECT_EQ(kernelImmData[1]->getIsaOffsetInParentAllocation(), isaAllocationAlignedSize1);
-        EXPECT_EQ(kernelImmData[1]->getIsaSubAllocationSize(), isaAllocationAlignedSize2);
-        EXPECT_EQ(kernelImmData[1]->getIsaSize(), isaAllocationAlignedSize2);
+        EXPECT_NE(nullptr, this->mockModule->sharedIsaAllocation.get());
     } else {
-        EXPECT_EQ(nullptr, kernelImmData[0]->getIsaParentAllocation());
-        EXPECT_NE(nullptr, kernelImmData[0]->getIsaGraphicsAllocation());
-        EXPECT_EQ(kernelImmData[0]->getIsaOffsetInParentAllocation(), 0lu);
-        EXPECT_EQ(kernelImmData[0]->getIsaSubAllocationSize(), 0lu);
-        EXPECT_EQ(kernelImmData[0]->getIsaSize(), computeKernelIsaAllocationSizeWithPadding(requestedSize1));
-        EXPECT_EQ(nullptr, kernelImmData[1]->getIsaParentAllocation());
-        EXPECT_NE(nullptr, kernelImmData[1]->getIsaGraphicsAllocation());
-        EXPECT_EQ(kernelImmData[1]->getIsaOffsetInParentAllocation(), 0lu);
-        EXPECT_EQ(kernelImmData[1]->getIsaSubAllocationSize(), 0lu);
-        EXPECT_EQ(kernelImmData[1]->getIsaSize(), computeKernelIsaAllocationSizeWithPadding(requestedSize2));
+        EXPECT_EQ(nullptr, this->mockModule->sharedIsaAllocation.get());
     }
+
+    EXPECT_EQ(kernelImmData[0]->getIsaGraphicsAllocation(), kernelImmData[0]->getIsaParentAllocation());
+    EXPECT_EQ(kernelImmData[0]->getIsaOffsetInParentAllocation(), 0lu);
+    EXPECT_EQ(kernelImmData[0]->getIsaSubAllocationSize(), isaAllocationAlignedSize1);
+    EXPECT_EQ(kernelImmData[0]->getIsaSize(), isaAllocationAlignedSize1);
+    EXPECT_EQ(kernelImmData[1]->getIsaGraphicsAllocation(), kernelImmData[1]->getIsaParentAllocation());
+    EXPECT_EQ(kernelImmData[1]->getIsaOffsetInParentAllocation(), isaAllocationAlignedSize1);
+    EXPECT_EQ(kernelImmData[1]->getIsaSubAllocationSize(), isaAllocationAlignedSize2);
+    EXPECT_EQ(kernelImmData[1]->getIsaSize(), isaAllocationAlignedSize2);
 
     EXPECT_EQ(kernelImmData[0]->getIsaGraphicsAllocation()->getMemoryPool(), isaAllocationMemoryPool);
     EXPECT_EQ(kernelImmData[1]->getIsaGraphicsAllocation()->getMemoryPool(), isaAllocationMemoryPool);
@@ -6151,6 +6218,25 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
     std::string output = capture.getCapturedStderr();
     const std::string expectedPart = "Size of SLM (" + std::to_string(slmInlineSizeCopy) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_NE(std::string::npos, output.find(expectedPart));
+}
+
+TEST_F(ModuleTests, givenSlmSizeExceedingLocalMemorySizeWhenProcessingUnpackedBinaryThenRejectionReasonIsAppendedToBuildLog) {
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    constexpr uint32_t slmNeeded = 64u;
+    constexpr uint32_t slmAvailable = 32u;
+    neoDevice->deviceInfo.localMemSize = slmAvailable;
+
+    L0::ModuleTranslationUnit moduleTu(this->device);
+    moduleTu.unpackedDeviceBinarySize = src.size();
+    moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+    memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize, src.data(), src.size());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, moduleTu.processUnpackedBinary());
+
+    const std::string expectedPart = "Size of SLM (" + std::to_string(slmNeeded) + ") larger than available (" + std::to_string(slmAvailable) + ")";
+    EXPECT_NE(std::string::npos, moduleTu.buildLog.find(expectedPart));
 }
 
 TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivateAndScratchUsageIsPrinted) {

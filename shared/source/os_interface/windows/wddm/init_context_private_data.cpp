@@ -9,11 +9,12 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 namespace NEO {
 
 CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
+    constexpr uint8_t powerHintValueMask = 0x7fu;
     auto &rootDeviceEnvironment = osContext.getWddm()->getRootDeviceEnvironment();
     CREATECONTEXT_PVTDATA privateData = {};
     privateData.IsProtectedProcess = FALSE;
@@ -22,7 +23,7 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
     privateData.IsMediaUsage = FALSE;
     privateData.UmdContextType = UMD_OCL;
     privateData.UseHw64bToken = debugManager.flags.WddmUseHw64bToken.get() &&
-                                rootDeviceEnvironment.getReleaseHelper().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+                                rootDeviceEnvironment.getCompilerReleaseHelper().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
     if (osContext.checkLatePreemptionStartSupport()) {
         osContext.prepareLatePreemptionStart(privateData);
     }
@@ -42,7 +43,8 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
 
     if (debugManager.flags.OverrideWddmContextPowerHint.get() != -1) {
         privateData.PowerHint.IsValid = 1;
-        privateData.PowerHint.Value = static_cast<uint8_t>(debugManager.flags.OverrideWddmContextPowerHint.get());
+        privateData.PowerHint.Value = static_cast<uint8_t>(
+            static_cast<uint32_t>(debugManager.flags.OverrideWddmContextPowerHint.get()) & powerHintValueMask);
     }
 
     return privateData;

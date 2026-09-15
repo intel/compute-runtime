@@ -102,10 +102,16 @@ struct CommandListRequiredStateChange {
 struct CommandQueuePatchPreambleCounter {
     uint64_t counter = 0;
     NEO::TagNodeBase *hostCounterNode = nullptr;
-    uint64_t *hostAddress = nullptr;
-    uint64_t deviceAddress = 0;
-    NEO::GraphicsAllocation *allocation = nullptr;
+    uint64_t *hostNodeCpuAddress = nullptr;
+    uint64_t hostNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
+    NEO::TagNodeBase *deviceCounterNode = nullptr;
+    uint64_t deviceNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
+    size_t offset = 0;
+    size_t deviceNodeSize = 0;
     std::mutex mutex;
+    bool use32bSemaphore = false;
 
     CommandQueuePatchPreambleCounter() = default;
     CommandQueuePatchPreambleCounter(const CommandQueuePatchPreambleCounter &) = delete;
@@ -115,11 +121,16 @@ struct CommandQueuePatchPreambleCounter {
     void getPatchPreambleFullData(Device *device,
                                   uint64_t &outCounterValue,
                                   uint64_t *&outHostAddress,
-                                  uint64_t &outDeviceAddress,
-                                  NEO::GraphicsAllocation *&outGraphicsAllocation);
-    void getPatchPreambleDeviceData(NEO::GraphicsAllocation *&outAllocation, uint64_t &outDeviceAddress) {
-        outDeviceAddress = this->deviceAddress;
-        outAllocation = this->allocation;
+                                  uint64_t &outHostGpuAddress,
+                                  NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation,
+                                  uint64_t &outDeviceGpuAddress,
+                                  NEO::GraphicsAllocation *&outDeviceNodeGraphicsAllocation);
+    void getPatchPreambleNodeData(NEO::GraphicsAllocation *&outHostNodeAllocation, uint64_t &outHostNodeGpuAddress,
+                                  NEO::GraphicsAllocation *&outDeviceNodeAllocation, uint64_t &outDeviceNodeGpuAddress) {
+        outHostNodeGpuAddress = this->hostNodeGpuAddress;
+        outHostNodeAllocation = this->hostNodeAllocation;
+        outDeviceNodeGpuAddress = this->deviceNodeGpuAddress;
+        outDeviceNodeAllocation = this->deviceNodeAllocation;
     }
 };
 

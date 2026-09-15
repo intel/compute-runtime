@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,7 @@ using namespace NEO;
 
 class DebugManagerStateRestore {
   public:
-    DebugManagerStateRestore() {
-        debugVarSnapshot = debugManager.flags;
-        injectFcnSnapshot = debugManager.injectFcn;
-    }
+    DebugManagerStateRestore() : debugVarSnapshot(debugManager.flags), injectFcnSnapshot(debugManager.injectFcn) {}
     ~DebugManagerStateRestore() {
         debugManager.flags = debugVarSnapshot;
         debugManager.injectFcn = injectFcnSnapshot;
@@ -30,6 +27,14 @@ class DebugManagerStateRestore {
 #include "release_variables.inl"
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
+#define DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description) shrink(debugManager.flags.variableName.getRef());
+#define DECLARE_RAW_ENV_SCOPED_V(dataType, variableName, envVarName, defaultValue, description, ...) \
+    DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description)
+#define DECLARE_RAW_ENV_VARIABLE_OPT(enabled, dataType, variableName, envVarName, defaultValue, description) DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description)
+#include "env_variables.inl"
+#undef DECLARE_RAW_ENV_VARIABLE_OPT
+#undef DECLARE_RAW_ENV_SCOPED_V
+#undef DECLARE_RAW_ENV_VARIABLE
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE

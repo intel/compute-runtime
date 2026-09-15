@@ -667,10 +667,7 @@ TEST(DebugSessionTest, givenRootDeviceWhenCreatingSessionThenResultReturnedIsCor
 TEST_F(DebugApiTest, givenZeAffinityMaskAndEnabledDebugMessagesWhenDebugAttachCalledThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.PrintDebugMessages.set(1);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_AFFINITY_MASK", "0.1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;

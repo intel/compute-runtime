@@ -13,8 +13,6 @@
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
-#include <functional>
-#include <map>
 #include <optional>
 #include <string>
 
@@ -179,6 +177,14 @@ class MockCompilerInterface : public CompilerInterface {
         return CompilerInterface::getPreferredIntermediateRepresentation(device);
     }
 
+    std::string getSpirvExtensionsYAML(const NEO::Device &device) override {
+        getSpirvExtensionsYAMLCalled++;
+        if (spirvExtensionsYAMLOverride.has_value()) {
+            return *spirvExtensionsYAMLOverride;
+        }
+        return CompilerInterface::getSpirvExtensionsYAML(device);
+    }
+
     static std::vector<char> getDummyGenBinary();
     static void releaseDummyGenBinary();
 
@@ -202,6 +208,11 @@ class MockCompilerInterface : public CompilerInterface {
 
     NEO::IgcOclDeviceCtxTag *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
     IGC::CodeType::CodeType_t preferredIr = IGC::CodeType::undefined;
+
+    // When set, getSpirvExtensionsYAML() returns this verbatim (use the IGC
+    // golden fixture for the success path, or "" to exercise legacy fallback).
+    std::optional<std::string> spirvExtensionsYAMLOverride;
+    uint32_t getSpirvExtensionsYAMLCalled = 0;
 };
 
 template <>

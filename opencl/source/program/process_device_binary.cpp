@@ -25,6 +25,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_initialization.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/time_measure_wrapper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -138,14 +139,19 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
     }
 
     Linker::UnresolvedExternals unresolvedExternalsInfo;
-    bool linkSuccess = LinkingStatus::linkedFully == linker.link(globals, constants, exportedFunctions, strings,
-                                                                 globalsForPatching, constantsForPatching,
-                                                                 isaSegmentsForPatching, unresolvedExternalsInfo,
-                                                                 pDevice, constantsInitData, constantsInitDataSize,
-                                                                 variablesInitData, variablesInitDataSize,
-                                                                 kernelDescriptors, extFuncInfos);
+    auto linkStatus = linker.link(globals, constants, exportedFunctions, strings,
+                                  globalsForPatching, constantsForPatching,
+                                  isaSegmentsForPatching, unresolvedExternalsInfo,
+                                  pDevice, constantsInitData, constantsInitDataSize,
+                                  variablesInitData, variablesInitDataSize,
+                                  kernelDescriptors, extFuncInfos);
     setSymbols(rootDeviceIndex, linker.extractRelocatedSymbols());
-    if (false == linkSuccess) {
+
+    if (linkStatus != LinkingStatus::linkedFully && !buildInfos[rootDeviceIndex].requiredLibPrograms.empty()) {
+        linkStatus = linkAgainstRequiredLibs(rootDeviceIndex, isaSegmentsForPatching, unresolvedExternalsInfo);
+    }
+
+    if (linkStatus != LinkingStatus::linkedFully) {
         std::vector<std::string> kernelNames;
         for (const auto &kernelInfo : kernelInfoArray) {
             kernelNames.push_back("kernel : " + kernelInfo->kernelDescriptor.kernelMetadata.kernelName);
@@ -153,7 +159,8 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
         auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
         updateBuildLog(pDevice->getRootDeviceIndex(), error.c_str(), error.size());
         return CL_INVALID_BINARY;
-    } else if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
+    }
+    if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         [[maybe_unused]] auto success = transferIsaSegmentsToAllocation(pDevice, kernelInfoArray, &isaSegmentsForPatching, rootDeviceIndex);
         DEBUG_BREAK_IF(!success);
     }
@@ -181,7 +188,7 @@ cl_int Program::processGenBinaries(const ClDeviceVector &clDevices, std::unorder
     return retVal;
 }
 
-cl_int Program::processGenBinary(const ClDevice &clDevice) {
+cl_int Program::processGenBinary(ClDevice &clDevice) {
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     if (nullptr == this->buildInfos[rootDeviceIndex].unpackedDeviceBinary) {
         ArrayRef<const uint8_t> archive(reinterpret_cast<uint8_t *>(this->buildInfos[rootDeviceIndex].packedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
@@ -216,8 +223,8 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     if (buildInfo.constantSurface) {
         auto gpuAddress = reinterpret_cast<void *>(buildInfo.constantSurface->getGpuAddress());
         if (auto usmPool = clDevice.getDevice().getUsmConstantSurfaceAllocPool();
-            usmPool && usmPool->isInPool(gpuAddress)) {
-            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
+            usmPool && usmPool->isInPoolRange(gpuAddress)) {
+            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
             DEBUG_BREAK_IF(!ret);
         } else if (auto &pool = clDevice.getDevice().getConstantSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.constantSurface->getGraphicsAllocation())) {
@@ -232,8 +239,8 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     if (buildInfo.globalSurface) {
         auto gpuAddress = reinterpret_cast<void *>(buildInfo.globalSurface->getGpuAddress());
         if (auto usmPool = clDevice.getDevice().getUsmGlobalSurfaceAllocPool();
-            usmPool && usmPool->isInPool(gpuAddress)) {
-            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
+            usmPool && usmPool->isInPoolRange(gpuAddress)) {
+            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
             DEBUG_BREAK_IF(!ret);
         } else if (auto &pool = clDevice.getDevice().getGlobalSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.globalSurface->getGraphicsAllocation())) {
@@ -272,7 +279,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     return this->processProgramInfo(decodedSingleDeviceBinary.programInfo, clDevice);
 }
 
-cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
+cl_int Program::processProgramInfo(ProgramInfo &src, ClDevice &clDevice) {
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
     size_t slmNeeded = getMaxInlineSlmNeeded(src);
@@ -290,8 +297,9 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     setLinkerInput(rootDeviceIndex, std::move(src.linkerInput));
 
     if (slmNeeded > slmAvailable) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
-                     static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        this->updateBuildLog(rootDeviceIndex, str.get(), static_cast<size_t>(maxErrorDescriptionSize));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         return CL_OUT_OF_RESOURCES;
     }
 
@@ -336,8 +344,69 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     indirectDetectionVersion = src.indirectDetectionVersion;
     indirectAccessBufferMajorVersion = src.indirectAccessBufferMajorVersion;
 
+    if (auto retVal = resolveRequiredLibs(clDevice, src); retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalConstants.size, src.globalVariables.initData,
                       src.globalVariables.size, src.globalStrings, src.externalFunctions);
+}
+
+namespace {
+const Linker::RelocatedSymbol<SymbolInfo> *findSymbolInLibs(const std::vector<Program *> &libs, uint32_t rootDeviceIndex, const std::string &symbolName) {
+    for (const auto *lib : libs) {
+        const auto &symbols = lib->getSymbols(rootDeviceIndex);
+        if (const auto it = symbols.find(symbolName); it != symbols.end()) {
+            return &it->second;
+        }
+    }
+    return nullptr;
+}
+} // namespace
+
+LinkingStatus Program::linkAgainstRequiredLibs(uint32_t rootDeviceIndex,
+                                               Linker::PatchableSegments &isaSegmentsForPatching,
+                                               Linker::UnresolvedExternals &unresolvedExternalsInfo) {
+    const auto &requiredLibs = buildInfos[rootDeviceIndex].requiredLibPrograms;
+
+    auto patchFromLibs = [&](const Linker::UnresolvedExternal &ext) {
+        if (ext.instructionsSegmentId >= isaSegmentsForPatching.size()) {
+            return false;
+        }
+        const auto &segment = isaSegmentsForPatching[ext.instructionsSegmentId];
+        const auto relocSize = addressSizeInBytes(ext.unresolvedRelocation.type);
+        if ((relocSize > segment.segmentSize) || (ext.unresolvedRelocation.offset > segment.segmentSize - relocSize)) {
+            return false;
+        }
+        const auto *symbol = findSymbolInLibs(requiredLibs, rootDeviceIndex, ext.unresolvedRelocation.symbolName);
+        if (nullptr == symbol) {
+            return false;
+        }
+        auto *relocAddress = ptrOffset(segment.hostPointer, static_cast<uintptr_t>(ext.unresolvedRelocation.offset));
+        NEO::Linker::patchAddress(relocAddress, symbol->gpuAddress + ext.unresolvedRelocation.addend, ext.unresolvedRelocation);
+        return true;
+    };
+
+    std::erase_if(unresolvedExternalsInfo, patchFromLibs);
+    return unresolvedExternalsInfo.empty() ? LinkingStatus::linkedFully : LinkingStatus::linkedPartially;
+}
+
+cl_int Program::resolveRequiredLibs(ClDevice &clDevice, const ProgramInfo &programInfo) {
+    const auto rootDeviceIndex = clDevice.getRootDeviceIndex();
+    auto &requiredLibs = buildInfos[rootDeviceIndex].requiredLibPrograms;
+    requiredLibs.clear();
+
+    for (const auto &libName : programInfo.requiredLibs) {
+        auto *lib = clDevice.getRequiredLibProgram(libName);
+        if (nullptr == lib) {
+            const auto msg = "Failed to load dependency (" + libName + ")\n";
+            updateBuildLog(rootDeviceIndex, msg.c_str(), msg.size());
+            requiredLibs.clear();
+            return CL_BUILD_PROGRAM_FAILURE;
+        }
+        requiredLibs.push_back(lib);
+    }
+    return CL_SUCCESS;
 }
 
 void Program::processDebugData(uint32_t rootDeviceIndex) {

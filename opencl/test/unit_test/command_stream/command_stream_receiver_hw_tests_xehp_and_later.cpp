@@ -631,10 +631,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenDisab
 HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw2, givenBlockedCacheFlushCmdWhenSubmittingThenDispatchBlockedCommands) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    if (HasSemaphore64bCmd<FamilyType>) {
-        pClDevice->sharedDeviceInfo.semaphore64bCmdSupport = true;
-    }
-
     MockContext context(pClDevice);
 
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
@@ -692,18 +688,18 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
         {
             auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0]));
             EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-            EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
 
             auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*node0.getNode(0));
-            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(dataAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
         }
         {
             auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1]));
             EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-            EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
 
             auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*node1.getNode(0));
-            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(dataAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
         }
     }
     {
@@ -901,7 +897,6 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenS
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restore{};
-    UnitTestSetter::setupSemaphore64bCmdSupport(restore, defaultHwInfo->platform.eRenderCoreFamily);
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());

@@ -1763,41 +1763,6 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                                 }
                                 WCH_ASSERT(tokVEBoxInfo == tokVEBoxInfoEnd);
                             } break;
-                            case TOK_FS_GT_SYSTEM_INFO__CACHE_TYPES: {
-                                const TokenHeader *tokCacheTypes = varLen->getValue<TokenHeader>();
-                                const TokenHeader *tokCacheTypesEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                while (tokCacheTypes < tokCacheTypesEnd) {
-                                    if (false == tokCacheTypes->flags.flag4IsVariableLength) {
-                                        switch (tokCacheTypes->id) {
-                                        default:
-                                            if (tokCacheTypes->flags.flag3IsMandatory) {
-                                                return false;
-                                            }
-                                            break;
-                                        case TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__L3: {
-                                            dst.SystemInfo.CacheTypes.L3 = readTokValue<decltype(dst.SystemInfo.CacheTypes.L3)>(*tokCacheTypes);
-                                        } break;
-                                        case TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__LLC: {
-                                            dst.SystemInfo.CacheTypes.LLC = readTokValue<decltype(dst.SystemInfo.CacheTypes.LLC)>(*tokCacheTypes);
-                                        } break;
-                                        case TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__E_DRAM: {
-                                            dst.SystemInfo.CacheTypes.eDRAM = readTokValue<decltype(dst.SystemInfo.CacheTypes.eDRAM)>(*tokCacheTypes);
-                                        } break;
-                                        case TOK_FBD_GT_CACHE_TYPES__CACHE_TYPE_MASK: {
-                                            dst.SystemInfo.CacheTypes.CacheTypeMask = readTokValue<decltype(dst.SystemInfo.CacheTypes.CacheTypeMask)>(*tokCacheTypes);
-                                        } break;
-                                        };
-                                        tokCacheTypes = tokCacheTypes + 1 + tokCacheTypes->valueDwordCount;
-                                    } else {
-                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokCacheTypes);
-                                        if (tokCacheTypes->flags.flag3IsMandatory) {
-                                            return false;
-                                        }
-                                        tokCacheTypes = tokCacheTypes + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
-                                    }
-                                }
-                                WCH_ASSERT(tokCacheTypes == tokCacheTypesEnd);
-                            } break;
                             };
                             tokSystemInfo = tokSystemInfo + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                         }

@@ -164,10 +164,6 @@ inline constexpr ConstStringRef channelOrder("image_channel_order");
 inline constexpr ConstStringRef arraySize("image_array_size");
 inline constexpr ConstStringRef numSamples("image_num_samples");
 inline constexpr ConstStringRef numMipLevels("image_num_mip_levels");
-inline constexpr ConstStringRef flatBaseOffset("flat_image_baseoffset");
-inline constexpr ConstStringRef flatWidth("flat_image_width");
-inline constexpr ConstStringRef flatHeight("flat_image_height");
-inline constexpr ConstStringRef flatPitch("flat_image_pitch");
 } // namespace Image
 namespace Sampler {
 inline constexpr ConstStringRef snapWa("sampler_snap_wa");
@@ -575,10 +571,6 @@ enum ArgType : uint8_t {
     argTypeImageArraySize,
     argTypeImageNumSamples,
     argTypeImageMipLevels,
-    argTypeImageFlatBaseOffset,
-    argTypeImageFlatWidth,
-    argTypeImageFlatHeight,
-    argTypeImageFlatPitch,
     argTypeSamplerSnapWa,
     argTypeSamplerNormCoords,
     argTypeSamplerAddrMode,

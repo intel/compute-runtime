@@ -8,7 +8,6 @@
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
 #include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -17,6 +16,7 @@
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -134,7 +134,7 @@ TEST_F(MockProductHelperTestLinux, whenConfigureHwInfoIsCalledAndPersitentContex
     EXPECT_FALSE(drm->areNonPersistentContextsSupported());
 }
 
-HWTEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
+TEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenConfiguringHwInfoThenPreemptionIsSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
@@ -147,9 +147,8 @@ HWTEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenCon
 
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
-    if (getRootDeviceEnvironment().compilerProductHelper->isMidThreadPreemptionSupported(outHwInfo)) {
-        EXPECT_EQ(PreemptionMode::MidThread, outHwInfo.capabilityTable.defaultPreemptionMode);
-    }
+    EXPECT_TRUE(outHwInfo.featureTable.flags.ftrWalkerMTP);
+    EXPECT_EQ(PreemptionMode::MidThread, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
@@ -356,4 +355,29 @@ HWTEST2_F(ProductHelperTestLinux, givenXe2CompressionWhenConfiguringHwInfoDrmThe
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenNullOsInterfaceWhenGettingDeviceMemoryMaxClkRateThenZeroIsReturned, IsNotBMG) {
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenDriverModelWithoutMemoryClockRateSupportWhenGettingDeviceMemoryMaxClkRateThenZeroIsReturned, IsNotBMG) {
+    drm = nullptr;
+    osInterface->setDriverModel(std::make_unique<MockDriverModel>());
+
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenFailingDrmQueryWhenGettingDeviceMemoryMaxClkRateThenZeroIsReturned, IsNotBMG) {
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = false;
+
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenSuccessfulDrmQueryWhenGettingDeviceMemoryMaxClkRateThenValueReportedByDrmIsReturned, IsNotBMG) {
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+
+    EXPECT_EQ(800u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
 }

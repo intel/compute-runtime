@@ -6,7 +6,10 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/simd_helper.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 #include "aubstream/engine_node.h"
 #include "aubstream/product_family.h"
@@ -109,11 +112,11 @@ bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
+uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     auto adjustedMaxThreadsPerThreadGroup = maxThreadsPerThreadGroup;
     if (grfCount == 512) {
         adjustedMaxThreadsPerThreadGroup = 32u;
-    } else if (isSimd1(simt) && (grfCount == 160 || grfCount == 192)) {
+    } else if ((isSimd1(simt) || simt == 16u) && (grfCount == 160 || grfCount == 192)) {
         adjustedMaxThreadsPerThreadGroup = 64u;
     }
     return adjustedMaxThreadsPerThreadGroup;
@@ -132,6 +135,53 @@ uint32_t ProductHelperHw<gfxProduct>::getPreferredWorkgroupCountPerSubslice() co
 template <>
 bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
     return true;
+}
+
+template <>
+size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferType) const {
+    size_t threshold = 0u;
+
+    switch (transferType) {
+    case TransferType::deviceUsmToDeviceUsm:
+        threshold = 4 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::deviceUsmToHostUsm:
+        threshold = 4 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::deviceUsmToHostNonUsm:
+        threshold = 64 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::hostUsmToDeviceUsm:
+        threshold = 64 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::hostUsmToHostUsm:
+        threshold = 1 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostUsmToHostNonUsm:
+        threshold = 64 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostNonUsmToDeviceUsm:
+        threshold = 10 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostNonUsmToHostUsm:
+        threshold = 64 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostNonUsmToHostNonUsm:
+        threshold = 64 * MemoryConstants::megaByte;
+        break;
+    default:
+        break;
+    }
+
+    return threshold;
+}
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const {
+    if (debugManager.flags.LimitIsaPrefetchSize.get() != -1) {
+        return std::min(isaSize, static_cast<uint32_t>(debugManager.flags.LimitIsaPrefetchSize.get()));
+    }
+    return isaSize;
 }
 
 } // namespace NEO

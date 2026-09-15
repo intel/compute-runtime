@@ -33,6 +33,12 @@ CRITEST_F(CriDeviceTest, givenCriProductWhenCheckingCapabilitiesThenReturnCorrec
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.timestampValidBits);
 }
 
+CRITEST_F(CriDeviceTest, givenCriProductWhenCheckingDefaultPreemptionModeThenDefaultPreemptionModeIsThreadGroup) {
+    EXPECT_EQ(PreemptionMode::ThreadGroup, CRI::hwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_EQ(PreemptionMode::ThreadGroup, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
+    EXPECT_EQ(PreemptionMode::ThreadGroup, pDevice->getPreemptionMode());
+}
+
 CRITEST_F(CriDeviceTest, givenCriProductWhenInitializedThenContextGroupIsEnabled) {
     EXPECT_TRUE(pDevice->getGfxCoreHelper().areSecondaryContextsSupported());
 }

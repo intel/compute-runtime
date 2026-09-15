@@ -328,7 +328,7 @@ void OaMetricGroupUserDefined::removeMetrics(bool immutable, std::vector<Metric 
     }
 
     for (auto &metric : removedMetricList) {
-        metrics.erase(std::remove(metrics.begin(), metrics.end(), metric), metrics.end());
+        std::erase(metrics, metric);
     }
 }
 
@@ -444,7 +444,7 @@ ze_result_t OaMetricGroupUserDefined::removeMetric(zet_metric_handle_t hMetric) 
     auto metricFromProgrammable = static_cast<OaMetricFromProgrammable *>(metric);
     auto mdapiStatus = getMetricSet()->RemoveMetric(metricFromProgrammable->pClonedPrototype);
 
-    metrics.erase(std::remove(metrics.begin(), metrics.end(), metric), metrics.end());
+    std::erase(metrics, metric);
     metricFromProgrammable->decrementRefCount();
     if (mdapiStatus != MetricsDiscovery::CC_OK) {
         DEBUG_BREAK_IF(true);

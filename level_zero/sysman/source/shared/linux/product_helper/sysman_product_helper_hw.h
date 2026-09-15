@@ -24,6 +24,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Frequency
     void getFrequencyStepSize(double *pStepSize) override;
     bool isFrequencySetRangeSupported() override;
+    bool isMediaDomainSupported(LinuxSysmanImp *pLinuxSysmanImp) override;
     bool isMemoryDomainSupported() override;
     ze_result_t getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) override;
     ze_result_t getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) override;
@@ -34,6 +35,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) override;
     void getMemoryHealthIndicator(LinuxSysmanImp *pLinuxSysmanImp, zes_mem_health_t *health) override;
     ze_result_t getNumberOfMemoryChannels(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pNumChannels) override;
+    ze_result_t getMemoryVendorId(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pVendorId) override;
 
     // Performance
     void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) override;
@@ -43,8 +45,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ze_result_t getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
     ze_result_t getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
     ze_result_t getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
-    ze_result_t getVoltageRegulatorMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
-    ze_result_t getGpuBoardMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
+    ze_result_t getVoltageRegulatorTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) override;
+    ze_result_t getGpuBoardTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) override;
+    ze_result_t getCompositeTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
     bool isMemoryMaxTemperatureSupported() override;
     void getSupportedSensors(std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) override;
 
@@ -56,6 +59,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isRepairStatusSupported() override;
     ze_result_t memoryGetPageOfflineStateExp(SysFsAccessInterface *pSysFsAccess, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, std::vector<MemPageInfo> &memPageInfoList, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) override;
     ze_result_t getMaxMemoryOfflinePages(SysFsAccessInterface *pSysFsAccess, uint32_t *pMaxOfflinePages) override;
+    ze_result_t getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
 
     // power
     int32_t getPowerLimitValue(uint64_t value) override;
@@ -65,13 +69,16 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     std::string getPackageCriticalPowerLimitFile() override;
     SysfsValueUnit getPackageCriticalPowerLimitNativeUnit() override;
     ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subDeviceId) override;
-    ze_result_t getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) override;
-    ze_result_t setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) override;
+    ze_result_t getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) override;
+    ze_result_t setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) override;
     ze_result_t getPowerUsage(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) override;
 
     // standby
     bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) override;
     bool isSetStandbyModeSupported() override;
+    std::string getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) override;
+    ze_result_t getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) override;
+    ze_result_t setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) override;
 
     // Firmware
     void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) override;
@@ -98,6 +105,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Netlink
     bool isNetlinkEventSupported() override;
+
+    // Pmt
+    bool isPmtBasedPowerSupported() override;
 
     ~SysmanProductHelperHw() override = default;
 

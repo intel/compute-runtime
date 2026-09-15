@@ -10,7 +10,7 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/debug_env_reader.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
@@ -1458,16 +1458,12 @@ int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
 } // namespace NonExistingPathIsSet
 
 TEST(CompilerCacheHelper, GivenNonExistingPathWhenCheckDefaultCacheDirSettingsThenFalseIsReturned) {
-    NEO::EnvironmentVariableReader envReader;
+    DebugManagerStateRestore restorer;
 
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
-
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, NonExistingPathIsSet::statMock);
 
     std::string cacheDir = "";
-    EXPECT_FALSE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_FALSE(checkDefaultCacheDirSettings(cacheDir));
 }
 
 namespace XDGEnvPathIsSet {
@@ -1488,17 +1484,14 @@ int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
 } // namespace XDGEnvPathIsSet
 
 TEST(CompilerCacheHelper, GivenXdgCachePathSetWhenCheckDefaultCacheDirSettingsThenProperPathIsReturned) {
-    NEO::EnvironmentVariableReader envReader;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory/");
 
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory/";
-
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, XDGEnvPathIsSet::statMock);
 
     std::string cacheDir = "";
 
-    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir));
     EXPECT_EQ(cacheDir, "xdg/directory/neo_compiler_cache");
 }
 
@@ -1519,16 +1512,13 @@ int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
 } // namespace HomeEnvPathIsSet
 
 TEST(CompilerCacheHelper, GivenHomeCachePathSetWhenCheckDefaultCacheDirSettingsThenProperDirectoryIsSet) {
-    NEO::EnvironmentVariableReader envReader;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvHome.set("home/directory/");
 
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["HOME"] = "home/directory/";
-
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSet::statMock);
 
     std::string cacheDir = "";
-    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir));
     EXPECT_EQ(cacheDir, "home/directory/.cache/neo_compiler_cache");
 }
 
@@ -1559,19 +1549,16 @@ int mkdirMock(const std::string &dir) {
 } // namespace XdgPathIsSetAndOtherProcessCreatesPath
 
 TEST(CompilerCacheHelper, GivenXdgEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperDirectoryIsReturned) {
-    NEO::EnvironmentVariableReader envReader;
-
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory/");
     bool mkdirCalledTemp = false;
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndOtherProcessCreatesPath::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndOtherProcessCreatesPath::mkdirMock);
     VariableBackup<bool> mkdirCalledBackup(&XdgPathIsSetAndOtherProcessCreatesPath::mkdirCalled, mkdirCalledTemp);
 
     std::string cacheDir = "";
-    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir));
     EXPECT_EQ(cacheDir, "xdg/directory/neo_compiler_cache");
     EXPECT_TRUE(XdgPathIsSetAndOtherProcessCreatesPath::mkdirCalled);
 }
@@ -1596,32 +1583,26 @@ int mkdirMock(const std::string &dir) {
 } // namespace XdgPathIsSetAndNeedToCreate
 
 TEST(CompilerCacheHelper, GivenXdgEnvWhenNeoCompilerCacheNotExistsThenCreateNeoCompilerCacheFolder) {
-    NEO::EnvironmentVariableReader envReader;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory/");
 
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory/";
-
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndNeedToCreate::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndNeedToCreate::mkdirMock);
 
     std::string cacheDir = "";
-    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir));
     EXPECT_EQ(cacheDir, "xdg/directory/neo_compiler_cache");
 }
 
 TEST(CompilerCacheHelper, GivenXdgEnvWithoutTrailingSlashWhenNeoCompilerCacheNotExistsThenCreateNeoCompilerCacheFolder) {
-    NEO::EnvironmentVariableReader envReader;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvXdgCacheHome.set("xdg/directory");
 
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory";
-
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndNeedToCreate::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndNeedToCreate::mkdirMock);
 
     std::string cacheDir = "";
-    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir));
     EXPECT_EQ(cacheDir, "xdg/directory/neo_compiler_cache");
 }
 
@@ -1645,32 +1626,26 @@ int mkdirMock(const std::string &dir) {
 } // namespace HomePathIsSetAndNeedToCreate
 
 TEST(CompilerCacheHelper, GivenHomeCachePathSetWithoutTrailingSlashWhenCheckDefaultCacheDirSettingsThenProperDirectoryIsCreated) {
-    NEO::EnvironmentVariableReader envReader;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvHome.set("home/directory");
 
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["HOME"] = "home/directory";
-
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, HomePathIsSetAndNeedToCreate::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, HomePathIsSetAndNeedToCreate::mkdirMock);
 
     std::string cacheDir = "";
-    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir));
     EXPECT_EQ(cacheDir, "home/directory/.cache/neo_compiler_cache");
 }
 
 TEST(CompilerCacheHelper, GivenHomeCachePathSetWhenCheckDefaultCacheDirSettingsThenProperDirectoryIsCreated) {
-    NEO::EnvironmentVariableReader envReader;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvHome.set("home/directory/");
 
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["HOME"] = "home/directory/";
-
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, HomePathIsSetAndNeedToCreate::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, HomePathIsSetAndNeedToCreate::mkdirMock);
 
     std::string cacheDir = "";
-    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir));
     EXPECT_EQ(cacheDir, "home/directory/.cache/neo_compiler_cache");
 }
 
@@ -1701,19 +1676,16 @@ int mkdirMock(const std::string &dir) {
 } // namespace HomePathIsSetAndOtherProcessCreatesPath
 
 TEST(CompilerCacheHelper, GivenHomeEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperDirectoryIsReturned) {
-    NEO::EnvironmentVariableReader envReader;
-
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["HOME"] = "home/directory/";
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnvHome.set("home/directory/");
     bool mkdirCalledTemp = false;
 
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statMockBackup(&NEO::SysCalls::sysCallsStat, HomePathIsSetAndOtherProcessCreatesPath::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, HomePathIsSetAndOtherProcessCreatesPath::mkdirMock);
     VariableBackup<bool> mkdirCalledBackup(&HomePathIsSetAndOtherProcessCreatesPath::mkdirCalled, mkdirCalledTemp);
 
     std::string cacheDir = "";
-    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir, envReader));
+    EXPECT_TRUE(checkDefaultCacheDirSettings(cacheDir));
     EXPECT_EQ(cacheDir, "home/directory/.cache/neo_compiler_cache");
     EXPECT_TRUE(HomePathIsSetAndOtherProcessCreatesPath::mkdirCalled);
 }

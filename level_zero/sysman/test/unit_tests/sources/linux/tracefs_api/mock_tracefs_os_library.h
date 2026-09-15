@@ -11,6 +11,7 @@
 
 #include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
 
+#include <cstdint>
 #include <fcntl.h>
 #include <map>
 
@@ -24,7 +25,7 @@ namespace ult {
 
 class MockTraceFsOsLibrary : public NEO::OsLibrary {
   public:
-    bool isLoaded() override { return false; }
+    bool isLoaded() override { return true; }
     void *getProcAddress(const std::string &procName) override;
     std::string getFullPath() override {
         return std::string();
@@ -33,22 +34,28 @@ class MockTraceFsOsLibrary : public NEO::OsLibrary {
     void deleteEntryPoint(const std::string &procName);
 
     MockTraceFsOsLibrary();
+    ~MockTraceFsOsLibrary() override = default;
 
     static struct tracefs_instance mockTraceFsInstance;
     static struct tep_handle mockTepHandle;
 
-    constexpr static const char *mockInstanceName = "test_instance";
-    constexpr static const char *mockTraceDir = "/sys/kernel/tracing/instances/test";
-    constexpr static const char *mockFileName = "trace";
-    constexpr static const char *mockFileContent = "test trace data";
-    constexpr static const char *mockSystemName = "i915";
-    constexpr static const char *mockEventName = "test_event";
-    constexpr static int mockFileMode = O_RDONLY;
-    constexpr static int mockFileFd = 42;
-    constexpr static int mockBufferPercent = 50;
-    constexpr static long long mockBufferSize = 4096;
-    constexpr static int mockCpu = 0;
-    constexpr static size_t mockSize = 8192;
+    static const char *mockInstanceName;
+    static bool mockInstanceIsNew;
+    static const char *mockTraceDir;
+    static const char *mockFileName;
+    static const char *mockFileContent;
+    static const char *mockSystemName;
+    static const char *mockEventName;
+    static int mockFileMode;
+    static int mockFileFd;
+    static int mockBufferPercent;
+    static long long mockBufferSize;
+    static int mockCpu;
+    static size_t mockSize;
+
+    static uint32_t instanceDestroyCallCount;
+    static uint32_t instanceFreeCallCount;
+    static uint32_t putTracingFileCallCount;
 
   private:
     std::map<std::string, void *> funcMap;

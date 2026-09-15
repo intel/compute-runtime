@@ -68,7 +68,7 @@ with OCL ULTs (`opencl/test/unit_test`).
 * Reuse existing mocks and fixtures instead of introducing new ones.
 
 # Coding guidelines
-* Favor the design of a self-explanatory code over the use of comments; if comments are needed, use double slash instead of block comments
+* Favor the design of a self-explanatory code over the use of comments, see the comments section below
 * Avoid code duplication; extract common logic into shared helpers instead of copying
 * Refactor existing code when it improves clarity or removes duplication introduced by your change
 * Do not add code to non-test driver sources that exists solely to support unit tests
@@ -90,6 +90,30 @@ The NEO code uses the UNRECOVERABLE macro to abort execution in the following ca
 * Execution entered an unexpected path that is not supported 
 
 The abort mechanism guarantees that the error is caught as early as possible, which makes debug and fixing easier. 
+
+# Comments
+
+* The expected number of comments added by a change is zero; every comment has to earn
+its place on its own. That the file being modified already contains comments is not a
+reason to add another one.
+* A comment earns its place when it carries a fact that lives outside the source code
+and that a future edit would break silently, for example: a hardware, specification or
+workaround requirement (name the document or the workaround identifier), an ordering or
+an extra flush that reads as arbitrary, a constant whose origin cannot be derived from
+the code, a language or toolchain constraint that forces the shape of the code, or the
+reason why the obvious simpler form is wrong.
+* Do not restate what the code already says, i.e. `// take the object lock` above a
+`takeOwnership()` call.
+* Do not document why the change was made or what the bug was; that is the content of
+the commit message.
+* Do not pre-empt an expected review objection in the code; answer it in the pull
+request instead.
+* Do not comment inside a unit test body; the `givenWhenThen` test name is already the
+sentence and the assertion is already the claim, so such a comment restates one of them.
+* When a comment is only needed because the code is hard to follow, fix the code
+instead: a named `constexpr`, a better function or variable name, or a helper whose name
+is the explanation. Those survive refactoring, a comment does not.
+* Use double slash instead of block comments.
 
 # Documentation
 

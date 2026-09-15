@@ -29,6 +29,7 @@
 #include "shared/test/common/test_macros/header/common_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/encoders/test_encode_slm_xe2_and_later.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
@@ -479,4 +480,15 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTests, givenHeaplessModeEnabledWhenPatchSc
 
         EXPECT_EQ(scratchAddress, implicitArgs.v1.scratchPtr);
     }
+}
+
+const std::vector<uint32_t> slmSizesPerThreadGroupXe3pIgpu = slmSizesInBytes({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 24, 32, 48, 64, 96, 128, 192});
+const std::vector<uint32_t> slmSizesPerThreadGroupCri = slmSizesInBytes({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 24, 32, 48, 64, 96, 128, 192, 256, 320, 384});
+
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmTotalSizePerThreadGroupEdgeValuesWhenCallingAlignSlmSizePerThreadGroupThenSizeIsAlignedUpToTheNextProgrammableSize, IsXe3pLpg) {
+    verifySlmSizePerThreadGroupAlignment<FamilyType>(slmSizesPerThreadGroupXe3pIgpu);
+}
+
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmTotalSizePerThreadGroupEdgeValuesWhenCallingAlignSlmSizePerThreadGroupThenSizeIsAlignedUpToTheNextProgrammableSize, IsCRI) {
+    verifySlmSizePerThreadGroupAlignment<FamilyType>(slmSizesPerThreadGroupCri);
 }

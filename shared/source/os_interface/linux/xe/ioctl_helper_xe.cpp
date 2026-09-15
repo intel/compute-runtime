@@ -16,10 +16,13 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/options.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/topology.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/memory_info.h"
@@ -28,6 +31,7 @@
 #include "shared/source/os_interface/linux/xe/xe_log_helper.h"
 #include "shared/source/os_interface/linux/xe/xedrm.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/directory.h"
 
 #include <algorithm>
@@ -240,9 +244,11 @@ bool IoctlHelperXe::initialize() {
 
     maxExecQueuePriority = config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] & 0xffff;
     isLowLatencyHintAvailable = config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_LOW_LATENCY;
+    noCompressionHintAvailable = config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_NO_COMPRESSION_HINT;
     if (debugManager.flags.ForceLowLatencyHint.get() != -1) {
         isLowLatencyHintAvailable = !!debugManager.flags.ForceLowLatencyHint.get();
     }
+    XELOG("  NO_COMPRESSION GEM create hint capability\t%s\n", noCompressionHintAvailable ? "ON" : "OFF");
 
     memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
@@ -462,6 +468,29 @@ inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_mem_region &x
     };
 }
 
+std::bitset<IoctlHelperXe::maxSupportedTilesNumber> IoctlHelperXe::getLocalMemRegionTilesMask(uint32_t regionInstance, uint32_t regionArrayIdx, bool populateUsage, size_t &usageCursor) {
+    std::bitset<maxSupportedTilesNumber> tilesMask{};
+    if (populateUsage) {
+        UNRECOVERABLE_IF(regionInstance >= 64u);
+        for (auto g = 0u; g < xeGtListData->num_gt; g++) {
+            const auto &gtEntry = xeGtListData->gt_list[g];
+            if (gtEntry.type == DRM_XE_QUERY_GT_TYPE_MAIN &&
+                (gtEntry.near_mem_regions & (1ull << regionInstance))) {
+                UNRECOVERABLE_IF(gtEntry.tile_id >= maxSupportedTilesNumber);
+                tilesMask.set(gtEntry.tile_id);
+            }
+        }
+        if (tilesMask.any()) {
+            localMemRegionsUsage.push_back({regionArrayIdx, tilesMask});
+        }
+    } else if (usageCursor < localMemRegionsUsage.size() &&
+               localMemRegionsUsage[usageCursor].regionArrayIdx == regionArrayIdx) {
+        tilesMask = localMemRegionsUsage[usageCursor].tilesMask;
+        ++usageCursor;
+    }
+    return tilesMask;
+}
+
 std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     auto memUsageData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_MEM_REGIONS);
 
@@ -469,21 +498,9 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         return {};
     }
 
-    constexpr auto maxSupportedTilesNumber{4u};
-    std::array<std::bitset<maxSupportedTilesNumber>, 64> regionTilesMask{};
-
-    for (auto i{0u}; i < xeGtListData->num_gt; i++) {
-        const auto &gtEntry = xeGtListData->gt_list[i];
-        if (gtEntry.type != DRM_XE_QUERY_GT_TYPE_MAIN) {
-            continue;
-        }
-
-        uint64_t nearMemRegions{gtEntry.near_mem_regions};
-        auto regionIndex{Math::log2(nearMemRegions)};
-        regionTilesMask[regionIndex].set(gtEntry.tile_id);
-    }
-
     MemoryInfo::RegionContainer regionsContainer{};
+    const bool populateUsage = localMemRegionsUsage.empty();
+    size_t usageCursor = 0;
 
     auto xeMemRegionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
     for (auto i = 0u; i < xeMemRegionsData->num_mem_regions; i++) {
@@ -492,12 +509,12 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         if (xeMemRegion.mem_class == DRM_XE_MEM_REGION_CLASS_SYSMEM) {
             // Make sure sysmem is always put at the first position
             regionsContainer.insert(regionsContainer.begin(), createMemoryRegionFromXeMemRegion(xeMemRegion, 0u));
-        } else {
-            auto regionIndex = xeMemRegion.instance;
-            UNRECOVERABLE_IF(regionIndex >= regionTilesMask.size());
-            if (auto tilesMask = regionTilesMask[regionIndex]; tilesMask.any()) {
-                regionsContainer.push_back(createMemoryRegionFromXeMemRegion(xeMemRegion, tilesMask));
-            }
+            continue;
+        }
+
+        const auto tilesMask = getLocalMemRegionTilesMask(xeMemRegion.instance, i, populateUsage, usageCursor);
+        if (tilesMask.any()) {
+            regionsContainer.push_back(createMemoryRegionFromXeMemRegion(xeMemRegion, tilesMask));
         }
     }
 
@@ -516,6 +533,33 @@ size_t IoctlHelperXe::getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, ui
         }
     }
     return size;
+}
+
+bool IoctlHelperXe::hasEnoughDeviceMemory(size_t size, uint32_t memoryBanks) {
+    if (localMemRegionsUsage.empty()) {
+        return true;
+    }
+
+    auto memUsageData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_MEM_REGIONS);
+    if (memUsageData.empty()) {
+        return true;
+    }
+
+    auto *regionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
+    const std::bitset<maxSupportedTilesNumber> banks{memoryBanks};
+    for (const auto &usage : localMemRegionsUsage) {
+        if ((usage.tilesMask & banks).none() ||
+            usage.regionArrayIdx >= regionsData->num_mem_regions) {
+            continue;
+        }
+        const auto &region = regionsData->mem_regions[usage.regionArrayIdx];
+        const auto available = (region.used <= region.total_size) ? (region.total_size - region.used) : 0u;
+        if (available < size) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 uint32_t IoctlHelperXe::queryHwIpVersion(PRODUCT_FAMILY productFamily) {
@@ -552,7 +596,7 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     auto ret = IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
 
     if (ret != 0) {
-        XELOG(" -> IoctlHelperXe::%s s=0x%lx r=%d\n", __FUNCTION__, deviceQuery.size, ret);
+        XELOG(" -> IoctlHelperXe::%s s=0x%lx r=%d\n", NEO_FUNCTION_NAME, deviceQuery.size, ret);
         return false;
     }
 
@@ -569,7 +613,7 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     auto gpuTimestampValidBits = maxNBitValue(nValidBits);
     auto gpuCycles = queryEngineCycles->engine_cycles & gpuTimestampValidBits;
 
-    XELOG(" -> IoctlHelperXe::%s [%d,%d] clockId=0x%x s=0x%lx nValidBits=0x%x gpuCycles=0x%x cpuTimeInNS=0x%x r=%d\n", __FUNCTION__,
+    XELOG(" -> IoctlHelperXe::%s [%d,%d] clockId=0x%x s=0x%lx nValidBits=0x%x gpuCycles=0x%x cpuTimeInNS=0x%x r=%d\n", NEO_FUNCTION_NAME,
           queryEngineCycles->eci.engine_class, queryEngineCycles->eci.engine_instance,
           queryEngineCycles->clockid, deviceQuery.size, nValidBits, gpuCycles, queryEngineCycles->cpu_timestamp, ret);
 
@@ -684,7 +728,7 @@ uint16_t IoctlHelperXe::getCpuCachingMode(std::optional<bool> isCoherent, bool a
     return cpuCachingMode;
 }
 
-int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) {
+int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) {
     struct drm_xe_gem_create create = {};
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
 
@@ -706,8 +750,11 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    if (this->isDeferBackingEnabled()) {
+    if (deferBacking.has_value() ? *deferBacking : this->isDeferBackingEnabledForSize(allocSize)) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
+    }
+    if (hint == GemCreateExtHint::noCompression) {
+        create.flags |= DRM_XE_GEM_CREATE_FLAG_NO_COMPRESSION;
     }
 
     PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
@@ -717,7 +764,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     handle = create.handle;
 
     PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, handle, create.size);
-    XELOG(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
+    XELOG(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", NEO_FUNCTION_NAME,
           mem.memoryClass, mem.memoryInstance,
           create.vm_id, create.size, create.flags, create.placement, handle, create.cpu_caching, ret);
     return ret;
@@ -751,7 +798,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    if (this->isDeferBackingEnabled()) {
+    if (this->isDeferBackingEnabledForSize(size)) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
@@ -762,24 +809,24 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
 
     PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, create.handle, create.size);
 
-    XELOG(" -> IoctlHelperXe::%s vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
+    XELOG(" -> IoctlHelperXe::%s vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", NEO_FUNCTION_NAME,
           create.vm_id, create.size, create.flags, create.placement, create.handle, create.cpu_caching, ret);
     DEBUG_BREAK_IF(ret != 0);
     return create.handle;
 }
 
 CacheRegion IoctlHelperXe::closAlloc(CacheLevel cacheLevel) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return CacheRegion::none;
 }
 
 uint16_t IoctlHelperXe::closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return 0;
 }
 
 CacheRegion IoctlHelperXe::closFree(CacheRegion closIndex) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return CacheRegion::none;
 }
 
@@ -800,7 +847,7 @@ int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, u
     setupXeWaitUserFenceStruct(&waitUserFence, ctxId, op, addr, value, timeout);
 
     auto retVal = IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &waitUserFence);
-    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x ctx=0x%x retVal=0x%x\n", __FUNCTION__,
+    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x ctx=0x%x retVal=0x%x\n", NEO_FUNCTION_NAME,
           addr, value, timeout, waitUserFence.flags, ctxId, retVal);
     return retVal;
 }
@@ -808,7 +855,7 @@ int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, u
 int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
                                  uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
                                  bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
-    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x ctx=0x%x\n", __FUNCTION__, address, value, dataWidth, timeout, flags, ctxId);
+    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x ctx=0x%x\n", NEO_FUNCTION_NAME, address, value, dataWidth, timeout, flags, ctxId);
     UNRECOVERABLE_IF(dataWidth != static_cast<uint32_t>(Drm::ValueWidth::u64));
     if (address) {
         return xeWaitUserFence(ctxId, DRM_XE_UFENCE_WAIT_OP_GTE, address, value, timeout, userInterrupt, externalInterruptId, allocForInterruptWait);
@@ -819,7 +866,7 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
 int IoctlHelperXe::waitUserFence(UserFenceWaitOperation operation, uint32_t ctxId, uint64_t address,
                                  uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
                                  bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
-    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x ctx=0x%x\n", __FUNCTION__, address, value, dataWidth, timeout, flags, ctxId);
+    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x ctx=0x%x\n", NEO_FUNCTION_NAME, address, value, dataWidth, timeout, flags, ctxId);
     if (!address) {
         return 0;
     }
@@ -852,18 +899,18 @@ int IoctlHelperXe::waitUserFence(UserFenceWaitOperation operation, uint32_t ctxI
     waitUserFence.mask = mask;
 
     auto retVal = IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &waitUserFence);
-    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x ctx=0x%x retVal=0x%x\n", __FUNCTION__,
+    XELOG(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x ctx=0x%x retVal=0x%x\n", NEO_FUNCTION_NAME,
           address, value, timeout, waitUserFence.flags, ctxId, retVal);
     return retVal;
 }
 
 uint32_t IoctlHelperXe::getAtomicAdvise(bool /* isNonAtomic */) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return DRM_XE_MEM_RANGE_ATTR_ATOMIC;
 }
 
 uint32_t IoctlHelperXe::getAtomicAccess(AtomicAccessMode mode) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
 
     uint32_t retVal = 0;
     switch (mode) {
@@ -880,7 +927,7 @@ uint32_t IoctlHelperXe::getAtomicAccess(AtomicAccessMode mode) {
         retVal = static_cast<uint32_t>(this->getDrmParamValue(DrmParam::atomicClassUndefined));
         break;
     default:
-        XELOG(" Invalid advise mode %s\n", __FUNCTION__);
+        XELOG(" Invalid advise mode %s\n", NEO_FUNCTION_NAME);
         break;
     }
 
@@ -888,7 +935,7 @@ uint32_t IoctlHelperXe::getAtomicAccess(AtomicAccessMode mode) {
 }
 
 uint64_t IoctlHelperXe::getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp, const std::vector<MemoryRegion> &memoryInfo) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     uint64_t param = 0;
     uint64_t regionInstance = 0;
 
@@ -923,14 +970,14 @@ uint64_t IoctlHelperXe::getPreferredLocationArgs(int deviceFd, MemAdvise memAdvi
         param = (preferredLocation << 32) | (policy << 16) | regionInstance;
     } break;
     default:
-        XELOG(" Invalid advise operation %s\n", __FUNCTION__);
+        XELOG(" Invalid advise operation %s\n", NEO_FUNCTION_NAME);
         break;
     }
     return param;
 }
 
 uint32_t IoctlHelperXe::getPreferredLocationAdvise() {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return DRM_XE_MEM_RANGE_ATTR_PREFERRED_LOC;
 }
 
@@ -939,12 +986,12 @@ std::optional<MemoryClassInstance> IoctlHelperXe::getPreferredLocationRegion(Pre
 }
 
 bool IoctlHelperXe::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return true;
 }
 
 bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) {
-    XELOG(" -> IoctlHelperXe::%s h=0x%x s=0x%lx numSub=%d\n", __FUNCTION__, handle, size, numSubDevices);
+    XELOG(" -> IoctlHelperXe::%s h=0x%x s=0x%lx numSub=%d\n", NEO_FUNCTION_NAME, handle, size, numSubDevices);
 
     drm_xe_madvise vmAdvise{};
     vmAdvise.start = alignDown(handle, MemoryConstants::pageSize);
@@ -965,7 +1012,7 @@ bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t siz
         uint32_t val = static_cast<uint32_t>(param);
         vmAdvise.atomic.val = val;
     } else {
-        XELOG(" Invalid advise operation %s\n", __FUNCTION__);
+        XELOG(" Invalid advise operation %s\n", NEO_FUNCTION_NAME);
         return false;
     }
 
@@ -995,7 +1042,7 @@ bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t siz
 
 AtomicAccessMode IoctlHelperXe::getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, const uint32_t vmId) {
 
-    XELOG(" -> IoctlHelperXe::%s h=0x%x s=0x%lx vmids=%d\n", __FUNCTION__, handle, size, vmId);
+    XELOG(" -> IoctlHelperXe::%s h=0x%x s=0x%lx vmids=%d\n", NEO_FUNCTION_NAME, handle, size, vmId);
 
     drm_xe_vm_query_mem_range_attr query{};
 
@@ -1053,12 +1100,12 @@ AtomicAccessMode IoctlHelperXe::getVmSharedSystemAtomicAttribute(uint64_t handle
 }
 
 bool IoctlHelperXe::setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return true;
 }
 
 bool IoctlHelperXe::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) {
-    XELOG(" -> IoctlHelperXe::%s s=0x%llx l=0x%llx align_s=0x%llx align_l=0x%llx vmid=0x%x\n", __FUNCTION__, start, length, alignDown(start, MemoryConstants::pageSize), alignSizeWholePage(reinterpret_cast<void *>(start), length), vmId);
+    XELOG(" -> IoctlHelperXe::%s s=0x%llx l=0x%llx align_s=0x%llx align_l=0x%llx vmid=0x%x\n", NEO_FUNCTION_NAME, start, length, alignDown(start, MemoryConstants::pageSize), alignSizeWholePage(reinterpret_cast<void *>(start), length), vmId);
     drm_xe_vm_bind bind = {};
     bind.vm_id = vmId;
     bind.num_binds = 1;
@@ -1095,7 +1142,7 @@ bool IoctlHelperXe::setVmPrefetch(uint64_t start, uint64_t length, uint32_t regi
 }
 
 bool IoctlHelperXe::setVmSharedSystemMemPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) {
-    XELOG(" -> IoctlHelperXe::%s s=0x%llx l=0x%llx align_s=0x%llx align_l=0x%llx vmid=0x%x\n", __FUNCTION__, start, length, alignDown(start, MemoryConstants::pageSize), alignSizeWholePage(reinterpret_cast<void *>(start), length), vmId);
+    XELOG(" -> IoctlHelperXe::%s s=0x%llx l=0x%llx align_s=0x%llx align_l=0x%llx vmid=0x%x\n", NEO_FUNCTION_NAME, start, length, alignDown(start, MemoryConstants::pageSize), alignSizeWholePage(reinterpret_cast<void *>(start), length), vmId);
     drm_xe_vm_bind bind = {};
     bind.vm_id = vmId;
     bind.num_binds = 1;
@@ -1136,12 +1183,12 @@ bool IoctlHelperXe::setVmSharedSystemMemPrefetch(uint64_t start, uint64_t length
 }
 
 uint32_t IoctlHelperXe::getDirectSubmissionFlag() {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return 0;
 }
 
 uint16_t IoctlHelperXe::getWaitUserFenceSoftFlag() {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return 0;
 };
 
@@ -1175,7 +1222,7 @@ void IoctlHelperXe::logExecBuffer(const ExecBuffer &execBuffer, std::stringstrea
 }
 
 int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     int ret = 0;
     if (execBuffer) {
         auto execBufferXe = reinterpret_cast<ExecBufferXe *>(execBuffer->data);
@@ -1186,7 +1233,7 @@ int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddr
             XELOG("EXEC ofs=%d ctx=0x%x ptr=0x%p\n",
                   execBufferXe->startOffset, execBufferXe->drmContextId, execBufferXe->execObject);
 
-            XELOG(" -> IoctlHelperXe::%s CA=0x%llx v=0x%x ctx=0x%x\n", __FUNCTION__,
+            XELOG(" -> IoctlHelperXe::%s CA=0x%llx v=0x%x ctx=0x%x\n", NEO_FUNCTION_NAME,
                   completionGpuAddress, counterValue, engine);
 
             struct drm_xe_sync sync[1] = {};
@@ -1216,13 +1263,13 @@ int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddr
 }
 
 bool IoctlHelperXe::completionFenceExtensionSupported(const bool isVmBindAvailable) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return isVmBindAvailable;
 }
 
 uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource, bool resolveResource) {
     uint64_t flags = 0;
-    XELOG(" -> IoctlHelperXe::%s %d %d %d %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource, resolveResource);
+    XELOG(" -> IoctlHelperXe::%s %d %d %d %d %d %d\n", NEO_FUNCTION_NAME, bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource, resolveResource);
     if (bindCapture) {
         flags |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
     }
@@ -1241,7 +1288,7 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
 }
 
 int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return 0;
 }
 
@@ -1262,18 +1309,18 @@ bool IoctlHelperXe::isPageFaultSupported() {
     };
     bool pageFaultSupport = checkVmCreateFlagsSupport(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE);
 
-    XELOG(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, pageFaultSupport);
+    XELOG(" -> IoctlHelperXe::%s %d\n", NEO_FUNCTION_NAME, pageFaultSupport);
 
     return pageFaultSupport;
 }
 
 uint32_t IoctlHelperXe::getEuStallFdParameter() {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return 0u;
 }
 
 std::unique_ptr<uint8_t[]> IoctlHelperXe::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return {};
 }
 
@@ -1284,12 +1331,17 @@ void IoctlHelperXe::checkNoVmOvercommitFlag() {
         ctl.flags = getFlagsForVmCreate(true, true, true);
         if (ioctl(DrmIoctl::gemVmCreate, &ctl) != 0) {
             setNoVmOvercommitFlagAllowed(false);
+            return;
         }
+        GemVmControl destroyCtl{};
+        destroyCtl.vmId = ctl.vmId;
+        [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemVmDestroy, &destroyCtl);
+        DEBUG_BREAK_IF(ret != 0);
     }
 }
 
 uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) {
-    XELOG(" -> IoctlHelperXe::%s %d,%d,%d\n", __FUNCTION__, disableScratch, enablePageFault, useVmBind);
+    XELOG(" -> IoctlHelperXe::%s %d,%d,%d\n", NEO_FUNCTION_NAME, disableScratch, enablePageFault, useVmBind);
     uint32_t flags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
     bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
     if (enablePageFault || debuggingEnabled) {
@@ -1305,21 +1357,21 @@ uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePage
 }
 
 uint32_t IoctlHelperXe::createContextWithAccessCounters(GemContextCreateExt &gcc) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return 0;
 }
 
 uint32_t IoctlHelperXe::createCooperativeContext(GemContextCreateExt &gcc) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return 0;
 }
 
 void IoctlHelperXe::fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
 }
 
 void IoctlHelperXe::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {
-    XELOG(" -> IoctlHelperXe::%s 0x%lx 0x%lx\n", __FUNCTION__, fenceAddress, fenceValue);
+    XELOG(" -> IoctlHelperXe::%s 0x%lx 0x%lx\n", NEO_FUNCTION_NAME, fenceAddress, fenceValue);
     auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindExtUserFence);
     UNRECOVERABLE_IF(!xeBindExtUserFence);
     xeBindExtUserFence->tag = UserFenceExtension::tagValue;
@@ -1328,13 +1380,13 @@ void IoctlHelperXe::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFen
 }
 
 void IoctlHelperXe::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     vmBind.userFence = castToUint64(vmBindUserFence);
     return;
 }
 
 std::optional<uint32_t> IoctlHelperXe::getVmAdviseAtomicAttribute() {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     // There is no vmAdvise attribute in Xe
     return {};
 }
@@ -1347,118 +1399,35 @@ int IoctlHelperXe::vmUnbind(const VmBindParams &vmBindParams) {
     return xeVmBind(vmBindParams, false);
 }
 
-int IoctlHelperXe::getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) {
+int IoctlHelperXe::getContextHealth(ContextHealth &contextHealth) {
     drm_xe_exec_queue_get_property getProperty{};
-    getProperty.exec_queue_id = resetStats.contextId;
+    getProperty.exec_queue_id = contextHealth.contextId;
     getProperty.property = DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN;
-    getProperty.value = 0;
 
-    auto banned = false;
-
-    const auto retVal = ioctl(DrmIoctl::getResetStats, &getProperty);
-    if (retVal == 0) {
-        banned = (getProperty.value != 0);
-        resetStats.batchActive = banned ? 1 : 0;
-        resetStats.batchPending = 0;
-        resetStats.resetCount = 0;
-
-        if (status) {
-            *status = static_cast<uint32_t>(getProperty.value);
-        }
+    const auto ret = this->ioctl(DrmIoctl::queryContextHealth, &getProperty);
+    XELOG(" -> IoctlHelperXe::getContextHealth ctx=0x%x r=%d value=%llu\n",
+          contextHealth.contextId, ret, getProperty.value);
+    if (ret != 0) {
+        return ret;
     }
-
-    auto debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
-    if (drm.checkToDisableScratchPage()) {
-        std::vector<uint32_t> vmIdsToCheck;
-        if (drm.isPerContextVMRequired()) {
-            vmIdsToCheck = osContextLinux->getDrmVmIds();
-        } else {
-            auto virtualMemoryIds = drm.getVirtualMemoryIds();
-            for (size_t i = 0; i < virtualMemoryIds.size(); i++) {
-                if (virtualMemoryIds[i] != 0) {
-                    vmIdsToCheck.push_back(virtualMemoryIds[i]);
-                }
-            }
-        }
-
-        for (const auto vmId : vmIdsToCheck) {
-            std::vector<ResetStatsFault> vmFaults;
-            if (getVmFaults(vmId, vmFaults) == 0 && !vmFaults.empty()) {
-                if (!banned && debuggingEnabled) {
-                    reportFaults = false;
-                    return retVal;
-                }
-                for (const auto &vmFault : vmFaults) {
-                    ResetFaultContext faultContext{};
-                    faultContext.id = vmId;
-                    faultContext.banned = banned;
-                    faultContext.vmFault = true;
-                    faultContext.fault = vmFault;
-                    faultsVector.push_back(faultContext);
-                }
-            }
-        }
-    }
-    return retVal;
-}
-
-int IoctlHelperXe::getVmFaults(uint32_t vmId, std::vector<ResetStatsFault> &faults) {
-    drm_xe_vm_get_property getProperty{};
-    getProperty.vm_id = vmId;
-    getProperty.property = DRM_XE_VM_GET_PROPERTY_FAULTS;
-    getProperty.size = 0;
-    getProperty.data = 0;
-
-    // First call to get the size
-    auto retVal = ioctl(DrmIoctl::vmGetProperty, &getProperty);
-    XELOG(" -> IoctlHelperXe::getVmFaults vmId=%u retVal=%d size=%u\n", vmId, retVal, getProperty.size);
-    if (retVal != 0) {
-        return retVal;
-    }
-
-    if (getProperty.size == 0) {
-        faults.clear();
-        return 0;
-    }
-
-    // Allocate buffer and get the faults
-    auto numFaults = getProperty.size / sizeof(xe_vm_fault);
-    std::vector<xe_vm_fault> faultBuffer(numFaults);
-    getProperty.data = reinterpret_cast<uint64_t>(faultBuffer.data());
-
-    retVal = ioctl(DrmIoctl::vmGetProperty, &getProperty);
-    if (retVal != 0) {
-        return retVal;
-    }
-
-    // Convert to ResetStatsFault format
-    faults.clear();
-    faults.reserve(numFaults);
-    for (const auto &fault : faultBuffer) {
-        ResetStatsFault resetFault{};
-        resetFault.addr = fault.address;
-        resetFault.type = fault.fault_type;
-        resetFault.level = fault.fault_level;
-        resetFault.access = fault.access_type;
-        resetFault.flags = 1; // Mark as valid
-        faults.push_back(resetFault);
-    }
+    contextHealth.banned = getProperty.value != 0;
+    contextHealth.banReason = contextHealth.banned ? ContextBanReason::gpuHang : ContextBanReason::none;
 
     return 0;
 }
 
 UuidRegisterResult IoctlHelperXe::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return {};
 }
 
 UuidRegisterResult IoctlHelperXe::registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return {};
 }
 
 int IoctlHelperXe::unregisterUuid(uint32_t handle) {
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
     return 0;
 }
 
@@ -1475,7 +1444,7 @@ bool IoctlHelperXe::isDebugAttachAvailable() {
 }
 
 int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {
-    XELOG(" -> IoctlHelperXe::%s 0x%x %s\n", __FUNCTION__, drmParam, getDrmParamString(drmParam).c_str());
+    XELOG(" -> IoctlHelperXe::%s 0x%x %s\n", NEO_FUNCTION_NAME, drmParam, getDrmParamString(drmParam).c_str());
     switch (drmParam) {
     case DrmParam::atomicClassUndefined:
         return DRM_XE_ATOMIC_UNDEFINED;
@@ -1527,7 +1496,7 @@ int IoctlHelperXe::getDrmParamValueBase(DrmParam drmParam) const {
 
 int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     int ret = -1;
-    XELOG(" => IoctlHelperXe::%s 0x%x\n", __FUNCTION__, request);
+    XELOG(" => IoctlHelperXe::%s 0x%x\n", NEO_FUNCTION_NAME, request);
     switch (request) {
     case DrmIoctl::getparam: {
         auto getParam = reinterpret_cast<GetParam *>(arg);
@@ -1669,16 +1638,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         XELOG(" -> IoctlHelperXe::ioctl GemMmapOffset h=0x%x o=0x%x f=0x%x r=%d\n",
               d->handle, d->offset, d->flags, ret);
     } break;
-    case DrmIoctl::getResetStats: {
-        ResetStats *resetStats = static_cast<ResetStats *>(arg);
-        drm_xe_exec_queue_get_property getProperty{};
-        getProperty.exec_queue_id = resetStats->contextId;
-        getProperty.property = DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN;
-        ret = IoctlHelper::ioctl(request, &getProperty);
-        resetStats->batchPending = static_cast<uint32_t>(getProperty.value);
-        XELOG(" -> IoctlHelperXe::ioctl GetResetStats ctx=0x%x r=%d value=%llu\n",
-              resetStats->contextId, ret, getProperty.value);
-    } break;
     case DrmIoctl::primeFdToHandle: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
@@ -1698,6 +1657,10 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::syncObjDestroy: {
         ret = IoctlHelper::ioctl(request, arg);
         XELOG(" -> IoctlHelperXe::ioctl SyncObjDestroy r=%d\n", ret);
+    } break;
+    case DrmIoctl::queryContextHealth: {
+        ret = IoctlHelper::ioctl(request, arg);
+        XELOG(" -> IoctlHelperXe::ioctl QueryContextHealth r=%d\n", ret);
     } break;
     case DrmIoctl::syncObjTimelineWait: {
         ret = IoctlHelper::ioctl(request, arg);
@@ -1733,10 +1696,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::perfQuery:
     case DrmIoctl::perfOpen: {
         ret = perfOpenIoctl(request, arg);
-    } break;
-    case DrmIoctl::vmGetProperty: {
-        ret = IoctlHelper::ioctl(request, arg);
-        XELOG(" -> IoctlHelperXe::ioctl VmGetProperty r=%d\n", ret);
     } break;
 
     default:
@@ -1880,6 +1839,20 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;
             bind.bind.obj = 0;
             bind.bind.obj_offset = userptr;
+            if (debugManager.flags.ValidateUserptrPatIndex.get()) {
+                const auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+                const bool valid = rootDeviceEnvironment.getProductHelper().isPatIndexValidForUserptr(bind.bind.pat_index);
+
+                PRINT_STRING(true, stderr,
+                             "MAP_USERPTR PAT: valid=%s pat=%hu vm=%u userptr=0x%llx gpu=0x%llx size=0x%llx flags=0x%x\n",
+                             valid ? "true" : "false",
+                             bind.bind.pat_index,
+                             bind.vm_id,
+                             bind.bind.obj_offset,
+                             bind.bind.addr,
+                             bind.bind.range,
+                             bind.bind.flags);
+            }
         }
     } else {
         if ((vmBindParams.sharedSystemUsmEnabled) && ((bind.bind.addr + bind.bind.range) <= drm.getSharedSystemAllocAddressRange())) {
@@ -1889,6 +1862,9 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             bindOps[0].op = DRM_XE_VM_BIND_OP_UNMAP;
             bindOps[1].op = DRM_XE_VM_BIND_OP_MAP;
             bindOps[1].flags |= DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+            // CPU_ADDR_MIRROR maps have no backing object, so obj/obj_offset must be zero
+            bindOps[1].obj = 0;
+            bindOps[1].obj_offset = 0;
             bind.num_binds = 2;
             bind.vector_of_binds = (uintptr_t)bindOps;
         } else {
@@ -2118,16 +2094,42 @@ bool IoctlHelperXe::isImmediateVmBindRequired() const {
     return true;
 }
 
-bool IoctlHelperXe::makeResidentBeforeLockNeeded() const {
-    return this->isDeferBackingEnabled();
+bool IoctlHelperXe::isDeferBackingEnabledForSize(size_t allocationSize) const {
+    if (!this->isDeferBackingSupported()) {
+        return false;
+    }
+
+    // Global threshold: once defer backing is enabled, -1 means defer unconditionally, while
+    // 0-100 defers only once the projected device footprint (used local memory + this allocation)
+    // reaches threshold% of max local memory (overcommit onset), so normal-load allocations keep
+    // immediate backing and avoid the cold first-submit latency hit.
+    const int32_t thresholdPercent = debugManager.flags.DeferBackingMemoryPressurePercent.get();
+    if (thresholdPercent < 0) {
+        return true;
+    }
+
+    auto memoryManager = static_cast<DrmMemoryManager *>(drm.getRootDeviceEnvironment().executionEnvironment.memoryManager.get());
+    UNRECOVERABLE_IF(memoryManager == nullptr);
+    const uint32_t rootDeviceIndex = drm.getRootDeviceEnvironment().getRootDeviceIndex();
+    return memoryManager->isDeferBackingMemoryPressureReached(rootDeviceIndex, allocationSize, thresholdPercent);
 }
 
-bool IoctlHelperXe::isDeferBackingEnabled() const {
+bool IoctlHelperXe::isDeferBackingSupported() const {
     std::call_once(checkDeferBackingOnce, [this]() {
-        const auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-        deferBackingEnabled = productHelper.isDeferBackingEnabled();
+        deferBackingSupported = !drm.getHardwareInfo()->capabilityTable.isIntegratedDevice;
+        if (debugManager.flags.EnableDeferBacking.get() != -1) {
+            deferBackingSupported = debugManager.flags.EnableDeferBacking.get();
+        }
+
+        if (deferBackingSupported) {
+            const auto csrType = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(),
+                                                               CommandStreamReceiverType::hardware);
+            if (csrType == CommandStreamReceiverType::hardwareWithAub) {
+                deferBackingSupported = false;
+            }
+        }
     });
-    return deferBackingEnabled;
+    return deferBackingSupported;
 }
 
 void IoctlHelperXe::insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) {
@@ -2219,7 +2221,7 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
 
     auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
 
-    XELOG(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
 
     if (osContext.isLowPriority()) {
         UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
@@ -2306,7 +2308,7 @@ bool IoctlHelperXe::isPrimaryContext(const OsContextLinux &osContext, uint32_t d
 }
 
 unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
-    XELOG(" -> IoctlHelperXe::%s 0x%x\n", __FUNCTION__, ioctlRequest);
+    XELOG(" -> IoctlHelperXe::%s 0x%x\n", NEO_FUNCTION_NAME, ioctlRequest);
     switch (ioctlRequest) {
     case DrmIoctl::gemClose:
         RETURN_ME(DRM_IOCTL_GEM_CLOSE);
@@ -2352,10 +2354,8 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT);
     case DrmIoctl::syncObjTimelineSignal:
         RETURN_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL);
-    case DrmIoctl::getResetStats:
+    case DrmIoctl::queryContextHealth:
         RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
-    case DrmIoctl::vmGetProperty:
-        RETURN_ME(DRM_IOCTL_XE_VM_GET_PROPERTY);
     case DrmIoctl::debuggerOpen:
     case DrmIoctl::metadataCreate:
     case DrmIoctl::metadataDestroy:
@@ -2425,10 +2425,8 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_CREATE);
     case DrmIoctl::metadataDestroy:
         STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_DESTROY);
-    case DrmIoctl::getResetStats:
+    case DrmIoctl::queryContextHealth:
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
-    case DrmIoctl::vmGetProperty:
-        STRINGIFY_ME(DRM_IOCTL_XE_VM_GET_PROPERTY);
     default:
         return "???";
     }

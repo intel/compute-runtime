@@ -33,12 +33,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     size_t getRenderPitch() override { return rowPitch; }
 
-    uint64_t getDriverProtectionBits(uint32_t overrideUsage, bool compressionDenied) override {
-        driverProtectionBitsUsageWasOverridden = GMM_RESOURCE_USAGE_UNKNOWN != overrideUsage;
-        driverProtectionBitsUsageOverride = overrideUsage;
-        if (compressionDenied) {
-            driverProtectionBitsCompessionOverride = true;
-        }
+    uint64_t getDriverProtectionBits(bool compressionDenied) override {
+        driverProtectionBitsCompressionOverride = compressionDenied;
         return driverProtectionBits;
     }
 
@@ -124,9 +120,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     using GmmResourceInfo::gmmResourceHandle;
 
     uint64_t driverProtectionBits = 0;
-    bool driverProtectionBitsUsageWasOverridden = false;
-    bool driverProtectionBitsCompessionOverride = false;
-    uint32_t driverProtectionBitsUsageOverride = 0u;
+    bool driverProtectionBitsCompressionOverride = false;
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
     SurfaceFormatInfo tempSurface{};

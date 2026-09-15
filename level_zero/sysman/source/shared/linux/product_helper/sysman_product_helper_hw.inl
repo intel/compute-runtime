@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
@@ -26,7 +27,15 @@
 namespace L0 {
 namespace Sysman {
 
+inline constexpr int standbyModeRc6Default = 1;
+inline constexpr int standbyModeRc6Never = 0;
+
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported() {
+    return false;
+}
 
 template <PRODUCT_FAMILY gfxProduct>
 const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
@@ -41,6 +50,11 @@ void SysmanProductHelperHw<gfxProduct>::getFrequencyStepSize(double *pStepSize) 
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pNumChannels) {
     return ZE_RESULT_ERROR_NOT_AVAILABLE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryVendorId(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pVendorId) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -121,7 +135,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
         uint64_t physicalMemSize = 0;
         ze_result_t getPhysicalSizeStatus = pSysmanKmdInterface->getPhysicalMemorySize(physicalMemSize, isSubdevice, subDeviceId, pLinuxSysmanImp);
         if (ZE_RESULT_SUCCESS != getPhysicalSizeStatus) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size, returning error:0x%x\n", __FUNCTION__, getPhysicalSizeStatus);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get physical memory size, returning error:0x%x\n", NEO_FUNCTION_NAME, getPhysicalSizeStatus);
         }
         pProperties->physicalSize = physicalMemSize;
     }
@@ -163,6 +177,11 @@ bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isMediaDomainSupported(LinuxSysmanImp *pLinuxSysmanImp) {
+    return pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.supportsImages;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -213,7 +232,7 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
         }
     } else {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read file %s, returning error 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read file %s, returning error 0x%x>\n", NEO_FUNCTION_NAME, throttleReasonStatusFile.c_str(), result);
     }
 
     return throttleReasons;
@@ -245,7 +264,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
 
     auto isValidTemperature = [](auto temperature) {
         if ((temperature > invalidMaxTemperature) || (temperature < invalidMinTemperature)) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", NEO_FUNCTION_NAME, temperature);
             return false;
         }
         return true;
@@ -268,7 +287,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     uint64_t socTemperature = 0;
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     uint32_t maxSocTemperature = getMaxTemperature(socTemperature, numSocTemperatureEntries);
@@ -305,7 +324,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     std::string key = "SOC_TEMPERATURES";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     gpuMaxTemperature = static_cast<double>(socTemperature & 0xff);
@@ -319,12 +338,17 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuBoardTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getCompositeTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -381,12 +405,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -403,6 +427,44 @@ bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *p
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isSetStandbyModeSupported() {
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+std::string SysmanProductHelperHw<gfxProduct>::getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) {
+    const std::string baseDir = pSysmanKmdInterface->getBasePath(subDeviceId);
+    bool baseDirectoryExists = false;
+
+    if (pSysfsAccess->directoryExists(std::move(baseDir))) {
+        baseDirectoryExists = true;
+    }
+
+    return pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, subDeviceId, baseDirectoryExists);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) {
+    int currentMode = -1;
+    ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
+    if (ZE_RESULT_SUCCESS != result) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), result);
+        return result;
+    }
+    if (standbyModeRc6Default == currentMode) {
+        mode = ZES_STANDBY_PROMO_MODE_DEFAULT;
+    } else if (standbyModeRc6Never == currentMode) {
+        mode = ZES_STANDBY_PROMO_MODE_NEVER;
+    } else {
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <unknown or internal error occurred> <currentMode: %d & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode, result);
+    }
+    return result;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) {
+    return pSysfsAccess->write(standbyModeFile, (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) ? standbyModeRc6Default : standbyModeRc6Never);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -482,6 +544,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMaxMemoryOfflinePages(SysFsAcc
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isNetlinkEventSupported() {
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace Sysman

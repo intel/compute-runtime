@@ -20,6 +20,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/alignment_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -37,7 +38,7 @@
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/thread_data_hash.h"
 
 #include "encode_dispatch_kernel_args_ext.h"
@@ -49,6 +50,12 @@
 #include <type_traits>
 
 namespace NEO {
+
+template <typename Family>
+size_t EncodeDispatchKernel<Family>::getCrossThreadDataAlignment(bool isLocalMemory, const HardwareInfo &hwInfo) {
+    const bool useReducedAlignment = isLocalMemory && AlignmentHelper::isReducedAlignmentAllowed(hwInfo);
+    return useReducedAlignment ? MemoryConstants::cacheLineSize : Family::cacheLineSize;
+}
 
 template <typename Family>
 template <typename WalkerType>
@@ -243,6 +250,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         inlineDataProgramming = inlineDataProgrammingOffset != 0;
     }
 
+    const auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+    const bool scratchPointerInCrossThreadData = isValidOffset(scratchPointerAddress.offset) && isDefined(scratchPointerAddress.pointerSize) && (static_cast<uint32_t>(scratchPointerAddress.offset) >= inlineDataProgrammingOffset);
+
     auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(container, args);
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
@@ -253,28 +263,26 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         void *ptr = nullptr;
         auto perThreadDataPtr = args.dispatchInterface->getPerThreadData();
         std::optional<uint64_t> cachedThreadDataOffset = std::nullopt;
+        const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
+        const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
 
         if (!args.makeCommandView) {
             auto heap = container.getIndirectHeap(HeapType::indirectObject);
             UNRECOVERABLE_IF(!heap);
             uint64_t threadDataHash = 0ull;
-            const bool isThreadDataMapAllowed = container.getIOHCacheEnabled() && (sizeThreadData != 0u) && !args.isIndirect && (pImplicitArgs == nullptr);
+            const bool isThreadDataMapAllowed = container.getIOHCacheEnabled() && (sizeThreadData != 0u) && !args.isIndirect && (pImplicitArgs == nullptr) && !scratchPointerInCrossThreadData;
             if (isThreadDataMapAllowed) {
-                const std::span<const uint8_t> crossThreadSpan(crossThreadData, sizeCrossThreadData);
-                const std::span<const uint8_t> perThreadSpan(perThreadDataPtr, sizePerThreadDataForWholeGroup);
                 threadDataHash = ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
-                cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
+                if (args.threadDataCacheHitOnPrefetch) {
+                    cachedThreadDataOffset = container.getCachedIohOffset(threadDataHash, crossThreadSpan, perThreadSpan);
+                }
                 if (cachedThreadDataOffset) {
                     offsetThreadData = *cachedThreadDataOffset;
                     container.makeThreadDataMapResident();
                 }
             }
             if (!cachedThreadDataOffset) {
-                if (container.isIndirectHeapInLocalMemory()) {
-                    heap->align(MemoryConstants::cacheLineSize);
-                } else {
-                    heap->align(Family::cacheLineSize);
-                }
+                heap->align(EncodeDispatchKernel<Family>::getCrossThreadDataAlignment(container.isIndirectHeapInLocalMemory(), hwInfo));
 
                 if (args.isKernelDispatchedFromImmediateCmdList) {
                     ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, Family::indirectDataAlignment)->getSpace(iohRequiredSize);
@@ -292,6 +300,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     args.outImplicitArgsGpuVa = heap->getGraphicsAllocation()->getGpuAddress() + ptrDiff(args.outImplicitArgsPtr, heap->getCpuBase());
                 }
 
+                if (scratchPointerInCrossThreadData) {
+                    args.outCrossThreadDataPtr = ptr;
+                    args.outCrossThreadDataGpuVa = heap->getGraphicsAllocation()->getGpuAddress() + ptrDiff(ptr, heap->getCpuBase());
+                }
+
                 if (args.isIndirect) {
                     auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
                     uint64_t implicitArgsGpuPtr = 0u;
@@ -301,7 +314,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr, &encodeIndirectParamsArgs);
                 }
                 if (isThreadDataMapAllowed) {
-                    container.registerThreadData(threadDataHash, std::span<const uint8_t>{reinterpret_cast<const uint8_t *>(ptr), sizeThreadData});
+                    container.registerThreadData(threadDataHash, crossThreadSpan, perThreadSpan);
                 }
             }
         } else {
@@ -312,6 +325,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             if (sizeCrossThreadData > 0) {
                 memcpy_s(ptr, sizeCrossThreadData,
                          crossThreadData, sizeCrossThreadData);
+            }
+
+            if (scratchPointerInCrossThreadData && args.immediateScratchAddressPatching) {
+                auto crossThreadDataScratchPtr = ptrOffset(ptr, static_cast<uint32_t>(scratchPointerAddress.offset) - inlineDataProgrammingOffset);
+                memcpy_s(crossThreadDataScratchPtr, scratchPointerAddress.pointerSize, &scratchAddressForImmediatePatching, scratchPointerAddress.pointerSize);
             }
 
             if (perThreadDataPtr != nullptr) {
@@ -383,7 +401,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             walkerCmd.setIndirectDataLength(sizeThreadData);
         }
     }
-    container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment(container.isIndirectHeapInLocalMemory()));
+    container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment(container.isIndirectHeapInLocalMemory(), hwInfo));
 
     EncodeDispatchKernel<Family>::encodeThreadData(walkerCmd,
                                                    nullptr,
@@ -434,9 +452,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  walkerCmd.getThreadGroupIdZDimension(),
                  idd.getThreadGroupDispatchSize());
 
-    EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, threadsPerThreadGroup, threadGroupCount,
-                                                           args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
-                                                           args.dispatchInterface->getSlmPolicy());
+    EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = threadsPerThreadGroup,
+        .workloadThreadGroupCount = threadGroupCount,
+        .slmTotalSizePerThreadGroup = args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
+        .grfCount = kernelDescriptor.kernelAttributes.numGrfRequired,
+        .slmPolicy = args.dispatchInterface->getSlmPolicy()};
+
+    EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
 
     auto kernelExecutionType = args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType;
 
@@ -607,8 +630,9 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
                 return false;
             }
             // If single channel is active but its size is not power of 2,
-            // there is no valid HW local-ID generation config - use runtime generation
-            return true;
+            // place that dimension as last in walk order
+            requiredWalkOrder = HwWalkOrderHelper::singleDimWalkIndex;
+            return false;
         }
 
         if (requireInputWalkOrder && activeChannels == 3) {
@@ -676,6 +700,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
                                                     bool isIndirect,
                                                     uint32_t requiredWorkGroupOrder,
                                                     const RootDeviceEnvironment &rootDeviceEnvironment) {
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
     if (isIndirect) {
         walkerCmd.setIndirectParameterEnable(true);
@@ -731,7 +756,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
         walkerCmd.setWalkOrder(requiredWorkGroupOrder);
     }
 
-    adjustWalkOrder(walkerCmd, requiredWorkGroupOrder, rootDeviceEnvironment);
+    adjustWalkOrder(walkerCmd, requiredWorkGroupOrder, hwInfo);
     if (inlineDataProgrammingRequired == true) {
         walkerCmd.setEmitInlineParameter(1);
     }
@@ -893,7 +918,7 @@ inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(Line
 
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const bool isBasicWARequired = hwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
     const bool isExtendedWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, isRcs);
 
     if (isExtendedWARequired) {

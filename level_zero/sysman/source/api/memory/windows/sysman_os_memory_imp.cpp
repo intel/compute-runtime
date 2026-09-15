@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,6 +189,10 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t WddmMemoryImp::getVendorId(uint32_t *pVendorId) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {

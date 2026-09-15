@@ -24,6 +24,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
@@ -33,7 +34,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/logger.h"
@@ -501,8 +502,8 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, s
 
     WaitStatus waitStatus{WaitStatus::ready};
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", getHwTag());
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Waiting for taskCount:", gpgpuTaskCountToWait);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "Current taskCount:", getHwTag());
 
     if (!skipWait) {
         if (flushStampToWait == 0 && getGpgpuCommandStreamReceiver().isKmdWaitOnTaskCountAllowed()) {
@@ -1155,14 +1156,13 @@ bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const {
     const auto &hwInfo = device->getHardwareInfo();
     auto &productHelper = device->getProductHelper();
-    const auto &releaseHelper = device->getDevice().getReleaseHelper();
     auto blitEnqueueImageAllowed = productHelper.isBlitterForImagesSupported();
 
     if (debugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
         blitEnqueueImageAllowed = debugManager.flags.EnableBlitterForEnqueueImageOperations.get();
     }
 
-    blitEnqueueImageAllowed &= !(Image::isDepthFormat(image.getImageFormat()) && !releaseHelper.isBlitImageAllowedForDepthFormat());
+    blitEnqueueImageAllowed &= !(Image::isDepthFormat(image.getImageFormat()) && !hwInfo.caps.blitImageAllowedForDepthFormat);
 
     blitEnqueueImageAllowed &= !isMipMapped(image.getImageDesc());
 
@@ -1372,6 +1372,8 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
         break;
     case 4:
         enabled = true;
+        break;
+    default:
         break;
     }
 

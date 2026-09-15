@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
 #include "shared/source/helpers/device_caps_reader.h"
@@ -25,9 +26,11 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/logger.h"
 
@@ -35,6 +38,7 @@
 #include "aubstream/stepping_values.h"
 #include "ocl_igc_shared/indirect_access_detection/version.h"
 
+#include <algorithm>
 #include <bitset>
 
 namespace NEO {
@@ -213,12 +217,10 @@ bool ProductHelperHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(Us
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    return 0u;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    return 0;
+    if (osIface == nullptr) {
+        return 0u;
+    }
+    return osIface->getDriverModel()->getDeviceMemoryMaxClockRateInMhz(subDeviceIndex);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -257,10 +259,12 @@ uint32_t ProductHelperHw<gfxProduct>::getPreferredWorkgroupCountPerSubslice() co
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const {}
+uint32_t ProductHelperHw<gfxProduct>::getDefaultMidthreadPreemptionDelayTimer() const {
+    return 0;
+}
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {}
+void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const {}
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
@@ -333,23 +337,10 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getLocalMemoryAccessMode(cons
     case LocalMemoryAccessMode::cpuAccessAllowed:
     case LocalMemoryAccessMode::cpuAccessDisallowed:
         return static_cast<LocalMemoryAccessMode>(debugManager.flags.ForceLocalMemoryAccessMode.get());
+    default:
+        break;
     }
     return getDefaultLocalMemoryAccessMode(hwInfo);
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isInitialFlagsProgrammingRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
-    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -414,19 +405,6 @@ bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBu
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isL1PolicyMissmatchCheckNeeded() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDeferBackingEnabled() const {
-    if (debugManager.flags.EnableDeferBacking.get() != -1) {
-        return debugManager.flags.EnableDeferBacking.get();
-    }
     return false;
 }
 
@@ -561,6 +539,14 @@ bool ProductHelperHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo
         return !!debugManager.flags.EnableMemoryPrefetch.get();
     }
     return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const {
+    constexpr size_t defaultLimitValue = MemoryConstants::kiloByte;
+
+    uint32_t limitValue = debugManager.flags.LimitIsaPrefetchSize.getIfNotDefault(static_cast<uint32_t>(defaultLimitValue));
+    return std::min(isaSize, limitValue);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -875,11 +861,6 @@ bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::localDispatchSizeQuerySupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() const {
     return false;
 }
@@ -892,6 +873,42 @@ bool ProductHelperHw<gfxProduct>::isAvailableExtendedScratch() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferType) const {
+    size_t threshold = 0u;
+
+    switch (transferType) {
+    case TransferType::deviceUsmToHostUsm:
+        threshold = 128u;
+        break;
+    case TransferType::deviceUsmToHostNonUsm:
+        threshold = 1 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::hostUsmToDeviceUsm:
+        threshold = 50 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::hostUsmToHostUsm:
+        threshold = 200 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::hostUsmToHostNonUsm:
+        threshold = 500 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::hostNonUsmToDeviceUsm:
+        threshold = 4 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostNonUsmToHostUsm:
+        threshold = 1 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostNonUsmToHostNonUsm:
+        threshold = 1 * MemoryConstants::megaByte;
+        break;
+    default:
+        break;
+    }
+
+    return threshold;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -932,13 +949,13 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
-    return false;
+bool ProductHelperHw<gfxProduct>::isPatIndexValidForUserptr(uint64_t patIndex) const {
+    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getGmmResourceUsageOverride(uint32_t usageType) const {
-    return 0u;
+bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
+    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -947,7 +964,7 @@ bool ProductHelperHw<gfxProduct>::isL3FlushAfterPostSyncSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
+uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     return maxThreadsPerThreadGroup;
 }
 
@@ -964,11 +981,6 @@ bool ProductHelperHw<gfxProduct>::isSvmHeapReservationSupported() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForQueues() const {
     return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
-    return {};
 }
 
 template <PRODUCT_FAMILY gfxProduct>

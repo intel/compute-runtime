@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -44,7 +44,7 @@ struct PlatformTest : public ::testing::Test {
 
         pPlatform.reset(new MockPlatform());
         compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
-        releaseHelper = ReleaseHelper::create(defaultHwInfo->ipVersion);
+        compilerReleaseHelper = CompilerReleaseHelper::create(defaultHwInfo->ipVersion);
     }
     void TearDown() override {
         MockSipData::clearUseFlags();
@@ -52,7 +52,7 @@ struct PlatformTest : public ::testing::Test {
     std::unique_ptr<MockPlatform> pPlatform;
     std::unique_ptr<VariableBackup<bool>> backupSipInitType;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
-    std::unique_ptr<ReleaseHelper> releaseHelper;
+    std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
 
     cl_int retVal = CL_SUCCESS;
 };
@@ -266,9 +266,9 @@ TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenIn
 TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatchingSubstringsAndMandatoryTrailingSpace) {
     const HardwareInfo *hwInfo;
     hwInfo = defaultHwInfo.get();
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo, *releaseHelper);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*hwInfo, features);
 
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string(" -cl-ext=-all,+cl")));
@@ -297,9 +297,9 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
 TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchingSubstrings) {
     const HardwareInfo *hwInfo;
     hwInfo = defaultHwInfo.get();
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo, *releaseHelper);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*hwInfo, features);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_base_atomics")));
@@ -309,9 +309,9 @@ TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchi
 TEST_F(PlatformTest, givenSupportedMediaBlockWhenCreateExtentionsListThenDeviceReportsSpritvMediaBlockIoExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsMediaBlock = true;
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *releaseHelper);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*defaultHwInfo, features);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
@@ -320,9 +320,9 @@ TEST_F(PlatformTest, givenSupportedMediaBlockWhenCreateExtentionsListThenDeviceR
 TEST_F(PlatformTest, givenNotSupportedMediaBlockWhenCreateExtentionsListThenDeviceNotReportsSpritvMediaBlockIoExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsMediaBlock = false;
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *releaseHelper);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*defaultHwInfo, features);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
@@ -331,9 +331,9 @@ TEST_F(PlatformTest, givenNotSupportedMediaBlockWhenCreateExtentionsListThenDevi
 TEST_F(PlatformTest, givenSupportedImagesWhenCreateExtentionsListThenDeviceNotReportsKhr3DImageWritesExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = true;
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *releaseHelper);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*defaultHwInfo, features);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_3d_image_writes")));
@@ -342,9 +342,9 @@ TEST_F(PlatformTest, givenSupportedImagesWhenCreateExtentionsListThenDeviceNotRe
 TEST_F(PlatformTest, givenNotSupportedImagesWhenCreateExtentionsListThenDeviceNotReportsKhr3DImageWritesExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = false;
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, *releaseHelper);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
     OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), *releaseHelper);
+    getOpenclCFeaturesList(*defaultHwInfo, features);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_3d_image_writes")));
@@ -395,6 +395,30 @@ TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDevice
     size_t expectedNumDevices = 1u;
     EXPECT_EQ(expectedNumDevices, platform(executionEnvironment)->getNumDevices());
     EXPECT_EQ(2u, platform(executionEnvironment)->getClDevice(0)->getRootDeviceIndex());
+    cleanupPlatform(executionEnvironment);
+}
+
+TEST(PlatformInitTest, givenPlatformInitializationThenPlatformNameContainsCorectSuffix) {
+    std::vector<std::unique_ptr<Device>> devices;
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
+    constructPlatform(executionEnvironment);
+    devices.push_back(std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0)));
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    auto status = platform(executionEnvironment)->initialize(std::move(devices));
+    EXPECT_TRUE(status);
+    EXPECT_STREQ("Intel(R) OpenCL Graphics (integrated)", platform(executionEnvironment)->getPlatformInfo().name.c_str());
+    cleanupPlatform(executionEnvironment);
+}
+
+TEST(PlatformInitTest, givenDiscreteDeviceWhenPlatformIsInitializedThenPlatformNameContainsDiscreteSuffix) {
+    std::vector<std::unique_ptr<Device>> devices;
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
+    constructPlatform(executionEnvironment);
+    devices.push_back(std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0)));
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    auto status = platform(executionEnvironment)->initialize(std::move(devices));
+    EXPECT_TRUE(status);
+    EXPECT_STREQ("Intel(R) OpenCL Graphics (discrete)", platform(executionEnvironment)->getPlatformInfo().name.c_str());
     cleanupPlatform(executionEnvironment);
 }
 

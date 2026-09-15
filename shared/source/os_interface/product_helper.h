@@ -6,19 +6,20 @@
  */
 
 #pragma once
-#include "shared/source/helpers/common_types.h"
-
-#include "aubstream/engine_node.h"
 #include "neo_igfxfmid.h"
 #include "supported_num_grfs.h"
 
+#include <array>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+enum class TransferType : uint32_t;
+
 namespace aub_stream {
+enum EngineType : uint32_t;
 enum class ProductFamily : uint32_t;
 class AubManager;
 } // namespace aub_stream
@@ -27,6 +28,7 @@ namespace NEO {
 struct KmdNotifyProperties;
 struct AllocationData;
 struct BlitProperties;
+struct BcsSplitSettings;
 class CommandStreamReceiver;
 class Device;
 class Drm;
@@ -95,15 +97,14 @@ class ProductHelper {
     virtual uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const = 0;
     virtual std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() const = 0;
     virtual uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const = 0;
-    virtual uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const = 0;
     virtual uint64_t getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const = 0;
     virtual bool isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
     virtual uint32_t getPreferredWorkgroupCountPerSubslice() const = 0;
+    virtual uint32_t getDefaultMidthreadPreemptionDelayTimer() const = 0; // STATE_COMPUTE_MODE field encoding, not microseconds
     virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
-    virtual void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
@@ -123,9 +124,6 @@ class ProductHelper {
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const = 0;
     virtual uint32_t canShareMemoryWithoutNTHandle() const = 0;
-    virtual bool isAdditionalMediaSamplerProgrammingRequired() const = 0;
-    virtual bool isInitialFlagsProgrammingRequired() const = 0;
-    virtual bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const = 0;
     virtual bool pipeControlWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const = 0;
@@ -134,8 +132,6 @@ class ProductHelper {
     virtual bool isBlitterForImagesSupported() const = 0;
     virtual bool isPageFaultSupported() const = 0;
     virtual bool isEuDebugPageFaultSupported() const = 0;
-    virtual bool isKmdMigrationSupported() const = 0;
-    virtual bool isDeferBackingEnabled() const = 0;
     virtual bool isL1PolicyMissmatchCheckNeeded() const = 0;
     virtual bool isDisableScratchPagesSupported() const = 0;
     virtual bool isDisableScratchPagesRequiredForDebugger() const = 0;
@@ -166,6 +162,7 @@ class ProductHelper {
     virtual bool isTimestampWaitSupportedForEvents() const = 0;
     virtual bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getIsaPrefetchSize(uint32_t isaSize) const = 0;
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual BcsSplitSettings getBcsSplitSettings(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const = 0;
@@ -246,23 +243,22 @@ class ProductHelper {
     virtual bool isNewCoherencyModelSupported() const = 0;
     virtual bool isResourceUncachedForCS(AllocationType allocationType) const = 0;
     virtual bool deferMOCSToPatIndex(bool isWddmOnLinux) const = 0;
-    virtual const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const = 0;
-    virtual bool localDispatchSizeQuerySupported() const = 0;
     virtual bool supportReadOnlyAllocations() const = 0;
     virtual bool isDeviceToHostCopySignalingFenceRequired() const = 0;
     virtual bool isAvailableExtendedScratch() const = 0;
     virtual std::optional<bool> isCoherentAllocation(uint64_t patIndex) const = 0;
+    virtual bool isPatIndexValidForUserptr(uint64_t patIndex) const = 0;
     virtual bool isStagingBuffersEnabled() const = 0;
+    virtual size_t getCpuCopyThreshold(TransferType transferType) const = 0;
     virtual uint32_t getCacheLineSize() const = 0;
     virtual bool supports2DBlockStore() const = 0;
     virtual bool supports2DBlockLoad() const = 0;
     virtual uint32_t getNumCacheRegions() const = 0;
-    virtual uint32_t adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const = 0;
+    virtual uint32_t adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual uint64_t getSharedSystemPatIndex() const = 0;
     virtual bool useSharedSystemUsm() const = 0;
-    virtual uint32_t getGmmResourceUsageOverride(uint32_t usageType) const = 0;
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
     virtual bool isL3FlushAfterPostSyncSupported() const = 0;
     virtual void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const = 0;
@@ -306,7 +302,7 @@ class ProductHelper {
     void applyLimitGrfSupported(SupportedNumGrfs &grfs) const;
     static void setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyProperties);
-    static void setupPreemptionMode(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment, bool kmdPreemptionSupport);
+    static void setupPreemptionMode(HardwareInfo &hwInfo, bool kmdPreemptionSupport);
     static void setupImageSupport(HardwareInfo &hwInfo);
 };
 } // namespace NEO

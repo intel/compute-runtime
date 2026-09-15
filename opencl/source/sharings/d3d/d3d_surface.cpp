@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);
 
-    return Image::createSharedImage(context, surface, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, gmmNoCubeMap, 0, 0, false);
+    return Image::createSharedImage(context, surface, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, gmmNoCubeMap, 0, 0, false, retCode);
 }
 
 void D3DSurface::synchronizeObject(UpdateData &updateData) {

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/registry/built_ins_registry.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -138,6 +139,51 @@ TEST(BuiltInResourceTests, whenMoveAssigningResourceThenOwnershipIsTransferredAn
     EXPECT_EQ(sizeof(source), destination.size);
 }
 
+TEST(EmbeddedResourceRegistryTests, whenResourceIsRegisteredThenItIsFoundByName) {
+    static constexpr char resourceData[] = "mock_resource_data";
+    static RegisterEmbeddedResource registeredResource("mock_registered.builtin_kernel.bin", resourceData, sizeof(resourceData));
+
+    const auto *foundResource = RegisterEmbeddedResource::find("mock_registered.builtin_kernel.bin");
+    ASSERT_NE(nullptr, foundResource);
+    EXPECT_EQ(resourceData, foundResource->resource);
+    EXPECT_EQ(sizeof(resourceData), foundResource->resourceLength);
+}
+
+TEST(EmbeddedResourceRegistryTests, whenResourceWasNeverRegisteredThenItIsNotFound) {
+    EXPECT_EQ(nullptr, RegisterEmbeddedResource::find("mock_never_registered.builtin_kernel.bin"));
+}
+
+TEST(EmbeddedResourceRegistryTests, givenDuplicatedNameWhenResourceIsFoundThenFirstRegisteredOneIsReturned) {
+    static constexpr char firstResourceData[] = "first";
+    static constexpr char secondResourceData[] = "second";
+    static RegisterEmbeddedResource firstRegistration("mock_duplicated.builtin_kernel.bin", firstResourceData, sizeof(firstResourceData));
+    static RegisterEmbeddedResource secondRegistration("mock_duplicated.builtin_kernel.bin", secondResourceData, sizeof(secondResourceData));
+
+    const auto *foundResource = RegisterEmbeddedResource::find("mock_duplicated.builtin_kernel.bin");
+    ASSERT_NE(nullptr, foundResource);
+    EXPECT_EQ(firstResourceData, foundResource->resource);
+}
+
+TEST(EmbeddedResourceRegistryTests, whenLoadingRegisteredResourceFromEmbeddedStorageThenDataIsNotCopied) {
+    static constexpr char resourceData[] = "mock_not_copied_data";
+    static RegisterEmbeddedResource registeredResource("mock_not_copied.builtin_kernel.bin", resourceData, sizeof(resourceData));
+
+    BuiltIn::EmbeddedStorage embeddedStorage("");
+    auto resource = embeddedStorage.load("mock_not_copied.builtin_kernel.bin");
+
+    EXPECT_EQ(resourceData, resource.data);
+    EXPECT_EQ(sizeof(resourceData), resource.size);
+    EXPECT_TRUE(resource.persistentMemory);
+}
+
+TEST(EmbeddedResourceRegistryTests, whenLoadingUnknownResourceFromEmbeddedStorageThenEmptyResourceIsReturned) {
+    BuiltIn::EmbeddedStorage embeddedStorage("");
+    auto resource = embeddedStorage.load("mock_unknown.builtin_kernel.bin");
+
+    EXPECT_TRUE(resource.empty());
+    EXPECT_EQ(nullptr, resource.data);
+}
+
 using BuiltInSharedTest = Test<DeviceFixture>;
 
 TEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformThenOnlyIntermediateFormatIsAvailable) {
@@ -263,31 +309,6 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeSourceWhenGettingResourceNamesThenRe
         EXPECT_EQ(2u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
         EXPECT_EQ(resourceNames[1], expectedResourceNameGeneric);
-    }
-}
-
-TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
-
-    const std::pair<BuiltIn::BaseKernel, const char *> testCases[] = {
-        {BuiltIn::BaseKernel::auxTranslation, "aux_translation.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyBufferToBuffer, "copy_buffer_to_buffer.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyBufferRect, "copy_buffer_rect.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillBuffer, "fill_buffer.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyBufferToImage3d, "copy_buffer_to_image3d.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyImage3dToBuffer, "copy_image3d_to_buffer.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyImageToImage1d, "copy_image_to_image1d.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyImageToImage2d, "copy_image_to_image2d.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyImageToImage3d, "copy_image_to_image3d.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillImage1d, "fill_image1d.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillImage2d, "fill_image2d.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillImage3d, "fill_image3d.builtin_kernel"},
-        {BuiltIn::BaseKernel::copyKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"},
-        {BuiltIn::BaseKernel::fillImage1dBuffer, "fill_image1d_buffer.builtin_kernel"}};
-
-    for (const auto &[type, name] : testCases) {
-        std::string builtinResourceName = BuiltIn::createResourceName(type, ".bin");
-        std::string expectedBuiltinResourceName = std::string(name) + ".bin";
-        EXPECT_EQ(expectedBuiltinResourceName, builtinResourceName);
     }
 }
 

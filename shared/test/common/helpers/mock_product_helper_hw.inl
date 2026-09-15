@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -48,11 +48,6 @@ int MockProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInf
         featureTable->flags.ftrGpGpuMidBatchPreempt = 1;
     }
     return (failOnConfigureHardwareCustom) ? -1 : 0;
-}
-
-template <>
-uint64_t MockProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const {
-    return 1024u;
 }
 
 template <>

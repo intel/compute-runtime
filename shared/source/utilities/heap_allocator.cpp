@@ -8,6 +8,7 @@
 #include "shared/source/utilities/heap_allocator.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/utilities/logger.h"
 
 #include <algorithm>
@@ -31,7 +32,7 @@ uint64_t HeapAllocator::allocateWithCustomAlignmentWithStartAddressHint(const ui
 
     {
         std::lock_guard<std::mutex> lock(mtx);
-        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
+        DBG_LOG(LogAllocationMemoryPool, NEO_FUNCTION_NAME, "Allocator usage == ", this->getUsage());
         if (availableSize < sizeToAllocate) {
             return 0llu;
         }
@@ -83,7 +84,7 @@ uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size
     sizeToAllocate = alignUp(sizeToAllocate, allocationAlignment);
 
     std::lock_guard<std::mutex> lock(mtx);
-    DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
+    DBG_LOG(LogAllocationMemoryPool, NEO_FUNCTION_NAME, "Allocator usage == ", this->getUsage());
     if (availableSize < sizeToAllocate) {
         return 0llu;
     }
@@ -171,7 +172,7 @@ void HeapAllocator::free(uint64_t ptr, size_t size) {
     }
 
     std::lock_guard<std::mutex> lock(mtx);
-    DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
+    DBG_LOG(LogAllocationMemoryPool, NEO_FUNCTION_NAME, "Allocator usage == ", this->getUsage());
 
     if (ptr == pRightBound) {
         pRightBound = ptr + size;
@@ -318,7 +319,7 @@ void HeapAllocator::defragment() {
         }
     }
     mergeLastFreedBig();
-    DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
+    DBG_LOG(LogAllocationMemoryPool, NEO_FUNCTION_NAME, "Allocator usage == ", this->getUsage());
 }
 
 } // namespace NEO

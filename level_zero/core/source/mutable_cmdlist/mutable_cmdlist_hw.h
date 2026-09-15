@@ -18,6 +18,7 @@ struct MutableAppendLaunchKernelWithParams {
     Variable *groupCountVariable = nullptr;
     Variable *groupSizeVariable = nullptr;
     Variable *globalOffsetVariable = nullptr;
+    Variable *firstSlmArgumentVariable = nullptr;
     Variable *lastSlmArgumentVariable = nullptr;
     MutableKernel *currentMutableKernel = nullptr;
     uint32_t maxKernelGroupScratch[2] = {0, 0};
@@ -32,8 +33,9 @@ struct MutableAppendLaunchKernelWithParams {
     bool isCooperativeFromApi = false;
 };
 
-struct MutableAppendLaunchKernelEvents {
+struct MutableAppendEvents {
     CommandToPatchInCmdList signalCmd = {PatchSignalEventPostSyncPipeControl{}};
+    CommandToPatchContainer *mutableCmdPatchlistContainer = nullptr;
 
     bool waitEvents = false;
     bool signalEvent = false;
@@ -44,6 +46,7 @@ struct MutableAppendLaunchKernelEvents {
     bool l3FlushEvent = false;
     bool eventInsideInOrder = false;
     bool inOrderIncrementEvent = false;
+    bool omitWaitEventResidency = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -79,10 +82,69 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     ze_result_t appendMILoadRegMem(MclAluReg reg, uint64_t address) override;
     ze_result_t appendMIStoreRegMem(MclAluReg reg, uint64_t address) override;
     ze_result_t appendMIMath(void *aluArray, size_t aluCount) override;
+
+    ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override;
+    ze_result_t appendMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
+                                          const void **pRanges,
+                                          ze_event_handle_t hSignalEvent,
+                                          uint32_t numWaitEvents,
+                                          ze_event_handle_t *phWaitEvents,
+                                          CmdListWaitEventParameters &waitEventParams) override;
+    ze_result_t appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage, const void *srcptr,
+                                             const ze_image_region_t *pDstRegion,
+                                             uint32_t srcRowPitch, uint32_t srcSlicePitch,
+                                             ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendImageCopyToMemoryExt(void *dstptr, ze_image_handle_t hSrcImage,
+                                           const ze_image_region_t *pSrcRegion,
+                                           uint32_t destRowPitch, uint32_t destSlicePitch,
+                                           ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                           ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendImageCopyRegion(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage,
+                                      const ze_image_region_t *pDstRegion, const ze_image_region_t *pSrcRegion,
+                                      ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                      ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
+                                 ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                 ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
+                                            size_t size, ze_event_handle_t hSignalEvent,
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendMemoryCopyRegion(void *dstPtr,
+                                       const ze_copy_region_t *dstRegion,
+                                       uint32_t dstPitch,
+                                       uint32_t dstSlicePitch,
+                                       const void *srcPtr,
+                                       const ze_copy_region_t *srcRegion,
+                                       uint32_t srcPitch,
+                                       uint32_t srcSlicePitch,
+                                       ze_event_handle_t hSignalEvent,
+                                       uint32_t numWaitEvents,
+                                       ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendMemoryFill(void *ptr, const void *pattern,
+                                 size_t patternSize, size_t size, ze_event_handle_t hSignalEvent,
+                                 uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) override;
+    ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
+                                            const size_t *pOffsets, ze_event_handle_t hSignalEvent,
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                            CmdListWaitEventParameters &waitEventsParameters) override;
+    ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                           CmdListWaitEventParameters &waitEventParams) override;
+    ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction,
+                                   void *pUserData,
+                                   const void *pNext,
+                                   ze_event_handle_t hSignalEvent,
+                                   uint32_t numWaitEvents,
+                                   ze_event_handle_t *phWaitEvents,
+                                   CmdListHostFunctionParameters &parameters) override;
+
     void programStateBaseAddressHook(size_t cmdBufferOffset, bool surfaceBaseAddressModify) override;
     void setBufferSurfaceState(void *address, NEO::GraphicsAllocation *alloc, Variable *variable) override;
 
-    MutableComputeWalker *getCommandWalker(CommandBufferOffset offsetToWalkerCommand, uint8_t indirectOffset, uint8_t scratchOffset) override;
+    MutableComputeWalker *getCommandWalker(CommandBufferOffset offsetToWalkerCommand, uint16_t indirectOffset, uint16_t scratchOffset) override;
     uint32_t getInlineDataSize() const;
 
     void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent) override;
@@ -102,13 +164,16 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
                                                  CmdListKernelLaunchParams &launchParams,
                                                  Kernel *kernel,
                                                  KernelVariableDescriptor *kernelVariables);
-    void storeSignalEventVariable(MutableAppendLaunchKernelEvents &mutableEventParams,
+    void storeSignalEventVariable(MutableAppendEvents &mutableEventParams,
                                   CmdListKernelLaunchParams &launchParams,
                                   Event *event);
 
     void captureCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                               std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
                                               std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList);
+    void captureExternalCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
+                                                      std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
+                                                      std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList);
     void captureRegularWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                          std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList);
     void captureCounterBasedTimestampSignalEventCommands(SignalEventVariableDescriptor &currentMutableSignalEvent,
@@ -121,9 +186,14 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
                                                           const ze_group_count_t &threadGroupDimensions,
                                                           Event *event,
                                                           MutableAppendLaunchKernelWithParams &parentMutableAppendLaunchParams);
+    void storeWaitEventsVariables(uint32_t numWaitEvents,
+                                  ze_event_handle_t *phWaitEvents,
+                                  MutableAppendEvents &mutableEventParams);
+    void processWaitEventVariables(uint32_t numWaitEvents);
+    void clearMutableAppendData();
 
-    void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) override;
-    void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) override;
+    void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) override;
+    void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) override;
     uint64_t getCurrentScratchPatchAddress(size_t scratchAddressPatchIndex) const override;
     void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) override;
     size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,16 +29,26 @@ std::unique_ptr<CpuPageFaultManager> CpuPageFaultManager::create() {
     return pageFaultManager;
 }
 
-std::function<void(int signal, siginfo_t *info, void *context)> PageFaultManagerLinux::pageFaultHandler = nullptr;
+constinit std::atomic<PageFaultManagerLinux *> PageFaultManagerLinux::activePageFaultManager{nullptr};
 
 PageFaultManagerLinux::PageFaultManagerLinux() {
     PageFaultManagerLinux::registerFaultHandler();
-    UNRECOVERABLE_IF(pageFaultHandler == nullptr);
 }
 
 PageFaultManagerLinux::~PageFaultManagerLinux() {
-    if (!previousHandlerRestored) {
-        auto retVal = sigaction(SIGSEGV, &previousPageFaultHandlers[0], nullptr);
+    auto expectedPageFaultManager = this;
+    auto wasActivePageFaultManager = activePageFaultManager.compare_exchange_strong(expectedPageFaultManager, nullptr);
+
+    if (wasActivePageFaultManager && !previousHandlerRestored) {
+        auto &previousPageFaultHandler = previousPageFaultHandlers[0];
+
+        auto previousHandlerIsWrapper = (previousPageFaultHandler.sa_flags & SA_SIGINFO) &&
+                                        previousPageFaultHandler.sa_sigaction == pageFaultHandlerWrapper;
+
+        struct sigaction defaultPageFaultHandler = {};
+        defaultPageFaultHandler.sa_handler = SIG_DFL;
+
+        auto retVal = sigaction(SIGSEGV, previousHandlerIsWrapper ? &defaultPageFaultHandler : &previousPageFaultHandler, nullptr);
         UNRECOVERABLE_IF(retVal != 0);
         previousPageFaultHandlers.clear();
     }
@@ -64,11 +74,7 @@ void PageFaultManagerLinux::registerFaultHandler() {
         previousPageFaultHandlers.push_back(previousPageFaultHandler);
     }
 
-    pageFaultHandler = [&](int signal, siginfo_t *info, void *context) {
-        if (!this->verifyAndHandlePageFault(info->si_addr, this->handlerIndex == 0)) {
-            callPreviousHandler(signal, info, context);
-        }
-    };
+    activePageFaultManager.store(this);
 
     struct sigaction pageFaultManagerHandler = {};
     pageFaultManagerHandler.sa_flags = SA_SIGINFO;
@@ -76,10 +82,19 @@ void PageFaultManagerLinux::registerFaultHandler() {
 
     retVal = sigaction(SIGSEGV, &pageFaultManagerHandler, &previousPageFaultHandler);
     UNRECOVERABLE_IF(retVal != 0);
+
+    previousHandlerRestored = false;
 }
 
 void PageFaultManagerLinux::pageFaultHandlerWrapper(int signal, siginfo_t *info, void *context) {
-    pageFaultHandler(signal, info, context);
+    auto pageFaultManager = activePageFaultManager.load();
+    if (pageFaultManager == nullptr) {
+        return;
+    }
+
+    if (!pageFaultManager->verifyAndHandlePageFault(info->si_addr, pageFaultManager->handlerIndex == 0)) {
+        pageFaultManager->callPreviousHandler(signal, info, context);
+    }
 }
 
 void PageFaultManagerLinux::allowCPUMemoryAccess(void *ptr, size_t size) {

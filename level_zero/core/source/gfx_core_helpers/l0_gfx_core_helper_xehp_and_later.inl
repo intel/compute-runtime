@@ -35,22 +35,13 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking(const N
 }
 
 template <typename Family>
-uint32_t L0GfxCoreHelperHw<Family>::getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const {
-    uint32_t kernelCount = EventPacketsCount::maxKernelSplit;
-    if (L0GfxCoreHelper::usePipeControlMultiKernelEventSync(hwInfo)) {
-        kernelCount = 1;
-    }
-    return kernelCount;
-}
-
-template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
 
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     bool flushL3AfterPostSync = productHelper.isL3FlushAfterPostSyncSupported();
 
-    uint32_t basePackets = getEventMaxKernelCount(hwInfo);
+    uint32_t basePackets = 1;
     if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, rootDeviceEnvironment) && !flushL3AfterPostSync) {
         basePackets += L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, flushL3AfterPostSync) ? 0 : 1;
     }

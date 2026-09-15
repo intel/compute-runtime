@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <errno.h>
+#include <string>
 
 namespace L0 {
 namespace Sysman {
@@ -49,11 +50,62 @@ int SysmanSysCallsWrapper::ioctl(int fd, unsigned long request, void *arg, int &
     return result;
 }
 
+// sync cannot fail and reports no status, hence no errno is captured
+void SysmanSysCallsWrapper::sync() {
+    NEO::SysCalls::sync();
+}
+
 int SysmanSysCallsWrapper::close(int fd, int &errorNum) {
     errno = 0;
     int result = NEO::SysCalls::close(fd);
     errorNum = errno;
     return result;
+}
+
+int SysmanSysCallsWrapper::dup(int oldfd, int &errorNum) {
+    errno = 0;
+    int result = NEO::SysCalls::dup(oldfd);
+    errorNum = errno;
+    return result;
+}
+
+int SysmanSysCallsWrapper::flock(int fd, int operation, int &errorNum) {
+    errno = 0;
+    int result = NEO::SysCalls::flock(fd, operation);
+    errorNum = errno;
+    return result;
+}
+
+int SysmanSysCallsWrapper::access(std::string_view pathname, int mode, int &errorNum) {
+    errno = 0;
+    int result = NEO::SysCalls::access(std::string(pathname), mode);
+    errorNum = errno;
+    return result;
+}
+
+FILE *SysmanSysCallsWrapper::fdopen(int fd, const char *mode, int &errorNum) {
+    errno = 0;
+    auto filep = NEO::SysCalls::fdopen(fd, mode);
+    errorNum = errno;
+    return filep;
+}
+
+char *SysmanSysCallsWrapper::fgets(char *s, int size, FILE *stream, int &errorNum) {
+    errno = 0;
+    auto ret = NEO::SysCalls::fgets(s, size, stream);
+    errorNum = errno;
+    return ret;
+}
+
+int SysmanSysCallsWrapper::fclose(FILE *stream, int &errorNum) {
+    errno = 0;
+    auto ret = NEO::SysCalls::fclose(stream);
+    errorNum = errno;
+    return ret;
+}
+
+int SysmanSysCallsWrapper::setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+    return NEO::SysCalls::setvbuf(stream, buf, mode, size);
 }
 
 } // namespace Sysman

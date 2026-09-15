@@ -16,4 +16,8 @@ bool isOpenVinoDetected() {
     return false;
 }
 
+bool isOldOpenVinoVersionDetected() {
+    return false;
+}
+
 } // namespace NEO

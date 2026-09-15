@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/utilities/directory.h"
-
-#include "test_files_setup.h"
 
 #include <cstdio>
 #include <dirent.h>
@@ -16,8 +14,8 @@
 namespace NEO {
 extern bool returnEmptyFilesVector;
 
-std::string byPathPattern(std::string(NEO_SHARED_TEST_FILES_DIR) + "/linux/by-path");
-std::string deviceDrmPath(std::string(NEO_SHARED_TEST_FILES_DIR) + "/linux/devices/device/drm");
+std::string byPathPattern("/linux/by-path");
+std::string deviceDrmPath("/linux/devices/device/drm");
 std::map<std::string, std::vector<std::string>> directoryFilesMap = {};
 int setErrno = 0;
 

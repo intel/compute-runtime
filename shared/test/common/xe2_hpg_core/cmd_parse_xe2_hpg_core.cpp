@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 using GenStruct = NEO::Xe2HpgCore;
 using GenGfxFamily = NEO::Xe2HpgCoreFamily;
 
+#include "shared/test/common/cmd_parse/cmd_parse_from_gen12lp_to_xe3_core.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_mem_fence.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_mem_set.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_resource_barrier.inl"

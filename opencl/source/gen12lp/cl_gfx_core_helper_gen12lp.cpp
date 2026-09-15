@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ bool ClGfxCoreHelperHw<GfxFamily>::isFormatRedescribable(cl_image_format format)
 #include "opencl/source/helpers/cl_gfx_core_helper_factory_init.inl"
 
 template <>
-cl_device_feature_capabilities_intel ClGfxCoreHelperHw<Family>::getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+cl_device_feature_capabilities_intel ClGfxCoreHelperHw<Family>::getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const {
     return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
 }
 

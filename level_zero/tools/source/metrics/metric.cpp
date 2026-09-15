@@ -690,7 +690,7 @@ std::vector<MetricImp *> removeDuplicatesPreserveOrder(const std::vector<MetricI
     std::vector<MetricImp *> result;
     result.reserve(input.size());
     for (auto *m : input) {
-        if (seen.find(m) == seen.end()) {
+        if (!seen.contains(m)) {
             seen.insert(m);
             result.push_back(m);
         }
@@ -883,11 +883,9 @@ uint32_t MetricDeviceContext::addMetricScope(std::string_view scopeName, std::st
 }
 
 void MetricDeviceContext::removeMetricScope(std::string_view scopeName) {
-    auto it = std::remove_if(metricScopes.begin(), metricScopes.end(),
-                             [scopeName](const std::unique_ptr<MetricScopeImp> &scope) {
-                                 return scope->isName(scopeName);
-                             });
-    metricScopes.erase(it, metricScopes.end());
+    std::erase_if(metricScopes, [scopeName](const std::unique_ptr<MetricScopeImp> &scope) {
+        return scope->isName(scopeName);
+    });
 }
 
 ze_result_t MetricScopeImp::getProperties(zet_intel_metric_scope_properties_exp_t *pProperties) {

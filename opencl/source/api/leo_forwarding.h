@@ -10,6 +10,7 @@
 #include "config.h"
 #include <CL/cl.h>
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 
@@ -19,9 +20,10 @@ class OsLibrary;
 
 bool isLEOEnabled();
 
+void activateLeoForwarding();
+
 cl_int forwardClGetPlatformIDs(cl_uint numEntries, cl_platform_id *platforms, cl_uint *numPlatforms);
 cl_int forwardClGetPlatformInfo(cl_platform_id platform, cl_platform_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet);
-cl_int forwardClGetDeviceIDs(cl_platform_id platform, cl_device_type deviceType, cl_uint numEntries, cl_device_id *devices, cl_uint *numDevices);
 void *forwardClGetExtensionFunctionAddress(const char *funcName);
 cl_int forwardClEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue, cl_event *event, cl_context *context);
 cl_int forwardClGetCLObjectInfoINTEL(cl_mem memObj, void *pResourceInfo);
@@ -37,11 +39,10 @@ using pfnClReleaseGlSharedEventINTEL = cl_int(CL_API_CALL *)(cl_event);
 struct L0ForwardingState {
     std::mutex mutex;
     bool loaded = false;
-    bool hasPlatforms = false;
+    std::atomic<bool> forwardingActive{false};
     std::unique_ptr<OsLibrary> library;
     pfnClIcdGetPlatformIDsKHR clGetPlatformIDsFunc = nullptr;
     decltype(&clGetPlatformInfo) clGetPlatformInfoFunc = nullptr;
-    decltype(&clGetDeviceIDs) clGetDeviceIDsFunc = nullptr;
     decltype(&clGetExtensionFunctionAddress) clGetExtensionFunctionAddressFunc = nullptr;
     pfnClEnqueueMarkerWithSyncObjectINTEL clEnqueueMarkerWithSyncObjectINTELFunc = nullptr;
     pfnClGetCLObjectInfoINTEL clGetCLObjectInfoINTELFunc = nullptr;

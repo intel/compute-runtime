@@ -14,11 +14,11 @@ namespace L0::MCL {
 
 template <typename GfxFamily>
 struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAndNonMovableClass {
-    MutableComputeWalkerHw(void *walker, uint8_t indirectOffset, uint8_t scratchOffset, void *cpuBuffer, bool stageCommitMode)
+    MutableComputeWalkerHw(void *walker, uint16_t indirectOffset, uint16_t scratchOffset, void *cpuBuffer, bool stageCommitMode)
         : MutableComputeWalker(walker, indirectOffset, scratchOffset, stageCommitMode),
           cpuBuffer(cpuBuffer) {}
     ~MutableComputeWalkerHw() override {
-        deleteCommandBuffer();
+        MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer(this->cpuBuffer);
     }
 
     void setKernelStartAddress(GpuAddress kernelStartAddress) override;
@@ -39,6 +39,8 @@ struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAnd
 
     void updateSlmSize(const NEO::Device &device, uint32_t slmTotalSizePerThreadGroup) override;
 
+    void updateL3FlushAfterWalker(uint32_t systemMemoryAllocsCount, uint32_t importedAllocationsCount) override;
+
     void *getInlineDataPointer() const override;
     size_t getInlineDataOffset() const override;
     size_t getInlineDataSize() const override;
@@ -46,7 +48,7 @@ struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAnd
 
     static size_t getCommandSize();
     static void *createCommandBuffer();
-    void deleteCommandBuffer();
+    static void deleteCommandBuffer(void *input);
 
     void copyWalkerDataToHostBuffer(MutableComputeWalker *sourceWalker) override;
     void updateWalkerScratchPatchAddress(GpuAddress scratchPatchAddress) override;

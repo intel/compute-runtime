@@ -7,7 +7,8 @@
 
 #include "level_zero/tools/source/debug/debug_handlers.h"
 
-#include "shared/source/os_interface/debug_env_reader.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/affinity_mask.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/debug/debug_session.h"
@@ -24,10 +25,8 @@ ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *c
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    NEO::EnvironmentVariableReader envReader;
-    auto affinityMask = envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
-
-    if (!affinityMask.empty()) {
+    const auto &affinityMask = NEO::debugManager.flags.ZE_AFFINITY_MASK.get();
+    if (NEO::isAffinityMaskSet(affinityMask)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                      "%s", "ZE_AFFINITY_MASK is not recommended while using program debug API\n");
     }

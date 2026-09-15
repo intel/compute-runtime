@@ -37,6 +37,7 @@
 #include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/state_base_address_helper.h"
@@ -207,7 +208,7 @@ void CommandStreamReceiverHw<GfxFamily>::addPipeControlFlushTaskIfNeeded(LinearS
             MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
         }
         this->taskLevel = taskLevel;
-        DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", peekTaskCount());
+        DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "this->taskCount", peekTaskCount());
     }
 
     if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {
@@ -450,7 +451,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     DEBUG_BREAK_IF(!(dispatchFlags.preemptionMode == PreemptionMode::Disabled ? device.getPreemptionMode() == PreemptionMode::Disabled : true));
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskLevel", taskLevel);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "taskLevel", taskLevel);
 
     auto levelClosed = false;
     bool implicitFlush = dispatchFlags.implicitFlush || dispatchFlags.blocking || debugManager.flags.ForceImplicitFlush.get();
@@ -566,7 +567,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     addPipeControlBeforeStateSip(commandStreamCSR, device);
     programStateSip(commandStreamCSR, device);
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
 
     bool samplerCacheFlushBetweenRedescribedSurfaceReadsRequired = hwInfo.workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads;
     if (samplerCacheFlushBetweenRedescribedSurfaceReadsRequired) {
@@ -899,6 +900,21 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
         kmdNotifyHelper->updateLastWaitForCompletionTimestamp();
     }
     return WaitStatus::ready;
+}
+
+template <typename GfxFamily>
+inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) {
+    auto status = waitForCompletionWithTimeout(WaitParams{false, true, false, 0}, taskCountToWait);
+    if (status != WaitStatus::notReady) {
+        return status;
+    }
+
+    status = waitForFlushStamp(flushStampToWait, timeoutNanoseconds);
+    if (status != WaitStatus::ready) {
+        return status;
+    }
+
+    return waitForCompletionWithTimeout(WaitParams{false, true, false, 0}, taskCountToWait);
 }
 
 template <typename GfxFamily>
@@ -1376,6 +1392,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
         break;
     case 3:
         enabled = true;
+        break;
+    default:
         break;
     }
 
@@ -1943,7 +1961,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(Linea
         rootDeviceEnvironment,
         args);
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "taskCount", peekTaskCount());
     if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
                                                               PatchInfoAllocationType::tagAddress,
@@ -2012,8 +2030,8 @@ inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::updateTaskCountAndGet
 
     ++taskCount;
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", tagAddress ? *tagAddress : 0);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "taskCount", peekTaskCount());
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "Current taskCount:", tagAddress ? *tagAddress : 0);
 
     CompletionStamp completionStamp = {
         taskCount,
@@ -2568,17 +2586,17 @@ void CommandStreamReceiverHw<GfxFamily>::submitLateMidThreadPreemptionStart() {
 
     auto lock = obtainUniqueOwnership();
 
+    this->skipPreemptionAllocation = false;
+
     auto dispatchSize = PreemptionHelper::getRequiredCmdStreamSizeForLateStart<GfxFamily>();
     auto &commandStream = getCS(dispatchSize);
     auto commandStreamStart = commandStream.getUsed();
     PreemptionHelper::programCmdStreamForLateStart<GfxFamily>(commandStream);
     makeResident(*commandStream.getGraphicsAllocation());
+    makeResidentPreemptionAllocation();
 
     auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     UNRECOVERABLE_IF(submissionStatus != NEO::SubmissionStatus::success);
-
-    this->latestFlushedTaskCount = taskCount.load();
-    this->skipPreemptionAllocation = false;
 }
 
 template <typename GfxFamily>

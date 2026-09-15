@@ -147,7 +147,7 @@ void MutableCommandListImp::processResidencyContainer(bool baseCmdListClosed) {
 }
 
 ze_result_t MutableCommandListImp::addVariableDispatch(const NEO::KernelDescriptor &kernelDescriptor, KernelDispatch &kernelDispatch, Variable *groupSize, Variable *groupCount, Variable *globalOffset,
-                                                       Variable *lastSlmArgumentVariable, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams) {
+                                                       Variable *lastSlmArgumentVariable, const std::vector<Variable *> *buffersVariables, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams) {
     if (groupSize != nullptr && (false == groupSize->isType(VariableType::groupSize))) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -192,7 +192,7 @@ ze_result_t MutableCommandListImp::addVariableDispatch(const NEO::KernelDescript
 
     auto mutableIndirectData = std::make_unique<MutableIndirectData>(std::move(offsets), crossThreadData, perThreadData, inlineData);
     kernelDispatch.varDispatch = std::make_unique<VariableDispatch>(&kernelDispatch, std::move(mutableIndirectData), mutableComputeWalker,
-                                                                    groupSize, groupCount, globalOffset, lastSlmArgumentVariable,
+                                                                    groupSize, groupCount, globalOffset, lastSlmArgumentVariable, buffersVariables,
                                                                     base->getDevice()->getHwInfo().capabilityTable.grfSize,
                                                                     dispatchParams, base->getPartitionCount(), base->getEngineGroupType());
 
@@ -230,6 +230,7 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
         kernelDataEntry->requiredThreadGroupDispatchSize = kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize;
         kernelDataEntry->grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
         kernelDataEntry->barrierCount = kernelDescriptor.kernelAttributes.barrierCount;
+        kernelDataEntry->slmAllocationMode = kernelDescriptor.kernelAttributes.slmAllocationMode;
         kernelDataEntry->kernelStartOffset = isa->getAllocationOffset() + isaOffsetWithinAllocation;
         if (this->base->isHeaplessModeEnabled()) {
             kernelDataEntry->kernelStartAddress = isa->getGpuAddress() + isaOffsetWithinAllocation;
@@ -257,9 +258,16 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
 
 ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
                                                          size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
-                                                         bool resetSlmArgumentValues) {
+                                                         Variable *firstSlmArgumentVariable, bool resetSlmArgumentValues) {
     auto kernelData = getKernelData(kernel);
     auto &kernelDescriptor = kernel->getKernelDescriptor();
+
+    if (firstSlmArgumentVariable != nullptr) {
+        const auto slmBaseOffset = kernelData->slmAllocationMode == NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted
+                                       ? kernelDescriptor.kernelAttributes.slmInlineSize
+                                       : 0u;
+        firstSlmArgumentVariable->setSlmBaseOffset(slmBaseOffset);
+    }
 
     auto ioh = base->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
     size_t reservedPerThreadDataSize = 0;
@@ -314,10 +322,8 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
     dispatch.offsets.walkerCmdOffset = walkerCmdOffset;
     dispatch.kernelData = kernelData;
     dispatch.walkerCmd = walkerCmd;
-    if (kernel->getSlmTotalSizePerThreadGroup() > 0) {
-        dispatch.slmTotalSizePerThreadGroup = kernel->getSlmTotalSizePerThreadGroup();
-        dispatch.slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize;
-    }
+    dispatch.slmTotalSizePerThreadGroup = kernel->getSlmTotalSizePerThreadGroup();
+    dispatch.slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize;
     dispatch.slmPolicy = static_cast<uint32_t>(kernel->getSlmPolicy());
     if (dispatch.kernelData->usesSyncBuffer) {
         dispatch.syncBuffer = syncBuffer;
@@ -339,10 +345,11 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
             currentSlmArgSize = slmArgSizes[i];
             currentSlmArgOffset = slmArgOffsetValues[i];
         }
-        auto retVal = Variable::fromHandle(vars[i])->addKernelArgUsage(args[i], kernelIohStartOffset, kernelFullOffset, kernelSshOffset,
-                                                                       currentSlmArgSize, currentSlmArgOffset,
-                                                                       walkerCmdOffset, mutableComputeWalker,
-                                                                       kernelData->passInlineData);
+        auto variable = Variable::fromHandle(vars[i]);
+        auto retVal = variable->addKernelArgUsage(args[i], kernelIohStartOffset, kernelFullOffset, kernelSshOffset,
+                                                  currentSlmArgSize, currentSlmArgOffset,
+                                                  walkerCmdOffset, mutableComputeWalker,
+                                                  kernelData->passInlineData);
         if (retVal != ZE_RESULT_SUCCESS) {
             DEBUG_BREAK_IF(true);
             return retVal;
@@ -537,7 +544,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t co
     for (uint32_t eventNum = 0; eventNum < numWaitEvents; eventNum++) {
         WaitEventVariableDescriptor &mutableWaitEventDesc = selectedAppend.waitEvents[eventNum];
         UNRECOVERABLE_IF(mutableWaitEventDesc.waitEventIndex != eventNum);
-        auto waitEventHandle = toInternalType(phWaitEvents[eventNum]);
+        auto waitEventHandle = phWaitEvents[eventNum];
         auto inputEvent = Event::fromHandle(waitEventHandle);
         if (mutableWaitEventDesc.event == inputEvent && !mutableWaitEventDesc.eventVariable->getDesc().eventValue.counterBasedEvent) {
             continue;
@@ -563,7 +570,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandKernelsExp cmdlist: %p numKernels: %u\n", this, numKernels);
     for (uint32_t id = 0; id < numKernels; id++) {
         auto commandId = pCommandId[id];
-        auto kernelHandle = toInternalType(phKernels[id]);
+        auto kernelHandle = phKernels[id];
         auto kernel = Kernel::fromHandle(kernelHandle);
         auto kernelGroup = this->kernelMutations[(commandId - 1)].kernelGroup;
         if (kernelGroup == nullptr) {
@@ -639,7 +646,8 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
         if (kernelGroup->isScratchNeeded()) {
             // update walker with latest patched scratch address
             auto scratchAddressPatchIndex = kernelGroup->getScratchAddressPatchIndex();
-            this->updateScratchAddress(scratchAddressPatchIndex, *oldKernelComputeWalker, *newKernelComputeWalker);
+            auto newKernelIndirectData = newMutableKernel->getKernelDispatch()->varDispatch->getIndirectData();
+            this->updateScratchAddress(scratchAddressPatchIndex, *oldKernelComputeWalker, *newKernelComputeWalker, newKernelIndirectData);
         }
 
         // save new host view inline data/post sync into command buffer

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class WddmFirmwareImp : public OsFirmware {
     ze_result_t osGetSecurityVersion(char *pVersion) override;
     ze_result_t osSetSecurityVersion() override;
     ze_result_t osGetConsoleLogs(size_t *pSize, char *pFirmwareLog) override;
+    void reInit() override {}
     ze_result_t getFirmwareVersion(std::string fwType, zes_firmware_properties_t *pProperties);
     WddmFirmwareImp() = default;
     WddmFirmwareImp(OsSysman *pOsSysman, const std::string &fwType);

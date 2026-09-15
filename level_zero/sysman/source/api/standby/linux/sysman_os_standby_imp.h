@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class LinuxStandbyImp : public OsStandby, NEO::NonCopyableAndNonMovableClass {
     ze_result_t osStandbyGetProperties(zes_standby_properties_t &properties) override;
 
     bool isStandbySupported(void) override;
+    void reInit() override;
 
     LinuxStandbyImp() = default;
     LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
@@ -40,8 +41,6 @@ class LinuxStandbyImp : public OsStandby, NEO::NonCopyableAndNonMovableClass {
 
   private:
     std::string standbyModeFile = {};
-    static const int standbyModeDefault = 1;
-    static const int standbyModeNever = 0;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     void init();

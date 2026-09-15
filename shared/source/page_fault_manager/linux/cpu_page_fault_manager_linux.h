@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
+#include <atomic>
 #include <csignal>
-#include <functional>
 #include <vector>
 
 namespace NEO {
@@ -34,7 +34,7 @@ class PageFaultManagerLinux : public virtual CpuPageFaultManager {
     void callPreviousHandler(int signal, siginfo_t *info, void *context);
     bool previousHandlerRestored = false;
 
-    static std::function<void(int signal, siginfo_t *info, void *context)> pageFaultHandler;
+    static constinit std::atomic<PageFaultManagerLinux *> activePageFaultManager;
 
     std::vector<struct sigaction> previousPageFaultHandlers;
 

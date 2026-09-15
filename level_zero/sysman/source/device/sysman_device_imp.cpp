@@ -235,12 +235,16 @@ ze_result_t SysmanDeviceImp::memoryGetPageOfflineStateExp(zes_intel_mem_page_sta
     return pGlobalOperations->memoryGetPageOfflineStateExp(pageStatus, pCount, pPageOfflineInfo);
 }
 
-ze_result_t SysmanDeviceImp::getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) {
-    return pGlobalOperations->getDeviceHealthExp(pHealth);
+ze_result_t SysmanDeviceImp::getDeviceHealthStatus(zes_device_health_status_ext_t *pHealth) {
+    return pGlobalOperations->getDeviceHealthStatus(pHealth);
 }
 
-ze_result_t SysmanDeviceImp::setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) {
-    return pGlobalOperations->setDeviceHealthExp(health, pReason, authTokenLength, pAuthToken);
+ze_result_t SysmanDeviceImp::setDeviceHealthStatus(zes_device_health_status_ext_t health) {
+    return pGlobalOperations->setDeviceHealthStatus(health);
+}
+
+ze_result_t SysmanDeviceImp::getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) {
+    return pGlobalOperations->getPowerOffReasonExp(pReason);
 }
 
 } // namespace Sysman

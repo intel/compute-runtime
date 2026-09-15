@@ -35,6 +35,11 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return false;
 }

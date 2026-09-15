@@ -15,6 +15,7 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_surface_formats.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -85,7 +86,7 @@ cl_int Context::initialize() {
 
     for (const auto clDevice : this->clDevices) {
         const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-        if (this->internalCopyCmdLists.count(rootDeviceIndex) != 0) {
+        if (this->internalCopyCmdLists.contains(rootDeviceIndex)) {
             continue;
         }
         ze_command_list_handle_t internalCopyCmdList{};

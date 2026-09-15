@@ -14,7 +14,7 @@
 
 #include <chrono>
 
-struct _ze_fence_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_FENCE> {};
+struct _ze_fence_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_fence_handle_t>);
 
 namespace L0 {
@@ -36,6 +36,9 @@ struct Fence : _ze_fence_handle_t {
     static Fence *fromHandle(ze_fence_handle_t handle) { return static_cast<Fence *>(handle); }
 
     inline ze_fence_handle_t toHandle() { return this; }
+    bool isParentQueue(CommandQueue *cmdQueue) {
+        return cmdQueue == this->cmdQueue;
+    }
 
   protected:
     Fence(CommandQueue *cmdQueueImp) : cmdQueue(cmdQueueImp) {}

@@ -70,18 +70,30 @@ size_t UsmMemAllocPool::getPoolSize() const {
 }
 
 void UsmMemAllocPool::cleanup() {
-    if (isInitialized()) {
-        if (this->customCleanup) {
-            this->customCleanup(this->pool);
-        }
-        [[maybe_unused]] const auto status = this->svmMemoryManager->freeSVMAlloc(this->pool, false);
-        DEBUG_BREAK_IF(false == status);
-        this->svmMemoryManager = nullptr;
-        this->pool = nullptr;
-        this->poolEnd = nullptr;
-        this->poolInfo.poolSize = 0u;
-        this->poolMemoryType = InternalMemoryType::notSpecified;
+    if (!isInitialized()) {
+        return;
     }
+    bool hasDeferredChunks = false;
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        hasDeferredChunks = false == this->deferredFreeChunks.empty();
+        if (hasDeferredChunks) {
+            // snapshots can bound work up to latestSentTaskCount, which is not stamped on
+            // the pool allocation, so raise it first or defer free would not cover them
+            this->svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
+        }
+    }
+
+    if (this->customCleanup) {
+        this->customCleanup(this->pool);
+    }
+    [[maybe_unused]] const auto status = hasDeferredChunks ? this->svmMemoryManager->freeSVMAllocDefer(this->pool) : this->svmMemoryManager->freeSVMAlloc(this->pool);
+    DEBUG_BREAK_IF(false == status);
+    this->svmMemoryManager = nullptr;
+    this->pool = nullptr;
+    this->poolEnd = nullptr;
+    this->poolInfo.poolSize = 0u;
+    this->poolMemoryType = InternalMemoryType::notSpecified;
 }
 
 bool UsmMemAllocPool::alignmentIsAllowed(size_t alignment) {
@@ -126,6 +138,13 @@ void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t requestedSize, const
     std::unique_lock<std::mutex> lock(mtx);
     auto actualSize = requestedSize;
     auto pooledAddress = this->chunkAllocator->allocateWithCustomAlignment(actualSize, memoryProperties.alignment);
+    if (!pooledAddress && false == this->deferredFreeChunks.empty()) {
+        // Chunks awaiting GPU completion are only reclaimed when their space is needed,
+        // to keep the completion polling off the successful allocation path.
+        this->drainDeferredFreeChunks();
+        actualSize = requestedSize;
+        pooledAddress = this->chunkAllocator->allocateWithCustomAlignment(actualSize, memoryProperties.alignment);
+    }
     if (!pooledAddress) {
         return nullptr;
     }
@@ -136,16 +155,17 @@ void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t requestedSize, const
     return pooledPtr;
 }
 
-bool UsmMemAllocPool::isInPool(const void *ptr) const {
+bool UsmMemAllocPool::isInPoolRange(const void *ptr) const {
     return ptr >= this->pool && ptr < this->poolEnd;
 }
 
 bool UsmMemAllocPool::isEmpty() const {
-    return 0u == this->allocations.getNumAllocs();
+    std::unique_lock<std::mutex> lock(mtx);
+    return 0u == this->allocations.getNumAllocs() && this->deferredFreeChunks.empty();
 }
 
-bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
-    if (false == isInitialized() || false == isInPool(ptr)) {
+bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
         return false;
     }
     std::unique_lock<std::mutex> lock(mtx);
@@ -154,54 +174,77 @@ bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
         return false;
     }
     DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
-    if (blocking) {
+    if (FreePolicyType::blocking == policy) {
+        svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
         svmMemoryManager->waitForEnginesCompletion(allocationData);
     }
-    this->chunkAllocator->free(allocationInfo->address, allocationInfo->size);
+    if (FreePolicyType::defer == policy) {
+        DeferredFreeInfo deferredFreeInfo{std::move(*allocationInfo), {}};
+        svmMemoryManager->captureEngineCompletionSnapshot(allocationData, deferredFreeInfo.snapshot);
+        this->deferredFreeChunks.push_back(std::move(deferredFreeInfo));
+    } else {
+        this->releaseChunk(*allocationInfo);
+    }
+    this->drainDeferredFreeChunks();
+    return true;
+}
+
+void UsmMemAllocPool::releaseChunk(const AllocationInfo &allocationInfo) {
+    this->chunkAllocator->free(allocationInfo.address, allocationInfo.size);
     if (trackResidency) {
         OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);
-        for (const auto &[neoDevice, isResident] : allocationInfo->isResident) {
+        for (const auto &[neoDevice, isResident] : allocationInfo.isResident) {
             if (isResident && 1u == this->residencyCounts[neoDevice]--) {
                 evictPool(neoDevice);
             }
         }
     }
-    return true;
 }
 
-bool UsmMemAllocPool::freeIfOwned(UsmMemAllocPool *pool, const void *ptr, bool blocking) {
-    if (nullptr == pool || false == pool->isInPool(ptr)) {
+void UsmMemAllocPool::reclaimDeferredFreeChunks() {
+    if (false == isInitialized()) {
+        return;
+    }
+    std::unique_lock<std::mutex> lock(mtx);
+    this->drainDeferredFreeChunks();
+}
+
+void UsmMemAllocPool::drainDeferredFreeChunks() {
+    std::erase_if(this->deferredFreeChunks, [this](const DeferredFreeInfo &deferredFreeInfo) {
+        if (false == isEngineCompletionSnapshotReady(deferredFreeInfo.snapshot)) {
+            return false;
+        }
+        this->releaseChunk(deferredFreeInfo.allocationInfo);
+        return true;
+    });
+}
+
+bool UsmMemAllocPool::freeIfOwned(UsmMemAllocPool *pool, const void *ptr, FreePolicyType policy) {
+    if (nullptr == pool || false == pool->isInPoolRange(ptr)) {
         return false;
     }
-    [[maybe_unused]] const auto freed = pool->freeSVMAlloc(ptr, blocking);
+    [[maybe_unused]] const auto freed = pool->freeSVMAlloc(ptr, policy);
     DEBUG_BREAK_IF(false == freed);
     return true;
 }
 
-size_t UsmMemAllocPool::getPooledAllocationSize(const void *ptr) {
-    if (false == isInitialized() || false == isInPool(ptr)) {
-        return 0u;
+UsmPoolLookupResult UsmMemAllocPool::lookupAlloc(const void *ptr) {
+    UsmPoolLookupResult result = {};
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
+        return result;
     }
+    result.pool = this;
+    result.poolInfo = this->poolInfo;
     std::unique_lock<std::mutex> lock(mtx);
-    auto allocationInfo = allocations.get(ptr);
-    return allocationInfo ? allocationInfo->requestedSize : 0u;
-}
-
-void *UsmMemAllocPool::getPooledAllocationBasePtr(const void *ptr) {
-    if (false == isInitialized() || false == isInPool(ptr)) {
-        return nullptr;
+    if (auto allocationInfo = allocations.get(ptr); allocationInfo) {
+        result.pooledAllocationBasePtr = addrToPtr(allocationInfo->address);
+        result.pooledAllocationSize = allocationInfo->requestedSize;
     }
-    std::unique_lock<std::mutex> lock(mtx);
-    auto allocationInfo = allocations.get(ptr);
-    return allocationInfo ? addrToPtr(allocationInfo->address) : nullptr;
-}
-
-bool UsmMemAllocPool::isPooledAllocation(const void *ptr) {
-    return nullptr != getPooledAllocationBasePtr(ptr);
+    return result;
 }
 
 size_t UsmMemAllocPool::getOffsetInPool(const void *ptr) const {
-    if (false == isInitialized() || false == isInPool(ptr)) {
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
         return 0u;
     }
     return ptrDiff(ptr, this->pool);
@@ -209,10 +252,6 @@ size_t UsmMemAllocPool::getOffsetInPool(const void *ptr) const {
 
 uint64_t UsmMemAllocPool::getPoolAddress() const {
     return castToUint64(this->pool);
-}
-
-PoolInfo UsmMemAllocPool::getPoolInfo() const {
-    return poolInfo;
 }
 
 MemoryOperationsStatus UsmMemAllocPool::evictPool(Device *targetDevice) {
@@ -308,63 +347,57 @@ bool UsmMemAllocPoolsManager::canBePooled(size_t size, const UnifiedMemoryProper
 }
 
 void UsmMemAllocPoolsManager::trimEmptyPools(PoolInfo poolInfo) {
-    std::lock_guard lock(mtx);
-    auto &bucket = pools[poolInfo];
-    auto firstEmptyPoolIt = std::partition(bucket.begin(), bucket.end(), [](std::unique_ptr<UsmMemAllocPool> &pool) {
-        return !pool->isEmpty();
-    });
-    const auto emptyPoolsCount = static_cast<size_t>(std::distance(firstEmptyPoolIt, bucket.end()));
-    if (emptyPoolsCount > maxEmptyPoolsPerBucket) {
-        std::advance(firstEmptyPoolIt, maxEmptyPoolsPerBucket);
-        for (auto it = firstEmptyPoolIt; it != bucket.end(); ++it) {
-            (*it)->cleanup();
+    std::vector<std::unique_ptr<UsmMemAllocPool>> poolsToCleanup;
+    {
+        std::lock_guard lock(mtx);
+        auto &bucket = pools[poolInfo];
+        // A pool holding chunks awaiting GPU completion never reports empty. Reclaim what
+        // retired since those chunks were freed, otherwise one stale chunk would keep the pool
+        // alive for good - allocations that fit do not drain, so nothing else revisits it.
+        for (auto &pool : bucket) {
+            pool->reclaimDeferredFreeChunks();
         }
-        bucket.erase(firstEmptyPoolIt, bucket.end());
+        auto firstEmptyPoolIt = std::partition(bucket.begin(), bucket.end(), [](std::unique_ptr<UsmMemAllocPool> &pool) {
+            return !pool->isEmpty();
+        });
+        const auto emptyPoolsCount = static_cast<size_t>(std::distance(firstEmptyPoolIt, bucket.end()));
+        if (emptyPoolsCount > maxEmptyPoolsPerBucket) {
+            std::advance(firstEmptyPoolIt, maxEmptyPoolsPerBucket);
+            poolsToCleanup.reserve(std::distance(firstEmptyPoolIt, bucket.end()));
+            for (auto it = firstEmptyPoolIt; it != bucket.end(); ++it) {
+                poolsToCleanup.push_back(std::move(*it));
+            }
+            bucket.erase(firstEmptyPoolIt, bucket.end());
+        }
+    }
+    // customCleanup reaches into the API layer and takes its locks, so cleanup must run unlocked
+    for (auto &pool : poolsToCleanup) {
+        pool->cleanup();
     }
 }
 
-bool UsmMemAllocPoolsManager::freeSVMAlloc(const void *ptr, bool blocking) {
-    bool allocFreed = false;
-    if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
-        allocFreed = pool->freeSVMAlloc(ptr, blocking);
-        if (allocFreed && pool->isEmpty()) {
-            trimEmptyPools(pool->getPoolInfo());
-        }
+bool UsmMemAllocPoolsManager::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
+    const auto lookupResult = this->getPoolContainingAlloc(ptr);
+    if (false == lookupResult.isAllocatedInPool()) {
+        return false;
+    }
+    const auto allocFreed = lookupResult.pool->freeSVMAlloc(ptr, policy);
+    if (allocFreed && lookupResult.pool->isEmpty()) {
+        trimEmptyPools(lookupResult.poolInfo);
     }
     return allocFreed;
 }
 
-size_t UsmMemAllocPoolsManager::getPooledAllocationSize(const void *ptr) {
-    if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
-        return pool->getPooledAllocationSize(ptr);
-    }
-    return 0u;
-}
-
-void *UsmMemAllocPoolsManager::getPooledAllocationBasePtr(const void *ptr) {
-    if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
-        return pool->getPooledAllocationBasePtr(ptr);
-    }
-    return nullptr;
-}
-
-size_t UsmMemAllocPoolsManager::getOffsetInPool(const void *ptr) {
-    if (auto pool = this->getPoolContainingAlloc(ptr); pool) {
-        return pool->getOffsetInPool(ptr);
-    }
-    return 0u;
-}
-
-UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr) {
-    std::unique_lock<std::mutex> lock(mtx);
+UsmPoolLookupResult UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr) {
+    std::lock_guard lock(mtx);
     for (const auto &poolInfo : getPoolInfos()) {
         for (auto &pool : this->pools[poolInfo]) {
-            if (pool->isInPool(ptr)) {
-                return pool.get();
+            if (pool->isInPoolRange(ptr)) {
+                return pool->lookupAlloc(ptr);
             }
         }
     }
-    return nullptr;
+    return {};
 }
 
 bool UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault) {
@@ -387,10 +420,7 @@ bool UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType memoryType, bool 
 }
 
 bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager, const InitParams &initParams) {
-    bool poolManagerEnabled = device->getGfxCoreHelper().isUsmPoolManagerSupported(memoryType);
-    if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
-        poolManagerEnabled = NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != 0;
-    }
+    const bool poolManagerEnabled = isPoolManagerSupported(memoryType, device);
 
     if (poolManagerEnabled) {
         auto managerDevice = memoryType == InternalMemoryType::deviceUnifiedMemory ? device : nullptr;
@@ -454,42 +484,30 @@ void *UsmMemAllocPoolsFacade::createUnifiedMemoryAllocation(size_t size, const U
     return nullptr;
 }
 
-bool UsmMemAllocPoolsFacade::freeSVMAlloc(const void *ptr, bool blocking) {
+bool UsmMemAllocPoolsFacade::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
     if (this->poolManager) {
-        return this->poolManager->freeSVMAlloc(ptr, blocking);
+        return this->poolManager->freeSVMAlloc(ptr, policy);
     } else if (this->pool) {
-        return this->pool->freeSVMAlloc(ptr, blocking);
+        return this->pool->freeSVMAlloc(ptr, policy);
     }
     return false;
 }
 
 size_t UsmMemAllocPoolsFacade::getPooledAllocationSize(const void *ptr) {
-    if (this->poolManager) {
-        return this->poolManager->getPooledAllocationSize(ptr);
-    } else if (this->pool) {
-        return this->pool->getPooledAllocationSize(ptr);
-    }
-    return 0u;
+    return this->getPoolContainingAlloc(ptr).pooledAllocationSize;
 }
 
 void *UsmMemAllocPoolsFacade::getPooledAllocationBasePtr(const void *ptr) {
-    if (this->poolManager) {
-        return this->poolManager->getPooledAllocationBasePtr(ptr);
-    } else if (this->pool) {
-        return this->pool->getPooledAllocationBasePtr(ptr);
-    }
-    return nullptr;
+    return this->getPoolContainingAlloc(ptr).pooledAllocationBasePtr;
 }
 
-UsmMemAllocPool *UsmMemAllocPoolsFacade::getPoolContainingAlloc(const void *ptr) {
+UsmPoolLookupResult UsmMemAllocPoolsFacade::getPoolContainingAlloc(const void *ptr) {
     if (this->poolManager) {
-        if (auto poolPtr = this->poolManager->getPoolContainingAlloc(ptr)) {
-            return poolPtr;
-        }
-    } else if (this->pool && this->pool->isInPool(ptr)) {
-        return this->pool.get();
+        return this->poolManager->getPoolContainingAlloc(ptr);
+    } else if (this->pool) {
+        return this->pool->lookupAlloc(ptr);
     }
-    return nullptr;
+    return {};
 }
 
 } // namespace NEO

@@ -9,9 +9,11 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -29,6 +31,11 @@
 using namespace NEO;
 
 using CriProductHelper = ProductHelperTest;
+
+CRITEST_F(CriProductHelper, givenCriWhenValidatingUserptrPatIndexThenValidationIsNotRestricted) {
+    EXPECT_TRUE(productHelper->isPatIndexValidForUserptr(0));
+    EXPECT_TRUE(productHelper->isPatIndexValidForUserptr(31));
+}
 
 CRITEST_F(CriProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
     EXPECT_EQ(aub_stream::ProductFamily::Cri, productHelper->getAubStreamProductFamily());
@@ -114,14 +121,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAdjustingEnginesGroupThenChang
     }
 }
 
-CRITEST_F(CriProductHelper, givenSmallRegionCountWhenAskingForLocalDispatchSizeThenReturnEmpty) {
-    pInHwInfo.featureTable.regionCount = 1;
-
-    const auto quantumSizes = productHelper->getSupportedLocalDispatchSizes(pInHwInfo);
-
-    EXPECT_EQ(0u, quantumSizes.size());
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenIsImplicitScalingSupportedThenExpectFalse) {
     EXPECT_TRUE(productHelper->isImplicitScalingSupported(*defaultHwInfo));
 }
@@ -199,7 +198,31 @@ CRITEST_F(CriProductHelper, givenGrfCount512WhenCallAdjustMaxThreadsPerThreadGro
     uint32_t expectedMaxThreadsPerThreadGroup = 32u;
     std::array<uint32_t, 2> values = {32, 16};
     for (auto simt : values) {
-        EXPECT_EQ(expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(threadsPerThreadGroup, simt, 512));
+        EXPECT_EQ(expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(*defaultHwInfo, threadsPerThreadGroup, simt, 512));
+    }
+}
+
+CRITEST_F(CriProductHelper, givenGrfCount160Or192WhenCallAdjustMaxThreadsPerThreadGroupThenAdjustOnlyForSimd16AndSimd1) {
+    constexpr uint32_t threadsPerThreadGroup = 40u;
+    struct TestCase {
+        uint32_t simt;
+        uint32_t grfCount;
+        uint32_t expectedMaxThreadsPerThreadGroup;
+    };
+    constexpr std::array<TestCase, 12> testCases = {{{1u, 160u, 64u},
+                                                     {16u, 160u, 64u},
+                                                     {32u, 160u, threadsPerThreadGroup},
+                                                     {1u, 192u, 64u},
+                                                     {16u, 192u, 64u},
+                                                     {32u, 192u, threadsPerThreadGroup},
+                                                     {1u, 128u, threadsPerThreadGroup},
+                                                     {16u, 128u, threadsPerThreadGroup},
+                                                     {32u, 128u, threadsPerThreadGroup},
+                                                     {1u, 256u, threadsPerThreadGroup},
+                                                     {16u, 256u, threadsPerThreadGroup},
+                                                     {32u, 256u, threadsPerThreadGroup}}};
+    for (const auto &testCase : testCases) {
+        EXPECT_EQ(testCase.expectedMaxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(*defaultHwInfo, threadsPerThreadGroup, testCase.simt, testCase.grfCount));
     }
 }
 
@@ -215,11 +238,47 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGettingPreferredWorkgroupCount
     EXPECT_EQ(4u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
 
-CRITEST_F(CriProductHelper, givenAtLeastXe3pCoreWhenGetL1CachePolicyThenReturnWB) {
-    EXPECT_EQ(productHelper->getL1CachePolicy(false), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB);
-    EXPECT_EQ(productHelper->getL1CachePolicy(true), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
     EXPECT_TRUE(productHelper->isLEOSupported());
+}
+
+CRITEST_F(CriProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnCriThresholds) {
+    EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::unknown));
+
+    EXPECT_EQ(4 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToDeviceUsm));
+    EXPECT_EQ(4 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostUsm));
+    EXPECT_EQ(64 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm));
+
+    EXPECT_EQ(64 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToDeviceUsm));
+    EXPECT_EQ(1 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToHostUsm));
+    EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToHostNonUsm));
+
+    EXPECT_EQ(10 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm));
+    EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToHostUsm));
+    EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToHostNonUsm));
+
+    EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
+}
+
+CRITEST_F(CriProductHelper, givenNoDebugFlagSetWhenGettingIsaPrefetchSizeThenWholeIsaSizeIsReturned) {
+    EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(0u));
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte / 2), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte / 2)));
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte)));
+    EXPECT_EQ(static_cast<uint32_t>(64 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(64 * MemoryConstants::kiloByte)));
+}
+
+CRITEST_F(CriProductHelper, givenLimitIsaPrefetchSizeDebugFlagSetWhenGettingIsaPrefetchSizeThenDebugFlagValueLimitsIsaSize) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LimitIsaPrefetchSize.set(2 * MemoryConstants::kiloByte);
+
+    EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
+    EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(2 * MemoryConstants::kiloByte)));
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte)));
+}
+
+CRITEST_F(CriProductHelper, givenLimitIsaPrefetchSizeDebugFlagSetToZeroWhenGettingIsaPrefetchSizeThenPrefetchIsDisabled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LimitIsaPrefetchSize.set(0);
+
+    EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
 }

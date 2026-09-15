@@ -9,6 +9,7 @@
 #include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -30,8 +31,15 @@ using CommandListAppendBarrier = Test<CommandListFixture>;
 HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -54,7 +62,15 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     commandList->reset();
-    auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -70,7 +86,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
 
     commandList->reset();
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -128,9 +144,9 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
     {
         auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miSemaphore);
-        EXPECT_EQ(gpuCrossTileSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(gpuCrossTileSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-        EXPECT_EQ(2u, miSemaphore->getSemaphoreDataDword());
+        EXPECT_EQ(2u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
         parsedOffset += NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
     }
     {
@@ -166,9 +182,9 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
         {
             auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
             ASSERT_NE(nullptr, miSemaphore);
-            EXPECT_EQ(gpuFinalSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(gpuFinalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-            EXPECT_EQ(2u, miSemaphore->getSemaphoreDataDword());
+            EXPECT_EQ(2u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
             parsedOffset += NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
         }
         {
@@ -190,9 +206,9 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
         {
             auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
             ASSERT_NE(nullptr, miSemaphore);
-            EXPECT_EQ(gpuFinalSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(gpuFinalSyncAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-            EXPECT_EQ(4u, miSemaphore->getSemaphoreDataDword());
+            EXPECT_EQ(4u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
             parsedOffset += NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
         }
     }
@@ -210,8 +226,6 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
 
     void setUp() {
         BaseClass::setUp();
-
-        UnitTestSetter::setupSemaphore64bCmdSupport(this->restorer, device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
     }
 
     void tearDown() {
@@ -249,8 +263,17 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
 
         size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
 
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+
         auto useSizeBefore = cmdListStream->getUsed();
-        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, false);
+        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters);
         auto useSizeAfter = cmdListStream->getUsed();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, event->getPacketsInUse());
@@ -362,7 +385,15 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         size_t stopRegisters = timestampRegisters + postBarrierSynchronization;
 
         auto useSizeBefore = cmdListStream->getUsed();
-        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, false);
+        CmdListWaitEventParameters waitEventsParameters = {
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters);
         auto useSizeAfter = cmdListStream->getUsed();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, eventTimeStamp->getPacketsInUse());
@@ -469,7 +500,15 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
     auto gpuStartAddress = gpuBaseAddress +
                            startOffset;
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -518,7 +557,15 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
                 sizeof(PIPE_CONTROL));
     cmdListStream->getSpace(useSize);
 
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto secondBatchBufferAllocation = cmdListStream->getGraphicsAllocation();
@@ -609,7 +656,15 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     uint64_t crossTileSyncGpuAddress = startGpuAddress +
                                        sizeBarrierCommands;
 
-    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedAfterSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, estimatedSize);
@@ -646,9 +701,9 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, cmdList.end());
     ASSERT_NE(cmdList.end(), itorSemaphore);
     auto cmdSemaphoreWait = genCmdCast<MI_SEMAPHORE_WAIT *>(*itorSemaphore);
-    EXPECT_EQ(crossTileSyncGpuAddress, cmdSemaphoreWait->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(crossTileSyncGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmdSemaphoreWait));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, cmdSemaphoreWait->getCompareOperation());
-    EXPECT_EQ(2u, cmdSemaphoreWait->getSemaphoreDataDword());
+    EXPECT_EQ(2u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmdSemaphoreWait));
 
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(itorSemaphore, cmdList.end());
     ASSERT_NE(cmdList.end(), itorBbStart);
@@ -690,7 +745,15 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
     size_t usedBeforeSize = cmdStream->getUsed();
 
-    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedAfterSize = cmdStream->getUsed();
 
@@ -763,7 +826,7 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, itorBbStart);
     ASSERT_NE(itorBbStart, itorSemaphore);
     auto cmdSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*itorSemaphore);
-    EXPECT_EQ(expectedAtomicCounterAddress, cmdSemaphore->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(expectedAtomicCounterAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmdSemaphore));
 }
 
 HWTEST2_F(MultiTilePatchPreambleTest,
@@ -772,12 +835,14 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-    uint64_t counterDeviceAddress = 0;
+    uint64_t counterHostGpuAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    NEO::GraphicsAllocation *counterAllocation = nullptr;
+    NEO::GraphicsAllocation *counterHostAllocation = nullptr;
+    uint64_t counterDeviceGpuAddress = 0;
+    NEO::GraphicsAllocation *counterDeviceAllocation = nullptr;
 
-    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation, counterDeviceGpuAddress, counterDeviceAllocation);
 
     commandQueue->setPatchingPreamble(true);
     commandList->close();
@@ -800,30 +865,55 @@ HWTEST2_F(MultiTilePatchPreambleTest,
         ptrOffset(queueStream->getCpuBase(), sizeBefore),
         (sizeAfter - sizeBefore)));
 
-    auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorBbStart);
+    auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    ASSERT_TRUE(bbStartCmds.size() > 1);
 
     // size of x-tile atomic counters is 2 * sizeof(uint32_t) and they are programmed right after BB_START
     constexpr size_t xTileJumpOffset = 2 * sizeof(uint32_t);
 
     // first BB_START is to jump over the x-tile atomic counters
-    auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
+    auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartCmds[0]);
     size_t bbStartOffset = reinterpret_cast<uintptr_t>(cmdBbStart) - reinterpret_cast<uintptr_t>(queueStreamCpuBaseAddress);
     // right after BB_START command
     uint64_t expectedAtomicCounterAddress = queueStreamGpuBaseAddress + bbStartOffset + sizeof(MI_BATCH_BUFFER_START);
     uint64_t expectedBbStartAddress = expectedAtomicCounterAddress + xTileJumpOffset;
+    EXPECT_EQ(expectedBbStartAddress, cmdBbStart->getBatchBufferStartAddress());
 
+    cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartCmds[1]);
+    bbStartOffset = reinterpret_cast<uintptr_t>(cmdBbStart) - reinterpret_cast<uintptr_t>(queueStreamCpuBaseAddress);
+    expectedAtomicCounterAddress = queueStreamGpuBaseAddress + bbStartOffset + sizeof(MI_BATCH_BUFFER_START);
+    expectedBbStartAddress = expectedAtomicCounterAddress + xTileJumpOffset;
     EXPECT_EQ(expectedBbStartAddress, cmdBbStart->getBatchBufferStartAddress());
 
     // verify x-tile sync: PIPE_CONTROL, MI_ATOMIC, MI_SEMAPHORE_WAIT
-    auto itorPipeControl = find<PIPE_CONTROL *>(cmdList.begin(), itorBbStart);
-    ASSERT_NE(itorBbStart, itorPipeControl);
+    auto pipeControlCmds = findAll<PIPE_CONTROL *>(cmdList.begin(), bbStartCmds[1]);
+    ASSERT_NE(0u, pipeControlCmds.size());
 
-    auto cmdPipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeControl);
-    EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, cmdPipeControl->getPostSyncOperation());
-    EXPECT_EQ(counter, cmdPipeControl->getImmediateData());
-    EXPECT_EQ(counterDeviceAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmdPipeControl));
-    EXPECT_TRUE(cmdPipeControl->getWorkloadPartitionIdOffsetEnable());
+    bool foundHostPostSyncWithCounter = false;
+    bool foundDevicePostSyncWithCounter = false;
+
+    for (auto &pipeControlCmd : pipeControlCmds) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlCmd);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
+            if (counterHostGpuAddress == actualAddress &&
+                pipeControl->getImmediateData() == counter) {
+                EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
+                foundHostPostSyncWithCounter = true;
+            }
+            if (counterDeviceGpuAddress == actualAddress &&
+                pipeControl->getImmediateData() == counter) {
+                EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
+                foundDevicePostSyncWithCounter = true;
+            }
+            if (foundHostPostSyncWithCounter && foundDevicePostSyncWithCounter) {
+                break;
+            }
+        }
+    }
+
+    EXPECT_TRUE(foundHostPostSyncWithCounter);
+    EXPECT_TRUE(foundDevicePostSyncWithCounter);
 }
 
 HWTEST2_F(MultiTilePatchPreambleTest,
@@ -864,15 +954,20 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     auto semaphoreList = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_TRUE((partitionCount <= semaphoreList.size()));
 
+    bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
     auto semAddress = dummyTagGpuAddress;
     for (uint32_t i = 0; i < partitionCount; i++) {
         auto cmdSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreList[i]);
-        EXPECT_EQ(semAddress, cmdSemaphore->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(dummyTagTaskCount, cmdSemaphore->getSemaphoreDataDword());
+        EXPECT_EQ(semAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmdSemaphore));
+        if (lriRequired) {
+            EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmdSemaphore));
+        } else {
+            EXPECT_EQ(dummyTagTaskCount, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmdSemaphore));
+        }
         semAddress += postSyncOffset;
     }
 
-    if (!useSemaphore64bCmd) {
+    if (lriRequired) {
         bool foundLriForSemaphore = false;
         auto lriList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), semaphoreList[0]);
         ASSERT_TRUE((2u <= lriList.size()));
@@ -892,6 +987,402 @@ HWTEST2_F(MultiTilePatchPreambleTest,
         EXPECT_EQ(0x2604u, cmdLoadImm->getRegisterOffset());
         EXPECT_EQ(0u, cmdLoadImm->getDataDword());
     }
+}
+
+struct OutOfOrderImmediateCmdListBarrierFixture : public DeviceFixture {
+    void setUp() {
+        DeviceFixture::setUp();
+
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+        queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+        commandList.reset(CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &queueDesc,
+                                                       false, NEO::EngineGroupType::renderCompute, returnValue));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        ASSERT_FALSE(commandList->isInOrderExecutionEnabled());
+
+        ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        eventPoolDesc.count = 1;
+        eventPool.reset(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        eventPoolDesc.flags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+        timestampEventPool.reset(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    }
+
+    void tearDown() {
+        timestampEventPool.reset(nullptr);
+        eventPool.reset(nullptr);
+        commandList.reset(nullptr);
+        DeviceFixture::tearDown();
+    }
+
+    std::unique_ptr<Event> createEvent(EventPool *pool, ze_event_scope_flags_t signalScope) {
+        ze_event_desc_t eventDesc{ZE_STRUCTURE_TYPE_EVENT_DESC};
+        eventDesc.index = 0;
+        eventDesc.wait = 0;
+        eventDesc.signal = signalScope;
+
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        return std::unique_ptr<Event>(static_cast<Event *>(getHelper<L0GfxCoreHelper>().createEvent(pool, &eventDesc, device, returnValue)));
+    }
+
+    L0::ult::CommandList *getWhiteBoxCmdList() { return CommandList::whiteboxCast(commandList.get()); }
+
+    L0::ult::CommandQueue *getQueue() { return static_cast<L0::ult::CommandQueue *>(getWhiteBoxCmdList()->cmdQImmediate); }
+
+    CmdListWaitEventParameters getWaitEventParameters() {
+        return CmdListWaitEventParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = true,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+        };
+    }
+
+    std::unique_ptr<L0::CommandList> commandList;
+    std::unique_ptr<EventPool> eventPool;
+    std::unique_ptr<EventPool> timestampEventPool;
+};
+
+using OutOfOrderImmediateCmdListBarrier = Test<OutOfOrderImmediateCmdListBarrierFixture>;
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSuccessfulHostSynchronizationWhenAppendingBarrierThenNothingIsDispatchedAndHostScopeSignalEventIsCompletedOnHost) {
+    auto event = createEvent(eventPool.get(), ZE_EVENT_SCOPE_FLAG_HOST);
+    getWhiteBoxCmdList()->dcFlushSupport = true;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = cmdStream->getUsed();
+    auto taskCountBefore = getQueue()->getTaskCount();
+
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+
+    EXPECT_EQ(usedBefore, cmdStream->getUsed());
+    EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEnqueuesAndConsecutiveBarriersWhenAppendingThenOnlyFirstBarrierAfterNewWorkIsDispatched) {
+    auto event = createEvent(eventPool.get(), 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = cmdStream->getUsed();
+
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_GT(cmdStream->getUsed(), usedBefore);
+
+    auto usedAfterFirstBarrier = cmdStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(usedAfterFirstBarrier, cmdStream->getUsed());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    usedBefore = cmdStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_GT(cmdStream->getUsed(), usedBefore);
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenWaitEventsWhenAppendingRedundantBarrierThenBarrierIsNotSkipped) {
+    auto event = createEvent(eventPool.get(), 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+
+    auto waitEventHandle = event->toHandle();
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = cmdStream->getUsed();
+
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 1, &waitEventHandle, waitEventsParameters));
+
+    EXPECT_GT(cmdStream->getUsed(), usedBefore);
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenTimestampSignalEventWhenAppendingRedundantBarrierThenBarrierIsNotSkipped) {
+    auto timestampEvent = createEvent(timestampEventPool.get(), 0);
+    ASSERT_TRUE(timestampEvent->isEventTimestampFlagSet());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = cmdStream->getUsed();
+
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(timestampEvent->toHandle(), 0, nullptr, waitEventsParameters));
+
+    EXPECT_GT(cmdStream->getUsed(), usedBefore);
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenCopyOnlyListAfterHostSynchronizationWhenAppendingConsecutiveBarriersThenEachUpdatesBarrierTag) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    commandList.reset(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, result));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_FALSE(commandList->isInOrderExecutionEnabled());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+
+    auto csr = commandList->getCsr(false);
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto waitEventsParameters = getWaitEventParameters();
+    for (uint32_t barrier = 0; barrier < 2; barrier++) {
+        const auto usedBefore = cmdStream->getUsed();
+        const auto barrierCountBefore = csr->peekBarrierCount();
+        const auto taskCountBefore = getQueue()->getTaskCount();
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+        EXPECT_EQ(barrierCountBefore + 1, csr->peekBarrierCount());
+        EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
+
+        GenCmdList commands;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(commands, ptrOffset(cmdStream->getCpuBase(), usedBefore), cmdStream->getUsed() - usedBefore));
+        bool barrierTagUpdateFound = false;
+        for (auto it : findAll<MI_FLUSH_DW *>(commands.begin(), commands.end())) {
+            auto flush = genCmdCast<MI_FLUSH_DW *>(*it);
+            if (flush->getDestinationAddress() == csr->getBarrierCountGpuAddress()) {
+                EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, flush->getPostSyncOperation());
+                EXPECT_EQ(barrierCountBefore + 1, flush->getImmediateData());
+                barrierTagUpdateFound = true;
+            }
+        }
+        EXPECT_TRUE(barrierTagUpdateFound);
+    }
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenAggregatedSignalEventWhenAppendingRedundantBarrierThenEventIsSubmitted) {
+    auto event = createEvent(eventPool.get(), 0);
+    auto allocation = event->getAllocation(device);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->getInOrderExecEventHelper().assignData(1, 0, 1, 1, allocation, allocation, event->getGpuAddress(device), event->getGpuAddress(device),
+                                                  static_cast<uint64_t *>(event->getHostAddress()), 1, 0, false, true);
+    ASSERT_TRUE(Event::isAggregatedEvent(event.get()));
+    ASSERT_FALSE(event->isCounterBased());
+    ASSERT_FALSE(event->isEventTimestampFlagSet());
+    ASSERT_FALSE(event->isSignalWithUserInterrupt());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenAsynchronousBarrierWhenAppendingBarrierWithSignalEventThenSignalEventIsSubmitted) {
+    auto event = createEvent(eventPool.get(), 0);
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto waitEventsParameters = getWaitEventParameters();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+
+    auto usedBefore = cmdStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_GT(cmdStream->getUsed(), usedBefore);
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenCounterBasedSignalEventWhenAppendingRedundantBarrierThenInvalidArgumentIsStillReturned) {
+    auto event = createEvent(eventPool.get(), 0);
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    ASSERT_TRUE(event->isCounterBased());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEmptyListWhenAppendingBarriersAndHostSynchronizingThenNothingIsSubmittedOrWaitedOn) {
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    const auto usedBefore = cmdStream->getUsed();
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    const auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    const auto clientsBefore = csr->getNumClients();
+
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    EXPECT_EQ(usedBefore, cmdStream->getUsed());
+    EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
+    EXPECT_EQ(waitsBefore, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(clientsBefore, csr->getNumClients());
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEmptyListWhenAppendingBarrierWithSignalEventThenEventIsCompletedOnHost) {
+    auto event = createEvent(eventPool.get(), ZE_EVENT_SCOPE_FLAG_HOST);
+    getWhiteBoxCmdList()->dcFlushSupport = true;
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    const auto usedBefore = cmdStream->getUsed();
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    auto waitEventsParameters = getWaitEventParameters();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(usedBefore, cmdStream->getUsed());
+    EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSuccessfulHostSynchronizeWhenSynchronizingAgainAndAppendingBarrierThenBothAreNoOps) {
+    auto event = createEvent(eventPool.get(), 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+
+    auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    EXPECT_EQ(waitsBefore + 1, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    EXPECT_EQ(waitsBefore + 1, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = cmdStream->getUsed();
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(usedBefore, cmdStream->getUsed());
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSubmittedBarrierWhenHostSynchronizingThenBarrierSubmissionIsStillWaitedOn) {
+    auto event = createEvent(eventPool.get(), 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+
+    auto waitEventsParameters = getWaitEventParameters();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    EXPECT_EQ(waitsBefore + 1, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenUserInterruptSignalEventWhenAppendingRedundantBarrierThenEventIsSubmitted) {
+    auto event = createEvent(eventPool.get(), 0);
+    event->setSignalWithUserInterrupt(true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSubmissionDuringHostSynchronizeWhenSynchronizingAgainThenNewWorkIsStillWaitedOn) {
+    auto event = createEvent(eventPool.get(), 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    csr->callBaseWaitForCompletionWithTimeout = false;
+    csr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+
+    const auto waitedTaskCount = getQueue()->getTaskCount();
+    csr->onWaitForCompletionWithTimeout = [&] {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    csr->onWaitForCompletionWithTimeout = nullptr;
+    EXPECT_EQ(waitedTaskCount, csr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    ASSERT_GT(getQueue()->getTaskCount(), waitedTaskCount);
+
+    csr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::notReady;
+    const auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, commandList->hostSynchronize(0));
+    EXPECT_EQ(waitsBefore + 1, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(getQueue()->getTaskCount(), csr->latestWaitForCompletionWithTimeoutTaskCount.load());
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSubmissionDuringPostWaitOperationsWhenAppendingBarrierThenBarrierAndSignalEventAreSubmitted) {
+    auto event = createEvent(eventPool.get(), 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    csr->callBaseWaitForCompletionWithTimeout = false;
+    csr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+
+    getWhiteBoxCmdList()->isTbxMode = true;
+    csr->onDownloadAllocations = [&] {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    csr->onDownloadAllocations = nullptr;
+    getWhiteBoxCmdList()->isTbxMode = false;
+
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
+
+    const auto barrierTaskCount = getQueue()->getTaskCount();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_GT(getQueue()->getTaskCount(), barrierTaskCount);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenFailedHostSynchronizeWhenSynchronizingAgainAndAppendingBarrierThenNeitherIsSkipped) {
+    auto event = createEvent(eventPool.get(), 0);
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    csr->callBaseWaitForCompletionWithTimeout = false;
+
+    for (auto waitStatus : {NEO::WaitStatus::notReady, NEO::WaitStatus::gpuHang}) {
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+        csr->returnWaitForCompletionWithTimeout = waitStatus;
+        const auto expectedResult = waitStatus == NEO::WaitStatus::notReady ? ZE_RESULT_NOT_READY : ZE_RESULT_ERROR_DEVICE_LOST;
+        EXPECT_EQ(expectedResult, commandList->hostSynchronize(0));
+
+        const auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+        EXPECT_EQ(expectedResult, commandList->hostSynchronize(0));
+        EXPECT_EQ(waitsBefore + 1, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+        const auto taskCountBefore = getQueue()->getTaskCount();
+        auto waitEventsParameters = getWaitEventParameters();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+        EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
+    }
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenInternalHostSynchronizeWhenSynchronizingWithPostWaitOperationsThenCleanupIsNotSkipped) {
+    auto event = createEvent(eventPool.get(), 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList.get());
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    const auto clientsBefore = csr->getNumClients();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->hostSynchronize(0, false));
+    EXPECT_EQ(clientsBefore, csr->getNumClients());
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
+
+    const auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    EXPECT_EQ(waitsBefore + 1, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(clientsBefore - 1, csr->getNumClients());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    EXPECT_EQ(waitsBefore + 1, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSynchronousSubmissionWhenAppendingBarrierAndHostSynchronizingThenBothAreNoOps) {
+    getWhiteBoxCmdList()->isSyncModeQueue = true;
+    auto event = createEvent(eventPool.get(), 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    const auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    auto waitEventsParameters = getWaitEventParameters();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
+    EXPECT_EQ(waitsBefore, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
 }
 
 } // namespace ult

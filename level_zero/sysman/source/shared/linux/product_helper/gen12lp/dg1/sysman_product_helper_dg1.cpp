@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
@@ -53,7 +54,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
 
     auto isValidTemperature = [](auto temperature) {
         if ((temperature > invalidMaxTemperature) || (temperature < invalidMinTemperature)) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", NEO_FUNCTION_NAME, temperature);
             return false;
         }
         return true;
@@ -80,7 +81,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     key = "COMPUTE_TEMPERATURES";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, computeTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for COMPUTE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for COMPUTE_TEMPERATURES returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     // Check max temperature among IA, GT and LLC sensors across COMPUTE_TEMPERATURES
@@ -90,7 +91,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     key = "CORE_TEMPERATURES";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, coreTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for CORE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for CORE_TEMPERATURES returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     // Check max temperature among CORE0, CORE1, CORE2, CORE3 sensors across CORE_TEMPERATURES
@@ -100,7 +101,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     key = "SOC_TEMPERATURES";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     // Check max temperature among possible sensors like PCH or GT_TEMP, DRAM, SA, PSF, DE, PCIE, TYPEC across SOC_TEMPERATURES
@@ -135,7 +136,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     std::string key("COMPUTE_TEMPERATURES");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, computeTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for COMPUTE_TEMPERATURES returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for COMPUTE_TEMPERATURES returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 

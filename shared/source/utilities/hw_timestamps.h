@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,11 @@ class HwTimeStamps : public TagTypeBase {
     uint64_t getGlobalStartValue(uint32_t) const { return globalStartTS; }
     uint64_t getContextEndValue(uint32_t) const { return contextEndTS; }
     uint64_t getGlobalEndValue(uint32_t) const { return globalEndTS; }
+
+    void getGlobalTimestampValues(uint32_t, uint64_t &globalStart, uint64_t &globalEnd) const {
+        globalStart = globalStartTS;
+        globalEnd = globalEndTS;
+    }
 
     uint64_t globalStartTS;
     uint64_t contextStartTS;

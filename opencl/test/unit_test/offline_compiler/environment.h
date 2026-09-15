@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 
 #include "gtest/gtest.h"
@@ -18,11 +17,29 @@ class Environment : public ::testing::Environment {
         : devicePrefix(devicePrefix), productConfig(productConfig) {
     }
 
-    void SetInputFileName( // NOLINT(readability-identifier-naming)
-        const std::string filename) {
+    void setValidMockKernel() {
+        igcDebugVars.binaryToReturn = mockDeviceBinary;
+        igcDebugVars.binaryToReturnSize = sizeof(mockDeviceBinary);
+        igcDebugVars.debugDataToReturn = mockDeviceBinary;
+        igcDebugVars.debugDataToReturnSize = sizeof(mockDeviceBinary);
+        fclDebugVars.binaryToReturn = mockDeviceBinary;
+        fclDebugVars.binaryToReturnSize = sizeof(mockDeviceBinary);
+        fclDebugVars.debugDataToReturn = mockDeviceBinary;
+        fclDebugVars.debugDataToReturnSize = sizeof(mockDeviceBinary);
 
-        retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".bin");
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".spv");
+        NEO::setIgcDebugVars(igcDebugVars);
+        NEO::setFclDebugVars(fclDebugVars);
+    }
+
+    void setInvalidMockKernel() {
+        igcDebugVars.binaryToReturn = nullptr;
+        igcDebugVars.binaryToReturnSize = 0;
+        igcDebugVars.debugDataToReturn = nullptr;
+        igcDebugVars.debugDataToReturnSize = 0;
+        fclDebugVars.binaryToReturn = nullptr;
+        fclDebugVars.binaryToReturnSize = 0;
+        fclDebugVars.debugDataToReturn = nullptr;
+        fclDebugVars.debugDataToReturnSize = 0;
 
         NEO::setIgcDebugVars(igcDebugVars);
         NEO::setFclDebugVars(fclDebugVars);
@@ -31,7 +48,7 @@ class Environment : public ::testing::Environment {
     void SetUp() override {
         mockIgaDllGuard.enable();
         mockCompilerGuard.Enable();
-        SetInputFileName("copybuffer");
+        setValidMockKernel();
     }
 
     void TearDown() override {
@@ -41,6 +58,7 @@ class Environment : public ::testing::Environment {
 
     NEO::MockCompilerDebugVars igcDebugVars;
     NEO::MockCompilerDebugVars fclDebugVars;
+    char mockDeviceBinary[1] = {8};
 
     void (*igcSetDebugVarsFPtr)(NEO::MockCompilerDebugVars &debugVars);
     void (*fclSetDebugVarsFPtr)(NEO::MockCompilerDebugVars &debugVars);

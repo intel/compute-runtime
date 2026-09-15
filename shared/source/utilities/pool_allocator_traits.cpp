@@ -69,6 +69,16 @@ AllocationProperties InternalHeapPoolTraits::createAllocationProperties(Device *
                                 device->getDeviceBitfield()};
 }
 
+AllocationProperties SemaphorePoolTraits::createAllocationProperties(Device *device, size_t poolSize) {
+    return AllocationProperties{device->getRootDeviceIndex(),
+                                true,
+                                poolSize,
+                                allocationType,
+                                device->getNumGenericSubDevices() > 1u,
+                                false,
+                                device->getDeviceBitfield()};
+}
+
 bool CommandBufferPoolTraits::isEnabled(const ProductHelper &productHelper) {
     auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
     if (forceEnable != -1) {

@@ -21,10 +21,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -178,25 +176,25 @@ TEST_F(DriverHandleTest, givenDriverWhenFindAllocationDataForRangeWithDifferentA
 
 using DriverVersionTest = Test<DeviceFixture>;
 TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
+    const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    const auto &productHelper = device->getProductHelper();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
     std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
-    device->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, device->getProductHelper(), device->getHwInfo());
+    device->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, productHelper, hwInfo);
 
     if (device->getL0GfxCoreHelper().synchronizedDispatchSupported() && device->isImplicitScalingCapable()) {
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
     }
 
-    if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
+    if (rootDeviceEnvironment.getBindlessHeapsHelper()) {
         additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT);
     }
-    auto mockReleaseHelperVal = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    mockReleaseHelperVal->bFloat16Support = true;
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
-    rootDeviceEnvironment.releaseHelper.reset(mockReleaseHelperVal.release());
-    if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper().isBFloat16ConversionSupported()) {
-        additionalExtensions.emplace_back(ZE_BFLOAT16_CONVERSIONS_EXT_NAME, ZE_BFLOAT16_CONVERSIONS_EXT_VERSION_CURRENT);
-    }
 
-    if (device->getProductHelper().isInterruptSupported(rootDeviceEnvironment)) {
+    hwInfo.caps.bFloat16ConversionSupported = true;
+    additionalExtensions.emplace_back(ZE_BFLOAT16_CONVERSIONS_EXT_NAME, ZE_BFLOAT16_CONVERSIONS_EXT_VERSION_CURRENT);
+
+    if (productHelper.isInterruptSupported(rootDeviceEnvironment)) {
         additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
     }
 
@@ -278,6 +276,68 @@ TEST_F(DriverExtensionsTest, whenAskingForExtensionsThenReturnCacheReservationEx
     EXPECT_EQ(it, extensionProperties.end());
 }
 
+TEST_F(DriverExtensionsTest, whenAskingForExtensionsThenIpcMemHandleRangeExtIsReturnedForDrmOnly) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(new MockProductHelper);
+
+    auto queryContainsIpcRange = [&]() {
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, nullptr));
+        std::vector<ze_driver_extension_properties_t> extensionProperties(count);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, extensionProperties.data()));
+        return std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) {
+                   return (strcmp(extension.name, ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_NAME) == 0);
+               }) != extensionProperties.end();
+    };
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+    EXPECT_TRUE(queryContainsIpcRange());
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    EXPECT_FALSE(queryContainsIpcRange());
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset();
+    EXPECT_FALSE(queryContainsIpcRange());
+}
+
+TEST_F(DriverExtensionsTest, whenQueryingExtensionCountOnlyThenIpcRangeExtensionIsGatedByDriverModelType) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(new MockProductHelper);
+
+    uint32_t countWithDrm = 0u;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&countWithDrm, nullptr));
+
+    uint32_t countWithWddm = 0u;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&countWithWddm, nullptr));
+
+    uint32_t countWithoutDriverModel = 0u;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&countWithoutDriverModel, nullptr));
+
+    EXPECT_GE(countWithDrm, countWithoutDriverModel);
+    EXPECT_GE(countWithWddm, countWithoutDriverModel);
+}
+
+TEST_F(DriverExtensionsTest, givenDriverModelNeitherDrmNorWddmWhenAskingForExtensionsThenIpcMemHandleRangeExtIsNotReturned) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(new MockProductHelper);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModel>());
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, nullptr));
+    std::vector<ze_driver_extension_properties_t> extensionProperties(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, extensionProperties.data()));
+
+    auto it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) {
+        return (strcmp(extension.name, ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_NAME) == 0);
+    });
+    EXPECT_EQ(it, extensionProperties.end());
+}
+
 TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertiesThenBindlessImageExtensionIsReturned) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseBindlessMode.set(1);
@@ -298,7 +358,7 @@ TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertie
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice2));
 
     ze_result_t res;
-    auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &res);
+    auto driverHandle = DriverHandle::create(std::move(devices), &res);
 
     uint32_t count = 0;
     res = driverHandle->getExtensionProperties(&count, nullptr);
@@ -359,6 +419,26 @@ TEST_F(DriverVersionTest, GivenDebugOverrideWhenGettingDriverVersionThenExpected
 
     expectedDriverVersion = DriverHandle::initialDriverVersionValue + 20;
     EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
+}
+
+TEST_F(DriverVersionTest, GivenOverrideVersionBuildWhenGettingDriverVersionThenForcedVersionBuildIsUsed) {
+    DebugManagerStateRestore restorer;
+    uint32_t version = 20u;
+    NEO::debugManager.flags.OverrideVersionBuild.set(version);
+
+    ze_driver_properties_t properties{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
+    ze_result_t res = driverHandle->getProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(static_cast<uint32_t>(DriverHandle::initialDriverVersionValue) + version, properties.driverVersion);
+
+    version = 3900u;
+    NEO::debugManager.flags.OverrideVersionBuild.set(version);
+
+    res = driverHandle->getProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(static_cast<uint32_t>(DriverHandle::initialDriverVersionValue) + version, properties.driverVersion);
 }
 
 TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
@@ -423,7 +503,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithHostB
 
     uint64_t imageHandle = 0x1;
     NEO::AllocationType allocationType = NEO::AllocationType::bufferHostMemory;
-    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType, true, 0u, false).second;
+    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType, true, 0u, false, 0u).second;
     EXPECT_NE(ptr, nullptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -441,7 +521,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithBuffe
 
     uint64_t imageHandle = 0x1;
     NEO::AllocationType allocationType = NEO::AllocationType::buffer;
-    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType, false, 0u, false).second;
+    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType, false, 0u, false, 0u).second;
     EXPECT_NE(ptr, nullptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -562,7 +642,7 @@ TEST(DriverTestFamilySupport, whenInitializingDriverOnSupportedFamilyThenDriverI
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue);
+    auto driverHandle = DriverHandle::create(std::move(devices), &returnValue);
     EXPECT_NE(nullptr, driverHandle);
     delete driverHandle;
 }
@@ -574,7 +654,7 @@ TEST(DriverTest, givenDriverHandleWhenInitializingThenSvmAllocsManagerIsSetBefor
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     ASSERT_NE(nullptr, driverHandle);
 
     auto builtinsLib = static_cast<MockBuiltInKernelLibImpl *>(driverHandle->devices[0]->getBuiltinFunctionsLib());
@@ -586,6 +666,8 @@ TEST(DriverTest, givenDriverHandleWhenInitializingThenSvmAllocsManagerIsSetBefor
 }
 
 TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggingIsFalse) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(0);
 
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -593,10 +675,8 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    L0EnvVariables envVariables = {};
-    envVariables.programDebugging = false;
 
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_EQ(NEO::DebuggingMode::disabled, driverHandle->enableProgramDebugging);
@@ -607,14 +687,10 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
 using DriverImpTest = ::testing::Test;
 
 TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
     driver.initialize(&result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_LE(3u, IoFunctions::mockGetenvCalled);
 
     auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
 
@@ -633,9 +709,8 @@ TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImp
         GTEST_SKIP();
     }
 
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_METRICS", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_METRICS.set(true);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -644,45 +719,10 @@ TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImp
     EXPECT_TRUE(globalDriverHandles->empty());
 }
 
-TEST_F(DriverImpTest, givenOneApiPvcSendWarWaEnvWhenCreatingExecutionEnvironmentThenCorrectEnvValueIsStored) {
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "1"}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-        ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-        Driver driver;
-        driver.initialize(&result);
-
-        ASSERT_FALSE(globalDriverHandles->empty());
-        auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
-        EXPECT_TRUE(driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv());
-
-        delete driverHandle;
-        globalDriverHandles->clear();
-    }
-    {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "0"}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-        ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-        Driver driver;
-        driver.initialize(&result);
-
-        ASSERT_FALSE(globalDriverHandles->empty());
-        auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
-        EXPECT_FALSE(driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv());
-
-        delete driverHandle;
-        globalDriverHandles->clear();
-    }
-}
-
 TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -698,9 +738,8 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironme
 
 TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -714,31 +753,10 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecution
     globalDriverHandles->clear();
 }
 
-TEST_F(DriverImpTest, givenEnabledFP64EmulationWhenCreatingExecutionEnvironmentThenFP64EmulationIsEnabled) {
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_FP64_EMULATION", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    Driver driver;
-    driver.initialize(&result);
-
-    ASSERT_FALSE(globalDriverHandles->empty());
-    auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
-    EXPECT_TRUE(driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->isFP64EmulationEnabled());
-
-    delete driverHandle;
-    globalDriverHandles->clear();
-}
-
 TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -755,10 +773,7 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWh
 TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -795,10 +810,10 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue1WhenCreatingDriverThenEnablePr
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-    envVariables.programDebugging = 1;
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
 
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::online);
@@ -815,10 +830,10 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue2WhenCreatingDriverThenEnablePr
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-    envVariables.programDebugging = 2;
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
 
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::offline);
@@ -835,9 +850,7 @@ TEST(DriverTest, whenCreatingDriverThenDefaultContextWithAllDevicesIsCreated) {
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     auto defaultContext = driverHandle->getDefaultContext();
@@ -864,9 +877,7 @@ TEST(DriverTest, givenDriverWhenGetDefaultContextApiIsCalledThenProperHandleIsRe
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-    L0EnvVariables envVariables = {};
-
-    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandle *>(DriverHandle::create(std::move(devices), &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
     auto defaultContext = ::zeDriverGetDefaultContext(driverHandle);
@@ -880,9 +891,8 @@ TEST(DriverTest, givenDriverWhenGetDefaultContextApiIsCalledThenProperHandleIsRe
 
 TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIsReturned) {
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
     backupUseMockSip = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -900,9 +910,8 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIs
 
 TEST(DriverTest, givenInvalidCompilerEnvironmentAndEnableProgramDebuggingWithValue2ThenDependencyUnavailableErrorIsReturned) {
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
     backupUseMockSip = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -965,6 +974,7 @@ struct MaskArray {
 
 struct DriverHandleZeInitTest : public ::testing::Test {
     void SetUp() override {
+        NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
         globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
 
         ze_result_t returnValue;
@@ -974,16 +984,14 @@ struct DriverHandleZeInitTest : public ::testing::Test {
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-        L0EnvVariables envVariables = {};
-        envVariables.programDebugging = true;
-
-        driverHandle = whiteboxCast(L0::DriverHandle::create(std::move(devices), envVariables, &returnValue));
+        driverHandle = whiteboxCast(L0::DriverHandle::create(std::move(devices), &returnValue));
         globalDriverHandles->push_back(driverHandle);
     }
     void TearDown() override {
         delete driverHandle;
         delete globalDriverHandles;
     }
+    DebugManagerStateRestore restorer;
     L0::DriverHandle *driverHandle;
     VariableBackup<decltype(globalDriverHandles)> globalDriverHandleBackup{&globalDriverHandles, nullptr};
 };
@@ -1146,7 +1154,7 @@ TEST_F(DriverHandleZeInitTest, whenQueryingForApiVersionThenExpectedVersionIsRet
     ze_api_version_t version = {};
     ze_result_t result = driverHandle->getApiVersion(&version);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZE_API_VERSION_1_17, version);
+    EXPECT_EQ(ZE_API_VERSION_1_18, version);
 }
 
 TEST_F(DriverHandleZeInitTest, whenQueryingForDevicesWithCountGreaterThanZeroAndNullDevicePointerThenNullHandleIsReturned) {
@@ -1477,8 +1485,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnGraphVisitExt = decltype(&zeGraphVisitExt);
     using pfnCommandListGetGraphExp = decltype(&zeCommandListGetGraphExp);
     using pfnGraphSetDestructionCallbackExp = decltype(&zeGraphSetDestructionCallbackExp);
-    using pfnExecutableGraphGetSourceGraphExt = decltype(&zeExecutableGraphGetSourceGraphExt);
-    using pfnGraphGetPrimaryCommandListExt = decltype(&zeGraphGetPrimaryCommandListExt);
     using pfnGraphPauseCaptureExt = decltype(&zeGraphPauseCaptureExt);
     using pfnGraphResumeCaptureExt = decltype(&zeGraphResumeCaptureExt);
     using pfnGraphGetIdExt = decltype(&zeGraphGetIdExt);
@@ -1489,30 +1495,11 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnIntelMemMapDeviceMemToHost = decltype(&zeIntelMemMapDeviceMemToHost);
 
     // command list function types
-    using pfnCommandListAppendMemoryCopyWithParameters = decltype(&zexCommandListAppendMemoryCopyWithParameters);
-    using pfnCommandListAppendMemoryFillWithParameters = decltype(&zexCommandListAppendMemoryFillWithParameters);
     using pfnCommandListSetCleanupCallback = decltype(&zexCommandListSetCleanupCallback);
     using pfnCommandListVisitExt = decltype(&zeCommandListVisitExt);
-    using pfnCommandListGetDeviceHandle = decltype(&zeCommandListGetDeviceHandle);
-    using pfnCommandListGetContextHandle = decltype(&zeCommandListGetContextHandle);
-    using pfnCommandListGetOrdinal = decltype(&zeCommandListGetOrdinal);
-    using pfnCommandListGetFlags = decltype(&zeCommandListGetFlags);
-    using pfnCommandListImmediateGetIndex = decltype(&zeCommandListImmediateGetIndex);
-    using pfnCommandListImmediateGetFlags = decltype(&zeCommandListImmediateGetFlags);
-    using pfnCommandListImmediateGetMode = decltype(&zeCommandListImmediateGetMode);
-    using pfnCommandListImmediateGetPriority = decltype(&zeCommandListImmediateGetPriority);
-    using pfnCommandListIsImmediate = decltype(&zeCommandListIsImmediate);
-    using pfnCommandListIsMutableExp = decltype(&zeCommandListIsMutableExp);
 
     // event function types
     using pfnEventGetCounterBasedFlags = decltype(&zeEventGetCounterBasedFlags);
-
-    // command queue function types
-    using pfnCommandQueueGetOrdinal = decltype(&zeCommandQueueGetOrdinal);
-    using pfnCommandQueueGetIndex = decltype(&zeCommandQueueGetIndex);
-    using pfnCommandQueueGetFlags = decltype(&zeCommandQueueGetFlags);
-    using pfnCommandQueueGetMode = decltype(&zeCommandQueueGetMode);
-    using pfnCommandQueueGetPriority = decltype(&zeCommandQueueGetPriority);
 
     // driver function addresses
     decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
@@ -1525,6 +1512,8 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&::zexKernelGetArgumentSize) expectedKernelGetArgumentSize = L0::zexKernelGetArgumentSize;
     decltype(&::zexKernelGetArgumentType) expectedKernelGetArgumentType = L0::zexKernelGetArgumentType;
     decltype(&::zeIntelKernelGetBinaryExp) expectedIntelKernelGetBinaryExp = L0::zeIntelKernelGetBinaryExp;
+    decltype(&::zeKernelGetModuleHandleExt) expectedGetModuleHandle = L0::zeKernelGetModuleHandleExt;
+    decltype(&::zeModuleGetDeviceHandleExt) expectedModuleGetDeviceHandle = L0::zeModuleGetDeviceHandleExt;
 
     // context function addresses
     decltype(&zexMemFreeRegisterCallbackExt) expectedIntelMemFreeRegisterCallbackExt = L0::zexMemFreeRegisterCallbackExt;
@@ -1548,21 +1537,9 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&::zexCommandListAppendWaitOnMemory) expectedCommandListAppendWaitOnMemory = L0::zexCommandListAppendWaitOnMemory;
     decltype(&::zexCommandListAppendWriteToMemory) expectedCommandListAppendWriteToMemory = L0::zexCommandListAppendWriteToMemory;
     decltype(&zeCommandListAppendHostFunction) expectedCommandListAppendHostFunction = L0::zeCommandListAppendHostFunction;
-    pfnCommandListAppendMemoryCopyWithParameters expectedCommandListAppendMemoryCopyWithParameters = L0::zexCommandListAppendMemoryCopyWithParameters;
-    pfnCommandListAppendMemoryFillWithParameters expectedCommandListAppendMemoryFillWithParameters = L0::zexCommandListAppendMemoryFillWithParameters;
     pfnCommandListSetCleanupCallback expectedCommandListSetCleanupCallback = L0::zexCommandListSetCleanupCallback;
     pfnCommandListVerifyMemory expectedCommandListVerifyMemory = L0::zexCommandListVerifyMemory;
     pfnCommandListVisitExt expectedCommandListVisitExt = L0::zeCommandListVisitExt;
-    pfnCommandListGetDeviceHandle expectedCommandListGetDeviceHandle = L0::zeCommandListGetDeviceHandle;
-    pfnCommandListGetContextHandle expectedCommandListGetContextHandle = L0::zeCommandListGetContextHandle;
-    pfnCommandListGetOrdinal expectedCommandListGetOrdinal = L0::zeCommandListGetOrdinal;
-    pfnCommandListGetFlags expectedCommandListGetFlags = L0::zeCommandListGetFlags;
-    pfnCommandListImmediateGetIndex expectedCommandListImmediateGetIndex = L0::zeCommandListImmediateGetIndex;
-    pfnCommandListImmediateGetFlags expectedCommandListImmediateGetFlags = L0::zeCommandListImmediateGetFlags;
-    pfnCommandListImmediateGetMode expectedCommandListImmediateGetMode = L0::zeCommandListImmediateGetMode;
-    pfnCommandListImmediateGetPriority expectedCommandListImmediateGetPriority = L0::zeCommandListImmediateGetPriority;
-    pfnCommandListIsImmediate expectedCommandListIsImmediate = L0::zeCommandListIsImmediate;
-    pfnCommandListIsMutableExp expectedCommandListIsMutableExp = L0::zeCommandListIsMutableExp;
 
     // mutable command list driver experimental extension function addresses
     pfnCommandListGetVariable expectedCommandListGetVariable = zexCommandListGetVariable;
@@ -1603,18 +1580,9 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnGraphVisitExt expectedGraphVisitExt = L0::zeGraphVisitExt;
     pfnCommandListGetGraphExp expectedCommandListGetGraphExp = L0::zeCommandListGetGraphExp;
     pfnGraphSetDestructionCallbackExp expectedGraphSetDestructionCallbackExp = L0::zeGraphSetDestructionCallbackExp;
-    pfnExecutableGraphGetSourceGraphExt expectedExecutableGraphGetSourceGraphExt = L0::zeExecutableGraphGetSourceGraphExt;
-    pfnGraphGetPrimaryCommandListExt expectedGraphGetPrimaryCommandListExt = L0::zeGraphGetPrimaryCommandListExt;
     pfnGraphPauseCaptureExt expectedGraphPauseCaptureExt = L0::zeGraphPauseCaptureExt;
     pfnGraphResumeCaptureExt expectedGraphResumeCaptureExt = L0::zeGraphResumeCaptureExt;
     pfnGraphGetIdExt expectedGraphGetIdExt = L0::zeGraphGetIdExt;
-
-    // command queue function addresses
-    pfnCommandQueueGetOrdinal expectedCommandQueueGetOrdinal = L0::zeCommandQueueGetOrdinal;
-    pfnCommandQueueGetIndex expectedCommandQueueGetIndex = L0::zeCommandQueueGetIndex;
-    pfnCommandQueueGetFlags expectedCommandQueueGetFlags = L0::zeCommandQueueGetFlags;
-    pfnCommandQueueGetMode expectedCommandQueueGetMode = L0::zeCommandQueueGetMode;
-    pfnCommandQueueGetPriority expectedCommandQueueGetPriority = L0::zeCommandQueueGetPriority;
 
     // Add EXPECT_EQ tests to verify function pointers
     void *funPtr = nullptr;
@@ -1646,6 +1614,12 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelKernelGetBinaryExp", &funPtr));
     EXPECT_EQ(expectedIntelKernelGetBinaryExp, reinterpret_cast<decltype(&zeIntelKernelGetBinaryExp)>(funPtr));
 
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeKernelGetModuleHandleExt", &funPtr));
+    EXPECT_EQ(expectedGetModuleHandle, reinterpret_cast<decltype(&zeKernelGetModuleHandleExt)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeModuleGetDeviceHandleExt", &funPtr));
+    EXPECT_EQ(expectedModuleGetDeviceHandle, reinterpret_cast<decltype(&zeModuleGetDeviceHandleExt)>(funPtr));
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelGetDriverVersionString", &funPtr));
     EXPECT_EQ(expectedIntelGetDriverVersionString, reinterpret_cast<decltype(&zeIntelGetDriverVersionString)>(funPtr));
 
@@ -1675,12 +1649,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListAppendHostFunction", &funPtr));
     EXPECT_EQ(expectedCommandListAppendHostFunction, reinterpret_cast<decltype(&zeCommandListAppendHostFunction)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendMemoryCopyWithParameters", &funPtr));
-    EXPECT_EQ(expectedCommandListAppendMemoryCopyWithParameters, reinterpret_cast<pfnCommandListAppendMemoryCopyWithParameters>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendMemoryFillWithParameters", &funPtr));
-    EXPECT_EQ(expectedCommandListAppendMemoryFillWithParameters, reinterpret_cast<pfnCommandListAppendMemoryFillWithParameters>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListSetCleanupCallback", &funPtr));
     EXPECT_EQ(expectedCommandListSetCleanupCallback, reinterpret_cast<pfnCommandListSetCleanupCallback>(funPtr));
@@ -1799,12 +1767,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphSetDestructionCallbackExp", &funPtr));
     EXPECT_EQ(expectedGraphSetDestructionCallbackExp, reinterpret_cast<pfnGraphSetDestructionCallbackExp>(funPtr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeExecutableGraphGetSourceGraphExt", &funPtr));
-    EXPECT_EQ(expectedExecutableGraphGetSourceGraphExt, reinterpret_cast<pfnExecutableGraphGetSourceGraphExt>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphGetPrimaryCommandListExt", &funPtr));
-    EXPECT_EQ(expectedGraphGetPrimaryCommandListExt, reinterpret_cast<pfnGraphGetPrimaryCommandListExt>(funPtr));
-
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeGraphPauseCaptureExt", &funPtr));
     EXPECT_EQ(expectedGraphPauseCaptureExt, reinterpret_cast<pfnGraphPauseCaptureExt>(funPtr));
 
@@ -1819,51 +1781,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMemMapDeviceMemToHost", &funPtr));
     EXPECT_EQ(expectedIntelMemMapDeviceMemToHost, reinterpret_cast<pfnIntelMemMapDeviceMemToHost>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetOrdinal", &funPtr));
-    EXPECT_EQ(expectedCommandQueueGetOrdinal, reinterpret_cast<pfnCommandQueueGetOrdinal>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetIndex", &funPtr));
-    EXPECT_EQ(expectedCommandQueueGetIndex, reinterpret_cast<pfnCommandQueueGetIndex>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetFlags", &funPtr));
-    EXPECT_EQ(expectedCommandQueueGetFlags, reinterpret_cast<pfnCommandQueueGetFlags>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetMode", &funPtr));
-    EXPECT_EQ(expectedCommandQueueGetMode, reinterpret_cast<pfnCommandQueueGetMode>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandQueueGetPriority", &funPtr));
-    EXPECT_EQ(expectedCommandQueueGetPriority, reinterpret_cast<pfnCommandQueueGetPriority>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetDeviceHandle", &funPtr));
-    EXPECT_EQ(expectedCommandListGetDeviceHandle, reinterpret_cast<pfnCommandListGetDeviceHandle>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetContextHandle", &funPtr));
-    EXPECT_EQ(expectedCommandListGetContextHandle, reinterpret_cast<pfnCommandListGetContextHandle>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetOrdinal", &funPtr));
-    EXPECT_EQ(expectedCommandListGetOrdinal, reinterpret_cast<pfnCommandListGetOrdinal>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListGetFlags", &funPtr));
-    EXPECT_EQ(expectedCommandListGetFlags, reinterpret_cast<pfnCommandListGetFlags>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetIndex", &funPtr));
-    EXPECT_EQ(expectedCommandListImmediateGetIndex, reinterpret_cast<pfnCommandListImmediateGetIndex>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetFlags", &funPtr));
-    EXPECT_EQ(expectedCommandListImmediateGetFlags, reinterpret_cast<pfnCommandListImmediateGetFlags>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetMode", &funPtr));
-    EXPECT_EQ(expectedCommandListImmediateGetMode, reinterpret_cast<pfnCommandListImmediateGetMode>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListImmediateGetPriority", &funPtr));
-    EXPECT_EQ(expectedCommandListImmediateGetPriority, reinterpret_cast<pfnCommandListImmediateGetPriority>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListIsImmediate", &funPtr));
-    EXPECT_EQ(expectedCommandListIsImmediate, reinterpret_cast<pfnCommandListIsImmediate>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListIsMutableExp", &funPtr));
-    EXPECT_EQ(expectedCommandListIsMutableExp, reinterpret_cast<pfnCommandListIsMutableExp>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeEventGetCounterBasedFlags", &funPtr));
     EXPECT_EQ(expectedEventGetCounterBasedFlags, reinterpret_cast<pfnEventGetCounterBasedFlags>(funPtr));
@@ -1905,6 +1822,7 @@ TEST_F(DriverExperimentalApiTest, givenGetVersionStringAPIExistsThenGetCurrentVe
 
 struct GtPinInitTest : public ::testing::Test {
     void SetUp() override {
+        NEO::debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
         globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
         gtpinInitTimesCalled = 0u;
         driver.driverInitCallBase = true;
@@ -1949,12 +1867,10 @@ struct GtPinInitTest : public ::testing::Test {
         gtpinInitTimesCalled = 0u;
     }
 
+    DebugManagerStateRestore restorer;
     Mock<Driver> driver;
     static uint32_t gtpinInitTimesCalled;
     VariableBackup<uint32_t> gtpinCounterBackup{&gtpinInitTimesCalled, 0};
-    VariableBackup<uint32_t> mockGetenvCalledBackup{&IoFunctions::mockGetenvCalled, 0};
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup{&IoFunctions::mockableEnvValues, &mockableEnvs};
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     VariableBackup<NEO::OsLibrary *> osLibraryBackup{&MockOsLibrary::loadLibraryNewObject, nullptr};
     VariableBackup<decltype(globalDriverHandles)> globalDriverHandleBackup{&globalDriverHandles, nullptr};
@@ -2295,6 +2211,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZE_PCI_PROPERTIES_EXT_NAME, ZE_PCI_PROPERTIES_EXT_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_RAYTRACING_EXT_NAME, ZE_RAYTRACING_EXT_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_RTAS_EXT_NAME, ZE_RTAS_BUILDER_EXT_VERSION_CURRENT);
+    verifyExtensionDefinition(ZE_RECORD_REPLAY_GRAPH_EXT_NAME, ZE_RECORD_REPLAY_GRAPH_EXT_VERSION_1_0);
 
     // Experimental extensions
     verifyExtensionDefinition(ZE_BANDWIDTH_PROPERTIES_EXP_NAME, ZE_BANDWIDTH_PROPERTIES_EXP_VERSION_CURRENT);
@@ -2309,7 +2226,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZE_KERNEL_SCHEDULING_HINTS_EXP_NAME, ZE_SCHEDULING_HINTS_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_MODULE_PROGRAM_EXP_NAME, ZE_MODULE_PROGRAM_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_MUTABLE_COMMAND_LIST_EXP_NAME, ZE_MUTABLE_COMMAND_LIST_EXP_VERSION_CURRENT);
-    verifyExtensionDefinition(ZE_RECORD_REPLAY_GRAPH_EXP_NAME, ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_CURRENT);
+    verifyExtensionDefinition(ZE_RECORD_REPLAY_GRAPH_EXP_NAME, ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_1_0);
     verifyExtensionDefinition(ZE_COMMAND_VISIT_EXT_NAME, ZE_COMMAND_VISIT_EXT_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_RELAXED_ALLOCATION_LIMITS_EXP_NAME, ZE_RELAXED_ALLOCATION_LIMITS_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_RTAS_BUILDER_EXP_NAME, ZE_RTAS_BUILDER_EXP_VERSION_CURRENT);

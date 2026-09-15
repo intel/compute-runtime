@@ -21,6 +21,10 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::createQuery(D3DQuery **query) {
 }
 
 template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D9>::createFence(D3DFence **fence) {
+}
+
+template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::updateDevice(D3DResource *resource) {
     resource->GetDevice(&d3dDevice);
 }
@@ -134,6 +138,10 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::flushAndWait(D3DQuery *query) {
     while (query->GetData(nullptr, 0, D3DGETDATA_FLUSH) != S_OK) {
         ;
     }
+}
+
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D9>::signalAndWait(D3DFence *fence) {
 }
 
 template <>

@@ -22,6 +22,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/encoders/test_encode_slm_xe2_and_later.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
@@ -263,4 +264,12 @@ XE3_CORETEST_F(Xe3CoreCommandEncoderTest, givenOverrideThreadArbitrationPolicyDe
         EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
         EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
     }
+}
+
+const std::vector<uint32_t> slmSizesPerThreadGroupXe3 = slmSizesInBytes({0, 1, 2, 4, 8, 16, 24, 32, 48, 64, 96, 128, 192});
+
+using CommandEncodeStatesSlmTestXe3Core = CommandEncodeStatesSlmTestXe2AndLater;
+
+XE3_CORETEST_F(CommandEncodeStatesSlmTestXe3Core, GivenSlmTotalSizePerThreadGroupEdgeValuesWhenCallingAlignSlmSizePerThreadGroupThenSizeIsAlignedUpToTheNextProgrammableSize) {
+    verifySlmSizePerThreadGroupAlignment<FamilyType>(slmSizesPerThreadGroupXe3);
 }

@@ -7,7 +7,7 @@
 if(${NEO_TARGET_PROCESSOR} STREQUAL "aarch64")
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-       ${CMAKE_CURRENT_SOURCE_DIR}/stream_copy.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/stream_copy.h
        ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.cpp
   )
 

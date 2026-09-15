@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,6 +16,8 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysman_hw_device_id.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_core_handle_support.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_survivability.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_rescan.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysman_rescan.h
   )
 endif()
 

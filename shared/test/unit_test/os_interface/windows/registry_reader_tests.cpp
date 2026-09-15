@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ namespace SysCalls {
 extern uint32_t regOpenKeySuccessCount;
 extern uint32_t regQueryValueSuccessCount;
 extern uint64_t regQueryValueExpectedData;
+extern uint32_t remainingRegReadCount;
 } // namespace SysCalls
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenItIsCreatedWithUserScopeSetToFalseThenItsHkeyTypeIsInitializedToHkeyLocalMachine) {
@@ -148,14 +149,18 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenPrefixedEnvironmentInt64Variab
 struct DebugReaderWithRegistryAndEnvTest : ::testing::Test {
     VariableBackup<uint32_t> openRegCountBackup{&SysCalls::regOpenKeySuccessCount};
     VariableBackup<uint32_t> queryRegCountBackup{&SysCalls::regQueryValueSuccessCount};
+    VariableBackup<uint32_t> remainingRegReadCountBackup{&SysCalls::remainingRegReadCount};
     TestedRegistryReader registryReader{std::string("")};
+
+    static constexpr int32_t sourceIntRegistry = 1;
+    static constexpr int32_t sourceIntEnv = 2;
 };
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
     SysCalls::regOpenKeySuccessCount = 1u;
     SysCalls::regQueryValueSuccessCount = 1u;
 
-    EXPECT_EQ(1, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(sourceIntRegistry, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValuePrefix) {
@@ -163,7 +168,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySu
     SysCalls::regQueryValueSuccessCount = 1u;
 
     DebugVarPrefix type = DebugVarPrefix::none;
-    EXPECT_EQ(1, registryReader.getSetting("settingSourceInt", 0, type));
+    EXPECT_EQ(sourceIntRegistry, registryReader.getSetting("settingSourceInt", 0, type));
     EXPECT_EQ(DebugVarPrefix::none, type);
 }
 
@@ -189,7 +194,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThe
     SysCalls::regOpenKeySuccessCount = 1u;
     SysCalls::regQueryValueSuccessCount = 0u;
 
-    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(sourceIntEnv, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThenObtainValueFromEnvPrefix) {
@@ -197,7 +202,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThe
     SysCalls::regQueryValueSuccessCount = 0u;
 
     DebugVarPrefix type = DebugVarPrefix::none;
-    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0, type));
+    EXPECT_EQ(sourceIntEnv, registryReader.getSetting("settingSourceInt", 0, type));
     EXPECT_EQ(DebugVarPrefix::none, type);
 }
 
@@ -205,7 +210,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenOb
     SysCalls::regOpenKeySuccessCount = 0u;
     SysCalls::regQueryValueSuccessCount = 0u;
 
-    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(sourceIntEnv, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenObtainValueFromEnvPrefix) {
@@ -213,7 +218,7 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenOb
     SysCalls::regQueryValueSuccessCount = 0u;
 
     DebugVarPrefix type = DebugVarPrefix::none;
-    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0, type));
+    EXPECT_EQ(sourceIntEnv, registryReader.getSetting("settingSourceInt", 0, type));
     EXPECT_EQ(DebugVarPrefix::none, type);
 }
 
@@ -338,6 +343,49 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenBinaryDebugKeyOnlyInRegistryWhenR
 
     EXPECT_STREQ("default", registryReader.getSetting("settingSourceBinary", defaultValue, type).c_str());
     EXPECT_EQ(DebugVarPrefix::none, type);
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenSettingPresentInRegistryWhenHasSettingIsCalledThenTrueIsReturnedWithNonePrefix) {
+    constexpr uint32_t oneOpenPlusOneQueryCall = 2u;
+    SysCalls::remainingRegReadCount = oneOpenPlusOneQueryCall;
+
+    DebugVarPrefix type = DebugVarPrefix::neo;
+    EXPECT_TRUE(registryReader.hasSetting("settingSourceInt", type));
+    EXPECT_EQ(DebugVarPrefix::none, type);
+
+    EXPECT_EQ(0u, SysCalls::remainingRegReadCount) << "expected exactly one RegOpenKeyExA call and one RegQueryValueExA call";
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenRegistryOpenFailsAndKeyAbsentFromEnvironmentWhenHasSettingIsCalledThenFalseIsReturned) {
+    constexpr uint32_t noRegistryReadsAllowed = 0u;
+    SysCalls::remainingRegReadCount = noRegistryReadsAllowed;
+
+    DebugVarPrefix type = DebugVarPrefix::neo;
+    EXPECT_FALSE(registryReader.hasSetting("settingNotPresentAnywhere", type));
+    EXPECT_EQ(DebugVarPrefix::none, type);
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenRegistryOpenFailsButKeyPresentInEnvironmentWhenHasSettingIsCalledThenTrueIsReturnedWithMatchingPrefix) {
+    constexpr uint32_t noRegistryReadsAllowed = 0u;
+    SysCalls::remainingRegReadCount = noRegistryReadsAllowed;
+
+    DebugVarPrefix type = DebugVarPrefix::none;
+    EXPECT_TRUE(registryReader.hasSetting("settingSourceInt", type));
+    EXPECT_EQ(DebugVarPrefix::none, type);
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenRegistryKeyOpensButValueQueryFailsWhenHasSettingIsCalledThenEnvironmentIsConsulted) {
+    constexpr uint32_t oneOpenCallOnly = 1u;
+    SysCalls::remainingRegReadCount = oneOpenCallOnly;
+
+    DebugVarPrefix type = DebugVarPrefix::none;
+    EXPECT_TRUE(registryReader.hasSetting("settingSourceInt", type));
+    EXPECT_EQ(DebugVarPrefix::none, type);
+
+    EXPECT_EQ(0u, SysCalls::remainingRegReadCount) << "expected the single registry-read budget to be consumed by RegOpenKeyExA, leaving none for RegQueryValueExA";
+
+    SysCalls::remainingRegReadCount = oneOpenCallOnly;
+    EXPECT_EQ(sourceIntEnv, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsZeroThenExpectBooleanFalse) {

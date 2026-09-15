@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,6 @@ class GmmResourceInfoWddmTest : public ::testing::Test {
 };
 
 TEST_F(GmmResourceInfoWddmTest, givenWddmImplementationWhenGetDriverProtectionBitsIsCalledThenReturnsZero) {
-    // Test WDDM implementation with arguments which should always return 0u
-    uint64_t result = gmmResourceInfo->getDriverProtectionBits(GMM_RESOURCE_USAGE_OCL_BUFFER, false);
+    uint64_t result = gmmResourceInfo->getDriverProtectionBits(false);
     EXPECT_EQ(0u, result);
 }

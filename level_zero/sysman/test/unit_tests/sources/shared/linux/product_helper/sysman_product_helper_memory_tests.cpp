@@ -1205,7 +1205,7 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGetProp
     auto handles = getMemoryHandles(pSysmanDevice->toHandle());
 
     for (const auto &handle : handles) {
-        zes_mem_properties_t properties;
+        zes_mem_properties_t properties = {};
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(properties.type, ZES_MEM_TYPE_HBM);
@@ -1225,7 +1225,7 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGetProp
     auto handles = getMemoryHandles(pSysmanDevice->toHandle());
 
     for (const auto &handle : handles) {
-        zes_mem_properties_t properties;
+        zes_mem_properties_t properties = {};
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
@@ -1245,7 +1245,7 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGetProp
     auto handles = getMemoryHandles(pSysmanDevice->toHandle());
 
     for (const auto &handle : handles) {
-        zes_mem_properties_t properties;
+        zes_mem_properties_t properties = {};
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);

@@ -475,7 +475,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     ASSERT_NE(nullptr, stateBuffer);
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(sizeof(RENDER_SURFACE_STATE), gfxCoreHelper.getRenderSurfaceStateSize());
+    EXPECT_EQ(sizeof(RENDER_SURFACE_STATE), gfxCoreHelper.getRenderSurfaceStateSize(pDevice->getRootDeviceEnvironment()));
 
     size_t size = 0x1000;
     SurfaceStateBufferLength length;
@@ -892,26 +892,6 @@ HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenMinimalSIMDSizeIsQuer
     EXPECT_EQ(8u, gfxCoreHelper.getMinimalSIMDSize());
 }
 
-HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenGettingPreferredVectorWidthsThenCorrectValuesAreReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(16u, gfxCoreHelper.getPreferredVectorWidthChar(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(8u, gfxCoreHelper.getPreferredVectorWidthShort(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(4u, gfxCoreHelper.getPreferredVectorWidthInt(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(1u, gfxCoreHelper.getPreferredVectorWidthLong(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(1u, gfxCoreHelper.getPreferredVectorWidthFloat(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(8u, gfxCoreHelper.getPreferredVectorWidthHalf(gfxCoreHelper.getMinimalSIMDSize()));
-}
-
-HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenGettingNativeVectorWidthsThenCorrectValuesAreReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(16u, gfxCoreHelper.getNativeVectorWidthChar(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(8u, gfxCoreHelper.getNativeVectorWidthShort(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(4u, gfxCoreHelper.getNativeVectorWidthInt(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(1u, gfxCoreHelper.getNativeVectorWidthLong(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(1u, gfxCoreHelper.getNativeVectorWidthFloat(gfxCoreHelper.getMinimalSIMDSize()));
-    EXPECT_EQ(8u, gfxCoreHelper.getNativeVectorWidthHalf(gfxCoreHelper.getMinimalSIMDSize()));
-}
-
 HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenMinimalGrfSizeIsQueriedThen128IsReturned) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(128u, gfxCoreHelper.getMinimalGrfSize());
@@ -1190,7 +1170,7 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorre
     uint64_t expectedBaseAddress = 0x1122334455667788;
     renderSurfaceState.setSurfaceBaseAddress(expectedBaseAddress);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(expectedBaseAddress, gfxCoreHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState));
+    EXPECT_EQ(expectedBaseAddress, gfxCoreHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState, pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValueIsReturned) {
@@ -1201,7 +1181,7 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValu
     const auto &productHelper = getHelper<ProductHelper>();
     EncodeSurfaceState<FamilyType>::setPitchForScratch(&renderSurfaceState, expectedPitch, productHelper);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(expectedPitch, gfxCoreHelper.getRenderSurfaceStatePitch(&renderSurfaceState, productHelper));
+    EXPECT_EQ(expectedPitch, gfxCoreHelper.getRenderSurfaceStatePitch(&renderSurfaceState, pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {
@@ -1561,6 +1541,44 @@ HWTEST2_F(GfxCoreHelperTest, GivenGfxHelperWhenForceTheoreticalMaxWorkGroupCount
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto engineGroupType = EngineGroupType::compute;
     EXPECT_NE(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment));
+}
+
+HWTEST_F(GfxCoreHelperTest, GivenDebugTogglesInfluencingMaxWorkGroupCountSetWhenAdjustMaxWorkGroupCountIsCalledThenDontChangeResult) {
+    struct MockGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
+        bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            return isCooperativeDispatchSupportedValue;
+        }
+        bool isCooperativeDispatchSupportedValue = true;
+    };
+    MockGfxCoreHelper gfxCoreHelper{};
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    for (auto isCooperativeDispatchSupported : ::testing::Bool()) {
+        gfxCoreHelper.isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
+        {
+            DebugManagerStateRestore dbgRestorer;
+            debugManager.flags.OverrideMaxWorkGroupCount.set(1);
+            EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, EngineGroupType::renderCompute, rootDeviceEnvironment));
+            EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::renderCompute, rootDeviceEnvironment));
+        }
+        {
+            DebugManagerStateRestore dbgRestorer;
+            debugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+            EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, EngineGroupType::renderCompute, rootDeviceEnvironment));
+            EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::renderCompute, rootDeviceEnvironment));
+        }
+    }
+}
+
+HWTEST2_F(GfxCoreHelperTest, WhenIsRcsAvailableIsCalledThenTrueIsReturned, IsAtMostXeHpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isRcsAvailable(*defaultHwInfo));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault) {

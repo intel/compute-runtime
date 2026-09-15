@@ -32,6 +32,8 @@ class OsPower {
     virtual ze_result_t getPowerUsage(uint32_t *pInstantPower, uint32_t *pAveragePower) = 0;
 
     virtual bool isPowerModuleSupported() = 0;
+    virtual void reInit() = 0;
+
     static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);
     static std::vector<zes_power_domain_t> getSupportedPowerDomains(OsSysman *pOsSysman);
 

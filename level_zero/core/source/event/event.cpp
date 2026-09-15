@@ -17,6 +17,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
@@ -40,6 +41,10 @@ template Event *Event::create<uint64_t>(const EventDescriptor &, Device *, ze_re
 template Event *Event::create<uint32_t>(const EventDescriptor &, Device *, ze_result_t &);
 
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+    if (this->numEvents == 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
     this->context = context;
 
     const bool counterBased = (counterBasedFlags != 0);
@@ -174,6 +179,11 @@ EventPool::~EventPool() {
         context->releaseIpcEventPoolHandle(this->exportedIpcHandle);
         this->hasExportedIpcHandle = false;
     }
+    // Release the opaque-handle import cache ref taken while opening this imported pool.
+    if (this->importedIpcCacheId != 0 && this->importedIpcDriverHandle) {
+        this->importedIpcDriverHandle->clearCachedImportHandle(this->importedIpcCacheId);
+        this->importedIpcCacheId = 0;
+    }
     if (eventPoolAllocations) {
         auto graphicsAllocations = eventPoolAllocations->getGraphicsAllocations();
         auto memoryManager = devices[0]->getDriverHandle()->getMemoryManager();
@@ -225,19 +235,11 @@ ze_result_t EventPool::getFlags(ze_event_pool_flags_t *pFlags) {
 
 void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandle &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
 
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
 
     setEventAlignment(static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
 
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    bool useDynamicEventPackets = l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo);
-    eventPackets = EventPacketsCount::eventPackets;
-    maxKernelCount = EventPacketsCount::maxKernelSplit;
-    if (useDynamicEventPackets) {
-        eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);
-        maxKernelCount = driver.getEventMaxKernelCount(numDevices, deviceHandles);
-    }
+    eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);
 
     auto eventSize = eventPackets * gfxCoreHelper.getSingleTimestampPacketSize();
     if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
@@ -295,13 +297,20 @@ ze_result_t EventPool::closeIpcHandle() {
 }
 
 ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_event_counter_based_desc_t *desc, ze_event_handle_t *phEvent) {
-    constexpr uint32_t supportedBasedFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE);
+    constexpr uint32_t cmdListTypeFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE);
+    constexpr uint32_t allCounterBasedFlags = (cmdListTypeFlags | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE | ZE_EVENT_COUNTER_BASED_FLAG_IPC |
+                                               ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP |
+                                               ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
-    auto device = Device::fromHandle(toInternalType(hDevice));
+    auto device = Device::fromHandle(hDevice);
     auto counterBasedEventDesc = desc ? desc : &defaultIntelCounterBasedEventDesc;
 
     if (!hDevice || !phEvent) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if ((counterBasedEventDesc->flags & ~allCounterBasedFlags) != 0) {
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
     const bool ipcFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_IPC);
@@ -309,12 +318,16 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
     const bool mappedTimestampFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP);
     const bool externalEvent = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
-    uint32_t inputCbFlags = counterBasedEventDesc->flags & supportedBasedFlags;
-    if (inputCbFlags == 0) {
-        inputCbFlags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+    uint32_t inputCbFlags = counterBasedEventDesc->flags;
+    if ((counterBasedEventDesc->flags & cmdListTypeFlags) == 0) {
+        inputCbFlags |= ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
     }
 
     if (ipcFlag && (timestampFlag || mappedTimestampFlag)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (timestampFlag && mappedTimestampFlag) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -328,13 +341,12 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
         .eventPoolAllocation = nullptr,
         .extensions = counterBasedEventDesc->pNext,
         .totalEventSize = 0,
-        .maxKernelCount = device->getEventMaxKernelCount(),
         .maxPacketsCount = 1,
         .counterBasedFlags = inputCbFlags,
         .index = 0,
         .signalScope = signalScope,
         .waitScope = counterBasedEventDesc->wait,
-        .timestampPool = timestampFlag,
+        .timestampPool = timestampFlag || mappedTimestampFlag,
         .kernelMappedTsPoolFlag = mappedTimestampFlag,
         .importedIpcPool = false,
         .ipcPool = ipcFlag,
@@ -351,7 +363,7 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
 }
 
 ze_result_t Event::counterBasedGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
-    auto eventObj = Event::fromHandle(toInternalType(event));
+    auto eventObj = Event::fromHandle(event);
 
     if (!eventObj || !completionValue || !address) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -380,6 +392,20 @@ ze_result_t Event::counterBasedGetIncrementValue(ze_device_handle_t hDevice, uin
     }
 
     *incrementValue = device->getAggregatedCopyOffloadIncrementValue();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Event::counterBasedGetMaxValue(ze_device_handle_t hDevice, uint64_t *maxValue) {
+    auto device = Device::fromHandle(hDevice);
+    if (!device) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    if (!maxValue) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    *maxValue = device->getL0GfxCoreHelper().getCounterBasedEventMaxValue();
     return ZE_RESULT_SUCCESS;
 }
 
@@ -430,7 +456,7 @@ ImportedCbAllocationsForIpc Event::importCbAllocationsForIpcFor2WaySharing(Devic
 
     deviceAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
                                                     context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.deviceAllocIpcHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(),
-                                                                             !hasHostIpcHandle, importedInOrderExecEventData.exporterProcessId, 0, out.deviceCacheId, nullptr, false, useOpaqueHandle)
+                                                                             !hasHostIpcHandle, importedInOrderExecEventData.exporterProcessId, 0, out.deviceCacheId, nullptr, false, useOpaqueHandle, 0u)
                                                         .first);
 
     if (!deviceAlloc) {
@@ -445,7 +471,7 @@ ImportedCbAllocationsForIpc Event::importCbAllocationsForIpcFor2WaySharing(Devic
     if (hasHostIpcHandle) {
         out.hostCacheId = Context::computeIpcCacheId(importedInOrderExecEventData.hostAllocIpcHandle, 0, importedInOrderExecEventData.exporterProcessId, static_cast<uint8_t>(context->settings.handleType),
                                                      static_cast<uint8_t>(InternalMemoryType::notSpecified));
-        out.hostAlloc = context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.hostAllocIpcHandle, NEO::DeviceAllocNodeType<false>::getAllocationType(), true, importedInOrderExecEventData.exporterProcessId, 0, out.hostCacheId, nullptr, false, useOpaqueHandle).first;
+        out.hostAlloc = context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.hostAllocIpcHandle, NEO::DeviceAllocNodeType<false>::getAllocationType(), true, importedInOrderExecEventData.exporterProcessId, 0, out.hostCacheId, nullptr, false, useOpaqueHandle, 0u).first;
 
         if (!out.hostAlloc) {
             out.result = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -559,9 +585,17 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     ImportedCbAllocationsForIpc imported;
 
     if (useOpaqueHandle) {
+        // Non-empty reservedHandleData: exporter captured a fallback handle for getMemHandlePtr to
+        // retry with if the primary import fails. Only the 2-way path populates it on export.
+        static const uint8_t emptyReservedHandleData[sizeof(ipcData.reservedHandleData)] = {0};
+        void *reservedHandleData = nullptr;
+        if (std::memcmp(ipcData.reservedHandleData, emptyReservedHandleData, sizeof(ipcData.reservedHandleData)) != 0) {
+            reservedHandleData = const_cast<uint8_t *>(ipcData.reservedHandleData);
+        }
+
         auto cacheId = Context::computeIpcCacheId(ipcData.communicationAllocHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
         communicationAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
-                                                               context->getMemHandlePtr(device->toHandle(), ipcData.communicationAllocHandle, NEO::InOrderExecEventDataNodeType::getAllocationType(), true, ipcData.processId, 0, cacheId, nullptr, false, true).first);
+                                                               context->getMemHandlePtr(device->toHandle(), ipcData.communicationAllocHandle, NEO::InOrderExecEventDataNodeType::getAllocationType(), true, ipcData.processId, 0, cacheId, reservedHandleData, false, true, 0u).first);
 
         if (!communicationAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -574,8 +608,9 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
             return imported.result;
         }
     } else {
+        // 1-way path never carries reserved handle data - pass nullptr.
         auto cacheId = Context::computeIpcCacheId(ipcData.oneWayAllocCounterHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
-        imported.deviceAlloc = context->getMemHandlePtr(device->toHandle(), ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), true, ipcData.processId, 0, cacheId, nullptr, false, false).first;
+        imported.deviceAlloc = context->getMemHandlePtr(device->toHandle(), ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), true, ipcData.processId, 0, cacheId, nullptr, false, false, 0u).first;
 
         if (!imported.deviceAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -590,7 +625,6 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
         .eventPoolAllocation = nullptr,
         .extensions = nullptr,
         .totalEventSize = 0,
-        .maxKernelCount = device->getEventMaxKernelCount(),
         .maxPacketsCount = 1,
         .counterBasedFlags = ipcData.counterBasedFlags,
         .index = 0,
@@ -671,9 +705,9 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     }
 
     ipcData = {};
-    ipcData.counterBasedFlags = this->counterBasedFlags;
-    ipcData.signalScopeFlags = this->signalScope;
-    ipcData.waitScopeFlags = this->waitScope;
+    ipcData.counterBasedFlags = static_cast<uint8_t>(this->counterBasedFlags);
+    ipcData.signalScopeFlags = static_cast<uint8_t>(this->signalScope);
+    ipcData.waitScopeFlags = static_cast<uint8_t>(this->waitScope);
     ipcData.processId = NEO::SysCalls::getCurrentProcessId();
 
     if (auto ret = exportCbAllocationsFor2WayIpcSharing(inOrderExecHelper.is2WayIpcSharingEnabled()); ret != ZE_RESULT_SUCCESS) {
@@ -684,14 +718,17 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
         auto eventData = inOrderExecHelper.getEventData();
 
         ipcData.oneWayCounterValue = eventData->counterValue;
-        ipcData.oneWayPartitionCount = eventData->devicePartitions;
+        ipcData.oneWayPartitionCount = static_cast<uint8_t>(eventData->devicePartitions);
         ipcData.oneWayAllocCounterHandle = eventData->deviceAllocIpcHandle;
-        ipcData.allocOffset = eventData->deviceIpcAllocOffset;
+        ipcData.allocOffset = static_cast<uint32_t>(eventData->deviceIpcAllocOffset);
 
+        // 1-way device alloc handle is captured earlier (not via createInternalHandle here), so no
+        // reserved fallback handle is available on this path.
         return ZE_RESULT_SUCCESS;
     }
 
     uint64_t communicationHandle = 0;
+    // Primary handle first - must not be affected by reserved handle data availability.
     if (int retCode = sharableEventDataHelper.getAllocation()->createInternalHandle(memoryManager, 0, communicationHandle, nullptr); retCode != 0) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -702,7 +739,18 @@ ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
     }
 
     ipcData.communicationAllocHandle = communicationHandle;
-    ipcData.allocOffset = sharableEventDataHelper.getAllocationOffset();
+    ipcData.allocOffset = static_cast<uint32_t>(sharableEventDataHelper.getAllocationOffset());
+
+    // Best-effort reserved fallback handle for the importer, only when fabric access is supported.
+    // Never fails the export - reservedHandleData is left zero-filled if unavailable.
+    if (context->settings.useOpaqueHandle != OpaqueHandlingType::none &&
+        device->getDriverHandle()->isFabricAccessSupported()) {
+        uint64_t unusedHandle = communicationHandle;
+        uint8_t reservedHandleDataStorage[32] = {0};
+        if (sharableEventDataHelper.getAllocation()->createInternalHandle(memoryManager, 0, unusedHandle, reservedHandleDataStorage) == 0) {
+            memcpy_s(ipcData.reservedHandleData, sizeof(ipcData.reservedHandleData), reservedHandleDataStorage, sizeof(reservedHandleDataStorage));
+        }
+    }
 
     return ZE_RESULT_SUCCESS;
 }
@@ -714,6 +762,9 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
 
     auto memoryManager = context->getDriverHandle()->getMemoryManager();
     auto allocation = eventPoolAllocations->getDefaultGraphicsAllocation();
+
+    // Get the primary handle first, exactly as before - this must not be affected by whether
+    // reserved handle data is available or not.
     uint64_t handle{};
     if (allocation->peekInternalHandle(memoryManager, handle, nullptr) != 0) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -725,13 +776,23 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     this->exportedIpcHandle = handle;
     this->hasExportedIpcHandle = true;
 
+    // Best-effort reserved fallback handle for the importer, only when fabric access is supported.
+    // Never fails the export - reservedHandleData is left zero-filled if unavailable.
+    uint8_t reservedHandleDataStorage[32] = {0};
+    bool hasReservedHandleData = false;
+    if (context->settings.useOpaqueHandle &&
+        getDevice()->getDriverHandle()->isFabricAccessSupported()) {
+        uint64_t unusedHandle = handle;
+        hasReservedHandleData = (allocation->peekInternalHandle(memoryManager, unusedHandle, reservedHandleDataStorage) == 0);
+    }
+
     IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle->data);
     ipcData = {};
     ipcData.handle.val = handle;
-    ipcData.numEvents = numEvents;
-    ipcData.rootDeviceIndex = getDevice()->getRootDeviceIndex();
-    ipcData.maxEventPackets = getEventMaxPackets();
-    ipcData.numDevices = static_cast<uint16_t>(devices.size());
+    ipcData.numEvents = static_cast<uint32_t>(numEvents);
+    ipcData.rootDeviceIndex = static_cast<uint16_t>(getDevice()->getRootDeviceIndex());
+    ipcData.maxEventPackets = static_cast<uint8_t>(getEventMaxPackets());
+    ipcData.numDevices = static_cast<uint8_t>(devices.size());
     ipcData.isDeviceEventPoolAllocation = isDeviceEventPoolAllocation;
     ipcData.isHostVisibleEventPoolAllocation = isHostVisibleEventPoolAllocation;
     ipcData.isImplicitScalingCapable = isImplicitScalingCapable;
@@ -742,13 +803,17 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
         ipcData.processId = NEO::SysCalls::getCurrentProcessId();
         // Set opaqueHandle to same value as handle (similar to IPC memory)
         ipcData.opaqueHandle.val = handle;
+        if (hasReservedHandleData) {
+            memcpy_s(ipcData.reservedHandleData, sizeof(ipcData.reservedHandleData), reservedHandleDataStorage, sizeof(reservedHandleDataStorage));
+        }
     }
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
                                               DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
-    const IpcEventPoolData &poolData = *reinterpret_cast<const IpcEventPoolData *>(ipcEventPoolHandle.data);
+    // IpcOpaqueEventPoolData is the wire format written by getIpcHandle - parse it directly (see event.h).
+    const IpcOpaqueEventPoolData &poolData = *reinterpret_cast<const IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
 
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     if (poolData.isEventPoolKernelMappedTsFlagSet) {
@@ -767,33 +832,49 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     UNRECOVERABLE_IF(numDevices == 0);
     auto device = Device::fromHandle(*deviceHandles);
     auto neoDevice = device->getNEODevice();
-    NEO::MemoryManager::OsHandleData osHandleData{poolData.handle};
+    NEO::MemoryManager::OsHandleData osHandleData{static_cast<uint64_t>(poolData.handle.val)};
 
     uint32_t parentID = 0;
     uint32_t shareWithNoNTHandle = 0;
-    uint64_t importHandle = poolData.handle;
+    uint64_t importHandle = static_cast<uint64_t>(poolData.handle.val);
+
+    // Non-empty reservedHandleData: exporter captured a fallback handle. Only trust it if this side
+    // also enables useOpaqueHandle.
+    static const uint8_t emptyReservedHandleData[sizeof(poolData.reservedHandleData)] = {0};
+    void *reservedHandleData = nullptr;
+    if (context->settings.useOpaqueHandle &&
+        std::memcmp(poolData.reservedHandleData, emptyReservedHandleData, sizeof(poolData.reservedHandleData)) != 0) {
+        reservedHandleData = const_cast<uint8_t *>(poolData.reservedHandleData);
+    }
+
     if (context->settings.useOpaqueHandle) {
-        IpcOpaqueEventPoolData ipcData = *reinterpret_cast<const IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
-        parentID = ipcData.processId;
+        parentID = poolData.processId;
 
         // Check if opaque handle should be used (similar to IPC memory)
-        uint64_t handle = static_cast<uint64_t>(ipcData.handle.val);
-        uint64_t opaqueHandle = static_cast<uint64_t>(ipcData.opaqueHandle.val);
+        uint64_t handle = static_cast<uint64_t>(poolData.handle.val);
+        uint64_t opaqueHandle = static_cast<uint64_t>(poolData.opaqueHandle.val);
         bool isOpaqueHandle = (handle == opaqueHandle);
 
         if (isOpaqueHandle) {
-            // Use helper to import opaque handle with fallback
+            // Per-handle cacheId so the importer-side fd cache is not keyed on a constant across pools.
+            auto cacheId = Context::computeIpcCacheId(handle, 0, parentID, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
+
             auto importResult = context->importOpaqueHandleWithFallback(
                 handle,
                 parentID,
-                0,       // cacheID not used for event pools
-                nullptr, // reservedHandleData not used for event pools
-                neoDevice);
+                cacheId,
+                reservedHandleData,
+                neoDevice,
+                true);
 
             if (!importResult.success) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
             importHandle = importResult.importHandle;
+
+            // Record the cache ref taken above so ~EventPool releases it on both success and open-failure paths.
+            eventPool->importedIpcCacheId = cacheId;
+            eventPool->importedIpcDriverHandle = driver;
         }
 
         if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
@@ -844,6 +925,20 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
                                                                                              eventPool->isHostVisibleEventPoolAllocation,
                                                                                              false,
                                                                                              nullptr);
+
+    // Primary import failed - retry via the reserved fallback handle (mirrors getMemHandlePtr).
+    if (alloc == nullptr && reservedHandleData != nullptr) {
+        int fallbackFd = memoryManager->getImportHandleFromReservedHandleData(reservedHandleData, poolData.rootDeviceIndex);
+        if (fallbackFd != -1) {
+            osHandleData.handle = static_cast<NEO::osHandle>(fallbackFd);
+            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData,
+                                                                            unifiedMemoryProperties,
+                                                                            false,
+                                                                            eventPool->isHostVisibleEventPoolAllocation,
+                                                                            false,
+                                                                            nullptr);
+        }
+    }
 
     if (alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -1016,14 +1111,9 @@ void *Event::getCompletionFieldHostAddress() const {
     return ptrOffset(getHostAddress(), getCompletionFieldOffset());
 }
 
-void Event::increaseKernelCount() {
-    kernelCount++;
-    UNRECOVERABLE_IF(kernelCount > maxKernelCount);
-}
-
 void Event::resetPackets(bool resetAllPackets) {
     if (resetAllPackets) {
-        resetKernelCountAndPacketUsedCount();
+        resetPacketsUsedCount();
     }
     cpuStartTimestamp = 0;
     gpuStartTimestamp = 0;
@@ -1097,6 +1187,7 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
 void Event::unsetInOrderExecInfo() {
     resetInOrderTimestampNode(nullptr, 0);
     inOrderExecHelper.unsetInOrderExecInfo();
+    isSignalledAsGraphInternalEvent = false;
 }
 
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
@@ -1206,7 +1297,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
                 completionValue = externalSyncAllocProperties->completionValue;
             }
 
-            if (!deviceAddress) {
+            if (!deviceAddress || completionValue > device->getL0GfxCoreHelper().getCounterBasedEventMaxValue()) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
@@ -1234,7 +1325,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             }
             auto deviceAlloc = getExternalCounterAllocationFromAddress(deviceAddress);
 
-            if (!deviceAlloc || incrementValue == 0) {
+            if (!deviceAlloc || incrementValue == 0 || completionValue > device->getL0GfxCoreHelper().getCounterBasedEventMaxValue()) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
@@ -1255,18 +1346,22 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
         enableInterruptMode();
     }
 
-    const bool userFenceNotEqualSupported = !csrs.empty() && csrs[0]->isWaitUserFenceNotEqualSupported();
-    const bool hostVisibleForInterrupt = eventDescriptor.hostVisibleEventPoolAllocation ||
-                                         (this->isCounterBased() && this->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-    setSignalWithUserInterrupt(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
-                               hostVisibleForInterrupt &&
-                               userFenceNotEqualSupported);
+    [[maybe_unused]] const bool userFenceNotEqualSupported = !csrs.empty() && csrs[0]->isWaitUserFenceNotEqualSupported();
+    [[maybe_unused]] const bool hostVisibleForKmdWait = eventDescriptor.hostVisibleEventPoolAllocation ||
+                                                        (this->isCounterBased() && this->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+    setLinuxUserFenceKmdWaitEnabled(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
+                                    hostVisibleForKmdWait &&
+                                    userFenceNotEqualSupported);
 
     if (externalInterruptWait || (interruptMode && kmdWaitMode)) {
         enableKmdWaitMode();
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+bool Event::isBeingUsedInActiveGraphRecording(const Event *event) {
+    return nullptr != event->getRecordedSignalFrom();
 }
 
 NEO::InOrderExecEventHelper &Event::getInOrderExecEventHelper() { return inOrderExecHelper; }

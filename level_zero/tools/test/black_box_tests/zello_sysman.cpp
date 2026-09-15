@@ -12,21 +12,29 @@
 #include <chrono>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <sys/stat.h>
 #include <thread>
 #if defined(_WIN32) || defined(_WIN64)
+#include <conio.h>
 #include <shlobj_core.h>
 #include <string>
 #else // defined(_WIN32) || defined(_WIN64)#
+#include <fcntl.h>
+#include <termios.h>
 #include <unistd.h>
 #endif // defined(_WIN32) || defined(_WIN64)
 #include <cstring>
 #include <mutex>
+#include <stdexcept>
 #include <vector>
 
 bool verbose = true;
+
+bool validateGetenv(const char *name);
 
 typedef struct {
     zes_firmware_handle_t firmwareHandle;
@@ -45,6 +53,7 @@ std::string getErrorString(ze_result_t error) {
         {ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, "ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS"},
         {ZE_RESULT_ERROR_NOT_AVAILABLE, "ZE_RESULT_ERROR_NOT_AVAILABLE"},
         {ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, "ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE"},
+        {ZE_RESULT_WARNING_DROPPED_DATA, "ZE_RESULT_WARNING_DROPPED_DATA"},
         {ZE_RESULT_ERROR_UNINITIALIZED, "ZE_RESULT_ERROR_UNINITIALIZED"},
         {ZE_RESULT_ERROR_UNSUPPORTED_VERSION, "ZE_RESULT_ERROR_UNSUPPORTED_VERSION"},
         {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, "ZE_RESULT_ERROR_UNSUPPORTED_FEATURE"},
@@ -72,7 +81,9 @@ std::string getErrorString(ze_result_t error) {
         {ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, "ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE"},
         {ZE_RESULT_ERROR_OVERLAPPING_REGIONS, "ZE_RESULT_ERROR_OVERLAPPING_REGIONS"},
         {ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, "ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED"},
-        {ZE_RESULT_ERROR_UNKNOWN, "ZE_RESULT_ERROR_UNKNOWN"}};
+        {ZE_RESULT_ERROR_UNKNOWN, "ZE_RESULT_ERROR_UNKNOWN"},
+        {ZE_RESULT_SUCCESS, "ZE_RESULT_SUCCESS"},
+    };
     auto i = mgetErrorString.find(error);
     if (i == mgetErrorString.end()) {
         return "ZE_RESULT_ERROR_UNKNOWN";
@@ -144,8 +155,17 @@ void usage() {
                  "\n  -re,  --rasexp                                                                                  selectively run ras experimental API black box test"
                  "\n        [--set-threshold <value>]                                                                 optionally set threshold value for RAS exp test"
                  "\n  -v,   --vftelemetry                                                                             selectively run vf telemetry API black box test"
-                 "\n  -H,   --health                                                                                  selectively run device health EXP API black box test"
+                 "\n  -H,   --health                                                                                  selectively run device health EXT API black box test"
                  "\n        [--set-health <ok|warning|critical|failed>]                                               optionally set device health status (requires root)"
+                 "\n  -x,   --rescan                                                                                  selectively run driver rescan EXP API black box test and re-run telemetry on rescanned handles"
+                 "\n  -D,   --driverproperties                                                                        selectively run driver properties EXP API black box test"
+                 "\n  -L,   --infolog                                                                                 selectively run info log EXP API black box test, reporting what each info log supports"
+                 "\n        [--instanceapi]                                                                           create a collection instance, generate CPER records by reading the uncorrectable RAS counters, then verify peek and read (requires root)"
+                 "\n        [--instancepeek]                                                                          create a collection instance, wait for the CPER data available event and peek the records (requires root)"
+                 "\n        [--instanceread]                                                                          create a collection instance, wait for the CPER data available event and read the records (requires root)"
+                 "\n        [--instance <name>]                                                                       optionally collect into a named tracefs instance instead of the default buffer, for --instancepeek/--instanceread"
+                 "\n        [--buffersize <kilobytes>]                                                                optionally request a total collection buffer size for --instancepeek/--instanceread"
+                 "\n        [--timeout <milliseconds>]                                                                optionally override the event listen timeout of --instancepeek/--instanceread, default is 1000"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -187,7 +207,14 @@ void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_ha
 }
 
 void getSysmanDeviceHandles(zes_driver_handle_t &sysmanDriverHandle, std::vector<zes_device_handle_t> &sysmanDevices) {
-    VALIDATECALL(zesInit(0));
+
+    if (validateGetenv("ZES_INIT_NO_GPUS")) {
+        std::cout << "ZES_INIT_NO_GPUS is set, calling zesInit() with ZES_INTEL_INIT_FLAG_EXP_NO_GPUS" << std::endl;
+        VALIDATECALL(zesInit(static_cast<zes_init_flags_t>(ZES_INTEL_INIT_FLAG_EXP_NO_GPUS)));
+    } else {
+        std::cout << "ZES_INIT_NO_GPUS is not set, calling zesInit() with 0" << std::endl;
+        VALIDATECALL(zesInit(0));
+    }
 
     uint32_t driverCount = 0;
     VALIDATECALL(zesDriverGet(&driverCount, nullptr));
@@ -552,7 +579,8 @@ std::string getTemperatureSensorType(zes_temp_sensors_t type) {
         {ZES_TEMP_SENSORS_GPU_MIN, "ZES_TEMP_SENSORS_GPU_MIN"},
         {ZES_TEMP_SENSORS_MEMORY_MIN, "ZES_TEMP_SENSORS_MEMORY_MIN"},
         {ZES_TEMP_SENSORS_GPU_BOARD, "ZES_TEMP_SENSORS_GPU_BOARD"},
-        {ZES_TEMP_SENSORS_VOLTAGE_REGULATOR, "ZES_TEMP_SENSORS_VOLTAGE_REGULATOR"}};
+        {ZES_TEMP_SENSORS_VOLTAGE_REGULATOR, "ZES_TEMP_SENSORS_VOLTAGE_REGULATOR"},
+        {ZES_TEMP_SENSORS_COMPOSITE, "ZES_TEMP_SENSORS_COMPOSITE"}};
     auto i = mgetSensorType.find(type);
     if (i == mgetSensorType.end()) {
         return "No supported temperature type available";
@@ -582,6 +610,7 @@ void testSysmanTemperature(ze_device_handle_t &device) {
         if (verbose) {
             std::cout << "For subDevice " << properties.subdeviceId << " temperature current state for "
                       << getTemperatureSensorType(properties.type) << " is: " << temperature << std::endl;
+            std::cout << "maxTemperature = " << properties.maxTemperature << std::endl;
         }
     }
 }
@@ -668,8 +697,8 @@ void testSysmanSurvivability(ze_device_handle_t &device) {
     std::cout << std::endl;
 
     // Get device state with extension to check wedged, survivability, and flash override status
-    zes_intel_device_state_exp_t extDeviceState = {};
-    extDeviceState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extDeviceState = {};
+    extDeviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extDeviceState.pNext = nullptr;
 
     zes_device_state_t deviceState = {};
@@ -681,14 +710,23 @@ void testSysmanSurvivability(ze_device_handle_t &device) {
         std::cout << "Device reset status: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
         std::cout << "Device repaired status: " << deviceState.repaired << std::endl;
 
-        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED) {
+        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_NORMAL) {
+            std::cout << "Device is operating NORMALLY" << std::endl;
+        }
+        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_WEDGED) {
             std::cout << "Device is WEDGED" << std::endl;
         }
-        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY) {
+        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY) {
             std::cout << "Device is in SURVIVABILITY mode" << std::endl;
         }
-        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE) {
+        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE) {
             std::cout << "Device has FLASH OVERRIDE enabled" << std::endl;
+        }
+        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST) {
+            std::cout << "Device is LOST (PCI path inaccessible)" << std::endl;
+        }
+        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED) {
+            std::cout << "Device has NO DRIVER loaded" << std::endl;
         }
         std::cout << std::endl;
     }
@@ -1095,23 +1133,23 @@ void testSysmanRasExp(ze_device_handle_t &device, bool doSet = false, uint64_t s
                         std::cout << "    " << getRasErrorCategoryExp(setConfig[i].category) << "  threshold=" << setConfig[i].threshold << std::endl;
                     }
                     std::cout << std::endl;
-                }
 
-                // Step 3: Verify the set threshold using get
-                VALIDATECALL(result = zesRasGetConfigExp(handle, supportedCategoryCount, verifyConfig.data()));
-                if (result == ZE_RESULT_SUCCESS) {
-                    std::cout << "  zesRasGetConfigExp (verify):" << std::endl;
-                    bool allMatch = true;
-                    for (uint32_t i = 0; i < supportedCategoryCount; i++) {
-                        bool match = (verifyConfig[i].threshold == thresholdValue);
-                        std::cout << "    " << getRasErrorCategoryExp(verifyConfig[i].category)
-                                  << "  threshold=" << verifyConfig[i].threshold
-                                  << (match ? "  [OK]" : "  [MISMATCH]") << std::endl;
-                        if (!match) {
-                            allMatch = false;
+                    // Step 3: Verify the set threshold using get
+                    VALIDATECALL(result = zesRasGetConfigExp(handle, supportedCategoryCount, verifyConfig.data()));
+                    if (result == ZE_RESULT_SUCCESS) {
+                        std::cout << "  zesRasGetConfigExp (verify):" << std::endl;
+                        bool allMatch = true;
+                        for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+                            bool match = (verifyConfig[i].threshold == thresholdValue);
+                            std::cout << "    " << getRasErrorCategoryExp(verifyConfig[i].category)
+                                      << "  threshold=" << verifyConfig[i].threshold
+                                      << (match ? "  [OK]" : "  [MISMATCH]") << std::endl;
+                            if (!match) {
+                                allMatch = false;
+                            }
                         }
+                        std::cout << "  " << (allMatch ? "All thresholds verified successfully." : ("ERROR: One or more thresholds did not match expected value of " + std::to_string(thresholdValue) + ".")) << std::endl;
                     }
-                    std::cout << "  " << (allMatch ? "All thresholds verified successfully." : ("ERROR: One or more thresholds did not match expected value of " + std::to_string(thresholdValue) + ".")) << std::endl;
                 }
                 std::cout << std::endl;
             }
@@ -1289,8 +1327,18 @@ void testSysmanStandby(ze_device_handle_t &device) {
         if (iamroot) {
             std::cout << "Setting Standby Mode Default" << std::endl;
             VALIDATECALL(zesStandbySetMode(handle, ZES_STANDBY_PROMO_MODE_DEFAULT));
+            VALIDATECALL(zesStandbyGetMode(handle, &standbyMode));
+            if (verbose) {
+                std::cout << "standbyMode.type = " << getStandbyMode(standbyMode) << std::endl;
+            }
+
             std::cout << "Setting Standby Mode Never" << std::endl;
             VALIDATECALL(zesStandbySetMode(handle, ZES_STANDBY_PROMO_MODE_NEVER));
+            VALIDATECALL(zesStandbyGetMode(handle, &standbyMode));
+            if (verbose) {
+                std::cout << "standbyMode.type = " << getStandbyMode(standbyMode) << std::endl;
+            }
+
             // Restore the original mode after the test.
             std::cout << "Restore Standby Mode" << std::endl;
             VALIDATECALL(zesStandbyGetMode(handle, &standbyMode));
@@ -1478,7 +1526,7 @@ std::string getMemoryType(zes_mem_type_t memType) {
         {ZES_MEM_TYPE_L3, "ZES_MEM_TYPE_L3"},
         {ZES_MEM_TYPE_GRF, "ZES_MEM_TYPE_GRF"},
         {ZES_MEM_TYPE_SLM, "ZES_MEM_TYPE_SLM"},
-        {static_cast<zes_mem_type_t>(ZES_INTEL_MEM_TYPE_LPDDR5X), "ZES_INTEL_MEM_TYPE_LPDDR5X"}};
+        {ZES_MEM_TYPE_LPDDR5X, "ZES_MEM_TYPE_LPDDR5X"}};
     auto i = mgetMemoryType.find(memType);
     if (i == mgetMemoryType.end()) {
         return "NOT SUPPORTED MEMORY TYPE SET";
@@ -1528,6 +1576,8 @@ void testSysmanMemory(ze_device_handle_t &device) {
         zes_mem_properties_t memoryProperties = {};
         zes_mem_state_t memoryState = {};
         zes_mem_bandwidth_t memoryBandwidth = {};
+        zes_memory_vendor_info_ext_properties_t memoryVendorId = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
+        memoryProperties.pNext = &memoryVendorId;
 
         VALIDATECALL(zesMemoryGetProperties(handle, &memoryProperties));
         if (verbose) {
@@ -1538,6 +1588,19 @@ void testSysmanMemory(ze_device_handle_t &device) {
             std::cout << "Memory Size = " << memoryProperties.physicalSize << std::endl;
             std::cout << "Number of channels = " << memoryProperties.numChannels << std::endl;
             std::cout << "Memory busWidth = " << memoryProperties.busWidth << std::endl;
+            // A vendor ID of 0 indicates that the memory vendor ID could not be determined
+            if (memoryVendorId.vendorId != 0) {
+                std::cout << "Memory Vendor Id = 0x" << std::hex << memoryVendorId.vendorId << std::dec << std::endl;
+            } else {
+                std::cout << "Memory Vendor Id = not available" << std::endl;
+            }
+            // A vendor name length of 0 indicates that the memory vendor name could not be determined
+            if (memoryVendorId.length != 0) {
+                std::cout << "Memory Vendor Name = " << memoryVendorId.vendorName << std::endl;
+                std::cout << "Memory Vendor Name Length = " << memoryVendorId.length << std::endl;
+            } else {
+                std::cout << "Memory Vendor Name = not available" << std::endl;
+            }
         }
 
         VALIDATECALL(zesMemoryGetState(handle, &memoryState));
@@ -1842,39 +1905,22 @@ void getGlobalOperationsExpFunctionPointers(zes_driver_handle_t driverHandle) {
     VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceMemoryGetPageOfflineStateExp", reinterpret_cast<void **>(&zesIntelDeviceMemoryGetPageOfflineStateExpPtr)));
 }
 
-// Device Health EXP APIs function pointers
-typedef ze_result_t(ZE_APICALL *zesIntelDeviceGetHealthExp_pfn)(
-    zes_device_handle_t hDevice,
-    zes_intel_device_health_status_exp_t *pHealth);
-
-typedef ze_result_t(ZE_APICALL *zesIntelDeviceSetHealthExp_pfn)(
-    zes_device_handle_t hDevice,
-    zes_intel_device_health_status_exp_t health,
-    const char *pReason,
-    const uint32_t authTokenLength,
-    const char *pAuthToken);
-
-zesIntelDeviceGetHealthExp_pfn zesIntelDeviceGetHealthExpPtr = nullptr;
-zesIntelDeviceSetHealthExp_pfn zesIntelDeviceSetHealthExpPtr = nullptr;
-
-void getDeviceHealthExpFunctionPointers(zes_driver_handle_t driverHandle) {
-    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetHealthExp", reinterpret_cast<void **>(&zesIntelDeviceGetHealthExpPtr)));
-    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceSetHealthExp", reinterpret_cast<void **>(&zesIntelDeviceSetHealthExpPtr)));
-}
-
 void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Global Operations tests ---- " << std::endl;
     zes_device_properties_t properties = {};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
     zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
-    oemSerialNumber.pNext = &drvName;
-    properties.pNext = &oemSerialNumber;
+    zes_intel_device_index_exp_properties_t deviceIndex = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    drvName.pNext = &deviceIndex;
+    oemSerialId.pNext = &drvName;
+    properties.pNext = &oemSerialId;
     VALIDATECALL(zesDeviceGetProperties(device, &properties));
     if (verbose) {
+        std::cout << "deviceIndex.deviceIndex = " << deviceIndex.deviceIndex << std::endl;
         std::cout << "properties.numSubdevices = " << properties.numSubdevices << std::endl;
         std::cout << "properties.serialNumber = " << properties.serialNumber << std::endl;
-        std::cout << "oemSerialNumber.oemSerialNumber = " << oemSerialNumber.oemSerialNumber << std::endl;
+        std::cout << "oemSerialId.oemSerialId = " << oemSerialId.oemSerialId << std::endl;
         std::cout << "properties.boardNumber = " << properties.boardNumber << std::endl;
         std::cout << "properties.brandName = " << properties.brandName << std::endl;
         std::cout << "properties.modelName = " << properties.modelName << std::endl;
@@ -1915,18 +1961,43 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
             std::cout << "processes.engines = " << process.engines << std::endl;
         }
     }
+
+    zes_device_ext_state_t extDeviceState = {};
+    extDeviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+    extDeviceState.pNext = nullptr;
+
     zes_device_state_t deviceState = {};
-    VALIDATECALL(zesDeviceGetState(device, &deviceState));
+    deviceState.pNext = &extDeviceState;
+
+    ze_result_t stateResult = zesDeviceGetState(device, &deviceState);
     if (verbose) {
-        std::cout << "reset status: " << deviceState.reset << std::endl;
-        std::cout << "repair: " << deviceState.repaired << std::endl;
-        if (deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED) {
-            std::cout << "state reset wedged = " << deviceState.reset << std::endl;
+        std::cout << "--- Device State ---" << std::endl;
+        if (stateResult != ZE_RESULT_SUCCESS) {
+            std::cout << "zesDeviceGetState() failed with 0x" << std::hex << stateResult << std::dec << std::endl;
+        } else {
+            std::cout << "Device reset status: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
+            std::cout << "Device repaired status: " << deviceState.repaired << std::endl;
+
+            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_NORMAL) {
+                std::cout << "Device is operating NORMALLY" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_WEDGED) {
+                std::cout << "Device is WEDGED" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY) {
+                std::cout << "Device is in SURVIVABILITY mode" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE) {
+                std::cout << "Device has FLASH OVERRIDE enabled" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST) {
+                std::cout << "Device is LOST (PCI path inaccessible)" << std::endl;
+            }
+            if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED) {
+                std::cout << "Device has NO DRIVER loaded" << std::endl;
+            }
         }
-        if (deviceState.reset & ZES_RESET_REASON_FLAG_REPAIR) {
-            std::cout << "state reset repair = " << deviceState.reset << std::endl;
-            std::cout << "repair state = " << deviceState.repaired << std::endl;
-        }
+        std::cout << std::endl;
     }
 
     if (zesIntelDeviceMemoryGetPageOfflineStateExpPtr) {
@@ -2310,12 +2381,12 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
     }
 }
 
-std::string getDeviceHealthStatusString(zes_intel_device_health_status_exp_t status) {
-    static const std::map<zes_intel_device_health_status_exp_t, std::string> healthStatusMap{
-        {ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, "ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK"},
-        {ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING, "ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING"},
-        {ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL, "ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL"},
-        {ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED, "ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED"}};
+std::string getDeviceHealthStatusString(zes_device_health_status_ext_t status) {
+    static const std::map<zes_device_health_status_ext_t, std::string> healthStatusMap{
+        {ZES_DEVICE_HEALTH_STATUS_EXT_OK, "ZES_DEVICE_HEALTH_STATUS_EXT_OK"},
+        {ZES_DEVICE_HEALTH_STATUS_EXT_WARNING, "ZES_DEVICE_HEALTH_STATUS_EXT_WARNING"},
+        {ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL, "ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL"},
+        {ZES_DEVICE_HEALTH_STATUS_EXT_FAILED, "ZES_DEVICE_HEALTH_STATUS_EXT_FAILED"}};
     auto i = healthStatusMap.find(status);
     if (i == healthStatusMap.end()) {
         return "Unknown health status";
@@ -2323,32 +2394,809 @@ std::string getDeviceHealthStatusString(zes_intel_device_health_status_exp_t sta
     return i->second;
 }
 
-void testSysmanDeviceHealth(ze_device_handle_t &device, zes_intel_device_health_status_exp_t setStatus, bool doSet) {
+void testSysmanDeviceHealth(ze_device_handle_t &device, zes_device_health_status_ext_t setStatus, bool doSet) {
     std::cout << std::endl
               << " ----  Device Health tests ---- " << std::endl;
     bool iamroot = (geteuid() == 0);
 
-    if (!zesIntelDeviceGetHealthExpPtr || !zesIntelDeviceSetHealthExpPtr) {
-        std::cout << "Device Health EXP function pointers not available" << std::endl;
-        return;
-    }
-
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
-    VALIDATECALL(zesIntelDeviceGetHealthExpPtr(device, &health));
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_OK;
+    VALIDATECALL(zesDeviceGetHealthStatusExt(device, &health));
     std::cout << "Current device health status: " << getDeviceHealthStatusString(health) << std::endl;
 
     if (doSet) {
         if (!iamroot) {
-            std::cout << "Not running as Root. Skipping zesIntelDeviceSetHealthExp test." << std::endl;
+            std::cout << "Not running as Root. Skipping zesDeviceSetHealthStatusExt test." << std::endl;
             return;
         }
         std::cout << "Setting device health status to: " << getDeviceHealthStatusString(setStatus) << std::endl;
-        VALIDATECALL(zesIntelDeviceSetHealthExpPtr(device, setStatus, nullptr, 0, nullptr));
+        VALIDATECALL(zesDeviceSetHealthStatusExt(device, setStatus));
 
-        zes_intel_device_health_status_exp_t verifyHealth = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
-        VALIDATECALL(zesIntelDeviceGetHealthExpPtr(device, &verifyHealth));
+        zes_device_health_status_ext_t verifyHealth = ZES_DEVICE_HEALTH_STATUS_EXT_OK;
+        VALIDATECALL(zesDeviceGetHealthStatusExt(device, &verifyHealth));
         std::cout << "Device health status after set: " << getDeviceHealthStatusString(verifyHealth) << std::endl;
     }
+}
+
+typedef ze_result_t(ZE_APICALL *zesIntelDriverRescanDevicesExp_pfn)(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_device_handle_t *phDevices);
+
+zesIntelDriverRescanDevicesExp_pfn zesIntelDriverRescanDevicesExpPtr = nullptr;
+
+void getDriverRescanExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverRescanDevicesExp", reinterpret_cast<void **>(&zesIntelDriverRescanDevicesExpPtr)));
+}
+
+void testSysmanDriverRescan(zes_driver_handle_t driver, std::vector<ze_device_handle_t> &devices) {
+    std::cout << std::endl
+              << " ----  Driver Rescan tests ---- " << std::endl;
+
+    if (!zesIntelDriverRescanDevicesExpPtr) {
+        std::cout << "Driver Rescan EXP function pointer not available" << std::endl;
+        return;
+    }
+
+    uint32_t rescanCount = 0;
+    VALIDATECALL(zesIntelDriverRescanDevicesExpPtr(driver, &rescanCount, nullptr));
+    std::cout << "Number of devices reported by rescan = " << rescanCount << std::endl;
+
+    std::vector<zes_device_handle_t> rescannedDevices(rescanCount);
+    VALIDATECALL(zesIntelDriverRescanDevicesExpPtr(driver, &rescanCount, rescannedDevices.data()));
+
+    // Exercise all telemetry modules on the original device handles to confirm they remain valid
+    // and functional after the rescan.
+    getGlobalOperationsExpFunctionPointers(driver);
+    std::vector<std::string> emptyBuf;
+    uint32_t pciDeviceIndex = 0;
+    uint32_t powerDeviceIndex = 0;
+    uint32_t performanceDeviceIndex = 0;
+    bool pFactorIsSet = true;
+    std::for_each(devices.begin(), devices.end(), [&](auto device) {
+        testSysmanPci(device, emptyBuf, pciDeviceIndex);
+        testSysmanFrequency(device);
+        testSysmanStandby(device);
+        testSysmanEngine(device);
+        testSysmanScheduler(device);
+        testSysmanTemperature(device);
+        testSysmanPower(device, emptyBuf, powerDeviceIndex);
+        testSysmanMemory(device);
+        testSysmanRas(device);
+        testSysmanRasExp(device);
+        testSysmanFan(device, "");
+        testSysmanPerformance(device, emptyBuf, performanceDeviceIndex, pFactorIsSet);
+        testSysmanFabricPort(device);
+        testSysmanGlobalOperations(device);
+        testSysmanVfTelemetry(device);
+    });
+}
+
+// Info Log EXP APIs function pointers
+typedef ze_result_t(ZE_APICALL *zesIntelDriverEnumInfoLogsExp_pfn)(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_intel_info_log_handle_t *phInfoLogs);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogGetPropertiesExp_pfn)(
+    zes_intel_info_log_handle_t hInfoLog,
+    zes_intel_info_log_properties_exp_t *pProperties);
+
+zesIntelDriverEnumInfoLogsExp_pfn zesIntelDriverEnumInfoLogsExpPtr = nullptr;
+zesIntelInfoLogGetPropertiesExp_pfn zesIntelInfoLogGetPropertiesExpPtr = nullptr;
+
+void getInfoLogExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverEnumInfoLogsExp", reinterpret_cast<void **>(&zesIntelDriverEnumInfoLogsExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogGetPropertiesExp", reinterpret_cast<void **>(&zesIntelInfoLogGetPropertiesExpPtr)));
+}
+
+// Info Log collection instance EXP APIs function pointers
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogCreateInstanceExp_pfn)(
+    zes_intel_info_log_handle_t hInfoLog,
+    const char *pInstanceName,
+    zes_intel_info_log_instance_exp_desc_t *pDesc,
+    zes_intel_info_log_instance_handle_t *phInfoLogInstance);
+
+// zesIntelInfoLogInstanceReadWithMetadataExp and zesIntelInfoLogInstancePeekWithMetadataExp take the
+// same arguments, so one type covers both and the tests below share their collection code
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogInstanceCollectExp_pfn)(
+    zes_intel_info_log_instance_handle_t hInfoLogInstance,
+    uint64_t timeout,
+    uint32_t *pSize,
+    uint8_t *pBuffer,
+    uint32_t *pRecordCount,
+    zes_intel_info_log_metadata_exp *pDescriptors,
+    zes_intel_info_log_read_status_exp_t *pReadStatus);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogInstanceDeleteExp_pfn)(
+    zes_intel_info_log_instance_handle_t hInfoLogInstance);
+
+zesIntelInfoLogCreateInstanceExp_pfn zesIntelInfoLogCreateInstanceExpPtr = nullptr;
+zesIntelInfoLogInstanceCollectExp_pfn zesIntelInfoLogInstanceReadWithMetadataExpPtr = nullptr;
+zesIntelInfoLogInstanceCollectExp_pfn zesIntelInfoLogInstancePeekWithMetadataExpPtr = nullptr;
+zesIntelInfoLogInstanceDeleteExp_pfn zesIntelInfoLogInstanceDeleteExpPtr = nullptr;
+
+void getInfoLogInstanceExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogCreateInstanceExp", reinterpret_cast<void **>(&zesIntelInfoLogCreateInstanceExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogInstanceReadWithMetadataExp", reinterpret_cast<void **>(&zesIntelInfoLogInstanceReadWithMetadataExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogInstancePeekWithMetadataExp", reinterpret_cast<void **>(&zesIntelInfoLogInstancePeekWithMetadataExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogInstanceDeleteExp", reinterpret_cast<void **>(&zesIntelInfoLogInstanceDeleteExpPtr)));
+}
+
+bool infoLogInstanceApisAvailable() {
+    return (zesIntelDriverEnumInfoLogsExpPtr != nullptr) && (zesIntelInfoLogGetPropertiesExpPtr != nullptr) &&
+           (zesIntelInfoLogCreateInstanceExpPtr != nullptr) && (zesIntelInfoLogInstanceReadWithMetadataExpPtr != nullptr) &&
+           (zesIntelInfoLogInstancePeekWithMetadataExpPtr != nullptr) && (zesIntelInfoLogInstanceDeleteExpPtr != nullptr);
+}
+
+typedef ze_result_t(ZE_APICALL *zesIntelDriverEventRegisterExp_pfn)(
+    zes_driver_handle_t hDriver,
+    zes_event_type_flags_t events);
+
+typedef ze_result_t(ZE_APICALL *zesIntelDriverEventListenExp_pfn)(
+    zes_driver_handle_t hDriver,
+    uint64_t timeout,
+    uint32_t count,
+    zes_device_handle_t *phDevices,
+    uint32_t *pNumDeviceEvents,
+    zes_event_type_flags_t *pEvents,
+    zes_event_type_flags_t *pDriverEvents);
+
+zesIntelDriverEventRegisterExp_pfn zesIntelDriverEventRegisterExpPtr = nullptr;
+zesIntelDriverEventListenExp_pfn zesIntelDriverEventListenExpPtr = nullptr;
+
+void getDriverEventRegisterExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverEventRegisterExp", reinterpret_cast<void **>(&zesIntelDriverEventRegisterExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverEventListenExp", reinterpret_cast<void **>(&zesIntelDriverEventListenExpPtr)));
+}
+
+std::string getInfoLogTypeString(zes_intel_info_log_type_exp_t type) {
+    static const std::map<zes_intel_info_log_type_exp_t, std::string> infoLogTypeMap{
+        {ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE, "ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE"}};
+    auto i = infoLogTypeMap.find(type);
+    if (i == infoLogTypeMap.end()) {
+        return "Unknown info log type";
+    }
+    return i->second;
+}
+
+std::string getInfoLogFormatString(zes_intel_info_log_format_exp_t format) {
+    static const std::map<zes_intel_info_log_format_exp_t, std::string> infoLogFormatMap{
+        {ZES_INTEL_INFO_LOG_FORMAT_CPER, "ZES_INTEL_INFO_LOG_FORMAT_CPER"}};
+    auto i = infoLogFormatMap.find(format);
+    if (i == infoLogFormatMap.end()) {
+        return "Unknown info log format";
+    }
+    return i->second;
+}
+
+std::string getInfoLogRecordTypeString(zes_intel_info_log_record_type_exp_t recordType) {
+    static const std::map<zes_intel_info_log_record_type_exp_t, std::string> infoLogRecordTypeMap{
+        {ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN, "ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN"},
+        {ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_INFORMATIONAL, "ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_INFORMATIONAL"},
+        {ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_CORRECTED, "ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_CORRECTED"},
+        {ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE, "ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE"},
+        {ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_FATAL, "ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_FATAL"}};
+    auto i = infoLogRecordTypeMap.find(recordType);
+    if (i == infoLogRecordTypeMap.end()) {
+        return "Unknown info log record type";
+    }
+    return i->second;
+}
+
+// Cross-platform non-blocking character input
+// Returns the character code if a key is pressed, or -1 if no input
+#if defined(_WIN32) || defined(_WIN64)
+int getCh() {
+    if (_kbhit()) {
+        return _getch();
+    }
+    return -1;
+}
+#else
+int getCh() {
+    struct termios oldt, newt;
+    int ch;
+    int oldf;
+
+    if (tcgetattr(STDIN_FILENO, &oldt) != 0) {
+        return -1; // Not a terminal, so there are no key presses to poll for
+    }
+
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
+    ch = getchar();
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
+
+    return ch;
+}
+#endif
+
+std::string uuidToString(const zes_uuid_t &uuid) {
+    char buf[64];
+    snprintf(buf, sizeof(buf),
+             "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+             uuid.id[0], uuid.id[1], uuid.id[2], uuid.id[3],
+             uuid.id[4], uuid.id[5], uuid.id[6], uuid.id[7],
+             uuid.id[8], uuid.id[9], uuid.id[10], uuid.id[11],
+             uuid.id[12], uuid.id[13], uuid.id[14], uuid.id[15]);
+    return std::string(buf);
+}
+
+void testSysmanDriverProperties(zes_driver_handle_t driver) {
+    std::cout << std::endl
+              << " ----  Driver Properties tests ---- " << std::endl;
+
+    using zesIntelDriverGetPropertiesExp_pfn = ze_result_t(ZE_APICALL *)(zes_driver_handle_t, zes_intel_driver_properties_exp_t *);
+
+    auto getDriverPropertiesExpFunctionPointer = [](zes_driver_handle_t driverHandle) {
+        zesIntelDriverGetPropertiesExp_pfn functionPointer = nullptr;
+        VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverGetPropertiesExp", reinterpret_cast<void **>(&functionPointer)));
+        return functionPointer;
+    };
+
+    auto zesIntelDriverGetPropertiesExpPtr = getDriverPropertiesExpFunctionPointer(driver);
+    if (!zesIntelDriverGetPropertiesExpPtr) {
+        std::cout << "Driver Properties EXP function pointer not available" << std::endl;
+        return;
+    }
+
+    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    memset(properties.uuid.id, 0xFF, sizeof(properties.uuid.id));
+    VALIDATECALL(zesIntelDriverGetPropertiesExpPtr(driver, &properties));
+
+    if (verbose) {
+        std::cout << "properties.driverVersion = " << properties.driverVersion << std::endl;
+        std::cout << "properties.uuid = " << uuidToString(properties.uuid) << std::endl;
+    }
+
+    if (properties.driverVersion == 0) {
+        std::cout << "Warning: driverVersion is zero, the driver version could not be retrieved" << std::endl;
+    }
+}
+
+void printHexData(const uint8_t *data, uint32_t size, uint32_t maxBytes) {
+    uint32_t bytesToPrint = std::min(size, maxBytes);
+    for (uint32_t i = 0; i < bytesToPrint; i++) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]);
+        if (i < bytesToPrint - 1) {
+            std::cout << " ";
+        }
+    }
+    if (size > maxBytes) {
+        std::cout << " ... (" << std::dec << (size - maxBytes) << " more bytes)";
+    }
+    std::cout << std::dec;
+}
+
+void printInfoLogRecord(uint32_t recordNumber, const zes_intel_info_log_metadata_exp &descriptor, const uint8_t *pBuffer) {
+    std::cout << "\nEvent #" << recordNumber << ":" << std::endl;
+    std::cout << "  Timestamp:    " << descriptor.timestamp << " nano seconds" << std::endl;
+    std::cout << "  BDF:          " << std::hex << std::setfill('0')
+              << std::setw(4) << descriptor.address.domain << ":"
+              << std::setw(2) << static_cast<int>(descriptor.address.bus) << ":"
+              << std::setw(2) << static_cast<int>(descriptor.address.device) << "."
+              << static_cast<int>(descriptor.address.function) << std::dec << std::endl;
+    std::cout << "  Platform ID:  " << uuidToString(descriptor.uuid) << std::endl;
+    std::cout << "  Record Type:  " << getInfoLogRecordTypeString(descriptor.recordType) << std::endl;
+    std::cout << "  Data Size:    " << descriptor.lengthOfData << " bytes" << std::endl;
+    std::cout << "  Data Offset:  " << descriptor.offset << std::endl;
+    std::cout << "  CPER Data:    ";
+    printHexData(pBuffer + descriptor.offset, descriptor.lengthOfData, 64);
+    std::cout << std::endl;
+}
+
+// The plain '-L' mode: enumerate the info logs and report what each one supports. Nothing here needs
+// root, and it is the smoke test which says whether the collection instance modes can run at all
+void testSysmanInfoLogProperties(zes_driver_handle_t driver) {
+    std::cout << std::endl
+              << " ----  Info Log properties tests ---- " << std::endl;
+
+    if (!zesIntelDriverEnumInfoLogsExpPtr || !zesIntelInfoLogGetPropertiesExpPtr) {
+        std::cout << "Info Log EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    uint32_t count = 0;
+    VALIDATECALL(zesIntelDriverEnumInfoLogsExpPtr(driver, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Info Log handles" << std::endl;
+        return;
+    }
+    std::cout << "Found " << count << " info log handles.." << std::endl;
+
+    std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesIntelDriverEnumInfoLogsExpPtr(driver, &count, handles.data()));
+
+    for (const auto &handle : handles) {
+        zes_intel_info_log_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP};
+        VALIDATECALL(zesIntelInfoLogGetPropertiesExpPtr(handle, &properties));
+        std::cout << "properties.infoLogType = " << getInfoLogTypeString(properties.infoLogType) << std::endl;
+        std::cout << "properties.infoLogFormat = " << getInfoLogFormatString(properties.infoLogFormat) << std::endl;
+        std::cout << "properties.isNamedInstancedCollectionSupported = "
+                  << (properties.isNamedInstancedCollectionSupported ? "true" : "false") << std::endl;
+        std::cout << "properties.isPeekSupported = " << (properties.isPeekSupported ? "true" : "false") << std::endl;
+    }
+
+    std::cout << "\nRecords are collected with --instanceapi, --instancepeek or --instanceread" << std::endl;
+}
+
+zes_intel_info_log_handle_t getCperInfoLogHandle(zes_driver_handle_t driver) {
+    uint32_t count = 0;
+    VALIDATECALL(zesIntelDriverEnumInfoLogsExpPtr(driver, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Info Log handles" << std::endl;
+        return nullptr;
+    }
+
+    std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesIntelDriverEnumInfoLogsExpPtr(driver, &count, handles.data()));
+
+    for (const auto &handle : handles) {
+        zes_intel_info_log_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP};
+        VALIDATECALL(zesIntelInfoLogGetPropertiesExpPtr(handle, &properties));
+        if (properties.infoLogFormat == ZES_INTEL_INFO_LOG_FORMAT_CPER) {
+            return handle;
+        }
+    }
+
+    std::cout << "No info log handle reports the CPER format" << std::endl;
+    return nullptr;
+}
+
+struct InfoLogRecords {
+    std::vector<uint8_t> buffer;
+    std::vector<zes_intel_info_log_metadata_exp> descriptors;
+    uint32_t size = 0;
+    uint32_t recordCount = 0;
+    zes_intel_info_log_read_status_exp_t readStatus = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP};
+};
+
+void printInfoLogReadStatus(const zes_intel_info_log_read_status_exp_t &readStatus) {
+    std::cout << "  readStatus.hasDataToRead = " << (readStatus.hasDataToRead ? "true" : "false")
+              << ", readStatus.droppedRecordCount = ";
+    if (readStatus.isDroppedRecordCountValid) {
+        std::cout << readStatus.droppedRecordCount << std::endl;
+    } else {
+        std::cout << "unknown (isDroppedRecordCountValid = false)" << std::endl;
+    }
+}
+
+struct InfoLogChecks {
+    void operator()(bool condition, const std::string &description) {
+        if (condition) {
+            std::cout << "  [PASS] " << description << std::endl;
+            passed++;
+        } else {
+            std::cout << "  [FAIL] " << description << std::endl;
+            failed++;
+        }
+    }
+
+    void printSummary() const {
+        std::cout << passed << " check(s) passed, " << failed << " check(s) failed" << std::endl;
+    }
+
+    uint32_t passed = 0;
+    uint32_t failed = 0;
+};
+
+const uint64_t collectWhatIsQueued = std::numeric_limits<uint64_t>::max();
+
+// A call with '*pSize' and '*pRecordCount' zero on input is a query: it reports the totals the
+// instance holds without consuming anything, for both the read and the peek entry point
+ze_result_t queryInfoLogRecords(zesIntelInfoLogInstanceCollectExp_pfn pfnCollect,
+                                zes_intel_info_log_instance_handle_t hInstance,
+                                uint32_t &size, uint32_t &recordCount) {
+    zes_intel_info_log_read_status_exp_t readStatus = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP};
+    size = 0;
+    recordCount = 0;
+    return pfnCollect(hInstance, collectWhatIsQueued, &size, nullptr, &recordCount, nullptr, &readStatus);
+}
+
+// Queries what the instance holds, then allocates exactly that much and collects it in a second call
+ze_result_t collectInfoLogRecords(zesIntelInfoLogInstanceCollectExp_pfn pfnCollect,
+                                  zes_intel_info_log_instance_handle_t hInstance,
+                                  const std::string &callName, InfoLogRecords &records) {
+    records.size = 0;
+    records.recordCount = 0;
+
+    ze_result_t result = queryInfoLogRecords(pfnCollect, hInstance, records.size, records.recordCount);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << callName << "() query Failed: " << getErrorString(result) << std::endl;
+        return result;
+    }
+    std::cout << callName << "() query: " << records.recordCount << " record(s), " << records.size
+              << " byte(s) pending" << std::endl;
+    if (records.recordCount == 0 || records.size == 0) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    records.buffer.assign(records.size, 0);
+    records.descriptors.assign(records.recordCount, zes_intel_info_log_metadata_exp{});
+    for (auto &descriptor : records.descriptors) {
+        descriptor.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_METADATA_EXP;
+    }
+    records.readStatus = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP};
+
+    result = pfnCollect(hInstance, collectWhatIsQueued, &records.size, records.buffer.data(),
+                        &records.recordCount, records.descriptors.data(), &records.readStatus);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << callName << "() Failed: " << getErrorString(result) << std::endl;
+        return result;
+    }
+    std::cout << callName << "(): " << records.recordCount << " record(s), " << records.size
+              << " byte(s) returned" << std::endl;
+    printInfoLogReadStatus(records.readStatus);
+    if (records.readStatus.hasDataToRead) {
+        std::cout << "  Records remain on the instance, " << callName << "() has to be called again" << std::endl;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+void printInfoLogRecords(const InfoLogRecords &records, uint32_t firstRecordNumber) {
+    std::cout << std::string(80, '-') << std::endl;
+    for (uint32_t i = 0; i < records.recordCount; i++) {
+        printInfoLogRecord(firstRecordNumber + i, records.descriptors[i], records.buffer.data());
+    }
+    std::cout << std::string(80, '-') << std::endl;
+}
+
+uint32_t drainInfoLogRecords(zesIntelInfoLogInstanceCollectExp_pfn pfnCollect,
+                             zes_intel_info_log_instance_handle_t hInstance,
+                             const std::string &callName,
+                             uint32_t firstRecordNumber, ze_result_t &result) {
+    const uint32_t maxCollectCalls = 16;
+    uint32_t recordsCollected = 0;
+    result = ZE_RESULT_SUCCESS;
+
+    for (uint32_t call = 0; call < maxCollectCalls; call++) {
+        InfoLogRecords records;
+        result = collectInfoLogRecords(pfnCollect, hInstance, callName, records);
+        if (result != ZE_RESULT_SUCCESS || records.recordCount == 0) {
+            break;
+        }
+
+        printInfoLogRecords(records, firstRecordNumber + recordsCollected);
+        recordsCollected += records.recordCount;
+
+        if (!records.readStatus.hasDataToRead) {
+            break;
+        }
+    }
+
+    return recordsCollected;
+}
+
+// The uncorrectable error counters read here come from the same device error reporting path which
+// emits the CPER trace records, so reading them is what makes records appear in the info log
+uint32_t generateCperRecordsWithRas(std::vector<ze_device_handle_t> &devices) {
+    uint32_t handlesRead = 0;
+    for (const auto &device : devices) {
+        uint32_t rasHandleCount = 0;
+        VALIDATECALL(zesDeviceEnumRasErrorSets(device, &rasHandleCount, nullptr));
+        if (rasHandleCount == 0) {
+            continue;
+        }
+        std::vector<zes_ras_handle_t> rasHandles(rasHandleCount, nullptr);
+        VALIDATECALL(zesDeviceEnumRasErrorSets(device, &rasHandleCount, rasHandles.data()));
+
+        for (const auto &rasHandle : rasHandles) {
+            zes_ras_properties_t rasProperties = {};
+            VALIDATECALL(zesRasGetProperties(rasHandle, &rasProperties));
+            if (rasProperties.type != ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
+                continue;
+            }
+
+            uint32_t categoryCount = 0;
+            ze_result_t result = zesRasGetStateExp(rasHandle, &categoryCount, nullptr);
+            if (result != ZE_RESULT_SUCCESS || categoryCount == 0) {
+                std::cout << "  zesRasGetStateExp() count query Failed: " << getErrorString(result) << std::endl;
+                continue;
+            }
+
+            std::vector<zes_ras_state_exp_t> rasStates(categoryCount);
+            result = zesRasGetStateExp(rasHandle, &categoryCount, rasStates.data());
+            if (result != ZE_RESULT_SUCCESS) {
+                std::cout << "  zesRasGetStateExp() Failed: " << getErrorString(result) << std::endl;
+                continue;
+            }
+
+            uint64_t errorCounterTotal = 0;
+            for (uint32_t i = 0; i < categoryCount; i++) {
+                errorCounterTotal += rasStates[i].errorCounter;
+            }
+            std::cout << "  Uncorrectable RAS state read on subdevice " << rasProperties.subdeviceId << ": "
+                      << categoryCount << " categories, total error count " << errorCounterTotal << std::endl;
+            handlesRead++;
+        }
+    }
+    return handlesRead;
+}
+
+void testSysmanInfoLogInstanceReadPeek(zes_driver_handle_t driver, std::vector<ze_device_handle_t> &devices) {
+    std::cout << std::endl
+              << " ----  Info Log instance read and peek tests ---- " << std::endl;
+
+    if (!infoLogInstanceApisAvailable()) {
+        std::cout << "Info Log instance EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    if (geteuid() != 0) {
+        std::cout << "Not running as Root. Skipping the info log instance read and peek test." << std::endl;
+        return;
+    }
+
+    zes_intel_info_log_handle_t hInfoLog = getCperInfoLogHandle(driver);
+    if (hInfoLog == nullptr) {
+        return;
+    }
+
+    zes_intel_info_log_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP};
+    VALIDATECALL(zesIntelInfoLogGetPropertiesExpPtr(hInfoLog, &properties));
+    std::cout << "properties.isNamedInstancedCollectionSupported = " << (properties.isNamedInstancedCollectionSupported ? "true" : "false") << std::endl;
+    std::cout << "properties.isPeekSupported = " << (properties.isPeekSupported ? "true" : "false") << std::endl;
+
+    if (!properties.isNamedInstancedCollectionSupported) {
+        std::cout << "Named collection instances are not supported. Skipping the test." << std::endl;
+        return;
+    }
+    if (!properties.isPeekSupported) {
+        std::cout << "Peek is not supported. Skipping the test." << std::endl;
+        return;
+    }
+
+    const std::string instanceName = "zello_sysman_infolog";
+    zes_intel_info_log_instance_exp_desc_t desc = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC};
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    ze_result_t result = zesIntelInfoLogCreateInstanceExpPtr(hInfoLog, instanceName.c_str(), &desc, &hInstance);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesIntelInfoLogCreateInstanceExp() Failed: " << getErrorString(result) << std::endl;
+        return;
+    }
+    std::cout << "Created collection instance '" << instanceName << "'" << std::endl;
+
+    InfoLogChecks check;
+
+    // Only records generated after the instance was created are collected into it, so the counters are
+    // read here rather than before the create call
+    std::cout << "\nGenerating CPER records by reading the uncorrectable RAS counters" << std::endl;
+    if (generateCperRecordsWithRas(devices) == 0) {
+        std::cout << "No uncorrectable RAS handle could be read, this test will not generate any record" << std::endl;
+    }
+
+    // The trace record is written by the kernel after the counter read has returned, so the instance is
+    // polled with the non-consuming query until it reports data
+    const uint32_t recordWaitMs = 5000;
+    const uint32_t pollIntervalMs = 200;
+    uint32_t pendingSize = 0;
+    uint32_t pendingCount = 0;
+    for (uint32_t waited = 0; waited < recordWaitMs; waited += pollIntervalMs) {
+        result = queryInfoLogRecords(zesIntelInfoLogInstancePeekWithMetadataExpPtr, hInstance, pendingSize, pendingCount);
+        if (result != ZE_RESULT_SUCCESS) {
+            std::cout << "zesIntelInfoLogInstancePeekWithMetadataExp() query Failed: " << getErrorString(result) << std::endl;
+            break;
+        }
+        if (pendingCount != 0) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
+    }
+
+    if (pendingCount == 0) {
+        std::cout << "No CPER record was collected within " << recordWaitMs
+                  << " ms. Skipping the read and peek verification." << std::endl;
+        VALIDATECALL(zesIntelInfoLogInstanceDeleteExpPtr(hInstance));
+        return;
+    }
+    std::cout << pendingCount << " record(s), " << pendingSize << " byte(s) are pending on the instance" << std::endl;
+
+    std::cout << "\nFirst peek:" << std::endl;
+    InfoLogRecords firstPeek;
+    result = collectInfoLogRecords(zesIntelInfoLogInstancePeekWithMetadataExpPtr, hInstance,
+                                   "zesIntelInfoLogInstancePeekWithMetadataExp", firstPeek);
+    check(result == ZE_RESULT_SUCCESS && firstPeek.recordCount != 0, "peek returned the pending records");
+    if (firstPeek.recordCount != 0) {
+        printInfoLogRecords(firstPeek, 1);
+    }
+
+    std::cout << "\nSecond peek, on the same records:" << std::endl;
+    InfoLogRecords secondPeek;
+    result = collectInfoLogRecords(zesIntelInfoLogInstancePeekWithMetadataExpPtr, hInstance,
+                                   "zesIntelInfoLogInstancePeekWithMetadataExp", secondPeek);
+    check(result == ZE_RESULT_SUCCESS && secondPeek.recordCount == firstPeek.recordCount && secondPeek.size == firstPeek.size,
+          "a second peek reports the same records, peek does not consume");
+
+    std::cout << "\nRead, on the records the peek left in place:" << std::endl;
+    InfoLogRecords read;
+    result = collectInfoLogRecords(zesIntelInfoLogInstanceReadWithMetadataExpPtr, hInstance,
+                                   "zesIntelInfoLogInstanceReadWithMetadataExp", read);
+    check(result == ZE_RESULT_SUCCESS && read.recordCount >= firstPeek.recordCount,
+          "read returned at least the records the peek reported");
+    if (read.recordCount != 0) {
+        printInfoLogRecords(read, 1);
+    }
+
+    bool firstRecordMatches = (firstPeek.recordCount != 0) && (read.recordCount != 0) &&
+                              (read.descriptors[0].lengthOfData == firstPeek.descriptors[0].lengthOfData) &&
+                              (memcmp(read.buffer.data() + read.descriptors[0].offset,
+                                      firstPeek.buffer.data() + firstPeek.descriptors[0].offset,
+                                      firstPeek.descriptors[0].lengthOfData) == 0);
+    check(firstRecordMatches, "the first record the read returned is byte identical to the peeked one");
+
+    if (read.readStatus.hasDataToRead) {
+        ze_result_t drainResult = ZE_RESULT_SUCCESS;
+        uint32_t drained = drainInfoLogRecords(zesIntelInfoLogInstanceReadWithMetadataExpPtr, hInstance,
+                                               "zesIntelInfoLogInstanceReadWithMetadataExp",
+                                               read.recordCount + 1u, drainResult);
+        std::cout << drained << " further record(s) were read to drain the instance" << std::endl;
+        check(drainResult == ZE_RESULT_SUCCESS, "the reads which drained the remaining records succeeded");
+    }
+
+    result = queryInfoLogRecords(zesIntelInfoLogInstanceReadWithMetadataExpPtr, hInstance, pendingSize, pendingCount);
+    check(result == ZE_RESULT_SUCCESS && pendingCount == 0, "the instance is drained after the read, nothing is pending");
+
+    std::cout << std::endl;
+    check.printSummary();
+
+    VALIDATECALL(zesIntelInfoLogInstanceDeleteExpPtr(hInstance));
+    std::cout << "Deleted collection instance '" << instanceName << "'" << std::endl;
+}
+
+void testSysmanInfoLogInstanceOnEvent(zes_driver_handle_t driver, std::vector<ze_device_handle_t> &devices,
+                                      const std::string &instanceName, uint32_t *pBufferSize,
+                                      uint64_t timeout, bool usePeek) {
+    const std::string operation = usePeek ? "peek" : "read";
+    std::cout << std::endl
+              << " ----  Info Log instance " << operation << " on CPER event tests ---- " << std::endl;
+
+    if (!infoLogInstanceApisAvailable()) {
+        std::cout << "Info Log instance EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    if (!zesIntelDriverEventRegisterExpPtr || !zesIntelDriverEventListenExpPtr) {
+        std::cout << "Driver scoped event EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    if (geteuid() != 0) {
+        std::cout << "Not running as Root. Skipping the info log instance " << operation << " test." << std::endl;
+        return;
+    }
+
+    zes_intel_info_log_handle_t hInfoLog = getCperInfoLogHandle(driver);
+    if (hInfoLog == nullptr) {
+        return;
+    }
+
+    zes_intel_info_log_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP};
+    VALIDATECALL(zesIntelInfoLogGetPropertiesExpPtr(hInfoLog, &properties));
+    if (usePeek && !properties.isPeekSupported) {
+        std::cout << "Peek is not supported. Skipping the test." << std::endl;
+        return;
+    }
+    if (!instanceName.empty() && !properties.isNamedInstancedCollectionSupported) {
+        std::cout << "Named collection instances are not supported. Skipping the test." << std::endl;
+        return;
+    }
+
+    zes_intel_info_log_instance_exp_desc_t desc = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC};
+    desc.pBufferSize = pBufferSize;
+    std::cout << "Collection instance: " << (instanceName.empty() ? "the default buffer" : instanceName) << std::endl;
+    if (pBufferSize != nullptr) {
+        std::cout << "  requested buffer size: " << *pBufferSize << " KB" << std::endl;
+    }
+
+    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    ze_result_t result = zesIntelInfoLogCreateInstanceExpPtr(hInfoLog, instanceName.empty() ? nullptr : instanceName.c_str(),
+                                                             &desc, &hInstance);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesIntelInfoLogCreateInstanceExp() Failed: " << getErrorString(result) << std::endl;
+        return;
+    }
+
+    // The descriptor members are updated in place with the values which were actually applied
+    if (pBufferSize != nullptr) {
+        std::cout << "  applied buffer size: " << *pBufferSize << " KB" << std::endl;
+    }
+
+    VALIDATECALL(zesIntelDriverEventRegisterExpPtr(driver, ZES_INTEL_CPER_DATA_AVAILABLE));
+
+    const uint32_t deviceCount = static_cast<uint32_t>(devices.size());
+    std::vector<zes_event_type_flags_t> events(deviceCount, 0);
+    auto pfnCollect = usePeek ? zesIntelInfoLogInstancePeekWithMetadataExpPtr : zesIntelInfoLogInstanceReadWithMetadataExpPtr;
+    const std::string collectName = usePeek ? "zesIntelInfoLogInstancePeekWithMetadataExp" : "zesIntelInfoLogInstanceReadWithMetadataExp";
+
+    std::cout << "\nListening for CPER data on " << deviceCount << " device handles with a " << timeout
+              << " millisecond timeout. Records can be generated from another shell with"
+              << " 'zello_sysman -L --instanceapi' or 'zello_sysman -re'." << std::endl;
+    std::cout << "\n** Press any key to exit **\n"
+              << std::endl;
+
+    // Clear any pending keypresses
+    while (getCh() != -1) {
+    }
+
+    InfoLogChecks check;
+    uint32_t totalRecordsRead = 0;
+    uint32_t lastPeekedRecords = 0;
+
+    bool listening = true;
+    while (listening) {
+        if (getCh() != -1) {
+            std::cout << "\nKey pressed. Exiting..." << std::endl;
+            break;
+        }
+
+        uint32_t numDeviceEvents = 0;
+        zes_event_type_flags_t driverEvents = 0;
+        VALIDATECALL(zesIntelDriverEventListenExpPtr(driver, timeout, deviceCount, devices.data(), &numDeviceEvents,
+                                                     events.data(), &driverEvents));
+        if (!(driverEvents & ZES_INTEL_CPER_DATA_AVAILABLE)) {
+            std::cout << "\rWaiting for the CPER data available event... " << std::flush;
+            continue;
+        }
+
+        std::cout << "\nCPER data available event received" << std::endl;
+        InfoLogRecords records;
+        result = collectInfoLogRecords(pfnCollect, hInstance, collectName, records);
+        if (result != ZE_RESULT_SUCCESS) {
+            break;
+        }
+
+        check(records.recordCount != 0, "the event was followed by records on the instance");
+        if (records.recordCount == 0) {
+            continue;
+        }
+
+        printInfoLogRecords(records, usePeek ? 1u : totalRecordsRead + 1u);
+
+        if (usePeek) {
+            lastPeekedRecords = records.recordCount;
+
+            // The peek left the records in place, so the same totals must still be reported and the
+            // event stays asserted. The sleep keeps that from spinning on data nothing consumes.
+            uint32_t pendingSize = 0;
+            uint32_t pendingCount = 0;
+            result = queryInfoLogRecords(pfnCollect, hInstance, pendingSize, pendingCount);
+            check(result == ZE_RESULT_SUCCESS && pendingCount == records.recordCount && pendingSize == records.size,
+                  "the peeked records are still pending on the instance");
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        } else {
+            totalRecordsRead += records.recordCount;
+
+            if (records.readStatus.hasDataToRead) {
+                ze_result_t drainResult = ZE_RESULT_SUCCESS;
+                uint32_t drained = drainInfoLogRecords(pfnCollect, hInstance, collectName,
+                                                       totalRecordsRead + 1u, drainResult);
+                totalRecordsRead += drained;
+                check(drainResult == ZE_RESULT_SUCCESS, "the reads which drained the remaining records succeeded");
+            }
+
+            uint32_t pendingSize = 0;
+            uint32_t pendingCount = 0;
+            result = queryInfoLogRecords(pfnCollect, hInstance, pendingSize, pendingCount);
+            check(result == ZE_RESULT_SUCCESS && pendingCount == 0, "the read consumed the records, nothing is pending");
+        }
+    }
+
+    if (usePeek) {
+        std::cout << "\nRecords pending at the last peek: " << lastPeekedRecords << std::endl;
+    } else {
+        std::cout << "\nTotal records read: " << totalRecordsRead << std::endl;
+    }
+    check.printSummary();
+
+    VALIDATECALL(zesIntelDriverEventRegisterExpPtr(driver, 0));
+    VALIDATECALL(zesIntelInfoLogInstanceDeleteExpPtr(hInstance));
 }
 
 bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector<std::string> &buf) {
@@ -2400,6 +3248,30 @@ bool validatePciDowngradeArguments(const size_t devCount, std::vector<std::strin
 
     // Validate that the third argument is either 0 or 1
     if (buf[2] != "0" && buf[2] != "1") {
+        return false;
+    }
+
+    return true;
+}
+
+// Converts the value of a numeric option, which std::stoul would abort the tool over when it is not a
+// number or does not fit, so that a bad value is reported like any other bad argument. Only digits are
+// accepted, which also rejects a negative value that would otherwise be converted as a huge one.
+bool parseUnsignedArgument(const std::string &option, const std::string &value, uint64_t maxValue, uint64_t &parsedValue) {
+    if (value.empty() || value.find_first_not_of("0123456789") != std::string::npos) {
+        std::cout << "Invalid " << option << " value '" << value << "': must be a number" << std::endl;
+        return false;
+    }
+
+    try {
+        parsedValue = std::stoull(value);
+    } catch (const std::out_of_range &) {
+        std::cout << "Invalid " << option << " value '" << value << "': must not exceed " << maxValue << std::endl;
+        return false;
+    }
+
+    if (parsedValue > maxValue) {
+        std::cout << "Invalid " << option << " value '" << value << "': must not exceed " << maxValue << std::endl;
         return false;
     }
 
@@ -2711,7 +3583,7 @@ int main(int argc, char *argv[]) {
 
     if (isParamEnabled(argc, argv, "-H", "--health", &optind)) {
         bool healthDoSet = false;
-        zes_intel_device_health_status_exp_t healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
+        zes_device_health_status_ext_t healthSetStatus = ZES_DEVICE_HEALTH_STATUS_EXT_OK;
         optind = optind + 1;
         while (optind < argc) {
             buf.push_back(argv[optind]);
@@ -2725,13 +3597,13 @@ int main(int argc, char *argv[]) {
             }
             const std::string &statusStr = buf[1];
             if (statusStr == "ok") {
-                healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK;
+                healthSetStatus = ZES_DEVICE_HEALTH_STATUS_EXT_OK;
             } else if (statusStr == "warning") {
-                healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING;
+                healthSetStatus = ZES_DEVICE_HEALTH_STATUS_EXT_WARNING;
             } else if (statusStr == "critical") {
-                healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL;
+                healthSetStatus = ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL;
             } else if (statusStr == "failed") {
-                healthSetStatus = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED;
+                healthSetStatus = ZES_DEVICE_HEALTH_STATUS_EXT_FAILED;
             } else {
                 std::cout << "Invalid health status value: " << statusStr << std::endl;
                 usage();
@@ -2739,10 +3611,109 @@ int main(int argc, char *argv[]) {
             }
             healthDoSet = true;
         }
-        getDeviceHealthExpFunctionPointers(driver);
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanDeviceHealth(device, healthSetStatus, healthDoSet);
         });
+        buf.clear();
+    }
+
+    if (isParamEnabled(argc, argv, "-x", "--rescan", &optind)) {
+        getDriverRescanExpFunctionPointers(driver);
+        testSysmanDriverRescan(driver, devices);
+    }
+
+    if (isParamEnabled(argc, argv, "-D", "--driverproperties", &optind)) {
+        testSysmanDriverProperties(driver);
+    }
+
+    if (isParamEnabled(argc, argv, "-L", "--infolog", &optind)) {
+        bool infoLogDoInstanceApi = false;
+        bool infoLogDoInstancePeek = false;
+        bool infoLogDoInstanceRead = false;
+        uint64_t infoLogEventTimeout = 1000u;
+        uint32_t infoLogBufferSize = 0;
+        bool infoLogHasBufferSize = false;
+        std::string infoLogInstanceName;
+
+        optind = optind + 1;
+        while (optind < argc) {
+            buf.push_back(argv[optind]);
+            optind++;
+        }
+
+        // Parse arguments
+        for (size_t i = 0; i < buf.size(); i++) {
+            if (buf[i] == "--instanceapi") {
+                infoLogDoInstanceApi = true;
+            } else if (buf[i] == "--instancepeek") {
+                infoLogDoInstancePeek = true;
+            } else if (buf[i] == "--instanceread") {
+                infoLogDoInstanceRead = true;
+            } else if (buf[i] == "--buffersize") {
+                if (i + 1 >= buf.size()) {
+                    std::cout << "Missing value for --buffersize option" << std::endl;
+                    usage();
+                    exit(0);
+                }
+                uint64_t parsedBufferSize = 0;
+                if (!parseUnsignedArgument("--buffersize", buf[i + 1], std::numeric_limits<uint32_t>::max(), parsedBufferSize)) {
+                    usage();
+                    exit(0);
+                }
+                if (parsedBufferSize == 0) {
+                    std::cout << "Invalid --buffersize value '" << buf[i + 1] << "': must be greater than 0" << std::endl;
+                    usage();
+                    exit(0);
+                }
+                infoLogBufferSize = static_cast<uint32_t>(parsedBufferSize);
+                infoLogHasBufferSize = true;
+                i++; // skip the value
+            } else if (buf[i] == "--timeout") {
+                if (i + 1 >= buf.size()) {
+                    std::cout << "Missing value for --timeout option" << std::endl;
+                    usage();
+                    exit(0);
+                }
+                if (!parseUnsignedArgument("--timeout", buf[i + 1], std::numeric_limits<uint64_t>::max(), infoLogEventTimeout)) {
+                    usage();
+                    exit(0);
+                }
+                i++; // skip the value
+            } else if (buf[i] == "--instance") {
+                if (i + 1 >= buf.size()) {
+                    std::cout << "Missing instance name for --instance option" << std::endl;
+                    usage();
+                    exit(0);
+                }
+                infoLogInstanceName = buf[i + 1];
+                i++; // skip the instance name
+            } else {
+                std::cout << "Unknown --infolog argument: " << buf[i] << std::endl;
+                usage();
+                exit(0);
+            }
+        }
+
+        getInfoLogExpFunctionPointers(driver);
+
+        if (infoLogDoInstanceApi || infoLogDoInstancePeek || infoLogDoInstanceRead) {
+            getInfoLogInstanceExpFunctionPointers(driver);
+        }
+
+        if (infoLogDoInstancePeek || infoLogDoInstanceRead) {
+            getDriverEventRegisterExpFunctionPointers(driver);
+        }
+
+        if (infoLogDoInstanceApi) {
+            testSysmanInfoLogInstanceReadPeek(driver, devices);
+        } else if (infoLogDoInstancePeek || infoLogDoInstanceRead) {
+            testSysmanInfoLogInstanceOnEvent(driver, devices, infoLogInstanceName,
+                                             infoLogHasBufferSize ? &infoLogBufferSize : nullptr,
+                                             infoLogEventTimeout, infoLogDoInstancePeek);
+        } else {
+            testSysmanInfoLogProperties(driver);
+        }
+
         buf.clear();
     }
 

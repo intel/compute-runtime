@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -37,7 +37,7 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPWhenGettingDpSupportThenReturn
     ze_result_t res = device->getKernelProperties(&deviceModProps);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    auto expDpas = this->neoDevice->getReleaseHelper().isDotProductAccumulateSystolicSupported();
+    auto expDpas = this->neoDevice->getHardwareInfo().caps.dotProductAccumulateSystolicSupported;
 
     bool dp4a = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
     bool dpas = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;

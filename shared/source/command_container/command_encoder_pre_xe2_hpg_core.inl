@@ -5,25 +5,36 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment(bool isLocalMemory) {
+size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment(bool isLocalMemory, const HardwareInfo &hwInfo) {
     return 1;
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareInfo &hwInfo) {
+uint32_t EncodeDispatchKernel<Family>::getMaxConcurrentThreadCountPerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment, [[maybe_unused]] uint32_t grfCount) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t totalDispatchedThreadGroupCount) {
-    return static_cast<uint32_t>(Math::divideAndRoundUp(totalDispatchedThreadGroupCount, hwInfo.gtSystemInfo.DualSubSliceCount));
+uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(const HardwareInfo &hwInfo, const uint32_t workloadThreadGroupCount) {
+    return static_cast<uint32_t>(Math::divideAndRoundUp(workloadThreadGroupCount, hwInfo.gtSystemInfo.DualSubSliceCount));
+}
+
+template <typename Family>
+uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountSharingSubsliceSlm(const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs) {
+    UNRECOVERABLE_IF(slmArgs.threadsPerThreadGroup == 0u);
+
+    const uint32_t maxConcurrentThreadCountPerSubslice = EncodeDispatchKernel<Family>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, slmArgs.grfCount);
+
+    return static_cast<uint32_t>(Math::divideAndRoundUp(maxConcurrentThreadCountPerSubslice, slmArgs.threadsPerThreadGroup));
 }
 
 template <typename Family>
@@ -33,8 +44,8 @@ void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfac
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const ReleaseHelper &releaseHelper) {
-    if (releaseHelper.isAuxSurfaceModeOverrideRequired()) {
+void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {
+    if (hwInfo.caps.auxSurfaceModeOverrideRequired) {
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     } else {
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);

@@ -100,6 +100,9 @@ class AILConfiguration {
     virtual void checkIfOpenVinoDetected() = 0;
     virtual bool getOpenVinoDetected() = 0;
 
+    virtual void checkIfOldOpenVinoVersionDetected() = 0;
+    virtual bool getOldOpenVinoVersionDetected() = 0;
+
   protected:
     virtual void applyExt(HardwareInfo &hwInfo) = 0;
     std::string processName;
@@ -145,12 +148,15 @@ class AILConfigurationHw : public AILConfiguration {
     uint32_t getMicrosecondResolution() override;
     bool getOpenVinoDetected() override;
     void checkIfOpenVinoDetected() override;
+    bool getOldOpenVinoVersionDetected() override;
+    void checkIfOldOpenVinoVersionDetected() override;
 
     bool shouldForceRcs = false;
     bool shouldHandleDivergentBarriers = false;
     bool shouldDisableBindlessAddressing = false;
     bool shouldAdjustMicrosecondResolution = false;
     bool openVinoDetected = false;
+    bool oldOpenVinoVersionDetected = false;
 
   protected:
     void setHandleDivergentBarriers(bool val) override;

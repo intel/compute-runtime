@@ -8,11 +8,12 @@
 #include "shared/source/os_interface/windows/os_context_win.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/windows/sys_calls_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 
@@ -29,9 +30,7 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contex
 
 bool OsContextWin::initializeContext() {
 
-    NEO::EnvironmentVariableReader envReader;
-    bool disableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
-    if (!disableContextCreationFlag) {
+    if (!NEO::debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.get()) {
         if (wddm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
             debuggableContext = wddm.getRootDeviceEnvironment().osInterface->isDebugAttachAvailable() && !isInternalEngine();
         }
@@ -48,14 +47,13 @@ bool OsContextWin::initializeContext() {
 }
 
 void OsContextWin::reInitializeContext() {
-    NEO::EnvironmentVariableReader envReader;
-    bool disableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
-    if (!disableContextCreationFlag && !isPartOfContextGroup()) {
+    if (!NEO::debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.get() && !isPartOfContextGroup()) {
         if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
             stopLatePreemptionStartWait();
             wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
             wddm.destroyContext(wddmContextHandle);
         }
+        releaseMonitoredFenceKmdWaitEvent();
         UNRECOVERABLE_IF(!wddm.createContext(*this));
         auto wddmInterface = wddm.getWddmInterface();
         if (wddmInterface->hwQueuesSupported()) {
@@ -127,6 +125,17 @@ OsContextWin::~OsContextWin() {
             (isPartOfContextGroup() && getPrimaryContext() == nullptr)) {
             wddm.destroyContext(wddmContextHandle);
         }
+    }
+    releaseMonitoredFenceKmdWaitEvent();
+}
+
+void OsContextWin::releaseMonitoredFenceKmdWaitEvent() {
+    std::lock_guard lock(monitoredFenceKmdWaitData.mutex);
+    auto eventHandle = monitoredFenceKmdWaitData.eventHandle;
+    monitoredFenceKmdWaitData.eventHandle = nullptr;
+    monitoredFenceKmdWaitData.pendingFenceValue = 0;
+    if (eventHandle != nullptr) {
+        SysCalls::closeHandle(eventHandle);
     }
 }
 

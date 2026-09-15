@@ -91,6 +91,10 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
     void resetCounterValue();
 
+    uint64_t getProgrammedCounterValue() const { return programmedCounterValue; }
+    void setProgrammedCounterValue(uint64_t value) { programmedCounterValue = value; }
+    bool isCounterSignalPending() const { return programmedCounterValue < counterValue; }
+
     bool isHostStorageDuplicated() const { return duplicatedHostStorage; }
     bool isAtomicDeviceSignalling() const { return atomicDeviceSignalling; }
 
@@ -138,6 +142,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     std::atomic<uint64_t> lastWaitedCounterValue[2] = {0, 0}; // [0] for offset == 0, [1] for offset != 0
 
     uint64_t counterValue = 0;
+    uint64_t programmedCounterValue = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;
@@ -272,11 +277,15 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void assignData(uint64_t counterValue, uint32_t counterOffset, uint32_t devicePartitions, uint32_t hostPartitions, NEO::GraphicsAllocation *deviceCounterAllocation,
                     NEO::GraphicsAllocation *hostCounterAllocation, uint64_t baseDeviceAddress, uint64_t baseHostGpuAddress, uint64_t *baseHostCpuAddress, uint64_t incrementValue, uint64_t aggregatedEventUsageCounter,
                     bool hostStorageDuplicated, bool fromExternalMemory);
-    void assignPatchPreambleData(uint64_t patchPreambleCounter, uint64_t *patchPreambleCounterCpuAddress, uint64_t patchPreambleDeviceAddress, NEO::GraphicsAllocation *patchPreambleAllocation) {
+    void assignPatchPreambleData(uint64_t patchPreambleCounter, uint64_t *patchPreambleCounterCpuAddress,
+                                 uint64_t patchPreambleHostGpuAddress, NEO::GraphicsAllocation *patchPreambleHostAllocation,
+                                 uint64_t patchPreambleDeviceGpuAddress, NEO::GraphicsAllocation *patchPreambleDeviceAllocation) {
         this->patchPreambleCounter = patchPreambleCounter;
         this->patchPreambleCounterCpuAddress = patchPreambleCounterCpuAddress;
-        this->patchPreambleDeviceAddress = patchPreambleDeviceAddress;
-        this->patchPreambleCounterAllocation = patchPreambleAllocation;
+        this->patchPreambleHostGpuAddress = patchPreambleHostGpuAddress;
+        this->patchPreambleHostAllocation = patchPreambleHostAllocation;
+        this->patchPreambleDeviceGpuAddress = patchPreambleDeviceGpuAddress;
+        this->patchPreambleDeviceAllocation = patchPreambleDeviceAllocation;
     }
     uint64_t getPatchPreambleCounter() const {
         return this->patchPreambleCounter;
@@ -284,11 +293,17 @@ class InOrderExecEventHelper : public NonCopyableClass {
     uint64_t *getPatchPreambleHostAddress() const {
         return this->patchPreambleCounterCpuAddress;
     }
-    uint64_t getPatchPreambleDeviceAddress() const {
-        return this->patchPreambleDeviceAddress;
+    uint64_t getPatchPreambleHostGpuAddress() const {
+        return this->patchPreambleHostGpuAddress;
     }
-    NEO::GraphicsAllocation *getPatchPreambleAllocation() const {
-        return this->patchPreambleCounterAllocation;
+    uint64_t getPatchPreambleDeviceGpuAddress() const {
+        return this->patchPreambleDeviceGpuAddress;
+    }
+    NEO::GraphicsAllocation *getPatchPreambleHostAllocation() const {
+        return this->patchPreambleHostAllocation;
+    }
+    NEO::GraphicsAllocation *getPatchPreambleDeviceAllocation() const {
+        return this->patchPreambleDeviceAllocation;
     }
 
     const SharableEventDataHelper &getSharableEventDataHelper() const { return sharableEventDataHelper; }
@@ -331,13 +346,15 @@ class InOrderExecEventHelper : public NonCopyableClass {
 
     NEO::GraphicsAllocation *deviceCounterAllocation = nullptr;
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
-    NEO::GraphicsAllocation *patchPreambleCounterAllocation = nullptr;
+    NEO::GraphicsAllocation *patchPreambleHostAllocation = nullptr;
+    NEO::GraphicsAllocation *patchPreambleDeviceAllocation = nullptr;
 
     uint64_t *baseHostCpuAddress = nullptr;
     uint64_t *patchPreambleCounterCpuAddress = nullptr;
     uint64_t baseHostGpuAddress = 0;
     uint64_t baseDeviceAddress = 0;
-    uint64_t patchPreambleDeviceAddress = 0;
+    uint64_t patchPreambleHostGpuAddress = 0;
+    uint64_t patchPreambleDeviceGpuAddress = 0;
     uint64_t incrementValue = 0;
     uint64_t aggregatedEventUsageCounter = 0;
     uint64_t imported2WayDeviceCounterHandle = 0;

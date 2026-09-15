@@ -10,6 +10,7 @@
 #include "shared/source/helpers/get_info.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/core/source/sampler/sampler.h"
 
 namespace NEO {

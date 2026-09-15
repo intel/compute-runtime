@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/encoders/test_encode_slm_xe2_and_later.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
@@ -219,12 +220,15 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
+    // set unconditionally from the product default, so it is present in every expected mask2 below
+    const uint32_t midthreadPreemptionDelayTimerMask = (rootDeviceEnvironment.getHelper<ProductHelper>().getDefaultMidthreadPreemptionDelayTimer() != 0u) ? 0b111u : 0u;
+
     StateComputeModeProperties properties;
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMask1());
-    EXPECT_EQ(0u, pScm->getMask2());
+    EXPECT_EQ(midthreadPreemptionDelayTimerMask, pScm->getMask2());
     EXPECT_FALSE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
     EXPECT_FALSE(pScm->getLargeGrfMode());
@@ -236,7 +240,7 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMask1());
-    EXPECT_EQ(0u, pScm->getMask2());
+    EXPECT_EQ(midthreadPreemptionDelayTimerMask, pScm->getMask2());
     EXPECT_FALSE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
     EXPECT_FALSE(pScm->getLargeGrfMode());
@@ -249,7 +253,7 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     auto expectedMask = FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask | FamilyType::stateComputeModeLargeGrfModeMask;
     EXPECT_EQ(expectedMask, pScm->getMask1());
-    EXPECT_EQ(FamilyType::stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask, pScm->getMask2());
+    EXPECT_EQ(FamilyType::stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask | midthreadPreemptionDelayTimerMask, pScm->getMask2());
     EXPECT_TRUE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, pScm->getEuThreadSchedulingMode());
     EXPECT_TRUE(pScm->getLargeGrfMode());
@@ -560,24 +564,24 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenXe2ThenPipelineSelectIsNotPr
 XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrderThenDispatchWalkOrderIsProgrammedCorrectly) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
 
     DefaultWalkerType walkerCmd{};
     uint32_t yOrder = 2u;
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[yOrder], HwWalkOrderHelper::yOrderWalk);
 
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, yOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, yOrder, hwInfo);
     EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK, walkerCmd.getDispatchWalkOrder());
 
     uint32_t linearOrder = 0u;
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[linearOrder], HwWalkOrderHelper::linearWalk);
 
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, linearOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, linearOrder, hwInfo);
     EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK, walkerCmd.getDispatchWalkOrder());
 
     auto currentDispatchWalkOrder = walkerCmd.getDispatchWalkOrder();
     uint32_t fakeOrder = 5u;
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, fakeOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, fakeOrder, hwInfo);
     EXPECT_EQ(currentDispatchWalkOrder, walkerCmd.getDispatchWalkOrder()); // no change
 }
 
@@ -614,20 +618,20 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenRequiredWorkGroupOrderWhenCa
 
 XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsFalseWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isAuxSurfaceModeOverrideRequiredResult = false;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.caps.auxSurfaceModeOverrideRequired = false;
     auto originalAuxMode = surfaceState.getAuxiliarySurfaceMode();
 
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), originalAuxMode);
 }
 
 XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsTrueWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isAuxSurfaceModeOverrideRequiredResult = true;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.caps.auxSurfaceModeOverrideRequired = true;
 
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }
@@ -672,4 +676,12 @@ XE2_HPG_CORETEST_F(Xe2HpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsPr
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+}
+
+const std::vector<uint32_t> slmSizesPerThreadGroupXe2 = slmSizesInBytes({0, 1, 2, 4, 8, 16, 24, 32, 48, 64, 96, 128});
+
+using CommandEncodeStatesSlmTestXe2HpgCore = CommandEncodeStatesSlmTestXe2AndLater;
+
+XE2_HPG_CORETEST_F(CommandEncodeStatesSlmTestXe2HpgCore, GivenSlmTotalSizePerThreadGroupEdgeValuesWhenCallingAlignSlmSizePerThreadGroupThenSizeIsAlignedUpToTheNextProgrammableSize) {
+    verifySlmSizePerThreadGroupAlignment<FamilyType>(slmSizesPerThreadGroupXe2);
 }

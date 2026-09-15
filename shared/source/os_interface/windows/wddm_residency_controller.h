@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/spinlock.h"
 
-#include <atomic>
 #include <mutex>
 
 struct _D3DKMT_TRIMNOTIFICATION;

@@ -41,7 +41,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:
     DrmMockCustom *mock = nullptr;
     bool dontTestIoctlInTearDown = false;
-    bool validateResetStats = true;
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
     TestedDrmMemoryManager *memoryManager = nullptr;
@@ -62,7 +61,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         executionEnvironment->incRefInternal();
         debugManager.flags.DeferOsContextInitialization.set(0);
         debugManager.flags.SetAmountOfReusableAllocations.set(0);
-        debugManager.flags.DisableGpuHangDetection.set(0);
 
         environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<GfxFamily>>();
         allocationData.rootDeviceIndex = rootDeviceIndex;
@@ -125,10 +123,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
             mock->ioctlExpected.gemWait += enginesCount;
         }
 
-        if (csr->isUpdateTagFromWaitEnabled() && csr->getTagAllocation() && validateResetStats) {
-            mock->ioctlExpected.getResetStats += enginesCount;
-        }
-
         auto &compilerProductHelper = device->getCompilerProductHelper();
         auto isHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
         if (isHeapless) {
@@ -143,7 +137,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         mock->ioctlExpected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
         mock->ioctlExpected.gemClose += additionalDestroyDeviceIoctls.gemClose.load();
         delete device;
-        mock->ioctlExpected.getResetStats += additionalDestroyDeviceIoctls.getResetStats.load();
         if (dontTestIoctlInTearDown) {
             mock->reset();
         }
@@ -190,28 +183,31 @@ class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
 };
 
 struct MockedMemoryInfo : public NEO::MemoryInfo {
+    using NEO::MemoryInfo::createGemExt;
+    using NEO::MemoryInfo::createGemExtWithSingleRegion;
     using NEO::MemoryInfo::MemoryInfo;
     ~MockedMemoryInfo() override = default;
 
     size_t getMemoryRegionSize(uint32_t memoryBank) const override {
         return 1024u;
     }
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) override {
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, GemCreateExtHint hint, std::optional<bool> deferBacking) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
         return 0;
     }
-    int createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation) override {
-        if (allocSize == 0) {
+    int createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation, GemCreateExtHint hint, std::optional<bool> deferBacking) override {
+        if (allocSize == 0 || failOnCreateGemExtWithSingleRegion) {
             return EINVAL;
         }
         handle = 1u;
         pairHandlePassed = pairHandle;
+        receivedGemCreateExtHint = hint;
         return 0;
     }
-    int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) override {
+    int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation, std::optional<bool> deferBacking) override {
         if (allocSize == 0) {
             return EINVAL;
         }
@@ -234,7 +230,9 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
 
     uint32_t banks = 0;
     int32_t pairHandlePassed = -1;
+    GemCreateExtHint receivedGemCreateExtHint = GemCreateExtHint::none;
     bool isChunkedUsed = false;
+    bool failOnCreateGemExtWithSingleRegion = false;
     bool failOnCreateGemExtWithMultipleRegions = false;
 };
 

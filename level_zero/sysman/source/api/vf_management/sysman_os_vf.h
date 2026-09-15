@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ class OsVf {
     virtual ze_result_t vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) = 0;
     virtual ze_result_t vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) = 0;
     virtual bool vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) = 0;
+    virtual void reInit() = 0;
     static std::unique_ptr<OsVf> create(OsSysman *pOsSysman, uint32_t vfId);
     static uint32_t getNumEnabledVfs(OsSysman *pOsSysman);
     virtual ~OsVf() = default;

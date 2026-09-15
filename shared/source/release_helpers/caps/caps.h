@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include <cstdint>
+
+namespace NEO {
+
+struct Caps {
+    uint32_t kernelBFloat16AtomicCapabilities = 0u;
+    uint32_t kernelFp16AtomicCapabilities = 0u;
+    uint32_t stackSizePerRay = 0u;
+    uint32_t rtasFormat = 0u;
+
+    bool adjustWalkOrderAvailable = false;
+    bool auxSurfaceModeOverrideRequired = false;
+    bool availableSemaphore64 = false;
+    bool bFloat16ConversionSupported = false;
+    bool bindlessAddressingDisabled = false;
+    bool blitImageAllowedForDepthFormat = false;
+    bool deviceConfigStringTileCountIncluded = false;
+    bool deviceConfigStringXeCuSegmentIncluded = false;
+    bool directSubmissionLightSupported = false;
+    bool dotProductAccumulateSystolicSupported = false;
+    bool dummyBlitWaRequired = false;
+    bool forceEmuInt32DivRemSPRequired = false;
+    bool ftrXe2Compression = false;
+    bool globalBindlessAllocatorEnabled = false;
+    bool latePreemptionStartSupported = false;
+    bool localOnlyAllowed = false;
+    bool matrixMultiplyAccumulateSupported = false;
+    bool numRtStacksPerDssFixedValue = false;
+    bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = false;
+    bool pipeControlPriorToPipelineSelectWaRequired = false;
+    bool postImageWriteFlushRequired = false;
+    bool preImageReadFlushRequired = false;
+    bool programAdditionalStallPriorToBarrierWithTimestamp = false;
+    bool programAllStateComputeCommandFieldsWARequired = false;
+    bool queryPeerAccess = false;
+    bool rayTracingSupported = false;
+    bool rcsExposureDisabled = false;
+    bool reducedSurfaceStateSupported = false;
+    bool singleDispatchRequiredForMultiCCS = false;
+    bool splitMatrixMultiplyAccumulateSupported = false;
+
+    constexpr bool operator==(const Caps &) const = default;
+};
+
+} // namespace NEO

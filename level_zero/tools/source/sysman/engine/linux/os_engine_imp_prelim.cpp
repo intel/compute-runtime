@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
@@ -59,7 +60,7 @@ static ze_result_t readBusynessFromGroupFd(PmuInterface *pPmuInterface, std::pai
 
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
     if (ret < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", NEO_FUNCTION_NAME, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     // In data[], First u64 is "active time", And second u64 is "timestamp". Both in ticks
@@ -82,7 +83,7 @@ static ze_result_t openPmuHandlesForVfs(uint32_t numberOfVfs,
             fd[1] = pPmuInterface->pmuInterfaceOpen(vfConfigs[i].second, static_cast<int>(fd[0]),
                                                     PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
             if (fd[1] < 0) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks PMU Handle \n", __FUNCTION__);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks PMU Handle \n", NEO_FUNCTION_NAME);
                 NEO::SysCalls::close(static_cast<int>(fd[0]));
                 fd[0] = -1;
             }
@@ -144,7 +145,7 @@ ze_result_t LinuxEngineImpPrelim::getActivityExt(uint32_t *pCount, zes_engine_st
 
     if (fdList.size() == 0) {
         DEBUG_BREAK_IF(true);
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): unexpected fdlist\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): unexpected fdlist\n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -196,7 +197,7 @@ void LinuxEngineImpPrelim::checkErrorNumberAndUpdateStatus() {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
         initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     } else {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", NEO_FUNCTION_NAME);
         initStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 }
@@ -228,7 +229,7 @@ void LinuxEngineImpPrelim::init() {
     errno = 0;
     fd[0] = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
     if (fd[0] < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", NEO_FUNCTION_NAME);
         checkErrorNumberAndUpdateStatus();
         return;
     }
@@ -244,7 +245,7 @@ void LinuxEngineImpPrelim::init() {
     fd[1] = pPmuInterface->pmuInterfaceOpen(totalTickConfig, static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
 
     if (fd[1] < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", NEO_FUNCTION_NAME);
         checkErrorNumberAndUpdateStatus();
         NEO::SysCalls::close(static_cast<int>(fd[0]));
         return;
@@ -257,7 +258,7 @@ void LinuxEngineImpPrelim::init() {
         auto status = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
         if (status != ZE_RESULT_SUCCESS) {
             numberOfVfs = 0;
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed or number of Vfs == 0 \n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed or number of Vfs == 0 \n", NEO_FUNCTION_NAME);
             return;
         }
 

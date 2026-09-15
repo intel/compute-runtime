@@ -18,7 +18,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/kernel/grf_config.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 using Family = NEO::XeHpcCoreFamily;
@@ -66,9 +66,6 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
     stateComputeMode.setMaskBits(maskBits);
 
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    productHelper.updateScmCommand(&stateComputeMode, properties);
-
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();
     *buffer = stateComputeMode;
 }
@@ -113,7 +110,7 @@ void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &wa
 
 template <>
 template <typename WalkerType>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}
 
 } // namespace NEO
 

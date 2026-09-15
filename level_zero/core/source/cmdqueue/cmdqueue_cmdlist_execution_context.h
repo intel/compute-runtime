@@ -49,10 +49,10 @@ struct CommandListExecutionContext {
     uint64_t currentGpuAddressForChainedBbStart = 0;
     uint64_t basePatchPreambleGpuAddress = 0;
     uint64_t patchPreambleRequiredCounter = 0;
+    uint64_t patchPreambleRequiredDevicePostSyncGpuAddress = 0;
 
     size_t spaceForResidency = 10;
     size_t bufferSpaceForPatchPreamble = 0;
-    size_t totalNoopSpaceForPatchPreamble = 0;
     CommandList *firstCommandList = nullptr;
     CommandList *lastCommandList = nullptr;
     void *currentPatchForChainedBbStart = nullptr;
@@ -69,7 +69,6 @@ struct CommandListExecutionContext {
     NEO::PreemptionMode statePreemption{};
     uint32_t perThreadScratchSpaceSlot0Size = 0;
     uint32_t perThreadScratchSpaceSlot1Size = 0;
-    uint32_t totalActiveScratchPatchElements = 0;
     UnifiedMemoryControls unifiedMemoryControls{};
 
     bool anyCommandListWithCooperativeKernels = false;

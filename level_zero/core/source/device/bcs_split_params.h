@@ -9,6 +9,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <cstddef>
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -42,9 +43,10 @@ struct RegionCopy {
 
 using CopyParams = std::variant<MemCopy, RegionCopy>;
 
-struct MarkerEvent {
-    L0::Event *event = nullptr;
-    uint32_t index = 0;
+struct SplitEventPackage {
+    L0::Event *marker = nullptr;
+    L0::Event *barrier = nullptr;
+    StackVec<L0::Event *, csrContainerSize> subcopyEvents;
     bool reservedForRecordedCmdList = false;
 };
 
@@ -56,9 +58,7 @@ enum class BcsSplitMode : uint8_t {
 
 struct EventsResources {
     std::vector<L0::EventPool *> pools;
-    std::vector<L0::Event *> barrier;
-    std::vector<L0::Event *> subcopy;
-    std::vector<BcsSplitParams::MarkerEvent> marker;
+    std::vector<std::unique_ptr<SplitEventPackage>> packages;
     std::vector<void *> allocsForAggregatedEvents;
     size_t currentAggregatedAllocOffset = 0;
     size_t createdFromLatestPool = 0u;

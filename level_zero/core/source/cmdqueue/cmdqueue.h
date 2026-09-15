@@ -22,7 +22,7 @@
 #include <mutex>
 #include <vector>
 
-struct _ze_command_queue_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_COMMAND_QUEUE> {};
+struct _ze_command_queue_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_command_queue_handle_t>);
 
 namespace NEO {
@@ -153,9 +153,11 @@ struct CommandQueue : _ze_command_queue_handle_t {
 
     void getPatchPreambleFullData(uint64_t &outCounterValue,
                                   uint64_t *&outHostAddress,
-                                  uint64_t &outDeviceAddress,
-                                  NEO::GraphicsAllocation *&outGraphicsAllocation) {
-        patchPreambleCounter.getPatchPreambleFullData(this->device, outCounterValue, outHostAddress, outDeviceAddress, outGraphicsAllocation);
+                                  uint64_t &outHostGpuAddress,
+                                  NEO::GraphicsAllocation *&outHostGraphicsAllocation,
+                                  uint64_t &outDeviceGpuAddress,
+                                  NEO::GraphicsAllocation *&outDeviceNodeGraphicsAllocation) {
+        patchPreambleCounter.getPatchPreambleFullData(this->device, outCounterValue, outHostAddress, outHostGpuAddress, outHostGraphicsAllocation, outDeviceGpuAddress, outDeviceNodeGraphicsAllocation);
     }
 
   protected:
@@ -180,6 +182,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
     NEO::LinearStream *startingCmdBuffer = nullptr;
+    NEO::GraphicsAllocation *cachedSipAllocation = nullptr;
 
     uint32_t partitionCount = 1;
     uint32_t activeSubDevices = 1;
@@ -206,8 +209,6 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool patchingPreamble = false;
     bool saveWaitForPreamble = false;
     bool csrClientRegistered = false;
-
-    NEO::GraphicsAllocation *cachedSipAllocation = nullptr;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandStreamReceiver *csr,

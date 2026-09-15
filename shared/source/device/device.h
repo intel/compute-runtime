@@ -35,6 +35,7 @@ class FrontEndController;
 class GfxCoreHelper;
 class GmmClientContext;
 class GmmHelper;
+class CompilerReleaseHelper;
 class GraphicsAllocation;
 class ISAPoolAllocator;
 class OSTime;
@@ -205,6 +206,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
     MOCKABLE_VIRTUAL const ReleaseHelper &getReleaseHelper() const;
+    MOCKABLE_VIRTUAL const CompilerReleaseHelper &getCompilerReleaseHelper() const;
     MOCKABLE_VIRTUAL AILConfiguration *getAilConfigurationHelper() const;
     ISAPoolAllocator &getIsaPoolAllocator() {
         return *isaPoolAllocator;
@@ -227,8 +229,10 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     CommandBufferPoolAllocator &getCommandBufferPoolAllocator() {
         return commandBufferPoolAllocator;
     }
+    SemaphorePoolAllocator &getSemaphorePoolAllocator() {
+        return this->semaphorePoolAllocator;
+    }
     UsmMemAllocPoolsFacade &getDeviceUsmMemAllocPoolFacade();
-    UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr);
     UsmMemAllocPool *getUsmConstantSurfaceAllocPool() {
         return usmConstantSurfaceAllocPool.get();
     }
@@ -300,6 +304,8 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         this->crossAccessEnabledDevices[peerDevice->getRootDeviceIndex()] = value;
         peerDevice->crossAccessEnabledDevices[this->getRootDeviceIndex()] = value;
     }
+
+    MOCKABLE_VIRTUAL bool initializeSpirvQueriesFromIGC();
 
   protected:
     Device() = delete;
@@ -384,6 +390,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     GlobalSurfacePoolAllocator globalSurfacePoolAllocator;
     ConstantSurfacePoolAllocator constantSurfacePoolAllocator;
     CommandBufferPoolAllocator commandBufferPoolAllocator;
+    SemaphorePoolAllocator semaphorePoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsFacade> deviceUsmMemAllocPoolFacade;
     std::unique_ptr<UsmMemAllocPool> usmConstantSurfaceAllocPool;
     std::unique_ptr<UsmMemAllocPool> usmGlobalSurfaceAllocPool;

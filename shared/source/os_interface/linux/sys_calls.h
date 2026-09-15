@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/source/os_interface/sys_calls_common.h"
 
+#include <cstdio>
 #include <dirent.h>
 #include <fcntl.h>
-#include <iostream>
 #include <poll.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
@@ -22,6 +22,7 @@
 
 namespace NEO {
 namespace SysCalls {
+void sync();
 int fsync(int fd);
 int close(int fd);
 int mkdir(const std::string &path);
@@ -40,6 +41,9 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noexcept;
 int munmap(void *addr, size_t size) noexcept;
+// The MREMAP_/MAP_ flags stay in the Linux-only wrapper; they are not visible to every build.
+void *mremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept;
+void *mmapFixedNoReplace(void *address, size_t size) noexcept;
 ssize_t read(int fd, void *buf, size_t count);
 ssize_t write(int fd, const void *buf, size_t count);
 int fcntl(int fd, int cmd);
@@ -79,6 +83,10 @@ int dup(int oldfd);
 pid_t getpid();
 char **getEnviron();
 int getrlimit(int resource, struct rlimit *rlim);
+FILE *fdopen(int fd, const char *mode);
+char *fgets(char *s, int size, FILE *stream);
+int fclose(FILE *stream);
+int setvbuf(FILE *stream, char *buf, int mode, size_t size);
 
 } // namespace SysCalls
 } // namespace NEO

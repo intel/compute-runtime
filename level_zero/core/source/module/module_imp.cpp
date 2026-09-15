@@ -14,6 +14,7 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
@@ -56,10 +57,10 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/helpers/pnext.h"
 #include "level_zero/core/source/kernel/kernel.h"
-#include "level_zero/core/source/module/defines_ext.h"
 #include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/modules_package_binary.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include "program_debug_data.h"
 
@@ -114,11 +115,11 @@ void ModuleTranslationUnit::freeGlobalBufferAllocation(std::unique_ptr<NEO::Shar
 
     auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
 
-    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmConstantSurfaceAllocPool(), gpuAddress, false)) {
+    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmConstantSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::none)) {
         return;
     }
 
-    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmGlobalSurfaceAllocPool(), gpuAddress, false)) {
+    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmGlobalSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::none)) {
         return;
     }
 
@@ -197,7 +198,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, BuildOptions::hasBufferOffsetArg);
     auto &neoDevice = *device->getNEODevice();
 
-    if (neoDevice.getExecutionEnvironment()->isFP64EmulationEnabled()) {
+    if (NEO::debugManager.flags.NEO_FP64_EMULATION.get()) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::enableFP64GenEmu);
     }
 
@@ -468,7 +469,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         this->isGeneratedByIgc = singleDeviceBinary.generator == NEO::GeneratorType::igc;
 
         bool rebuild = NEO::debugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
-        rebuild |= !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
+        rebuild |= !NEO::debugManager.flags.EnvOneapiPvcSendWarWa.get();
 
         auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
@@ -572,8 +573,8 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     if (slmNeeded > slmAvailable) {
         CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         driverHandle->setErrorDescription(std::string(str.get()));
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
-                     static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        this->updateBuildLog(std::string(str.get()));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
@@ -1017,11 +1018,14 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
             if (oclExtensionsInternalOptions != nullptr) {
                 NEO::CompilerOptions::concatenateAppend(internalBuildOptions, oclExtensionsInternalOptions);
             }
-            return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
-                                                         static_cast<uint32_t>(desc->inputSize),
-                                                         buildOptions.c_str(),
-                                                         internalBuildOptions.c_str(),
-                                                         desc->pConstants);
+            ArrayRef<const uint8_t> il(reinterpret_cast<const uint8_t *>(desc->pInputModule), desc->inputSize);
+            auto ilCodeType = NEO::isLlvmBitcode(il) ? IGC::CodeType::llvmBc : IGC::CodeType::spirV;
+            return this->translationUnit->buildFromIntermediate(ilCodeType,
+                                                                reinterpret_cast<const char *>(desc->pInputModule),
+                                                                static_cast<uint32_t>(desc->inputSize),
+                                                                buildOptions.c_str(),
+                                                                internalBuildOptions.c_str(),
+                                                                desc->pConstants);
         } else if (desc->format == ZE_MODULE_FORMAT_OCLC) {
             this->isLlvmBitcode = NEO::CompilerOptions::contains(buildOptions, NEO::CompilerOptions::createLibrary);
             if (headersProgExt) {
@@ -1042,14 +1046,17 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
                                                           static_cast<uint32_t>(desc->inputSize),
                                                           buildOptions.c_str(),
                                                           internalBuildOptions.c_str());
-        } else {
+        } else if (desc->format == ZE_MODULE_FORMAT_PISA) {
             this->isFunctionSymbolExportEnabled = true;
             this->isGlobalSymbolExportEnabled = true;
-            return this->translationUnit->buildExt(desc->format,
-                                                   reinterpret_cast<const char *>(desc->pInputModule),
-                                                   static_cast<uint32_t>(desc->inputSize),
-                                                   buildOptions.c_str(),
-                                                   internalBuildOptions.c_str());
+            return this->translationUnit->buildFromIntermediate(NEO::pisaCodeType,
+                                                                reinterpret_cast<const char *>(desc->pInputModule),
+                                                                static_cast<uint32_t>(desc->inputSize),
+                                                                buildOptions.c_str(),
+                                                                internalBuildOptions.c_str(),
+                                                                nullptr);
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ENUMERATION;
         }
     }
 }
@@ -1211,7 +1218,7 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         this->isFunctionSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
         this->isGlobalSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
 
-        if (getDevice()->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv() == false) {
+        if (NEO::debugManager.flags.EnvOneapiPvcSendWarWa.get() == false) {
             NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::optDisableSendWarWa);
         }
     }
@@ -1627,6 +1634,11 @@ bool ModuleImp::linkInternalRequiredLibsModule() {
     auto hModules = StackVec<ze_module_handle_t, 4>{this->toHandle()};
     for (const auto &libName : translationUnit->programInfo.requiredLibs) {
         auto libModule = this->device->getRequiredLibModule(libName, moduleBuildLog);
+        if (nullptr == libModule) {
+            this->isFullyLinked = false;
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Linking required_libs failed: dependency (%s) unavailable\n", libName.c_str());
+            return false;
+        }
         hModules.push_back(libModule->toHandle());
     }
     ze_module_build_log_handle_t hLinkLog = {};

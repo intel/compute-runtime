@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -29,18 +28,15 @@ XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, givenXeHpgCoreWhenCheckExtensionsThenDe
 
 XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, giveDeviceExtensionsWhenDeviceCapsInitializedThenAddProperExtensions) {
     const auto &caps = pClDevice->getDeviceInfo();
-    const auto &releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    const auto &hwInfoCaps = pClDevice->getDevice().getHardwareInfo().caps;
 
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_create_buffer_with_properties")));
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_local_block_io")));
 
-    bool expectMatrixMultiplyAccumulateExtensions = releaseHelper.isMatrixMultiplyAccumulateSupported();
-    EXPECT_EQ(expectMatrixMultiplyAccumulateExtensions, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
-    bool expectSpliyMatrixMultiplyAccumulateExtensions = releaseHelper.isSplitMatrixMultiplyAccumulateSupported();
-    EXPECT_EQ(expectSpliyMatrixMultiplyAccumulateExtensions, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
+    EXPECT_EQ(hwInfoCaps.matrixMultiplyAccumulateSupported, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
+    EXPECT_EQ(hwInfoCaps.splitMatrixMultiplyAccumulateSupported, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
 
-    bool expectBFloat16ConversionsExtension = releaseHelper.isBFloat16ConversionSupported();
-    EXPECT_EQ(expectBFloat16ConversionsExtension, hasSubstr(caps.deviceExtensions, std::string("cl_intel_bfloat16_conversions")));
+    EXPECT_EQ(hwInfoCaps.bFloat16ConversionSupported, hasSubstr(caps.deviceExtensions, std::string("cl_intel_bfloat16_conversions")));
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, givenXeHpgCoreWhenCheckingCapsThenDeviceDoesNotSupportIndependentForwardProgress) {

@@ -676,6 +676,19 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetPowerUsageTh
     }
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingReInitOnPowerHandleContextThenHandlesRemainValid) {
+    init(true);
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    ASSERT_EQ(powerHandleComponentCount, static_cast<uint32_t>(handles.size()));
+
+    pSysmanDeviceImp->pPowerHandleContext->reInit();
+
+    EXPECT_EQ(powerHandleComponentCount, static_cast<uint32_t>(pSysmanDeviceImp->pPowerHandleContext->handleList.size()));
+    for (auto pPower : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        EXPECT_NE(nullptr, pPower);
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

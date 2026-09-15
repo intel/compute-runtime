@@ -15,7 +15,6 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <unordered_map>
 #include <vector>
 
 namespace NEO {

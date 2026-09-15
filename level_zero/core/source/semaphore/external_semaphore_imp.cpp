@@ -17,7 +17,7 @@ namespace L0 {
 
 void ExternalSemaphoreImp::semaphoreWait(const ExternalSemaphoreOperationData &operationData) {
     for (auto [semaphore, value] : operationData.semaphores) {
-        bool result = semaphore->neoExternalSemaphore->enqueueWait(&value);
+        [[maybe_unused]] bool result = semaphore->neoExternalSemaphore->enqueueWait(&value);
         PRINT_STRING(NEO::debugManager.flags.PrintExternalSemaphoreOperationResults.get(), stdout,
                      "ExternalSemaphoreImp::semaphoreWait semaphore=%p value=%llu result=%d\n",
                      static_cast<void *>(semaphore),
@@ -28,7 +28,7 @@ void ExternalSemaphoreImp::semaphoreWait(const ExternalSemaphoreOperationData &o
 
 void ExternalSemaphoreImp::semaphoreSignal(const ExternalSemaphoreOperationData &operationData) {
     for (auto [semaphore, value] : operationData.semaphores) {
-        bool result = semaphore->neoExternalSemaphore->enqueueSignal(&value);
+        [[maybe_unused]] bool result = semaphore->neoExternalSemaphore->enqueueSignal(&value);
         PRINT_STRING(NEO::debugManager.flags.PrintExternalSemaphoreOperationResults.get(), stdout,
                      "ExternalSemaphoreImp::semaphoreSignal semaphore=%p value=%llu result=%d\n",
                      static_cast<void *>(semaphore),
@@ -121,9 +121,11 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(this->device->getOsInterface(), externalSemaphoreType, handle, fd, name);
+    NEO::ExternalSemaphore::ImportResult importResult = NEO::ExternalSemaphore::ImportResult::success;
+    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(this->device->getOsInterface(), externalSemaphoreType, handle, fd, name, importResult);
     if (!this->neoExternalSemaphore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return (importResult == NEO::ExternalSemaphore::ImportResult::invalidResource) ? ZE_RESULT_ERROR_INVALID_ARGUMENT
+                                                                                       : ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     return ZE_RESULT_SUCCESS;

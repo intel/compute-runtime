@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mcl_types.h"
@@ -52,6 +53,8 @@ struct KernelData {
     uint8_t regionGroupBarrierBufferPointerSize = 0;
     uint8_t numLocalIdChannels = 3;
 
+    NEO::KernelDescriptor::SlmAllocationMode slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::compilerResolved;
+
     bool passInlineData = false;
     bool requiresWorkgroupWalkOrder = false;
     bool usesSyncBuffer = false;
@@ -92,6 +95,8 @@ struct MutableKernelDispatchParameters {
     uint32_t numThreadsPerThreadGroup = 0;
     uint32_t threadExecutionMask = 0;
     uint32_t maxCooperativeGroupCount = 0;
+    uint32_t systemMemoryAllocsCount = 0u;
+    uint32_t importedAllocationsCount = 0u;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     bool generationOfLocalIdsByRuntime = false;

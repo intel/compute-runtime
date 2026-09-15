@@ -88,6 +88,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                        cl_event *oclEvent,
                                        cl_uint cmdType);
 
+    static bool isInPlaceSharingAcquireReleaseEnabled(cl_uint cmdType);
+
     void storeDependencies(cl_uint numEvents, const cl_event *eventWaitList);
     void clearDependencies();
     bool hasDependencies();
@@ -107,6 +109,20 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     };
     static void acquireHelper(void *userData);
     static void releaseHelper(void *userData);
+
+    cl_int acquireSharedObjectsInPlace(cl_uint numObjects,
+                                       const cl_mem *memObjects,
+                                       cl_uint numEventsInWaitList,
+                                       const cl_event *eventWaitList,
+                                       cl_event *oclEvent,
+                                       cl_uint cmdType);
+
+    cl_int releaseSharedObjectsInPlace(cl_uint numObjects,
+                                       const cl_mem *memObjects,
+                                       cl_uint numEventsInWaitList,
+                                       const cl_event *eventWaitList,
+                                       cl_event *oclEvent,
+                                       cl_uint cmdType);
 
     std::vector<cl_queue_properties> queueProperties{};
     std::vector<NEO::LEO::Event *> dependencyEvents{};

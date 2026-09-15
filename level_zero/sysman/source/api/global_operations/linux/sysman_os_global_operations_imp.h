@@ -59,8 +59,10 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     ze_result_t getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) override;
     ze_result_t memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) override;
     ze_result_t getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) override;
-    ze_result_t getDeviceHealthExp(zes_intel_device_health_status_exp_t *pHealth) override;
-    ze_result_t setDeviceHealthExp(zes_intel_device_health_status_exp_t health, const char *pReason, const uint32_t authTokenLength, const char *pAuthToken) override;
+    ze_result_t getDeviceHealthStatus(zes_device_health_status_ext_t *pHealth) override;
+    ze_result_t setDeviceHealthStatus(zes_device_health_status_ext_t health) override;
+    ze_result_t getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) override;
+    void clearUuidCache() override;
     LinuxGlobalOperationsImp() = default;
     LinuxGlobalOperationsImp(OsSysman *pOsSysman);
     ~LinuxGlobalOperationsImp() override = default;
@@ -107,6 +109,12 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     ze_result_t getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize);
     ze_result_t resetImpl(ze_bool_t force, zes_reset_type_t resetType);
     bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
+    zes_device_state_ext_flags_t getDeviceStateExtFlags();
+    ze_result_t readPowerOffReasons(zes_intel_device_power_off_reason_exp_flags_t &reasons);
+    std::string getAlertReasonFilePath();
+    bool isPowerOffPending();
+    MOCKABLE_VIRTUAL bool isDevicePciPathAccessible();
+    MOCKABLE_VIRTUAL bool isDrmIoctlOk();
 };
 
 } // namespace Sysman

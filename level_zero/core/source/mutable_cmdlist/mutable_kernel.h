@@ -12,8 +12,6 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_variable_descriptor.h"
 #include <level_zero/ze_api.h>
 
-#include <vector>
-
 namespace L0 {
 struct Kernel;
 } // namespace L0

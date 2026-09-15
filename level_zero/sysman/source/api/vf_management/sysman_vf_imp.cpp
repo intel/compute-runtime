@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,10 @@ ze_result_t VfImp::vfGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2
 
 ze_result_t VfImp::vfGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) {
     return pOsVf->vfOsGetEngineUtilization(pCount, pEngineUtil);
+}
+
+void VfImp::reInit() {
+    pOsVf->reInit();
 }
 
 VfImp::VfImp(OsSysman *pOsSysman, uint32_t vfId) {

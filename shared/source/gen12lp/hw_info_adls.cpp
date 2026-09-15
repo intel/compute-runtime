@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_adls.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 
 #include "aubstream/engine_node.h"
 
@@ -96,7 +97,7 @@ void ADLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
@@ -109,6 +110,7 @@ void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
@@ -124,8 +126,8 @@ const HardwareInfo AdlsHwConfig::hwInfo = {
     ADLS::capabilityTable};
 
 GT_SYSTEM_INFO AdlsHwConfig::gtSystemInfo = {0};
-void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
@@ -150,9 +152,9 @@ void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
 
 const HardwareInfo ADLS::hwInfo = AdlsHwConfig::hwInfo;
 
-void setupADLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
-    AdlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void setupADLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
+    AdlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
-void (*ADLS::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupADLSHardwareInfoImpl;
+void (*ADLS::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupADLSHardwareInfoImpl;
 } // namespace NEO

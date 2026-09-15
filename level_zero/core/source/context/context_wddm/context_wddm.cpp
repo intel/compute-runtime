@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/debug_helpers.h"
+
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 
@@ -36,8 +38,8 @@ bool Context::isShareableMemory(const void *exportDesc, bool exportableMemory, N
 void Context::closeExternalHandle(uint64_t) {
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle) {
-    return this->driverHandle->importNTHandle(hDevice, reinterpret_cast<void *>(handle), allocationType, isHostIpcAllocation, processId, compressedMemory);
+std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) {
+    return this->driverHandle->importNTHandle(hDevice, reinterpret_cast<void *>(handle), allocationType, isHostIpcAllocation, processId, compressedMemory, physicalOffset);
 }
 
 void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {
@@ -60,7 +62,12 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
                                                                           unsigned int processId,
                                                                           uint64_t cacheID,
                                                                           void *reservedHandleData,
-                                                                          NEO::Device *neoDevice) {
+                                                                          NEO::Device *neoDevice,
+                                                                          bool useCache) {
     return {handle, true};
+}
+
+void Context::releaseImportedRangeChunkHandles(const std::vector<std::pair<uint64_t, uint64_t>> &importedChunks) {
+    UNRECOVERABLE_IF(!importedChunks.empty());
 }
 } // namespace L0

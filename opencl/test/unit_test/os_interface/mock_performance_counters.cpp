@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,10 +93,10 @@ uint32_t MockMetricsLibrary::hwCountersGetGpuReportSize() {
 // MockMetricsLibrary::commandBufferGet
 //////////////////////////////////////////////////////
 bool MockMetricsLibrary::commandBufferGet(CommandBufferData_1_0 &data) {
-    MI_REPORT_PERF_COUNT mirpc = {};
-    mirpc.init();
+    const uint32_t noop = 0;
     DEBUG_BREAK_IF(data.Data == nullptr);
-    memcpy(data.Data, &mirpc, sizeof(mirpc));
+    memcpy(data.Data, &noop, sizeof(noop));
+    commandBufferGetCalls.push_back(data);
     return true;
 }
 
@@ -104,7 +104,7 @@ bool MockMetricsLibrary::commandBufferGet(CommandBufferData_1_0 &data) {
 // MockMetricsLibrary::commandBufferGetSize
 //////////////////////////////////////////////////////
 bool MockMetricsLibrary::commandBufferGetSize(const CommandBufferData_1_0 &commandBufferData, CommandBufferSize_1_0 &commandBufferSize) {
-    commandBufferSize.GpuMemorySize = sizeof(MI_REPORT_PERF_COUNT);
+    commandBufferSize.GpuMemorySize = sizeof(uint32_t);
     return true;
 }
 

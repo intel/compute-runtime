@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,10 @@ ze_result_t FirmwareImp::firmwareSetSecurityVersion() {
 
 ze_result_t FirmwareImp::firmwareGetConsoleLogs(size_t *pSize, char *pFirmwareLog) {
     return pOsFirmware->osGetConsoleLogs(pSize, pFirmwareLog);
+}
+
+void FirmwareImp::reInit() {
+    pOsFirmware->reInit();
 }
 
 FirmwareImp::FirmwareImp(OsSysman *pOsSysman, const std::string &initializedFwType) {

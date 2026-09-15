@@ -16,8 +16,10 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_mem_obj_helper.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
@@ -26,6 +28,11 @@
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
+
+namespace NEO {
+namespace LEO {
+
+extern "C" {
 
 cl_mem CL_API_CALL clCreateBuffer(cl_context context,
                                   cl_mem_flags flags,
@@ -81,6 +88,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     if (inputMemObjFound) {
         ptr = reinterpret_cast<void *>(inputMemObjHandle);
     } else {
+        auto pCtx = NEO::LEO::castToObject<NEO::LEO::Context>(context);
         ze_memory_compression_hints_ext_desc_t compressionHints{ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC, nullptr};
         if (memoryProperties.flags.compressedHint) {
             compressionHints.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
@@ -88,9 +96,12 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
             compressionHints.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED;
         }
 
-        auto allocData = NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(hostPtr);
+        const bool preferHostMemory = memoryProperties.flags.forceHostMemory ||
+                                      pCtx->getClDevice()->getHardwareInfo().capabilityTable.isIntegratedDevice;
+
+        auto allocData = pCtx->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(hostPtr);
         if (memoryProperties.flags.useHostPtr && allocData) {
-            auto rootDeviceIndex = NEO::LEO::castToObject<NEO::LEO::Context>(context)->getClDevice()->getRootDeviceIndex();
+            auto rootDeviceIndex = pCtx->getClDevice()->getRootDeviceIndex();
             auto allocationEndAddress = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + allocData->size;
             auto bufferEndAddress = castToUint64(hostPtr) + size;
 
@@ -101,18 +112,26 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                 ptr = cpuPtr = hostPtr;
                 copyFromHostPtr = false;
             }
-        } else if (memoryProperties.flags.forceHostMemory || (NEO::LEO::castToObject<NEO::LEO::Context>(context)->getClDevice()->getHardwareInfo().capabilityTable.isIntegratedDevice && !memoryProperties.flags.useHostPtr)) {
-            ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0};
-            ret = zeMemAllocHost(NEO::LEO::castToObject<NEO::LEO::Context>(context)->getL0ContextHandle(), &hostAllocDesc, size, 0, &ptr);
-            cpuPtr = ptr;
         } else {
-            auto pCtx = NEO::LEO::castToObject<NEO::LEO::Context>(context);
-            ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0, 0};
-            if (pCtx->isSingleDeviceContext()) {
-                ret = zeMemAllocDevice(pCtx->getL0ContextHandle(), &deviceAllocDesc, size, 0, pCtx->getL0Object()->getDevices().begin()->second, &ptr);
+            ptr = NEO::LEO::Buffer::tryImportUserPtr(pCtx, hostPtr, size, memoryProperties, preferHostMemory);
+            if (nullptr != ptr) {
+                copyFromHostPtr = false;
             } else {
-                ze_host_mem_alloc_desc_t sharedHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, 0};
-                ret = zeMemAllocShared(pCtx->getL0ContextHandle(), &deviceAllocDesc, &sharedHostDesc, size, 0, nullptr, &ptr);
+                const bool allocateHostMemory = memoryProperties.flags.forceHostMemory ||
+                                                (preferHostMemory && !memoryProperties.flags.useHostPtr);
+                if (allocateHostMemory) {
+                    ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0};
+                    ret = zeMemAllocHost(pCtx->getL0ContextHandle(), &hostAllocDesc, size, 0, &ptr);
+                    cpuPtr = ptr;
+                } else {
+                    ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0, 0};
+                    if (pCtx->isSingleDeviceContext()) {
+                        ret = zeMemAllocDevice(pCtx->getL0ContextHandle(), &deviceAllocDesc, size, 0, pCtx->getL0Object()->getDevices().begin()->second, &ptr);
+                    } else {
+                        ze_host_mem_alloc_desc_t sharedHostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, 0};
+                        ret = zeMemAllocShared(pCtx->getL0ContextHandle(), &deviceAllocDesc, &sharedHostDesc, size, 0, nullptr, &ptr);
+                    }
+                }
             }
         }
     }
@@ -207,21 +226,25 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                                                void *hostPtr,
                                                cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateImageWithProperties, &context, &properties, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
-    if (!pContext) {
-        if (errcodeRet) {
-            *errcodeRet = CL_INVALID_CONTEXT;
-        }
+    if (!pContext) [[unlikely]] {
+        err.set(CL_INVALID_CONTEXT);
         cl_mem tracingRetVal = nullptr;
         TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
         return tracingRetVal;
     }
 
     if (!pContext->getClDevice()->getHardwareInfo().capabilityTable.supportsImages) {
-        if (errcodeRet) {
-            *errcodeRet = CL_INVALID_OPERATION;
-        }
+        err.set(CL_INVALID_OPERATION);
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    if (imageDesc == nullptr) [[unlikely]] {
+        err.set(CL_INVALID_IMAGE_DESCRIPTOR);
         cl_mem tracingRetVal = nullptr;
         TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
         return tracingRetVal;
@@ -232,20 +255,37 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     cl_mem_flags_intel emptyFlagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if ((false == NEO::LEO::ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext))) {
-        if (errcodeRet) {
-            *errcodeRet = CL_INVALID_VALUE;
-        }
+                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext)) ||
+        (false == NEO::MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, emptyFlagsIntel, imageDesc->mem_object,
+                                                                      *pContext))) [[unlikely]] {
+        err.set(CL_INVALID_VALUE);
         cl_mem tracingRetVal = nullptr;
         TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
         return tracingRetVal;
     }
 
     if ((false == NEO::LEO::ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext))) {
-        if (errcodeRet) {
-            *errcodeRet = CL_INVALID_VALUE;
-        }
+                                                                            NEO::LEO::ClMemoryPropertiesHelper::ObjType::image, *pContext)) ||
+        (false == NEO::MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object,
+                                                                      *pContext))) [[unlikely]] {
+        err.set(CL_INVALID_PROPERTY);
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    const bool isHostPtrUsed = (hostPtr != nullptr);
+    const bool areHostPtrFlagsUsed = memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr;
+    if (isHostPtrUsed != areHostPtrFlagsUsed) [[unlikely]] {
+        err.set(CL_INVALID_HOST_PTR);
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    const auto formatResult = NEO::LEO::validateImageFormat(imageFormat);
+    if (formatResult != CL_SUCCESS) [[unlikely]] {
+        err.set(formatResult);
         cl_mem tracingRetVal = nullptr;
         TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
         return tracingRetVal;
@@ -259,6 +299,22 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
 
     bool inputMemObjFound = false;
     auto inputMemObjHandle = NEO::LEO::MemObj::getMemObjProperties<uintptr_t>(properties, CL_L0_MEM_OBJ_HANDLE, &inputMemObjFound);
+
+    if (!inputMemObjFound && imageDesc->mem_object == nullptr) {
+        const auto validationResult = NEO::LEO::validateStandaloneImageDescriptor(*pContext->getClDevice(),
+                                                                                  memoryProperties,
+                                                                                  flags,
+                                                                                  imageFormat,
+                                                                                  imageDesc,
+                                                                                  hostPtr);
+        if (validationResult != CL_SUCCESS) [[unlikely]] {
+            err.set(validationResult);
+            cl_mem tracingRetVal = nullptr;
+            TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+            return tracingRetVal;
+        }
+    }
+
     if (inputMemObjFound) {
         imageHandle = reinterpret_cast<ze_image_handle_t>(inputMemObjHandle);
         auto l0Image = static_cast<L0::ImageImp *>(L0::Image::fromHandle(imageHandle));
@@ -266,67 +322,109 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         resolvedFormat.image_channel_data_type = L0::getClChannelDataType(l0imageDesc.format);
         resolvedFormat.image_channel_order = L0::getClChannelOrder(l0imageDesc.format, l0Image->isSrgb());
     } else {
-        l0imageDesc.miplevels = imageDesc->num_mip_levels;
-        l0imageDesc.width = static_cast<uint32_t>(imageDesc->image_width);
-        l0imageDesc.height = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageHeight(*imageDesc));
-        l0imageDesc.depth = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageDepth(*imageDesc));
-        l0imageDesc.arraylevels = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageArraySize(*imageDesc));
-
-        l0imageDesc.type = NEO::LEO::Image::clToL0ImageType(imageDesc->image_type);
-        NEO::LEO::Image::clToL0ImageFormat(l0imageDesc.format, imageFormat->image_channel_order, imageFormat->image_channel_data_type);
-
-        ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, NEO::LEO::Image::isSRGB(imageFormat->image_channel_order)};
-        l0imageDesc.pNext = &srgbExtDesc;
-
-        ze_image_pitched_exp_desc_t imageFromBuffer{ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
-
+        auto parentMemObj = NEO::LEO::castToObject<NEO::LEO::MemObj>(imageDesc->mem_object);
         auto device = pContext->getL0Object()->getDevices().begin()->second;
-        if (imageDesc->mem_object) {
-            imageFromBuffer.ptr = NEO::LEO::castToObject<NEO::LEO::Buffer>(imageDesc->mem_object)->getUsmPtr();
-            imageFromBuffer.pNext = l0imageDesc.pNext;
-            l0imageDesc.pNext = &imageFromBuffer;
-        }
 
-        ze_custom_pitch_exp_desc_t customPitchDesc{ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC};
-        if (imageDesc->mem_object && (imageDesc->image_row_pitch != 0 || imageDesc->image_slice_pitch != 0) &&
-            imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-            customPitchDesc.rowPitch = imageDesc->image_row_pitch;
-            customPitchDesc.slicePitch = imageDesc->image_slice_pitch;
-            customPitchDesc.pNext = l0imageDesc.pNext;
-            l0imageDesc.pNext = &customPitchDesc;
-        }
-
-        L0::ze_depth_stencil_format_ext_desc_t depthStencilDesc{};
-        if (imageFormat->image_channel_order == CL_DEPTH_STENCIL) {
-            if (imageFormat->image_channel_data_type == CL_UNORM_INT24) {
-                depthStencilDesc.format = L0::ZE_DEPTH_STENCIL_FORMAT_D24_UNORM_S8_UINT;
-            } else {
-                depthStencilDesc.format = L0::ZE_DEPTH_STENCIL_FORMAT_D32_FLOAT_S8X24_UINT;
+        if (parentMemObj && parentMemObj->isImage()) {
+            auto parentImage = static_cast<NEO::LEO::Image *>(parentMemObj);
+            const uint32_t planeIndex = static_cast<uint32_t>(imageDesc->image_depth);
+            if (planeIndex > 1) [[unlikely]] {
+                err.set(CL_INVALID_IMAGE_DESCRIPTOR);
+                cl_mem tracingRetVal = nullptr;
+                TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+                return tracingRetVal;
             }
-            depthStencilDesc.pNext = l0imageDesc.pNext;
-            l0imageDesc.pNext = &depthStencilDesc;
-        }
 
-        ret = zeImageCreate(pContext->getL0ContextHandle(),
-                            device,
-                            &l0imageDesc,
-                            &imageHandle);
+            const auto &parentImgDesc = parentImage->getL0Object()->getImageInfo().imgDesc;
+            l0imageDesc.type = ZE_IMAGE_TYPE_2D;
+            l0imageDesc.width = static_cast<uint32_t>(parentImgDesc.imageWidth);
+            l0imageDesc.height = static_cast<uint32_t>(parentImgDesc.imageHeight);
+            l0imageDesc.depth = 1;
 
-        if (ret == ZE_RESULT_SUCCESS && !pContext->isSingleDeviceContext()) {
-            const auto primaryRootDeviceIndex = pContext->getL0Object()->getDevices().begin()->first;
-            for (auto clDevice : pContext->getClDevices()) {
-                const auto extraRootDeviceIndex = clDevice->getRootDeviceIndex();
-                if (extraRootDeviceIndex == primaryRootDeviceIndex || extraImageHandles.count(extraRootDeviceIndex) != 0) {
-                    continue;
+            NEO::LEO::Image::clToL0ImageFormat(l0imageDesc.format, imageFormat->image_channel_order, imageFormat->image_channel_data_type);
+
+            ze_image_view_planar_ext_desc_t planarDesc{ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC};
+            planarDesc.planeIndex = planeIndex;
+            planarDesc.pNext = l0imageDesc.pNext;
+            l0imageDesc.pNext = &planarDesc;
+
+            ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, NEO::LEO::Image::isSRGB(imageFormat->image_channel_order)};
+            l0imageDesc.pNext = &srgbExtDesc;
+
+            ret = zeImageViewCreateExp(pContext->getL0ContextHandle(), device, &l0imageDesc, parentImage->getL0Handle(), &imageHandle);
+
+            resolvedFormat = *imageFormat;
+        } else {
+            l0imageDesc.miplevels = imageDesc->num_mip_levels;
+            l0imageDesc.width = static_cast<uint32_t>(imageDesc->image_width);
+            l0imageDesc.height = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageHeight(*imageDesc));
+            l0imageDesc.depth = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageDepth(*imageDesc));
+            l0imageDesc.arraylevels = static_cast<uint32_t>(NEO::LEO::SurfaceFormats::getImageArraySize(*imageDesc));
+
+            l0imageDesc.type = NEO::LEO::Image::clToL0ImageType(imageDesc->image_type);
+            NEO::LEO::Image::clToL0ImageFormat(l0imageDesc.format, imageFormat->image_channel_order, imageFormat->image_channel_data_type);
+
+            ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, NEO::LEO::Image::isSRGB(imageFormat->image_channel_order)};
+            l0imageDesc.pNext = &srgbExtDesc;
+
+            ze_image_pitched_exp_desc_t imageFromBuffer{ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
+
+            if (parentMemObj && parentMemObj->isBuffer()) {
+                imageFromBuffer.ptr = static_cast<NEO::LEO::Buffer *>(parentMemObj)->getUsmPtr();
+                imageFromBuffer.pNext = l0imageDesc.pNext;
+                l0imageDesc.pNext = &imageFromBuffer;
+            }
+
+            const size_t effectiveRowPitch = NEO::LEO::Image::getRowPitchForImageFromBuffer(flags, imageFormat, imageDesc);
+
+            ze_custom_pitch_exp_desc_t customPitchDesc{ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC};
+            if (parentMemObj && parentMemObj->isBuffer() && (effectiveRowPitch != 0 || imageDesc->image_slice_pitch != 0) &&
+                imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+                customPitchDesc.rowPitch = effectiveRowPitch;
+                customPitchDesc.slicePitch = imageDesc->image_slice_pitch;
+                customPitchDesc.pNext = l0imageDesc.pNext;
+                l0imageDesc.pNext = &customPitchDesc;
+            }
+
+            L0::ze_depth_stencil_format_ext_desc_t depthStencilDesc{};
+            if (imageFormat->image_channel_order == CL_DEPTH_STENCIL) {
+                if (imageFormat->image_channel_data_type == CL_UNORM_INT24) {
+                    depthStencilDesc.format = L0::ZE_DEPTH_STENCIL_FORMAT_D24_UNORM_S8_UINT;
+                } else {
+                    depthStencilDesc.format = L0::ZE_DEPTH_STENCIL_FORMAT_D32_FLOAT_S8X24_UINT;
                 }
-                ze_image_handle_t extraImageHandle{};
-                if (zeImageCreate(pContext->getL0ContextHandle(), clDevice->getL0Handle(), &l0imageDesc, &extraImageHandle) == ZE_RESULT_SUCCESS) {
-                    extraImageHandles[extraRootDeviceIndex] = extraImageHandle;
+                depthStencilDesc.pNext = l0imageDesc.pNext;
+                l0imageDesc.pNext = &depthStencilDesc;
+            }
+
+            ret = zeImageCreate(pContext->getL0ContextHandle(),
+                                device,
+                                &l0imageDesc,
+                                &imageHandle);
+
+            if (ret == ZE_RESULT_SUCCESS && !pContext->isSingleDeviceContext()) {
+                const auto primaryRootDeviceIndex = pContext->getL0Object()->getDevices().begin()->first;
+                for (auto clDevice : pContext->getClDevices()) {
+                    const auto extraRootDeviceIndex = clDevice->getRootDeviceIndex();
+                    if (extraRootDeviceIndex == primaryRootDeviceIndex || extraImageHandles.contains(extraRootDeviceIndex)) {
+                        continue;
+                    }
+                    ze_image_handle_t extraImageHandle{};
+                    if (zeImageCreate(pContext->getL0ContextHandle(), clDevice->getL0Handle(), &l0imageDesc, &extraImageHandle) == ZE_RESULT_SUCCESS) {
+                        extraImageHandles[extraRootDeviceIndex] = extraImageHandle;
+                    }
                 }
             }
-        }
 
-        resolvedFormat = *imageFormat;
+            resolvedFormat = *imageFormat;
+        }
+    }
+
+    if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
+        err.set(L0ToClResultMapper(ret));
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     void *cpuPtr = nullptr;
@@ -337,28 +435,67 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     if (memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr) {
         {
             auto lock = pContext->lockInternalCopy();
-            uint32_t regionHeight = std::max(l0imageDesc.height, 1u);
-            uint32_t regionDepth = std::max(l0imageDesc.depth, 1u);
-            if (l0imageDesc.type == ZE_IMAGE_TYPE_1DARRAY) {
-                regionHeight = std::max(l0imageDesc.arraylevels, 1u);
-            } else if (l0imageDesc.type == ZE_IMAGE_TYPE_2DARRAY) {
-                regionDepth = std::max(l0imageDesc.arraylevels, 1u);
+            if (NEO::LEO::isNV12Image(imageFormat)) {
+                auto device = pContext->getL0Object()->getDevices().begin()->second;
+                const uint32_t nv12Width = static_cast<uint32_t>(l0imageDesc.width);
+                const uint32_t nv12Height = l0imageDesc.height;
+                const uint32_t rowPitch = imageDesc->image_row_pitch != 0 ? static_cast<uint32_t>(imageDesc->image_row_pitch) : nv12Width;
+
+                auto writePlane = [&](uint32_t planeIndex, cl_channel_order channelOrder, uint32_t planeWidth, uint32_t planeHeight, const void *planePtr) {
+                    ze_image_desc_t planeDesc{ZE_STRUCTURE_TYPE_IMAGE_DESC};
+                    planeDesc.type = ZE_IMAGE_TYPE_2D;
+                    planeDesc.width = planeWidth;
+                    planeDesc.height = planeHeight;
+                    planeDesc.depth = 1;
+                    NEO::LEO::Image::clToL0ImageFormat(planeDesc.format, channelOrder, CL_UNORM_INT8);
+
+                    ze_image_view_planar_ext_desc_t planarDesc{ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC};
+                    planarDesc.planeIndex = planeIndex;
+                    planeDesc.pNext = &planarDesc;
+
+                    ze_image_handle_t planeHandle{};
+                    if (zeImageViewCreateExp(pContext->getL0ContextHandle(), device, &planeDesc, imageHandle, &planeHandle) == ZE_RESULT_SUCCESS) {
+                        ze_image_region_t planeRegion{0u, 0u, 0u, planeWidth, planeHeight, 1u};
+                        ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(), planeHandle, planePtr, &planeRegion, rowPitch, 0, nullptr, 0, nullptr);
+                        zeImageDestroy(planeHandle);
+                    }
+                };
+
+                writePlane(0, CL_R, nv12Width, nv12Height, hostPtr);
+                writePlane(1, CL_RG, nv12Width / 2, nv12Height / 2, ptrOffset(hostPtr, static_cast<size_t>(rowPitch) * nv12Height));
+            } else {
+                uint32_t regionHeight = std::max(l0imageDesc.height, 1u);
+                uint32_t regionDepth = std::max(l0imageDesc.depth, 1u);
+                if (l0imageDesc.type == ZE_IMAGE_TYPE_1DARRAY) {
+                    regionHeight = std::max(l0imageDesc.arraylevels, 1u);
+                } else if (l0imageDesc.type == ZE_IMAGE_TYPE_2DARRAY) {
+                    regionDepth = std::max(l0imageDesc.arraylevels, 1u);
+                }
+                ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
+                                         regionHeight, regionDepth};
+                ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(),
+                                                                imageHandle,
+                                                                hostPtr,
+                                                                &region,
+                                                                static_cast<uint32_t>(imageDesc->image_row_pitch),
+                                                                static_cast<uint32_t>(imageDesc->image_slice_pitch),
+                                                                nullptr, 0, nullptr);
             }
-            ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
-                                     regionHeight, regionDepth};
-            ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(),
-                                                            imageHandle,
-                                                            hostPtr,
-                                                            &region,
-                                                            static_cast<uint32_t>(imageDesc->image_row_pitch),
-                                                            static_cast<uint32_t>(imageDesc->image_slice_pitch),
-                                                            nullptr, 0, nullptr);
         }
         zeCommandListHostSynchronize(pContext->getInternalCopyCmdList(), std::numeric_limits<uint64_t>::max());
     }
 
-    if (errcodeRet) {
-        *errcodeRet = L0ToClResultMapper(ret);
+    if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
+        if (!inputMemObjFound && imageHandle) {
+            zeImageDestroy(imageHandle);
+        }
+        for (auto &extraImageHandle : extraImageHandles) {
+            zeImageDestroy(extraImageHandle.second);
+        }
+        err.set(L0ToClResultMapper(ret));
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
     }
 
     cl_mem associatedMemObject = inputMemObjFound ? nullptr : imageDesc->mem_object;
@@ -572,3 +709,8 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
     TRACING_EXIT(ClGetPipeInfo, &tracingRetVal);
     return tracingRetVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

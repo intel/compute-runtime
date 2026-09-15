@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -32,9 +31,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanInitThenValidSysmanHan
 }
 
 TEST_F(SysmanDeviceFixture, GivenMockEnvValuesWhenGettingEnvValueThenCorrectValueIsReturned) {
-    ASSERT_NE(IoFunctions::mockableEnvValues, nullptr);
-    EnvironmentVariableReader envVarReader;
-    EXPECT_EQ(envVarReader.getSetting("ZES_ENABLE_SYSMAN", false), true);
+    EXPECT_TRUE(debugManager.flags.ZES_ENABLE_SYSMAN.get());
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndGetPciBdfFailsThenFailureIsReturned) {

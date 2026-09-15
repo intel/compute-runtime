@@ -272,7 +272,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::initRelaxedOrderingRegisters() {
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSections() {
     // Task store section
-    preinitializedTaskStoreSection = std::make_unique<uint8_t[]>(RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
+    preinitializedTaskStoreSection = std::make_unique_for_overwrite<uint8_t[]>(RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
 
     LinearStream stream(preinitializedTaskStoreSection.get(), RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
 
@@ -313,7 +313,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
     UNRECOVERABLE_IF(stream.getUsed() != RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
 
     // Scheduler section
-    preinitializedRelaxedOrderingScheduler = std::make_unique<uint8_t[]>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
+    preinitializedRelaxedOrderingScheduler = std::make_unique_for_overwrite<uint8_t[]>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
     LinearStream schedulerStream(preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
 
     uint64_t schedulerStartAddress = relaxedOrderingSchedulerAllocation->getGpuAddress();

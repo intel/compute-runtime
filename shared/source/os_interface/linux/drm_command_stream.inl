@@ -321,19 +321,6 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
 }
 
 template <typename GfxFamily>
-WaitStatus DrmCommandStreamReceiver<GfxFamily>::baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait) {
-    auto waitStatus = BaseClass::baseWaitFunction(pollAddress, params, taskCountToWait);
-
-    // A GPU fault (e.g. a page fault under xeKMD) can be reported even after the completion tag has
-    // been written, so probe for a hang once the wait has otherwise completed.
-    if (waitStatus == WaitStatus::ready && this->isGpuHangDetected()) {
-        return WaitStatus::gpuHang;
-    }
-
-    return waitStatus;
-}
-
-template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     if (drm->useVMBindImmediate()) {
         auto osContextLinux = static_cast<OsContextLinux *>(this->osContext);

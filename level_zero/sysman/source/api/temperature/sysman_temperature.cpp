@@ -19,10 +19,16 @@ void TemperatureHandleContext::releaseTemperatureHandles() {
     handleList.clear();
 }
 
-void TemperatureHandleContext::createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type) {
-    std::unique_ptr<Temperature> pTemperature = std::make_unique<TemperatureImp>(pOsSysman, onSubdevice, subDeviceId, type);
+void TemperatureHandleContext::createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type, uint32_t sensorIndex) {
+    std::unique_ptr<Temperature> pTemperature = std::make_unique<TemperatureImp>(pOsSysman, onSubdevice, subDeviceId, type, sensorIndex);
     if (pTemperature->initSuccess == true) {
         handleList.push_back(std::move(pTemperature));
+    }
+}
+
+void TemperatureHandleContext::reInit() {
+    for (auto &handle : handleList) {
+        handle->reInit();
     }
 }
 
@@ -35,7 +41,7 @@ ze_result_t TemperatureHandleContext::init(uint32_t subDeviceCount) {
     auto createTemperatureHandles = [this, &supportedSensorTypeMap](bool onSubdevice, uint32_t subDeviceId) {
         for (const auto &[sensorType, sensorCount] : supportedSensorTypeMap) {
             for (uint32_t sensorIndex = 0; sensorIndex < sensorCount; sensorIndex++) {
-                createHandle(onSubdevice, subDeviceId, sensorType);
+                createHandle(onSubdevice, subDeviceId, sensorType, sensorIndex);
             }
         }
     };

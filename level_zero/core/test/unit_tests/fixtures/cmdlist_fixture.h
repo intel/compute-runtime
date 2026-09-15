@@ -230,6 +230,7 @@ class AppendFillFixture : public DeviceFixture {
 
         const uint32_t rootDeviceIndex = 0u;
         bool forceFalseFromfindAllocationDataForRange = false;
+        NEO::AllocationType allocationTypeToReturn = NEO::AllocationType::unknown;
         std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
         NEO::SvmAllocationData data{rootDeviceIndex};
     };
@@ -253,6 +254,7 @@ class AppendFillFixture : public DeviceFixture {
                 xGroupSizes[numberOfCallsToAppendLaunchKernelWithParams] = kernel->getGroupSize()[0];
             }
             numberOfCallsToAppendLaunchKernelWithParams++;
+            this->usedKernelLaunchParams = launchParams;
             return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(kernel,
                                                                                       pThreadGroupDimensions,
                                                                                       event,
@@ -285,19 +287,12 @@ class AppendFillFixture : public DeviceFixture {
 
 struct TestExpectedValues {
     uint32_t expectedPacketsInUse = 0;
-    uint32_t expectedKernelCount = 0;
     uint32_t expectedWalkerPostSyncOp = 0;
     uint32_t expectedPostSyncPipeControls = 0;
     uint32_t expectDcFlush = 0;
     uint32_t expectStoreDataImm = 0;
     bool postSyncAddressZero = false;
     bool workloadPartition = false;
-};
-
-struct CommandListEventUsedPacketSignalFixture : public CommandListFixture {
-    void setUp();
-
-    DebugManagerStateRestore restorer;
 };
 
 struct CommandListSecondaryBatchBufferFixture : public CommandListFixture {

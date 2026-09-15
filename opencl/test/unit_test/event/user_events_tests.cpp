@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1061,7 +1061,7 @@ TEST_F(EventTests, GivenMultipleEventsWhenEventsAreCompletedThenCorrectNumberOfB
 }
 
 TEST_F(EventTests, WhenPassingBlockedUserEventToEnqueueNdRangeThenCommandQueueIsNotRetained) {
-    auto userEvent = clCreateUserEvent(pContext, &retVal);
+    auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto uEvent = (UserEvent *)userEvent;

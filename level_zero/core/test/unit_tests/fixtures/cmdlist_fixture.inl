@@ -1667,6 +1667,9 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate, bo
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
             EXPECT_EQ(1u, commandList->getActiveScratchPatchElements());
 
+            size_t expectedSize = 1 * NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(uint64_t));
+            EXPECT_EQ(expectedSize, commandList->getActiveScratchPatchElemsPatchSize());
+
             auto commandListHandle = commandList->toHandle();
 
             void *queueCpuBase = commandQueue->commandStream.getCpuBase();
@@ -2177,12 +2180,12 @@ void CommandListScratchPatchFixtureInit::testScratchUndefinedPatching() {
 
     struct TestParam {
         uint8_t pointerSize;
-        InlineDataOffset offset;
+        CrossThreadDataOffset offset;
     };
 
     std::vector<TestParam> testParams = {
         {undefined<uint8_t>, 0u},
-        {8u, undefined<InlineDataOffset>}};
+        {8u, undefined<CrossThreadDataOffset>}};
 
     for (const auto &testParam : testParams) {
         mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = testParam.pointerSize;

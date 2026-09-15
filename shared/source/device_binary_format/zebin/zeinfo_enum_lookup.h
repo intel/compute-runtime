@@ -22,7 +22,7 @@ using namespace Tags::Kernel::PayloadArgument::ArgType::Sampler::Vme;
 using ArgType = Types::Kernel::ArgType;
 
 inline constexpr ConstStringRef name = "argument type";
-inline constexpr LookupArray<ConstStringRef, ArgType, 44> lookup({{
+inline constexpr LookupArray<ConstStringRef, ArgType, 40> lookup({{
     {packedLocalIds, ArgType::argTypePackedLocalIds},
     {localId, ArgType::argTypeLocalId},
     {localSize, ArgType::argTypeLocalSize},
@@ -46,10 +46,6 @@ inline constexpr LookupArray<ConstStringRef, ArgType, 44> lookup({{
     {arraySize, ArgType::argTypeImageArraySize},
     {numSamples, ArgType::argTypeImageNumSamples},
     {numMipLevels, ArgType::argTypeImageMipLevels},
-    {flatBaseOffset, ArgType::argTypeImageFlatBaseOffset},
-    {flatWidth, ArgType::argTypeImageFlatWidth},
-    {flatHeight, ArgType::argTypeImageFlatHeight},
-    {flatPitch, ArgType::argTypeImageFlatPitch},
     {snapWa, ArgType::argTypeSamplerSnapWa},
     {normCoords, ArgType::argTypeSamplerNormCoords},
     {addrMode, ArgType::argTypeSamplerAddrMode},

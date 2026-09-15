@@ -512,12 +512,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     fillWalkerFields<WalkerType>(controlWalkerBuffer);
 
-    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&controlIdd,
-                                                                    neoDevice->getRootDeviceEnvironment(),
-                                                                    walkerArgs.threadsPerThreadGroup,
-                                                                    walkerArgs.threadGroupCount,
-                                                                    walkerArgs.slmTotalSizePerThreadGroup,
-                                                                    static_cast<NEO::SlmPolicy>(walkerArgs.slmPolicy));
+    NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = walkerArgs.threadsPerThreadGroup,
+        .workloadThreadGroupCount = walkerArgs.threadGroupCount,
+        .slmTotalSizePerThreadGroup = walkerArgs.slmTotalSizePerThreadGroup,
+        .grfCount = walkerArgs.grfCount,
+        .slmPolicy = static_cast<NEO::SlmPolicy>(walkerArgs.slmPolicy)};
+
+    NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&controlIdd, neoDevice->getRootDeviceEnvironment(), slmArgs);
 
     fillWalkerFields<WalkerType>(this->cmdBufferCpuPtr);
 
@@ -625,6 +627,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     EXPECT_EQ(controlWalker->getPartitionType(), walkerCmdGpu->getPartitionType());
     EXPECT_EQ(controlWalker->getPartitionSize(), walkerCmdGpu->getPartitionSize());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableHwCommandTest,
+            givenMutableComputeWalkerCreatedCommandViewWhenDeletingCommandViewThenIsSuccessfullyFreed) {
+    void *cmdView = L0::MCL::MutableComputeWalkerHw<FamilyType>::createCommandBuffer();
+    L0::MCL::MutableComputeWalkerHw<FamilyType>::deleteCommandBuffer(cmdView);
+    cmdView = nullptr;
+    L0::MCL::MutableComputeWalkerHw<FamilyType>::deleteCommandBuffer(cmdView);
 }
 } // namespace ult
 } // namespace L0

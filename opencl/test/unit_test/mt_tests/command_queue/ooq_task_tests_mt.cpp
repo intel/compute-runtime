@@ -30,7 +30,7 @@ TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
     ASSERT_NE(nullptr, alignedReadPtr);
 
-    auto userEvent = clCreateUserEvent(pContext, &retVal);
+    auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto previousTaskCount = pCmdQ->taskCount;
@@ -71,7 +71,7 @@ TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
 
 TEST_F(OOQTaskTestsMt, GivenBlockedOnUserEventWhenEnqueingMarkerThenSuccessIsReturned) {
 
-    auto userEvent = clCreateUserEvent(pContext, &retVal);
+    auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     std::thread t([=]() {

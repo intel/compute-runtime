@@ -10,7 +10,6 @@
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
@@ -60,10 +59,6 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIfIsTlbFlushRequired
 
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isPageFaultSupported());
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
@@ -126,28 +121,6 @@ BMGTEST_F(BmgProductHelperLinux, givenPublicSkuDeviceIdWhenGetDeviceMemoryMaxClk
     EXPECT_EQ(19000u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
 }
 
-BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenMockDriverModelWithUnknownTypeWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
-    auto mockDriverModel = std::make_unique<MockDriverModel>();
-    osInterface->setDriverModel(std::move(mockDriverModel));
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenDrmQueryFailsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
-    drm->storedGetDeviceMemoryPhysicalSizeInBytesStatus = false;
-    drm->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
-    EXPECT_EQ(0u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenDrmQuerySucceedsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnPhysicalSize) {
-    drm->storedGetDeviceMemoryPhysicalSizeInBytesStatus = true;
-    drm->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
-    EXPECT_EQ(1024u, productHelper->getDeviceMemoryPhysicalSizeInBytes(osInterface, 0));
-}
-
 BMGTEST_F(BmgProductHelperLinux, givenPublicSkuDeviceIdWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnPublicSpec) {
     pInHwInfo.platform.usDeviceID = 0xE209;
     EXPECT_EQ(456000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
@@ -166,14 +139,4 @@ BMGTEST_F(BmgProductHelperLinux, givenPublicSkuDeviceIdWhenGetDeviceMemoryMaxBan
 
     pInHwInfo.platform.usDeviceID = 0xE223;
     EXPECT_EQ(608000000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(pInHwInfo, nullptr, 0));
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isDeferBackingEnabled());
-}
-
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToZeroThenReturnFalse) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferBacking.set(0);
-    EXPECT_FALSE(productHelper->isDeferBackingEnabled());
 }

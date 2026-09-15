@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ const char *dxcoreDllName = "/usr/lib/wsl/lib/libdxcore.so";
 const char *sysFsPciPathPrefix = "/sys/bus/pci/devices/";
 const char *pciDevicesDirectory = "/dev/dri/by-path";
 const char *sysFsProcPathPrefix = "/proc";
+const char *sysFsSystemCpuPathPrefix = "/sys/devices/system/cpu";
 
 // Metrics Library name
 const char *metricsLibraryDllName = "libigdml.so.1";

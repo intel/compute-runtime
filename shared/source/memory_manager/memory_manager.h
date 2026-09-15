@@ -62,7 +62,6 @@ class HostPtrManager;
 class OsContext;
 class PrefetchManager;
 class HeapAllocator;
-class ReleaseHelper;
 
 using MultiDeviceEngineControlContainer = StackVec<EngineControlContainer, 6u>;
 
@@ -89,6 +88,8 @@ struct MemoryMappedRange {
     // Physical memory handle (BO) that backs this mapping. Tracked so that a given
     // physical allocation can be guarded against being mapped to more than one VA.
     void *physicalHandle = nullptr;
+    // Offset passed to zeVirtualMemMap; carried per chunk by range IPC export.
+    uint64_t mappedPhysicalOffset = 0;
 };
 
 struct VirtualMemoryReservation {
@@ -100,6 +101,9 @@ struct VirtualMemoryReservation {
     size_t reservationSize;
     uint64_t reservationBase;
     size_t reservationTotalSize;
+    // Bytes below virtualAddressRange backing a folded offset; only the part beyond foldHeadroomSize is claimed.
+    size_t foldPrefixSize = 0u;
+    size_t foldHeadroomSize = 0u;
 };
 
 struct CustomHeapAllocatorConfig {
@@ -119,7 +123,7 @@ struct PeerAllocationDeps {
                          SvmAllocationData &mappedPeerAllocData, bool compressedMemory)>
         importFds;
     std::function<void(GraphicsAllocation *sourceAllocation)> decompressP2P;
-    bool requiresReservedHandleData = false;
+    bool reservedHandleDataAvailable = false;
 };
 
 namespace MemoryTransferHelper {
@@ -143,6 +147,7 @@ class MemoryManager {
         osHandle handle;
         uint32_t arrayIndex;
         uint32_t parentProcessId = 0;
+        uint64_t physicalOffset = 0;
 
         OsHandleData(uint64_t handle, uint32_t arrayIndex = 0) : handle(static_cast<osHandle>(handle)), arrayIndex(arrayIndex) {};
         OsHandleData(void *handle, uint32_t arrayIndex = 0) : handle(toOsHandle(handle)), arrayIndex(arrayIndex) {};
@@ -175,6 +180,8 @@ class MemoryManager {
     virtual bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) { return true; }
     virtual bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) { return false; }
     virtual GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
+    // Host reserved-memory range import: host USM uses CPU mmap and cannot go through the device merge above. Unsupported on non-DRM back-ends.
+    virtual GraphicsAllocation *createHostAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, const std::vector<uint64_t> &physicalOffsets, bool reuseSharedAllocation) { return nullptr; }
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {};
@@ -189,7 +196,8 @@ class MemoryManager {
                                           GraphicsAllocation **pAlloc,
                                           SvmAllocationData &mappedPeerAllocData,
                                           bool compressedMemory,
-                                          bool uncachedBias);
+                                          bool uncachedBias,
+                                          uint64_t physicalOffset);
 
     MOCKABLE_VIRTUAL void *importFdHandles(Device *neoDevice,
                                            SVMAllocsManager *svmAllocsManager,
@@ -198,7 +206,8 @@ class MemoryManager {
                                            GraphicsAllocation **pAlloc,
                                            SvmAllocationData &mappedPeerAllocData,
                                            bool compressedMemory,
-                                           bool uncachedBias);
+                                           bool uncachedBias,
+                                           const std::vector<uint64_t> &physicalOffsets);
 
     bool isRemoteResourceNeeded(GraphicsAllocation *alloc, SvmAllocationData *allocData, Device *device);
 
@@ -276,10 +285,12 @@ class MemoryManager {
     void waitForDeletions();
     MOCKABLE_VIRTUAL void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation);
     MOCKABLE_VIRTUAL bool allocInUse(GraphicsAllocation &graphicsAllocation);
+    MOCKABLE_VIRTUAL void captureEngineCompletionSnapshot(GraphicsAllocation &graphicsAllocation, EngineCompletionSnapshot &snapshot);
     void cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion);
 
     bool isAsyncDeleterEnabled() const;
     bool isLocalMemorySupported(uint32_t rootDeviceIndex) const;
+    bool isSystemMemoryPreferred(const AllocationProperties &properties);
     virtual bool isMemoryBudgetExhausted() const;
 
     virtual bool hasPageFaultsEnabled(const Device &neoDevice) { return false; }
@@ -342,6 +353,8 @@ class MemoryManager {
     virtual AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) = 0;
     AddressRange reserveCpuAddressWithZeroBaseRetry(const uint64_t requiredStartAddress, size_t size);
     virtual void freeCpuAddress(AddressRange addressRange) = 0;
+    virtual bool isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) { return false; }
+    virtual bool reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) { return false; }
     static HeapIndex selectInternalHeap(bool useLocalMemory);
     static HeapIndex selectExternalHeap(bool useLocalMemory);
 
@@ -393,13 +406,13 @@ class MemoryManager {
     std::unordered_map<std::string, KernelAllocationInfo> &getKernelAllocationMap() { return this->kernelAllocationMap; };
     [[nodiscard]] std::unique_lock<std::mutex> lockKernelAllocationMap() { return std::unique_lock<std::mutex>(this->kernelAllocationMutex); };
     std::map<void *, VirtualMemoryReservation *> &getVirtualMemoryReservationMap() { return this->virtualMemoryReservationMap; };
-    [[nodiscard]] std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() { return std::unique_lock<std::mutex>(this->virtualMemoryReservationMapMutex); };
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() { return std::unique_lock<std::mutex>(this->virtualMemoryReservationMapMutex); };
     std::map<void *, PhysicalMemoryAllocation *> &getPhysicalMemoryAllocationMap() { return this->physicalMemoryAllocationMap; };
     [[nodiscard]] std::unique_lock<std::mutex> lockPhysicalMemoryAllocationMap() { return std::unique_lock<std::mutex>(this->physicalMemoryAllocationMapMutex); };
     virtual bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) = 0;
     virtual bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) = 0;
     virtual bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) = 0;
-    virtual bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) = 0;
+    virtual bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) = 0;
     bool allocateBindlessSlot(GraphicsAllocation *allocation);
     static uint64_t adjustToggleBitFlagForGpuVa(AllocationType inputAllocationType, uint64_t gpuAddress);
     virtual bool isCompressionSupportedForShareable(bool isShareable) { return true; }
@@ -466,7 +479,7 @@ class MemoryManager {
     void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size);
     void updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex);
     virtual DeviceBitfield computeStorageInfoMemoryBanks(const AllocationProperties &properties, DeviceBitfield preferredBank, DeviceBitfield allBanks);
-    virtual bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const;
+    virtual bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const;
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;

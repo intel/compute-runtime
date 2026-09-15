@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,8 +56,10 @@ bool FirmwareUtilImp::loadEntryPoints() {
 }
 
 static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
-    uint32_t percent = (done * 100) / total;
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
+    if (NEO::debugManager.flags.PrintDebugMessages.get()) {
+        uint32_t percent = (done * 100) / total;
+        PRINT_STRING(true, stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
+    }
 }
 
 ze_result_t FirmwareUtilImp::getFirstDevice(IgscDeviceInfo *info) {

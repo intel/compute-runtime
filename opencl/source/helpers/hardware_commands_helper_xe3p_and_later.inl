@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ void NEO::HardwareCommandsHelper<NEO::FamilyType>::programInlineData<NEO::Family
         uint32_t maxBytesToCopy = std::max(0, static_cast<int32_t>(inlineDataSize - indirectDataPointerAddress.offset));
         memcpy_s(inlineDataPtr + indirectDataPointerAddress.offset, maxBytesToCopy, &indirectDataAddress, indirectDataPointerAddress.pointerSize);
     }
-    if (isDefined(scratchPointerAddress.pointerSize) && isValidOffset(scratchPointerAddress.offset)) {
+    if (isDefined(scratchPointerAddress.pointerSize) && isValidOffset(scratchPointerAddress.offset) && scratchPointerAddress.offset < inlineDataSize) {
         uint32_t maxBytesToCopy = std::max(0, static_cast<int32_t>(inlineDataSize - scratchPointerAddress.offset));
         memcpy_s(inlineDataPtr + scratchPointerAddress.offset, maxBytesToCopy, &scratchAddress, scratchPointerAddress.pointerSize);
     }

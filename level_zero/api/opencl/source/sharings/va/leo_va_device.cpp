@@ -8,6 +8,7 @@
 #include "level_zero/api/opencl/source/sharings/va/leo_va_device.h"
 
 namespace NEO {
+namespace LEO {
 
 VADevice::VADevice() {
 }
@@ -19,4 +20,5 @@ ClDevice *VADevice::getDeviceFromVA(Platform *pPlatform, VADisplay vaDisplay) {
 VADevice::~VADevice() {
 }
 
+} // namespace LEO
 } // namespace NEO

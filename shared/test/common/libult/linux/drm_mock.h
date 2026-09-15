@@ -17,12 +17,17 @@
 #include <climits>
 
 #include <cstdio>
-#include <map>
 #include <optional>
 #include <queue>
 #include <vector>
 
 using namespace NEO;
+
+struct MockResetStats {
+    uint32_t contextId;
+    uint32_t batchActive;
+    uint32_t batchPending;
+};
 
 class DrmMock : public Drm {
   public:
@@ -244,7 +249,7 @@ class DrmMock : public Drm {
     std::optional<bool> isVMBindImmediateSupported{};
 
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
-    std::vector<ResetStats> resetStatsToReturn{};
+    std::vector<MockResetStats> resetStatsToReturn{};
 
     GemContextCreateExtSetParam receivedContextCreateSetParam = {};
     uint32_t receivedContextCreateFlags = 0;
@@ -318,29 +323,23 @@ class DrmMock : public Drm {
 
     bool storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
     bool useBaseGetDeviceMemoryMaxClockRateInMhz = true;
-    bool getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate) override {
+    uint32_t getDeviceMemoryMaxClockRateInMhz(uint32_t tileId) override {
 
         if (useBaseGetDeviceMemoryMaxClockRateInMhz == true) {
-            return Drm::getDeviceMemoryMaxClockRateInMhz(tileId, clkRate);
+            return Drm::getDeviceMemoryMaxClockRateInMhz(tileId);
         }
 
-        if (storedGetDeviceMemoryMaxClockRateInMhzStatus == true) {
-            clkRate = 800;
-        }
-        return storedGetDeviceMemoryMaxClockRateInMhzStatus;
+        return storedGetDeviceMemoryMaxClockRateInMhzStatus ? 800u : 0u;
     }
 
     bool storedGetDeviceMemoryPhysicalSizeInBytesStatus = true;
     bool useBaseGetDeviceMemoryPhysicalSizeInBytes = true;
-    bool getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize) override {
+    uint64_t getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId) override {
         if (useBaseGetDeviceMemoryPhysicalSizeInBytes == true) {
-            return Drm::getDeviceMemoryPhysicalSizeInBytes(tileId, physicalSize);
+            return Drm::getDeviceMemoryPhysicalSizeInBytes(tileId);
         }
 
-        if (storedGetDeviceMemoryPhysicalSizeInBytesStatus == true) {
-            physicalSize = 1024;
-        }
-        return storedGetDeviceMemoryPhysicalSizeInBytesStatus;
+        return storedGetDeviceMemoryPhysicalSizeInBytesStatus ? 1024u : 0u;
     }
 
     const DeviceDescriptor *getDeviceDescriptor(uint32_t usDeviceId) override {

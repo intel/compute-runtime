@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace NEO {
 
@@ -49,6 +50,8 @@ struct DeviceInfo {
     uint32_t vmeAvcSupportsPreemption;
     std::string name;
     bool semaphore64bCmdSupport;
+    std::vector<uint32_t> spirvCapabilities;
+    std::vector<std::string> spirvExtensions;
 };
 
 } // namespace NEO

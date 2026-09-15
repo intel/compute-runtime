@@ -107,7 +107,6 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE_VOIDRETURN(storeReusableAllocation, (NEO::GraphicsAllocation & alloc));
     ADDMETHOD_NOBASE(getFabricVertex, ze_result_t, ZE_RESULT_SUCCESS, (ze_fabric_vertex_handle_t * phVertex));
     ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, ())
-    ADDMETHOD_CONST_NOBASE(getEventMaxKernelCount, uint32_t, 3, ())
     ADDMETHOD_NOBASE(getAggregatedCopyOffloadIncrementValue, uint32_t, 0, ())
     ADDMETHOD_CONST_NOBASE(getBufferFromFile, NEO::BuiltIn::Resource, NEO::BuiltIn::createResource("X", 1), (const std::string &dirPath, const std::string &fileName))
     ADDMETHOD_NOBASE(doCreateRequiredLibModule, ::L0::Module *, nullptr, (NEO::BuiltIn::Resource & reqLibBuff, ::L0::ModuleBuildLog *buildLog, ze_result_t &result))

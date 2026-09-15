@@ -17,12 +17,12 @@
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/module/defines_ext.h"
 #include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
+#include "level_zero/ze_intel_gpu.h"
 
-#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <string_view>
@@ -108,9 +108,7 @@ std::vector<const char *> Program::getUserKernelNames() const {
     zeModuleGetKernelNames(moduleHandle, &numKernels, nullptr);
     std::vector<const char *> kernelNames(numKernels, nullptr);
     zeModuleGetKernelNames(moduleHandle, &numKernels, kernelNames.data());
-    kernelNames.erase(std::remove_if(kernelNames.begin(), kernelNames.end(),
-                                     [](const char *name) { return NEO::Zebin::Elf::SectionNames::externalFunctions == name; }),
-                      kernelNames.end());
+    std::erase_if(kernelNames, [](const char *name) { return NEO::Zebin::Elf::SectionNames::externalFunctions == name; });
     return kernelNames;
 }
 
@@ -137,7 +135,7 @@ cl_int Program::populateIrBinaryFromModule(bool isSpirv) {
     if (ZE_RESULT_SUCCESS != l0Module->getIrBinary(&irSize, nullptr) || 0u == irSize) {
         return CL_INVALID_OPERATION;
     }
-    this->irBinary = std::make_unique<char[]>(irSize);
+    this->irBinary = std::make_unique_for_overwrite<char[]>(irSize);
     if (ZE_RESULT_SUCCESS != l0Module->getIrBinary(&irSize, reinterpret_cast<uint8_t *>(this->irBinary.get()))) {
         this->irBinary.reset();
         return CL_INVALID_OPERATION;
@@ -305,7 +303,7 @@ bool Program::populateModuleConstants(ze_module_constants_t &moduleConstants,
     return true;
 }
 
-std::string Program::computeOclExtensionsInternalOptions(const std::string &buildOptions) const {
+std::string Program::computeOclCContractInternalOptions(const std::string &buildOptions) const {
     std::string internalOptions;
     NEO::appendExtensionsToInternalOptions(this->context->getClDevice()->getHardwareInfo(), buildOptions, internalOptions);
     return internalOptions;
@@ -315,9 +313,9 @@ std::string Program::computeOclExtensionsInternalOptions(const std::string &buil
  * @brief Use l0 api to link spirv to gen binary.
  */
 cl_int Program::buildFromIL(const char *options) {
-    const std::string oclExtensionsInternalOptions = computeOclExtensionsInternalOptions(options ? options : "");
+    const std::string oclCContractInternalOptions = computeOclCContractInternalOptions(options ? options : "");
     L0::ze_module_ocl_extensions_exp_desc_t oclExtensionsDesc;
-    oclExtensionsDesc.pInternalBuildOptions = oclExtensionsInternalOptions.c_str();
+    oclExtensionsDesc.pInternalBuildOptions = oclCContractInternalOptions.c_str();
 
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, &oclExtensionsDesc, ZE_MODULE_FORMAT_IL_SPIRV, this->irBinarySize, reinterpret_cast<uint8_t *>(this->irBinary.get()), options, nullptr};
 
@@ -436,9 +434,9 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
         moduleProgDesc.pNext = &llvmBcDesc;
     }
 
-    const std::string oclExtensionsInternalOptions = computeOclExtensionsInternalOptions(options ? options : "");
+    const std::string oclCContractInternalOptions = computeOclCContractInternalOptions(options ? options : "");
     L0::ze_module_ocl_extensions_exp_desc_t oclExtensionsDesc;
-    oclExtensionsDesc.pInternalBuildOptions = oclExtensionsInternalOptions.c_str();
+    oclExtensionsDesc.pInternalBuildOptions = oclCContractInternalOptions.c_str();
     oclExtensionsDesc.pNext = moduleDesc.pNext;
     moduleDesc.pNext = &oclExtensionsDesc;
 
@@ -524,7 +522,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         devicesToExpose.push_back(clDevice);
     }
     uint32_t numDevices = static_cast<uint32_t>(devicesToExpose.size());
-    uint32_t numKernels = 0u;
+    size_t numKernels = 0u;
     std::string kernelNames;
 
     switch (paramName) {
@@ -609,7 +607,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         if (nullptr == this->getModuleHandle()) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
         } else {
-            numKernels = static_cast<uint32_t>(getUserKernelNames().size());
+            numKernels = getUserKernelNames().size();
             pSrc = &numKernels;
             retSize = srcSize = sizeof(numKernels);
         }

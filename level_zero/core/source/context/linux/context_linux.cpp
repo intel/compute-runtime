@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -28,6 +29,15 @@
 namespace L0 {
 
 constexpr rlim_t maxOpaqueHandlePreallocation = 4096;
+constexpr uint32_t defaultMaxIpcRangeHandleCount = 1024u;
+
+uint32_t Context::getMaxIpcRangeHandleCount() {
+    struct rlimit rlim;
+    if (NEO::SysCalls::getrlimit(RLIMIT_NOFILE, &rlim)) {
+        return defaultMaxIpcRangeHandleCount;
+    }
+    return static_cast<uint32_t>(std::min<rlim_t>(rlim.rlim_cur, std::numeric_limits<uint32_t>::max()));
+}
 
 uint8_t Context::isDrmOpaqueHandleSupported(IpcHandleType *handleType) {
     *handleType = IpcHandleType::fdHandle;
@@ -68,14 +78,15 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
                                                                           unsigned int processId,
                                                                           uint64_t cacheID,
                                                                           void *reservedHandleData,
-                                                                          NEO::Device *neoDevice) {
+                                                                          NEO::Device *neoDevice,
+                                                                          bool useCache) {
     uint64_t importHandle = handle;
     bool handleRetrieved = false;
     bool socketFallbackSuccess = false;
     bool opaqueHandlesAttempted = false;
 
     // Check cache first for opaque handles
-    if (this->driverHandle->tryGetCachedImportHandle(cacheID, importHandle)) {
+    if (useCache && this->driverHandle->tryGetCachedImportHandle(cacheID, importHandle)) {
         handleRetrieved = true; // Mark as successful to skip import logic
     }
 
@@ -92,13 +103,14 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
             NEO::SysCalls::close(pidfd);
             if (newfd < 0) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed: %s\n", strerror(errno));
-                return {0, false, false};
             } else {
                 importHandle = static_cast<uint64_t>(newfd);
                 handleRetrieved = true;
                 opaqueHandlesAttempted = true;
                 // Cache the imported handle for future use
-                this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+                if (useCache) {
+                    this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+                }
             }
         }
     }
@@ -116,9 +128,11 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
                 socketFallbackSuccess = true;
                 opaqueHandlesAttempted = true;
                 // Cache the imported handle for future use
-                this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+                if (useCache) {
+                    this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+                }
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "IPC socket fallback successful for handle %lu, cached as %lu\n",
+                             "IPC socket fallback successful for handle %lu, imported as %lu\n",
                              handle, importHandle);
             } else {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -137,7 +151,53 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
         }
     }
 
-    return {importHandle, true, opaqueHandlesAttempted};
+    return {importHandle, handleRetrieved || socketFallbackSuccess, opaqueHandlesAttempted};
+}
+
+std::pair<NEO::GraphicsAllocation *, void *> Context::importOpaqueFdHandle(NEO::Device *neoDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, uint64_t physicalOffset) {
+    const auto imported = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice, false);
+    if (!imported.success) {
+        return {nullptr, nullptr};
+    }
+
+    auto importOnce = [&](uint64_t fd) {
+        struct ScopedImportFd : NEO::NonCopyableAndNonMovableClass {
+            ScopedImportFd(int fd, bool owned) : fd(fd), owned(owned) {}
+
+            int fd;
+            bool owned;
+            ~ScopedImportFd() {
+                if (owned) {
+                    NEO::SysCalls::close(fd);
+                }
+            }
+        } scopedFd{static_cast<int>(fd), !isHostIpcAllocation};
+        static_assert(NEO::NonCopyableAndNonMovable<ScopedImportFd>);
+
+        NEO::GraphicsAllocation *alloc = nullptr;
+        NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
+        auto ptr = driverHandle->importFdHandle(neoDevice, flags, fd, allocationType, isHostIpcAllocation, nullptr, &alloc, allocData, compressedMemory, physicalOffset);
+        if (alloc && scopedFd.owned) {
+            alloc->setSharedHandle(NEO::Sharing::nonSharedResource);
+        }
+        return std::make_pair(alloc, ptr);
+    };
+
+    auto result = importOnce(imported.importHandle);
+    if (!result.first && reservedHandleData) {
+        const int reservedFd = driverHandle->getMemoryManager()->getImportHandleFromReservedHandleData(reservedHandleData, neoDevice->getRootDeviceIndex());
+        if (reservedFd != -1) {
+            result = importOnce(static_cast<uint64_t>(reservedFd));
+        }
+    }
+    return result;
+}
+
+void Context::releaseImportedRangeChunkHandles(const std::vector<std::pair<uint64_t, uint64_t>> &importedChunks) {
+    for (const auto &chunk : importedChunks) {
+        NEO::SysCalls::close(static_cast<int>(chunk.first));
+        this->driverHandle->clearCachedImportHandle(chunk.second);
+    }
 }
 
 void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {
@@ -204,7 +264,7 @@ void Context::initOpaqueHandleResourcesImpl() {
                      static_cast<long long>(availableFDs), static_cast<long long>(rlim.rlim_cur),
                      static_cast<long long>(maxOpaqueHandlePreallocation));
     }
-    auto tempFds = std::make_unique<int[]>(availableFDs);
+    auto tempFds = std::make_unique_for_overwrite<int[]>(availableFDs);
 
     rlim_t i;
     for (i = 0; i < availableFDs; ++i) {
@@ -223,33 +283,6 @@ void Context::initOpaqueHandleResourcesImpl() {
 
     PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                  "preallocation of fds for opaque ipc handles completed with %lld fds\n", static_cast<long long>(availableFDs));
-}
-
-void *Context::importHandleFromReservedHandleData(void *reservedHandleData,
-                                                  uint64_t cacheID,
-                                                  NEO::Device *neoDevice,
-                                                  ze_ipc_memory_flags_t flags,
-                                                  NEO::AllocationType allocationType,
-                                                  bool isHostIpcAllocation,
-                                                  bool compressedMemory,
-                                                  uint64_t &importHandle,
-                                                  NEO::GraphicsAllocation *&alloc) {
-    int reservedHandle = this->driverHandle->getMemoryManager()->getImportHandleFromReservedHandleData(reservedHandleData, neoDevice->getRootDeviceIndex());
-    if (reservedHandle != -1) {
-        importHandle = static_cast<uint64_t>(reservedHandle);
-        this->driverHandle->setCachedImportHandle(cacheID, importHandle);
-        NEO::SvmAllocationData allocDataRetry(neoDevice->getRootDeviceIndex());
-        return this->driverHandle->importFdHandle(neoDevice,
-                                                  flags,
-                                                  importHandle,
-                                                  allocationType,
-                                                  isHostIpcAllocation,
-                                                  nullptr,
-                                                  &alloc,
-                                                  allocDataRetry,
-                                                  compressedMemory);
-    }
-    return nullptr;
 }
 
 } // namespace L0

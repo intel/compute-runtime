@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class FrequencyImp : public Frequency, NEO::NonCopyableAndNonMovableClass {
     ze_result_t frequencySetRange(const zes_freq_range_t *pLimits) override;
     ze_result_t frequencyGetState(zes_freq_state_t *pState) override;
     ze_result_t frequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) override;
+    void reInit() override;
 
     // Overclocking
     ze_result_t frequencyOcGetCapabilities(zes_oc_capabilities_t *pOcCapabilities) override;

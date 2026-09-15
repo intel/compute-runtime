@@ -37,8 +37,8 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
                                                         useSemaphore64);
 
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore1.getCompareOperation());
-    EXPECT_EQ(4u, miSemaphore1.getSemaphoreDataDword());
-    EXPECT_EQ(0x123400u, miSemaphore1.getSemaphoreGraphicsAddress());
+    EXPECT_EQ(4u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(&miSemaphore1));
+    EXPECT_EQ(0x123400u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(&miSemaphore1));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore1.getWaitMode());
 
     MI_SEMAPHORE_WAIT miSemaphore2;
@@ -77,8 +77,8 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
     ASSERT_NE(nullptr, miSemaphore);
 
     EXPECT_EQ(compareMode, miSemaphore->getCompareOperation());
-    EXPECT_EQ(5u, miSemaphore->getSemaphoreDataDword());
-    EXPECT_EQ(0xFF00FF000u, miSemaphore->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(5u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
+    EXPECT_EQ(0xFF00FF000u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
     EXPECT_EQ(WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore->getWaitMode());
 }
 
@@ -150,6 +150,45 @@ HWTEST_F(CommandEncodeSemaphore, GivenCommandCaptureProvidedWhenCommandViewSelec
 
     ASSERT_NE(nullptr, output.commandView);
     EXPECT_EQ(0, memcmp(miSemaphore, output.commandView, output.cmdSize));
+
+    EncodeSemaphore<FamilyType>::deallocateSemaphoreWaitCommand(output.commandView, HasSemaphore64bCmd<FamilyType>);
+}
+
+HWTEST_F(CommandEncodeSemaphore, GivenCommandCaptureProvidedWhenNoopSpaceSelectedThenCmdBufferIsNoopedInStreamAndCommandView) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    constexpr size_t bufferSize = 128;
+    alignas(4) uint8_t buffer[bufferSize];
+
+    alignas(4) uint8_t noopSpace[sizeof(MI_SEMAPHORE_WAIT)];
+    memset(noopSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    LinearStream stream(buffer, bufferSize);
+
+    constexpr uint64_t gpuBase = 0x1A0000;
+    stream.setGpuBase(gpuBase);
+
+    COMPARE_OPERATION compareMode = COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD;
+
+    EncodeCaptureCommandData output{};
+    output.makeCommandView = true;
+    output.noopSpace = true;
+
+    void *cmd = stream.getSpace(0);
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(stream,
+                                                           0xFF00FF000u,
+                                                           5u,
+                                                           compareMode, false, false, false, false, HasSemaphore64bCmd<FamilyType>, &output);
+
+    EXPECT_EQ(cmd, output.cpuBuffer);
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), output.cmdSize);
+    EXPECT_EQ(gpuBase, output.gpuAddress);
+    ASSERT_NE(nullptr, output.commandView);
+
+    EXPECT_EQ(0, memcmp(noopSpace, output.commandView, output.cmdSize));
+    EXPECT_EQ(0, memcmp(noopSpace, output.cpuBuffer, output.cmdSize));
 
     EncodeSemaphore<FamilyType>::deallocateSemaphoreWaitCommand(output.commandView, HasSemaphore64bCmd<FamilyType>);
 }

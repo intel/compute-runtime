@@ -835,6 +835,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndHeaplessModeWhenDrmIsCreatedThenPerCont
     auto compilerHelper = std::unique_ptr<MockCompilerProductHelper>(new MockCompilerProductHelper());
     auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
     compilerHelper->isHeaplessModeEnabledResult = true;
+    compilerHelper->getProductConfigFromHwInfoResult = defaultHwInfo->ipVersion.value;
     mockRootDeviceEnvironment->compilerProductHelper.reset(compilerHelper.release());
     mockRootDeviceEnvironment->releaseHelper.reset(releaseHelper.release());
 

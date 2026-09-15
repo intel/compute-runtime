@@ -18,13 +18,30 @@
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "metrics_library_api_1_0.h"
 
+namespace ContextGroup {
+extern uint32_t maxContextCount;
+}
+
 namespace NEO {
 template <>
-uint32_t GfxCoreHelperHw<Family>::getContextGroupContextsCount() const;
+uint32_t GfxCoreHelperHw<Family>::getContextGroupContextsCount() const {
+    auto contextGroupCount = 64u;
+    if (contextGroupCount > ContextGroup::maxContextCount) {
+        contextGroupCount = ContextGroup::maxContextCount;
+    }
+    if (!secondaryContextsEnabled) {
+        contextGroupCount = 0;
+    }
+    if (debugManager.flags.ContextGroupSize.get() != -1) {
+        return debugManager.flags.ContextGroupSize.get();
+    }
+    return contextGroupCount;
+}
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const;
@@ -253,7 +270,10 @@ template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    const bool globalFenceRequired = (fenceType == FenceType::acquire)
+                                         ? productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)
+                                         : productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = globalFenceRequired ? AdditionalSynchronizationType::fence : AdditionalSynchronizationType::none;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
@@ -272,7 +292,10 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    const bool globalFenceRequired = (fenceType == FenceType::acquire)
+                                         ? productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)
+                                         : productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = globalFenceRequired ? AdditionalSynchronizationType::fence : AdditionalSynchronizationType::none;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
@@ -286,8 +309,8 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
         *reinterpret_cast<MI_MEM_FENCE *>(commandsBuffer) = miMemFence;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(MI_MEM_FENCE));
     } else if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::semaphore) {
-        const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-        bool useSemaphore64bCmd = releaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+        const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
+        bool useSemaphore64bCmd = compilerReleaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
         EncodeSemaphore<Family>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandsBuffer),
                                                         gpuAddress,
                                                         EncodeSemaphore<Family>::invalidHardwareTag,
@@ -322,6 +345,20 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family
     setPipeControlRequiredFields(pipeControl, args);
 
     auto flushCachesMask = debugManager.flags.FlushAllCaches.get();
+    constexpr int64_t cacheInvalidationMask = FlushCachesBitmask::instructionCache | FlushCachesBitmask::textureCache |
+                                              FlushCachesBitmask::constantCache | FlushCachesBitmask::stateCache |
+                                              FlushCachesBitmask::tlb;
+    auto isCacheInvalidated = args.instructionCacheInvalidateEnable || args.stateCacheInvalidationEnable ||
+                              args.textureCacheInvalidationEnable || args.constantCacheInvalidationEnable ||
+                              args.tlbInvalidation ||
+                              (flushCachesMask & cacheInvalidationMask) != 0;
+    if (debugManager.flags.DrainAllQueuesOnCacheInvalidation.get() == 0) {
+        isCacheInvalidated = false;
+    }
+    if (isCacheInvalidated) {
+        pipeControl.setQueueDrainMode(QueueDrainMode::drainAllQueues);
+    }
+
     if (flushCachesMask) {
         if (flushCachesMask & FlushCachesBitmask::hdcPipeline) {
             pipeControl.setDataportFlush(true);
@@ -345,6 +382,27 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family
 }
 
 template <>
+void MemorySynchronizationCommands<Family>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+
+    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    cmd.setRenderTargetCacheFlushEnable(true);
+    cmd.setStateCacheInvalidationEnable(true);
+    cmd.setTextureCacheInvalidationEnable(true);
+
+    if (debugManager.flags.DrainAllQueuesOnCacheInvalidation.get() != 0) {
+        cmd.setQueueDrainMode(QueueDrainMode::drainAllQueues);
+    }
+    if (debugManager.flags.PcQueueDrainMode.get() != -1) {
+        cmd.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
+    }
+
+    auto commandsBuffer = commandStream.getSpace(sizeof(PIPE_CONTROL));
+    *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
+}
+
+template <>
 void MemorySynchronizationCommands<Family>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
 }
 
@@ -363,7 +421,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (hwInfo.featureTable.flags.ftrLocalMemory) {
         if (properties.allocationType == AllocationType::timestampPacketTagBuffer) {
-            allocationData.flags.useSystemMemory = false;
+            allocationData.flags.useSystemMemory = this->duplicatedInOrderCounterStorageEnabled();
         }
 
         if (properties.allocationType == AllocationType::commandBuffer ||

@@ -8,27 +8,17 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
 using CompilerProductHelperFixture = Test<DeviceFixture>;
-
-HWTEST_F(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned) {
-    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo.featureTable.flags.ftrWalkerMTP = false;
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    EXPECT_FALSE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
-    hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
-}
 
 TEST(CompilerProductHelperTest, GivenIgcLibraryNameDebugKeyWhenQueryingForCustomIgcLibraryNameThenDebugKeyValueisReturned) {
     DebugManagerStateRestore restorer;
@@ -225,38 +215,35 @@ HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuil
 TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressThenReportsClKhrSubgroupExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const auto &releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsIndependentForwardProgress = true;
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 
     hwInfo.capabilityTable.supportsIndependentForwardProgress = false;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 }
 
 TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClExtFloatAtomicsExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const auto &releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }
 
 TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClKhrExternalMemoryExtension) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const auto &releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
 
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ClKhrExternalMemoryExtension.set(0);
 
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 }
 
@@ -292,7 +279,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeapless
 
 HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(pDevice->getHardwareInfo(), NEO::OclCVersion{3, 0});
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{3, 0});
     ASSERT_LT(3U, versions.size());
 
     EXPECT_EQ(1, versions[0].major);
@@ -311,7 +298,7 @@ HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsR
 
 HWTEST_F(CompilerProductHelperFixture, WhenLimitedListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToProvidedMax) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(pDevice->getHardwareInfo(), NEO::OclCVersion{1, 1});
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{1, 1});
     ASSERT_EQ(2U, versions.size());
 
     EXPECT_EQ(1, versions[0].major);
@@ -323,7 +310,7 @@ HWTEST_F(CompilerProductHelperFixture, WhenLimitedListOfSupportedOpenCLCVersions
 
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsEmptyThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(pDevice->getHardwareInfo(), NEO::OclCVersion{0, 0});
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{0, 0});
     ASSERT_LT(3U, versions.size());
 
     EXPECT_EQ(1, versions[0].major);
@@ -342,7 +329,7 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpen
 
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsBelow10ThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToOclC12) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(pDevice->getHardwareInfo(), NEO::OclCVersion{0, 1});
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{0, 1});
     ASSERT_EQ(3U, versions.size());
 
     EXPECT_EQ(1, versions[0].major);

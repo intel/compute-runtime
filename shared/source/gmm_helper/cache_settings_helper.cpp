@@ -33,6 +33,18 @@ GmmResourceUsageType CacheSettingsHelper::getGmmUsageType(AllocationType allocat
     }
 }
 
+// The CPU fills ISA through a persistent mmap, so unlike the generic ISA usage type this one
+// has to guarantee a cacheable resource on a coherent PAT index.
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForKmdMappedIsa(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
+    DEBUG_BREAK_IF(allocationType != AllocationType::kernelIsa && allocationType != AllocationType::kernelIsaInternal);
+
+    const auto usageType = getGmmUsageType(allocationType, forceUncached, productHelper, hwInfo);
+    if (isUncachedType(usageType)) {
+        return usageType;
+    }
+    return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+}
+
 bool CacheSettingsHelper::isUncachedType(GmmResourceUsageType gmmResourceUsageType) {
     return ((gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC) ||
             (gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED) ||

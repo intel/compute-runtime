@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
@@ -44,17 +45,17 @@ ze_result_t LinuxSchedulerImp::getCurrentMode(zes_sched_mode_t *pMode) {
     uint64_t heartbeat = 0;
     ze_result_t result = getPreemptTimeout(timeout, false);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get preempt timeout and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get preempt timeout and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     result = getTimesliceDuration(timeslice, false);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get timeslice duration and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get timeslice duration and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     result = getHeartbeatInterval(heartbeat, false);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get heartbeat interval and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get heartbeat interval and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -86,12 +87,12 @@ ze_result_t LinuxSchedulerImp::setExclusiveModeImp() {
     uint64_t timeslice = 0, timeout = 0, heartbeat = 0;
     ze_result_t result = setPreemptTimeout(timeout);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set preempt timeout and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set preempt timeout and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     result = setTimesliceDuration(timeslice);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set timeslice duration and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set timeslice duration and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     result = setHeartbeatInterval(heartbeat);
@@ -104,7 +105,7 @@ ze_result_t LinuxSchedulerImp::setExclusiveMode(ze_bool_t *pNeedReload) {
     zes_sched_mode_t currMode;
     ze_result_t result = getCurrentMode(&currMode);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get current mode and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get current mode and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -112,7 +113,7 @@ ze_result_t LinuxSchedulerImp::setExclusiveMode(ze_bool_t *pNeedReload) {
         // Unset this mode
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
     }
@@ -124,7 +125,7 @@ ze_result_t LinuxSchedulerImp::getTimeoutModeProperties(ze_bool_t getDefaults, z
     uint64_t heartbeat = 0;
     ze_result_t result = getHeartbeatInterval(heartbeat, getDefaults);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get heart beat interval and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get heart beat interval and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     pConfig->watchdogTimeout = heartbeat;
@@ -136,12 +137,12 @@ ze_result_t LinuxSchedulerImp::getTimesliceModeProperties(ze_bool_t getDefaults,
     uint64_t timeout = 0, timeslice = 0;
     ze_result_t result = getPreemptTimeout(timeout, getDefaults);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get preempt timeout and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get preempt timeout and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     result = getTimesliceDuration(timeslice, getDefaults);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get timeslice duration and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get timeslice duration and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     pConfig->interval = timeslice;
@@ -154,7 +155,7 @@ ze_result_t LinuxSchedulerImp::setTimeoutMode(zes_sched_timeout_properties_t *pP
     zes_sched_mode_t currMode;
     ze_result_t result = getCurrentMode(&currMode);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get current mode and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get current mode and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -169,28 +170,28 @@ ze_result_t LinuxSchedulerImp::setTimeoutMode(zes_sched_timeout_properties_t *pP
         // Unset this mode
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
     }
 
     result = setHeartbeatInterval(pProperties->watchdogTimeout);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set heartbeat interval and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set heartbeat interval and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
     uint64_t timeout = (pProperties->watchdogTimeout) / 5;
     result = setPreemptTimeout(timeout);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set preempt timeout and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set preempt timeout and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
     uint64_t timeslice = 0;
     result = setTimesliceDuration(timeslice);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set timeslice duration and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set timeslice duration and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     return result;
@@ -207,7 +208,7 @@ ze_result_t LinuxSchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t
     zes_sched_mode_t currMode;
     ze_result_t result = getCurrentMode(&currMode);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get current mode and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get current mode and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -215,19 +216,19 @@ ze_result_t LinuxSchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t
         // Unset this mode
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
     }
 
     result = setPreemptTimeout(pProperties->yieldTimeout);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set preempt timeout and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set preempt timeout and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     result = setTimesliceDuration(pProperties->interval);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set timeslice duration and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set timeslice duration and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     uint64_t heartbeat = 2500 * (pProperties->interval);
@@ -256,7 +257,7 @@ ze_result_t LinuxSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t ge
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
                 result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read preempt timeout from %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read preempt timeout from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, path.c_str(), result);
             return result;
         }
     }
@@ -291,7 +292,7 @@ ze_result_t LinuxSchedulerImp::getTimesliceDuration(uint64_t &timeslice, ze_bool
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
                 result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read timeslice duration from %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read timeslice duration from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, path.c_str(), result);
             return result;
         }
     }
@@ -326,7 +327,7 @@ ze_result_t LinuxSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat, ze_bool
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
                 result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read heartbeat interval from %s and returning error:0x%x \n", __FUNCTION__, path.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read heartbeat interval from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, path.c_str(), result);
             return result;
         }
     }
@@ -348,7 +349,7 @@ ze_result_t LinuxSchedulerImp::setPreemptTimeout(uint64_t timeout) {
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
                 result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Preempt timeout into engineDir/%s/preemptTimeoutMilliSecs and returning error:0x%x \n", __FUNCTION__, engineName.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Preempt timeout into engineDir/%s/preemptTimeoutMilliSecs and returning error:0x%x \n", NEO_FUNCTION_NAME, engineName.c_str(), result);
             return result;
         }
     }
@@ -364,7 +365,7 @@ ze_result_t LinuxSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
                 result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Timeslice duration into engineDir/%s/timesliceDurationMilliSecs and returning error:0x%x \n", __FUNCTION__, engineName.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Timeslice duration into engineDir/%s/timesliceDurationMilliSecs and returning error:0x%x \n", NEO_FUNCTION_NAME, engineName.c_str(), result);
             return result;
         }
     }
@@ -380,7 +381,7 @@ ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
                 result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Heartbeat interval into engineDir/%s/heartbeatIntervalMilliSecs and returning error:0x%x \n", __FUNCTION__, engineName.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write Heartbeat interval into engineDir/%s/heartbeatIntervalMilliSecs and returning error:0x%x \n", NEO_FUNCTION_NAME, engineName.c_str(), result);
             return result;
         }
     }
@@ -412,7 +413,7 @@ static ze_result_t getNumEngineTypeAndInstancesForDevice(std::map<zes_engine_typ
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     for_each(localListOfAllEngines.begin(), localListOfAllEngines.end(),

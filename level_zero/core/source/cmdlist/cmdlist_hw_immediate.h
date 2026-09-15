@@ -15,7 +15,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 
 #include <atomic>
-#include <functional>
 #include <mutex>
 
 namespace NEO {
@@ -81,7 +80,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                               uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override;
 
     ze_result_t appendMemoryCopy(void *dstptr,
                                  const void *srcptr,
@@ -116,15 +115,20 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                     NEO::GraphicsAllocation *srcAllocation,
                                     size_t size, bool flushHost, size_t offset) override;
 
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override;
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) override;
 
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                           CmdListWaitEventParameters &waitEventParams) override;
+
+    ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
+                                            const size_t *pOffsets, ze_event_handle_t hSignalEvent,
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                            CmdListWaitEventParameters &waitEventsParameters) override;
 
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
                                             size_t size, ze_event_handle_t hSignalEvent,
-                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendImageCopyFromMemory(ze_image_handle_t hDstImage,
                                           const void *srcPtr,
@@ -176,7 +180,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                           const void **pRanges,
                                           ze_event_handle_t hSignalEvent,
                                           uint32_t numWaitEvents,
-                                          ze_event_handle_t *phWaitEvents) override;
+                                          ze_event_handle_t *phWaitEvents,
+                                          CmdListWaitEventParameters &waitEventParams) override;
 
     ze_result_t appendWaitOnMemory(void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData) override;
 
@@ -235,7 +240,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                                 std::unique_lock<std::mutex> *outerLockForIndirect);
 
     ze_result_t appendBarrierWithCopyOffloadSynchronization(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                                            bool relaxedOrderingDispatch, bool isStallingOperation);
+                                                            CmdListWaitEventParameters &waitEventsParameters, bool isStallingOperation);
     void programCrossEngineTaskCountWait(NEO::CommandStreamReceiver *waitedCsr, TaskCountType taskCountToWait);
 
     bool preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
@@ -245,7 +250,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(NEO::SvmAllocationData *alloc, void *ptr, bool &lockingFailed);
     TransferType getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo);
-    size_t getTransferThreshold(TransferType transferType);
+    size_t getCpuCopyThreshold(TransferType transferType);
     bool isBarrierRequired();
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override;
     void handlePostSyncPrintfAndAssert(bool hangDetected) final;
@@ -275,6 +280,21 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ComputeFlushMethodType computeFlushMethod = nullptr;
     uint64_t relaxedOrderingCounter = 0;
     std::atomic<bool> dependenciesPresent{false};
+    struct SynchronizationTaskCounts {
+        bool matches(TaskCountType mainTaskCount, TaskCountType copyOffloadTaskCount) const {
+            return main.load() == mainTaskCount && copyOffload.load() == copyOffloadTaskCount;
+        }
+
+        void store(TaskCountType mainTaskCount, TaskCountType copyOffloadTaskCount) {
+            main.store(mainTaskCount);
+            copyOffload.store(copyOffloadTaskCount);
+        }
+
+        std::atomic<TaskCountType> main{0};
+        std::atomic<TaskCountType> copyOffload{0};
+    };
+    SynchronizationTaskCounts lastBarrierTaskCounts;
+    SynchronizationTaskCounts lastHostSynchronizeTaskCounts;
     bool latestFlushIsHostVisible = false;
     bool keepRelaxedOrderingEnabled = false;
 };

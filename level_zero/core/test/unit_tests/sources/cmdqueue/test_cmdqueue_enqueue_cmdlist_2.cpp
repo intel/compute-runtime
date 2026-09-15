@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -315,8 +316,8 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
         using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
 
-        if ((static_cast<uint32_t>(requiredDebugPauseState) == semaphoreCmd->getSemaphoreDataDword()) &&
-            (debugPauseStateAddress == semaphoreCmd->getSemaphoreGraphicsAddress())) {
+        if ((static_cast<uint32_t>(requiredDebugPauseState) == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd)) &&
+            (debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd))) {
 
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
             EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());
@@ -1216,12 +1217,13 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
 
     commandQueue->setPatchingPreamble(true);
 
-    uint64_t counterDeviceAddress = 0;
+    uint64_t counterHostGpuAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    NEO::GraphicsAllocation *counterAllocation = nullptr;
-    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
-
+    NEO::GraphicsAllocation *counterHostAllocation = nullptr;
+    uint64_t counterDeviceGpuAddress = 0;
+    NEO::GraphicsAllocation *counterDeviceAllocation = nullptr;
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation, counterDeviceGpuAddress, counterDeviceAllocation);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -1230,12 +1232,14 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.patchPreambleRequiredCounter = counter;
+    internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress = counterDeviceGpuAddress;
     returnValue = commandQueue->executeCommandLists(1, commandLists, nullptr, internalOptions);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    EXPECT_TRUE(ultCsr->isMadeResident(counterAllocation));
+    EXPECT_TRUE(ultCsr->isMadeResident(counterHostAllocation));
+    EXPECT_TRUE(ultCsr->isMadeResident(counterDeviceAllocation));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1243,7 +1247,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
         ptrOffset(queueCpuBase, usedSpaceBefore),
         usedSpaceAfter - usedSpaceBefore));
 
-    bool foundPostSyncWithCounter = false;
+    bool foundHostPostSyncWithCounter = false;
+    bool foundDevicePostSyncWithCounter = false;
 
     auto pipeControlCmds = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, pipeControlCmds.size());
@@ -1251,15 +1256,22 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlCmd);
         if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
-            if (counterDeviceAddress == actualAddress &&
+            if (counterHostGpuAddress == actualAddress &&
                 pipeControl->getImmediateData() == counter) {
-                foundPostSyncWithCounter = true;
+                foundHostPostSyncWithCounter = true;
+            }
+            if (counterDeviceGpuAddress == actualAddress &&
+                pipeControl->getImmediateData() == counter) {
+                foundDevicePostSyncWithCounter = true;
+            }
+            if (foundHostPostSyncWithCounter && foundDevicePostSyncWithCounter) {
                 break;
             }
         }
     }
 
-    EXPECT_TRUE(foundPostSyncWithCounter);
+    EXPECT_TRUE(foundHostPostSyncWithCounter);
+    EXPECT_TRUE(foundDevicePostSyncWithCounter);
 
     commandList->destroy();
     commandQueue->destroy();
@@ -1354,12 +1366,13 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
 
     commandQueue->setPatchingPreamble(true);
 
-    uint64_t counterDeviceAddress = 0;
+    uint64_t counterHostGpuAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    NEO::GraphicsAllocation *counterAllocation = nullptr;
-    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterDeviceAddress, counterAllocation);
-
+    NEO::GraphicsAllocation *counterHostAllocation = nullptr;
+    uint64_t counterDeviceGpuAddress = 0;
+    NEO::GraphicsAllocation *counterDeviceAllocation = nullptr;
+    commandQueue->getPatchPreambleFullData(counter, hostAddress, counterHostGpuAddress, counterHostAllocation, counterDeviceGpuAddress, counterDeviceAllocation);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -1373,7 +1386,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    EXPECT_TRUE(ultCsr->isMadeResident(counterAllocation));
+    EXPECT_TRUE(ultCsr->isMadeResident(counterHostAllocation));
+    EXPECT_TRUE(ultCsr->isMadeResident(counterDeviceAllocation));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1381,7 +1395,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
         ptrOffset(queueCpuBase, usedSpaceBefore),
         usedSpaceAfter - usedSpaceBefore));
 
-    bool foundPostSyncWithCounter = false;
+    bool foundHostPostSyncWithCounter = false;
+    bool foundDevicePostSyncWithCounter = false;
 
     auto miFlushCmds = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, miFlushCmds.size());
@@ -1389,14 +1404,22 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleOnCopyEngi
     for (auto &miFlushCmd : miFlushCmds) {
         auto miFlush = reinterpret_cast<MI_FLUSH_DW *>(*miFlushCmd);
         if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD &&
-            miFlush->getDestinationAddress() == counterDeviceAddress &&
+            miFlush->getDestinationAddress() == counterHostGpuAddress &&
             miFlush->getImmediateData() == counter) {
-            foundPostSyncWithCounter = true;
+            foundHostPostSyncWithCounter = true;
+        }
+        if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD &&
+            miFlush->getDestinationAddress() == counterDeviceGpuAddress &&
+            miFlush->getImmediateData() == counter) {
+            foundDevicePostSyncWithCounter = true;
+        }
+        if (foundHostPostSyncWithCounter && foundDevicePostSyncWithCounter) {
             break;
         }
     }
 
-    EXPECT_TRUE(foundPostSyncWithCounter);
+    EXPECT_TRUE(foundHostPostSyncWithCounter);
+    EXPECT_TRUE(foundDevicePostSyncWithCounter);
 
     commandList->destroy();
     commandQueue->destroy();
@@ -1634,7 +1657,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
     const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-    const size_t expectedSize = useSemaphore64bCmd ? sizeof(MI_SEMAPHORE_WAIT) : 2 * sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_SEMAPHORE_WAIT);
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
+    const size_t expectedSize = qwordIndirect ? 2 * sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_SEMAPHORE_WAIT) : sizeof(MI_SEMAPHORE_WAIT);
     CommandListExecutionContext ctx{};
 
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -1662,7 +1686,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(0u, commandList->getLatestTaskCount());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
     EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
     mockCmdQHw->setPatchingPreamble(true);
@@ -1670,7 +1694,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     mockCmdQHw->saveWaitForPreamble = true;
     EXPECT_TRUE(mockCmdQHw->getSaveWaitForPreamble());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
     EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
     mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
@@ -1678,13 +1702,13 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(expectedGpuAddress, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(expectedTaskCount, commandList->getLatestTaskCount());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
     EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
     MockGraphicsAllocation otherTagAllocation(nullptr, expectedGpuAddress + 0x1000, 1);
 
     mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, &otherTagAllocation, expectedTaskCount);
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
     EXPECT_TRUE(ctx.patchPreambleWaitSyncNeeded);
 
     commandList->reset();
@@ -1701,7 +1725,6 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
-    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -1709,7 +1732,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    CommandListExecutionContext ctx{};
+
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1717,10 +1740,12 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
-    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    commandList->close();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
 
     uint64_t hostFunctionAddress = 0xABCDEF00;
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
@@ -1735,7 +1760,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(semaphoreSize);
     size_t expectedSize = encodedMiStoreSize + encodedMiSemaphoreSize;
 
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    EXPECT_EQ(expectedSize, commandList->getHostFunctionsPatchSize());
 
     auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
     CommandListExecutionInternalOptions internalOptions = {};
@@ -1799,15 +1824,14 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppen
     EXPECT_EQ(expectedHostFunctionMappedMemory, storeDataImm.getAddress());
 
     auto expectedSemaphoreWaitClearedId = 0u;
-    EXPECT_EQ(expectedSemaphoreWaitClearedId, semaphoreWait.getSemaphoreDataDword());
-    EXPECT_EQ(expectedHostFunctionMappedMemory, semaphoreWait.getSemaphoreGraphicsAddress());
+    EXPECT_EQ(expectedSemaphoreWaitClearedId, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(&semaphoreWait));
+    EXPECT_EQ(expectedHostFunctionMappedMemory, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(&semaphoreWait));
 
     commandList->destroy();
 }
 
 HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostFunctionsRequireDifferentMemorySynchronizationThenEstimatedSizeIsCorect, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
-    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -1815,17 +1839,19 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostF
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    CommandListExecutionContext ctx{};
+
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    commandList->close();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
 
     uint64_t hostFunctionAddress = 0xABCDEF00;
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
@@ -1851,7 +1877,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostF
 
     size_t expectedSize = encodedIdSizeWithSync + encodedIdSizeWithoutSync + (2 * encodedMiSemaphoreSize);
 
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    EXPECT_EQ(expectedSize, commandList->getHostFunctionsPatchSize());
 
     commandList->destroy();
 }
@@ -1866,7 +1892,6 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     }
 
     DebugManagerStateRestore restore;
-    UnitTestSetter::setupSemaphore64bCmdSupport(restore, FamilyType::gfxCoreFamily);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -1874,7 +1899,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    CommandListExecutionContext ctx{};
+
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1882,10 +1907,12 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
 
-    ctx.patchPreambleEnabled = true;
     mockCmdQHw->setPatchingPreamble(true);
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    commandList->close();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getHostFunctionsPatchSize());
 
     uint64_t hostFunctionAddress = 0xABCDEF00;
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(hostFunctionAddress);
@@ -1900,7 +1927,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     auto encodedMiSemaphoreSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(semaphoreSize);
     size_t expectedSize = encodedPcSize + encodedMiSemaphoreSize;
 
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleHostFunctions(ctx, commandList));
+    EXPECT_EQ(expectedSize, commandList->getHostFunctionsPatchSize());
 
     auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
     CommandListExecutionInternalOptions internalOptions = {};
@@ -1981,8 +2008,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
     EXPECT_TRUE(pc.getDcFlushEnable());
 
     auto expectedSemaphoreWaitClearedId = 0u;
-    EXPECT_EQ(expectedSemaphoreWaitClearedId, semaphoreWait.getSemaphoreDataDword());
-    EXPECT_EQ(expectedHostFunctionMappedMemory, semaphoreWait.getSemaphoreGraphicsAddress());
+    EXPECT_EQ(expectedSemaphoreWaitClearedId, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(&semaphoreWait));
+    EXPECT_EQ(expectedHostFunctionMappedMemory, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(&semaphoreWait));
 
     commandList->destroy();
 }
@@ -2144,11 +2171,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
 
     // third execution of command list, different tag allocation and semaphore required
     const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
     auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    if (useSemaphore64bCmd) {
-        EXPECT_EQ(0u, lriCmds.size());
-        semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    } else {
+    if (qwordIndirect) {
         ASSERT_EQ(2u, lriCmds.size());
 
         auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[0]);
@@ -2160,12 +2185,15 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
         EXPECT_EQ(getHighPart(otherTaskCount), lriCmd->getDataDword());
 
         semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(lriCmds[1], cmdList.end());
+    } else {
+        EXPECT_EQ(0u, lriCmds.size());
+        semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     }
 
     ASSERT_EQ(1u, semWaitCmds.size());
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(*semWaitCmds[0]);
 
-    EXPECT_EQ(otherTagAllocation.getGpuAddress(), semWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(otherTagAllocation.getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
     EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semWaitCmd->getCompareOperation());
 
     EXPECT_TRUE(ultCsr->isMadeResident(&otherTagAllocation));

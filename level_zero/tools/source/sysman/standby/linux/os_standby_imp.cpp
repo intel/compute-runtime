@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/standby/linux/os_standby_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 
@@ -27,7 +28,7 @@ bool LinuxStandbyImp::isStandbySupported(void) {
         return true;
     } else {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <can't read file %s> <error: 0x%x>\n", __func__, standbyModeFile.c_str(), rel);
+                     "error@<%s> <can't read file %s> <error: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), rel);
         return false;
     }
 }
@@ -40,7 +41,7 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, standbyModeFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), result);
         return result;
     }
     if (standbyModeDefault == currentMode) {
@@ -50,7 +51,7 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
     } else {
         result = ZE_RESULT_ERROR_UNKNOWN;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <unknown or internal error occurred> <currentMode: %d & result: 0x%x>\n", __func__, currentMode, result);
+                     "error@<%s> <unknown or internal error occurred> <currentMode: %d & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode, result);
     }
     return result;
 }
@@ -66,7 +67,7 @@ ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
     if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <Unsupported feature> <result: 0x%x>\n", __func__, result);
+                     "error@<%s> <Unsupported feature> <result: 0x%x>\n", NEO_FUNCTION_NAME, result);
     }
     return result;
 }

@@ -15,6 +15,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -454,7 +455,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
         auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
 
         if (gpuVa != 0 && stateSaveAreaSize != 0) {
-            stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
+            stateSaveArea = std::make_unique_for_overwrite<char[]>(stateSaveAreaSize);
             stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
         } else {
             DEBUG_BREAK_IF(true);
@@ -527,7 +528,7 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
             }
 
             const auto regSize = std::max(getRegisterSize(registerType), hwInfo.capabilityTable.grfSize);
-            auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+            auto reg = std::make_unique_for_overwrite<uint32_t[]>(regSize / sizeof(uint32_t));
 
             for (auto &threadID : threadIds) {
                 memset(reg.get(), 0, regSize);
@@ -769,7 +770,7 @@ size_t DebugSessionImp::calculateSrMagicOffset(const NEO::StateSaveAreaHeader *s
     } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
         srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
     } else {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", __func__);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", NEO_FUNCTION_NAME);
         DEBUG_BREAK_IF(true);
     }
     return srMagicOffset;
@@ -916,7 +917,7 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
         return;
     }
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
-    auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+    auto reg = std::make_unique_for_overwrite<uint32_t[]>(regSize / sizeof(uint32_t));
 
     for (auto &newlyStopped : newlyStoppedThreads) {
         if (allThreads[newlyStopped]->isStopped()) {
@@ -1188,7 +1189,7 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(const NEO::StateSaveAr
     }
 
     if (pStateSaveAreaHeader->versionHeader.version.major >= 5) {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", __func__);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", NEO_FUNCTION_NAME);
         DEBUG_BREAK_IF(true);
         return nullptr;
     }
@@ -1367,7 +1368,7 @@ std::optional<NEO::RegsetDescExt> DebugSessionImp::typeToRegsetDescExt(zet_debug
     }
     default:
         if (!sipLibInterface) {
-            PRINT_DEBUGGER_ERROR_LOG("%s: SipExternalLibInterface not available", __func__);
+            PRINT_DEBUGGER_ERROR_LOG("%s: SipExternalLibInterface not available", NEO_FUNCTION_NAME);
             DEBUG_BREAK_IF(true);
             return std::nullopt;
         }
@@ -1504,7 +1505,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
 
     const auto &hwInfo = connectedDevice->getHwInfo();
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), hwInfo.capabilityTable.grfSize);
-    auto r0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+    auto r0 = std::make_unique_for_overwrite<uint32_t[]>(regSize / sizeof(uint32_t));
 
     ret = readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0.get());
     if (ret != ZE_RESULT_SUCCESS) {
@@ -1515,12 +1516,13 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
     uint64_t scratchSpaceBaseAddress = 0;
 
     auto &gfxCoreHelper = connectedDevice->getGfxCoreHelper();
+    const auto &rootDeviceEnvironment = connectedDevice->getNEODevice()->getRootDeviceEnvironment();
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         auto surfaceStateForScratch = ((r0[5] >> 10) << 6);
 
         if (surfaceStateForScratch > 0) {
             uint64_t renderSurfaceStateGpuVa = surfaceStateForScratch + sbaBuffer.surfaceStateBaseAddress;
-            constexpr size_t renderSurfaceStateSize = 64;
+            const size_t renderSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
             std::vector<char> renderSurfaceState(renderSurfaceStateSize, 0);
 
             ret = readGpuMemory(allThreads[threadId]->getMemoryHandle(), renderSurfaceState.data(), renderSurfaceStateSize, renderSurfaceStateGpuVa);
@@ -1529,10 +1531,10 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
                 return ret;
             }
 
-            auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data(), connectedDevice->getProductHelper());
+            auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data(), rootDeviceEnvironment);
             auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, threadId);
             auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-            auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
+            auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data(), rootDeviceEnvironment));
             if (scratchAllocationBase != 0) {
                 scratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
             }
@@ -1573,15 +1575,11 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
 }
 
 void DebugSession::updateGrfRegisterSetProperties(EuThread::ThreadId thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
-    if (pRegisterSetProperties == nullptr) {
-        return;
-    }
-
+    // The only caller returns early when there are no properties to update.
     auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto regsetType = l0GfxCoreHelper.getRegsetTypeForLargeGrfDetection();
     const auto regSize = std::max(getRegisterSize(regsetType), 64u);
     auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
-    memset(reg.get(), 0, regSize);
     readRegistersImp(thread, regsetType, 0, 1, reg.get());
     for (uint32_t i = 0; i < *pCount; i++) {
         if (pRegisterSetProperties[i].type == ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU) {
@@ -1605,9 +1603,17 @@ ze_result_t DebugSession::getThreadRegisterSetProperties(ze_device_thread_t thre
         return ret;
     }
 
+    if (pRegisterSetProperties == nullptr) {
+        return ret;
+    }
+
     auto sipExternalLib = this->connectedDevice->getNEODevice()->getSipExternalLibInterface();
     if (sipExternalLib) {
-        getRegisterAccessProperties(&threadId, pCount, pRegisterSetProperties);
+        if (!getRegisterAccessProperties(&threadId, pCount, pRegisterSetProperties)) {
+            // Reporting a partially updated set would silently mix device level and thread level counts.
+            PRINT_DEBUGGER_ERROR_LOG("%s: Failed to get thread register access properties\n", NEO_FUNCTION_NAME);
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
     } else {
         updateGrfRegisterSetProperties(threadId, pCount, pRegisterSetProperties);
     }
@@ -1764,7 +1770,7 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
         if (start + count > registerCount) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        startRegOffset = static_cast<size_t>(registerStartOffset);
+        startRegOffset = static_cast<size_t>(registerStartOffset) + (static_cast<size_t>(start) * regdesc->bytes);
     } else {
         auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
         startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regdesc, start);
@@ -1773,8 +1779,11 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
     int ret = 0;
     if (write) {
         ret = writeGpuMemory(thread->getMemoryHandle(), static_cast<const char *>(pRegisterValues), count * regdesc->bytes, gpuVa + startRegOffset);
-    } else {
+    } else if (type == NEO::SipRegisterType::eCommand) {
+        // SIP writes the command register while parked, so this read must never skip the flush.
         ret = readGpuMemory(thread->getMemoryHandle(), static_cast<char *>(pRegisterValues), count * regdesc->bytes, gpuVa + startRegOffset);
+    } else {
+        ret = readRegsetForStoppedThread(thread, static_cast<char *>(pRegisterValues), count * regdesc->bytes, gpuVa + startRegOffset);
     }
 
     return ret == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
@@ -1813,7 +1822,7 @@ std::optional<SipRegisterPacker> SipRegisterPacker::create(const NEO::RegsetDesc
         .majorStart = start,
         .majorCount = count,
         .packedOffset = packedOffset.value(),
-        .unpackedIndices = unpackedIndices,
+        .unpackedIndices = std::move(unpackedIndices),
     };
 }
 
@@ -1823,7 +1832,7 @@ std::vector<uint32_t> SipRegisterPacker::packRegisters(const std::vector<uint32_
         try {
             packed.push_back(unpacked.at(i));
         } catch (const std::out_of_range &) {
-            PRINT_DEBUGGER_ERROR_LOG("%s: Invalid register indices", __func__);
+            PRINT_DEBUGGER_ERROR_LOG("%s: Invalid register indices", NEO_FUNCTION_NAME);
             return {};
         }
     }
@@ -1837,7 +1846,7 @@ std::vector<uint32_t> SipRegisterPacker::unpackRegisters(const std::vector<uint3
         try {
             unpacked.at(unpackedIndices.at(i)) = packed.at(i);
         } catch (const std::out_of_range &) {
-            PRINT_DEBUGGER_ERROR_LOG("%s: Invalid register indices", __func__);
+            PRINT_DEBUGGER_ERROR_LOG("%s: Invalid register indices", NEO_FUNCTION_NAME);
             return {};
         }
     }
@@ -1881,7 +1890,7 @@ ze_result_t DebugSessionImp::registersAccessHelperPacked(const EuThread &thread,
     if (write) {
         return writePackedRegisters(memHandle, regStartGpuVa, packer, pRegisterValues);
     } else {
-        return readPackedRegisters(memHandle, regStartGpuVa, packer, pRegisterValues);
+        return readPackedRegisters(thread, regStartGpuVa, packer, pRegisterValues);
     }
 }
 
@@ -1897,13 +1906,13 @@ ze_result_t DebugSessionImp::writePackedRegisters(uint64_t memHandle, uint64_t r
     return writeGpuMemory(memHandle, data, size, gpuVa);
 }
 
-ze_result_t DebugSessionImp::readPackedRegisters(uint64_t memHandle, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *dest) {
+ze_result_t DebugSessionImp::readPackedRegisters(const EuThread &thread, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *dest) {
     std::vector<uint32_t> packed(packer.unpackedIndices.size());
 
     char *data = reinterpret_cast<char *>(packed.data());
     const size_t packedDataSize = sizeof(packed[0]) * packed.size();
     const uint64_t gpuVa = (packer.packedOffset * sizeof(packed[0])) + regStartGpuVa;
-    ze_result_t status = readGpuMemory(memHandle, data, packedDataSize, gpuVa);
+    ze_result_t status = readRegsetForStoppedThread(&thread, data, packedDataSize, gpuVa);
     if (status != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -1920,7 +1929,7 @@ ze_result_t DebugSessionImp::getCommandRegisterDescriptor(const NEO::StateSaveAr
     } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
         *regdesc = stateSaveAreaHeader->regHeader.cmd;
     } else {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported State Save Area Header version %u\n", __func__, stateSaveAreaHeader->versionHeader.version.major);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported State Save Area Header version %u\n", NEO_FUNCTION_NAME, stateSaveAreaHeader->versionHeader.version.major);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -2113,6 +2122,11 @@ ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
+    // SIP writes READY only after fencing whatever the command produced, and the poll above always
+    // flushes, so the whole slot is back in memory. Does not rely on a fifo entry being published
+    // on command completion.
+    allThreads.at(threadId)->setStateSaveAreaCoherent(true);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2218,7 +2232,16 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
                     return retVal;
                 }
                 UNRECOVERABLE_IF(!nodes[i].valid);
-                threadsWithAttention.emplace_back(0, nodes[i].slice_id, nodes[i].subslice_id, nodes[i].eu_id, nodes[i].thread_id);
+                const EuThread::ThreadId threadId(0, nodes[i].slice_id, nodes[i].subslice_id, nodes[i].eu_id, nodes[i].thread_id);
+
+                // SIP publishes this node only after fencing its state save, and the read above
+                // flushed, so the whole slot for this thread is now in memory.
+                auto thread = allThreads.find(threadId);
+                if (thread != allThreads.end()) {
+                    thread->second->setStateSaveAreaCoherent(true);
+                }
+
+                threadsWithAttention.push_back(threadId);
                 nodes[i].valid = 0;
             }
             retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(nodes.data()), readSize * sizeof(SIP::fifo_node), currentFifoOffset);
@@ -2329,7 +2352,7 @@ std::optional<SipTransferAddr> DebugSessionImp::getSlmAddresses(EuThread::Thread
 
     uint32_t slmStartOffset = 0;
     if (!getSlmStartOffset(memoryHandle, threadId, &slmStartOffset)) {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Getting SLM start offset failed\n", __func__);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Getting SLM start offset failed\n", NEO_FUNCTION_NAME);
         return std::nullopt;
     }
 
@@ -2350,7 +2373,7 @@ std::optional<SipTransferAddr> DebugSessionImp::getBarrierAddresses(EuThread::Th
 
     uint32_t barrierStartOffset = 0;
     if (!getBarrierStartOffset(memoryHandle, threadId, &barrierStartOffset)) {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Getting barrier start offset failed\n", __func__);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Getting barrier start offset failed\n", NEO_FUNCTION_NAME);
         return std::nullopt;
     }
 

@@ -202,6 +202,22 @@ std::optional<uint64_t> HostFunctionStreamer::getHostFunctionReadyToExecute() co
     return hostFunctionId;
 }
 
+std::optional<uint64_t> HostFunctionStreamer::tryReserveHostFunctionReadyToExecute() {
+    auto hostFunctionId = getHostFunctionReadyToExecute();
+    if (!hostFunctionId.has_value()) {
+        return std::nullopt;
+    }
+
+    bool expected = false;
+    if (!inOrderExecutionInProgress.compare_exchange_strong(expected, true,
+                                                            std::memory_order_acq_rel,
+                                                            std::memory_order_acquire)) {
+        return std::nullopt;
+    }
+
+    return hostFunctionId;
+}
+
 bool HostFunctionStreamer::isUsingSemaphore64bCmd() const {
     return useSemaphore64bCmd;
 }

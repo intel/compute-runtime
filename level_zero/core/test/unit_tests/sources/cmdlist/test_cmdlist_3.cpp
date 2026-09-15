@@ -240,6 +240,67 @@ HWTEST_F(CommandListCreateTests, givenZeroBufferSizeWhenResolveAlignedAllocation
     EXPECT_TRUE(outData.needsFlush);
 }
 
+HWTEST_F(CommandListCreateTests, givenExplicitAllocationWhenResolveAlignedAllocationCalledThenPointerLookupIsSkippedAndAllocationIsMadeResident) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    constexpr size_t allocationSize = MemoryConstants::pageSize;
+    constexpr size_t offsetInAllocation = 64u;
+
+    NEO::MockGraphicsAllocation explicitAllocation(reinterpret_cast<void *>(0x2000), allocationSize);
+
+    L0::MemAllocInfo allocInfo{};
+    allocInfo.explicitAlloc = &explicitAllocation;
+
+    auto ptr = reinterpret_cast<void *>(explicitAllocation.getGpuAddress() + offsetInAllocation);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, ptr, allocationSize, &allocInfo, {});
+
+    EXPECT_EQ(&explicitAllocation, outData.alloc);
+    EXPECT_EQ(nullptr, outData.svmAllocData);
+    EXPECT_EQ(static_cast<uintptr_t>(explicitAllocation.getGpuAddress()), outData.alignedAllocationPtr);
+    EXPECT_EQ(offsetInAllocation, outData.offset);
+
+    bool foundInResidency = false;
+    for (auto *residentAllocation : commandList->commandContainer.getResidencyContainer()) {
+        foundInResidency |= (residentAllocation == &explicitAllocation);
+    }
+    EXPECT_TRUE(foundInResidency);
+}
+
+HWTEST_F(CommandListCreateTests, givenSharedSystemAllocationUsedWhenGetRegionOffsetForAppendMemoryCopyBlitRegionCalledThenRetrieveProperOffset) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    size_t cmdListHostPtrSize = MemoryConstants::pageSize;
+    void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
+    void *startMemory = cmdListHostBuffer;
+
+    void *ptr = static_cast<void *>(reinterpret_cast<uint8_t *>(startMemory) + 1);
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, ptr, cmdListHostPtrSize, nullptr, {.sharedSystemEnabled = true});
+    uint32_t offset = commandList->getRegionOffsetForAppendMemoryCopyBlitRegion(&outData);
+    EXPECT_EQ(1u, outData.offset);
+    EXPECT_EQ(1u, offset);
+    device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
+}
+
+HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenGetRegionOffsetForAppendMemoryCopyBlitRegionCalledThenRetrieveProperOffset) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    size_t cmdListHostPtrSize = MemoryConstants::pageSize;
+    void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
+    void *startMemory = cmdListHostBuffer;
+
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, startMemory, cmdListHostPtrSize, nullptr, {});
+    ASSERT_NE(nullptr, outData.alloc);
+    uint32_t offset = commandList->getRegionOffsetForAppendMemoryCopyBlitRegion(&outData);
+    uint64_t ptr = outData.alignedAllocationPtr + outData.offset;
+    uint64_t allocPtr = outData.alloc->getGpuAddress();
+    EXPECT_EQ(static_cast<uint32_t>(ptr - allocPtr), offset);
+    commandList->removeHostPtrAllocations();
+    device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
+}
+
 HWTEST_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsInMapThenAllocationReturned) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -324,6 +385,37 @@ HWTEST_F(CommandListCreateTests, givenCmdListHostPointerUsedWhenResolveAlignedAl
     EXPECT_EQ((expectedOffset & (EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment() - 1)), outData.offset);
 
     commandList->removeHostPtrAllocations();
+    device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
+}
+
+HWTEST_F(CommandListCreateTests, givenSharedSystemAllocationUsedWhenResolveAlignedAllocationCalledThenRetrieveProperOffsetAndAddress) {
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    size_t cmdListHostPtrSize = MemoryConstants::pageSize;
+    void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
+    void *startMemory = cmdListHostBuffer;
+
+    void *ptr = static_cast<void *>(reinterpret_cast<uint8_t *>(startMemory));
+    AlignedAllocationData outData = commandList->resolveAlignedAllocation(device, startMemory, cmdListHostPtrSize, nullptr, {.sharedSystemEnabled = true});
+    EXPECT_EQ(nullptr, outData.alloc);
+    EXPECT_EQ(0u, outData.offset);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr), outData.alignedAllocationPtr + outData.offset);
+    EXPECT_TRUE(isAligned(outData.alignedAllocationPtr, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment()));
+
+    ptr = static_cast<void *>(reinterpret_cast<uint8_t *>(startMemory) + 1);
+    outData = commandList->resolveAlignedAllocation(device, ptr, cmdListHostPtrSize, nullptr, {.sharedSystemEnabled = true});
+    EXPECT_EQ(nullptr, outData.alloc);
+    EXPECT_NE(0u, outData.offset);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr), outData.alignedAllocationPtr + outData.offset);
+    EXPECT_TRUE(isAligned(outData.alignedAllocationPtr, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment()));
+
+    ptr = static_cast<void *>(reinterpret_cast<uint8_t *>(startMemory) + 15);
+    outData = commandList->resolveAlignedAllocation(device, ptr, cmdListHostPtrSize, nullptr, {.sharedSystemEnabled = true});
+    EXPECT_EQ(nullptr, outData.alloc);
+    EXPECT_NE(0u, outData.offset);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr), outData.alignedAllocationPtr + outData.offset);
+    EXPECT_TRUE(isAligned(outData.alignedAllocationPtr, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment()));
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
 }
 
@@ -677,28 +769,154 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenGettingPatchPreamble
 
     uint64_t *hostAddress = nullptr;
     uint64_t counter = 0;
-    uint64_t deviceAddress = 0;
-    NEO::GraphicsAllocation *allocation = nullptr;
+    uint64_t hostNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
+    uint64_t deviceNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
 
-    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
     EXPECT_EQ(1u, counter);
     EXPECT_NE(nullptr, hostAddress);
-    EXPECT_NE(0u, deviceAddress);
-    EXPECT_NE(nullptr, allocation);
+    EXPECT_NE(0u, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, hostNodeAllocation);
+    EXPECT_NE(0u, deviceNodeGpuAddress);
+    EXPECT_NE(nullptr, deviceNodeAllocation);
 
-    deviceAddress = 0;
-    allocation = nullptr;
+    hostNodeGpuAddress = 0;
+    hostNodeAllocation = nullptr;
+    deviceNodeGpuAddress = 0;
+    deviceNodeAllocation = nullptr;
 
-    whiteBoxCmdQueue->patchPreambleCounter.getPatchPreambleDeviceData(allocation, deviceAddress);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_NE(0u, deviceAddress);
+    whiteBoxCmdQueue->patchPreambleCounter.getPatchPreambleNodeData(hostNodeAllocation, hostNodeGpuAddress, deviceNodeAllocation, deviceNodeGpuAddress);
+    EXPECT_NE(nullptr, hostNodeAllocation);
+    EXPECT_NE(0u, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, deviceNodeAllocation);
+    EXPECT_NE(0u, deviceNodeGpuAddress);
 
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.allocation, allocation);
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceAddress, deviceAddress);
-    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostAddress, hostAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, hostNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, hostNodeGpuAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, hostAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeAllocation, deviceNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, deviceNodeGpuAddress);
 
-    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, deviceAddress, allocation);
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
     EXPECT_EQ(2u, counter);
+}
+
+TEST_F(CommandListCreateTests, givenImmediateCommandListOnSemWait32bPreambleCounterWhenGettingPatchPreambleDataAndCounterExceeds32bBoundryThenCorrectOffsetDeviceGpuAddressProvided) {
+    const ze_command_queue_desc_t desc = {};
+
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                              device,
+                                                                              &desc,
+                                                                              false,
+                                                                              NEO::EngineGroupType::compute,
+                                                                              ret));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    auto whiteBoxCmdQueue = static_cast<CommandQueue *>(whiteBoxCmdList->cmdQImmediate);
+
+    whiteBoxCmdQueue->patchPreambleCounter.use32bSemaphore = true;
+
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+    uint64_t hostNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
+    uint64_t deviceNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
+    size_t tagSize = device->getDeviceInOrderCounterAllocator()->getTagSize();
+    size_t offset = 0;
+    std::vector<uint8_t> zeroBuffer(tagSize / 2);
+
+    constexpr uint64_t overflow32b = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1;
+
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    EXPECT_EQ(1u, counter);
+    EXPECT_NE(nullptr, hostAddress);
+    EXPECT_NE(0u, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, hostNodeAllocation);
+    EXPECT_NE(0u, deviceNodeGpuAddress);
+    EXPECT_NE(nullptr, deviceNodeAllocation);
+
+    EXPECT_EQ(0u, whiteBoxCmdQueue->patchPreambleCounter.offset);
+
+    EXPECT_NE(0u, whiteBoxCmdQueue->patchPreambleCounter.deviceNodeSize);
+    EXPECT_EQ(tagSize, whiteBoxCmdQueue->patchPreambleCounter.deviceNodeSize);
+
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, hostNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, hostNodeGpuAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, hostAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeAllocation, deviceNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, deviceNodeGpuAddress);
+
+    auto baseDeviceNodeGpuAddress = deviceNodeGpuAddress;
+    void *devNodeCpuBase = whiteBoxCmdQueue->patchPreambleCounter.deviceCounterNode->getCpuBase();
+
+    hostNodeGpuAddress = 0;
+    hostNodeAllocation = nullptr;
+    deviceNodeGpuAddress = 0;
+    deviceNodeAllocation = nullptr;
+
+    whiteBoxCmdQueue->patchPreambleCounter.counter = 1 * overflow32b - 2;
+    uint64_t expectedCounter = overflow32b - 1;
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+
+    // counter is at max, next iteration is overflow
+    EXPECT_EQ(expectedCounter, counter);
+
+    hostNodeGpuAddress = 0;
+    hostNodeAllocation = nullptr;
+    deviceNodeGpuAddress = 0;
+    deviceNodeAllocation = nullptr;
+
+    offset = tagSize / 2;
+    // next sets non zero lower 32b
+    expectedCounter = overflow32b + 1u;
+
+    // simulate node is filled and check it is clean
+    memset(ptrOffset(devNodeCpuBase, offset), 0xFF, tagSize / 2);
+
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    EXPECT_EQ(expectedCounter, counter);
+    EXPECT_NE(nullptr, hostNodeAllocation);
+    EXPECT_NE(0u, hostNodeGpuAddress);
+    EXPECT_NE(nullptr, deviceNodeAllocation);
+    EXPECT_NE(0u, deviceNodeGpuAddress);
+
+    EXPECT_NE(0u, whiteBoxCmdQueue->patchPreambleCounter.offset);
+    EXPECT_EQ(offset, whiteBoxCmdQueue->patchPreambleCounter.offset);
+
+    EXPECT_EQ(baseDeviceNodeGpuAddress + offset, deviceNodeGpuAddress);
+
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeAllocation, hostNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeGpuAddress, hostNodeGpuAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.hostNodeCpuAddress, hostAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeAllocation, deviceNodeAllocation);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress + offset, deviceNodeGpuAddress);
+
+    // half node is cleared
+    EXPECT_EQ(0, memcmp(zeroBuffer.data(), ptrOffset(devNodeCpuBase, offset), tagSize / 2));
+
+    hostNodeGpuAddress = 0;
+    hostNodeAllocation = nullptr;
+    deviceNodeGpuAddress = 0;
+    deviceNodeAllocation = nullptr;
+
+    // next iteration will reach overflow, but with offset comeback to 0
+    whiteBoxCmdQueue->patchPreambleCounter.counter = 2 * overflow32b - 1;
+    offset = 0;
+    expectedCounter = 2 * overflow32b + 1;
+
+    memset(ptrOffset(devNodeCpuBase, offset), 0xFF, tagSize / 2);
+
+    whiteBoxCmdList->getPatchPreambleFullData(counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    EXPECT_EQ(expectedCounter, counter);
+    EXPECT_EQ(offset, whiteBoxCmdQueue->patchPreambleCounter.offset);
+    EXPECT_EQ(baseDeviceNodeGpuAddress, deviceNodeGpuAddress);
+    EXPECT_EQ(whiteBoxCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, deviceNodeGpuAddress);
+
+    EXPECT_EQ(0, memcmp(zeroBuffer.data(), ptrOffset(devNodeCpuBase, offset), tagSize / 2));
 }
 
 HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned) {
@@ -1024,15 +1242,22 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendBarri
     std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
-
-    commandList->appendBarrier(event, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(event, 0, nullptr, false);
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -1107,8 +1332,16 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
             auto event2 = std::unique_ptr<L0::Event>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, returnValue));
             ze_event_handle_t events[] = {event1->toHandle(), event2->toHandle()};
 
-            commandList->appendBarrier(nullptr, 0, nullptr, false);
-            commandList->appendBarrier(event->toHandle(), 2, events, false);
+            CmdListWaitEventParameters waitEventsParameters = {
+                .outWaitCmds = nullptr,
+                .relaxedOrderingAllowed = false,
+                .trackDependencies = true,
+                .waitForImplicitInOrderDependency = true,
+                .skipAddingWaitEventsToResidency = false,
+                .dualStreamCopyOffloadOperation = false,
+            };
+            commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+            commandList->appendBarrier(event->toHandle(), 2, events, waitEventsParameters);
 
             auto result = event->hostSignal(false);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);

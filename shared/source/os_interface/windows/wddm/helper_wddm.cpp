@@ -11,7 +11,6 @@
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -19,7 +18,7 @@ NTSTATUS Wddm::createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHan
     OBJECT_ATTRIBUTES objAttr = {};
     objAttr.Length = sizeof(OBJECT_ATTRIBUTES);
 
-    return getGdi()->shareObjects(1, resourceHandle, &objAttr, SHARED_ALLOCATION_WRITE, ntHandle);
+    return getGdi()->shareObjects(1, resourceHandle, &objAttr, SHARED_ALLOCATION_ALL_ACCESS, ntHandle);
 }
 
 bool Wddm::getReadOnlyFlagValue(const void *cpuPtr) const {
@@ -27,6 +26,18 @@ bool Wddm::getReadOnlyFlagValue(const void *cpuPtr) const {
 }
 bool Wddm::isReadOnlyFlagFallbackSupported() const {
     return true;
+}
+
+HANDLE Wddm::createMonitoredFenceKmdWaitEvent() {
+    return SysCalls::createEvent(nullptr, TRUE, FALSE, nullptr);
+}
+
+bool Wddm::resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) {
+    return SysCalls::resetEvent(eventHandle);
+}
+
+bool Wddm::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) {
+    return SysCalls::waitForSingleObject(eventHandle, timeoutMilliseconds) == WAIT_OBJECT_0;
 }
 
 HANDLE Wddm::getSharedHandle(const MemoryManager::OsHandleData &osHandleData) {
@@ -69,8 +80,7 @@ bool Wddm::isLatePreemptionStartSupported(const HardwareInfo &hwInfo) {
     if (debugManager.flags.OverrideLatePreemptionStart.get() != -1) {
         return debugManager.flags.OverrideLatePreemptionStart.get();
     }
-    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-    return hwInfo.featureTable.flags.ftrSelectiveWmtp && releaseHelper->isLatePreemptionStartSupportedHelper();
+    return hwInfo.featureTable.flags.ftrSelectiveWmtp && hwInfo.caps.latePreemptionStartSupported;
 }
 
 void OsContextWin::prepareLatePreemptionStart(CREATECONTEXT_PVTDATA &privateData) {

@@ -41,8 +41,12 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void allowCPUMemoryAccessIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
     void protectCPUMemoryAccessIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
     void protectCPUMemoryFromWritesIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
+    void executeDownloadAllocations(TaskCountType taskCountToWait);
+    TaskCountType peekCompletedTaskCount() const;
+    TaskCountType waitForCompletionOfTaskCount(TaskCountType taskCountToWait);
 
   public:
+    using BaseClass::waitForTaskCountWithKmdNotifyFallback;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfo;

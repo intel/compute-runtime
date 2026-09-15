@@ -239,9 +239,11 @@ void *MutableComputeWalkerHw<GfxFamily>::createCommandBuffer() {
 }
 
 template <typename GfxFamily>
-void MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer() {
+void MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer(void *input) {
     using WalkerType = typename GfxFamily::DefaultWalkerType;
-    delete (reinterpret_cast<WalkerType *>(cpuBuffer));
+    if (input != nullptr) {
+        delete (reinterpret_cast<WalkerType *>(input));
+    }
 }
 
 template <typename GfxFamily>
@@ -285,12 +287,14 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
     }
 
     if (args.isSlmKernel && (args.updateGroupSize || args.updateSlm)) {
-        NEO::EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&idd,
-                                                                       device.getRootDeviceEnvironment(),
-                                                                       args.threadsPerThreadGroup,
-                                                                       args.threadGroupCount,
-                                                                       args.slmTotalSizePerThreadGroup,
-                                                                       static_cast<NEO::SlmPolicy>(args.slmPolicy));
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = args.threadsPerThreadGroup,
+            .workloadThreadGroupCount = args.threadGroupCount,
+            .slmTotalSizePerThreadGroup = args.slmTotalSizePerThreadGroup,
+            .grfCount = args.grfCount,
+            .slmPolicy = static_cast<NEO::SlmPolicy>(args.slmPolicy)};
+
+        NEO::EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&idd, device.getRootDeviceEnvironment(), slmArgs);
     }
 
     if (args.updateGroupCount || args.updateGroupSize) {
@@ -333,6 +337,10 @@ void MutableComputeWalkerHw<GfxFamily>::setSlmSize(uint32_t slmSize) {
         auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
         walkerCmd->getInterfaceDescriptor().getRawData(slmSizeIddIndex) = cpuBufferIdd.getRawData(slmSizeIddIndex);
     }
+}
+
+template <typename GfxFamily>
+void MutableComputeWalkerHw<GfxFamily>::updateL3FlushAfterWalker(uint32_t systemMemoryAllocsCount, uint32_t importedAllocationsCount) {
 }
 
 } // namespace L0::MCL

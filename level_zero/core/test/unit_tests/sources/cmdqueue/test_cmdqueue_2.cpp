@@ -1200,7 +1200,6 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
 
         for (auto nPartitions : {1u, 2u}) {
             DebugManagerStateRestore restorer;
-            UnitTestSetter::setupSemaphore64bCmdSupport(restorer, device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
             debugManager.flags.UseMemorySynchronizationForHostFunction.set(useMemorySynchronization);
 
             if (nPartitions > 1u) {
@@ -1314,12 +1313,12 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                     uint64_t expectedHostFunctionIdGpuAddress = hostFunctionStreamer.getHostFunctionIdGpuAddress(partitionId);
 
                     if (partitionId == 0) {
-                        EXPECT_EQ(expectedHostFunctionIdGpuAddress, miWait1->getSemaphoreGraphicsAddress());
-                        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWait1->getSemaphoreDataDword());
+                        EXPECT_EQ(expectedHostFunctionIdGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWait1));
+                        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWait1));
 
                     } else {
-                        EXPECT_EQ(expectedHostFunctionIdGpuAddress, miWait1Partition2->getSemaphoreGraphicsAddress());
-                        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWait1Partition2->getSemaphoreDataDword());
+                        EXPECT_EQ(expectedHostFunctionIdGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWait1Partition2));
+                        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWait1Partition2));
                     }
                 }
 
@@ -1365,12 +1364,12 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                     uint64_t expectedHostFunctionIdGpuAddress = hostFunctionStreamer.getHostFunctionIdGpuAddress(partitionId);
 
                     if (partitionId == 0) {
-                        EXPECT_EQ(expectedHostFunctionIdGpuAddress, miWait2->getSemaphoreGraphicsAddress());
-                        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWait2->getSemaphoreDataDword());
+                        EXPECT_EQ(expectedHostFunctionIdGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWait2));
+                        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWait2));
 
                     } else {
-                        EXPECT_EQ(expectedHostFunctionIdGpuAddress, miWait2Partition2->getSemaphoreGraphicsAddress());
-                        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWait2Partition2->getSemaphoreDataDword());
+                        EXPECT_EQ(expectedHostFunctionIdGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWait2Partition2));
+                        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWait2Partition2));
                     }
                 }
 

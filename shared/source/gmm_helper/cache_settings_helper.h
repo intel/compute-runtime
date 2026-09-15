@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ struct RootDeviceEnvironment;
 
 struct CacheSettingsHelper {
     static GmmResourceUsageType getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo);
+    static GmmResourceUsageType getGmmUsageTypeForKmdMappedIsa(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo);
     static GmmResourceUsageType getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper);
 
     static bool isUncachedType(GmmResourceUsageType gmmResourceUsageType);

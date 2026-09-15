@@ -188,6 +188,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return waitForCompletionWithKmdNotifyFallbackReturnValue;
     }
 
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) override {
+        return waitForCompletionWithKmdNotifyFallbackReturnValue;
+    }
+
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) {
         return waitForCompletionWithKmdNotifyFallbackReturnValue;
     }

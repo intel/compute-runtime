@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableAndNonMovableC
     void osGetDiagProperties(zes_diag_properties_t *pProperties) override;
     ze_result_t osGetDiagTests(uint32_t *pCount, zes_diag_test_t *pTests) override;
     ze_result_t osRunDiagTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) override;
+    void reInit() override;
     ze_result_t osRunDiagTestsinFW(zes_diag_result_t *pResult);
     LinuxDiagnosticsImp() = default;
     LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests);

@@ -19,7 +19,7 @@
 #include <mutex>
 #include <vector>
 
-struct _ze_kernel_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_KERNEL> {};
+struct _ze_kernel_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_kernel_handle_t>);
 
 namespace NEO {
@@ -175,6 +175,8 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
     virtual NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() = 0;
 
     virtual ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) = 0;
+
+    virtual Module *getModule() const = 0;
 
     static Kernel *fromHandle(ze_kernel_handle_t handle) { return static_cast<Kernel *>(handle); }
 

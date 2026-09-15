@@ -28,7 +28,7 @@ ze_result_t OaMetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawD
         auto pMetricStreamer = MetricStreamer::fromHandle(metricStreamers[0]);
         // Return required size if requested.
         if (*pRawDataSize == 0) {
-            const size_t headerSize = sizeof(MetricGroupCalculateHeader);
+            const size_t headerSize = sizeof(OaMetricGroupCalculateHeader);
             const size_t rawDataOffsetsRequiredSize = sizeof(uint32_t) * metricStreamerSize;
             const size_t rawDataSizesRequiredSize = sizeof(uint32_t) * metricStreamerSize;
             const size_t rawDataRequiredSize = static_cast<OaMetricStreamerImp *>(pMetricStreamer)->getRequiredBufferSize(maxReportCount) * metricStreamerSize;
@@ -36,12 +36,12 @@ ze_result_t OaMetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawD
             return ZE_RESULT_SUCCESS;
         }
 
-        MetricGroupCalculateHeader *pRawDataHeader = reinterpret_cast<MetricGroupCalculateHeader *>(pRawData);
-        pRawDataHeader->magic = MetricGroupCalculateHeader::magicValue;
+        OaMetricGroupCalculateHeader *pRawDataHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(pRawData);
+        pRawDataHeader->magic = OaMetricGroupCalculateHeader::magicValue;
         pRawDataHeader->dataCount = static_cast<uint32_t>(metricStreamerSize);
 
         // Relative offsets in the header allow to move/copy the buffer.
-        pRawDataHeader->rawDataOffsets = sizeof(MetricGroupCalculateHeader);
+        pRawDataHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
         pRawDataHeader->rawDataSizes = static_cast<uint32_t>(pRawDataHeader->rawDataOffsets + (sizeof(uint32_t) * metricStreamerSize));
         pRawDataHeader->rawDataOffset = static_cast<uint32_t>(pRawDataHeader->rawDataSizes + (sizeof(uint32_t) * metricStreamerSize));
 

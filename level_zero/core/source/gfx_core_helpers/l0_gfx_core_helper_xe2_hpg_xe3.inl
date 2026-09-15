@@ -87,7 +87,7 @@ bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromData(const uint8_t *pRaw
     memcpy_s(reinterpret_cast<uint8_t *>(&ip), sizeof(ip), tempAddr, sizeof(ip));
     ip &= ipSamplingIpMaskXe2Xe3;
     StallSumIpDataXe2Xe3Core_t *stallSumData = nullptr;
-    if (stallSumIpDataMap.count(ip) == 0) {
+    if (!stallSumIpDataMap.contains(ip)) {
         stallSumData = new StallSumIpDataXe2Xe3Core_t{};
         stallSumData->tdrCount = 0;
         stallSumData->otherCount = 0;
@@ -133,7 +133,7 @@ void L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromMap(std::map<uint64_t, v
     for (auto &entry : sourceMap) {
         uint64_t ip = entry.first;
         StallSumIpDataXe2Xe3Core_t *sourceData = reinterpret_cast<StallSumIpDataXe2Xe3Core_t *>(entry.second);
-        if (stallSumIpDataMap.count(ip) == 0) {
+        if (!stallSumIpDataMap.contains(ip)) {
             StallSumIpDataXe2Xe3Core_t *newData = new StallSumIpDataXe2Xe3Core_t{};
             memcpy_s(newData, sizeof(StallSumIpDataXe2Xe3Core_t), sourceData, sizeof(StallSumIpDataXe2Xe3Core_t));
             stallSumIpDataMap[ip] = newData;

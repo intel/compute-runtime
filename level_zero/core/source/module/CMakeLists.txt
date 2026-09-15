@@ -7,7 +7,6 @@
 target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/defines_ext.h
                ${CMAKE_CURRENT_SOURCE_DIR}/internal_core_program_ext.h
                ${CMAKE_CURRENT_SOURCE_DIR}/module.h
                ${CMAKE_CURRENT_SOURCE_DIR}/module_build_log.cpp
@@ -16,7 +15,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/module_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/modules_package_binary.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/modules_package_binary.h
-               ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/translation_unit_ext.cpp
 )
 
 add_subdirectories()

@@ -36,6 +36,9 @@ set(HEAPLESS_ONLY_CORE_TYPES "XE3P_CORE")
 
 add_library(${BUILTINS_BINARIES_LIB_NAME} OBJECT EXCLUDE_FROM_ALL builtins_binary.cmake)
 target_compile_definitions(${BUILTINS_BINARIES_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
+if(TARGET prepare_kernels)
+  add_dependencies(prepare_kernels ${BUILTINS_BINARIES_LIB_NAME})
+endif()
 
 # Add builtins sources
 add_subdirectory(registry)

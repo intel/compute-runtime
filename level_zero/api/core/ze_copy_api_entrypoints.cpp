@@ -50,6 +50,9 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFill(
     if (false == Math::isPow2(patternSize)) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
+    if (size % patternSize != 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
 
     CmdListMemoryCopyParams memoryCopyParams = {};
     return cmdList->appendMemoryFill(ptr, pattern, patternSize, size, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -232,8 +235,8 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyFromContext(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendMemoryCopyFromContext(dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, false);
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    return cmdList->appendMemoryCopyFromContext(dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 } // namespace L0

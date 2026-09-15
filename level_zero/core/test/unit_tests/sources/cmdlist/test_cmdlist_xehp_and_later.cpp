@@ -13,8 +13,10 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/thread_data_hash.h"
+#include "shared/source/utilities/thread_data_map.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -338,7 +340,6 @@ struct AppendKernelTestInput {
 template <uint32_t multiTile>
 struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFixture {
     void setUp() {
-        debugManager.flags.SignalAllEventPackets.set(0);
         if constexpr (multiTile == 1) {
             debugManager.flags.CreateMultipleSubDevices.set(2);
             debugManager.flags.EnableImplicitScaling.set(1);
@@ -392,7 +393,6 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
-        EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -459,7 +459,6 @@ using CommandListAppendLaunchKernelCompactL3FlushEnabledTest = Test<CommandListA
 HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
           givenAppendKernelWithSignalScopeTimestampEventWhenRegisterTimestampPostsyncUsedThenExpectNoComputeWalkerAndPipeControlPostsync,
           IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 1;
     arg.expectedPostSyncPipeControls = 0;
     arg.expectedWalkerPostSyncOp = 0;
@@ -474,7 +473,6 @@ HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
 HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
           givenAppendKernelWithSignalScopeImmediateEventWhenL3ImmediatePostsyncUsedThenExpectPipeControlPostsync,
           IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -491,7 +489,6 @@ using CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest = Test<Com
 HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
           givenAppendMultiTileKernelWithSignalScopeTimestampEventWhenRegisterTimestampPostsyncUsedThenExpectNoComputeWalkerAndPipeControlPostsync,
           IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 2;
     arg.expectedPostSyncPipeControls = 0;
     arg.expectedWalkerPostSyncOp = 0;
@@ -506,7 +503,6 @@ HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
 HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
           givenAppendMultiTileKernelWithSignalScopeImmediateEventWhenL3ImmediatePostsyncUsedThenExpectPipeControlPostsync,
           IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 2;
     arg.expectedPostSyncPipeControls = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -519,16 +515,11 @@ HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
 }
 
 template <uint32_t multiTile, uint32_t limitEventPacketes, uint32_t copyOnly>
-struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
+struct CommandListCompactL3FlushEventPacketFixture : public ModuleFixture {
     void setUp() {
-        NEO::debugManager.flags.UseDynamicEventPacketsCount.set(1);
-        NEO::debugManager.flags.SignalAllEventPackets.set(1);
-
         if constexpr (limitEventPacketes == 1) {
-            NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(1);
             NEO::debugManager.flags.CompactL3FlushEventPacket.set(1);
         } else {
-            NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
             NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
         }
         if constexpr (multiTile == 1) {
@@ -1045,7 +1036,16 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         size_t sizeBefore = cmdStream->getUsed();
         auto eventHandle = event->toHandle();
-        result = commandList->appendWaitOnEvents(1, &eventHandle, nullptr, false, true, false, false, false, false);
+        CmdListWaitEventParameters waitEventsParameters{
+            .outWaitCmds = nullptr,
+            .relaxedOrderingAllowed = false,
+            .trackDependencies = true,
+            .waitForImplicitInOrderDependency = false,
+            .skipAddingWaitEventsToResidency = false,
+            .dualStreamCopyOffloadOperation = false,
+            .apiRequest = false,
+            .skipFlush = false};
+        result = commandList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1067,9 +1067,9 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
             for (uint32_t i = 0; i < allPackets; i++) {
                 auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itorSemWait[i]);
-                EXPECT_EQ(gpuAddress, cmd->getSemaphoreGraphicsAddress());
+                EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd));
                 EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, cmd->getCompareOperation());
-                EXPECT_EQ(Event::STATE_CLEARED, cmd->getSemaphoreDataDword());
+                EXPECT_EQ(Event::STATE_CLEARED, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd));
                 gpuAddress += event->getSinglePacketSize();
             }
         }
@@ -1208,7 +1208,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
     bool alignEventPacketsForReset = true;
 };
 
-using CommandListSignalAllEventPacketTest = Test<CommandListSignalAllEventPacketFixture<0, 0, 0>>;
+using CommandListSignalAllEventPacketTest = Test<CommandListCompactL3FlushEventPacketFixture<0, 0, 0>>;
 HWTEST2_F(CommandListSignalAllEventPacketTest, givenSignalPacketsTimestampEventWhenAppendKernelThenAllPacketCompletionDispatched, IsAtLeastXeCore) {
     testAppendKernel<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1253,7 +1253,7 @@ HWTEST2_F(CommandListSignalAllEventPacketTest, givenSignalPacketsImmediateEventW
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using MultiTileCommandListSignalAllEventPacketTest = Test<CommandListSignalAllEventPacketFixture<1, 0, 0>>;
+using MultiTileCommandListSignalAllEventPacketTest = Test<CommandListCompactL3FlushEventPacketFixture<1, 0, 0>>;
 HWTEST2_F(MultiTileCommandListSignalAllEventPacketTest, givenSignalPacketsTimestampEventWhenAppendKernelThenAllPacketCompletionDispatched, IsAtLeastXeCore) {
     testAppendKernel<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1326,7 +1326,7 @@ HWTEST2_F(MultiTileCommandListSignalAllEventPacketTest, givenSignalPacketsImmedi
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using CommandListSignalAllEventPacketForCompactEventTest = Test<CommandListSignalAllEventPacketFixture<0, 1, 0>>;
+using CommandListSignalAllEventPacketForCompactEventTest = Test<CommandListCompactL3FlushEventPacketFixture<0, 1, 0>>;
 HWTEST2_F(CommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsTimestampEventWhenAppendKernelThenAllPacketCompletionDispatchNotNeeded, IsAtLeastXeCore) {
     testAppendKernel<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1371,7 +1371,7 @@ HWTEST2_F(CommandListSignalAllEventPacketForCompactEventTest, givenSignalPackets
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using MultiTileCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListSignalAllEventPacketFixture<1, 1, 0>>;
+using MultiTileCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListCompactL3FlushEventPacketFixture<1, 1, 0>>;
 HWTEST2_F(MultiTileCommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsTimestampEventWhenAppendKernelThenAllPacketCompletionDispatchNotNeeded, IsAtLeastXeCore) {
     testAppendKernel<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1428,7 +1428,7 @@ HWTEST2_F(MultiTileCommandListSignalAllEventPacketForCompactEventTest, givenSign
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using CopyCommandListSignalAllEventPacketTest = Test<CommandListSignalAllEventPacketFixture<0, 0, 1>>;
+using CopyCommandListSignalAllEventPacketTest = Test<CommandListCompactL3FlushEventPacketFixture<0, 0, 1>>;
 HWTEST2_F(CopyCommandListSignalAllEventPacketTest, givenSignalPacketsTimestampEventWhenAppendSignalEventThenAllPacketCompletionDispatched, IsAtLeastXeCore) {
     testAppendSignalEvent<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1453,7 +1453,7 @@ HWTEST2_F(CopyCommandListSignalAllEventPacketTest, givenSignalPacketsImmediateEv
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using MultiTileCopyCommandListSignalAllEventPacketTest = Test<CommandListSignalAllEventPacketFixture<1, 0, 1>>;
+using MultiTileCopyCommandListSignalAllEventPacketTest = Test<CommandListCompactL3FlushEventPacketFixture<1, 0, 1>>;
 HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketTest, givenSignalPacketsTimestampEventWhenAppendSignalEventThenAllPacketCompletionDispatched, IsAtLeastXeCore) {
     testAppendSignalEvent<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1478,7 +1478,7 @@ HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketTest, givenSignalPacketsIm
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using CopyCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListSignalAllEventPacketFixture<0, 1, 1>>;
+using CopyCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListCompactL3FlushEventPacketFixture<0, 1, 1>>;
 HWTEST2_F(CopyCommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsTimestampEventWhenAppendSignalEventThenAllPacketCompletionDispatchNotNeeded, IsAtLeastXeCore) {
     testAppendSignalEvent<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -1503,7 +1503,7 @@ HWTEST2_F(CopyCommandListSignalAllEventPacketForCompactEventTest, givenSignalPac
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListSignalAllEventPacketFixture<1, 1, 1>>;
+using MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest = Test<CommandListCompactL3FlushEventPacketFixture<1, 1, 1>>;
 HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsTimestampEventWhenAppendSignalEventThenAllPacketCompletionDispatchNotNeeded, IsAtLeastXeCore) {
     testAppendSignalEvent<FamilyType::gfxCoreFamily>(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP);
 }
@@ -2183,8 +2183,18 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     if (csrImmediate.heaplessModeEnabled) {
         GTEST_SKIP();
     }
+    commandListImmediate->cmdQImmediate->setTaskCount(1);
+
     size_t csrUsedBefore = csrStream.getUsed();
-    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     size_t csrUsedAfter = csrStream.getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -2393,7 +2403,15 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppend
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
     const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
-    returnValue = commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    returnValue = commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;
@@ -2840,7 +2858,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     ASSERT_EQ(*semaphoreWaitList[0], cmd->pDestination);
     auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd->pDestination);
     ASSERT_NE(nullptr, semaphoreWaitCmd);
-    EXPECT_EQ(eventCompletionAddress + cmd->offset, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(eventCompletionAddress + cmd->offset, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreWaitCmd));
 
     auto &residencyContainer = commandContainer.getResidencyContainer();
 
@@ -2918,7 +2936,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
 
     size_t totalSize = 1024 + 64;
-    size_t expectedSize = alignUp(totalSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
+    size_t expectedSize = alignUp(totalSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, device->getHwInfo()));
     EXPECT_EQ(expectedSize, ioh->getUsed());
 }
 
@@ -3016,7 +3034,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThe
             }
             itor++;
         }
-        EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), prefetchedSize); // limited to 1kb
+        EXPECT_EQ(device->getProductHelper().getIsaPrefetchSize(defaultIsaSize), prefetchedSize); // limited to product default
     }
 
     NEO::debugManager.flags.LimitIsaPrefetchSize.set(2 * MemoryConstants::kiloByte);
@@ -3108,7 +3126,7 @@ HWTEST2_F(CommandListSystemMemoryFenceCacheTest, givenCommandListWhenInitialized
 
 using ContainsAllocationHelpersTest = Test<DeviceFixture>;
 
-HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForSystemAllocationThenReturnsTrueOnlyWhenBufferHostMemoryPresent, IsAtLeastXeCore) {
+HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForSystemAllocationThenReturnsTrueOnlyWhenSystemMemoryAllocationPresent, IsAtLeastXeCore) {
     using CommandListType = WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
 
     NEO::ResidencyContainer emptyContainer;
@@ -3116,14 +3134,60 @@ HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForS
 
     NEO::MockGraphicsAllocation deviceAllocation{};
     deviceAllocation.setAllocationType(NEO::AllocationType::buffer);
-    NEO::MockGraphicsAllocation hostAllocation{};
-    hostAllocation.setAllocationType(NEO::AllocationType::bufferHostMemory);
+    NEO::MockGraphicsAllocation svmGpuAllocation{};
+    svmGpuAllocation.setAllocationType(NEO::AllocationType::svmGpu);
 
-    NEO::ResidencyContainer containerWithoutHost{&deviceAllocation, nullptr};
-    EXPECT_FALSE(CommandListType::containsSystemAllocation(containerWithoutHost));
+    NEO::ResidencyContainer containerWithoutSystemMemory{&deviceAllocation, nullptr, &svmGpuAllocation};
+    EXPECT_FALSE(CommandListType::containsSystemAllocation(containerWithoutSystemMemory));
 
-    NEO::ResidencyContainer containerWithHost{&deviceAllocation, nullptr, &hostAllocation};
-    EXPECT_TRUE(CommandListType::containsSystemAllocation(containerWithHost));
+    for (auto systemAllocationType : {NEO::AllocationType::bufferHostMemory,
+                                      NEO::AllocationType::svmCpu,
+                                      NEO::AllocationType::svmZeroCopy,
+                                      NEO::AllocationType::externalHostPtr}) {
+        NEO::MockGraphicsAllocation systemAllocation{};
+        systemAllocation.setAllocationType(systemAllocationType);
+
+        NEO::ResidencyContainer containerWithSystemMemory{&deviceAllocation, nullptr, &systemAllocation};
+        EXPECT_TRUE(CommandListType::containsSystemAllocation(containerWithSystemMemory));
+    }
+}
+
+HWTEST2_F(ContainsAllocationHelpersTest, givenAllocationTypeWhenCheckingIsUsingSystemAllocationThenOnlyCpuVisibleTypesAreReported, IsAtLeastXeCore) {
+    using CommandListType = WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+
+    EXPECT_TRUE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::bufferHostMemory));
+    EXPECT_TRUE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::svmCpu));
+    EXPECT_TRUE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::svmZeroCopy));
+    EXPECT_TRUE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::externalHostPtr));
+
+    EXPECT_FALSE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::buffer));
+    EXPECT_FALSE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::svmGpu));
+    EXPECT_FALSE(CommandListType::isUsingSystemAllocation(NEO::AllocationType::image));
+}
+
+HWTEST2_F(ContainsAllocationHelpersTest, givenZeroCopySvmAllocationWhenAligningSvmAllocationDataThenHostPointerFlushIsRequested, IsAtLeastXeCore) {
+    using CommandListType = WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+
+    auto commandList = std::make_unique<CommandListType>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    uint8_t storage[MemoryConstants::pageSize] = {};
+    NEO::MockGraphicsAllocation svmAllocation{storage, sizeof(storage)};
+    NEO::SvmAllocationData allocData{device->getRootDeviceIndex()};
+    allocData.gpuAllocations.addAllocation(&svmAllocation);
+    allocData.memoryType = InternalMemoryType::svm;
+    allocData.size = sizeof(storage);
+
+    auto buffer = svmAllocation.getUnderlyingBuffer();
+    auto sourcePtr = static_cast<uintptr_t>(svmAllocation.getGpuAddress());
+
+    svmAllocation.setAllocationType(NEO::AllocationType::svmGpu);
+    auto deviceStorageData = commandList->alignSvmAllocationData(device, &allocData, buffer, sourcePtr, 0u);
+    EXPECT_FALSE(deviceStorageData.needsFlush);
+
+    svmAllocation.setAllocationType(NEO::AllocationType::svmZeroCopy);
+    auto zeroCopyData = commandList->alignSvmAllocationData(device, &allocData, buffer, sourcePtr, 0u);
+    EXPECT_TRUE(zeroCopyData.needsFlush);
 }
 
 HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForExternalAllocationThenReturnsTrueOnlyWhenImportedAllocationPresent, IsAtLeastXeCore) {
@@ -3146,6 +3210,7 @@ HWTEST2_F(ContainsAllocationHelpersTest, givenResidencyContainerWhenCheckingForE
 struct IOHCacheCommandListFixture : public Test<ModuleFixture> {
     struct MockContainerIOHCacheAccessor : public NEO::CommandContainer {
         using NEO::CommandContainer::extractCommonThreadData;
+        using NEO::CommandContainer::threadDataTracker;
     };
 
     void SetUp() override {
@@ -3176,11 +3241,13 @@ HWTEST2_F(IOHCacheCommandListTest,
 
     EXPECT_FALSE(commandList->commandContainer.getIOHCacheEnabled());
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, false);
+    bool threadDataCacheMiss = false;
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, false, threadDataCacheMiss);
 
     auto regularIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     ASSERT_NE(nullptr, regularIoh);
     EXPECT_EQ(regularIoh->getGraphicsAllocation(), iohAllocation);
+    EXPECT_FALSE(threadDataCacheMiss);
 }
 
 HWTEST2_F(IOHCacheCommandListTest,
@@ -3195,12 +3262,14 @@ HWTEST2_F(IOHCacheCommandListTest,
 
     EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+    bool threadDataCacheMiss = false;
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true, threadDataCacheMiss);
 
     auto regularIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     ASSERT_NE(nullptr, regularIoh);
     EXPECT_EQ(regularIoh->getGraphicsAllocation(), iohAllocation);
     EXPECT_EQ(regularIoh->getUsed(), iohOffset);
+    EXPECT_FALSE(threadDataCacheMiss);
 }
 
 HWTEST2_F(IOHCacheCommandListTest,
@@ -3219,15 +3288,55 @@ HWTEST2_F(IOHCacheCommandListTest,
     const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
     const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
 
-    commandList->commandContainer.registerThreadData(hash, crossThreadSpan);
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan, perThreadSpan);
     static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
 
-    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true);
+    bool threadDataCacheMiss = true;
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true, threadDataCacheMiss);
 
     auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
     ASSERT_NE(nullptr, cacheStorage);
     EXPECT_EQ(cacheStorage->getGraphicsAllocation(), iohAllocation);
     EXPECT_NE(cacheStorage->getGraphicsAllocation(), commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation());
+    EXPECT_TRUE(threadDataCacheMiss);
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledAndCurrentHeapFullWhenGetIohAllocationAndOffsetForPrefetchCalledThenCommonThreadDataExtractedAndCacheHitReturnsThreadDataMapStorageAllocation,
+          IsAtLeastXeCore) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    EXPECT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    // Register the kernel's thread data so it becomes the most common thread data in the tracker,
+    // but do not extract it yet - extraction is expected to happen automatically once the heap fills up.
+    const std::span<const uint8_t> crossThreadSpan(kernel.getCrossThreadData(), kernel.getCrossThreadDataSize());
+    const std::span<const uint8_t> perThreadSpan(kernel.getPerThreadData(), kernel.getPerThreadDataSizeForWholeThreadGroup());
+    const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan, perThreadSpan);
+
+    // Fill the current indirect object heap so the next required allocation forces a new heap.
+    // Allocating a new heap extracts the common thread data into the thread data map, and - thanks to
+    // requesting the heap before probing the cache - that freshly extracted data is available for reuse
+    // within this same call.
+    auto originalIoh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    ASSERT_NE(nullptr, originalIoh);
+    originalIoh->getSpace(originalIoh->getAvailableSpace());
+    ASSERT_LT(originalIoh->getAvailableSpace(), kernel.getIndirectSize());
+
+    bool threadDataCacheMiss = true;
+    auto [iohAllocation, iohOffset] = commandList->getIohAllocationAndOffsetForPrefetch(kernel, 0u, true, threadDataCacheMiss);
+
+    auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
+    ASSERT_NE(nullptr, cacheStorage);
+    EXPECT_EQ(cacheStorage->getGraphicsAllocation(), iohAllocation);
+    EXPECT_NE(commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation(), iohAllocation);
+    EXPECT_TRUE(threadDataCacheMiss);
 }
 
 HWTEST2_F(IOHCacheCommandListTest,
@@ -3269,11 +3378,7 @@ HWTEST2_F(IOHCacheCommandListTest,
                                                  kernel->getPerThreadDataSizeForWholeThreadGroup());
     const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
 
-    std::vector<uint8_t> combinedData(crossThreadSpan.size() + perThreadSpan.size());
-    std::copy(crossThreadSpan.begin(), crossThreadSpan.end(), combinedData.begin());
-    std::copy(perThreadSpan.begin(), perThreadSpan.end(), combinedData.begin() + crossThreadSpan.size());
-
-    commandList->commandContainer.registerThreadData(hash, std::span<const uint8_t>(combinedData));
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan, perThreadSpan);
     static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer).extractCommonThreadData();
     auto cacheStorage = commandList->commandContainer.getThreadDataMapStorage();
     ASSERT_NE(nullptr, cacheStorage);
@@ -3281,7 +3386,7 @@ HWTEST2_F(IOHCacheCommandListTest,
     EXPECT_NE(cacheStorage->getGraphicsAllocation(),
               commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getGraphicsAllocation());
 
-    const auto expectedIohOffset = cacheStorage->getUsed() - combinedData.size();
+    const auto expectedIohOffset = cacheStorage->getUsed() - (crossThreadSpan.size() + perThreadSpan.size());
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     const auto expectedPrefetchGpuVa = gmmHelper->decanonize(cacheStorage->getGraphicsAllocation()->getGpuAddress()) + expectedIohOffset;
 
@@ -3390,6 +3495,68 @@ HWTEST2_F(IOHCacheCommandListTest,
     commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
     EXPECT_FALSE(commandList->isKernelPatchedWhenWithParamsCalled);
+}
+
+HWTEST2_F(IOHCacheCommandListTest,
+          giventhreadDataCacheMissOnPrefetchWhenEncoderFindsThreadDataInCacheThenCachedOffsetIsDiscardedAndIohSpaceIsConsumed,
+          IsAtLeastXeCore) {
+    class MockCmdListPatchingCrossThreadData : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
+      public:
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions,
+                                                 Event *event, CmdListKernelLaunchParams &launchParams) override {
+            auto &crossThreadData = static_cast<KernelImp *>(kernel)->getPrivateState().crossThreadData;
+            std::copy(patchedCrossThreadData.begin(), patchedCrossThreadData.end(), crossThreadData.begin() + patchOffset);
+            return WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>::appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
+        }
+        std::vector<uint8_t> patchedCrossThreadData;
+        size_t patchOffset = 0u;
+    };
+
+    debugManager.flags.EnableMemoryPrefetch.set(1);
+
+    createKernel();
+
+    auto commandList = std::make_unique<MockCmdListPatchingCrossThreadData>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    ASSERT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    kernel->patchGlobalOffset();
+    kernel->setGroupCount(groupCount.groupCountX, groupCount.groupCountY, groupCount.groupCountZ);
+
+    uint32_t inlineDataProgrammingOffset = 0u;
+    if (NEO::EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel->getKernelDescriptor())) {
+        constexpr uint32_t inlineDataSize = FamilyType::DefaultWalkerType::getInlineDataSize();
+        inlineDataProgrammingOffset = std::min(inlineDataSize, kernel->getCrossThreadDataSize());
+    }
+    ASSERT_LT(inlineDataProgrammingOffset, kernel->getCrossThreadDataSize());
+
+    commandList->patchedCrossThreadData.assign(kernel->getCrossThreadData() + inlineDataProgrammingOffset,
+                                               kernel->getCrossThreadData() + kernel->getCrossThreadDataSize());
+    commandList->patchedCrossThreadData.back() = static_cast<uint8_t>(~commandList->patchedCrossThreadData.back());
+    commandList->patchOffset = inlineDataProgrammingOffset;
+
+    const std::span<const uint8_t> crossThreadSpan(commandList->patchedCrossThreadData);
+    const std::span<const uint8_t> perThreadSpan(kernel->getPerThreadData(), kernel->getPerThreadDataSizeForWholeThreadGroup());
+    const auto hash = NEO::ThreadDataHash::computeThreadDataHash(crossThreadSpan, perThreadSpan);
+
+    auto &containerAccessor = static_cast<MockContainerIOHCacheAccessor &>(commandList->commandContainer);
+    commandList->commandContainer.registerThreadData(hash, crossThreadSpan, perThreadSpan);
+    containerAccessor.extractCommonThreadData();
+    ASSERT_TRUE(commandList->commandContainer.getCachedIohOffset(crossThreadSpan, perThreadSpan).has_value());
+    ASSERT_TRUE(containerAccessor.threadDataTracker->isEmpty());
+
+    auto ioh = commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    ASSERT_NE(nullptr, ioh);
+    const auto iohUsedBeforeAppend = ioh->getUsed();
+
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    EXPECT_FALSE(launchParams.threadDataCacheHitOnPrefetch);
+    ASSERT_EQ(ioh, commandList->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject));
+    EXPECT_GT(ioh->getUsed(), iohUsedBeforeAppend);
+    EXPECT_FALSE(containerAccessor.threadDataTracker->isEmpty());
 }
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,14 +12,6 @@
 using namespace NEO;
 
 using XeHpcCoreHwCmdTest = ::testing::Test;
-
-XE_HPC_CORETEST_F(XeHpcCoreHwCmdTest, givenMediaSurfaceStateWhenProgrammingMocsThenMocsIndexIsSetProperly) {
-    auto mediaSurfaceState = FamilyType::cmdInitMediaSurfaceState;
-    uint32_t mocs = 4u;
-    uint32_t expectedMocsIndex = (mocs >> 1);
-    mediaSurfaceState.setSurfaceMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, mediaSurfaceState.TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables);
-}
 
 XE_HPC_CORETEST_F(XeHpcCoreHwCmdTest, givenRenderSurfaceStateWhenProgrammingMocsThenMocsIndexIsSetProperly) {
     auto renderSurfaceState = FamilyType::cmdInitRenderSurfaceState;

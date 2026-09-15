@@ -65,7 +65,7 @@ class MockMetricCalcOp : public MetricCalcOpImp {
     };
 
     ze_result_t metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
-                                      bool, size_t *usedSize,
+                                      bool lastCall, size_t *usedSize,
                                       uint32_t *pTotalMetricReportCount,
                                       zet_intel_metric_result_exp_t *pMetricResults) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -160,9 +160,7 @@ class MockMetricSource : public L0::MetricSource {
     }
 
     void removeTestMetricScope(const std::string &name) {
-        testMetricScopes.erase(std::remove_if(testMetricScopes.begin(), testMetricScopes.end(),
-                                              [&name](const TestMetricScope &scope) { return scope.name == name; }),
-                               testMetricScopes.end());
+        std::erase_if(testMetricScopes, [&name](const TestMetricScope &scope) { return scope.name == name; });
     }
 
     uint32_t enableCallCount = 0;

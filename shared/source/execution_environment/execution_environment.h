@@ -19,6 +19,7 @@
 namespace NEO {
 class DirectSubmissionController;
 class UnifiedMemoryReuseCleaner;
+class UsmReusePerfLogger;
 class GfxCoreHelper;
 class MemoryManager;
 struct OsEnvironment;
@@ -59,10 +60,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool getSubDeviceHierarchy(uint32_t index, std::tuple<uint32_t, uint32_t, uint32_t> *subDeviceMap);
     bool areMetricsEnabled() { return this->metricsEnabled; }
     int setErrorDescription(const std::string &str);
-    void setFP64EmulationEnabled() {
-        fp64EmulationEnabled = true;
-    }
-    bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
     void setDevicePermissionError(bool value) {
         devicePermissionError = value;
     }
@@ -70,18 +67,20 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool isResourceDecompressionEnabled() const { return resourceDecompressionEnabled; };
     void setResourceDecompressionEnabled(bool value) { resourceDecompressionEnabled = value; };
 
-    void setOneApiPvcWaEnv(bool val) {
-        oneApiPvcWaEnv = val;
-    }
-    bool isOneApiPvcWaEnv() const { return oneApiPvcWaEnv; }
-
     DirectSubmissionController *initializeDirectSubmissionController();
     void initializeUnifiedMemoryReuseCleaner(bool isAnyDirectSubmissionLightEnabled);
+    UsmReusePerfLogger &getUsmReusePerfLogger() const;
 
     std::unique_lock<std::mutex> obtainPeerAccessQueryLock() {
         return std::unique_lock<std::mutex>(peerAccessQueryMutex);
     }
 
+  private:
+    // Must be declared before the memory manager and reuse cleaner to outlive their teardown
+    mutable std::once_flag usmReusePerfLoggerOnceFlag;
+    mutable std::unique_ptr<UsmReusePerfLogger> usmReusePerfLogger;
+
+  public:
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<UnifiedMemoryReuseCleaner> unifiedMemoryReuseCleaner;
     std::unique_ptr<DirectSubmissionController> directSubmissionController;
@@ -103,8 +102,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void configureNeoEnvironment();
     void restoreCcsMode();
     bool metricsEnabled = false;
-    bool fp64EmulationEnabled = false;
-    bool oneApiPvcWaEnv = true;
     bool devicePermissionError = false;
     bool resourceDecompressionEnabled = false;
 

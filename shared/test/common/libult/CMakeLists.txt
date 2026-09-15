@@ -93,8 +93,6 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_helpers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
@@ -133,6 +131,12 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/utilities/cpuintrinsics.cpp
 )
+
+if(${NEO_TARGET_PROCESSOR} STREQUAL "x86_64")
+  list(APPEND neo_libult_common_SRCS_LIB_ULT
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/x86_64/stream_copy_ult.cpp
+  )
+endif()
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND neo_libult_common_SRCS_LIB_ULT
@@ -231,6 +235,7 @@ set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_info.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_buffer_pool_size.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_async_launch_mode.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_leo_detection.cpp
 )
 
 set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_LINUX ${neo_libult_SRCS_LINUX})
@@ -253,6 +258,7 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_info.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_buffer_pool_size.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_async_launch_mode.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_leo_detection.cpp
 )
 
 set_property(GLOBAL APPEND PROPERTY neo_libult_SRCS_WINDOWS ${neo_libult_SRCS_WINDOWS})

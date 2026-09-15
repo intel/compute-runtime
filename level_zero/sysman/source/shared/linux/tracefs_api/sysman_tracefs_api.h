@@ -24,6 +24,7 @@ namespace L0 {
 namespace Sysman {
 
 typedef struct tracefs_instance *(*pTraceFsInstanceCreate)(const char *);
+typedef bool (*pTraceFsInstanceIsNew)(struct tracefs_instance *);
 typedef void (*pTraceFsInstanceDestroy)(struct tracefs_instance *);
 typedef void (*pTraceFsInstanceFree)(struct tracefs_instance *);
 typedef const char *(*pTraceFsInstanceGetName)(struct tracefs_instance *);
@@ -37,17 +38,18 @@ typedef int (*pTraceFsTraceOff)(struct tracefs_instance *);
 typedef int (*pTraceFsEventEnable)(struct tracefs_instance *, const char *, const char *);
 typedef int (*pTraceFsEventDisable)(struct tracefs_instance *, const char *, const char *);
 typedef struct tep_handle *(*pTraceFsLocalEvents)(const char *);
-typedef void (*pTraceFsLocalEventsFree)(struct tep_handle *);
 typedef int (*pTraceFsInstanceGetBufferPercent)(struct tracefs_instance *);
 typedef int (*pTraceFsInstanceSetBufferPercent)(struct tracefs_instance *, int);
 typedef long long (*pTraceFsInstanceGetBufferSize)(struct tracefs_instance *, int);
 typedef int (*pTraceFsInstanceSetBufferSize)(struct tracefs_instance *, size_t, int);
 typedef char *(*pTraceFsInstanceGetFile)(struct tracefs_instance *, const char *);
 typedef char *(*pTraceFsGetTracingFile)(const char *);
+typedef void (*pTraceFsPutTracingFile)(char *);
 
 class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
   public:
     MOCKABLE_VIRTUAL struct tracefs_instance *traceFsInstanceCreate(const char *name);
+    MOCKABLE_VIRTUAL bool traceFsInstanceIsNew(struct tracefs_instance *instance);
     MOCKABLE_VIRTUAL void traceFsInstanceDestroy(struct tracefs_instance *instance);
     MOCKABLE_VIRTUAL void traceFsInstanceFree(struct tracefs_instance *instance);
     MOCKABLE_VIRTUAL const char *traceFsInstanceGetName(struct tracefs_instance *instance);
@@ -65,7 +67,6 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL int traceFsEventDisable(struct tracefs_instance *instance, const char *system, const char *event);
 
     MOCKABLE_VIRTUAL struct tep_handle *traceFsLocalEvents(const char *tracingDir);
-    MOCKABLE_VIRTUAL void traceFsLocalEventsFree(struct tep_handle *tep);
 
     MOCKABLE_VIRTUAL int traceFsInstanceGetBufferPercent(struct tracefs_instance *instance);
     MOCKABLE_VIRTUAL int traceFsInstanceSetBufferPercent(struct tracefs_instance *instance, int val);
@@ -74,6 +75,7 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL char *traceFsInstanceGetFile(struct tracefs_instance *instance, const char *file);
     MOCKABLE_VIRTUAL char *traceFsGetTracingFile(const char *file);
+    MOCKABLE_VIRTUAL void traceFsPutTracingFile(char *file);
 
     bool isAvailable() { return nullptr != traceFsLibraryHandle.get(); }
 
@@ -89,6 +91,7 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<NEO::OsLibrary> traceFsLibraryHandle;
 
     pTraceFsInstanceCreate traceFsInstanceCreateEntry = nullptr;
+    pTraceFsInstanceIsNew traceFsInstanceIsNewEntry = nullptr;
     pTraceFsInstanceDestroy traceFsInstanceDestroyEntry = nullptr;
     pTraceFsInstanceFree traceFsInstanceFreeEntry = nullptr;
     pTraceFsInstanceGetName traceFsInstanceGetNameEntry = nullptr;
@@ -102,13 +105,13 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
     pTraceFsEventEnable traceFsEventEnableEntry = nullptr;
     pTraceFsEventDisable traceFsEventDisableEntry = nullptr;
     pTraceFsLocalEvents traceFsLocalEventsEntry = nullptr;
-    pTraceFsLocalEventsFree traceFsLocalEventsFreeEntry = nullptr;
     pTraceFsInstanceGetBufferPercent traceFsInstanceGetBufferPercentEntry = nullptr;
     pTraceFsInstanceSetBufferPercent traceFsInstanceSetBufferPercentEntry = nullptr;
     pTraceFsInstanceGetBufferSize traceFsInstanceGetBufferSizeEntry = nullptr;
     pTraceFsInstanceSetBufferSize traceFsInstanceSetBufferSizeEntry = nullptr;
     pTraceFsInstanceGetFile traceFsInstanceGetFileEntry = nullptr;
     pTraceFsGetTracingFile traceFsGetTracingFileEntry = nullptr;
+    pTraceFsPutTracingFile traceFsPutTracingFileEntry = nullptr;
 };
 
 } // namespace Sysman

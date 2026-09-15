@@ -14,12 +14,18 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
+
+namespace NEO {
+namespace LEO {
+
+extern "C" {
 
 cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
                                        cl_uint numDevices,
@@ -188,3 +194,8 @@ cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
     TRACING_EXIT(ClSetDefaultDeviceCommandQueue, &retVal);
     return retVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

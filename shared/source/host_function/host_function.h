@@ -73,6 +73,7 @@ class HostFunctionStreamer {
     ~HostFunctionStreamer() = default;
 
     std::optional<uint64_t> getHostFunctionReadyToExecute() const;
+    std::optional<uint64_t> tryReserveHostFunctionReadyToExecute();
     GraphicsAllocation *getHostFunctionIdAllocation() const;
     HostFunction getHostFunction(uint64_t hostFunctionId);
     uint64_t getHostFunctionId(uint32_t partitionId) const;

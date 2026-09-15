@@ -17,6 +17,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -27,7 +28,12 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/logger.h"
+
+#include <algorithm>
+#include <chrono>
+#include <thread>
 
 namespace NEO {
 
@@ -40,12 +46,13 @@ uint32_t UnifiedMemoryProperties::getRootDeviceIndex() const {
 }
 
 void SVMAllocsManager::MapBasedAllocationTracker::insert(const SvmAllocationData &allocationsPair) {
-    allocations.emplace(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), allocationsPair);
+    allocations.emplace(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()), allocationsPair);
 }
 
 void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData &allocationsPair) {
     SvmAllocationContainer::iterator iter;
-    iter = allocations.find(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
+    iter = allocations.find(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()));
+    UNRECOVERABLE_IF(iter == allocations.end());
     allocations.erase(iter);
 }
 
@@ -75,7 +82,10 @@ UsmReuseInfo &SVMAllocsManager::SvmAllocationCache::getUsmReuseInfo(SvmAllocatio
 bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAllocationData *svmData, CompletionCheckPolicy completionPolicy) {
     if (false == sizeAllowed(size) ||
         svmData->isInternalAllocation ||
-        svmData->isImportedAllocation) {
+        svmData->isImportedAllocation ||
+        svmData->isExternalMemmapAllocation ||
+        svmData->allocationFlagsProperty.hostptr != 0u) {
+
         return false;
     }
 
@@ -154,6 +164,9 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
     if (false == sizeAllowed(size)) {
         return nullptr;
     }
+    if (unifiedMemoryProperties.allocationFlags.hostptr != 0u) {
+        return nullptr;
+    }
     std::lock_guard<std::mutex> lock(this->mtx);
     const size_t sizeForReuse = alignUp(size, this->allocationSizeAlignment);
     for (auto allocationIter = std::lower_bound(allocations.begin(), allocations.end(), sizeForReuse);
@@ -194,6 +207,11 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             allocationIter->svmData->isSavedForReuse = false;
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
+            for (auto gpuAllocation : allocationIter->svmData->gpuAllocations.getGraphicsAllocations()) {
+                if (gpuAllocation) {
+                    memoryManager->setMemAdvise(gpuAllocation, MemAdviseFlags{}, gpuAllocation->getRootDeviceIndex());
+                }
+            }
             if (requireUpdatingAllocsForIndirectAccess) {
                 allocationIter->svmData->setAllocId(++svmAllocsManager->allocationsCounter);
                 svmAllocsManager->reinsertToAllocsForIndirectAccess(*allocationIter->svmData);
@@ -278,12 +296,12 @@ void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocation
         break;
     }
     isSuccessString = cachePerfEvent.isSuccess ? "TRUE" : "FALSE";
-    NEO::usmReusePerfLoggerInstance().log(true, ",",
-                                          cachePerfEvent.timePoint.time_since_epoch().count(), ",",
-                                          allocationTypeString, ",",
-                                          operationTypeString, ",",
-                                          cachePerfEvent.allocationSize, ",",
-                                          isSuccessString);
+    memoryManager->peekExecutionEnvironment().getUsmReusePerfLogger().log(true, ",",
+                                                                          cachePerfEvent.timePoint.time_since_epoch().count(), ",",
+                                                                          allocationTypeString, ",",
+                                                                          operationTypeString, ",",
+                                                                          cachePerfEvent.allocationSize, ",",
+                                                                          isSuccessString);
 }
 
 void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) {
@@ -351,7 +369,7 @@ SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *
     }
     if (iter != end) {
         svmAllocData = &iter->second;
-        char *charPtr = reinterpret_cast<char *>(svmAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+        const char *charPtr = reinterpret_cast<const char *>(iter->first);
         if (ptr < (charPtr + svmAllocData->size)) {
             return svmAllocData;
         }
@@ -445,8 +463,10 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
             }
         }
     }
-    const size_t pageSizeForAlignment = isDiscrete ? MemoryConstants::pageSize2M : MemoryConstants::pageSize;
-    const size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
+    auto externalPtr = reinterpret_cast<void *>(memoryProperties.allocationFlags.hostptr);
+    bool useExternalHostPtrForCpu = externalPtr != nullptr;
+    const size_t pageSizeForAlignment = (isDiscrete && !useExternalHostPtrForCpu) ? MemoryConstants::pageSize2M : MemoryConstants::pageSize;
+    const size_t alignedSize = useExternalHostPtrForCpu ? size : alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
@@ -457,7 +477,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     auto &deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
 
     AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
-                                                 true,
+                                                 !useExternalHostPtrForCpu,
                                                  alignedSize,
                                                  allocationType,
                                                  false,
@@ -486,13 +506,12 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
 
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), std::less<uint32_t const>());
     SvmAllocationData allocData(maxRootDeviceIndex);
-    void *externalHostPointer = reinterpret_cast<void *>(memoryProperties.allocationFlags.hostptr);
 
-    void *usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalHostPointer);
+    void *usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalPtr);
     if (!usmPtr) {
         if (this->usmHostAllocationsCache) {
             this->trimUSMHostAllocCache();
-            usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalHostPointer);
+            usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalPtr);
         }
         if (!usmPtr) {
             return nullptr;
@@ -602,6 +621,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.device = memoryProperties.device;
     allocData.setAllocId(++this->allocationsCounter);
     allocData.isInternalAllocation = memoryProperties.isInternalAllocation;
+    allocData.isExternalMemmapAllocation = memoryProperties.isExternalMemmapAllocation;
     allocData.ipcHandleTypeFlags = memoryProperties.ipcHandleTypeFlags;
 
     auto retPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
@@ -751,17 +771,25 @@ void SVMAllocsManager::removeFromAllocsForIndirectAccess(SvmAllocationData &svmD
 }
 
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
-    insertSVMAlloc(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), svmAllocData);
+    insertSVMAlloc(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()), svmAllocData);
+}
+
+void SVMAllocsManager::removeFromSvmAllocs(const SvmAllocationData &svmAllocData) {
+    auto graphicsAllocation = svmAllocData.gpuAllocations.getDefaultGraphicsAllocation();
+    const auto removed = svmAllocs.remove(reinterpret_cast<void *>(graphicsAllocation->getGpuAddressWithoutOffset()));
+    if (0u != graphicsAllocation->getAllocationOffset() && !removed) {
+        svmAllocs.remove(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
+    }
 }
 
 void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
     ContainerReadWriteLockType lock(mtx);
     internalAllocationsMap.erase(svmAllocData.getAllocId());
-    svmAllocs.remove(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
+    removeFromSvmAllocs(svmAllocData);
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
-    if (svmDeferFreeAllocs.allocations.size() > 0) {
+    if (getNumClaimableDeferFreeAllocs() > 0) {
         this->freeSVMAllocDeferImpl();
     }
     SvmAllocationData *svmData = getSVMAlloc(ptr);
@@ -801,7 +829,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
 
 bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
 
-    if (svmDeferFreeAllocs.allocations.size() > 0) {
+    if (getNumClaimableDeferFreeAllocs() > 0) {
         this->freeSVMAllocDeferImpl();
     }
 
@@ -848,6 +876,66 @@ void SVMAllocsManager::waitForEnginesCompletion(SvmAllocationData *allocationDat
     }
 }
 
+namespace {
+// An allocation reachable through indirect access is made resident once per csr and then
+// left always resident, so its task count stops advancing while later submissions can still
+// access it. For such an allocation the csr's latestSentTaskCount is the only current bound.
+GraphicsAllocation *getAllocationKeptResidentForIndirectAccess(SvmAllocationData *allocationData, CommandStreamReceiver *commandStreamReceiver) {
+    auto gpuAllocation = allocationData->gpuAllocations.getGraphicsAllocation(commandStreamReceiver->getRootDeviceIndex());
+    if (nullptr == gpuAllocation ||
+        false == gpuAllocation->isAlwaysResident(commandStreamReceiver->getOsContext().getContextId())) {
+        return nullptr;
+    }
+    return gpuAllocation;
+}
+} // namespace
+
+void SVMAllocsManager::captureEngineCompletionSnapshot(SvmAllocationData *allocationData, EngineCompletionSnapshot &snapshot) {
+    if (allocationData->cpuAllocation) {
+        this->memoryManager->captureEngineCompletionSnapshot(*allocationData->cpuAllocation, snapshot);
+    }
+
+    for (auto &gpuAllocation : allocationData->gpuAllocations.getGraphicsAllocations()) {
+        if (gpuAllocation) {
+            this->memoryManager->captureEngineCompletionSnapshot(*gpuAllocation, snapshot);
+        }
+    }
+
+    ContainerReadLockType lock(mtx);
+    for (auto &[commandStreamReceiver, tracker] : this->indirectAllocationsResidency) {
+        if (nullptr == getAllocationKeptResidentForIndirectAccess(allocationData, commandStreamReceiver)) {
+            continue;
+        }
+        auto snapshotEntry = std::find_if(snapshot.begin(), snapshot.end(), [&commandStreamReceiver](const auto &entry) {
+            return entry.first == commandStreamReceiver;
+        });
+        if (snapshotEntry == snapshot.end()) {
+            snapshot.push_back({commandStreamReceiver, tracker.latestSentTaskCount});
+        } else {
+            snapshotEntry->second = std::max(snapshotEntry->second, tracker.latestSentTaskCount);
+        }
+    }
+}
+
+void SVMAllocsManager::applyIndirectAccessTaskCountFloor(SvmAllocationData *allocationData) {
+    // Read lock covers the residency map; it is written only under the write lock. The task
+    // count write races with CommandStreamReceiver::makeResident the same way
+    // prepareIndirectAllocationForDestruction does - both writers are monotonic towards
+    // latestSentTaskCount. Kept separate from that function because the pool allocation
+    // survives the chunk free and must stay always resident.
+    ContainerReadLockType lock(mtx);
+    for (auto &[commandStreamReceiver, tracker] : this->indirectAllocationsResidency) {
+        auto gpuAllocation = getAllocationKeptResidentForIndirectAccess(allocationData, commandStreamReceiver);
+        if (nullptr == gpuAllocation) {
+            continue;
+        }
+        const auto osContextId = commandStreamReceiver->getOsContext().getContextId();
+        if (gpuAllocation->getTaskCount(osContextId) < tracker.latestSentTaskCount) {
+            gpuAllocation->updateTaskCount(tracker.latestSentTaskCount, osContextId);
+        }
+    }
+}
+
 void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) {
     auto allowNonBlockingFree = policy == FreePolicyType::none;
     this->prepareIndirectAllocationForDestruction(svmData, allowNonBlockingFree);
@@ -887,18 +975,50 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
     }
 }
 
-void SVMAllocsManager::freeSVMAllocDeferImpl(FreePolicyType policy) {
-    std::vector<void *> freedPtr;
-    for (auto iter = svmDeferFreeAllocs.allocations.begin(); iter != svmDeferFreeAllocs.allocations.end(); ++iter) {
-        void *ptr = reinterpret_cast<void *>(iter->second.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
-        this->freeSVMAllocImpl(ptr, policy, this->getSVMAlloc(ptr));
+SVMAllocsManager::MapBasedAllocationTracker::SvmAllocationContainer SVMAllocsManager::claimQueuedDeferFreeAllocsAsInFlight() {
+    MapBasedAllocationTracker::SvmAllocationContainer claimedAllocs;
 
-        if (this->getSVMAlloc(ptr) == nullptr) {
-            freedPtr.push_back(ptr);
+    ContainerReadWriteLockType lock(mtx);
+    deferFreeInFlight.fetch_add(svmDeferFreeAllocs.allocations.size());
+    claimedAllocs.swap(svmDeferFreeAllocs.allocations);
+
+    return claimedAllocs;
+}
+
+void SVMAllocsManager::freeSVMAllocDeferImpl(FreePolicyType policy) {
+    auto claimedAllocs = this->claimQueuedDeferFreeAllocsAsInFlight();
+
+    for (const auto &claimedAlloc : claimedAllocs) {
+        void *ptr = reinterpret_cast<void *>(claimedAlloc.second.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+        auto *svmData = this->getSVMAlloc(ptr);
+        if (svmData != nullptr) {
+            this->freeSVMAllocImpl(ptr, policy, svmData);
         }
+        deferFreeInFlight.fetch_sub(1u);
     }
-    for (uint32_t i = 0; i < freedPtr.size(); ++i) {
-        svmDeferFreeAllocs.allocations.erase(freedPtr[i]);
+}
+
+void SVMAllocsManager::drainAllDeferFreeAllocsBlocking() {
+    constexpr uint32_t yieldsBeforeSleeping = 64u;
+    constexpr auto sleepDuration = std::chrono::microseconds(100);
+    uint32_t yieldsSpent = 0u;
+
+    while (true) {
+        const auto counts = this->getDeferFreeAllocCounts();
+        if (0u == counts.outstanding()) {
+            return;
+        }
+        if (counts.claimable > 0u) {
+            this->freeSVMAllocDeferImplBlocking();
+            yieldsSpent = 0u;
+            continue;
+        }
+        if (yieldsSpent < yieldsBeforeSleeping) {
+            yieldsSpent++;
+            std::this_thread::yield();
+        } else {
+            NEO::sleep(sleepDuration);
+        }
     }
 }
 
@@ -1053,7 +1173,7 @@ void SVMAllocsManager::freeSVMData(SvmAllocationData *svmData) {
     std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
     ContainerReadWriteLockType lock(mtx);
     internalAllocationsMap.erase(svmData->getAllocId());
-    svmAllocs.remove(reinterpret_cast<void *>(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
+    removeFromSvmAllocs(*svmData);
 }
 
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
@@ -1256,7 +1376,8 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
             auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
             auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
-            if (gfxCoreHelper.usmCompressionSupported(hwInfo) && !unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation) {
+            if (gfxCoreHelper.usmCompressionSupported(hwInfo) && !unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation &&
+                !unifiedMemoryProperties.allocationFlags.flags.uncompressedHint) {
                 compressionEnabled = true;
             }
             if (unifiedMemoryProperties.requestedAllocationType != AllocationType::unknown) {
@@ -1358,7 +1479,7 @@ SVMAllocsManager::ContainerReadLockTypeRAIIHelper SVMAllocsManager::obtainReadCo
 void SVMAllocsManager::insertSVMAlloc(void *svmPtr, const SvmAllocationData &allocData) {
     ContainerReadWriteLockType lock(mtx);
     this->svmAllocs.insert(svmPtr, allocData);
-    UNRECOVERABLE_IF(internalAllocationsMap.count(allocData.getAllocId()) > 0);
+    UNRECOVERABLE_IF(internalAllocationsMap.contains(allocData.getAllocId()));
     for (auto alloc : allocData.gpuAllocations.getGraphicsAllocations()) {
         if (alloc != nullptr) {
             internalAllocationsMap.emplace(allocData.getAllocId(), alloc);

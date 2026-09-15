@@ -8,8 +8,11 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -34,6 +37,14 @@ BMGTEST_F(BmgProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
 
 BMGTEST_F(BmgProductHelper, givenBmgProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+}
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenGettingDefaultMidthreadPreemptionDelayTimerThen150UsEncodingIsReturned) {
+    using STATE_COMPUTE_MODE = typename BMG::STATE_COMPUTE_MODE;
+    using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
+
+    EXPECT_EQ(static_cast<uint32_t>(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150),
+              productHelper->getDefaultMidthreadPreemptionDelayTimer());
 }
 
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
@@ -104,13 +115,47 @@ BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersonTh
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::BMG_G21_A0);
 }
 
-HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned, IGFX_BMG);
-BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemptionSupportThenCorrectValueIsSet) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrWalkerMTP = false;
-    EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-    hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
+TEST(BmgProductConfigHelperTest, givenBmgG21ReservedSteppingProductConfigWhenCheckingIsSupportedProductConfigThenFalseIsReturned) {
+    ProductConfigHelper productConfigHelper{};
+    EXPECT_FALSE(productConfigHelper.isSupportedProductConfig(AOT::BMG_G21_A1_RESERVED));
+    EXPECT_FALSE(productConfigHelper.isSupportedProductConfig(AOT::BMG_G21_B0_RESERVED));
+}
+
+TEST(BmgProductConfigHelperTest, givenLegacyProductConfigWhenGettingDeviceIdThenFallbackToFirstSupportedCompatibleTarget) {
+    for (auto legacyProductConfig : {AOT::BMG_G21_A1_RESERVED, AOT::BMG_G21_B0_RESERVED}) {
+        ProductConfigHelper productConfigHelper{};
+
+        auto compatibleConfigsIt = AOT::getCompatibilityMapping().find(legacyProductConfig);
+        ASSERT_NE(compatibleConfigsIt, AOT::getCompatibilityMapping().end());
+        auto compatibleConfigs = compatibleConfigsIt->second;
+        ASSERT_FALSE(compatibleConfigs.empty());
+
+        auto deviceIdOf = [&](AOT::PRODUCT_CONFIG config) -> uint32_t {
+            DeviceAotInfo info{};
+            return productConfigHelper.getDeviceAotInfoForProductConfig(config, info) ? info.deviceIds->front() : 0u;
+        };
+
+        // Disable one compatible target at a time (in the order the mapping declares them) and
+        // confirm the fallback always matches whichever entry is still the first supported one.
+        for (auto configToDisable : compatibleConfigs) {
+            uint32_t expectedDeviceId = 0u;
+            for (auto compatibleConfig : compatibleConfigs) {
+                expectedDeviceId = deviceIdOf(compatibleConfig);
+                if (expectedDeviceId != 0u) {
+                    break;
+                }
+            }
+            EXPECT_EQ(expectedDeviceId, productConfigHelper.getDeviceIdFromIpVersion(legacyProductConfig));
+
+            for (auto &device : productConfigHelper.getDeviceAotInfo()) {
+                if (device.aotConfig.value == configToDisable) {
+                    device.aotConfig.value = AOT::UNKNOWN_ISA;
+                }
+            }
+        }
+
+        EXPECT_EQ(0u, productConfigHelper.getDeviceIdFromIpVersion(legacyProductConfig));
+    }
 }
 
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
@@ -171,4 +216,22 @@ BMGTEST_F(BmgProductHelper, givenMultipleCcsEnabledWhenAdjustDispatchAllRequired
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2u;
     hwInfo.gtSystemInfo.SliceCount = 4u;
     EXPECT_FALSE(productHelper->adjustDispatchAllRequired(hwInfo));
+}
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnBmgThresholds) {
+    EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::unknown));
+
+    EXPECT_EQ(4 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToDeviceUsm));
+    EXPECT_EQ(4 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostUsm));
+    EXPECT_EQ(64 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm));
+
+    EXPECT_EQ(64 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToDeviceUsm));
+    EXPECT_EQ(1 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToHostUsm));
+    EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToHostNonUsm));
+
+    EXPECT_EQ(10 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm));
+    EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToHostUsm));
+    EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToHostNonUsm));
+
+    EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
 }

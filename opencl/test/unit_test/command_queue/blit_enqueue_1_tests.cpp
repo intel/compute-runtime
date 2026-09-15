@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -885,8 +885,8 @@ struct BlitEnqueueWithDebugCapabilityTests : public BlitEnqueueTests<0> {
 
         while (semaphore != cmdList.end()) {
             auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
-            if (static_cast<uint32_t>(DebugPauseState::hasUserStartConfirmation) == semaphoreCmd->getSemaphoreDataDword() &&
-                debugPauseStateAddress == semaphoreCmd->getSemaphoreGraphicsAddress()) {
+            if (static_cast<uint32_t>(DebugPauseState::hasUserStartConfirmation) == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd) &&
+                debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd)) {
 
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());
@@ -894,8 +894,8 @@ struct BlitEnqueueWithDebugCapabilityTests : public BlitEnqueueTests<0> {
                 semaphoreBeforeCopyFound++;
             }
 
-            if (static_cast<uint32_t>(DebugPauseState::hasUserEndConfirmation) == semaphoreCmd->getSemaphoreDataDword() &&
-                debugPauseStateAddress == semaphoreCmd->getSemaphoreGraphicsAddress()) {
+            if (static_cast<uint32_t>(DebugPauseState::hasUserEndConfirmation) == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd) &&
+                debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd)) {
 
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());

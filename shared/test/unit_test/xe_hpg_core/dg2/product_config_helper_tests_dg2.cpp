@@ -161,7 +161,7 @@ DG2TEST_F(ProductHelperTestDg2, whenGettingAubstreamProductFamilyThenProperEnumV
 DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    Dg2HwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper);
+    Dg2HwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper);
 
     EXPECT_EQ(0u, gtSystemInfo.TotalVsThreads);
     EXPECT_EQ(0u, gtSystemInfo.TotalHsThreads);

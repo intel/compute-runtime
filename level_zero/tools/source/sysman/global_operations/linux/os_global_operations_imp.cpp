@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -52,14 +53,14 @@ bool LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(uint64_t &telemOffset, 
     auto pDrm = &pLinuxSysmanImp->getDrm();
     std::optional<std::string> rootPath = NEO::getPciRootPath(pDrm->getFileDescriptor());
     if (!rootPath.has_value()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Root path has no value \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Root path has no value \n", NEO_FUNCTION_NAME);
         return false;
     }
 
     std::map<uint32_t, std::string> telemPciPath;
     NEO::PmtUtil::getTelemNodesInPciPath(rootPath.value(), telemPciPath);
     if (telemPciPath.size() < pDevice->getNEODevice()->getNumSubDevices() + 1) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): telemPciPath size is less than expected \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): telemPciPath size is less than expected \n", NEO_FUNCTION_NAME);
         return false;
     }
 
@@ -69,14 +70,14 @@ bool LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(uint64_t &telemOffset, 
     std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
     int errorNum = 0;
     if (!NEO::PmtUtil::readGuid(telemDir, guidString, errorNum)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", __FUNCTION__, telemDir.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", NEO_FUNCTION_NAME, telemDir.c_str());
         return false;
     }
 
     uint64_t offset = ULONG_MAX;
     errorNum = 0;
     if (!NEO::PmtUtil::readOffset(telemDir, offset, errorNum)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read offset from %s\n", __FUNCTION__, telemDir.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read offset from %s\n", NEO_FUNCTION_NAME, telemDir.c_str());
         return false;
     }
 
@@ -88,7 +89,7 @@ bool LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(uint64_t &telemOffset, 
             return true;
         }
     }
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find keyOffset in keyOffsetMap \n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find keyOffset in keyOffsetMap \n", NEO_FUNCTION_NAME);
     return false;
 }
 
@@ -96,7 +97,7 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
     uint64_t offset = 0;
     std::string telemDir = {};
     if (!LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(offset, "PPIN", telemDir)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get telemetry offset and directory for PPIN \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get telemetry offset and directory for PPIN \n", NEO_FUNCTION_NAME);
         return false;
     }
 
@@ -109,7 +110,7 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
         memcpy_s(serialNumber, ZES_STRING_PROPERTY_SIZE, telemDataString.str().c_str(), telemDataString.str().size());
         return true;
     }
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read serial number \n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read serial number \n", NEO_FUNCTION_NAME);
     return false;
 }
 
@@ -122,7 +123,7 @@ bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PRO
     std::string telemDir = {};
     constexpr uint32_t boardNumberSize = 32;
     if (!LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(offset, "BoardNumber", telemDir)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get telemetry offset and directory for BoardNumber \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get telemetry offset and directory for BoardNumber \n", NEO_FUNCTION_NAME);
         return false;
     }
     std::array<uint8_t, boardNumberSize> value;
@@ -142,7 +143,7 @@ bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PRO
         memcpy_s(boardNumber, ZES_STRING_PROPERTY_SIZE, value.data(), bytesRead);
         return true;
     }
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read board number \n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read board number \n", NEO_FUNCTION_NAME);
     return false;
 }
 
@@ -184,12 +185,12 @@ void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING
     ze_result_t result = pFsAccess->read(agamaVersionFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (ZE_RESULT_ERROR_NOT_AVAILABLE != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Driver version not available \n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Driver version not available \n", NEO_FUNCTION_NAME);
             return;
         }
         result = pFsAccess->read(srcVersionFile, strVal);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read driver version and returning error:0x%x\n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read driver version and returning error:0x%x\n", NEO_FUNCTION_NAME, result);
             return;
         }
     }
@@ -211,7 +212,7 @@ ze_result_t LinuxGlobalOperationsImp::resetExt(zes_reset_properties_t *pProperti
 
 ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_t resetType) {
     if (!pSysfsAccess->isRootUser()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Not running as root user and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Not running as root user and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
 
@@ -222,14 +223,14 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
 
     ze_result_t result = pLinuxSysmanImp->gpuProcessCleanup(force);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): gpuProcessCleanup() failed and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): gpuProcessCleanup() failed and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
     std::string resetName;
     result = pSysfsAccess->getRealPath(deviceDir, resetName);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get reset sysfs path and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get reset sysfs path and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     std::string flrPath = resetName + functionLevelReset;
@@ -238,7 +239,7 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
         result = pSysfsAccess->unbindDevice(resetName);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to unbind device:%s and returning error:0x%x \n", __FUNCTION__, resetName.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to unbind device:%s and returning error:0x%x \n", NEO_FUNCTION_NAME, resetName.c_str(), result);
             return result;
         }
     }
@@ -246,7 +247,7 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     std::vector<::pid_t> processes;
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list processes and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list processes and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     std::vector<::pid_t> deviceUsingPids;
@@ -273,18 +274,18 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
                 if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
                     result = pSysfsAccess->bindDevice(resetName);
                     if (ZE_RESULT_SUCCESS != result) {
-                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to bind the device to the kernel driver and returning error:0x%x \n", __FUNCTION__, result);
+                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to bind the device to the kernel driver and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
                         return result;
                     }
                 }
 
                 result = pLinuxSysmanImp->initDevice();
                 if (ZE_RESULT_SUCCESS != result) {
-                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to init the device and returning error:0x%x \n", __FUNCTION__, result);
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to init the device and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
                     return result;
                 }
 
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Timeout reached, device still in use and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Timeout reached, device still in use and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
 
@@ -309,14 +310,14 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     }
 
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to reset the device and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to reset the device and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
     if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
         result = pSysfsAccess->bindDevice(std::move(resetName));
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to bind the device to the kernel driver and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to bind the device to the kernel driver and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
     }
@@ -354,7 +355,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
 
     ze_result_t result = pSysfsAccess->scanDirEntries(clientsDir, clientIds);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -435,7 +436,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         result = pSysfsAccess->read(realClientTotalMemoryPath, memSize);
         if (ZE_RESULT_SUCCESS != result) {
             if (ZE_RESULT_ERROR_NOT_AVAILABLE != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read memory size from:%s and returning error:0x%x \n", __FUNCTION__, realClientTotalMemoryPath.c_str(), result);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read memory size from:%s and returning error:0x%x \n", NEO_FUNCTION_NAME, realClientTotalMemoryPath.c_str(), result);
                 return result;
             }
         }
@@ -445,7 +446,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         result = pSysfsAccess->read(realClientTotalSharedMemoryPath, sharedMemSize);
         if (ZE_RESULT_SUCCESS != result) {
             if (ZE_RESULT_ERROR_NOT_AVAILABLE != result) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read shared memory size from:%s and returning error:0x%x \n", __FUNCTION__, realClientTotalSharedMemoryPath.c_str(), result);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read shared memory size from:%s and returning error:0x%x \n", NEO_FUNCTION_NAME, realClientTotalSharedMemoryPath.c_str(), result);
                 return result;
             }
         }

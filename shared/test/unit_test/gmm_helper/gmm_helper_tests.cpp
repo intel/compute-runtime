@@ -1009,6 +1009,24 @@ TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenRetur
     }
 }
 
+TEST(GmmTest, givenKmdMappedIsaWhenGettingUsageTypeThenSystemMemoryBufferAndUncachedOverridesAreHonored) {
+    DebugManagerStateRestore restore;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    const auto expectedUncachedUsage = productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+
+    for (const auto allocationType : {AllocationType::kernelIsa, AllocationType::kernelIsaInternal}) {
+        EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
+                  CacheSettingsHelper::getGmmUsageTypeForKmdMappedIsa(allocationType, false, productHelper, defaultHwInfo.get()));
+        EXPECT_EQ(expectedUncachedUsage,
+                  CacheSettingsHelper::getGmmUsageTypeForKmdMappedIsa(allocationType, true, productHelper, defaultHwInfo.get()));
+    }
+
+    debugManager.flags.ForceAllResourcesUncached.set(true);
+    EXPECT_EQ(expectedUncachedUsage,
+              CacheSettingsHelper::getGmmUsageTypeForKmdMappedIsa(AllocationType::kernelIsa, false, productHelper, defaultHwInfo.get()));
+}
+
 TEST(GmmTest, givenUsageTypeWhenAskingIfUncacheableThenReturnCorrectValue) {
     for (GMM_RESOURCE_USAGE_TYPE_ENUM usage : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                                GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,

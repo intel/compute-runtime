@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ class OsStandby {
     virtual ze_result_t osStandbyGetProperties(zes_standby_properties_t &properties) = 0;
 
     virtual bool isStandbySupported(void) = 0;
+    virtual void reInit() = 0;
 
     static std::unique_ptr<OsStandby> create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     virtual ~OsStandby() {}

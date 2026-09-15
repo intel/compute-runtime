@@ -14,4 +14,6 @@ bool applyOpenVinoCompatibilityWaIfNeeded(HardwareInfo &hwInfo);
 
 bool isOpenVinoDetected();
 
+bool isOldOpenVinoVersionDetected();
+
 } // namespace NEO

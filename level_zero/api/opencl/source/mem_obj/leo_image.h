@@ -17,9 +17,7 @@ namespace LEO {
 
 class Image : public MemObj {
   public:
-    Image(Context *context, MemoryProperties &properties, cl_mem_flags flags, ze_image_handle_t imageHandle, void *cpuPtr, ze_image_handle_t baseImageHandle, bool externalHandle, cl_image_format originalFormat, cl_mem memObject) : MemObj(context, properties, flags, cpuPtr, externalHandle, MemObjType::image), imageHandle(imageHandle), baseImageHandle(baseImageHandle), originalFormat(originalFormat) {
-        this->associatedMemObject = memObject ? castToObject<MemObj>(memObject) : nullptr;
-    };
+    Image(Context *context, MemoryProperties &properties, cl_mem_flags flags, ze_image_handle_t imageHandle, void *cpuPtr, ze_image_handle_t baseImageHandle, bool externalHandle, cl_image_format originalFormat, cl_mem memObject);
     Image() = delete;
     ~Image() override;
 
@@ -27,6 +25,7 @@ class Image : public MemObj {
     static void clToL0ImageFormat(ze_image_format_t &l0Format, cl_channel_order clChannelOrder, cl_channel_type clChannelType);
     static bool isSRGB(cl_channel_order clChannelOrder);
     static const ClSurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat);
+    static size_t getRowPitchForImageFromBuffer(cl_mem_flags flags, const cl_image_format *imageFormat, const cl_image_desc *imageDesc);
 
     cl_int getImageInfo(cl_image_info paramName,
                         size_t paramValueSize,
@@ -34,6 +33,7 @@ class Image : public MemObj {
                         size_t *paramValueSizeRet);
 
     size_t calculateTotalSizeForImage(const std::array<size_t, 3> &sizes) const;
+    size_t calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes) const;
 
     void getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
 

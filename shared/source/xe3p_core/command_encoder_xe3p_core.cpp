@@ -123,6 +123,8 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
         maskBits |= Family::stateComputeModeLSCSamplerBackingThresholdMask;
     }
 
+    appendMidthreadPreemptionDelayTimer(stateComputeMode, maskBits2, rootDeviceEnvironment);
+
     stateComputeMode.setMask1(maskBits);
     stateComputeMode.setMask2(maskBits2);
 

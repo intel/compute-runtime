@@ -36,8 +36,8 @@ bool L0GfxCoreHelperHw<Family>::forceDefaultUsmCompressionSupport() const {
 }
 
 template <typename Family>
-ze_record_replay_graph_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformRecordReplayGraphCapabilities() const {
-    return ZE_RECORD_REPLAY_GRAPH_EXP_FLAG_IMMUTABLE_GRAPH;
+ze_record_replay_graph_ext_flags_t L0GfxCoreHelperHw<Family>::getPlatformRecordReplayGraphCapabilities() const {
+    return ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH;
 }
 
 template <typename Family>

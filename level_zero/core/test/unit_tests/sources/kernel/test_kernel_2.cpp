@@ -874,7 +874,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, globalConstBuffer.get(), nullptr, false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));
 
         EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
 
@@ -945,7 +945,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, globalVarBuffer.get(), false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));
 
         EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
 
@@ -1020,7 +1020,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, globalConstBuffer.get(), nullptr, false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));
 
         EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
 
@@ -1106,7 +1106,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, globalVarBuffer.get(), false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));
 
         EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
 

@@ -27,7 +27,6 @@ inline constexpr ConstStringRef argInfo = "-cl-kernel-arg-info";
 inline constexpr ConstStringRef gtpinRera = "-cl-intel-gtpin-rera";
 inline constexpr ConstStringRef finiteMathOnly = "-cl-finite-math-only";
 inline constexpr ConstStringRef fastRelaxedMath = "-cl-fast-relaxed-math";
-inline constexpr ConstStringRef preserveVec3Type = "-fpreserve-vec3-type";
 inline constexpr ConstStringRef createLibrary = "-create-library";
 inline constexpr ConstStringRef generateDebugInfo = "-g";
 inline constexpr ConstStringRef generateSourcePath = "-s";

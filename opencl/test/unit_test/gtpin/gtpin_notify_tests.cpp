@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/os_interface/os_library.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
 #include "opencl/source/gtpin/gtpin_notify.h"
@@ -46,9 +46,8 @@ TEST(GTPinInitNotifyTests, givenNoPlatformsAvailableAndEnvironmentVariableSetWhe
     ASSERT_TRUE(platformsImpl->empty());
 
     VariableBackup<uint32_t> gtpinCounterBackup(&gtpinInitTimesCalled, 0u);
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
 
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
     MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
@@ -66,9 +65,8 @@ TEST(GTPinInitNotifyTests, givenAvailablePlatformsAndEnvironmentVariableSetWhenT
     ASSERT_FALSE(platformsImpl->empty());
 
     VariableBackup<uint32_t> gtpinCounterBackup(&gtpinInitTimesCalled, 0u);
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.set(true);
 
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
     MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);

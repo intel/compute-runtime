@@ -26,6 +26,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -45,7 +46,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/logger_neo_only.h"
 
 #include <iostream>
@@ -79,7 +80,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
         anyLocalMemorySupported |= this->localMemorySupported[rootDeviceIndex];
 
-        auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration(rootDeviceEnvironment.getReleaseHelper());
+        auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration(*hwInfo);
         heapAssigners.push_back(std::make_unique<HeapAssigner>(globalHeap));
         localMemAllocsSize[rootDeviceIndex].store(0u);
     }
@@ -369,7 +370,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     if (isLocked) {
         freeAssociatedResourceImpl(*gfxAllocation);
     }
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Free allocation, gpu address = ", std::hex, gfxAllocation->getGpuAddress());
+    DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Free allocation, gpu address = ", std::hex, gfxAllocation->getGpuAddress());
 
     logFreeAllocation(fileLoggerInstance(), gfxAllocation);
     getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), rootDevIdx)->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
@@ -867,6 +868,9 @@ GraphicsAllocation *MemoryManager::allocateInternalGraphicsMemoryWithHostCopy(ui
                                                                               DeviceBitfield bitField,
                                                                               const void *ptr,
                                                                               size_t size) {
+    if (!isValidCpuVirtualAddressRange(ptr, size)) {
+        return nullptr;
+    }
     NEO::AllocationProperties copyProperties{rootDeviceIndex,
                                              size,
                                              NEO::AllocationType::internalHostMemory,
@@ -1144,6 +1148,15 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
     return false;
 }
 
+void MemoryManager::captureEngineCompletionSnapshot(GraphicsAllocation &graphicsAllocation, EngineCompletionSnapshot &snapshot) {
+    for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
+        auto osContextId = engine.osContext->getContextId();
+        if (graphicsAllocation.isUsedByOsContext(osContextId)) {
+            snapshot.push_back({engine.commandStreamReceiver, graphicsAllocation.getTaskCount(osContextId)});
+        }
+    }
+}
+
 void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion) {
     for (auto &engineContainer : allRegisteredEngines) {
         for (auto &engine : engineContainer) {
@@ -1300,6 +1313,12 @@ bool MemoryManager::isAllocationTypeToCapture(AllocationType type) const {
     return false;
 }
 
+bool MemoryManager::isSystemMemoryPreferred(const AllocationProperties &properties) {
+    AllocationData allocationData;
+    this->getAllocationData(allocationData, properties, nullptr, this->createStorageInfoFromProperties(properties));
+    return allocationData.flags.useSystemMemory;
+}
+
 bool MemoryManager::isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex) {
     std::call_once(checkIsaPlacementOnceFlags[rootDeviceIndex], [&] {
         AllocationProperties properties = {rootDeviceIndex, 0x1000, AllocationType::kernelIsa, 1};
@@ -1352,7 +1371,7 @@ bool MemoryManager::allocateBindlessSlot(GraphicsAllocation *allocation) {
         auto &gfxCoreHelper = peekExecutionEnvironment().rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getHelper<GfxCoreHelper>();
         const auto isImage = allocation->getAllocationType() == AllocationType::image || allocation->getAllocationType() == AllocationType::sharedImage || allocation->getAllocationType() == AllocationType::sharedResourceCopy;
         auto surfStateCount = isImage ? NEO::BindlessImageSlot::max : 1;
-        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize();
+        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
         auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh);
         if (surfaceStateInfo.heapAllocation == nullptr) {
@@ -1440,13 +1459,11 @@ void MemoryManager::removeCustomHeapAllocatorConfig(AllocationType allocationTyp
     customHeapAllocators.erase({allocationType, isFrontWindowPool, rootDeviceIndex});
 }
 
-bool MemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const {
-    const bool enabledForRelease{!releaseHelper || releaseHelper->isLocalOnlyAllowed()};
-
+bool MemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const {
     if (allocationType == AllocationType::buffer || allocationType == AllocationType::svmGpu) {
-        return productHelper.getStorageInfoLocalOnlyFlag(usmDeviceAllocationMode, enabledForRelease);
+        return productHelper.getStorageInfoLocalOnlyFlag(usmDeviceAllocationMode, hwInfo.caps.localOnlyAllowed);
     }
-    return (preferCompressed ? enabledForRelease : false);
+    return (preferCompressed ? hwInfo.caps.localOnlyAllowed : false);
 }
 
 void MemoryManager::destroyPageFaultManager() {
@@ -1466,14 +1483,17 @@ void *MemoryManager::importFdHandle(Device *neoDevice,
                                     GraphicsAllocation **pAlloc,
                                     SvmAllocationData &mappedPeerAllocData,
                                     bool compressedMemory,
-                                    bool uncachedBias) {
+                                    bool uncachedBias,
+                                    uint64_t physicalOffset) {
     MemoryManager::OsHandleData osHandleData{handle};
+    osHandleData.physicalOffset = physicalOffset;
     AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                  MemoryConstants::pageSize,
                                                  allocationType,
                                                  neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
+    unifiedMemoryProperties.flags.uncacheable = uncachedBias;
     GraphicsAllocation *alloc = this->createGraphicsAllocationFromSharedHandle(osHandleData,
                                                                                unifiedMemoryProperties,
                                                                                false,
@@ -1523,13 +1543,16 @@ void *MemoryManager::importFdHandles(Device *neoDevice,
                                      GraphicsAllocation **pAlloc,
                                      SvmAllocationData &mappedPeerAllocData,
                                      bool compressedMemory,
-                                     bool uncachedBias) {
+                                     bool uncachedBias,
+                                     const std::vector<uint64_t> &physicalOffsets) {
     AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                  MemoryConstants::pageSize,
                                                  AllocationType::buffer,
                                                  neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     unifiedMemoryProperties.flags.preferCompressed = compressedMemory;
+    unifiedMemoryProperties.flags.uncacheable = uncachedBias;
+    unifiedMemoryProperties.physicalOffsets = physicalOffsets;
     GraphicsAllocation *alloc = this->createGraphicsAllocationFromMultipleSharedHandles(handles,
                                                                                         unifiedMemoryProperties,
                                                                                         false,
@@ -1616,9 +1639,14 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
         SvmAllocationData allocDataInternal(peerAllocRootDeviceIndex);
         GraphicsAllocation *originalAlloc = alloc;
 
+        constexpr size_t reservedHandleDataSize = 32u;
         if (numHandles > 1) {
             UNRECOVERABLE_IF(numHandles == 0);
             std::vector<osHandle> handles;
+            std::vector<uint8_t> reservedHandleDataStorage;
+            if (deps.reservedHandleDataAvailable) {
+                reservedHandleDataStorage.resize(numHandles * reservedHandleDataSize, 0u);
+            }
             auto closeImportedHandles = [&]() {
                 for (uint32_t handleId = 0; handleId < handles.size(); handleId++) {
                     uint64_t handle = handles[handleId];
@@ -1627,43 +1655,64 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
             };
             for (uint32_t i = 0; i < numHandles; i++) {
                 uint64_t handle = 0;
-                uint8_t reservedHandleDataStorage[32] = {0};
-                void *reservedHandleData = nullptr;
-                if (deps.requiresReservedHandleData) {
-                    reservedHandleData = reservedHandleDataStorage;
-                }
+                void *reservedHandleData = deps.reservedHandleDataAvailable
+                                               ? reservedHandleDataStorage.data() + i * reservedHandleDataSize
+                                               : nullptr;
                 int ret = alloc->peekInternalHandle(this, i, handle, reservedHandleData);
                 if (ret < 0) {
                     closeImportedHandles();
                     return nullptr;
                 }
-                if (deps.requiresReservedHandleData) {
-                    int importHandleFromReserved = -1;
-                    importHandleFromReserved = this->getImportHandleFromReservedHandleData(reservedHandleData, device->getRootDevice()->getRootDeviceIndex());
-                    handle = static_cast<uint64_t>(importHandleFromReserved);
-                }
                 handles.push_back(static_cast<osHandle>(handle));
             }
             auto neoDevice = device->getRootDevice();
+            // Prefer the fd handles; fall back to the reserved handle data only if the fd import fails.
             peerPtr = deps.importFds(neoDevice, handles, peerMapAddress, &alloc, allocDataInternal, false);
+            if (peerPtr == nullptr && deps.reservedHandleDataAvailable) {
+                std::vector<osHandle> reservedHandles;
+                reservedHandles.reserve(numHandles);
+                bool allReservedHandlesResolved = true;
+                for (uint32_t i = 0; i < numHandles; i++) {
+                    int importHandleFromReserved = this->getImportHandleFromReservedHandleData(
+                        reservedHandleDataStorage.data() + i * reservedHandleDataSize, device->getRootDevice()->getRootDeviceIndex());
+                    if (importHandleFromReserved < 0) {
+                        allReservedHandlesResolved = false;
+                        break;
+                    }
+                    reservedHandles.push_back(static_cast<osHandle>(importHandleFromReserved));
+                }
+                if (allReservedHandlesResolved) {
+                    alloc = originalAlloc;
+                    peerPtr = deps.importFds(neoDevice, reservedHandles, peerMapAddress, &alloc, allocDataInternal, false);
+                }
+                for (uint32_t handleId = 0; handleId < reservedHandles.size(); handleId++) {
+                    uint64_t reservedHandle = reservedHandles[handleId];
+                    this->closeInternalHandle(reservedHandle, handleId, originalAlloc);
+                }
+            }
             closeImportedHandles();
         } else {
             uint64_t handle = 0;
-            uint8_t reservedHandleDataStorage[32] = {0};
+            uint8_t reservedHandleDataStorage[reservedHandleDataSize] = {0};
             void *reservedHandleData = nullptr;
-            if (deps.requiresReservedHandleData) {
+            if (deps.reservedHandleDataAvailable) {
                 reservedHandleData = reservedHandleDataStorage;
             }
             int ret = alloc->peekInternalHandle(this, handle, reservedHandleData);
             if (ret < 0) {
                 return nullptr;
             }
-            if (deps.requiresReservedHandleData) {
-                int importHandleFromReserved = -1;
-                importHandleFromReserved = this->getImportHandleFromReservedHandleData(reservedHandleData, device->getRootDeviceIndex());
-                handle = static_cast<uint64_t>(importHandleFromReserved);
-            }
+            // Prefer the fd handle; fall back to the reserved handle data only if the fd import fails.
             peerPtr = deps.importFd(device, handle, AllocationType::buffer, peerMapAddress, &alloc, allocDataInternal, false);
+            if (peerPtr == nullptr && deps.reservedHandleDataAvailable) {
+                int importHandleFromReserved = this->getImportHandleFromReservedHandleData(reservedHandleData, device->getRootDeviceIndex());
+                if (importHandleFromReserved >= 0) {
+                    uint64_t reservedHandle = static_cast<uint64_t>(importHandleFromReserved);
+                    alloc = originalAlloc;
+                    peerPtr = deps.importFd(device, reservedHandle, AllocationType::buffer, peerMapAddress, &alloc, allocDataInternal, false);
+                    this->closeInternalHandle(reservedHandle, 0u, originalAlloc);
+                }
+            }
             if (alloc != originalAlloc) {
                 alloc->setSharedHandle(std::numeric_limits<osHandle>::max());
             }

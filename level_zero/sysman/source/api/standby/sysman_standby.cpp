@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,9 +32,16 @@ ze_result_t StandbyHandleContext::init(uint32_t subDeviceCount) {
     return ZE_RESULT_SUCCESS;
 }
 
+void StandbyHandleContext::reInit() {
+    for (auto &handle : handleList) {
+        handle->reInit();
+    }
+}
+
 ze_result_t StandbyHandleContext::standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) {
     std::call_once(initStandbyOnce, [this]() {
         this->init(pOsSysman->getSubDeviceCount());
+        this->standbyInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

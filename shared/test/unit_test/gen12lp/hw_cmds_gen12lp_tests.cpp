@@ -48,11 +48,3 @@ GEN12LPTEST_F(Gen12lpHwCmdTest, givenStateBaseAddressWhenProgrammingMocsThenMocs
     stateBaseAddress.setBindlessSamplerStateMemoryObjectControlState(mocs);
     EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables);
 }
-
-GEN12LPTEST_F(Gen12lpHwCmdTest, givenMediaSurfaceStateWhenProgrammingMocsThenMocsIndexIsSetProperly) {
-    auto mediaSurfaceState = FamilyType::cmdInitMediaSurfaceState;
-    uint32_t mocs = 4u;
-    uint32_t expectedMocsIndex = (mocs >> 1);
-    mediaSurfaceState.setSurfaceMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, mediaSurfaceState.TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables);
-}

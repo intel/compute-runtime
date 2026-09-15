@@ -14,7 +14,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -321,6 +320,35 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenSetLastCounterValueIs
     inOrderExecInfo = std::make_unique<InOrderExecInfo>(nullptr, nullptr, mockDevice, 2, false);
     inOrderExecInfo->setLastWaitedCounterValue(2, 0);
     EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(1, 0));
+}
+
+HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenProgrammedCounterValueIsSetThenReportPendingCounterSignalUntilItMatchesCounterValue) {
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, mockDevice.getMemoryManager());
+    auto node = tagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(node, nullptr, mockDevice, 1, false);
+
+    const uint64_t initialValue = inOrderExecInfo->getInitialCounterValue();
+
+    EXPECT_EQ(initialValue, inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_FALSE(inOrderExecInfo->isCounterSignalPending());
+
+    inOrderExecInfo->addCounterValue(2u);
+    EXPECT_EQ(initialValue, inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_TRUE(inOrderExecInfo->isCounterSignalPending());
+
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(initialValue + 2, inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_FALSE(inOrderExecInfo->isCounterSignalPending());
+
+    inOrderExecInfo->addCounterValue(1u);
+    EXPECT_TRUE(inOrderExecInfo->isCounterSignalPending());
+
+    inOrderExecInfo->resetCounterValue();
+    EXPECT_EQ(initialValue, inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_FALSE(inOrderExecInfo->isCounterSignalPending());
 }
 
 HWTEST_F(CommandEncoderTests, whenResetingInOrderExecInfoCounterValueThenAlsoResetInterruptFence) {
@@ -792,32 +820,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenLocalWorkgroupSizeGreater
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
 }
 
-using IsWithinXeHpCoreAndXe3pCore = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE3P_CORE>;
-HWTEST2_F(CommandEncoderTests, givenSingleActiveChannelWhenLocalSizeIsNotPowerOfTwoThenRuntimeGenerationOfLocalIdsIsRequired, IsWithinXeHpCoreAndXe3pCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    uint32_t workDim = 1;
-    uint32_t simd = 32;
-    std::array<uint8_t, 3> walkOrder = {{0, 1, 2}};
-    uint32_t requiredWalkOrder = 77u;
-
-    // power-of-two size: HW generation with linear walk order
-    std::array<size_t, 3> lws = {256, 1, 1};
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, requiredWalkOrder);
-
-    // non-power-of-two size: runtime generation required
-    lws = {400, 1, 1};
-    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-
-    lws = {15, 1, 1};
-    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
-        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-}
-
 HWTEST_F(CommandEncoderTests, givenNotify) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
@@ -987,20 +989,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
 HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrderThenWalkerIsNotChanged, IsAtMostXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     DefaultWalkerType walkerCmd{};
     DefaultWalkerType walkerOnStart{};
 
     uint32_t yOrder = 2u;
-    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, yOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, yOrder, hwInfo);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
 
     uint32_t linearOrder = 0u;
-    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, linearOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, linearOrder, hwInfo);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
 
     uint32_t fakeOrder = 5u;
-    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, fakeOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, fakeOrder, hwInfo);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
 }
 

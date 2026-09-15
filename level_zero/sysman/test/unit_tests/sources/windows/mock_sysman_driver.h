@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,17 +29,17 @@ struct MockSysmanDriver : public ::L0::Sysman::SysmanDriverImp {
         driver = previousDriver;
     }
 
-    ze_result_t driverInit() override {
+    ze_result_t driverInit(zes_init_flags_t flags) override {
         initCalledCount++;
         if (useBaseDriverInit) {
-            return SysmanDriverImp::driverInit();
+            return SysmanDriverImp::driverInit(flags);
         }
         return ZE_RESULT_SUCCESS;
     }
 
-    void initialize(ze_result_t *result) override {
+    void initialize(ze_result_t *result, zes_init_flags_t flags) override {
         if (useBaseInit) {
-            SysmanDriverImp::initialize(result);
+            SysmanDriverImp::initialize(result, flags);
             return;
         }
         if (sysmanInitFail) {

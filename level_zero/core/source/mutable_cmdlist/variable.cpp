@@ -133,7 +133,6 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
     this->desc.eventValue.inOrderIncrementEvent = event->getInOrderIncrementValue(cmdList->getBase()->getPartitionCount()) > 0;
     this->desc.eventValue.walkerCmd = walkerCmd;
     this->desc.eventValue.postSyncCmd = postSyncCmd;
-    this->desc.eventValue.kernelCount = event->getKernelCount();
     this->desc.eventValue.packetCount = event->getPacketsInUse();
     this->desc.eventValue.waitPackets = event->getPacketsToWait();
     this->desc.eventValue.hasStandaloneProfilingNode = event->hasInOrderTimestampNode();
@@ -142,6 +141,9 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
         this->desc.eventValue.inOrderAllocationOffset = event->getInOrderAllocationOffset();
     }
     this->desc.size = 0;
+    this->desc.eventValue.qwordInUse = cmdList->isQwordInOrderCounter();
+    this->desc.eventValue.useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
+    this->desc.eventValue.qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->desc.eventValue.qwordInUse, this->desc.eventValue.useSemaphore64bCmd);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -149,27 +151,45 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     if (false == isType(VariableType::waitEvent)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
+    uint32_t semWaitReserve = 0;
     this->desc.eventValue.event = event;
     this->desc.eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
     this->desc.eventValue.counterBasedEvent = event->isCounterBased();
-    this->desc.eventValue.kernelCount = event->getKernelCount();
     this->desc.eventValue.packetCount = event->getPacketsInUse();
     if (this->desc.eventValue.counterBasedEvent) {
-        this->desc.eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
-        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event);
-        bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
-        if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), useSemaphore64bCmd)) {
-            this->desc.eventValue.loadRegImmCmds.reserve(2 * this->desc.eventValue.waitPackets);
-        }
-        this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
+        const bool lriUsed = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), cmdList->isSemaphore64bCmdSupported());
+        uint32_t lriMultiplier = lriUsed ? 2 : 0;
+
         auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
         this->desc.eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
+
+        this->desc.eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
+        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event) || !event->getInOrderExecEventHelper().isDataAssigned();
+        this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
         this->desc.eventValue.isExternalFlag = event->isExternalEvent();
+        if (this->desc.eventValue.isExternalFlag) {
+            semWaitReserve += this->desc.eventValue.waitPackets;
+            this->desc.eventValue.patchPreambleCounterValue = event->getInOrderExecEventHelper().getPatchPreambleCounter();
+            this->desc.eventValue.patchPreambleCounterDeviceAllocation = event->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation();
+            this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
+            this->desc.eventValue.patchPreambleNoopState = this->desc.eventValue.patchPreambleCounterValue == 0;
+
+            lriMultiplier += lriUsed ? 2 : 0;
+        }
+        if (lriMultiplier > 0) {
+            this->desc.eventValue.loadRegImmCmds.reserve(lriMultiplier * this->desc.eventValue.waitPackets);
+        }
     } else {
         this->desc.eventValue.waitPackets = event->getPacketsToWait();
     }
-    this->desc.eventValue.semWaitCmds.reserve(this->desc.eventValue.waitPackets);
+    semWaitReserve += this->desc.eventValue.waitPackets;
+    this->desc.eventValue.semWaitCmds.reserve(semWaitReserve);
     this->desc.size = 0;
+    this->desc.eventValue.qwordInUse = cmdList->isQwordInOrderCounter();
+    this->desc.eventValue.useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
+    this->desc.eventValue.qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->desc.eventValue.qwordInUse, this->desc.eventValue.useSemaphore64bCmd);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -390,6 +410,7 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
                  desc.allocIdMemoryManagerCounter);
 
     auto oldBufferAlloc = desc.bufferAlloc;
+    auto oldArgValue = desc.argValue;
     GpuAddress gpuAddress = 0u;
     NEO::GraphicsAllocation *newBufferAlloc = nullptr;
     uint32_t newAllocId = undefined<uint32_t>;
@@ -439,6 +460,8 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel argument variable %p buffer gpuva %" PRIx64 " arg value %p from allocation %p alloc id %u alloc id from manager %u\n",
                  this, gpuAddress, argValue, newBufferAlloc, newAllocId, newAllocIdMemoryManagerCounter);
 
+    this->handleBufferTypeChange(oldArgValue, oldBufferAlloc, argValue, newBufferAlloc);
+
     if (bufferUsages.statelessWithoutOffset.size() > 0) {
         for (const auto statelessPatch : bufferUsages.statelessWithoutOffset) {
             PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel argument buffer into heap offset %zx\n", statelessPatch);
@@ -471,6 +494,39 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
 
     return ZE_RESULT_SUCCESS;
 }
+
+void Variable::handleBufferTypeChange(const void *oldArgValue, NEO::GraphicsAllocation *oldAllocation,
+                                      const void *newArgValue, NEO::GraphicsAllocation *newAllocation) {
+
+    if (usedInDispatch.empty()) {
+        return;
+    }
+
+    const bool sharedSystemAllocationsAllowed = cmdList->getBase()->areSharedSystemAllocationsAllowed();
+    bool isOldAllocSystemMemory = L0::CommandList::isUsingSystemMemory(oldArgValue, oldAllocation, sharedSystemAllocationsAllowed);
+    bool isNewAllocSystemMemory = L0::CommandList::isUsingSystemMemory(newArgValue, newAllocation, sharedSystemAllocationsAllowed);
+
+    bool isOldAllocImported = oldAllocation != nullptr && oldAllocation->getIsImported();
+    bool isNewAllocImported = newAllocation != nullptr && newAllocation->getIsImported();
+
+    int32_t allocSystemMemoryDelta = static_cast<int32_t>(isNewAllocSystemMemory) - static_cast<int32_t>(isOldAllocSystemMemory);
+    int32_t allocImportedDelta = static_cast<int32_t>(isNewAllocImported) - static_cast<int32_t>(isOldAllocImported);
+
+    if (allocSystemMemoryDelta == 0 && allocImportedDelta == 0) {
+        return;
+    }
+
+    bool commitChangesNeeded = false;
+
+    for (auto *variableDispatch : usedInDispatch) {
+        commitChangesNeeded |= variableDispatch->updateAllocationsCount(allocSystemMemoryDelta, allocImportedDelta);
+    }
+
+    if (commitChangesNeeded) {
+        this->setCommitVariable();
+    }
+}
+
 ze_result_t Variable::setValueVariable(size_t size, const void *argVal) {
     return selectImmediateSetValueHandler(size, argVal);
 }
@@ -641,7 +697,6 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
         }
     }
 
-    newEvent->setKernelCount(this->desc.eventValue.kernelCount);
     newEvent->setPacketsInUse(this->desc.eventValue.packetCount);
 
     this->desc.eventValue.event = newEvent;
@@ -667,20 +722,32 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     NEO::GraphicsAllocation *newInOrderAllocation = nullptr;
     NEO::GraphicsAllocation *oldInOrderAllocation = nullptr;
 
+    NEO::GraphicsAllocation *newPatchPreambleCounterAllocation = nullptr;
+    NEO::GraphicsAllocation *oldPatchPreambleCounterAllocation = nullptr;
+
     NEO::InOrderExecEventHelper *newInOrderEventHelper = nullptr;
     bool newCbEventBoundToCmdList = false;
     bool newNooped = true;
+    bool newPatchPreambleNooped = true;
+    uint64_t newPatchPreambleCounterValue = 0;
+    uint64_t newPatchPreambleCounterGpuAddress = 0;
     if (newEvent != nullptr) {
         newInOrderEventHelper = &newEvent->getInOrderExecEventHelper();
         newNooped = false;
         newEventAllocation = newEvent->getAllocation(device);
         if (newEvent->isCounterBased()) {
             newCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(newEvent);
-            if (newCbEventBoundToCmdList) {
+            if (newCbEventBoundToCmdList || !newInOrderEventHelper->isDataAssigned()) {
                 newNooped = true;
             } else {
                 auto deviceCounterAlloc = newInOrderEventHelper->getDeviceCounterAllocation();
                 newInOrderAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
+            }
+            if (this->desc.eventValue.isExternalFlag) {
+                newPatchPreambleCounterAllocation = newInOrderEventHelper->getPatchPreambleDeviceAllocation();
+                newPatchPreambleCounterValue = newInOrderEventHelper->getPatchPreambleCounter();
+                newPatchPreambleCounterGpuAddress = newInOrderEventHelper->getPatchPreambleDeviceGpuAddress();
+                newPatchPreambleNooped = newInOrderEventHelper->getPatchPreambleCounter() == 0;
             }
         }
     }
@@ -689,14 +756,16 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     if (this->desc.eventValue.event != nullptr) {
         oldEventAllocation = this->desc.eventValue.eventPoolAllocation;
         if (this->desc.eventValue.counterBasedEvent) {
-            if (!this->desc.eventValue.isCbEventBoundToCmdList) {
-                oldInOrderAllocation = this->desc.eventValue.cbEventDeviceCounterAllocation;
+            oldInOrderAllocation = this->desc.eventValue.cbEventDeviceCounterAllocation;
+            if (this->desc.eventValue.isExternalFlag) {
+                oldPatchPreambleCounterAllocation = this->desc.eventValue.patchPreambleCounterDeviceAllocation;
             }
         }
     }
 
     updateAllocationResidency(oldEventAllocation, newEventAllocation);
     updateAllocationResidency(oldInOrderAllocation, newInOrderAllocation);
+    updateAllocationResidency(oldPatchPreambleCounterAllocation, newPatchPreambleCounterAllocation);
 
     if (this->desc.eventValue.counterBasedEvent && (this->cmdList->getBase()->isHeaplessModeEnabled() || !(newEvent ? newEvent->hasInOrderTimestampNode() : false))) {
         if (oldNooped) {
@@ -753,47 +822,131 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     if (this->desc.eventValue.counterBasedEvent) {
         this->desc.eventValue.isCbEventBoundToCmdList = newCbEventBoundToCmdList;
         this->desc.eventValue.cbEventDeviceCounterAllocation = newInOrderAllocation;
+        if (this->desc.eventValue.isExternalFlag) {
+            this->desc.eventValue.patchPreambleCounterDeviceAllocation = newPatchPreambleCounterAllocation;
+            this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = newPatchPreambleCounterGpuAddress;
+            this->desc.eventValue.patchPreambleCounterValue = newPatchPreambleCounterValue;
+            this->desc.eventValue.patchPreambleNoopState = newPatchPreambleNooped;
+        }
     }
     desc.state = State::initialized;
     return ZE_RESULT_SUCCESS;
 }
 
 void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper) {
-    bool qwordInUse = cmdList->isQwordInOrderCounter();
-    bool useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
-    bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordInUse, useSemaphore64bCmd);
+
+    auto newPatchPreambleCounter = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getPatchPreambleCounter();
+    auto newPatchPreambleCounterAddress = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getPatchPreambleDeviceGpuAddress();
+    bool newPatchPreambleNooped = newPatchPreambleCounter == 0;
+    newPatchPreambleCounter = this->desc.eventValue.qwordInUse == false ? getLowPart(newPatchPreambleCounter) : newPatchPreambleCounter;
 
     for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
-        if (operation == CbWaitEventOperationType::set) {
-            mutableSemWait->setSemaphoreAddress(waitAddress);
-        } else if (operation == CbWaitEventOperationType::noop) {
-            mutableSemWait->noop();
-        } else if (operation == CbWaitEventOperationType::restore) {
-            mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
-        }
+        if (mutableSemWait->getType() != MutableSemaphoreWait::cbEventWaitPatchPreambleCounter) {
+            if (operation == CbWaitEventOperationType::set) {
+                mutableSemWait->setSemaphoreAddress(waitAddress);
+            } else if (operation == CbWaitEventOperationType::noop) {
+                mutableSemWait->noop();
+            } else if (operation == CbWaitEventOperationType::restore) {
+                mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
+            }
 
-        if (!qwordIndirect && eventInOrderHelper) {
-            if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
+            if (!this->desc.eventValue.qwordIndirect && eventInOrderHelper) {
+                if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
+                    mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
+                }
+            }
+        } else {
+            setCbWaitEventPatchPreambleSemWaitOperation(operation, mutableSemWait, newPatchPreambleCounter, newPatchPreambleCounterAddress, newPatchPreambleNooped, this->desc.eventValue.qwordIndirect);
+        }
+    }
+    if (this->desc.eventValue.qwordIndirect) {
+        uint32_t cmdIndex = 0;
+        for (auto &mutableLoadRegImm : this->desc.eventValue.loadRegImmCmds) {
+            if (mutableLoadRegImm->getType() != MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter) {
+                if (operation == CbWaitEventOperationType::noop) {
+                    mutableLoadRegImm->noop();
+                } else if (operation == CbWaitEventOperationType::restore) {
+                    mutableLoadRegImm->restore();
+                }
+
+                if (eventInOrderHelper) {
+                    if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
+                        // check if cmdIndex is even - there can be multiple lri pairs, even takes lower, odd takes higher part of 64b value
+                        uint32_t waitValue = ((cmdIndex & 1u) == 0u) ? getLowPart(eventInOrderHelper->getEventData()->counterValue) : getHighPart(eventInOrderHelper->getEventData()->counterValue);
+                        mutableLoadRegImm->setValue(waitValue);
+                    }
+                }
+            } else {
+                setCbWaitEventPatchPreambleLoadRegImmOperation(operation, mutableLoadRegImm, newPatchPreambleCounter, cmdIndex, newPatchPreambleNooped);
+            }
+            cmdIndex++;
+        }
+    }
+}
+
+void Variable::setCbWaitEventPatchPreambleSemWaitOperation(CbWaitEventOperationType operation, MutableSemaphoreWait *mutableSemWait, uint64_t counter, uint64_t deviceGpuAddress, bool newPatchPreambleNoop, bool qwordIndirect) {
+    if (operation == CbWaitEventOperationType::set) {
+        // general order to set
+        if (this->desc.eventValue.patchPreambleNoopState) {
+            if (newPatchPreambleNoop == false) {
+                // was patch preamble nooped -> can patch preamble set: restore + set value
+                mutableSemWait->restoreWithSemaphoreAddress(deviceGpuAddress);
+                if (qwordIndirect == false) {
+                    mutableSemWait->setSemaphoreValue(counter);
+                }
+            }
+        } else {
+            if (newPatchPreambleNoop == false) {
+                // was patch preamble set -> can patch preamble set: just update address and value
+                mutableSemWait->setSemaphoreAddress(deviceGpuAddress);
+                if (qwordIndirect == false) {
+                    mutableSemWait->setSemaphoreValue(counter);
+                }
+            } else {
+                // was patch preamble set -> needs patch preamble nooped: noop
+                mutableSemWait->noop();
+            }
+        }
+    } else if (operation == CbWaitEventOperationType::noop) {
+        mutableSemWait->noop();
+    } else if (operation == CbWaitEventOperationType::restore) {
+        // general order to restore, can patch preamble restore only if new patch preamble counter is not 0, otherwise noop
+        if (newPatchPreambleNoop == false) {
+            mutableSemWait->restoreWithSemaphoreAddress(deviceGpuAddress);
+            if (qwordIndirect == false) {
+                mutableSemWait->setSemaphoreValue(counter);
             }
         }
     }
-    if (qwordIndirect) {
-        uint32_t cmdIndex = 0;
-        for (auto &mutableLoadRegImm : this->desc.eventValue.loadRegImmCmds) {
-            if (operation == CbWaitEventOperationType::noop) {
-                mutableLoadRegImm->noop();
-            } else if (operation == CbWaitEventOperationType::restore) {
-                mutableLoadRegImm->restore();
-            }
+}
 
-            if (eventInOrderHelper) {
-                if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                    uint32_t waitValue = cmdIndex == 0 ? getLowPart(eventInOrderHelper->getEventData()->counterValue) : getHighPart(eventInOrderHelper->getEventData()->counterValue);
-                    mutableLoadRegImm->setValue(waitValue);
-                }
+void Variable::setCbWaitEventPatchPreambleLoadRegImmOperation(CbWaitEventOperationType operation, MutableLoadRegisterImm *mutableLoadRegImm, uint64_t counter, uint32_t cmdIndex, bool newPatchPreambleNoop) {
+    // check if cmdIndex is even - there can be multiple lri pairs, even takes lower, odd takes higher part of 64b value
+    uint32_t waitValue = ((cmdIndex & 1u) == 0u) ? getLowPart(counter) : getHighPart(counter);
+
+    if (operation == CbWaitEventOperationType::set) {
+        // was patch preamble nooped -> can patch preamble set: restore + set value
+        if (this->desc.eventValue.patchPreambleNoopState) {
+            if (newPatchPreambleNoop == false) {
+                mutableLoadRegImm->restore();
+                mutableLoadRegImm->setValue(waitValue);
             }
-            cmdIndex++;
+        } else {
+            if (newPatchPreambleNoop == false) {
+                // was patch preamble set -> can patch preamble set: just update address and value
+                mutableLoadRegImm->setValue(waitValue);
+            } else {
+                // was patch preamble set -> needs patch preamble nooped: noop
+                mutableLoadRegImm->noop();
+            }
+        }
+    } else if (operation == CbWaitEventOperationType::noop) {
+        mutableLoadRegImm->noop();
+    } else if (operation == CbWaitEventOperationType::restore) {
+        // general order to restore, can patch preamble restore only if new patch preamble counter is not 0, otherwise remain noop
+        if (newPatchPreambleNoop == false) {
+            mutableLoadRegImm->restore();
+            mutableLoadRegImm->setValue(waitValue);
         }
     }
 }
@@ -884,7 +1037,24 @@ void Variable::setNextSlmVariableOffset(SlmOffset nextSlmOffset) {
 }
 
 void Variable::processVariableDispatchForSlm() {
-    SlmOffset nextSlmOffset = this->desc.slmValue.slmOffsetValue + this->desc.slmValue.slmSize;
+
+    auto slmOffset = this->desc.slmValue.slmOffsetValue;
+    const bool isSlmOffsetResolved = slmOffset != undefined<SlmOffset>;
+    if (!isSlmOffsetResolved) {
+        const bool hasSlmBaseOffset = this->desc.slmValue.slmBaseOffset != undefined<SlmOffset>;
+        if (!hasSlmBaseOffset) {
+            return;
+        }
+        setNextSlmVariableOffset(this->desc.slmValue.slmBaseOffset);
+        return;
+    }
+
+    const bool isSlmSizeInitialized = this->desc.slmValue.slmSize != undefined<SlmOffset>;
+    if (!isSlmSizeInitialized) {
+        return;
+    }
+
+    SlmOffset nextSlmOffset = slmOffset + this->desc.slmValue.slmSize;
     if (this->desc.slmValue.nextSlmVariable != nullptr) {
         this->desc.slmValue.nextSlmVariable->setNextSlmVariableOffset(nextSlmOffset);
     } else {

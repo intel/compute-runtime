@@ -45,6 +45,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocateGraphicsMemoryWithAlignment;
     using DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl;
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
+    using DrmMemoryManager::allocateKmdMappedIsaIn32BitHeap;
     using DrmMemoryManager::allocateMemoryByKMD;
     using DrmMemoryManager::allocatePhysicalDeviceMemory;
     using DrmMemoryManager::allocatePhysicalHostMemory;

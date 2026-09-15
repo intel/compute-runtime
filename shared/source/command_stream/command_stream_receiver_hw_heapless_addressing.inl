@@ -14,6 +14,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_context.h"
@@ -82,7 +83,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
     TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) {
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskLevel", taskLevel);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "taskLevel", taskLevel);
 
     bool levelClosed = false;
     bool hasStallingCmdsOnTaskStream = false;
@@ -118,6 +119,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     this->latestSentTaskCount = taskCount + 1;
 
     auto estimatedSize = getRequiredCmdStreamHeaplessSizeAligned(dispatchFlags, device);
+
+    bool stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
+    if (stateCacheFlushRequired) {
+        estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+    }
+
     auto &commandStreamCSR = this->getCS(estimatedSize);
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
@@ -137,6 +144,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
         programEnginePrologue(commandStreamCSR);
     }
 
+    if (stateCacheFlushRequired) {
+        device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
+        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment());
+    }
+
     const bool useSemaphore64bCmd = device.getDeviceInfo().semaphore64bCmdSupport;
     TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false, EngineHelpers::isBcs(this->osContext->getEngineType()), useSemaphore64bCmd);
     TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, useSemaphore64bCmd);
@@ -145,7 +157,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags.barrierTimestampPacketNodes, dispatchFlags.isDcFlushRequiredOnStallingCommandsOnNextFlush);
     }
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
+    DBG_LOG(LogTaskCounts, NEO_FUNCTION_NAME, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
 
     addPipeControlFlushTaskIfNeeded(commandStreamCSR, taskLevel);
 
@@ -371,7 +383,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForHeaplessPrologue(Device 
 
     size_t size = 0u;
     size += getCmdSizeForPrologue();
-    size += StateBaseAddressHelper<GfxFamily>::getSbaCmdSize();
+    if (isStateBaseAddressProgrammingEnabled<GfxFamily>()) {
+        size += StateBaseAddressHelper<GfxFamily>::getSbaCmdSize();
+    }
     size += EncodeComputeMode<GfxFamily>::getSizeForComputeMode();
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
@@ -411,7 +425,8 @@ void CommandStreamReceiverHw<GfxFamily>::programHeaplessStateProlog(Device &devi
         }
     }
 
-    if (getReleaseHelper().isRayTracingSupported()) {
+    const auto &hwInfo = device.getHardwareInfo();
+    if (hwInfo.caps.rayTracingSupported) {
         device.initializeRTMemoryBackedBuffer();
     }
 
@@ -462,6 +477,11 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
     }
 
     heaplessPrologProgrammed = true;
+
+    if (status == SubmissionStatus::success) {
+        this->osContext->onFirstSubmission();
+    }
+
     return status;
 }
 

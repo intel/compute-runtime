@@ -284,7 +284,7 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
     stoppedThreadsToReport.reserve(threadsToCheck.size());
 
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
-    auto cr0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+    auto cr0 = std::make_unique_for_overwrite<uint32_t[]>(regSize / sizeof(uint32_t));
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
 
     for (auto &threadId : threadsToCheck) {
@@ -329,6 +329,16 @@ ze_result_t DebugSessionLinux::resumeImp(const std::vector<EuThread::ThreadId> &
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize;
 
+    // SIP transactions resume a thread that stays in the stopped state, so EuThread::resumeThread()
+    // is never reached for them. A tile session forwards resumeImp() to the root session, whose
+    // allThreads is empty when tile attach is enabled, so threads missing here are expected.
+    for (const auto &threadId : threads) {
+        auto thread = allThreads.find(threadId);
+        if (thread != allThreads.end()) {
+            thread->second->setStateSaveAreaCoherent(false);
+        }
+    }
+
     auto result = threadControl(threads, deviceIndex, ThreadControlCmd::resume, bitmask, bitmaskSize);
 
     return result == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -344,6 +354,10 @@ ze_result_t DebugSessionLinux::interruptImp(uint32_t deviceIndex) {
 }
 
 ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) {
+    return readGpuMemoryImp(vmHandle, output, size, gpuVa, true);
+}
+
+ze_result_t DebugSessionLinux::readGpuMemoryImp(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa, bool flushBeforeRead) {
 
     int vmDebugFd = openVmFd(vmHandle, true);
     if (vmDebugFd < 0) {
@@ -354,7 +368,8 @@ ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, si
     int64_t retVal = 0;
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
-    if (flushVmCache(vmDebugFd) != 0) {
+    if (flushBeforeRead && flushVmCache(vmDebugFd) != 0) {
+        closeVmFd(vmDebugFd);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
@@ -397,10 +412,7 @@ ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, si
 
         retVal = pendingSize;
     }
-    if (flushVmCache(vmDebugFd) != 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    NEO::SysCalls::close(vmDebugFd);
+    closeVmFd(vmDebugFd);
 
     return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -417,6 +429,7 @@ ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *inp
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
     if (flushVmCache(vmDebugFd) != 0) {
+        closeVmFd(vmDebugFd);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
@@ -460,9 +473,10 @@ ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *inp
         retVal = pendingSize;
     }
     if (flushVmCache(vmDebugFd) != 0) {
+        closeVmFd(vmDebugFd);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    NEO::SysCalls::close(vmDebugFd);
+    closeVmFd(vmDebugFd);
 
     return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -1057,6 +1071,7 @@ ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) 
 bool DebugSessionLinux::closeConnection() {
     closeAsyncThread();
     closeInternalEventsThread();
+    closeAllCachedVmFds();
 
     if (clientHandle != invalidClientHandle) {
         auto numTiles = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
@@ -1107,7 +1122,7 @@ void DebugSessionLinux::handlePageFaultEvent(PageFaultEvent &pfEvent) {
         return;
     }
 
-    std::unique_ptr<uint8_t[]> bitmaskPF = std::make_unique<uint8_t[]>(size);
+    std::unique_ptr<uint8_t[]> bitmaskPF = std::make_unique_for_overwrite<uint8_t[]>(size);
     std::transform(bitmaskAfter, bitmaskAfter + size, bitmaskResolved, bitmaskPF.get(), std::bit_xor<uint8_t>());
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();

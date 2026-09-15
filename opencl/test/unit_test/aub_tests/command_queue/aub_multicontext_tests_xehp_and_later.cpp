@@ -21,8 +21,8 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
@@ -230,7 +230,7 @@ struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextT
     void SetUp() override {
         debugManager.flags.EnableWalkerPartition.set(1u);
         kernelIds |= (1 << 5);
-        kernelIds |= (1 << 8);
+        kernelIds |= (1 << 3);
 
         FourTilesSingleContextTest::SetUp();
         SimpleKernelFixture::setUp(rootDevice, context.get());
@@ -304,8 +304,8 @@ HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForK
             if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
                 continue;
             }
-            EXPECT_EQ(4u, semaphoreCmd->getSemaphoreDataDword());
-            tileAtomicGpuAddress = semaphoreCmd->getSemaphoreGraphicsAddress();
+            EXPECT_EQ(4u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+            tileAtomicGpuAddress = NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd);
             lastSemaphoreFound = true;
             break;
         }
@@ -346,9 +346,9 @@ HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForK
     cl_uint kernelIncrementCounter = 1024;
     cl_int retVal = CL_SUCCESS;
 
-    kernels[8]->setArg(0, sizeof(cl_mem), &clBuffer);
-    kernels[8]->setArg(1, kernelIncrementCounter);
-    retVal = mockCommandQueue->enqueueKernel(kernels[8].get(), workingDimensions, globalWorkOffset, gwsSize, lwsSize, 0, nullptr, nullptr);
+    kernels[3]->setArg(0, sizeof(cl_mem), &clBuffer);
+    kernels[3]->setArg(1, kernelIncrementCounter);
+    retVal = mockCommandQueue->enqueueKernel(kernels[3].get(), workingDimensions, globalWorkOffset, gwsSize, lwsSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     mockCommandQueue->flush();
 
@@ -417,9 +417,9 @@ HWTEST2_F(StaticWalkerPartitionFourTilesTests, givenFourTilesWhenStaticWalkerPar
     cl_uint kernelIncrementCounter = 1024;
     cl_int retVal = CL_SUCCESS;
 
-    kernels[8]->setArg(0, sizeof(cl_mem), &clBuffer);
-    kernels[8]->setArg(1, kernelIncrementCounter);
-    retVal = mockCommandQueue->enqueueKernel(kernels[8].get(), workingDimensions, globalWorkOffset, gwsSize, lwsSize, 0, nullptr, nullptr);
+    kernels[3]->setArg(0, sizeof(cl_mem), &clBuffer);
+    kernels[3]->setArg(1, kernelIncrementCounter);
+    retVal = mockCommandQueue->enqueueKernel(kernels[3].get(), workingDimensions, globalWorkOffset, gwsSize, lwsSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     mockCommandQueue->flush();
 

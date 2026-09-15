@@ -9,10 +9,8 @@
 
 using Family = NEO::Xe3CoreFamily;
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
@@ -21,7 +19,6 @@ using Family = NEO::Xe3CoreFamily;
 #include "shared/source/helpers/gfx_core_helper_xe2_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xe3_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
-#include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/simd_helper.h"
 
 namespace NEO {
@@ -101,7 +98,10 @@ template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    const bool globalFenceRequired = (fenceType == FenceType::acquire)
+                                         ? productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)
+                                         : productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = globalFenceRequired ? AdditionalSynchronizationType::fence : AdditionalSynchronizationType::none;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
@@ -120,7 +120,10 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    const bool globalFenceRequired = (fenceType == FenceType::acquire)
+                                         ? productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)
+                                         : productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = globalFenceRequired ? AdditionalSynchronizationType::fence : AdditionalSynchronizationType::none;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
@@ -253,7 +256,7 @@ uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t sim
         maxThreadsPerThreadGroup = 48u;
     }
 
-    maxThreadsPerThreadGroup = productHelper.adjustMaxThreadsPerThreadGroup(maxThreadsPerThreadGroup, simd, grfCount);
+    maxThreadsPerThreadGroup = productHelper.adjustMaxThreadsPerThreadGroup(*rootDeviceEnvironment.getHardwareInfo(), maxThreadsPerThreadGroup, simd, grfCount);
 
     numThreadsPerThreadGroup = std::min(numThreadsPerThreadGroup, maxThreadsPerThreadGroup);
     DEBUG_BREAK_IF(numThreadsPerThreadGroup * simd > CommonConstants::maxWorkgroupSize);

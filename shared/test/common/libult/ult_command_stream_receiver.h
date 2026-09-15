@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <algorithm>
 #include <functional>
 #include <map>
 #include <optional>
@@ -323,13 +324,16 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     uint32_t getPreferredTagPoolSize() const override {
-        return BaseClass::getPreferredTagPoolSize() + 1;
+        return std::min(BaseClass::getPreferredTagPoolSize(), 128u);
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 
     void downloadAllocations(bool blockingWait, TaskCountType taskCount) override {
         downloadAllocationsCalledCount++;
         latestDownloadAllocationsBlocking = blockingWait;
+        if (onDownloadAllocations) {
+            onDownloadAllocations();
+        }
     }
 
     void downloadAllocationUlt(GraphicsAllocation &gfxAllocation) {
@@ -342,6 +346,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
             latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
             latestWaitForCompletionWithTimeoutWaitParams = params;
             waitForCompletionWithTimeoutTaskCountCalled++;
+        }
+        if (onWaitForCompletionWithTimeout) {
+            onWaitForCompletionWithTimeout();
         }
         if (callBaseWaitForCompletionWithTimeout) {
             return BaseClass::waitForCompletionWithTimeout(params, taskCountToWait);
@@ -360,17 +367,29 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return waitForCompletionWithTimeout(WaitParams{false, enableTimeout, false, timeoutMicroseconds}, taskCountToWait);
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
-        if (captureWaitForTaskCountWithKmdNotifyInputParams) {
-            static std::mutex waitForTaskCountWithKmdNotifyInputParamsMtx;
-            std::unique_lock<std::mutex> lock(waitForTaskCountWithKmdNotifyInputParamsMtx);
-            waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
+    void captureWaitForTaskCountWithKmdNotifyFallbackInputParams(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
+        if (this->captureWaitForTaskCountWithKmdNotifyInputParams) {
+            std::lock_guard<std::mutex> guard(this->mutex);
+            this->waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
         }
+    }
+
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+        this->captureWaitForTaskCountWithKmdNotifyFallbackInputParams(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
         if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
             return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
         }
 
         return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
+    }
+
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) override {
+        this->captureWaitForTaskCountWithKmdNotifyFallbackInputParams(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
+        if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
+            return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
+        }
+
+        return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle, timeoutNanoseconds);
     }
 
     WaitStatus waitForTaskCount(TaskCountType requiredTaskCount) override {
@@ -400,7 +419,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     bool isMadeResident(GraphicsAllocation *graphicsAllocation) const {
-        return makeResidentAllocations.find(graphicsAllocation) != makeResidentAllocations.end();
+        return makeResidentAllocations.contains(graphicsAllocation);
     }
 
     bool isMadeResident(GraphicsAllocation *graphicsAllocation, TaskCountType taskCount) const {
@@ -759,6 +778,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
     std::atomic<bool> latestDownloadAllocationsBlocking = false;
+    std::function<void()> onDownloadAllocations;
+    std::function<void()> onWaitForCompletionWithTimeout;
     OsContext *initialOsContext = nullptr;
 
     bool renderStateCacheFlushed = false;

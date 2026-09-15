@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,8 @@
 #include <x86intrin.h>
 
 #define STATUS_GRAPHICS_NO_VIDEO_MEMORY ((NTSTATUS)0xC01E0100L)
+
+#define STANDARD_RIGHTS_REQUIRED 0x000F0000
 
 #define PAGE_NOACCESS 0x01
 #define PAGE_READWRITE 0x04

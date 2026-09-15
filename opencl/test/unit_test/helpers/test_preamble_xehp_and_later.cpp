@@ -485,10 +485,8 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsXe
 HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSingleDispatchForMultiCCSRequiredWhenSystemHasMultiCCSConfigThenSingleSliceDispatchCcsModeIsEnabled, IsHeapfulRequiredAndAtLeastXeCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isSingleDispatchRequiredForMultiCCSResult = true;
-    pDevice->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
     auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    mutableHwInfo->caps.singleDispatchRequiredForMultiCCS = true;
     mutableHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties streamProperties{};

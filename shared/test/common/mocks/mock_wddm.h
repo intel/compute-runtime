@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -73,6 +74,7 @@ class WddmMock : public Wddm {
     using Wddm::temporaryResources;
     using Wddm::timestampFrequency;
     using Wddm::useAdditionalEngine;
+    using Wddm::waitFromCpu;
     using Wddm::wddmInterface;
 
     WddmMock(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {}
@@ -103,6 +105,10 @@ class WddmMock : public Wddm {
     void setHeap32(uint64_t base, uint64_t size);
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
     bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait) override;
+    WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds) override;
+    HANDLE createMonitoredFenceKmdWaitEvent() override;
+    bool resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) override;
+    bool waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) override;
     void *virtualAlloc(void *inPtr, size_t size, bool topDownHint) override;
     void virtualFree(void *ptr, size_t size) override;
     void releaseReservedAddress(void *reservedAddress) override;
@@ -119,6 +125,12 @@ class WddmMock : public Wddm {
             return Wddm::verifyAdapterLuid(adapterLuid);
         }
         return verifyAdapterLuidReturnValue;
+    }
+    bool isNativeFenceAvailable() override {
+        if (callBaseIsNativeFenceAvailable) {
+            return Wddm::isNativeFenceAvailable();
+        }
+        return isNativeFenceAvailableReturnValue;
     }
     LUID getAdapterLuid() { return hwDeviceId->getAdapterLuid(); }
     bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) override;
@@ -154,6 +166,8 @@ class WddmMock : public Wddm {
     NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) override;
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand) override;
     uint32_t getTimestampFrequency() const override;
+    void *getTimestampPtr() override { return timestampPtrResult; }
+    void *timestampPtrResult = nullptr;
     bool perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize) override;
     bool perfDisableEuStallStream() override;
     bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) override;
@@ -175,6 +189,11 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult lockResult;
     WddmMockHelpers::CallResult unlockResult;
     WddmMockHelpers::WaitFromCpuResult waitFromCpuResult;
+    WddmMockHelpers::MonitoredFenceKmdWaitEventResult monitoredFenceKmdWaitEventResult;
+    uint32_t waitFromCpuWithTimeoutCalled = 0;
+    uint64_t waitFromCpuWithTimeoutFenceValue = 0;
+    uint64_t waitFromCpuTimeoutNanoseconds = 0;
+    OsContextWin *waitFromCpuWithTimeoutOsContext = nullptr;
     WddmMockHelpers::CallResult releaseReservedAddressResult;
     WddmMockHelpers::CallResult reserveValidAddressRangeResult;
     WddmMockHelpers::CallResult registerTrimCallbackResult;
@@ -210,6 +229,11 @@ class WddmMock : public Wddm {
     bool shutdownStatus = false;
     bool callBaseSetAllocationPriority = true;
     bool callBaseWaitFromCpu = true;
+    bool callBaseWaitFromCpuWithTimeout = true;
+    WaitStatus waitFromCpuWithTimeoutReturnValue = WaitStatus::ready;
+    bool failFreeGpuVirtualAddress = false;
+    bool callBaseIsNativeFenceAvailable = true;
+    bool isNativeFenceAvailableReturnValue = false;
     bool failReserveGpuVirtualAddress = false;
     bool failCreateAllocation = false;
 };

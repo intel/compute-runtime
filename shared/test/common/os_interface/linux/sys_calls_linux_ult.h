@@ -10,8 +10,8 @@
 
 #include <atomic>
 #include <cstdint>
+#include <cstdio>
 #include <dirent.h>
-#include <iostream>
 #include <poll.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
@@ -31,6 +31,7 @@ extern int (*sysCallsRmdir)(const std::string &dir);
 extern int (*sysCallsOpen)(const char *pathname, int flags);
 extern int (*sysCallsClose)(int fileDescriptor);
 extern int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode);
+extern int (*sysCallsAccess)(const char *pathname, int mode);
 extern int (*sysCallsDlinfo)(void *handle, int request, void *info);
 extern ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset);
 extern ssize_t (*sysCallsPwrite)(int fd, const void *buf, size_t count, off_t offset);
@@ -73,8 +74,16 @@ extern ssize_t (*sysCallsSendmsg)(int sockfd, const struct msghdr *msg, int flag
 extern ssize_t (*sysCallsRecvmsg)(int sockfd, struct msghdr *msg, int flags);
 extern int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 extern int (*sysCallsDup)(int oldfd);
+extern void *(*sysCallsMmap)(void *addr, size_t size, int prot, int flags, int fd, off_t off);
+extern int (*sysCallsMunmap)(void *addr, size_t size);
+extern void *(*sysCallsMremapFixed)(void *oldAddress, size_t size, void *newAddress);
+extern void *(*sysCallsMmapFixedNoReplace)(void *address, size_t size);
 extern pid_t (*sysCallsGetpid)();
 extern int (*sysCallsGetrlimit)(int resource, struct rlimit *rlim);
+extern FILE *(*sysCallsFdopen)(int fd, const char *mode);
+extern char *(*sysCallsFgets)(char *s, int size, FILE *stream);
+extern int (*sysCallsFclose)(FILE *stream);
+extern int (*sysCallsSetvbuf)(FILE *stream, char *buf, int mode, size_t size);
 
 extern bool allowFakeDevicePath;
 extern int flockRetVal;
@@ -95,6 +104,7 @@ extern int mkstempCalled;
 extern int renameCalled;
 extern int pathFileExistsCalled;
 extern int flockCalled;
+extern int syncCalled;
 extern int fsyncCalled;
 extern int fsyncArgPassed;
 extern int fsyncRetVal;
@@ -133,12 +143,15 @@ extern bool mmapCaptureExtendedPointers;
 extern bool mmapAllowExtendedPointers;
 extern uint32_t mmapFuncCalled;
 extern uint32_t munmapFuncCalled;
+extern uint32_t mremapFixedFuncCalled;
+extern uint32_t mmapFixedNoReplaceFuncCalled;
 
 extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
 extern bool captureDlOpenFilePath;
 extern std::string dlOpenFilePathPassed;
 extern std::string mkfifoPathNamePassed;
+extern std::string getProcessNameResult;
 
 extern long sysconfReturn;
 char **getEnviron();

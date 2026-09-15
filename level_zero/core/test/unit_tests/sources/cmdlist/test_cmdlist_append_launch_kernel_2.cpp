@@ -667,8 +667,16 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
     ASSERT_NE(nullptr, eventPool);
 
     eventPool->createEvent(&eventDesc, &hEvent);
-
-    auto result = commandList->appendWaitOnEvents(1, &hEvent, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    auto result = commandList->appendWaitOnEvents(1, &hEvent, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = cmdStream->getUsed();
@@ -914,7 +922,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(reinterpret_cast<const ImplicitArgs *>(&expectedImplicitArgs), *kernelDescriptor, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
         auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
         auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
-        EXPECT_EQ(indirectHeap->getUsed(), alignUp(sizeCrossThreadData + sizePerThreadDataForWholeGroup + implicitArgsProgrammingSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false)));
+        EXPECT_EQ(indirectHeap->getUsed(), alignUp(sizeCrossThreadData + sizePerThreadDataForWholeGroup + implicitArgsProgrammingSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, device->getHwInfo())));
 
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
             expectedImplicitArgs.localIdTablePtr = indirectHeapAllocation->getGpuAddress();

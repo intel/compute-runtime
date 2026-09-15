@@ -13,7 +13,6 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_to_xe3p.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_tgllp_to_pvc.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe_hpg_and_xe_hpc.inl"
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe_hpg_to_xe2_hpg.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xehp_and_later.inl"
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
 
@@ -109,7 +108,7 @@ bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromData(const uint8_t *pRaw
     memcpy_s(reinterpret_cast<uint8_t *>(&ip), sizeof(ip), tempAddr, sizeof(ip));
     ip &= ipSamplingIpMaskXe;
     StallSumIpData_t *stallSumData = nullptr;
-    if (stallSumIpDataMap.count(ip) == 0) {
+    if (!stallSumIpDataMap.contains(ip)) {
         stallSumData = new StallSumIpData_t{};
         stallSumData->activeCount = 0;
         stallSumData->otherCount = 0;
@@ -164,7 +163,7 @@ void L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromMap(std::map<uint64_t, v
     for (auto &entry : sourceMap) {
         uint64_t ip = entry.first;
         StallSumIpData_t *sourceData = reinterpret_cast<StallSumIpData_t *>(entry.second);
-        if (stallSumIpDataMap.count(ip) == 0) {
+        if (!stallSumIpDataMap.contains(ip)) {
             StallSumIpData_t *newData = new StallSumIpData_t{};
             memcpy_s(newData, sizeof(StallSumIpData_t), sourceData, sizeof(StallSumIpData_t));
             stallSumIpDataMap[ip] = newData;

@@ -37,9 +37,14 @@ void getCpuFlagsLinux(std::string &cpuFlags) {
     }
 }
 
+size_t getLastLevelCacheSizeLinux() {
+    return 0u;
+}
+
 void (*CpuInfo::cpuidexFunc)(int *, int, int) = cpuidexLinuxWrapper;
 void (*CpuInfo::cpuidFunc)(int[4], int) = cpuidLinuxWrapper;
 void (*CpuInfo::getCpuFlagsFunc)(std::string &) = getCpuFlagsLinux;
+size_t (*CpuInfo::getLastLevelCacheSizeFunc)() = getLastLevelCacheSizeLinux;
 uint64_t (*CpuInfo::xgetbvFunc)(uint32_t) = xgetbvLinuxWrapper;
 
 const CpuInfo CpuInfo::instance;

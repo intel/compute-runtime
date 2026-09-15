@@ -27,7 +27,7 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenKmdInterfaceWhenGettingSysFsFilenamesFor
     EXPECT_STREQ("power2_max_interval", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimitInterval, 0, false).c_str());
 }
 
-TEST_F(SysmanDevicePowerFixtureXe, GivenComponentCountZeroWhenEnumeratingPowerDomainsWhenOnlySysfsNodesExistThenValidCountIsReturned) {
+TEST_F(SysmanDevicePowerFixtureXe, GivenComponentCountZeroWhenEnumeratingPowerDomainsThenValidCountIsReturned) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(xePowerHandleComponentCount, count);
@@ -91,7 +91,7 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenDefaultLimitSysfsNodeNotAvailableWhenGet
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         zes_power_properties_t properties = {};
-        pSysfsAccess->defaultReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        pFsAccess->defaultReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_EQ(-1, properties.defaultLimit);
     }
@@ -111,7 +111,7 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenDefaultLimitSysfsNodesNotAvailableWhenGe
         extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
         properties.pNext = &extProperties;
 
-        pSysfsAccess->defaultReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        pFsAccess->defaultReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_EQ(-1, extProperties.defaultLimit->limit);
     }
@@ -152,12 +152,12 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenValidPowerHandleWhenGettingPowerProperti
 }
 
 TEST_F(SysmanDevicePowerFixtureXe, GivenPowerLimitSysfsNodesNotPresentWhenCallingGetPowerLimitsExtThenPowerLimitCountIsZero) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     auto handles = getPowerHandles();
     EXPECT_EQ(xePowerHandleComponentCount, handles.size());
@@ -168,6 +168,20 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenPowerLimitSysfsNodesNotPresentWhenCallin
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, nullptr));
         EXPECT_EQ(0u, count);
     }
+}
+
+TEST_F(SysmanDevicePowerFixtureXe, GivenDevicePciBdfIsUnresolvableWhenEnumeratingPowerDomainsThenNoHandlesAreReturned) {
+    pSysfsAccess->realPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    auto handles = getPowerHandles();
+    EXPECT_EQ(0u, handles.size());
+    EXPECT_TRUE(pFsAccess->listDirectoryPathRequested.empty());
+}
+
+TEST_F(SysmanDevicePowerFixtureXe, GivenHwmonDirectoryIsSearchedWhenInitializingThenAbsolutePciDevicePathIsUsed) {
+    auto handles = getPowerHandles();
+
+    EXPECT_EQ(mockXePowerHwmonBaseDir, pFsAccess->listDirectoryPathRequested);
 }
 
 } // namespace ult

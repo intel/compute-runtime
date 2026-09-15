@@ -16,7 +16,7 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -46,22 +46,20 @@ cl_uint testSimdTable[] = {
     8, 16, 32};
 
 namespace ULT {
-template <typename FixtureFactory>
 struct AUBHelloWorldFixture
     : public AUBCommandStreamFixture,
-      public FixtureFactory::KernelFixture,
-      public FixtureFactory::IndirectHeapFixture,
+      public AUBHelloWorldKernelFixture,
+      public IndirectHeapFixture,
       public ClHardwareParse {
 
-    typedef typename FixtureFactory::KernelFixture KernelFixture;
-    using KernelFixture::pKernel;
+    using AUBHelloWorldKernelFixture::pKernel;
 
     void setUp() {
         AUBCommandStreamFixture::setUp(nullptr);
         ClHardwareParse::setUp();
 
         IndirectHeapFixture::setUp(pCmdQ);
-        KernelFixture::setUp(device, kernelFilename, kernelName);
+        AUBHelloWorldKernelFixture::setUp(context, kernelFilename, kernelName);
         ASSERT_NE(nullptr, pKernel);
 
         auto retVal = CL_INVALID_VALUE;
@@ -94,7 +92,7 @@ struct AUBHelloWorldFixture
         srcBuffer->release();
         destBuffer->release();
 
-        KernelFixture::tearDown();
+        AUBHelloWorldKernelFixture::tearDown();
         IndirectHeapFixture::tearDown();
         ClHardwareParse::tearDown();
         AUBCommandStreamFixture::tearDown();
@@ -111,7 +109,7 @@ struct AUBHelloWorldFixture
     const int destPattern = 170;
 };
 
-using AUBHelloWorld = Test<AUBHelloWorldFixture<AUBHelloWorldFixtureFactory>>;
+using AUBHelloWorld = Test<AUBHelloWorldFixture>;
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, AUBHelloWorld, WhenEnqueuingKernelThenAddressesAreAligned) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
@@ -167,15 +165,15 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, AUBHelloWorld, WhenEnqueuingKernelThenAddressesAr
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
-struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture<AUBHelloWorldFixtureFactory>,
+struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture,
                                     public ::testing::TestWithParam<std::tuple<uint32_t /*cl_uint*/, TestParam>> {
-    typedef AUBHelloWorldFixture<AUBHelloWorldFixtureFactory> ParentClass;
+    typedef AUBHelloWorldFixture ParentClass;
 
     void SetUp() override {
-        std::tie(KernelFixture::simd, param) = GetParam();
+        std::tie(this->simd, param) = GetParam();
         MockExecutionEnvironment executionEnvironment{};
         auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-        if (KernelFixture::simd < gfxCoreHelper.getMinimalSIMDSize()) {
+        if (this->simd < gfxCoreHelper.getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
         ParentClass::setUp();
@@ -260,20 +258,18 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(testParamTable)));
 
 struct AUBSimpleArg
-    : public SimpleArgFixture<AUBSimpleArgFixtureFactory>,
+    : public SimpleArgFixture,
       public ClHardwareParse,
       public ::testing::Test {
 
-    using SimpleArgKernelFixture::setUp;
-
     void SetUp() override {
-        SimpleArgFixture<AUBSimpleArgFixtureFactory>::setUp();
+        SimpleArgFixture::setUp();
         ClHardwareParse::setUp();
     }
 
     void TearDown() override {
         ClHardwareParse::tearDown();
-        SimpleArgFixture<AUBSimpleArgFixtureFactory>::tearDown();
+        SimpleArgFixture::tearDown();
     }
 };
 
@@ -294,7 +290,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, AUBSimpleArg, WhenEnqueingKernelThenAddressesAreA
     pDSH->getSpace(sizeof(uint32_t));
 
     auto retVal = pCmdQ->enqueueKernel(
-        pKernel,
+        pKernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -348,7 +344,7 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
     pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::immediateDispatch);
 
     auto retVal = pCmdQ->enqueueKernel(
-        pKernel,
+        pKernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -361,11 +357,12 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
     pCmdQ->flush();
 }
 
-struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFactory>,
+struct AUBSimpleArgIntegrateTest : public SimpleArgFixture,
                                    public ::testing::TestWithParam<std::tuple<uint32_t /*cl_uint*/, TestParam>> {
-    typedef SimpleArgFixture<AUBSimpleArgFixtureFactory> ParentClass;
+    typedef SimpleArgFixture ParentClass;
 
     void SetUp() override {
+        cl_uint simd;
         std::tie(simd, param) = GetParam();
         MockExecutionEnvironment executionEnvironment{};
         auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -381,7 +378,6 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFa
             ParentClass::tearDown();
         }
     }
-    cl_uint simd;
     TestParam param;
     bool initialized = false;
 };
@@ -396,7 +392,7 @@ HWTEST_P(AUBSimpleArgIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
     cl_event *event = nullptr;
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->pKernel,
+        this->pKernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -608,7 +604,7 @@ HWTEST_F(AUBSimpleAtomicTest, givenKernelWithAtomicWhenExecutedThenExpectAtomicV
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -642,7 +638,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -673,7 +669,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -704,7 +700,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -735,7 +731,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -766,7 +762,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -797,7 +793,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -828,7 +824,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -859,7 +855,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -890,7 +886,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -921,7 +917,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -952,7 +948,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
 
     auto retVal = this->pCmdQ->enqueueKernel(
-        this->kernel,
+        this->kernel.get(),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -971,19 +967,41 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     expectMemory<FamilyType>(remainderBufferGpuAddress, this->expectedRemainderMemory, sizeRemainderMemory);
 }
 
-struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
+struct AUBBindlessKernel : public AUBFixture,
                            public ::testing::Test {
 
     void SetUp() override {
         debugManager.flags.UseBindlessMode.set(1);
         debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-        KernelAUBFixture<BindlessKernelFixture>::setUp();
+        AUBFixture::setUp(nullptr);
     }
 
     void TearDown() override {
-        KernelAUBFixture<BindlessKernelFixture>::tearDown();
+        AUBFixture::tearDown();
     }
+
+    void createKernel(const std::string &programName, const std::string &kernelName) {
+        pProgram = createProgramFromBinaryFile(context, programName);
+        ASSERT_NE(nullptr, pProgram);
+
+        retVal = pProgram->build(
+            pProgram->getDevices(),
+            nullptr);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+
+        kernel.reset(Kernel::create<MockKernel>(
+            pProgram.get(),
+            pProgram->getKernelInfoForKernel(kernelName.c_str()),
+            *device,
+            retVal));
+        ASSERT_NE(nullptr, kernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+    }
+
     DebugManagerStateRestore restorer;
+    std::unique_ptr<Kernel> kernel;
+    cl_int retVal = CL_SUCCESS;
+    ReleaseableObjectPtr<MockProgram> pProgram;
 };
 
 HWTEST_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate) {
@@ -1108,8 +1126,8 @@ HWTEST_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThe
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(
-        contextCl,
-        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &contextCl->getDevice(0)->getDevice()),
+        context,
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,

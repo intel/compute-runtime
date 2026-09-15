@@ -30,6 +30,7 @@
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -46,6 +47,23 @@ using namespace NEO;
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
 typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
+
+ReleaseableObjectPtr<MockProgram> createCopyBufferZebinProgram(Context *pContext, ClDevice *pClDevice) {
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    ZebinTestData::ZebinCopyBufferModule<numBits>::Descriptor descriptor{};
+    descriptor.isStateless = pClDevice->getCompilerProductHelper().isForceToStatelessRequired();
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(pClDevice->getHardwareInfo(), descriptor);
+    const auto src = zebinData->storage.data();
+    const auto binarySize = zebinData->storage.size();
+
+    auto deviceVector = toClDeviceVector(*pClDevice);
+    cl_int retVal = CL_SUCCESS;
+    auto program = clUniquePtr(Program::create<MockProgram>(pContext, deviceVector, &binarySize, (const unsigned char **)&src, nullptr, retVal));
+    EXPECT_NE(nullptr, program);
+
+    program->build(program->getDevices(), nullptr);
+    return program;
+}
 
 template <template <typename> class CsrType>
 class EnqueueKernelTestT
@@ -96,7 +114,8 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
     cl_int retVal = CL_INVALID_KERNEL;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+    auto program = createCopyBufferZebinProgram(context, pClDevice);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(program.get(), program->getKernelInfosForKernel("CopyBuffer"), retVal));
     auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -152,7 +171,7 @@ HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKerne
 
     auto deviceVector = toClDeviceVector(*pClDevice);
     auto program = Program::create<MockProgram>(
-        pContext,
+        pContext.get(),
         deviceVector,
         &binarySize,
         (const unsigned char **)&src,
@@ -197,7 +216,7 @@ HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKerne
         auto sizePerThread = HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numGrf, numChannels, Math::computeTotalElementsCount(localWorkSize), pDevice->getRootDeviceEnvironment());
         auto sizeImplicitArgs = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel->getImplicitArgs(), kernel->getDescriptor(), false, pDevice->getRootDeviceEnvironment());
 
-        auto size = alignUp(sizeCrossThread + sizePerThread + sizeImplicitArgs, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
+        auto size = alignUp(sizeCrossThread + sizePerThread + sizeImplicitArgs, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, pDevice->getHardwareInfo()));
 
         EXPECT_EQ(size, pCmdQ2->getIndirectHeap(NEO::IndirectHeapType::indirectObject, 0).getUsed());
         EXPECT_EQ(0u, kernel->getImplicitArgs()->getAlignedSize() % 64u);
@@ -300,7 +319,8 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+    auto program = createCopyBufferZebinProgram(context, pClDevice);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(program.get(), program->getKernelInfosForKernel("CopyBuffer"), retVal));
     auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -341,7 +361,8 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+    auto program = createCopyBufferZebinProgram(context, pClDevice);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(program.get(), program->getKernelInfosForKernel("CopyBuffer"), retVal));
     auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -471,7 +492,8 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::lowPriority).osContext;
     }
 
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+    auto program = createCopyBufferZebinProgram(context, pClDevice);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(program.get(), program->getKernelInfosForKernel("CopyBuffer"), retVal));
     auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -509,13 +531,14 @@ TEST_F(EnqueueKernelTest, givenLocalWorkSizeEqualZeroThenClEnqueueNDCountKernelI
     size_t workgroupCount[3] = {1, 1, 1};
     size_t localWorkSize[3] = {0, 1, 1};
     cl_int retVal = CL_SUCCESS;
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+    auto kernelWithInternals = createBufferArgsKernel(*context);
+    auto *pMultiDeviceKernel = kernelWithInternals->mockMultiDeviceKernel;
 
-    retVal = clEnqueueNDCountKernelINTEL(pCmdQ, pMultiDeviceKernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ, pMultiDeviceKernel, 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
 
-    pMultiDeviceKernel.get()->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
-    retVal = clEnqueueNDCountKernelINTEL(pCmdQ, pMultiDeviceKernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    pMultiDeviceKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ, pMultiDeviceKernel, 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
 }
 
@@ -533,7 +556,8 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::lowPriority).osContext;
     }
 
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+    auto program = createCopyBufferZebinProgram(context, pClDevice);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(program.get(), program->getKernelInfosForKernel("CopyBuffer"), retVal));
     auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -581,7 +605,8 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::lowPriority).osContext;
     }
 
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+    auto program = createCopyBufferZebinProgram(context, pClDevice);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(program.get(), program->getKernelInfosForKernel("CopyBuffer"), retVal));
     auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -700,8 +725,6 @@ HWTEST_F(EnqueueKernelTest, GivenGpuHangAndBlockingCallWhenEnqueingKernelThenOut
 }
 
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
-    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -720,7 +743,7 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
         EXPECT_NE(iohBefore, pIOH->getUsed());
     }
 
-    if (((pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindfulAndStateless) || pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesImages) && compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+    if ((pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindfulAndStateless) || pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesImages) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 }
@@ -1672,7 +1695,8 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreNotAndEventExistSetThenClEnqu
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+    auto program = createCopyBufferZebinProgram(context, pClDevice);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(program.get(), program->getKernelInfosForKernel("CopyBuffer"), retVal));
     auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1877,7 +1901,6 @@ HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocati
 
 struct PauseOnGpuTests : public EnqueueKernelTest {
     void SetUp() override {
-        UnitTestSetter::setupSemaphore64bCmdSupport(this->restore, defaultHwInfo->platform.eRenderCoreFamily);
         EnqueueKernelTest::SetUp();
 
         auto &csr = pDevice->getGpgpuCommandStreamReceiver();
@@ -1893,8 +1916,8 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
 
-        if ((static_cast<uint32_t>(requiredDebugPauseState) == semaphoreCmd->getSemaphoreDataDword()) &&
-            (debugPauseStateAddress == semaphoreCmd->getSemaphoreGraphicsAddress())) {
+        if ((static_cast<uint32_t>(requiredDebugPauseState) == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd)) &&
+            (debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd))) {
 
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
             EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());

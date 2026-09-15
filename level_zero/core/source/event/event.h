@@ -20,7 +20,6 @@
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <atomic>
-#include <bitset>
 #include <chrono>
 #include <limits>
 #include <memory>
@@ -28,10 +27,10 @@
 #include <utility>
 #include <vector>
 
-struct _ze_event_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_EVENT> {};
+struct _ze_event_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_event_handle_t>);
 
-struct _ze_event_pool_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_EVENT_POOL> {};
+struct _ze_event_pool_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_event_pool_handle_t>);
 
 namespace NEO {
@@ -71,6 +70,11 @@ struct IpcEventPoolData {
 #pragma pack()
 static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
+// Sole wire format for event-pool IPC: getIpcHandle always writes it, openEventPoolIpcHandle always
+// parses it (IpcEventPoolData above is documentation-only). reservedHandleData[32] is an opaque OS
+// fallback handle tried if the primary fd/NT import fails (mirrors IpcOpaqueMemoryData). Fields are
+// ordered largest-to-smallest so each lands naturally aligned under #pragma pack(1) - a misaligned
+// reference (e.g. gtest EXPECT_EQ binding processId) is UB and trips UBSan.
 #pragma pack(1)
 struct IpcOpaqueEventPoolData {
     union {
@@ -78,47 +82,48 @@ struct IpcOpaqueEventPoolData {
         uint64_t nt;
         uint64_t val; // Generic value
     } handle = {};
-    size_t numEvents = 0;
-    uint32_t rootDeviceIndex = 0;
-    uint32_t maxEventPackets = 0;
-    uint16_t numDevices = 0;
+    union {
+        int fd;
+        uint64_t nt;
+        uint64_t val; // Generic value
+    } opaqueHandle = {};
+    uint32_t numEvents = 0;
+    unsigned int processId = 0;
+    uint16_t rootDeviceIndex = 0;
+    uint8_t maxEventPackets = 0; // max is EventPacketsCount::maxKernelSplit (3)
+    uint8_t numDevices = 0;
     bool isDeviceEventPoolAllocation : 1 = false;
     bool isHostVisibleEventPoolAllocation : 1 = false;
     bool isImplicitScalingCapable : 1 = false;
     bool isEventPoolKernelMappedTsFlagSet : 1 = false;
     bool isEventPoolTsFlagSet : 1 = false;
     IpcHandleType type = IpcHandleType::maxHandle;
-    unsigned int processId = 0;
-    union {
-        int fd;
-        uint64_t nt;
-        uint64_t val; // Generic value
-    } opaqueHandle = {};
+    uint8_t reservedHandleData[32] = {0}; // opaque OS-specific fallback handle, mirrors IpcOpaqueMemoryData
 };
 #pragma pack()
 static_assert(sizeof(IpcOpaqueEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
-// 2way communication uses communicator allocation to obtain indirect handles, current counter value etc.
-// 1way communication must pass all informations as part of single IPC exchange
+// communicationAllocHandle (2-way) and oneWayAllocCounterHandle (1-way) are mutually exclusive, so
+// they are unioned to make room for reservedHandleData[32] - an opaque OS fallback handle tried if
+// the primary fd/NT import fails (mirrors IpcOpaqueMemoryData). Fields are largest-to-smallest for
+// natural alignment under #pragma pack(1) - see IpcOpaqueEventPoolData above.
 #pragma pack(1)
 struct IpcCounterBasedEventData {
-    uint64_t oneWayAllocCounterHandle = 0;
-    uint64_t communicationAllocHandle = 0;
+    union {
+        uint64_t oneWayAllocCounterHandle;
+        uint64_t communicationAllocHandle;
+    };
     uint64_t oneWayCounterValue = 0;
-    size_t allocOffset = 0;
-    uint32_t oneWayPartitionCount = 0;
-    uint32_t counterBasedFlags = 0;
-    uint32_t signalScopeFlags = 0;
-    uint32_t waitScopeFlags = 0;
-    unsigned int processId = 0;
+    uint32_t allocOffset = 0;
+    uint32_t processId = 0;
+    uint8_t oneWayPartitionCount = 0;     // max is device/tile partition count
+    uint8_t counterBasedFlags = 0;        // values are ZEX_COUNTER_BASED_EVENT_FLAG_* bits 0-6
+    uint8_t signalScopeFlags = 0;         // values are ZE_EVENT_SCOPE_FLAG_* bits 0-2
+    uint8_t waitScopeFlags = 0;           // values are ZE_EVENT_SCOPE_FLAG_* bits 0-2
+    uint8_t reservedHandleData[32] = {0}; // opaque OS-specific fallback handle, mirrors IpcOpaqueMemoryData
 };
 #pragma pack()
 static_assert(sizeof(IpcCounterBasedEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcCounterBasedEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
-
-namespace EventPacketsCount {
-inline constexpr uint32_t maxKernelSplit = 3;
-inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketConstants::preferredPacketCount;
-} // namespace EventPacketsCount
 
 struct ImportedCbAllocationsForIpc {
     NEO::GraphicsAllocation *deviceAlloc = nullptr;
@@ -133,7 +138,6 @@ struct EventDescriptor {
     const void *extensions = nullptr;
     size_t offsetInSharedAlloc = 0;
     uint32_t totalEventSize = 0;
-    uint32_t maxKernelCount = 0;
     uint32_t maxPacketsCount = 0;
     uint32_t counterBasedFlags = 0;
     uint32_t index = 0;
@@ -187,6 +191,7 @@ struct Event : _ze_event_handle_t {
     static ze_result_t counterBasedCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_event_counter_based_desc_t *desc, ze_event_handle_t *phEvent);
     static ze_result_t counterBasedGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address);
     static ze_result_t counterBasedGetIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue);
+    static ze_result_t counterBasedGetMaxValue(ze_device_handle_t hDevice, uint64_t *maxValue);
 
     static Event *fromHandle(ze_event_handle_t handle) { return static_cast<Event *>(handle); }
 
@@ -210,14 +215,12 @@ struct Event : _ze_event_handle_t {
 
     MOCKABLE_VIRTUAL uint64_t getGpuAddress(Device *device) const;
     virtual uint32_t getPacketsInUse() const = 0;
-    virtual uint32_t getPacketsUsedInLastKernel() = 0;
     virtual uint64_t getPacketAddress(Device *device) = 0;
     MOCKABLE_VIRTUAL void resetPackets(bool resetAllPackets);
-    virtual void resetKernelCountAndPacketUsedCount() = 0;
+    virtual void resetPacketsUsedCount() = 0;
     void *getHostAddress() const;
-    uint32_t getPoolIndex() const { return static_cast<uint32_t>(eventPoolOffset / totalEventSize); }
+    uint32_t getPoolIndex() const { return totalEventSize ? static_cast<uint32_t>(eventPoolOffset / totalEventSize) : 0; }
     virtual void setPacketsInUse(uint32_t value) = 0;
-    uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
     MOCKABLE_VIRTUAL void setGpuStartTimestamp();
     MOCKABLE_VIRTUAL void setGpuEndTimestamp();
     size_t getCompletionFieldOffset() const {
@@ -292,23 +295,6 @@ struct Event : _ze_event_handle_t {
         return this->csrForCacheFlush;
     }
 
-    void increaseKernelCount();
-    uint32_t getKernelCount() const {
-        return kernelCount;
-    }
-    void zeroKernelCount() {
-        kernelCount = 0;
-    }
-    void setKernelCount(uint32_t newKernelCount) {
-        kernelCount = newKernelCount;
-    }
-    bool getL3FlushForCurrentKernel() {
-        return l3FlushAppliedOnKernel.test(kernelCount - 1);
-    }
-    void setL3FlushForCurrentKernel() {
-        l3FlushAppliedOnKernel.set(kernelCount - 1);
-    }
-
     void resetCompletionStatus() {
         if (this->isCompleted.load() != HOST_CACHING_DISABLED_PERMANENT) {
             this->isCompleted.store(STATE_CLEARED);
@@ -327,12 +313,6 @@ struct Event : _ze_event_handle_t {
 
     uint32_t getMaxPacketsCount() const {
         return maxPacketCount;
-    }
-    void setMaxKernelCount(uint32_t value) {
-        maxKernelCount = value;
-    }
-    uint32_t getMaxKernelCount() const {
-        return maxKernelCount;
     }
     void setKernelForPrintf(std::weak_ptr<Kernel> inputKernelWeakPtr) {
         kernelWithPrintf = inputKernelWeakPtr;
@@ -392,11 +372,13 @@ struct Event : _ze_event_handle_t {
     bool isInterruptModeEnabled() const { return interruptMode; }
     void setSignalWithUserInterrupt(bool value) { signalWithUserInterrupt = value; }
     bool isSignalWithUserInterrupt() const { return signalWithUserInterrupt; }
+    void setLinuxUserFenceKmdWaitEnabled(bool value) { linuxUserFenceKmdWaitEnabled = value; }
+    bool isLinuxUserFenceKmdWaitEnabled() const { return linuxUserFenceKmdWaitEnabled; }
     void unsetInOrderExecInfo();
     uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
 
     uint32_t getPacketsToWait() const {
-        return this->signalAllEventPackets ? getMaxPacketsCount() : getPacketsInUse();
+        return getMaxPacketsCount();
     }
 
     void setExternalInterruptId(uint32_t interruptId) { externalInterruptId = interruptId; }
@@ -449,7 +431,24 @@ struct Event : _ze_event_handle_t {
         return externalEvent && (inOrderExecHelper.getPatchPreambleCounter() > 0);
     }
 
+    bool isCapturedGraphInternalEvent() const {
+        return (nullptr != getRecordedSignalFrom()) && isCounterBased() && (false == externalEvent);
+    }
+
     virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) = 0;
+
+    static bool isBeingUsedInActiveGraphRecording(const Event *event);
+
+    bool getIsSignalledAsGraphInternalEvent() const {
+        return isSignalledAsGraphInternalEvent;
+    }
+
+    void setIsSignalledAsGraphInternalEvent(bool signalledFromGraph) {
+        isSignalledAsGraphInternalEvent = signalledFromGraph &&
+                                          isCounterBasedExplicitlyEnabled() &&
+                                          !isExternalEvent() &&
+                                          !isAggregatedEvent(this);
+    }
 
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
@@ -479,7 +478,6 @@ struct Event : _ze_event_handle_t {
     uint64_t contextEndTS = 1;
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
-    std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
 
     size_t contextStartOffset = 0u;
     size_t contextEndOffset = 0u;
@@ -513,8 +511,6 @@ struct Event : _ze_event_handle_t {
     NEO::InOrderExecEventHelper inOrderExecHelper;
     CommandQueue *latestUsedCmdQueue = nullptr;
 
-    uint32_t maxKernelCount = 0;
-    uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
     uint32_t counterBasedFlags = 0;
@@ -530,16 +526,17 @@ struct Event : _ze_event_handle_t {
     std::atomic<State> isCompleted{STATE_INITIAL};
 
     bool isTimestampEvent = false;
-    bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
     bool kmdWaitMode = false;
     bool interruptMode = false;
     bool signalWithUserInterrupt = false;
+    bool linuxUserFenceKmdWaitEnabled = false;
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
     bool heapfullCbEventWithProfiling = false;
     bool externalEvent = false;
     bool isDualCopyOffloadEvent = false;
+    bool isSignalledAsGraphInternalEvent = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {
@@ -591,10 +588,6 @@ struct EventPool : _ze_event_pool_handle_t {
         return false;
     }
 
-    uint32_t getMaxKernelCount() const {
-        return maxKernelCount;
-    }
-
     ze_result_t initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
 
     void initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandle &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
@@ -631,13 +624,17 @@ struct EventPool : _ze_event_pool_handle_t {
     uint32_t eventAlignment = 0;
     uint32_t eventSize = 0;
     uint32_t eventPackets = 0;
-    uint32_t maxKernelCount = 0;
 
     uint32_t counterBasedFlags = 0;
 
     ze_event_pool_flags_t eventPoolFlags{};
 
     uint64_t exportedIpcHandle = 0;
+
+    // Opaque-handle import cache ref taken when this pool was imported; released in ~EventPool.
+    // Driver handle stored separately so open-failure paths (devices/context still empty) can release it.
+    uint64_t importedIpcCacheId = 0;
+    DriverHandle *importedIpcDriverHandle = nullptr;
 
     bool hasExportedIpcHandle = false;
     bool isDeviceEventPoolAllocation = false;

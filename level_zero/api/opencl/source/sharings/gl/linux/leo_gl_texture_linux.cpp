@@ -22,6 +22,7 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/leo_gmm_types_converter.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_texture.h"
 #include "level_zero/api/opencl/source/sharings/gl/linux/leo_gl_sharing_linux.h"

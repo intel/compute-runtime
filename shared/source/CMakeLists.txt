@@ -21,6 +21,9 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual MOCKABLE= DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} ${TESTED_CORE_FLAGS_DEFINITONS})
   else()
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
+    if(WIN32 AND NOT RELEASE_WITH_REGKEYS)
+      target_compile_definitions(${LIB_NAME} PUBLIC $<$<CONFIG:Release>:NEO_USE_CONSTEXPR_DEBUG_VARIABLES>)
+    endif()
   endif()
 
   list(APPEND LIB_FLAGS_DEFINITIONS ${SUPPORTED_CORE_FLAGS_DEFINITONS})
@@ -39,6 +42,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
                              ${IGC_OCL_ADAPTOR_DIR}
                              ${NEO__IGC_INCLUDE_DIR}
                              ${KHRONOS_HEADERS_DIR}
+                             ${KHRONOS_SPIRV_HEADERS_DIR}
                              ${VISA_INCLUDE_DIR}
                              ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/create_command_stream_receiver_${DRIVER_MODEL}
                              ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission/create_direct_submission_${DRIVER_MODEL}
@@ -63,11 +67,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
   # Enable SSE4/AVX2/AVX512 options for files that need them
   if(MSVC)
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/stream_copy_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/stream_copy_avx512.cpp PROPERTIES COMPILE_FLAGS /arch:AVX512)
   else()
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/stream_copy_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/stream_copy_avx512.cpp PROPERTIES COMPILE_FLAGS "-mavx512f -mavx2")
     if(COMPILER_SUPPORTS_AVX2)
       set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/${NEO_TARGET_PROCESSOR}/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
     endif()

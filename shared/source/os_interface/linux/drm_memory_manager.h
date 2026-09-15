@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_memory.h"
 
 #include <map>
@@ -49,6 +50,7 @@ class DrmMemoryManager : public MemoryManager {
     void handleFenceCompletion(GraphicsAllocation *allocation) override;
     GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override;
     GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
+    GraphicsAllocation *createHostAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, const std::vector<uint64_t> &physicalOffsets, bool reuseSharedAllocation) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
     void closeSharedHandle(GraphicsAllocation *gfxAllocation) override;
     void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override;
@@ -60,6 +62,7 @@ class DrmMemoryManager : public MemoryManager {
 
     uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
     uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override;
+    bool isDeferBackingMemoryPressureReached(uint32_t rootDeviceIndex, size_t allocationSize, int32_t thresholdPercent);
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
@@ -91,6 +94,8 @@ class DrmMemoryManager : public MemoryManager {
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override;
     void freeCpuAddress(AddressRange addressRange) override;
+    bool isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) override;
+    bool reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) override;
     MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
                                                                     DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation);
 
@@ -147,8 +152,11 @@ class DrmMemoryManager : public MemoryManager {
 
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
+    decltype(&SysCalls::mremapFixed) mremapFixedFunction = SysCalls::mremapFixed;
+    decltype(&SysCalls::mmapFixedNoReplace) mmapFixedNoReplaceFunction = SysCalls::mmapFixedNoReplace;
 
   protected:
+    bool restoreVirtualMemoryReservationPlaceholder(void *address, size_t size);
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle, uint32_t rootDeviceIndex);
     void eraseSharedBoHandleWrapper(int boHandle, uint32_t rootDeviceIndex);
@@ -162,6 +170,7 @@ class DrmMemoryManager : public MemoryManager {
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
+    void makeAllocationResidentInDefaultContext(GraphicsAllocation *allocation);
     void makeAllocationResidentIfNeeded(GraphicsAllocation *allocation);
 
     MOCKABLE_VIRTUAL bool getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes);
@@ -186,7 +195,7 @@ class DrmMemoryManager : public MemoryManager {
     bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override;
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override;
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override;
     GraphicsAllocation *createSharedUnifiedMemoryAllocation(const AllocationData &allocationData);
@@ -195,6 +204,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL void *lockBufferObject(BufferObject *bo);
     MOCKABLE_VIRTUAL void unlockBufferObject(BufferObject *bo);
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
+    DrmAllocation *allocateKmdMappedIsaIn32BitHeap(const AllocationData &allocationData, HeapIndex heapIndex);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     bool createDrmChunkedAllocation(Drm *drm, DrmAllocation *allocation, uint64_t boAddress, size_t boSize, size_t maxOsContextCount);
@@ -211,7 +221,8 @@ class DrmMemoryManager : public MemoryManager {
     void releaseBufferObject(uint32_t rootDeviceIndex);
     BufferObject::BOType getBOTypeFromPatIndex(uint64_t patIndex, bool isPatIndexSupported) const;
     void setLocalMemBanksCount(uint32_t rootDeviceIndex);
-    bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const override;
+    MOCKABLE_VIRTUAL void cacheMaxLocalMemorySize(uint32_t rootDeviceIndex);
+    bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const override;
 
     template <typename Func>
     bool processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, Func funcToProcess);
@@ -230,6 +241,7 @@ class DrmMemoryManager : public MemoryManager {
     std::map<std::pair<int, uint32_t>, BufferObjectHandleWrapper, BoHandleDeviceIndexPairComparer> sharedBoHandles;
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
     std::vector<size_t> localMemBanksCount;
+    std::unique_ptr<uint64_t[]> cachedMaxLocalMemory;
     std::vector<GraphicsAllocation *> sysMemAllocs;
     std::mutex allocMutex;
 };

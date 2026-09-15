@@ -46,6 +46,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     std::unique_ptr<MutableCommandList> createMutableCmdList();
     Event *createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag);
     void *allocateUsm(size_t size);
+    void *allocateDeviceUsm(size_t size);
     NEO::GraphicsAllocation *getUsmAllocation(void *usm);
     void resizeKernelArg(uint32_t resize);
     void prepareKernelArg(uint16_t argIndex, L0::MCL::VariableType varType, uint32_t kernelMask);
@@ -77,12 +78,58 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     template <typename FamilyType>
     void waitCbEventBelongToDifferentMutateToDifferent();
 
+    struct MutableWaitEventsOnAppendOperationsData {
+        CommandToPatchContainer *outWaitCmds = nullptr;
+
+        ze_event_handle_t signalEvent = nullptr;
+        ze_event_handle_t *waitEvents = nullptr;
+
+        ze_image_handle_t srcImageHandle = nullptr;
+        ze_image_handle_t dstImageHandle = nullptr;
+
+        uint32_t numWaitEvents = 0;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+
+        bool skipAddingWaitEventsToResidency = false;
+        bool cbEventAsWaitEvent = false;
+    };
+
+    using MutableEventOnAppendOperationCallback = void (MutableCommandListFixtureInit::*)(MutableWaitEventsOnAppendOperationsData *callbackData);
+
+    void mutableWaitEventsOnAppendBarrierCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendRangesBarrierCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+
+    void mutableWaitEventsOnAppendImageCopyFromMemoryCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyFromMemoryExtCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyToMemoryCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyToMemoryExtCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendImageCopyRegionCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryCopyCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryCopyRegionCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryCopyWithParametersCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryCopyFromContextCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryFillCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendMemoryFillWithParametersCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+
+    void mutableWaitEventsOnAppendWaitOnEventsCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendWriteGlobalTimestampCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendQueryKernelTimestampsCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+    void mutableWaitEventsOnAppendHostFunctionCallback(MutableWaitEventsOnAppendOperationsData *callbackData);
+
+    template <typename FamilyType>
+    void mutableWaitEventsOnAppendOperations(MutableEventOnAppendOperationCallback callback,
+                                             bool doNotSelectWaitEvents,
+                                             bool createCbEvent,
+                                             bool doNotGetNextCommandId);
+
     ze_mutable_command_id_exp_desc_t mutableCommandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
     ze_mutable_commands_exp_desc_t mutableCommandsDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
 
     CmdListKernelLaunchParams testLaunchParams = {};
 
     std::vector<void *> usmAllocations;
+    std::vector<void *> deviceUsmAllocations;
     std::vector<ze_event_handle_t> eventHandles;
     std::vector<Event *> events;
     std::vector<void *> externalStorages;
@@ -121,6 +168,10 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     uint16_t nextArgOffset = defaultNextArgOffset;
 
     bool createInOrder;
+    bool l3FlushAfterPostSyncEnabled = false;
+    bool qwordInUse = false;
+    bool sem64bSupport = false;
+    bool lriRequired = false;
 };
 
 template <bool createInOrderT, int32_t useSemaphore64>
@@ -128,6 +179,10 @@ struct MutableCommandListFixture : public MutableCommandListFixtureInit {
     void setUp() {
         MutableCommandListFixtureInit::setUp(createInOrderT, useSemaphore64);
     }
+};
+
+struct MutableCommandListSWTagsFixture : public MutableCommandListFixture<false, -1> {
+    void setUp();
 };
 
 struct WhiteBoxMutableResidencyAllocations : public ::L0::MCL::MutableResidencyAllocations {

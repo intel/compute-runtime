@@ -26,7 +26,7 @@ namespace L0 {
 namespace ult {
 
 using CommandListAppendSignalEvent = Test<CommandListFixture>;
-using CommandListAppendUsedPacketSignalEvent = Test<CommandListEventUsedPacketSignalFixture>;
+using CommandListAppendUsedPacketSignalEvent = Test<CommandListSecondaryBatchBufferFixture>;
 
 HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenMiStoreImmIsGenerated) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -157,7 +157,15 @@ HWTEST_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTime
 
     commandContainer.clearResidencyContainer();
 
-    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr, waitEventsParameters);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -424,7 +432,6 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using StallingBarrierType = typename FamilyType::StallingBarrierType;
 
@@ -493,12 +500,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorBbStart);
 
-    GenCmdList::iterator itorResolveCmd = itorBbStart;
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, neoDevice->getRootDeviceEnvironment())) {
-        itorResolveCmd = find<StallingBarrierType *>(cmdList.begin(), itorBbStart);
-    } else {
-        itorResolveCmd = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), itorBbStart);
-    }
+    auto itorResolveCmd = find<StallingBarrierType *>(cmdList.begin(), itorBbStart);
     ASSERT_NE(itorBbStart, itorResolveCmd);
 }
 
@@ -562,6 +564,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
+    event->maxPacketCount = packets;
     ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
@@ -607,6 +610,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
     event->setEventTimestampFlag(true);
 
     commandList->partitionCount = 2;
+    event->maxPacketCount = 2;
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle(), false));
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
@@ -698,6 +702,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = 0;
 
     commandList->partitionCount = packets;
+    event->maxPacketCount = packets;
     ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
@@ -755,6 +760,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
+    event->maxPacketCount = packets;
     commandList->appendSignalEventPostWalker(event.get(), nullptr, nullptr, false, false, false);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
@@ -818,6 +824,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
+    event->maxPacketCount = packets;
     commandList->checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     commandList->appendSignalEventPostWalker(event.get(), nullptr, nullptr, false, false, false);
     EXPECT_EQ(packets, event->getPacketsInUse());
@@ -871,8 +878,17 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     event->setEventTimestampFlag(true);
     commandList->partitionCount = packets;
+    event->maxPacketCount = packets;
 
-    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr, waitEventsParameters);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
     auto residencyContainer = commandContainer.getResidencyContainer();

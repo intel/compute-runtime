@@ -13,8 +13,11 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 #include "gtest/gtest.h"
+
+#include <cstring>
 
 namespace L0 {
 namespace Sysman {
@@ -195,6 +198,43 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesSysman
         EXPECT_EQ(state.size, 0u);
         EXPECT_EQ(state.free, 0u);
         errno = 0;
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionWhenCallingZesMemoryGetPropertiesAndVendorIdIsNotSupportedThenZeroVendorIdAndSuccessIsReturned, IsNotCRI) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_properties_t properties = {};
+        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
+        vendorIdProperties.vendorId = 0xADu;
+        vendorIdProperties.length = 0xBEEFu;
+        std::strncpy(vendorIdProperties.vendorName, "unexpected", ZES_MEMORY_VENDOR_NAME_EXT_SIZE);
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(properties.pNext, &vendorIdProperties);
+        EXPECT_EQ(vendorIdProperties.vendorId, 0u);
+        EXPECT_EQ(vendorIdProperties.length, 0u);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "");
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenUnsupportedExtensionStypeWhenCallingZesMemoryGetPropertiesThenExtensionIsIgnoredAndSuccessIsReturned) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_properties_t properties = {};
+        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_FORCE_UINT32};
+        vendorIdProperties.vendorId = 0xADu;
+        vendorIdProperties.length = 0xBEEFu;
+        std::strncpy(vendorIdProperties.vendorName, "untouched", ZES_MEMORY_VENDOR_NAME_EXT_SIZE);
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(vendorIdProperties.vendorId, 0xADu);
+        EXPECT_EQ(vendorIdProperties.length, 0xBEEFu);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "untouched");
     }
 }
 

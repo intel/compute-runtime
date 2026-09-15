@@ -13,6 +13,7 @@
 namespace L0 {
 namespace Sysman {
 
+class FsAccessInterface;
 class LinuxSysmanImp;
 class SysFsAccessInterface;
 class SysmanKmdInterface;
@@ -24,8 +25,9 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;
     ze_result_t getSensorTemperature(double *pTemperature) override;
     bool isTempModuleSupported() override;
+    void reInit() override;
     void setSensorType(zes_temp_sensors_t sensorType);
-    LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, uint32_t sensorIndex);
     LinuxTemperatureImp() = default;
     ~LinuxTemperatureImp() override = default;
 
@@ -34,22 +36,19 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
 
   private:
-    ze_result_t getGlobalMaxTemperature(double *pTemperature);
-    ze_result_t getGpuMaxTemperature(double *pTemperature);
-    ze_result_t getMemoryMaxTemperature(double *pTemperature);
-    ze_result_t getVoltageRegulatorMaxTemperature(double *pTemperature);
-    ze_result_t getGpuBoardMaxTemperature(double *pTemperature);
     ze_result_t getMaxTemperature(double &temperature);
     bool isIntelGraphicsHwmonDir(const std::string &name);
     void init();
     uint32_t subdeviceId = 0;
+    uint32_t sensorIndex = 0;
     ze_bool_t isSubdevice = 0;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
+    FsAccessInterface *pFsAccess = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
     std::string intelGraphicsHwmonDir = {};
-    std::string maxTemperatureFile = {};
-    bool maxTemperatureFileExists = false;
+    std::string temperatureEmergencyFile = {};
+    bool temperatureEmergencyFileExists = false;
 };
 
 } // namespace Sysman

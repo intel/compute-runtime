@@ -111,6 +111,35 @@ TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngi
     }
 }
 
+TEST_F(ZesVfFixturePrelim, GivenBdfChangedWhenCallingVfReInitThenStalePerfFdsAreClosedAndReopened) {
+    VariableBackup<uint32_t> closeCountBackup(&NEO::SysCalls::closeFuncCalled, 0u);
+
+    auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pVfImp->vfEngineDataInit());
+    EXPECT_EQ(0u, NEO::SysCalls::closeFuncCalled);
+
+    // reInit closes the stale perf FDs (2 per engine) and re-opens them.
+    pVfImp->reInit();
+    EXPECT_EQ(numberMockedEngines * 2u, NEO::SysCalls::closeFuncCalled);
+
+    // A second reInit closes the same number again, proving the first reInit re-opened them.
+    pVfImp->reInit();
+    EXPECT_EQ(numberMockedEngines * 2u * 2u, NEO::SysCalls::closeFuncCalled);
+}
+
+TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngineUtilizationExp2AndEngineInfoIsEmptyThenUnsupportedFeatureIsReturned) {
+
+    pDrm->mockEmptyEngineInfo = true;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto handleVf : handles) {
+        ASSERT_NE(nullptr, handleVf);
+        uint32_t count = 0;
+        auto result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, nullptr);
+        EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    }
+}
+
 TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngineUtilizationExp2WithEngineStatsCountThenCorrectEngineStatsCountIsReturned) {
 
     auto handles = getEnabledVfHandles(mockHandleCount);
@@ -177,7 +206,7 @@ TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenQueryingEngineUtilizationMultip
     }
 }
 
-TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenPmuInterfaceOpenFailsForBusyTicksConfigThenErrorIsReturned) {
+TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenPmuConfigDiscoveryFailsThenNotAvailableIsReturned) {
 
     pFsAccess->mockReadFail = true;
     auto handles = getEnabledVfHandles(mockHandleCount);
@@ -185,9 +214,9 @@ TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenPmuInterfaceOpenFailsForBusyTic
         ASSERT_NE(nullptr, handleVf);
         uint32_t count = 0;
         auto result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, nullptr);
-        EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
         result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, nullptr);
-        EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
     }
 }
 
@@ -200,9 +229,24 @@ TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenPmuInterfaceOpenFailsForTotalTi
         ASSERT_NE(nullptr, handleVf);
         uint32_t count = 0;
         auto result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, nullptr);
-        EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
         result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, nullptr);
-        EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
+TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenPmuInterfaceOpenFailsWithPermissionErrorThenInsufficientPermissionsIsReturned) {
+
+    pPmuInterface->mockPerfEventOpenReadFail = true;
+    pPmuInterface->mockErrorNumber = EACCES;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto handleVf : handles) {
+        ASSERT_NE(nullptr, handleVf);
+        uint32_t count = 0;
+        auto result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, nullptr);
+        EXPECT_EQ(result, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+        result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, nullptr);
+        EXPECT_EQ(result, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
     }
 }
 

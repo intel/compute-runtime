@@ -119,16 +119,10 @@ const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
                 auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
                 auto &productHelper = device.getProductHelper();
 
-                if (context->getDeviceBitfield().count() == 1) {
-                    copySuccess = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
-                                                                                   device, sipAllocation, 0, binary.get(),
-                                                                                   bindlessSip.getBinary().size());
-                } else {
-                    DeviceBitfield copyBitfield{};
-                    copyBitfield.set(deviceIndex);
-                    copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
-                                                                                        device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
-                }
+                DeviceBitfield copyBitfield{};
+                copyBitfield.set(deviceIndex);
+                copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
+                                                                                    device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
                 DEBUG_BREAK_IF(!copySuccess);
             }
         }

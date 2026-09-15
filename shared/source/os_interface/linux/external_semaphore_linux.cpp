@@ -19,15 +19,16 @@
 
 namespace NEO {
 
-std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name) {
+std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd, const char *name, ImportResult &importResult) {
     if (!osInterface) {
+        importResult = ImportResult::unsupported;
         return nullptr;
     }
 
     auto externalSemaphore = ExternalSemaphoreLinux::create(osInterface);
 
-    bool result = externalSemaphore->importSemaphore(nullptr, fd, 0, nullptr, type, false);
-    if (result == false) {
+    importResult = externalSemaphore->importSemaphore(nullptr, fd, 0, nullptr, type, false);
+    if (importResult != ImportResult::success) {
         return nullptr;
     }
 
@@ -42,14 +43,14 @@ std::unique_ptr<ExternalSemaphoreLinux> ExternalSemaphoreLinux::create(OSInterfa
     return externalSemaphoreLinux;
 }
 
-bool ExternalSemaphoreLinux::importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) {
+ExternalSemaphore::ImportResult ExternalSemaphoreLinux::importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) {
     switch (type) {
     case ExternalSemaphore::OpaqueFd:
     case ExternalSemaphore::TimelineSemaphoreFd:
         break;
     default:
         DEBUG_BREAK_IF(true);
-        return false;
+        return ImportResult::unsupported;
     }
 
     auto drm = this->osInterface->getDriverModel()->as<Drm>();
@@ -65,13 +66,13 @@ bool ExternalSemaphoreLinux::importSemaphore(void *extHandle, int fd, uint32_t f
         SysCalls::close(fd);
     }
     if (ret != 0) {
-        return false;
+        return ImportResult::invalidResource;
     }
 
     this->syncHandle = args.handle;
     this->type = type;
 
-    return true;
+    return ImportResult::success;
 }
 
 bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {

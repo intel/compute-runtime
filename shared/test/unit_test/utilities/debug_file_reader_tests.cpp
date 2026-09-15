@@ -30,11 +30,6 @@ class TestSettingsFileReader : public SettingsFileReader {
 
     TestSettingsFileReader() : SettingsFileReader("") {}
 
-    bool hasSetting(const char *settingName) {
-        std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
-        return (it != settingStringMap.end());
-    }
-
     size_t getStringSettingsCount() {
         return settingStringMap.size();
     }
@@ -324,4 +319,63 @@ TEST(SettingsFileReader, givenPrefixFileReadCorrectValueReturned) {
     returnedStringValue = neoReader->getSetting("StringTestKey", retValueString, type);
     EXPECT_EQ(DebugVarPrefix::neo, type);
     EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
+}
+
+TEST(SettingsFileReader, givenKeyWrittenUnderSeveralPrefixesWhenGetSettingThenMostSpecificOneWins) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader.get());
+    {
+        std::istringstream fileContent("NEO_OCL_IntTestKey = 1\nNEO_IntTestKey = 2\nIntTestKey = 3\n");
+        reader->parseStream(fileContent);
+    }
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+
+    DebugVarPrefix type = DebugVarPrefix::none;
+    EXPECT_EQ(1, reader->getSetting("IntTestKey", 0, type));
+    EXPECT_EQ(DebugVarPrefix::neoOcl, type);
+}
+
+TEST(SettingsFileReader, givenKeyPresentUnderPrefixWhenHasSettingThenTrueAndMatchedPrefixAreReturned) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader.get());
+    {
+        std::istringstream fileContent("NEO_IntTestKey = 2\nStringTestKey = TestValue\n");
+        reader->parseStream(fileContent);
+    }
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+
+    DebugVarPrefix type = DebugVarPrefix::none;
+    EXPECT_TRUE(reader->hasSetting("IntTestKey", type));
+    EXPECT_EQ(DebugVarPrefix::neo, type);
+
+    EXPECT_TRUE(reader->hasSetting("StringTestKey", type));
+    EXPECT_EQ(DebugVarPrefix::none, type);
+}
+
+TEST(SettingsFileReader, givenKeyAbsentWhenHasSettingThenFalseIsReturned) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader.get());
+    {
+        std::istringstream fileContent("NEO_IntTestKey = 2\n");
+        reader->parseStream(fileContent);
+    }
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+
+    DebugVarPrefix type = DebugVarPrefix::neo;
+    EXPECT_FALSE(reader->hasSetting("MissingTestKey", type));
+    EXPECT_EQ(DebugVarPrefix::none, type);
+}
+
+TEST(SettingsFileReader, givenL0PrefixWhenOclApiIsActiveThenKeyIsNotFound) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader.get());
+    {
+        std::istringstream fileContent("NEO_L0_IntTestKey = 2\n");
+        reader->parseStream(fileContent);
+    }
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+
+    DebugVarPrefix type = DebugVarPrefix::none;
+    EXPECT_FALSE(reader->hasSetting("IntTestKey", type));
+    EXPECT_EQ(7, reader->getSetting("IntTestKey", 7, type));
 }

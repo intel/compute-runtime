@@ -9,7 +9,7 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
-struct _ze_image_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_IMAGE> {};
+struct _ze_image_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_image_handle_t>);
 
 namespace NEO {
@@ -49,6 +49,8 @@ struct Image : _ze_image_handle_t {
     virtual ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) = 0;
     virtual ze_result_t allocateBindlessSlot() = 0;
     virtual NEO::SurfaceStateInHeapInfo *getBindlessSlot() = 0;
+    virtual ze_result_t allocateBindlessSlotWithMipmap(uint32_t mipLevel) = 0;
+    virtual NEO::SurfaceStateInHeapInfo *getBindlessSlotWithMipmap(uint32_t mipLevel) = 0;
     virtual ze_result_t getDeviceOffset(uint64_t *deviceOffset) = 0;
     virtual bool isMimickedImage() = 0;
     virtual bool hasCustomPitch() const = 0;

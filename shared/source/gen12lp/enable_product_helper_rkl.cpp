@@ -1,13 +1,10 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gen12lp/hw_cmds_rkl.h"
-#include "shared/source/gen12lp/hw_info_rkl.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 
 namespace NEO {

@@ -557,6 +557,40 @@ TEST_F(SysmanRasNetlinkFixture, GivenRasErrorListAlreadyPopulatedWhenCallingGetS
     EXPECT_EQ(MockRasNetlinkUtil::rasErrorList.at(1).at(0).errorName, "core-compute");
 }
 
+TEST_F(SysmanRasNetlinkFixture, GivenUncorrectableNetlinkRasUtilWhenCallingRasSetConfigExpThenUnsupportedFeatureIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_UNCORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {{1, "core-compute", 10, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_ras_config_exp_t config = {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 500};
+    auto result = rasNetlinkUtil->rasSetConfigExp(1, &config);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenUncorrectableNetlinkRasUtilWhenCallingRasGetConfigExpThenSuccessAndThresholdOfOneIsReturned) {
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_UNCORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {
+        {1, "core-compute", 10, 0}, {2, "device-memory", 20, 0}};
+    auto pDrmNlApi = std::make_unique<MockDrmNlApi>("testCard");
+    pDrmNlApi->mockThresholdResponse.threshold = 999u;
+    auto drmNlApiOriginal = std::move(rasNetlinkUtil->drmNl);
+    rasNetlinkUtil->drmNl = std::move(pDrmNlApi);
+
+    zes_ras_config_exp_t configs[2] = {
+        {.category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, .threshold = 0},
+        {.category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS, .threshold = 0}};
+    auto result = rasNetlinkUtil->rasGetConfigExp(2, configs);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(configs[0].threshold, 1u);
+    EXPECT_EQ(configs[1].threshold, 1u);
+
+    rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

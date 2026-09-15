@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/surface_format_info.h"
@@ -2878,6 +2879,33 @@ TEST_F(DrmMemoryManagerMemsetAllocationPrelimTest, givenDrmMemoryManagerWhenMems
 
 typedef Test<DrmMemoryManagerFixturePrelim> DrmMemoryManagerTestPrelim;
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestPrelim, givenUncacheableFlagWhenCreatingAllocationFromMultipleSharedHandlesThenGmmUsageTypeIsUncached) {
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 2;
+
+    std::vector<NEO::osHandle> handles{6, 7};
+    size_t size = 65536u * 2;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::buffer, false, device->getDeviceBitfield());
+    properties.flags.uncacheable = true;
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true, nullptr);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    auto expectedUsageType = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, true, productHelper, gmmHelper->getHardwareInfo());
+
+    for (uint32_t i = 0; i < handles.size(); i++) {
+        auto gmm = graphicsAllocation->getGmm(i);
+        ASSERT_NE(nullptr, gmm);
+        EXPECT_EQ(expectedUsageType, gmm->getResourceUsageType());
+        EXPECT_TRUE(CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType()));
+    }
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTestPrelim, whenSettingNumHandlesThenTheyAreRetrievedCorrectly) {
     mock->ioctlExpected.primeFdToHandle = 2;
     mock->ioctlExpected.gemWait = 1;
@@ -3961,60 +3989,6 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAl
     EXPECT_EQ(allocationData.storageInfo.getNumBanks(), allocation->storageInfo.getNumBanks());
 
     memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerAndResidentNeededbeforeLockWhenCreateAllocWithAlignmentIsCalledThenverifyAllocationIsResident) {
-    auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
-
-    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
-    drm.ioctlHelper.reset(mockIoctlHelper);
-
-    auto memoryClassSystem = mockIoctlHelper->getDrmParamValue(DrmParam::memoryClassSystem);
-    auto memoryClassDevice = mockIoctlHelper->getDrmParamValue(DrmParam::memoryClassDevice);
-
-    std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {static_cast<uint16_t>(memoryClassSystem), 0};
-    regionInfo[1].region = {static_cast<uint16_t>(memoryClassDevice), DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
-
-    mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo, *mock));
-    mock->engineInfoQueried = false;
-    mock->queryEngineInfo();
-
-    memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
-                                     int flags, int fd, off_t offset) throw() {
-        if (addr == 0) {
-            return reinterpret_cast<void *>(0x10000000);
-        } else {
-            return addr;
-        }
-    };
-
-    memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
-        return 0;
-    };
-
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), 0));
-
-    AllocationData allocationData;
-    allocationData.size = MemoryConstants::pageSize64k;
-    allocationData.rootDeviceIndex = 0u;
-    allocationData.type = AllocationType::buffer;
-
-    auto allocation = memoryManager->createAllocWithAlignment(allocationData,
-                                                              MemoryConstants::pageSize,
-                                                              MemoryConstants::pageSize64k,
-                                                              MemoryConstants::pageSize64k,
-                                                              0u);
-    ASSERT_NE(nullptr, allocation);
-
-    auto osContext = device->getDefaultEngine().osContext;
-    EXPECT_TRUE(allocation->isAlwaysResident(osContext->getContextId()));
-
-    memoryManager->freeGraphicsMemory(allocation);
-
-    memoryManager->mmapFunction = SysCalls::mmap;
-    memoryManager->munmapFunction = SysCalls::munmap;
 }
 
 TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenConsumeFdTrueAndMappedPtrWhenCreateUSMHostAllocationFromSharedHandleThenFdIsClosedAndSharedHandleIsNonShared) {

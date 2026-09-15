@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/registry/built_ins_registry.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -32,10 +33,6 @@ BuiltIn::Resource BuiltIn::createResource(const char *ptr, size_t size, bool per
 
 BuiltIn::Resource BuiltIn::createResource(const BuiltIn::Resource &r) {
     return BuiltIn::Resource(r);
-}
-
-std::string BuiltIn::createResourceName(BuiltIn::BaseKernel kernel, const std::string &extension) {
-    return std::string(BuiltIn::getAsString(kernel)) + extension;
 }
 
 StackVec<std::string, 3> BuiltIn::getResourceNames(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType type, const Device &device) {
@@ -111,23 +108,13 @@ BuiltIn::Resource BuiltIn::FileStorage::loadImpl(const std::string &fullResource
     return ret;
 }
 
-const BuiltIn::Resource *BuiltIn::EmbeddedStorageRegistry::get(const std::string &name) const {
-    auto it = resources.find(name);
-    if (resources.end() == it) {
-        return nullptr;
-    }
-
-    return &it->second;
-}
-
 BuiltIn::Resource BuiltIn::EmbeddedStorage::loadImpl(const std::string &fullResourceName) {
-    auto *constResource = BuiltIn::EmbeddedStorageRegistry::getInstance().get(fullResourceName);
-    if (constResource == nullptr) {
-        BuiltIn::Resource ret;
-        return ret;
+    auto *embeddedResource = RegisterEmbeddedResource::find(fullResourceName);
+    if (embeddedResource == nullptr) {
+        return BuiltIn::Resource{};
     }
 
-    return BuiltIn::createResource(*constResource);
+    return BuiltIn::createResource(embeddedResource->resource, embeddedResource->resourceLength, true);
 }
 
 BuiltIn::ResourceLoader::ResourceLoader() {
@@ -143,7 +130,7 @@ BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::BaseKernel kernel
 
     if (requestedCodeType == BuiltIn::CodeType::any) {
         uint32_t codeType = static_cast<uint32_t>(BuiltIn::CodeType::binary);
-        bool requiresRebuild = !device.getExecutionEnvironment()->isOneApiPvcWaEnv();
+        bool requiresRebuild = !debugManager.flags.EnvOneapiPvcSendWarWa.get();
         if (requiresRebuild || debugManager.flags.RebuildPrecompiledKernels.get()) {
             codeType = static_cast<uint32_t>(BuiltIn::CodeType::source);
         }

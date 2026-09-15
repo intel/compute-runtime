@@ -29,12 +29,6 @@ TEST(OSContext, whenCreatingDefaultOsContextThenExpectInitializedAlways) {
     delete osContext;
 }
 
-TEST(OSContext, givenBaseOsContextWhenAsOsContextLinuxIsCalledThenNullptrIsReturned) {
-    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
-    EXPECT_EQ(nullptr, osContext->asOsContextLinux());
-    delete osContext;
-}
-
 TEST(OSContext, givenInternalAndRootDeviceAreTrueWhenCreatingDefaultOsContextThenExpectGettersTrue) {
     auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::internal});
     descriptor.isRootDevice = true;

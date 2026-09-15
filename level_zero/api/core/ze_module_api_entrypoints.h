@@ -171,6 +171,16 @@ ze_result_t ZE_APICALL zeKernelGetAllocationPropertiesExp(
     uint32_t *pCount,
     ze_kernel_allocation_exp_properties_t *pAllocationProperties);
 
+ze_result_t ZE_APICALL
+zeModuleGetDeviceHandle(
+    ze_module_handle_t hModule,
+    ze_device_handle_t *phDevice);
+
+ze_result_t ZE_APICALL
+zeKernelGetModuleHandle(
+    ze_kernel_handle_t hKernel,
+    ze_module_handle_t *phModule);
+
 } // namespace L0
 
 extern "C" {
@@ -329,5 +339,15 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelGetAllocationPropertiesExp(
     ze_kernel_handle_t hKernel,
     uint32_t *pCount,
     ze_kernel_allocation_exp_properties_t *pAllocationProperties);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeModuleGetDeviceHandle(
+    ze_module_handle_t hModule,
+    ze_device_handle_t *phDevice);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetModuleHandle(
+    ze_kernel_handle_t hKernel,
+    ze_module_handle_t *phModule);
 
 } // extern "C"

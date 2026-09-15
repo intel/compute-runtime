@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/frequency/linux/os_frequency_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
@@ -26,7 +27,7 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &p
     // If can't figure out the valid range, then can't control it.
     if (ZE_RESULT_SUCCESS != result1 || ZE_RESULT_SUCCESS != result2) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <getMinVal returned: 0x%x, getMaxVal returned: 0x%x> <setting min = 0.0, max = 0.0>\n", __func__, result1, result2);
+                     "error@<%s> <getMinVal returned: 0x%x, getMaxVal returned: 0x%x> <setting min = 0.0, max = 0.0>\n", NEO_FUNCTION_NAME, result1, result2);
         properties.canControl = false;
         properties.min = 0.0;
         properties.max = 0.0;
@@ -45,14 +46,14 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetRange(zes_freq_range_t *pLimits) {
     ze_result_t result = getMax(pLimits->max);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <getMax returned 0x%x setting max = -1>\n", __func__, result);
+                     "error@<%s> <getMax returned 0x%x setting max = -1>\n", NEO_FUNCTION_NAME, result);
         pLimits->max = -1;
     }
 
     result = getMin(pLimits->min);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <getMin returned 0x%x setting min = -1>\n", __func__, result);
+                     "error@<%s> <getMin returned 0x%x setting min = -1>\n", NEO_FUNCTION_NAME, result);
         pLimits->min = -1;
     }
     return ZE_RESULT_SUCCESS;
@@ -70,7 +71,7 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
             result = setMax(maxDefault);
             if (ZE_RESULT_SUCCESS != result) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "error@<%s> <setMax(maxDefault) returned 0x%x>\n", __func__, result);
+                             "error@<%s> <setMax(maxDefault) returned 0x%x>\n", NEO_FUNCTION_NAME, result);
                 return result;
             }
             return setMin(minDefault);
@@ -80,7 +81,7 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     ze_result_t result = getMax(currentMax);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <getMax returned 0x%x>\n", __func__, result);
+                     "error@<%s> <getMax returned 0x%x>\n", NEO_FUNCTION_NAME, result);
         return result;
     }
     if (newMin > currentMax) {
@@ -88,7 +89,7 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
         ze_result_t result = setMax(newMax);
         if (ZE_RESULT_SUCCESS != result) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "error@<%s> <setMax(newMax) returned 0x%x>\n", __func__, result);
+                         "error@<%s> <setMax(newMax) returned 0x%x>\n", NEO_FUNCTION_NAME, result);
             return result;
         }
         return setMin(newMin);
@@ -98,7 +99,7 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     result = setMin(newMin);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <setMin returned 0x%x>\n", __func__, result);
+                     "error@<%s> <setMin returned 0x%x>\n", NEO_FUNCTION_NAME, result);
         return result;
     }
     return setMax(newMax);
@@ -111,7 +112,7 @@ bool LinuxFrequencyImp::getThrottleReasonStatus(void) {
         return (val == 0 ? false : true);
     } else {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, throttleReasonStatusFile.c_str(), result);
         return false;
     }
 }
@@ -122,28 +123,28 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     result = getRequest(pState->request);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <getRequest returned 0x%x>\n", __func__, result);
+                     "error@<%s> <getRequest returned 0x%x>\n", NEO_FUNCTION_NAME, result);
         pState->request = -1;
     }
 
     result = getTdp(pState->tdp);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <getTdp returned 0x%x>\n", __func__, result);
+                     "error@<%s> <getTdp returned 0x%x>\n", NEO_FUNCTION_NAME, result);
         pState->tdp = -1;
     }
 
     result = getEfficient(pState->efficient);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <getEfficient returned 0x%x>\n", __func__, result);
+                     "error@<%s> <getEfficient returned 0x%x>\n", NEO_FUNCTION_NAME, result);
         pState->efficient = -1;
     }
 
     result = getActual(pState->actual);
     if (ZE_RESULT_SUCCESS != result) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <getActual returned 0x%x>\n", __func__, result);
+                     "error@<%s> <getActual returned 0x%x>\n", NEO_FUNCTION_NAME, result);
         pState->actual = -1;
     }
 
@@ -230,7 +231,7 @@ ze_result_t LinuxFrequencyImp::getMin(double &min) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, minFreqFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, minFreqFile.c_str(), result);
         return result;
     }
     min = intval;
@@ -244,7 +245,7 @@ ze_result_t LinuxFrequencyImp::setMin(double min) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to write file %s> <result: 0x%x>\n", __func__, minFreqFile.c_str(), result);
+                     "error@<%s> <failed to write file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, minFreqFile.c_str(), result);
         return result;
     }
     return ZE_RESULT_SUCCESS;
@@ -259,7 +260,7 @@ ze_result_t LinuxFrequencyImp::getMax(double &max) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, maxFreqFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, maxFreqFile.c_str(), result);
         return result;
     }
     max = intval;
@@ -273,7 +274,7 @@ ze_result_t LinuxFrequencyImp::setMax(double max) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to write file %s> <result: 0x%x>\n", __func__, maxFreqFile.c_str(), result);
+                     "error@<%s> <failed to write file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, maxFreqFile.c_str(), result);
         return result;
     }
     return pSysfsAccess->write(boostFreqFile, max);
@@ -288,7 +289,7 @@ ze_result_t LinuxFrequencyImp::getRequest(double &request) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, requestFreqFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, requestFreqFile.c_str(), result);
         return result;
     }
     request = intval;
@@ -304,7 +305,7 @@ ze_result_t LinuxFrequencyImp::getTdp(double &tdp) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, tdpFreqFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, tdpFreqFile.c_str(), result);
         return result;
     }
     tdp = intval;
@@ -320,7 +321,7 @@ ze_result_t LinuxFrequencyImp::getActual(double &actual) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, actualFreqFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, actualFreqFile.c_str(), result);
         return result;
     }
     actual = intval;
@@ -336,7 +337,7 @@ ze_result_t LinuxFrequencyImp::getEfficient(double &efficient) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, efficientFreqFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, efficientFreqFile.c_str(), result);
         return result;
     }
     efficient = intval;
@@ -352,7 +353,7 @@ ze_result_t LinuxFrequencyImp::getMaxVal(double &maxVal) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, maxValFreqFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, maxValFreqFile.c_str(), result);
         return result;
     }
     maxVal = intval;
@@ -368,7 +369,7 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, minValFreqFile.c_str(), result);
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, minValFreqFile.c_str(), result);
         return result;
     }
     minVal = intval;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,10 @@ SysmanDeviceImp *WddmSysmanImp::getSysmanDeviceImp() {
     return pParentSysmanDeviceImp;
 }
 
+uint32_t WddmSysmanImp::getRootDeviceIndex() const {
+    return pParentSysmanDeviceImp->getRootDeviceIndex();
+}
+
 const NEO::HardwareInfo &WddmSysmanImp::getHardwareInfo() const {
     return pParentSysmanDeviceImp->getHardwareInfo();
 }
@@ -131,6 +135,10 @@ void WddmSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
         std::string uuidString(reinterpret_cast<char const *>(uuid), ZES_MAX_UUID_SIZE);
         deviceUuids.push_back(std::move(uuidString));
     }
+}
+
+std::string WddmSysmanImp::getPciUuid() {
+    return "";
 }
 
 bool WddmSysmanImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {

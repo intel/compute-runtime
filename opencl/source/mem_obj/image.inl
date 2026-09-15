@@ -12,10 +12,11 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/image_helper.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/image/image_surface_state.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
@@ -28,14 +29,19 @@ namespace NEO {
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) {
-    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+
+    const bool usesReducedSurfaceState = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment) < sizeof(RENDER_SURFACE_STATE);
+    RENDER_SURFACE_STATE localSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    auto surfaceState = usesReducedSurfaceState ? &localSurfaceState : reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
 
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     auto gmm = graphicsAllocation->getDefaultGmm();
-    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
     auto imageDescriptor = Image::convertDescriptor(getImageDesc());
-    ImageInfo imgInfo;
+    ImageInfo imgInfo{};
     imgInfo.imgDesc = imageDescriptor;
     imgInfo.qPitch = qPitch;
     imgInfo.surfaceFormat = &getSurfaceFormatInfo().surfaceFormat;
@@ -109,6 +115,46 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     if (isPackedFormat) {
         NEO::EncodeSurfaceState<GfxFamily>::convertSurfaceStateToPacked(surfaceState, imgInfo);
     }
+
+    if (usesReducedSurfaceState) {
+        ImageSurfaceStateInputs inputs{};
+        inputs.imageInfo = &imgInfo;
+        inputs.gmm = gmm;
+        inputs.gmmHelper = gmmHelper;
+        inputs.surfaceOffsets = &surfaceOffsets;
+        inputs.gpuAddress = graphicsAllocation->getGpuAddress();
+        inputs.cubeFaceIndex = cubeFaceIndex;
+        inputs.useChannelSelects = true;
+        inputs.shaderChannelSelectRed = static_cast<uint32_t>(surfaceState->getShaderChannelSelectRed());
+        inputs.shaderChannelSelectGreen = static_cast<uint32_t>(surfaceState->getShaderChannelSelectGreen());
+        inputs.shaderChannelSelectBlue = static_cast<uint32_t>(surfaceState->getShaderChannelSelectBlue());
+        inputs.shaderChannelSelectAlpha = static_cast<uint32_t>(surfaceState->getShaderChannelSelectAlpha());
+        inputs.numberOfMultisamples = static_cast<uint32_t>(surfaceState->getNumberOfMultisamples());
+        inputs.compressionFormat = NEO::getSurfaceStateCompressionFormatIfSupported(*surfaceState);
+        inputs.isNV12Format = isNV12Image(&this->getImageFormat());
+        inputs.isDepthStencilResource = surfaceState->getDepthStencilResource();
+        inputs.multisampleControlSurfacePresent =
+            (inputs.numberOfMultisamples > 0u) && (surfaceState->getAuxiliarySurfaceBaseAddress() != 0u);
+        inputs.surfaceMinLOD = this->baseMipLevel + mipLevel;
+        inputs.mipCountLOD = mipCount;
+
+        if (isPackedFormat &&
+            static_cast<uint32_t>(surfaceState->getSurfaceFormat()) !=
+                static_cast<uint32_t>(imgInfo.surfaceFormat->genxSurfaceFormat)) {
+            inputs.packedFormatOverride = true;
+            inputs.packedSurfaceFormat = static_cast<uint32_t>(surfaceState->getSurfaceFormat());
+            inputs.packedWidth = surfaceState->getWidth();
+            inputs.packedTileBpp = NEO::getSurfaceStateOverrideTileBppIfSupported(*surfaceState);
+        }
+
+        // Protected-content images carry a decryption bit (LSB) in the caller-built state MOCS, set by
+        // the per-family surface-state extension. The reduced surface state encoder reconstructs MOCS from the
+        // resource and cannot re-derive that bit, so forward it explicitly.
+        inputs.encryptedData = (surfaceState->getMemoryObjectControlState() & 0x1u) != 0u;
+
+        gfxCoreHelper.encodeImageSurfaceState(memory, inputs);
+        gfxCoreHelper.applyImageSurfaceStateMipAndMediaBlock(memory, imgInfo, gmm, this->baseMipLevel + mipLevel, setAsMediaBlockImage, rootDeviceEnvironment);
+    }
 }
 
 template <typename GfxFamily>
@@ -119,8 +165,8 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
         auto mcsGmm = getMcsAllocation()->getDefaultGmm();
 
         if (EncodeSurfaceState<GfxFamily>::shouldProgramAuxForMcs(mcsGmm->unifiedAuxTranslationCapable(), mcsGmm->hasMultisampleControlSurface())) {
-            const auto &releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
-            EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
+            const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+            EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, hwInfo);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
             EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);

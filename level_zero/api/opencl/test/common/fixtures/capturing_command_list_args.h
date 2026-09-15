@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include <level_zero/ze_api.h>
 
@@ -27,6 +28,13 @@ inline EventHandles copyWaitEvents(uint32_t numWaitEvents, ze_event_handle_t *ph
         return {};
     }
     return {phWaitEvents, phWaitEvents + numWaitEvents};
+}
+
+inline std::vector<ze_command_list_handle_t> copyCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
+    if ((phCommandLists == nullptr) || (numCommandLists == 0u)) {
+        return {};
+    }
+    return {phCommandLists, phCommandLists + numCommandLists};
 }
 
 inline std::vector<uint8_t> copyPattern(const void *pattern, size_t patternSize) {
@@ -95,12 +103,51 @@ struct AppendMemoryFillArgs {
 struct AppendBarrierArgs {
     ze_event_handle_t signalEvent;
     EventHandles waitEvents;
-    bool relaxedOrderingDispatch;
+    L0::CmdListWaitEventParameters waitEventsParameters;
 
     AppendBarrierArgs(ze_event_handle_t signalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                      bool relaxedOrderingDispatch)
+                      L0::CmdListWaitEventParameters waitEventsParameters)
         : signalEvent(signalEvent), waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)),
-          relaxedOrderingDispatch(relaxedOrderingDispatch) {}
+          waitEventsParameters(waitEventsParameters) {}
+};
+
+struct AppendImageCopyFromMemoryExtArgs {
+    ze_image_handle_t dstImage;
+    const void *srcptr;
+    std::optional<ze_image_region_t> dstRegion;
+    uint32_t srcRowPitch;
+    uint32_t srcSlicePitch;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendImageCopyFromMemoryExtArgs(ze_image_handle_t dstImage, const void *srcptr, const ze_image_region_t *dstRegion,
+                                     uint32_t srcRowPitch, uint32_t srcSlicePitch, ze_event_handle_t signalEvent,
+                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : dstImage(dstImage), srcptr(srcptr), dstRegion(copyValue(dstRegion)), srcRowPitch(srcRowPitch),
+          srcSlicePitch(srcSlicePitch), signalEvent(signalEvent), waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+};
+
+struct AppendHostFunctionArgs {
+    ze_host_function_callback_t hostFunction;
+    void *userData;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendHostFunctionArgs(ze_host_function_callback_t hostFunction, void *userData, ze_event_handle_t signalEvent,
+                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : hostFunction(hostFunction), userData(userData), signalEvent(signalEvent),
+          waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+};
+
+struct AppendCommandListsArgs {
+    std::vector<ze_command_list_handle_t> commandLists;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendCommandListsArgs(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, ze_event_handle_t signalEvent,
+                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : commandLists(copyCommandLists(numCommandLists, phCommandLists)), signalEvent(signalEvent),
+          waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
 };
 
 struct HostSynchronizeArgs {

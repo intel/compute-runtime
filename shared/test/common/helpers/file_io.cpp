@@ -27,7 +27,7 @@ bool fileExists(const std::string &fileName) {
     DEBUG_BREAK_IF(fileName.empty());
     DEBUG_BREAK_IF(fileName == "");
 
-    if (NEO::virtualFileList.count(fileName) > 0) {
+    if (NEO::virtualFileList.contains(fileName)) {
         return true;
     }
 
@@ -74,7 +74,7 @@ void removeVirtualFile(const std::string &fileName) {
 }
 
 bool virtualFileExists(const std::string &fileName) {
-    if (NEO::virtualFileList.count(fileName) > 0) {
+    if (NEO::virtualFileList.contains(fileName)) {
         return true;
     }
     return false;

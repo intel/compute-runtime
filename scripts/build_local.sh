@@ -19,11 +19,12 @@
 # Note: this script is Ubuntu-specific.
 #
 # Usage:
-#   ./build_local.sh <tag> [install_prefix]
+#   ./build_local.sh <tag> [install_prefix] [build_type]
 #
 # Examples:
 #   ./build_local.sh 26.09.37435.1
 #   ./build_local.sh 26.09.37435.1 $HOME/my_prefix
+#   ./build_local.sh 26.09.37435.1 $HOME/my_prefix Debug
 #
 # The latest release tag can be found at:
 #   https://github.com/intel/compute-runtime/releases/latest
@@ -32,14 +33,29 @@
 # any command in a pipeline that fails (not just the last one).
 set -euo pipefail
 
-# Parse arguments: the release tag is required, the install prefix is optional.
+# Parse arguments: the release tag is required, the install prefix and build
+# type are optional.
 # PREFIX is the directory where GmmLib and IGC are installed (no sudo needed).
 # It is used as CMAKE_PREFIX_PATH and PKG_CONFIG_PATH during the build, and
 # must be readable at driver load time (LD_LIBRARY_PATH=${PREFIX}/lib).
 # Defaults to $HOME/local if not specified.
-TAG="${1:?Usage: $0 <tag> [install_prefix]}"
+# BUILD_TYPE (CMAKE_BUILD_TYPE) applies to every component built from source
+# (GmmLib and compute-runtime). Defaults to Release if not specified.
+TAG="${1:?Usage: $0 <tag> [install_prefix] [build_type]}"
 PREFIX="${2:-$HOME/local}"
+BUILD_TYPE="${3:-Release}"
 REPO_URL="https://github.com/intel/compute-runtime"
+
+# Validate the build type: only Release, Debug and RelWithDebInfo are
+# supported (these are CMake's own build type names).
+case "${BUILD_TYPE}" in
+    Release|Debug|RelWithDebInfo) ;;
+    *)
+        echo "ERROR: '${BUILD_TYPE}' is not a valid build type." >&2
+        echo "       Expected one of: Release, Debug, RelWithDebInfo" >&2
+        exit 1
+        ;;
+esac
 
 # Validate the tag format: must be four dot-separated integers (e.g. 26.18.38308.1).
 if ! echo "${TAG}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
@@ -62,14 +78,24 @@ NPROC="$(nproc)"
 
 echo "=== Building compute-runtime tag: ${TAG} ==="
 echo "=== Install prefix: ${PREFIX} ==="
+echo "=== Build type: ${BUILD_TYPE} ==="
 echo "=== Work directory: ${WORKDIR} ==="
 echo ""
 
-# On exit (success or failure), remind the user where temporary files are.
+# On exit, clean up the temporary work directory if the build succeeded
+# (BUILD_OK is set to 1 right before the script exits normally). On failure,
+# keep the work directory around so the user can inspect it / retry.
+BUILD_OK=0
 cleanup() {
-    echo ""
-    echo "=== Temporary files in: ${WORKDIR} ==="
-    echo "    Remove with: rm -rf ${WORKDIR}"
+    if [ "${BUILD_OK}" = "1" ]; then
+        rm -rf "${WORKDIR}"
+        echo ""
+        echo "=== Removed temporary work directory: ${WORKDIR} ==="
+    else
+        echo ""
+        echo "=== Build failed. Temporary files kept in: ${WORKDIR} ==="
+        echo "    Remove with: rm -rf ${WORKDIR}"
+    fi
 }
 trap cleanup EXIT
 
@@ -78,7 +104,7 @@ trap cleanup EXIT
 # --------------------------------------------------------------------------
 # Shallow clone (--depth 1) is sufficient since we only need the source at
 # this exact tag, not the full git history.
-echo "=== [1/6] Cloning compute-runtime at tag ${TAG} ==="
+echo "=== [1/7] Cloning compute-runtime at tag ${TAG} ==="
 SRCDIR="${WORKDIR}/compute-runtime"
 git clone --depth 1 -b "${TAG}" "${REPO_URL}.git" "${SRCDIR}"
 
@@ -92,7 +118,7 @@ git clone --depth 1 -b "${TAG}" "${REPO_URL}.git" "${SRCDIR}"
 #   - level_zero "revision": a git tag like "v1.28.2"
 # We try python3+PyYAML first (reliable), falling back to sed if unavailable.
 echo ""
-echo "=== [2/6] Reading dependency versions from manifest ==="
+echo "=== [2/7] Reading dependency versions from manifest ==="
 MANIFEST="${SRCDIR}/manifests/manifest.yml"
 
 if [ ! -f "${MANIFEST}" ]; then
@@ -166,7 +192,7 @@ fi
 # revision pinned in the manifest because the system-installed headers
 # may be too old and lack recently-added headers (e.g. zer_ddi.h).
 echo ""
-echo "=== [3/6] Cloning level-zero headers (${LEVEL_ZERO_REV}) ==="
+echo "=== [3/7] Cloning level-zero headers (${LEVEL_ZERO_REV}) ==="
 git clone --depth 1 -b "${LEVEL_ZERO_REV}" \
     https://github.com/oneapi-src/level-zero.git "${WORKDIR}/level_zero"
 echo "  level-zero headers cloned to ${WORKDIR}/level_zero"
@@ -180,17 +206,17 @@ echo "  level-zero headers cloned to ${WORKDIR}/level_zero"
 # prebuilt packages on GitHub, and install it into the local prefix.
 echo ""
 if [ "${NEED_LOCAL_GMMLIB}" = true ]; then
-echo "=== [4/6] Building GmmLib (${GMMLIB_REV}) ==="
+echo "=== [4/7] Building GmmLib (${GMMLIB_REV}) ==="
 cd "${WORKDIR}"
 git clone --depth 1 -b "${GMMLIB_REV}" https://github.com/intel/gmmlib.git
 cd gmmlib
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${PREFIX}" ..
+cmake -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DCMAKE_INSTALL_PREFIX="${PREFIX}" ..
 make -j"${NPROC}"
 make install
 echo "  GmmLib installed to ${PREFIX}"
 else
-echo "=== [4/6] Skipping GmmLib (system version is compatible) ==="
+echo "=== [4/7] Skipping GmmLib (system version is compatible) ==="
 fi
 
 # --------------------------------------------------------------------------
@@ -214,7 +240,7 @@ fi
 # into the local prefix.
 echo ""
 if [ "${NEED_LOCAL_IGC}" = true ]; then
-echo "=== [5/6] Installing IGC from prebuilt packages ==="
+echo "=== [5/7] Installing IGC from prebuilt packages ==="
 
 # Convert branch name to version prefix for matching against release tags.
 # e.g. "releases/2.30.x" -> "2.30" -> match tags starting with "v2.30."
@@ -298,7 +324,7 @@ fi
 
 echo "  IGC ${IGC_TAG} installed to ${PREFIX}"
 else
-echo "=== [5/6] Skipping IGC (system version ${SYSTEM_IGC_VER} is compatible) ==="
+echo "=== [5/7] Skipping IGC (system version ${SYSTEM_IGC_VER} is compatible) ==="
 IGC_TAG="system-${SYSTEM_IGC_VER}"
 fi
 
@@ -326,7 +352,7 @@ fi
 # If local deps were installed, we also set CMAKE_PREFIX_PATH and disable
 # built-in kernel compilation (COMPILE_BUILT_INS=OFF).
 echo ""
-echo "=== [6/6] Building compute-runtime ==="
+echo "=== [6/7] Building compute-runtime ==="
 cd "${SRCDIR}"
 mkdir -p build && cd build
 
@@ -339,11 +365,24 @@ else
 fi
 
 cmake \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     -DNEO_SKIP_UNIT_TESTS=1 \
     ${CMAKE_EXTRA_ARGS} \
     ..
 make -j"${NPROC}"
+
+# --------------------------------------------------------------------------
+# Step 7: Install built artifacts into the prefix directory
+# --------------------------------------------------------------------------
+# The build directory lives inside WORKDIR, which is a temporary directory
+# removed once the script exits successfully. Copy the built driver, ocloc,
+# and their supporting libraries into ${PREFIX}/bin so they survive after
+# the temporary work directory is cleaned up.
+echo ""
+echo "=== [7/7] Installing built artifacts to ${PREFIX}/bin ==="
+mkdir -p "${PREFIX}/bin"
+cp -a "${SRCDIR}/build/bin/." "${PREFIX}/bin/"
+BINDIR="${PREFIX}/bin"
 
 # --------------------------------------------------------------------------
 # Summary
@@ -360,12 +399,12 @@ echo "  Build complete!"
 echo "=========================================="
 echo ""
 echo "  Tag:        ${TAG}"
+echo "  Build type: ${BUILD_TYPE}"
 echo "  GmmLib:     ${GMMLIB_REV}"
 echo "  IGC:        ${IGC_TAG}"
 echo "  level-zero: ${LEVEL_ZERO_REV}"
 echo ""
 echo "  Built artifacts:"
-BINDIR="${SRCDIR}/build/bin"
 for lib in "${BINDIR}"/libze_intel_gpu.so* "${BINDIR}"/libigdrcl.so* "${BINDIR}"/ocloc-*; do
     if [ -e "${lib}" ] && [ ! -L "${lib}" ]; then
         echo "    ${lib}"
@@ -377,3 +416,7 @@ echo "    LD_LIBRARY_PATH=${BINDIR}:${PREFIX}/lib:\$LD_LIBRARY_PATH \\"
 echo "      OVERRIDEZEDRIVERSEARCH=${BINDIR} \\"
 echo "      sycl-ls"
 echo ""
+
+# Mark the build as successful so the EXIT trap removes the temporary
+# work directory instead of keeping it around for debugging.
+BUILD_OK=1

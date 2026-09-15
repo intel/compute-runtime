@@ -40,6 +40,7 @@ XE3P_CORETEST_F(Xe3pPreemptionTests, givenMidThreadPreemptionAndDebugEnabledWhen
     using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
 
     // Mid thread preemption is forced And debugger not enabled
+    device->overridePreemptionMode(PreemptionMode::MidThread);
     size_t cmdSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*device);
     EXPECT_EQ(sizeof(STATE_CONTEXT_DATA_BASE_ADDRESS), cmdSize);
 

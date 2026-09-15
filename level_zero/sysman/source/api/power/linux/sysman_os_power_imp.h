@@ -15,6 +15,7 @@
 namespace L0 {
 namespace Sysman {
 
+class FsAccessInterface;
 class SysFsAccessInterface;
 class SysmanKmdInterface;
 class SysmanProductHelper;
@@ -37,6 +38,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getPowerUsage(uint32_t *pInstantPower, uint32_t *pAveragePower) override;
 
     bool isPowerModuleSupported() override;
+    void reInit() override;
     bool isIntelGraphicsHwmonDir(const std::string &name);
     ze_result_t getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy);
     LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);
@@ -46,9 +48,10 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
+    FsAccessInterface *pFsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
-    bool isTelemetrySupportAvailable = false;
+    bool isPmtBasedPowerSupported = false;
 
   private:
     std::string intelGraphicsHwmonDir = {};

@@ -64,7 +64,7 @@ TEST_F(IOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
     ASSERT_NE(nullptr, alignedReadPtr);
 
-    auto userEvent = clCreateUserEvent(pContext, &retVal);
+    auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto previousTaskLevel = pCmdQ->taskLevel;
@@ -105,7 +105,7 @@ TEST_F(IOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
 
 TEST_F(IOQTaskTestsMt, GivenBlockedOnUserEventWhenEnqueingMarkerThenSuccessIsReturned) {
 
-    auto userEvent = clCreateUserEvent(pContext, &retVal);
+    auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     std::thread t([=]() {
@@ -131,9 +131,9 @@ TEST_F(IOQTaskTestsMt, GivenBlockedOnUserEventWhenEnqueingMarkerThenSuccessIsRet
 
 TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingBufferThenEventsAreCompleted) {
     MockGraphicsAllocation alignedBufferAlloc{nullptr, MemoryConstants::pageSize};
-    AlignedBuffer alignedBuffer{pContext, &alignedBufferAlloc};
+    AlignedBuffer alignedBuffer{pContext.get(), &alignedBufferAlloc};
 
-    auto userEvent = clCreateUserEvent(pContext, &retVal);
+    auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_event outputEvent = nullptr;
@@ -201,7 +201,7 @@ TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingBufferThenEventsAreComplet
 TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingImageThenEventsAreCompleted) {
     auto image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(context));
 
-    auto userEvent = clCreateUserEvent(pContext, &retVal);
+    auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_event outputEvent = nullptr;

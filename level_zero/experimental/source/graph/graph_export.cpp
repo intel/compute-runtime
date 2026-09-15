@@ -7,6 +7,7 @@
 
 #include "level_zero/experimental/source/graph/graph_export.h"
 
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -17,10 +18,13 @@
 #include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/ze_api.h"
 
+#include <algorithm>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <vector>
 
 namespace L0 {
 
@@ -45,6 +49,21 @@ ze_result_t GraphDotExporter::exportToFile(const Graph &graph, const char *fileP
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+std::string getGraphDumpDefaultFileName(const Graph &graph, const ExecutableGraph &executableGraph) {
+    auto processName = NEO::SysCalls::getProcessName();
+    if (processName.empty()) {
+        processName = "unknown";
+    }
+    return processName + "_" + std::to_string(NEO::SysCalls::getProcessId()) + "_" + std::to_string(graph.getId()) +
+           "_" + GraphDumpHelper::formatPointer(&graph) + "_" + GraphDumpHelper::formatPointer(&executableGraph) + ".dot";
+}
+
+void dumpGraphOnInstantiate(const Graph &graph, const ExecutableGraph &executableGraph) {
+    const auto fileName = getGraphDumpDefaultFileName(graph, executableGraph);
+    GraphDotExporter exporter{GraphExportStyle::detailed, GraphExportEventNodes::hideInternal};
+    exporter.exportToFile(graph, fileName.c_str());
 }
 
 std::string GraphDotExporter::exportToString(const Graph &graph) const {
@@ -79,8 +98,7 @@ void GraphDotExporter::writeNodes(std::ostringstream &dot, const Graph &graph, u
     const std::string indent(static_cast<size_t>(level + 1) * 2, ' ');
     dot << indent << "// Command nodes:\n";
 
-    const auto &commands = graph.getCapturedCommands();
-    for (CapturedCommandId cmdId = 0; cmdId < static_cast<uint32_t>(commands.size()); ++cmdId) {
+    for (const auto cmdId : collectVisibleCommands(graph)) {
         const std::string nodeId = generateNodeId(level, subgraphId, cmdId);
         const std::string label = getCommandNodeLabel(graph, cmdId, indent);
         const std::string attributes = getCommandNodeAttributes(graph, cmdId);
@@ -101,15 +119,15 @@ void GraphDotExporter::writeEdges(std::ostringstream &dot, const Graph &graph, u
 void GraphDotExporter::writeSequentialEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const {
     const std::string indent(static_cast<size_t>(level + 1) * 2, ' ');
 
-    const auto &commands = graph.getCapturedCommands();
+    const auto visibleCommands = collectVisibleCommands(graph);
 
-    if (commands.size() > 1) {
+    if (visibleCommands.size() > 1) {
         dot << indent << "// Sequential edges:\n";
     }
 
-    for (CapturedCommandId cmdId = 1; cmdId < static_cast<uint32_t>(commands.size()); ++cmdId) {
-        const std::string fromNode = generateNodeId(level, subgraphId, cmdId - 1);
-        const std::string toNode = generateNodeId(level, subgraphId, cmdId);
+    for (size_t i = 1; i < visibleCommands.size(); ++i) {
+        const std::string fromNode = generateNodeId(level, subgraphId, visibleCommands[i - 1]);
+        const std::string toNode = generateNodeId(level, subgraphId, visibleCommands[i]);
         dot << indent << fromNode << " -> " << toNode << ";\n";
     }
 }
@@ -125,16 +143,30 @@ void GraphDotExporter::writeForkJoinEdges(std::ostringstream &dot, const Graph &
             << indent << "// Fork/Join edges:\n";
     }
 
+    const auto visibleCommands = collectVisibleCommands(graph);
+
     for (const auto &[forkCmdId, forkJoinInfo] : potentialJoins) {
         const auto subgraphIndex = findSubgraphIndex(subGraphs, forkJoinInfo.forkDestiny);
-        if (subgraphIndex && !forkJoinInfo.forkDestiny->getCapturedCommands().empty()) {
-            const auto &subgraphCommands = forkJoinInfo.forkDestiny->getCapturedCommands();
-            const std::string forkNode = generateNodeId(level, subgraphId, forkJoinInfo.forkSignalCommandId);
-            const std::string subgraphFirstNode = generateNodeId(level + 1, *subgraphIndex, 0);
-            const std::string subgraphLastNode = generateNodeId(level + 1, *subgraphIndex, static_cast<uint32_t>(subgraphCommands.size()) - 1);
-            const std::string joinNode = generateNodeId(level, subgraphId, forkJoinInfo.joinWaitCommandId);
+        if (false == subgraphIndex.has_value()) {
+            continue;
+        }
 
+        const auto subgraphVisibleCommands = collectVisibleCommands(*forkJoinInfo.forkDestiny);
+        if (subgraphVisibleCommands.empty()) {
+            continue;
+        }
+
+        const auto forkCommandId = findVisibleCommandAtOrBefore(visibleCommands, forkJoinInfo.forkSignalCommandId);
+        if (forkCommandId) {
+            const std::string forkNode = generateNodeId(level, subgraphId, *forkCommandId);
+            const std::string subgraphFirstNode = generateNodeId(level + 1, *subgraphIndex, subgraphVisibleCommands.front());
             dot << indent << forkNode << " -> " << subgraphFirstNode << ";\n";
+        }
+
+        const auto joinCommandId = findVisibleCommandAtOrAfter(visibleCommands, forkJoinInfo.joinWaitCommandId);
+        if (joinCommandId) {
+            const std::string subgraphLastNode = generateNodeId(level + 1, *subgraphIndex, subgraphVisibleCommands.back());
+            const std::string joinNode = generateNodeId(level, subgraphId, *joinCommandId);
             dot << indent << subgraphLastNode << " -> " << joinNode << ";\n";
         }
     }
@@ -151,13 +183,23 @@ void GraphDotExporter::writeUnjoinedForkEdges(std::ostringstream &dot, const Gra
             << indent << "// Unjoined forks:\n";
     }
 
+    const auto visibleCommands = collectVisibleCommands(graph);
+
     for (const auto &[cmdList, forkInfo] : unjoinedForks) {
         const auto subgraphIndex = findSubgraphIndexByCommandList(subGraphs, cmdList);
-        if (subgraphIndex && !subGraphs[*subgraphIndex]->getCapturedCommands().empty()) {
-            const std::string forkNode = generateNodeId(level, subgraphId, forkInfo.forkSignalCommandId);
-            const std::string subgraphFirstNode = generateNodeId(level + 1, *subgraphIndex, 0);
-            dot << indent << forkNode << " -> " << subgraphFirstNode << " [color=red, label=\"unjoined fork\"];\n";
+        if (false == subgraphIndex.has_value()) {
+            continue;
         }
+
+        const auto subgraphVisibleCommands = collectVisibleCommands(*subGraphs[*subgraphIndex]);
+        const auto forkCommandId = findVisibleCommandAtOrBefore(visibleCommands, forkInfo.forkSignalCommandId);
+        if (subgraphVisibleCommands.empty() || (false == forkCommandId.has_value())) {
+            continue;
+        }
+
+        const std::string forkNode = generateNodeId(level, subgraphId, *forkCommandId);
+        const std::string subgraphFirstNode = generateNodeId(level + 1, *subgraphIndex, subgraphVisibleCommands.front());
+        dot << indent << forkNode << " -> " << subgraphFirstNode << " [color=red, label=\"unjoined fork\"];\n";
     }
 }
 
@@ -177,6 +219,159 @@ std::optional<uint32_t> GraphDotExporter::findSubgraphIndexByCommandList(std::sp
         }
     }
     return std::nullopt;
+}
+
+namespace {
+
+std::vector<ze_event_handle_t> getEventOnlyCommandEvents(const CapturedCommand &cmd, const ClosureExternalStorage &storage) {
+    std::vector<ze_event_handle_t> events;
+
+    auto addEvent = [&events](ze_event_handle_t event) {
+        if (nullptr != event) {
+            events.push_back(event);
+        }
+    };
+    auto addWaitEvents = [&events, &storage](const auto &closure, uint32_t numEvents) {
+        const auto *waitEvents = storage.getEventsList(closure.indirectArgs.waitEvents);
+        for (uint32_t i = 0; i < numEvents; ++i) {
+            if (nullptr != waitEvents[i]) {
+                events.push_back(waitEvents[i]);
+            }
+        }
+    };
+
+    switch (static_cast<CaptureApi>(cmd.index())) {
+    case CaptureApi::zeCommandListAppendSignalEvent: {
+        const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendSignalEvent)>(cmd);
+        addEvent(closure.apiArgs.hEvent);
+        break;
+    }
+    case CaptureApi::zeCommandListAppendSignalEventWithParameters: {
+        const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendSignalEventWithParameters)>(cmd);
+        addEvent(closure.apiArgs.hEvent);
+        break;
+    }
+    case CaptureApi::zeCommandListAppendWaitOnEvents: {
+        const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendWaitOnEvents)>(cmd);
+        addWaitEvents(closure, closure.apiArgs.numEvents);
+        break;
+    }
+    case CaptureApi::zeCommandListAppendWaitOnEventsWithParameters: {
+        const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendWaitOnEventsWithParameters)>(cmd);
+        addWaitEvents(closure, closure.apiArgs.numEvents);
+        break;
+    }
+    case CaptureApi::zeCommandListAppendBarrier: {
+        const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendBarrier)>(cmd);
+        addEvent(closure.apiArgs.hSignalEvent);
+        addWaitEvents(closure, closure.apiArgs.numWaitEvents);
+        break;
+    }
+    default:
+        break;
+    }
+
+    return events;
+}
+
+bool isUsedOnlyForInternalDependencyTracking(const CapturedCommand &cmd, const ClosureExternalStorage &storage,
+                                             std::span<const ze_event_handle_t> internalDependencyEvents) {
+    const auto commandEvents = getEventOnlyCommandEvents(cmd, storage);
+    if (commandEvents.empty()) {
+        return false;
+    }
+
+    return std::all_of(commandEvents.begin(), commandEvents.end(), [internalDependencyEvents](ze_event_handle_t event) {
+        return std::find(internalDependencyEvents.begin(), internalDependencyEvents.end(), event) != internalDependencyEvents.end();
+    });
+}
+
+} // namespace
+
+GraphDotExporter::InternalCommandsSet GraphDotExporter::collectInternalDependencyCommands(const Graph &graph) const {
+    InternalCommandsSet internalCommands;
+    if (GraphExportEventNodes::show == exportEventNodes) {
+        return internalCommands;
+    }
+
+    const auto &commands = graph.getCapturedCommands();
+    std::unordered_map<CapturedCommandId, std::vector<ze_event_handle_t>> internalDependencyEvents;
+    auto trackDependencyEvent = [&internalDependencyEvents, &commands](CapturedCommandId cmdId, ze_event_handle_t dependencyEvent) {
+        if (cmdId >= commands.size()) {
+            return;
+        }
+        if ((nullptr == dependencyEvent) || L0::Event::fromHandle(dependencyEvent)->isExternalEvent()) {
+            return;
+        }
+        internalDependencyEvents[cmdId].push_back(dependencyEvent);
+    };
+
+    for (const auto &[_, forkJoinInfo] : graph.getJoinedForks()) {
+        trackDependencyEvent(forkJoinInfo.forkSignalCommandId, forkJoinInfo.forkEvent);
+        trackDependencyEvent(forkJoinInfo.joinWaitCommandId, forkJoinInfo.joinEvent);
+    }
+    for (const auto &[_, forkInfo] : graph.getUnjoinedForks()) {
+        trackDependencyEvent(forkInfo.forkSignalCommandId, forkInfo.forkEvent);
+    }
+
+    // operations which link this subgraph with its parent are tracked by the parent
+    const auto *parentGraph = graph.getParentGraph();
+    if (nullptr != parentGraph) {
+        constexpr CapturedCommandId forkWaitCommandId = 0;
+        for (const auto &[_, forkJoinInfo] : parentGraph->getJoinedForks()) {
+            if (forkJoinInfo.forkDestiny != &graph) {
+                continue;
+            }
+            trackDependencyEvent(forkWaitCommandId, forkJoinInfo.forkEvent);
+            trackDependencyEvent(forkJoinInfo.joinSignalCommandId, forkJoinInfo.joinEvent);
+        }
+        for (const auto &[cmdList, forkInfo] : parentGraph->getUnjoinedForks()) {
+            if (cmdList != graph.getExecutionTarget()) {
+                continue;
+            }
+            trackDependencyEvent(forkWaitCommandId, forkInfo.forkEvent);
+        }
+    }
+
+    for (const auto &[cmdId, dependencyEvents] : internalDependencyEvents) {
+        if (isUsedOnlyForInternalDependencyTracking(commands[cmdId], graph.getExternalStorage(), dependencyEvents)) {
+            internalCommands.insert(cmdId);
+        }
+    }
+
+    return internalCommands;
+}
+
+std::vector<CapturedCommandId> GraphDotExporter::collectVisibleCommands(const Graph &graph) const {
+    const auto internalCommands = collectInternalDependencyCommands(graph);
+    const auto &commands = graph.getCapturedCommands();
+
+    std::vector<CapturedCommandId> visibleCommands;
+    visibleCommands.reserve(commands.size());
+    for (CapturedCommandId cmdId = 0; cmdId < static_cast<uint32_t>(commands.size()); ++cmdId) {
+        if (internalCommands.contains(cmdId)) {
+            continue;
+        }
+        visibleCommands.push_back(cmdId);
+    }
+
+    return visibleCommands;
+}
+
+std::optional<CapturedCommandId> GraphDotExporter::findVisibleCommandAtOrBefore(std::span<const CapturedCommandId> visibleCommands, CapturedCommandId cmdId) {
+    auto it = std::upper_bound(visibleCommands.begin(), visibleCommands.end(), cmdId);
+    if (it == visibleCommands.begin()) {
+        return std::nullopt;
+    }
+    return *(it - 1);
+}
+
+std::optional<CapturedCommandId> GraphDotExporter::findVisibleCommandAtOrAfter(std::span<const CapturedCommandId> visibleCommands, CapturedCommandId cmdId) {
+    auto it = std::lower_bound(visibleCommands.begin(), visibleCommands.end(), cmdId);
+    if (it == visibleCommands.end()) {
+        return std::nullopt;
+    }
+    return *it;
 }
 
 void GraphDotExporter::writeSubgraphs(std::ostringstream &dot, const Graph &graph, uint32_t level) const {
@@ -279,7 +474,9 @@ std::string GraphDotExporter::getCommandNodeAttributes(const Graph &graph, Captu
         return ", fillcolor=orange";
 
     case CaptureApi::zeCommandListAppendSignalEvent:
+    case CaptureApi::zeCommandListAppendSignalEventWithParameters:
     case CaptureApi::zeCommandListAppendWaitOnEvents:
+    case CaptureApi::zeCommandListAppendWaitOnEventsWithParameters:
     case CaptureApi::zeCommandListAppendEventReset:
         return ", fillcolor=yellow";
 
@@ -335,6 +532,9 @@ std::string GraphDotExporter::getSubgraphFillColor(uint32_t level) const {
 namespace GraphDumpHelper {
 
 std::string formatPointer(const void *ptr) {
+    if (ptr == nullptr) {
+        return std::string("nullptr");
+    }
     std::ostringstream addr;
     addr << "0x" << std::hex << std::uppercase << reinterpret_cast<uintptr_t>(ptr);
     return addr.str();
@@ -442,11 +642,6 @@ void addKernelInformation(std::vector<std::pair<std::string, std::string>> &para
 }
 
 void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext) {
-    if (pNext == nullptr) {
-        params.emplace_back("pNext", "nullptr");
-        return;
-    }
-
     params.emplace_back("pNext", formatPointer(pNext));
 
     const auto *baseDesc = reinterpret_cast<const ze_base_desc_t *>(pNext);
@@ -466,11 +661,6 @@ void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::
 }
 
 void addMemoryTransferExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext) {
-    if (pNext == nullptr) {
-        params.emplace_back("pNext", "nullptr");
-        return;
-    }
-
     params.emplace_back("pNext", formatPointer(pNext));
 
     const auto *baseDesc = reinterpret_cast<const ze_base_desc_t *>(pNext);
@@ -537,6 +727,17 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListAppendWaitOnEvents> &closure, const ClosureExternalStorage &storage) {
 
     auto params = createBaseParams(closure.apiArgs);
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(
+    const Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("pNext", formatPointer(closure.apiArgs.pNext));
     addCommonEventParameters(params, closure, storage);
 
     return params;
@@ -688,6 +889,16 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     auto params = createBaseParams(closure.apiArgs);
     params.emplace_back("hEvent", formatPointer(closure.apiArgs.hEvent));
 
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendSignalEventWithParameters>(
+    const Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("hEvent", formatPointer(closure.apiArgs.hEvent));
+    params.emplace_back("pNext", formatPointer(closure.apiArgs.pNext));
     return params;
 }
 
@@ -940,39 +1151,6 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
 template <>
 std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(
     const Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters> &closure, const ClosureExternalStorage &storage) {
-
-    auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("ptr", formatPointer(closure.apiArgs.ptr));
-    params.emplace_back("pattern", formatPointer(closure.indirectArgs.pattern.data()));
-    params.emplace_back("patternSize", std::to_string(closure.indirectArgs.pattern.size()));
-    params.emplace_back("size", std::to_string(closure.apiArgs.size));
-
-    addMemoryTransferExtensionParameters(params, closure.indirectArgs.pNext);
-
-    addCommonEventParameters(params, closure, storage);
-
-    return params;
-}
-
-template <>
-std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(
-    const Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters> &closure, const ClosureExternalStorage &storage) {
-
-    auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("dstptr", formatPointer(closure.apiArgs.dstptr));
-    params.emplace_back("srcptr", formatPointer(closure.apiArgs.srcptr));
-    params.emplace_back("size", std::to_string(closure.apiArgs.size));
-
-    addMemoryTransferExtensionParameters(params, closure.indirectArgs.pNext);
-
-    addCommonEventParameters(params, closure, storage);
-
-    return params;
-}
-
-template <>
-std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(
-    const Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters> &closure, const ClosureExternalStorage &storage) {
 
     auto params = createBaseParams(closure.apiArgs);
     params.emplace_back("ptr", formatPointer(closure.apiArgs.ptr));

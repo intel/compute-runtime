@@ -52,6 +52,22 @@ unsigned int getCurrentProcessId() {
     return getpid();
 }
 
+std::string getProcessName() {
+    char path[512] = {0};
+    auto result = ::readlink("/proc/self/exe", path, sizeof(path) - 1);
+    if (result == -1) {
+        return "";
+    }
+    path[result] = '\0';
+
+    std::string executablePath(path);
+    auto lastSeparator = executablePath.find_last_of('/');
+    if (lastSeparator != std::string::npos) {
+        return executablePath.substr(lastSeparator + 1u);
+    }
+    return executablePath;
+}
+
 unsigned long getNumThreads() {
     struct stat taskStat;
     if (stat("/proc/self/task", &taskStat) == 0) {
@@ -80,6 +96,10 @@ int open(const char *file, int flags) {
 }
 int openWithMode(const char *file, int flags, int mode) {
     return ::open(file, flags, mode);
+}
+
+void sync() {
+    ::sync();
 }
 
 int fsync(int fd) {
@@ -142,12 +162,36 @@ int munmap(void *addr, size_t size) noexcept {
     return ::munmap(addr, size);
 }
 
+void *mremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept {
+    return ::mremap(oldAddress, size, size, MREMAP_MAYMOVE | MREMAP_FIXED, newAddress);
+}
+
+void *mmapFixedNoReplace(void *address, size_t size) noexcept {
+    return ::mmap(address, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE | MAP_NORESERVE, -1, 0);
+}
+
 ssize_t read(int fd, void *buf, size_t count) {
     return ::read(fd, buf, count);
 }
 
 ssize_t write(int fd, const void *buf, size_t count) {
     return ::write(fd, buf, count);
+}
+
+FILE *fdopen(int fd, const char *mode) {
+    return ::fdopen(fd, mode);
+}
+
+char *fgets(char *s, int size, FILE *stream) {
+    return ::fgets(s, size, stream);
+}
+
+int fclose(FILE *stream) {
+    return ::fclose(stream);
+}
+
+int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+    return ::setvbuf(stream, buf, mode, size);
 }
 
 int fcntl(int fd, int cmd) {

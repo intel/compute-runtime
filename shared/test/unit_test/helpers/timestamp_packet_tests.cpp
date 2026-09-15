@@ -47,12 +47,12 @@ struct TimestampPacketTests : public ::testing::Test {
         using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         EXPECT_NE(nullptr, semaphoreCmd);
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
 
         uint64_t compareOffset = packetId * TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
         auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode) + compareOffset;
 
-        EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(dataAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     };
 };
 

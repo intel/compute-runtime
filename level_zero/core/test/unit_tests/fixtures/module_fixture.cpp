@@ -94,7 +94,6 @@ void ModuleImmutableDataFixture::setUp() {
         this->copyHwInfo.platform.usRevId = static_cast<unsigned short>(debugManager.flags.OverrideRevision.get());
         hwInfo = &this->copyHwInfo;
     }
-    UnitTestSetter::setupSemaphore64bCmdSupport(restore, hwInfo->platform.eRenderCoreFamily);
     auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
     memoryManager = new MockImmutableMemoryManager(*executionEnvironment);
     memoryManager->initUsmReuseLimits();

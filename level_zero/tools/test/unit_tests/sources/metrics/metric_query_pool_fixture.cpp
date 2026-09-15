@@ -17,7 +17,7 @@ void MetricQueryPoolTest::SetUp() {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     MetricContextFixture::setUp();
     auto executionEnvironment = new NEO::ExecutionEnvironment();
-    driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), L0EnvVariables{}, &returnValue));
+    driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), &returnValue));
 }
 
 void MetricQueryPoolTest::TearDown() {
@@ -29,7 +29,7 @@ void MultiDeviceMetricQueryPoolTest::SetUp() {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     MetricMultiDeviceFixture::setUp();
     auto executionEnvironment = new NEO::ExecutionEnvironment();
-    driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), L0EnvVariables{}, &returnValue));
+    driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), &returnValue));
 }
 
 void MultiDeviceMetricQueryPoolTest::TearDown() {

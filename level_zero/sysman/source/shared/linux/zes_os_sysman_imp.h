@@ -54,7 +54,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     SysmanDeviceImp *getSysmanDeviceImp();
     SysmanProductHelper *getSysmanProductHelper();
     uint32_t getSubDeviceCount() override;
+    uint32_t getRootDeviceIndex() const override { return rootDeviceIndex; }
     void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
+    std::string getPciUuid() override;
     const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
@@ -65,6 +67,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     NEO::Drm *getDrm();
     MOCKABLE_VIRTUAL void releaseSysmanDeviceResources();
     MOCKABLE_VIRTUAL ze_result_t reInitSysmanDeviceResources();
+    MOCKABLE_VIRTUAL void reInitSysmanDeviceCache();
     MOCKABLE_VIRTUAL void getPidFdsForOpenDevice(const ::pid_t, std::vector<int> &);
     MOCKABLE_VIRTUAL ze_result_t osWarmReset();
     MOCKABLE_VIRTUAL ze_result_t osColdReset();
@@ -88,12 +91,14 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::string gtDevicePath;
     SysmanKmdInterface *getSysmanKmdInterface() { return pSysmanKmdInterface.get(); }
     static ze_result_t getResult(int err);
+    static ze_result_t getPmtResult(int err);
     ze_result_t getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
     bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
     bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
     ze_result_t initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) override;
     bool isDeviceInSurvivabilityMode() override;
     std::unique_ptr<NEO::PhysicalDevicePciBusInfo> getPciBdfInfo() const override { return std::make_unique<NEO::PhysicalDevicePciBusInfo>(pciBdfInfo); }
+    MOCKABLE_VIRTUAL ze_result_t updateBdfDependentData();
 
   protected:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
@@ -127,6 +132,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::mutex fwLock;
     std::string devicePciBdf = "";
     std::string driverName;
+    std::string pciUuid;
 };
 
 } // namespace Sysman

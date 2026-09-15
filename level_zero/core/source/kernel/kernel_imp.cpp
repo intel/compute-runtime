@@ -113,7 +113,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
         auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getBindlessSurfaceStateSlotSize());
 
         this->surfaceStateHeapSize = (kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful +
                                       kernelInfo->kernelDescriptor.kernelAttributes.numBindlessImages) *
@@ -209,7 +209,7 @@ void KernelImmutableData::createRelocatedDebugData(NEO::SharedPoolAllocation *gl
             UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.external.relocatedDebugData.get() != nullptr);
 
             auto size = kernelInfo->kernelDescriptor.external.debugData->vIsaSize;
-            kernelInfo->kernelDescriptor.external.relocatedDebugData = std::make_unique<uint8_t[]>(size);
+            kernelInfo->kernelDescriptor.external.relocatedDebugData = std::make_unique_for_overwrite<uint8_t[]>(size);
 
             memcpy_s(kernelInfo->kernelDescriptor.external.relocatedDebugData.get(), size, kernelInfo->kernelDescriptor.external.debugData->vIsa, kernelInfo->kernelDescriptor.external.debugData->vIsaSize);
 
@@ -743,14 +743,14 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 
         NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
         auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-        const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        const auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
         if (bindlessHeapsHelper) {
 
-            if (image->allocateBindlessSlot() != ZE_RESULT_SUCCESS) {
+            if (image->allocateBindlessSlotWithMipmap(mipLevel) != ZE_RESULT_SUCCESS) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
 
-            auto ssInHeap = image->getBindlessSlot();
+            auto ssInHeap = image->getBindlessSlotWithMipmap(mipLevel);
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
             // redescribed image's surface state is after image's implicit args and sampler
             uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * bindlessSlot;
@@ -962,7 +962,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 
         NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
         auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
-        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
         if (bindlessHeapsHelper) {
 
             if (image->allocateBindlessSlot() != ZE_RESULT_SUCCESS) {
@@ -1038,12 +1038,6 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     NEO::patchNonPointer<cl_channel_type, cl_channel_type>(getCrossThreadDataSpan(), arg.metadataPayload.channelDataType, clChannelType);
     NEO::patchNonPointer<cl_channel_order, cl_channel_order>(getCrossThreadDataSpan(), arg.metadataPayload.channelOrder, clChannelOrder);
     NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(), arg.metadataPayload.numMipLevels, imageInfo.imgDesc.numMipLevels);
-
-    auto pixelSize = imageInfo.surfaceFormat->imageElementSizeInBytes;
-    NEO::patchNonPointer<uint64_t, uint64_t>(getCrossThreadDataSpan(), arg.metadataPayload.flatBaseOffset, image->getAllocation()->getGpuAddress());
-    NEO::patchNonPointer<uint32_t, size_t>(getCrossThreadDataSpan(), arg.metadataPayload.flatWidth, (imageInfo.imgDesc.imageWidth * pixelSize) - 1u);
-    NEO::patchNonPointer<uint32_t, size_t>(getCrossThreadDataSpan(), arg.metadataPayload.flatHeight, (imageInfo.imgDesc.imageHeight * pixelSize) - 1u);
-    NEO::patchNonPointer<uint32_t, size_t>(getCrossThreadDataSpan(), arg.metadataPayload.flatPitch, imageInfo.imgDesc.imageRowPitch - 1u);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1365,7 +1359,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     if (this->usesRayTracing()) {
-        if (!rootDeviceEnvironment.getReleaseHelper().isRayTracingSupported()) {
+        if (!hwInfo.caps.rayTracingSupported) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Ray tracing detected in kernel, but the current device does not support ray tracing. Returning ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.\n");
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
@@ -1592,7 +1586,7 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
     UNRECOVERABLE_IF(this->module == nullptr);
 
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
     for (size_t argIndex = 0; argIndex < getImmutableData()->getDescriptor().payloadMappings.explicitArgs.size(); argIndex++) {
         const auto &arg = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex];
@@ -1689,7 +1683,7 @@ void KernelImp::patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStat
     auto implicitArgsVec = getImmutableData()->getDescriptor().getImplicitArgBindlessCandidatesVec();
 
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
     for (size_t i = 0; i < implicitArgsVec.size(); i++) {
         if (NEO::isValidOffset(implicitArgsVec[i]->bindless)) {

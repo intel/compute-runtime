@@ -196,6 +196,16 @@ ze_result_t ZE_APICALL zeDeviceValidateRuntimeRequirements(
 ze_result_t ZE_APICALL zeDeviceGetCounterBasedEventMaxValue(
     ze_device_handle_t hDevice,
     uint64_t *maxValue) {
+    return Event::counterBasedGetMaxValue(hDevice, maxValue);
+}
+
+ze_result_t ZE_APICALL
+zeDeviceGetCompilerInfo(
+    ze_device_handle_t hDevice,
+    ze_device_compiler_info_t paramName,
+    const void *pNext,
+    size_t *pSize,
+    void *pData) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -419,6 +429,16 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetCounterBasedEventMaxValue(
     ze_device_handle_t hDevice,
     uint64_t *maxValue) {
     return L0::zeDeviceGetCounterBasedEventMaxValue(hDevice, maxValue);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceGetCompilerInfo(
+    ze_device_handle_t hDevice,
+    ze_device_compiler_info_t paramName,
+    const void *pNext,
+    size_t *pSize,
+    void *pData) {
+    return L0::zeDeviceGetCompilerInfo(hDevice, paramName, pNext, pSize, pData);
 }
 
 } // extern "C"

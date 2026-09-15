@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,14 @@
 #include <bitset>
 #include <cstdint>
 #include <limits>
+#include <string>
 #include <vector>
 
 namespace NEO {
+
+inline bool isAffinityMaskSet(const std::string &affinityMask) {
+    return affinityMask.compare("default") != 0 && !affinityMask.empty();
+}
 
 class AffinityMaskHelper {
   public:

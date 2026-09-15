@@ -1,0 +1,83 @@
+/*
+ * Copyright (C) 2023-2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+
+namespace NEO {
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        return debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
+    }
+    return false;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
+    return true;
+}
+
+template <ReleaseType releaseType>
+const SupportedNumGrfs ReleaseHelperHw<releaseType>::getSupportedNumGrfs() const {
+    return {128u, 256u};
+}
+
+template <ReleaseType releaseType>
+uint64_t ReleaseHelperHw<releaseType>::getTotalMemBankSize() const {
+    return 32ull * MemoryConstants::gigaByte;
+}
+
+template <ReleaseType releaseType>
+const ThreadsPerEUConfigs ReleaseHelperHw<releaseType>::getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const {
+    return {4, 8};
+}
+
+template <ReleaseType releaseType>
+const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPreferredSlmValue() const {
+    static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
+    return sizeToPreferredSlmValue;
+}
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize) const {
+    return 0u;
+}
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::alignSlmSizePerThreadGroup(uint32_t slmSize) const {
+    return 0u;
+}
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
+    return maxThreadsPerEuCount;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
+    auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
+    if (enableStateCacheInvalidationWa != -1) {
+        return enableStateCacheInvalidationWa;
+    }
+    return false;
+}
+
+template <ReleaseType releaseType>
+uint64_t ReleaseHelperHw<releaseType>::overrideSystemMemoryPatIndexBase(uint64_t patIndex) const {
+    return patIndex;
+}
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::getIpVersionForGmm() const {
+    return hardwareIpVersion.value;
+}
+
+} // namespace NEO

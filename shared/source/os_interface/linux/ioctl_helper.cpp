@@ -44,6 +44,13 @@ int IoctlHelper::ioctl(int fd, DrmIoctl request, void *arg) {
     return NEO::SysCalls::ioctl(fd, getIoctlRequestValue(request), arg);
 }
 
+int IoctlHelper::ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName) {
+    if (externalCtx) {
+        return externalCtx->ioctl(externalCtx->handle, drm.getFileDescriptor(), requestValue, arg, false);
+    }
+    return drm.ioctlWithRequestValue(request, arg, requestValue, requestName);
+}
+
 void IoctlHelper::setupIpVersion() {
     auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();

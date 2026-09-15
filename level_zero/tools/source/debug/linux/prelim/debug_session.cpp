@@ -188,7 +188,7 @@ void DebugSessionLinuxi915::readInternalEventsAsync() {
             if (result == ZE_RESULT_SUCCESS) {
                 std::lock_guard<std::mutex> lock(internalEventThreadMutex);
 
-                auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
+                auto memory = std::make_unique_for_overwrite<uint64_t[]>(maxEventSize / sizeof(uint64_t));
                 memcpy(memory.get(), event, maxEventSize);
 
                 internalEventQueue.push(std::move(memory));
@@ -209,7 +209,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
         auto clientEvent = reinterpret_cast<prelim_drm_i915_debug_event_client *>(event);
 
         if (event->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE) {
-            DEBUG_BREAK_IF(clientHandleToConnection.find(clientEvent->handle) != clientHandleToConnection.end());
+            DEBUG_BREAK_IF(clientHandleToConnection.contains(clientEvent->handle));
             clientHandleToConnection[clientEvent->handle].reset(new ClientConnectioni915);
             clientHandleToConnection[clientEvent->handle]->client = *clientEvent;
         }
@@ -227,7 +227,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
         prelim_drm_i915_debug_event_context *context = reinterpret_cast<prelim_drm_i915_debug_event_context *>(event);
 
         if (event->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE) {
-            UNRECOVERABLE_IF(clientHandleToConnection.find(context->client_handle) == clientHandleToConnection.end());
+            UNRECOVERABLE_IF(!clientHandleToConnection.contains(context->client_handle));
             clientHandleToConnection[context->client_handle]->contextsCreated[context->handle].handle = context->handle;
         }
 
@@ -283,7 +283,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
             const auto &connection = clientHandleToConnection[uuid->client_handle];
             if (uuid->payload_size) {
                 prelim_drm_i915_debug_read_uuid readUuid = {};
-                auto payload = std::make_unique<char[]>(uuid->payload_size);
+                auto payload = std::make_unique_for_overwrite<char[]>(uuid->payload_size);
                 readUuid.client_handle = uuid->client_handle;
                 readUuid.handle = static_cast<decltype(readUuid.handle)>(uuid->handle);
                 readUuid.payload_ptr = reinterpret_cast<uint64_t>(payload.get());
@@ -310,7 +310,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
                             debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
 
                             if (tileSessionsEnabled) {
-                                UNRECOVERABLE_IF(uuidL0CommandQueueHandleToDevice.find(uuid->handle) != uuidL0CommandQueueHandleToDevice.end());
+                                UNRECOVERABLE_IF(uuidL0CommandQueueHandleToDevice.contains(uuid->handle));
                                 auto tileSession = static_cast<TileDebugSessionLinuxi915 *>(tileSessions[deviceIndex].first);
                                 tileSession->processEntry();
                                 tileSession->pushApiEvent(debugEvent);
@@ -380,12 +380,12 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
                                 (int)event->flags, (uint64_t)event->size, (uint64_t)vm->client_handle, (uint64_t)vm->handle);
 
         if (event->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE) {
-            UNRECOVERABLE_IF(clientHandleToConnection.find(vm->client_handle) == clientHandleToConnection.end());
+            UNRECOVERABLE_IF(!clientHandleToConnection.contains(vm->client_handle));
             clientHandleToConnection[vm->client_handle]->vmIds.emplace(static_cast<uint64_t>(vm->handle));
         }
 
         if (event->flags & PRELIM_DRM_I915_DEBUG_EVENT_DESTROY) {
-            UNRECOVERABLE_IF(clientHandleToConnection.find(vm->client_handle) == clientHandleToConnection.end());
+            UNRECOVERABLE_IF(!clientHandleToConnection.contains(vm->client_handle));
             clientHandleToConnection[vm->client_handle]->vmIds.erase(static_cast<uint64_t>(vm->handle));
         }
     } break;
@@ -582,7 +582,7 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                 }
             }
 
-            if (connection->isaMap[tileIndex].find(vmBind->va_start) == connection->isaMap[tileIndex].end() && createEvent) {
+            if (!connection->isaMap[tileIndex].contains(vmBind->va_start) && createEvent) {
 
                 auto &isaMap = connection->isaMap[tileIndex];
                 auto &elfMap = connection->elfMap;
@@ -1013,7 +1013,7 @@ void DebugSessionLinuxi915::handleEnginesEvent(prelim_drm_i915_debug_event_engin
                             engines->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE ? "CREATE" : engines->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_DESTROY ? "DESTROY"
                                                                                                                                                             : "");
 
-    UNRECOVERABLE_IF(clientHandleToConnection.find(engines->client_handle) == clientHandleToConnection.end());
+    UNRECOVERABLE_IF(!clientHandleToConnection.contains(engines->client_handle));
 
     if (engines->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE) {
         for (uint64_t i = 0; i < engines->num_engines; ++i) {

@@ -36,7 +36,7 @@ struct MutableWalkerSpecificFieldsArguments {
 };
 
 struct MutableComputeWalker {
-    MutableComputeWalker(void *walker, uint8_t indirectOffset, uint8_t scratchOffset, bool stageCommitMode)
+    MutableComputeWalker(void *walker, uint16_t indirectOffset, uint16_t scratchOffset, bool stageCommitMode)
         : walker(walker),
           indirectOffset(indirectOffset),
           scratchOffset(scratchOffset),
@@ -61,6 +61,8 @@ struct MutableComputeWalker {
 
     virtual void updateSlmSize(const NEO::Device &device, uint32_t slmTotalSizePerThreadGroup) = 0;
 
+    virtual void updateL3FlushAfterWalker(uint32_t systemMemoryAllocsCount, uint32_t importedAllocationsCount) = 0;
+
     virtual void *getInlineDataPointer() const = 0;
     virtual size_t getInlineDataOffset() const = 0;
     virtual size_t getInlineDataSize() const = 0;
@@ -70,11 +72,11 @@ struct MutableComputeWalker {
         return walker;
     }
 
-    uint8_t getIndirectOffset() const {
+    uint16_t getIndirectOffset() const {
         return indirectOffset;
     }
 
-    uint8_t getScratchOffset() const {
+    uint16_t getScratchOffset() const {
         return scratchOffset;
     }
 
@@ -84,8 +86,8 @@ struct MutableComputeWalker {
 
   protected:
     void *walker;
-    uint8_t indirectOffset;
-    uint8_t scratchOffset;
+    uint16_t indirectOffset;
+    uint16_t scratchOffset;
     bool stageCommitMode = false;
 };
 

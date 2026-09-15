@@ -137,6 +137,9 @@ struct LinkerInput : NEO::NonCopyableAndNonMovableClass {
     template <Elf::ElfIdentifierClass numBits>
     bool addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &relocation);
 
+    template <Elf::ElfIdentifierClass numBits>
+    void addSymbolIfMissing(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &relocation);
+
     std::optional<uint32_t> getInstructionSegmentId(const SectionNameToSegmentIdMap &kernelNameToSegId, const std::string &kernelName);
 
     const Traits &getTraits() const {
@@ -281,6 +284,7 @@ struct Linker {
 
 static_assert(NEO::NonCopyableAndNonMovable<LinkerInput>);
 
+uint32_t addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationType);
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);
 std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &relocatedSymbols);
 

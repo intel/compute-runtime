@@ -711,19 +711,11 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFai
     EXPECT_EQ(2u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
-TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedNotSupportedThenReturnNull) {
-    EXPECT_GT(SurfaceFormats::packed().size(), 0u);
-    for (auto &format : SurfaceFormats::packed()) {
-        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, false /* packedSupported */);
-        ASSERT_EQ(nullptr, surfaceFormat);
-    }
-}
-
-TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedSupportedThenReturnValidFormat) {
+TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatThenReturnValidFormat) {
     EXPECT_GT(SurfaceFormats::packed().size(), 0u);
     uint32_t counter = 0;
     for (auto &format : SurfaceFormats::packed()) {
-        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, true /* packedSupported */);
+        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY);
         ASSERT_NE(nullptr, surfaceFormat);
         counter++;
         EXPECT_EQ(&format, surfaceFormat);
@@ -739,7 +731,7 @@ TYPED_TEST_P(D3DTests, givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnV
             format.oclImageFormat.image_channel_order == CL_BGRA ||
             format.oclImageFormat.image_channel_order == CL_RG ||
             format.oclImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, true);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -754,7 +746,7 @@ TYPED_TEST_P(D3DTests, givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturn
             format.oclImageFormat.image_channel_order == CL_BGRA ||
             format.oclImageFormat.image_channel_order == CL_RG ||
             format.oclImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_WRITE_ONLY, true);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_WRITE_ONLY);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -769,7 +761,7 @@ TYPED_TEST_P(D3DTests, givenReadWriteFormatWhenLookingForSurfaceFormatThenReturn
             format.oclImageFormat.image_channel_order == CL_BGRA ||
             format.oclImageFormat.image_channel_order == CL_RG ||
             format.oclImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_WRITE, true);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_WRITE);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -808,8 +800,7 @@ REGISTER_TYPED_TEST_SUITE_P(D3DTests,
                             givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
                             givenP010FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
                             givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
-                            givenPackedFormatWhenLookingForSurfaceFormatWithPackedNotSupportedThenReturnNull,
-                            givenPackedFormatWhenLookingForSurfaceFormatWithPackedSupportedThenReturnValidFormat);
+                            givenPackedFormatWhenLookingForSurfaceFormatThenReturnValidFormat);
 
 INSTANTIATE_TYPED_TEST_SUITE_P(D3DSharingTests, D3DTests, D3DTypes);
 

@@ -876,7 +876,6 @@ HWTEST2_F(AppendMemoryCopyTests,
     EXPECT_EQ(2u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -936,7 +935,6 @@ HWTEST2_F(AppendMemoryCopyTests,
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1471,8 +1469,8 @@ HWTEST_F(AppendMemoryCopyTests, givenInvalidExtWhenAppendMemoryCopyWithParameter
     uint32_t srcBuffer = 1;
     uint32_t dstBuffer = 0;
     ze_base_desc_t desc{};
-
-    ze_result_t result = cmdList.appendMemoryCopyWithParameters(&dstBuffer, &srcBuffer, sizeof(srcBuffer), &desc, nullptr, 0, nullptr);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    ze_result_t result = cmdList.appendMemoryCopyWithParameters(&dstBuffer, &srcBuffer, sizeof(srcBuffer), &desc, nullptr, 0, nullptr, memoryCopyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 
@@ -1485,6 +1483,7 @@ struct StagingBuffersFixture : public AppendMemoryCopyTests {
         }
         ze_command_queue_desc_t queueDesc = {};
         this->queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+        this->queue->setTaskCount(1);
 
         ze_device_mem_alloc_desc_t deviceDesc = {};
         auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, size, &usmDevice);
@@ -1682,7 +1681,6 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndProfilingThen
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, event->toHandle(), 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     uint64_t globalStartAddress = event->getGpuAddress(device) + event->getGlobalStartOffset();
     uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
@@ -1729,7 +1727,6 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndEventWithoutP
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, event->toHandle(), 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
     GenCmdList parsedCmdList;
@@ -1770,7 +1767,6 @@ HWTEST2_F(StagingBuffersFixture, givenSingleTransferStagingAndEventWithoutProfil
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, transferSize, event->toHandle(), 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
     GenCmdList parsedCmdList;

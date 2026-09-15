@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,8 +145,8 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSyn
 
             auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*hwParser.cmdList.begin());
             ASSERT_NE(nullptr, semaphoreCmd);
-            EXPECT_EQ(static_cast<uint32_t>(-2), semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(static_cast<uint32_t>(-2), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
         } else {
             EXPECT_EQ(sizeof(MI_MEM_FENCE), synchronizationSize);

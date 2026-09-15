@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
-#include <functional>
+#include <atomic>
 
 namespace NEO {
 
@@ -31,8 +31,8 @@ class PageFaultManagerWindows : public virtual CpuPageFaultManager {
     bool checkFaultHandlerFromPageFaultManager() override;
     void registerFaultHandler() override;
 
-    static std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> pageFaultHandler;
-    PVOID previousHandler;
+    static constinit std::atomic<PageFaultManagerWindows *> activePageFaultManager;
+    PVOID previousHandler = nullptr;
 };
 
 class CpuPageFaultManagerWindows final : public PageFaultManagerWindows {};

@@ -9,7 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
@@ -20,15 +20,15 @@ namespace NEO {
 StackVec<const char *, 4> validClPrefixes;
 StackVec<NEO::DebugVarPrefix, 4> validClPrefixTypes;
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper &releaseHelper) {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const HardwareInfo &hwInfo) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
         return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
     }
-    return releaseHelper.isGlobalBindlessAllocatorEnabled();
+    return hwInfo.caps.globalBindlessAllocatorEnabled;
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
-    if (device.getCompilerProductHelper().isForceBindlessRequired(device.getHardwareInfo())) {
+    if (device.getCompilerProductHelper().isHeaplessModeEnabled(device.getHardwareInfo())) {
         return true;
     }
     if (debugManager.flags.UseBindlessMode.get() != -1) {

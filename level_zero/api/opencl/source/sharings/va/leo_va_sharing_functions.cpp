@@ -80,7 +80,7 @@ void VASharingFunctions::initFunctions() {
 void VASharingFunctions::querySupportedVaImageFormats(VADisplay vaDisplay) {
     int maxFormats = this->maxNumImageFormats(vaDisplay);
     if (maxFormats > 0) {
-        auto allVaFormats = std::make_unique<VAImageFormat[]>(maxFormats);
+        auto allVaFormats = std::make_unique_for_overwrite<VAImageFormat[]>(maxFormats);
         auto result = this->queryImageFormats(vaDisplay, allVaFormats.get(), &maxFormats);
         if (result == VA_STATUS_SUCCESS) {
             for (int i = 0; i < maxFormats; i++) {

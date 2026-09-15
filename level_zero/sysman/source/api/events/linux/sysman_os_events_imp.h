@@ -11,6 +11,7 @@
 
 #include "level_zero/sysman/source/api/events/sysman_os_events.h"
 #include "level_zero/sysman/source/shared/linux/udev/udev_lib.h"
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <map>
 #include <mutex>
@@ -32,7 +33,8 @@ struct SysmanDeviceImp;
 
 enum class PollSourceType { udev,
                             pipe,
-                            netlink };
+                            netlink,
+                            tracefs };
 
 struct PollDescriptor {
     struct pollfd pfd;
@@ -56,10 +58,11 @@ class LinuxEventsUtil {
   public:
     LinuxEventsUtil() = delete;
     LinuxEventsUtil(LinuxSysmanDriverImp *pOsSysmanDriverImp);
-    ~LinuxEventsUtil() = default;
+    MOCKABLE_VIRTUAL ~LinuxEventsUtil() = default;
 
-    ze_result_t eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents);
+    ze_result_t eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents = nullptr);
     void eventRegister(zes_event_type_flags_t events, SysmanDeviceImp *pSysmanDevice);
+    ze_result_t driverEventRegister(zes_event_type_flags_t events);
 
   protected:
     UdevLib *pUdevLib = nullptr;
@@ -67,6 +70,7 @@ class LinuxEventsUtil {
     LinuxSysmanDriverImp *pLinuxSysmanDriverImp = nullptr;
     int pipeFd[2] = {-1, -1};
     std::map<SysmanDeviceImp *, zes_event_type_flags_t> deviceEventsMap;
+    zes_event_type_flags_t registeredDriverEvents = 0;
     bool checkRasEvent(zes_event_type_flags_t &pEvent, SysmanDeviceImp *pSysmanDeviceImp, zes_event_type_flags_t registeredEvents);
     bool isResetRequired(void *dev, zes_event_type_flags_t &pEvent);
     bool checkDeviceDetachEvent(zes_event_type_flags_t &pEvent);
@@ -74,9 +78,10 @@ class LinuxEventsUtil {
     bool checkIfMemHealthChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkIfFabricPortStatusChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkDeviceWedgedEvent(void *dev, zes_event_type_flags_t &pEvent);
-    bool listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout);
+    bool listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout, zes_event_type_flags_t *pDriverEvents = nullptr);
     bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices);
     void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess);
+    MOCKABLE_VIRTUAL void updateCperPollSource(zes_event_type_flags_t driverRegisteredEvents, std::vector<PollDescriptor> &pollSources, bool &cperRegistered);
     bool handleNetlinkEvents(zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents);
     bool processNetlinkRasEvent(const DrmRasEvent &netlinkEvent, zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents);
     static bool isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess, const std::string &devPath, const std::string &mode);

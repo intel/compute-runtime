@@ -78,7 +78,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_validator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/offline_compiler_ext_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_pisa_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stdout_capturer.h
@@ -192,10 +192,6 @@ endif()
 
 macro(macro_for_each_platform)
   if("${PLATFORM_IT_LOWER}" STREQUAL "${CLOC_LIB_DEFAULT_DEVICE}")
-    list(GET ${PLATFORM_IT}_${CORE_TYPE}_REVISIONS 0 REVISION_CONFIG)
-    parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-    add_dependencies(run_ocloc_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
-    add_dependencies(unit_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
     set(run_tests_cmd ocloc_tests --device ${PLATFORM_IT_LOWER})
   endif()
 endmacro()

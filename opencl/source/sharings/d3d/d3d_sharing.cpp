@@ -99,19 +99,17 @@ void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, ImagePl
 }
 
 template <typename D3D>
-const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags, bool packedSupported) {
+const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(int gmmFormat, cl_mem_flags flags) {
     ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags);
     for (auto &format : formats) {
         if (gmmFormat == format.surfaceFormat.gmmSurfaceFormat) {
             return &format;
         }
     }
-    if (packedSupported) {
-        formats = SurfaceFormats::packed();
-        for (auto &format : formats) {
-            if (gmmFormat == format.surfaceFormat.gmmSurfaceFormat) {
-                return &format;
-            }
+    formats = SurfaceFormats::packed();
+    for (auto &format : formats) {
+        if (gmmFormat == format.surfaceFormat.gmmSurfaceFormat) {
+            return &format;
         }
     }
 

@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
-struct _ze_driver_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_DRIVER> {};
+struct _ze_driver_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_driver_handle_t>);
 
 namespace NEO {
@@ -45,7 +45,6 @@ struct IpcSocketServerDeleter {
 
 namespace L0 {
 struct Device;
-struct L0EnvVariables;
 class HostPointerManager;
 struct FabricVertex;
 struct FabricEdge;
@@ -112,7 +111,9 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
                                                uintptr_t *peerGpuAddress,
                                                NEO::SvmAllocationData **peerAllocData,
                                                bool decompressP2PAllocation);
-    bool peerRequiresReservedHandleData(Device *srcDevice, Device *peerDevice);
+    NEO::GraphicsAllocation *findPeerAllocation(Device *device, const void *ptr);
+    NEO::GraphicsAllocation *resolveMemoryAllocation(Device *device, void *ptr, size_t size, bool allowImport);
+    bool peerReservedHandleDataAvailable(Device *srcDevice, Device *peerDevice);
 
     MOCKABLE_VIRTUAL bool isFabricAccessSupported();
 
@@ -126,7 +127,6 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     ze_result_t fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
                                  uint32_t *pCount, ze_fabric_edge_handle_t *phEdges);
     MOCKABLE_VIRTUAL uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const;
-    MOCKABLE_VIRTUAL uint32_t getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const;
 
     MOCKABLE_VIRTUAL ze_result_t loadRTASLibrary();
     MOCKABLE_VIRTUAL ze_result_t createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc, ze_rtas_builder_exp_handle_t *phBuilder);
@@ -140,9 +140,9 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     MOCKABLE_VIRTUAL ze_result_t getErrorDescription(const char **ppString);
     MOCKABLE_VIRTUAL ze_result_t clearErrorDescription();
 
-    MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
-    MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory);
-    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory);
+    MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset);
+    MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, const std::vector<uint64_t> &physicalOffsets);
+    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset);
     MOCKABLE_VIRTUAL bool initializeIpcSocketServer();
     MOCKABLE_VIRTUAL bool registerIpcHandleWithServer(uint64_t handleId, int fd);
 
@@ -161,7 +161,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     void initDeviceUsmAllocPoolOnce();
     void initUsmPooling();
     NEO::UsmMemAllocPool::CustomCleanupFn getPoolCleanupFn();
-    NEO::UsmMemAllocPool *getHostUsmPoolOwningPtr(const void *ptr);
+    NEO::UsmPoolLookupResult getHostUsmPoolOwningPtr(const void *ptr);
 
     void shutdownIpcSocketServer();
     bool unregisterIpcHandleWithServer(uint64_t handleId);
@@ -240,7 +240,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }
 
-    static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices, const L0EnvVariables &envVariables, ze_result_t *returnValue);
+    static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices, ze_result_t *returnValue);
 
   protected:
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,

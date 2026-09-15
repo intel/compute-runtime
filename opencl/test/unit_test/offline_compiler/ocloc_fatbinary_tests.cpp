@@ -16,7 +16,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -89,10 +89,7 @@ std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
 void appendAcronymWithoutDashes(std::vector<std::string> &out, ConstStringRef acronym) {
     if (acronym.contains("-")) {
         auto acronymCopy = acronym.str();
-        auto findDash = acronymCopy.find('-');
-        if (findDash == std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
+        std::erase(acronymCopy, '-');
         out.push_back(acronymCopy);
     }
 }
@@ -176,6 +173,18 @@ TEST(OclocFatBinaryIsSpvOnly, givenSpvOnlyProvidedReturnsTrue) {
     EXPECT_TRUE(NEO::isIrOnly(args));
 }
 
+TEST(OclocFatBinaryIsIrOnly, givenEmitPisaOptThenReturnsTrue) {
+    std::vector<std::string> args = {"-emit_pisa"};
+
+    EXPECT_TRUE(NEO::isIrOnly(args));
+}
+
+TEST(OclocFatBinaryIsIrOnly, givenNoIrOnlyOptsThenReturnsFalse) {
+    std::vector<std::string> args = {"-pisa_input"};
+
+    EXPECT_FALSE(NEO::isIrOnly(args));
+}
+
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     const char *args[] = {"ocloc", "-aaa", "*", "-device", "*"};
 
@@ -191,11 +200,11 @@ TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
 TEST(OclocFatBinaryRequestedFatBinary, givenHwInfoForProductConfigWhenUnknownIsaIsPassedThenFalseIsReturned) {
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
-    std::unique_ptr<ReleaseHelper> releaseHelper;
+    std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
 
     NEO::HardwareInfo hwInfo;
 
-    EXPECT_FALSE(argHelper->setHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, compilerProductHelper, releaseHelper));
+    EXPECT_FALSE(argHelper->setHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, compilerProductHelper, compilerReleaseHelper));
 }
 
 TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronymsForTargetThenCorrectValuesAreReturned) {
@@ -575,7 +584,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputNameOptionWhenBuildi
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
 
     EXPECT_EQ(4u, NEO::virtualFileList.size());
-    EXPECT_TRUE(NEO::virtualFileList.find("expected_output.bin") != NEO::virtualFileList.end());
+    EXPECT_TRUE(NEO::virtualFileList.contains("expected_output.bin"));
 
     for (const auto &product : expected) {
         resString << "Build succeeded for : " << product.str() + ".\n";
@@ -616,7 +625,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
 
         const std::string expectedFatbinaryFileName = "../expected_output_directory/some_kernel.ar";
         EXPECT_EQ(4u, NEO::virtualFileList.size());
-        EXPECT_TRUE(NEO::virtualFileList.find(expectedFatbinaryFileName) != NEO::virtualFileList.end());
+        EXPECT_TRUE(NEO::virtualFileList.contains(expectedFatbinaryFileName));
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -646,7 +655,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
 
         const std::string expectedFatbinaryFileName = "../expected_output_directory/expected_filename";
         EXPECT_EQ(5u, NEO::virtualFileList.size());
-        EXPECT_TRUE(NEO::virtualFileList.find(expectedFatbinaryFileName) != NEO::virtualFileList.end());
+        EXPECT_TRUE(NEO::virtualFileList.contains(expectedFatbinaryFileName));
 
         for (const auto &product : expected) {
             resString << "Build succeeded for : " << product.str() + ".\n";
@@ -1452,7 +1461,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenReleaseWhichHasNoDeviceAcronymWh
 
     for (auto &aotInfo : aotInfos) {
         auto hasDeviceAcronym = std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(aotInfo.release));
-        if (!hasDeviceAcronym) {
+        if (!hasDeviceAcronym && !aotInfo.rtlIdAcronyms.empty()) {
             deviceInfo = &aotInfo;
             break;
         }
@@ -2113,7 +2122,7 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     const char buildWarning[] = "warning: This is a build log!";
-    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
+    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning), gEnvironment->devicePrefix.c_str());
     mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     // Dummy value
@@ -2135,7 +2144,7 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     EXPECT_EQ(OCLOC_SUCCESS, buildResult);
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
 
-    const std::string expectedOutput{buildWarning + "\nBuild succeeded for : "s + deviceConfig + ".\n"s};
+    const std::string expectedOutput{"[" + gEnvironment->devicePrefix + "] " + buildWarning + "\nBuild succeeded for : "s + deviceConfig + ".\n"s};
     EXPECT_EQ(expectedOutput, output);
 }
 
@@ -2158,7 +2167,7 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     const char buildWarning[] = "Warning: this is a build log!";
-    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
+    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning), gEnvironment->devicePrefix.c_str());
     mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
 
     std::vector<char> bin = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};

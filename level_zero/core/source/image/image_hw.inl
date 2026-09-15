@@ -35,6 +35,9 @@
 
 namespace L0 {
 
+static_assert(ImageFormats::maxTypeCount == static_cast<uint32_t>(ZE_IMAGE_FORMAT_TYPE_FLOAT) + 1u);
+static_assert(ImageFormats::maxLayoutCount == static_cast<uint32_t>(ZE_IMAGE_FORMAT_LAYOUT_32_32_32) + 1u);
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
@@ -51,10 +54,19 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         return parseResult;
     }
 
-    bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
+    const bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
+
+    const bool hasFixedChannelSelect = isMediaFormatLayout || isPackedYuvFormat(desc->format.layout);
+
+    if (!hasFixedChannelSelect && !hasValidSwizzles(desc->format)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+    }
 
     imgInfo.imgDesc = lookupTable.imageProperties.imageDescriptor;
     imgInfo.mipCount = imgInfo.imgDesc.numMipLevels > 1 ? imgInfo.imgDesc.numMipLevels : 0;
+    if (imgInfo.imgDesc.numMipLevels > 1) {
+        mipLevelBindlessInfos = std::vector<std::unique_ptr<NEO::SurfaceStateInHeapInfo>>(imgInfo.imgDesc.numMipLevels);
+    }
 
     if (lookupTable.isSrgb) {
         if (desc->format.layout != ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8 || desc->format.type != ZE_IMAGE_FORMAT_TYPE_UNORM) {
@@ -70,7 +82,14 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
         this->depthStencilImage = true;
     } else {
-        imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][desc->format.type];
+        if (static_cast<uint32_t>(desc->format.layout) >= ImageFormats::maxLayoutCount) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+        }
+        const auto formatType = hasIgnoredFormatType(desc->format.layout) ? ZE_IMAGE_FORMAT_TYPE_UNORM : desc->format.type;
+        if (static_cast<uint32_t>(formatType) >= ImageFormats::maxTypeCount) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+        }
+        imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][formatType];
     }
     imageFormatDesc = *const_cast<ze_image_desc_t *>(desc);
 
@@ -125,8 +144,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         this->samplerDesc = *lookupTable.imageProperties.samplerDesc;
         this->samplerDesc.pNext = nullptr;
     }
-
-    NEO::UsmMemAllocPool *usmPool = nullptr;
 
     if (!isImageView()) {
         if (lookupTable.isSharedHandle) {
@@ -186,8 +203,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
 
-                usmPool = this->device->getNEODevice()->getUsmPoolOwningPtr(lookupTable.imageProperties.pitchedPtr);
-                if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(lookupTable.imageProperties.pitchedPtr)) {
+                auto poolLookup = this->device->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(lookupTable.imageProperties.pitchedPtr);
+                if (poolLookup.pool && false == poolLookup.isAllocatedInPool()) {
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
 
@@ -219,7 +236,9 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
-    implicitArgsSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    if (this->device->getGfxCoreHelper().getRenderSurfaceStateSize(rootDeviceEnvironment) == sizeof(RENDER_SURFACE_STATE)) {
+        getImplicitArgsSurfaceState() = GfxFamily::cmdInitRenderSurfaceState;
+    }
 
     if (this->bindlessImage) {
         auto result = allocateBindlessSlot();
@@ -237,7 +256,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     if (!this->imageFromBuffer && gmm != nullptr) {
         NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::noPlane;
-        if (isImageView() && (sourceImageFormatDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12)) {
+        if (isImageView() && isTwoPlaneYuv420Format(sourceImageFormatDesc->format.layout)) {
             yuvPlaneType = NEO::ImagePlane::planeY;
             if (imgInfo.plane == NEO::ImagePlane::planeU) {
                 yuvPlaneType = NEO::ImagePlane::planeUV;
@@ -247,6 +266,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                                            ? lookupTable.d3dTextureExt.arrayIndex
                                            : 0u;
         gmm->updateImgInfoAndDesc(imgInfo, gmmArrayIndex, yuvPlaneType);
+
+        if (yuvPlaneType == NEO::ImagePlane::planeUV) {
+            // Callers pass frame dimensions per plane - copy bounds read this descriptor.
+            this->imageFormatDesc.width = imgInfo.imgDesc.imageWidth;
+            this->imageFormatDesc.height = static_cast<uint32_t>(imgInfo.imgDesc.imageHeight);
+        }
 
         if (lookupTable.isSharedHandle && lookupTable.glTextureExt.present) {
             imgInfo.offset = 0;
@@ -283,6 +308,20 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         imgInfo.imgDesc.imageRowPitch = lookupTable.imageTilingOverride.rowPitch;
     }
 
+    // Compute qPitch for 3D images placed on top of a buffer as a function of rows.
+    if (this->imageFromBuffer && desc->type == ZE_IMAGE_TYPE_3D) {
+        if (imgInfo.rowPitch == 0 || imgInfo.slicePitch % imgInfo.rowPitch != 0) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        const size_t rowsPerSlice = imgInfo.slicePitch / imgInfo.rowPitch;
+        // Slice pitch rows must be a multiple of SURFACEQPITCH_ALIGN_SIZE.
+        if (rowsPerSlice % RENDER_SURFACE_STATE::SURFACEQPITCH_ALIGN_SIZE != 0) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        imgInfo.qPitch = static_cast<uint32_t>(rowsPerSlice);
+        imgInfo.imgDesc.imageSlicePitch = imgInfo.slicePitch;
+    }
+
     imgInfo.print();
 
     NEO::SurfaceOffsets surfaceOffsets = {imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane};
@@ -291,119 +330,24 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                                        ? lookupTable.glTextureExt.cubeFaceIndex
                                        : static_cast<uint32_t>(__GMM_NO_CUBE_MAP);
 
-    const uint32_t numSamplesForSurfaceState = this->getNumSamples();
-    auto programMultisampleSurfaceState = [&](RENDER_SURFACE_STATE *surfaceState) {
-        using NUMBER_OF_MULTISAMPLES = typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES;
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
 
-        if (numSamplesForSurfaceState <= 1) {
-            surfaceState->setNumberOfMultisamples(NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
-            return;
+    const bool usesReducedSurfaceState = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment) < sizeof(RENDER_SURFACE_STATE);
+
+    if (usesReducedSurfaceState && (this->getNumSamples() > 1u)) {
+        const bool countTooLarge =
+            this->getMcsMultisampleCount() > RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_8;
+        const bool resolvedThroughControlSurface =
+            (this->getMcsAllocation() != nullptr) || this->getIsUnifiedMcsSurface();
+
+        if (countTooLarge || resolvedThroughControlSurface) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        surfaceState->setNumberOfMultisamples(static_cast<NUMBER_OF_MULTISAMPLES>(this->getMcsMultisampleCount()));
+    }
 
-        auto mcsAlloc = this->getMcsAllocation();
-        const bool unifiedMcs = this->getIsUnifiedMcsSurface();
-        if (mcsAlloc != nullptr || unifiedMcs) {
-            auto mcsGmm = mcsAlloc ? mcsAlloc->getDefaultGmm() : gmm;
-            const auto &releaseHelper = device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper();
-            NEO::EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
-            surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
-            surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
-            NEO::EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);
-            NEO::ImageSurfaceStateHelper<GfxFamily>::setUnifiedAuxBaseAddress(surfaceState, mcsGmm);
-        } else {
-            using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
-            const bool isDepthResource = this->depthStencilImage || (gmm && gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth);
-            if (isDepthResource && surfaceState->getSurfaceFormat() != SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS) {
-                surfaceState->setMultisampledSurfaceStorageFormat(
-                    RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
-            } else {
-                surfaceState->setMultisampledSurfaceStorageFormat(
-                    RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
-            }
-        }
-    };
-
+    NEO::ImageInfo imgInfoRedescirebed;
+    const bool redescribedIsNV12 = (desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12);
     {
-        surfaceState = GfxFamily::cmdInitRenderSurfaceState;
-        packedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
-        uint32_t minArrayElement, renderTargetViewExtent, depth;
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&surfaceState, imgInfo, gmm, *gmmHelper, cubeFaceIndex,
-                                                                      this->allocation->getGpuAddress(), surfaceOffsets,
-                                                                      isMediaFormatLayout, minArrayElement, renderTargetViewExtent);
-
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&surfaceState, imgInfo, cubeFaceIndex, surfaceType, depth);
-        surfaceState.setSurfaceMinLOD(0u);
-        surfaceState.setMIPCountLOD(0u);
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&surfaceState, gmm);
-
-        if (!isMediaFormatLayout) {
-            surfaceState.setShaderChannelSelectRed(
-                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
-                    shaderChannelSelect[desc->format.x]));
-            surfaceState.setShaderChannelSelectGreen(
-                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
-                    shaderChannelSelect[desc->format.y]));
-            surfaceState.setShaderChannelSelectBlue(
-                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
-                    shaderChannelSelect[desc->format.z]));
-            surfaceState.setShaderChannelSelectAlpha(
-                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
-                    shaderChannelSelect[desc->format.w]));
-        } else {
-            surfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
-            surfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
-            surfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
-            surfaceState.setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
-        }
-
-        programMultisampleSurfaceState(&surfaceState);
-
-        if (numSamplesForSurfaceState <= 1 && allocation->isCompressionEnabled()) {
-            NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&surfaceState, gmm);
-        }
-
-        if (gmm) {
-            const bool isDepthResource = this->depthStencilImage || gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
-            surfaceState.setDepthStencilResource(isDepthResource);
-        }
-    }
-
-    if (this->bindlessImage) {
-        auto ssInHeap = getBindlessSlot();
-        copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, false, 0u);
-
-        if (this->sampledImage) {
-            auto productFamily = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-            auto sampler = Sampler::create(productFamily, device, &this->samplerDesc);
-            if (!sampler) {
-                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-            }
-            auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
-            auto samplerStateOffset = static_cast<uint32_t>(NEO::BindlessImageSlot::sampler * surfaceStateSize);
-
-            ArrayRef<uint8_t> ssInHeapSpan{reinterpret_cast<uint8_t *>(ssInHeap->ssPtr), ssInHeap->ssSize};
-            sampler->copySamplerStateToDSH(ssInHeapSpan, samplerStateOffset);
-            sampler->destroy();
-        }
-    }
-
-    const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
-    if (this->bindlessImage && implicitArgsAllocation) {
-        NEO::ImageImplicitArgs imageImplicitArgs{};
-        populateImageImplicitArgs(imageImplicitArgs);
-
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation), *this->device->getNEODevice(), implicitArgsAllocation, 0u, &imageImplicitArgs, NEO::ImageImplicitArgs::getSize());
-        this->encodeImplicitArgsSurfaceState();
-        auto surfaceStateSize = this->device->getGfxCoreHelper().getRenderSurfaceStateSize();
-        auto ssInHeap = getBindlessSlot();
-        copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false, 0u);
-    }
-
-    {
-
-        NEO::ImageInfo imgInfoRedescirebed;
         [[maybe_unused]] uint32_t exponent;
         switch (imgInfo.surfaceFormat->imageElementSizeInBytes) {
         default:
@@ -424,53 +368,336 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         if (imgInfoRedescirebed.imgDesc.imageType == NEO::ImageType::image1DBuffer) {
             imgInfoRedescirebed.imgDesc.imageType = NEO::ImageType::image1D;
         }
-        redescribedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    }
 
+    const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+
+    SurfaceStateSlotContext slotContext{};
+    slotContext.desc = desc;
+    slotContext.redescribedImageInfo = &imgInfoRedescirebed;
+    slotContext.surfaceOffsets = &surfaceOffsets;
+    slotContext.gmm = gmm;
+    slotContext.gmmHelper = gmmHelper;
+    slotContext.surfaceType = surfaceType;
+    slotContext.cubeFaceIndex = cubeFaceIndex;
+    slotContext.numSamples = this->getNumSamples();
+    slotContext.isMediaFormatLayout = isMediaFormatLayout;
+    slotContext.hasFixedChannelSelect = hasFixedChannelSelect;
+    slotContext.redescribedIsNV12 = redescribedIsNV12;
+    slotContext.packedSupported = productHelper.isPackedCopyFormatSupported();
+
+    encodeSurfaceState(slotContext);
+
+    if (this->bindlessImage) {
+        auto ssInHeap = getBindlessSlot();
+        copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, false, 0u);
+
+        if (this->sampledImage) {
+            auto productFamily = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+            auto sampler = Sampler::create(productFamily, device, &this->samplerDesc);
+            if (!sampler) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+            auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+            auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+            auto samplerStateOffset = static_cast<uint32_t>(NEO::BindlessImageSlot::sampler * surfaceStateSize);
+
+            ArrayRef<uint8_t> ssInHeapSpan{reinterpret_cast<uint8_t *>(ssInHeap->ssPtr), ssInHeap->ssSize};
+            sampler->copySamplerStateToDSH(ssInHeapSpan, samplerStateOffset);
+            sampler->destroy();
+        }
+    }
+
+    if (this->bindlessImage && implicitArgsAllocation) {
+        NEO::ImageImplicitArgs imageImplicitArgs{};
+        populateImageImplicitArgs(imageImplicitArgs);
+
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation), *this->device->getNEODevice(), implicitArgsAllocation, 0u, &imageImplicitArgs, NEO::ImageImplicitArgs::getSize());
+        this->encodeImplicitArgsSurfaceState();
+        auto surfaceStateSize = this->device->getGfxCoreHelper().getBindlessSurfaceStateSlotSize();
+        auto ssInHeap = getBindlessSlot();
+        copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false, 0u);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceState(const SurfaceStateSlotContext &context) {
+    const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+
+    if (gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment) < sizeof(RENDER_SURFACE_STATE)) {
+        encodeSurfaceStateReduced(context);
+    } else {
+        encodeSurfaceStateFull(context);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateReduced(const SurfaceStateSlotContext &context) {
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+
+    const auto *desc = context.desc;
+    auto *gmm = context.gmm;
+    auto *gmmHelper = context.gmmHelper;
+    const auto &surfaceOffsets = *context.surfaceOffsets;
+    const auto &imgInfoRedescirebed = *context.redescribedImageInfo;
+    const auto cubeFaceIndex = context.cubeFaceIndex;
+    const auto numSamplesForSurfaceState = context.numSamples;
+    const bool isMediaFormatLayout = context.isMediaFormatLayout;
+    const bool hasFixedChannelSelect = context.hasFixedChannelSelect;
+    const bool redescribedIsNV12 = context.redescribedIsNV12;
+
+    auto makeInputsFromSource = [&](const NEO::ImageInfo &encodeImageInfo, bool isNV12) {
+        using NUMBER_OF_MULTISAMPLES = typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES;
+
+        NEO::ImageSurfaceStateInputs inputs{};
+        inputs.imageInfo = &encodeImageInfo;
+        inputs.gmm = gmm;
+        inputs.gmmHelper = gmmHelper;
+        inputs.surfaceOffsets = &surfaceOffsets;
+        inputs.gpuAddress = this->allocation->getGpuAddress();
+        inputs.cubeFaceIndex = cubeFaceIndex;
+        inputs.useChannelSelects = true;
+        inputs.isNV12Format = isNV12;
+
+        inputs.numberOfMultisamples =
+            (numSamplesForSurfaceState <= 1)
+                ? static_cast<uint32_t>(NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1)
+                : static_cast<uint32_t>(this->getMcsMultisampleCount());
+
+        inputs.multisampleControlSurfacePresent =
+            (inputs.numberOfMultisamples > 0u) &&
+            ((this->getMcsAllocation() != nullptr) || this->getIsUnifiedMcsSurface());
+
+        return inputs;
+    };
+
+    auto makeImageSlotInputs = [&]() {
+        auto inputs = makeInputsFromSource(imgInfo, isMediaFormatLayout);
+
+        if (!hasFixedChannelSelect) {
+            inputs.shaderChannelSelectRed = static_cast<uint32_t>(shaderChannelSelect[desc->format.x]);
+            inputs.shaderChannelSelectGreen = static_cast<uint32_t>(shaderChannelSelect[desc->format.y]);
+            inputs.shaderChannelSelectBlue = static_cast<uint32_t>(shaderChannelSelect[desc->format.z]);
+            inputs.shaderChannelSelectAlpha = static_cast<uint32_t>(shaderChannelSelect[desc->format.w]);
+        } else {
+            inputs.shaderChannelSelectRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
+            inputs.shaderChannelSelectGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
+            inputs.shaderChannelSelectBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
+            inputs.shaderChannelSelectAlpha = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE;
+        }
+
+        inputs.isDepthStencilResource =
+            (gmm != nullptr) && (this->depthStencilImage || gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth);
+        return inputs;
+    };
+
+    auto makeRedescribedSlotInputs = [&]() {
+        auto inputs = makeInputsFromSource(imgInfoRedescirebed, redescribedIsNV12);
+
+        const auto redescribedGmmFormat = imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat;
+        inputs.shaderChannelSelectRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
+        if (redescribedGmmFormat == GMM_FORMAT_R8_UINT_TYPE ||
+            redescribedGmmFormat == GMM_FORMAT_R16_UINT_TYPE ||
+            redescribedGmmFormat == GMM_FORMAT_R32_UINT_TYPE) {
+            inputs.shaderChannelSelectGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
+            inputs.shaderChannelSelectBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
+        } else if (redescribedGmmFormat == GMM_FORMAT_R32G32_UINT_TYPE) {
+            inputs.shaderChannelSelectGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
+            inputs.shaderChannelSelectBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
+        } else {
+            inputs.shaderChannelSelectGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
+            inputs.shaderChannelSelectBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
+        }
+        inputs.shaderChannelSelectAlpha = redescribedIsNV12
+                                              ? RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE
+                                              : RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
+
+        inputs.isDepthStencilResource = (gmm != nullptr) && gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+        return inputs;
+    };
+
+    auto makePackedSlotInputs = [&]() {
+        auto inputs = makeRedescribedSlotInputs();
+        inputs.imageInfo = &imgInfo;
+        inputs.isNV12Format = isMediaFormatLayout;
+
+        RENDER_SURFACE_STATE packedView = GfxFamily::cmdInitRenderSurfaceState;
+        NEO::EncodeSurfaceState<GfxFamily>::convertSurfaceStateToPacked(&packedView, imgInfo);
+
+        inputs.shaderChannelSelectRed = static_cast<uint32_t>(packedView.getShaderChannelSelectRed());
+        inputs.shaderChannelSelectGreen = static_cast<uint32_t>(packedView.getShaderChannelSelectGreen());
+        inputs.shaderChannelSelectBlue = static_cast<uint32_t>(packedView.getShaderChannelSelectBlue());
+        inputs.shaderChannelSelectAlpha = static_cast<uint32_t>(packedView.getShaderChannelSelectAlpha());
+
+        if (static_cast<uint32_t>(packedView.getSurfaceFormat()) !=
+            static_cast<uint32_t>(imgInfo.surfaceFormat->genxSurfaceFormat)) {
+            inputs.packedFormatOverride = true;
+            inputs.packedSurfaceFormat = static_cast<uint32_t>(packedView.getSurfaceFormat());
+            inputs.packedWidth = packedView.getWidth();
+            inputs.packedTileBpp = NEO::getSurfaceStateOverrideTileBppIfSupported(packedView);
+        }
+        return inputs;
+    };
+
+    auto imageInputs = makeImageSlotInputs();
+    gfxCoreHelper.encodeImageSurfaceState(surfaceStateStorage.data(), imageInputs);
+
+    auto redescribedInputs = makeRedescribedSlotInputs();
+    gfxCoreHelper.encodeImageSurfaceState(redescribedSurfaceStateStorage.data(), redescribedInputs);
+
+    if (context.packedSupported) {
+        auto packedInputs = makePackedSlotInputs();
+        gfxCoreHelper.encodeImageSurfaceState(packedSurfaceStateStorage.data(), packedInputs);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateFull(const SurfaceStateSlotContext &context) {
+
+    const auto *desc = context.desc;
+    auto *gmm = context.gmm;
+    auto *gmmHelper = context.gmmHelper;
+    const auto &surfaceOffsets = *context.surfaceOffsets;
+    const auto &imgInfoRedescirebed = *context.redescribedImageInfo;
+    const auto cubeFaceIndex = context.cubeFaceIndex;
+    const auto numSamplesForSurfaceState = context.numSamples;
+    const bool isMediaFormatLayout = context.isMediaFormatLayout;
+    const bool hasFixedChannelSelect = context.hasFixedChannelSelect;
+    const bool redescribedIsNV12 = context.redescribedIsNV12;
+    const auto surfaceType = context.surfaceType;
+
+    auto programMultisampleSurfaceState = [&](RENDER_SURFACE_STATE *surfaceState) {
+        using NUMBER_OF_MULTISAMPLES = typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES;
+
+        if (numSamplesForSurfaceState <= 1) {
+            surfaceState->setNumberOfMultisamples(NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
+            return;
+        }
+        surfaceState->setNumberOfMultisamples(static_cast<NUMBER_OF_MULTISAMPLES>(this->getMcsMultisampleCount()));
+
+        auto mcsAlloc = this->getMcsAllocation();
+        const bool unifiedMcs = this->getIsUnifiedMcsSurface();
+        if (mcsAlloc != nullptr || unifiedMcs) {
+            auto mcsGmm = mcsAlloc ? mcsAlloc->getDefaultGmm() : gmm;
+            const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+            NEO::EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, hwInfo);
+            surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
+            surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
+            NEO::EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);
+            NEO::ImageSurfaceStateHelper<GfxFamily>::setUnifiedAuxBaseAddress(surfaceState, mcsGmm);
+        } else {
+            using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+            const bool isDepthResource = this->depthStencilImage || (gmm && gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth);
+            if (isDepthResource && surfaceState->getSurfaceFormat() != SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS) {
+                surfaceState->setMultisampledSurfaceStorageFormat(
+                    RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
+            } else {
+                surfaceState->setMultisampledSurfaceStorageFormat(
+                    RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+            }
+        }
+    };
+
+    auto buildFullImageSurfaceState = [&](RENDER_SURFACE_STATE &dst) {
         uint32_t minArrayElement, renderTargetViewExtent, depth;
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&redescribedSurfaceState, imgInfoRedescirebed, gmm, *gmmHelper,
-                                                                      cubeFaceIndex, this->allocation->getGpuAddress(), surfaceOffsets,
-                                                                      desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12, minArrayElement, renderTargetViewExtent);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&dst, imgInfo, gmm, *gmmHelper, cubeFaceIndex,
+                                                                      this->allocation->getGpuAddress(), surfaceOffsets,
+                                                                      isMediaFormatLayout, minArrayElement, renderTargetViewExtent);
 
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&redescribedSurfaceState, imgInfoRedescirebed, cubeFaceIndex, surfaceType, depth);
-        redescribedSurfaceState.setSurfaceMinLOD(0u);
-        redescribedSurfaceState.setMIPCountLOD(0u);
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&redescribedSurfaceState, gmm);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&dst, imgInfo, cubeFaceIndex, surfaceType, depth);
+        dst.setSurfaceMinLOD(0u);
+        dst.setMIPCountLOD(0u);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&dst, gmm);
+
+        if (!hasFixedChannelSelect) {
+            dst.setShaderChannelSelectRed(
+                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
+                    shaderChannelSelect[desc->format.x]));
+            dst.setShaderChannelSelectGreen(
+                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
+                    shaderChannelSelect[desc->format.y]));
+            dst.setShaderChannelSelectBlue(
+                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
+                    shaderChannelSelect[desc->format.z]));
+            dst.setShaderChannelSelectAlpha(
+                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
+                    shaderChannelSelect[desc->format.w]));
+        } else {
+            dst.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
+            dst.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
+            dst.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
+            dst.setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
+        }
+
+        programMultisampleSurfaceState(&dst);
+
+        if (numSamplesForSurfaceState <= 1 && allocation->isCompressionEnabled()) {
+            NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&dst, gmm);
+        }
+
+        if (gmm) {
+            const bool isDepthResource = this->depthStencilImage || gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+            dst.setDepthStencilResource(isDepthResource);
+        }
+    };
+
+    auto buildFullRedescribedSurfaceState = [&](RENDER_SURFACE_STATE &dst) {
+        uint32_t minArrayElement, renderTargetViewExtent, depth;
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&dst, imgInfoRedescirebed, gmm, *gmmHelper,
+                                                                      cubeFaceIndex, this->allocation->getGpuAddress(), surfaceOffsets,
+                                                                      redescribedIsNV12, minArrayElement, renderTargetViewExtent);
+
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&dst, imgInfoRedescirebed, cubeFaceIndex, surfaceType, depth);
+        dst.setSurfaceMinLOD(0u);
+        dst.setMIPCountLOD(0u);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&dst, gmm);
 
         if (imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R8_UINT_TYPE ||
             imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R16_UINT_TYPE ||
             imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R32_UINT_TYPE) {
-            redescribedSurfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
-            redescribedSurfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
-            redescribedSurfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+            dst.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
+            dst.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+            dst.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
         } else if (imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R32G32_UINT_TYPE) {
-            redescribedSurfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
-            redescribedSurfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
-            redescribedSurfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+            dst.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
+            dst.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
+            dst.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
         } else {
-            redescribedSurfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
-            redescribedSurfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
-            redescribedSurfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
+            dst.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
+            dst.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
+            dst.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
         }
 
-        programMultisampleSurfaceState(&redescribedSurfaceState);
+        programMultisampleSurfaceState(&dst);
 
         if (numSamplesForSurfaceState <= 1 && allocation->isCompressionEnabled()) {
-            NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&redescribedSurfaceState, gmm);
+            NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&dst, gmm);
         }
 
         if (gmm) {
             const bool isDepthResource = gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
-            redescribedSurfaceState.setDepthStencilResource(isDepthResource);
+            dst.setDepthStencilResource(isDepthResource);
         }
-    }
+    };
 
-    if (productHelper.isPackedCopyFormatSupported()) {
+    auto &surfaceState = this->getSurfaceState();
+    auto &redescribedSurfaceState = this->getRedescribedSurfaceState();
+    auto &packedSurfaceState = this->getPackedSurfaceState();
+
+    surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    packedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    buildFullImageSurfaceState(surfaceState);
+
+    redescribedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    buildFullRedescribedSurfaceState(redescribedSurfaceState);
+
+    if (context.packedSupported) {
         packedSurfaceState = redescribedSurfaceState;
-
         NEO::EncodeSurfaceState<GfxFamily>::convertSurfaceStateToPacked(&packedSurfaceState, imgInfo);
     }
-
-    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -479,53 +706,38 @@ void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHea
                                                            uint32_t bindlessSlot,
                                                            bool isMediaBlockArg,
                                                            uint32_t mipLevel) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-
-    const RENDER_SURFACE_STATE *src = nullptr;
+    const void *src = nullptr;
 
     switch (bindlessSlot) {
     case NEO::BindlessImageSlot::image:
-        src = &surfaceState;
+        src = surfaceStateStorage.data();
         break;
     case NEO::BindlessImageSlot::redescribedImage:
-        src = &redescribedSurfaceState;
+        src = redescribedSurfaceStateStorage.data();
         break;
     case NEO::BindlessImageSlot::implicitArgs:
-        src = &implicitArgsSurfaceState;
+        src = implicitArgsSurfaceStateStorage.data();
         break;
     case NEO::BindlessImageSlot::packedImage:
-        src = &packedSurfaceState;
+        src = packedSurfaceStateStorage.data();
         break;
     default:
         UNRECOVERABLE_IF(true);
     }
 
     auto dst = ptrOffset(surfaceStateHeap, surfaceStateOffset);
-    memcpy_s(dst, sizeof(RENDER_SURFACE_STATE), src, sizeof(RENDER_SURFACE_STATE));
+    const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+    const size_t stateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
 
-    if (imgInfo.mipCount > 1u && (bindlessSlot == NEO::BindlessImageSlot::image ||
-                                  bindlessSlot == NEO::BindlessImageSlot::redescribedImage ||
-                                  bindlessSlot == NEO::BindlessImageSlot::packedImage)) {
-        auto *dstRss = static_cast<RENDER_SURFACE_STATE *>(dst);
-        const uint32_t mipCountLod = imgInfo.mipCount > 0u ? imgInfo.mipCount - 1u : 0u;
-        const uint32_t clampedMip = std::min(mipLevel, mipCountLod);
+    memcpy_s(dst, stateSize, src, stateSize);
 
-        dstRss->setSurfaceMinLOD(clampedMip);
-        dstRss->setMIPCountLOD(mipCountLod);
-
-        if (this->allocation != nullptr) {
-            auto *gmm = this->allocation->getDefaultGmm();
-            if (gmm != nullptr) {
-                NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(dstRss, gmm);
-            }
-        }
+    if (bindlessSlot == NEO::BindlessImageSlot::implicitArgs) {
+        return;
     }
 
-    if (isMediaBlockArg) {
-        RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(dst);
-        NEO::ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(dstRss, imgInfo);
-    }
+    auto *gmm = (this->allocation != nullptr) ? this->allocation->getDefaultGmm() : nullptr;
+    gfxCoreHelper.applyImageSurfaceStateMipAndMediaBlock(dst, imgInfo, gmm, mipLevel, isMediaBlockArg, rootDeviceEnvironment);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -547,7 +759,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeImplicitArgsSurfaceState() {
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
 
     NEO::EncodeSurfaceStateArgs encodeArgs;
-    encodeArgs.outMemory = &implicitArgsSurfaceState;
+    encodeArgs.outMemory = implicitArgsSurfaceStateStorage.data();
     encodeArgs.size = NEO::ImageImplicitArgs::getSize();
     encodeArgs.graphicsAddress = implicitArgsAllocation->getGpuAddress();
     encodeArgs.gmmHelper = gmmHelper;

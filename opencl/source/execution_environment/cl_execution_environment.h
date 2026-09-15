@@ -8,9 +8,7 @@
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
 
-#include <mutex>
 #include <utility>
-#include <vector>
 
 namespace NEO {
 

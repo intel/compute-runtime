@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     }
     ze_result_t getProperties(zes_engine_properties_t &properties) override;
     bool isEngineModuleSupported() override;
+    void reInit() override;
     static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
     LinuxEngineImp() = default;
     LinuxEngineImp(OsSysman *pOsSysman, MapOfEngineInfo &mapEngineInfo, zes_engine_group_t type, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubDevice);

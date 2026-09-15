@@ -252,7 +252,6 @@ WslComputeHelperGmmHandleAllocator::WslComputeHelperGmmHandleAllocator(WslComput
 void *WslComputeHelperGmmHandleAllocator::createHandle(const GMM_RESOURCE_INFO *gmmResourceInfo) {
     size_t sizeU64 = (translator->getSizeForGmmResourceInfoInternalRepresentation() + sizeof(uint64_t) - 1) / sizeof(uint64_t);
     auto ret = std::make_unique<uint64_t[]>(sizeU64);
-    memset(ret.get(), 0, sizeU64 * sizeof(uint64_t));
     translator->translateGmmResourceInfoToInternalRepresentation(ret.get(), sizeU64 * sizeof(uint64_t), *gmmResourceInfo);
 
     return ret.release();

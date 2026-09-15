@@ -39,10 +39,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
   target_link_libraries(igdrcl_mt_tests neo_gtest)
   target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${NEO_EXTRA_LIBS})
 
-  add_dependencies(igdrcl_mt_tests
-                   prepare_test_kernels_for_shared
-                   prepare_test_kernels_for_ocl
-  )
   create_project_source_tree(igdrcl_mt_tests)
 
   set_target_properties(igdrcl_mt_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})

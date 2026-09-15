@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ class WddmStandbyImp : public OsStandby {
     ze_result_t setMode(zes_standby_promo_mode_t mode) override;
     ze_result_t osStandbyGetProperties(zes_standby_properties_t &properties) override;
     bool isStandbySupported(void) override;
+    void reInit() override {}
 };
 
 ze_result_t WddmStandbyImp::setMode(zes_standby_promo_mode_t mode) {

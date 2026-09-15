@@ -18,6 +18,8 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel_info_cl.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 
 namespace NEO {
 namespace LEO {
@@ -28,7 +30,7 @@ Kernel::Kernel(std::map<uint32_t, ze_kernel_handle_t> kernelHandles, Program *pr
     program->incRefInternal();
 }
 
-Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), program(sourceKernel->program), executionType(sourceKernel->executionType) {
+Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), sharedObjArgs(sourceKernel->sharedObjArgs), program(sourceKernel->program), executionType(sourceKernel->executionType) {
     for (const auto &[rootDeviceIndex, kernelHandle] : sourceKernel->kernelHandles) {
         this->kernelHandles[rootDeviceIndex] = static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle))->makeDependentClone().release();
     }
@@ -359,6 +361,7 @@ cl_int Kernel::getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWo
     if (this->kernelHandles.empty()) {
         return CL_INVALID_KERNEL;
     }
+    auto lock = this->takeOwnership();
     auto kernelHandle = this->getL0Handle();
 
     Vec3<uint32_t> globalSize{1, 1, 1};
@@ -401,7 +404,40 @@ cl_int Kernel::setArgumentValue(uint32_t argIndex, size_t argSize, const void *a
     return result;
 }
 
+void Kernel::setSharedObjArg(uint32_t argIndex, Buffer *buffer) {
+    if (buffer->peekSharingHandler()) {
+        this->sharedObjArgs[argIndex] = buffer;
+    } else {
+        this->sharedObjArgs.erase(argIndex);
+    }
+}
+
+void Kernel::resetSharedObjectsPatchAddresses() {
+    for (const auto &[argIndex, buffer] : this->sharedObjArgs) {
+        const auto ptr = buffer->getUsmPtr();
+        this->setArgumentValue(argIndex, sizeof(ptr), &ptr);
+    }
+}
+
+cl_int Kernel::validateImmediateArgSize(uint32_t argIndex, size_t argSize) const {
+    auto l0Kernel = getL0Object();
+    l0Kernel->populateMetadata();
+
+    const auto &extendedMetadata = l0Kernel->getKernelDescriptor().explicitArgsExtendedMetadata;
+    if (argIndex >= extendedMetadata.size()) {
+        return CL_SUCCESS;
+    }
+
+    const auto requiredArgSize = extendedMetadata[argIndex].typeSize;
+    if (requiredArgSize != 0u && argSize < requiredArgSize) {
+        return CL_INVALID_ARG_SIZE;
+    }
+
+    return CL_SUCCESS;
+}
+
 cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
+    auto lock = this->takeOwnership();
     cl_int result = CL_SUCCESS;
     if (CL_TRUE == val) {
         for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
@@ -415,8 +451,8 @@ cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
 }
 
 cl_int Kernel::setThreadArbitrationPolicy(uint32_t flag) {
-    ze_scheduling_hint_exp_desc_t schedulingDesc;
-    schedulingDesc.flags = NEO::LEO::Kernel::schedulingHintToL0(flag);
+    auto lock = this->takeOwnership();
+    ze_scheduling_hint_exp_desc_t schedulingDesc{ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC, nullptr, NEO::LEO::Kernel::schedulingHintToL0(flag)};
     cl_int result = CL_SUCCESS;
     for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
         auto ret = L0ToClResultMapper(zeKernelSchedulingHintExp(kernelHandle, &schedulingDesc));
@@ -455,6 +491,7 @@ ze_scheduling_hint_exp_flags_t Kernel::schedulingHintToL0(uint32_t arbitrationPo
 }
 
 cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel type) {
+    auto lock = this->takeOwnership();
     switch (type) {
     case CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL:
         this->executionType = NEO::KernelExecutionType::defaultType;

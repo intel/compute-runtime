@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include <iterator>
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
@@ -3305,4 +3306,72 @@ TEST(ReserveBasedOnEstimates, WhenContainerFullThenGrowBasedOnPos) {
     bool reservedAdditionalMem = reserveBasedOnEstimates(container, beg, end, pos);
     EXPECT_TRUE(reservedAdditionalMem);
     EXPECT_EQ(280U, container.capacity());
+}
+
+TEST(ReserveBasedOnEstimates, WhenContainerFullAndEstimateRoundsDownToCapacityThenGrowGeometrically) {
+    StackVec<int, 7> container;
+    container.resize(7U);
+    ASSERT_EQ(container.capacity(), container.size());
+    size_t beg = 0U;
+    size_t pos = 995U; // extrapolation multiplier ~1.005 -> estimate rounds down to current capacity
+    size_t end = 1000U;
+    bool reservedAdditionalMem = reserveBasedOnEstimates(container, beg, end, pos);
+    EXPECT_TRUE(reservedAdditionalMem);
+    EXPECT_GT(container.capacity(), 7U); // must still grow so the next insert has room
+    EXPECT_EQ(14U, container.capacity());
+}
+
+TEST(YamlParser, GivenInlineCollectionOnLateLineThenAllElementsAreParsed) {
+    // Large inline collection appearing on a late line.
+    constexpr size_t leadingPaddingLines = 1500U;
+    constexpr size_t inlineElements = 700U;
+    std::string yaml = "---\n";
+    for (size_t i = 0; i < leadingPaddingLines; ++i) {
+        yaml += "# padding\n";
+    }
+    yaml += "caps:            [";
+    for (size_t i = 0; i < inlineElements; ++i) {
+        if (i != 0) {
+            yaml += ", ";
+        }
+        yaml += std::to_string(i);
+    }
+    yaml += "]\n";
+    yaml += "...\n";
+
+    NEO::Yaml::YamlParser parser;
+    std::string errReason, warning;
+    bool success = parser.parse(yaml, errReason, warning);
+    ASSERT_TRUE(success) << errReason;
+    EXPECT_TRUE(errReason.empty()) << errReason;
+
+    const auto *capsNode = parser.findNodeWithKeyDfs("caps");
+    ASSERT_NE(nullptr, capsNode);
+    auto childrenRange = parser.createChildrenRange(*capsNode);
+    EXPECT_EQ(inlineElements, static_cast<size_t>(std::distance(childrenRange.begin(), childrenRange.end())));
+}
+
+TEST(YamlParser, GivenManyMixedSiblingListItemsThenAllAreParsed) {
+    // Mixed sibling list items (some with a value, some without).
+    constexpr size_t items = 4000U;
+    std::string yaml = "---\n";
+    for (size_t i = 0; i < items; ++i) {
+        if (0 == (i & 1U)) {
+            yaml += "- k" + std::to_string(i) + ": v" + std::to_string(i) + "\n";
+        } else {
+            yaml += "- v" + std::to_string(i) + "\n";
+        }
+    }
+    yaml += "...\n";
+
+    NEO::Yaml::YamlParser parser;
+    std::string errReason, warning;
+    bool success = parser.parse(yaml, errReason, warning);
+    ASSERT_TRUE(success) << errReason;
+    EXPECT_TRUE(errReason.empty()) << errReason;
+
+    const auto *root = parser.getRoot();
+    ASSERT_NE(nullptr, root);
+    auto childrenRange = parser.createChildrenRange(*root);
+    EXPECT_EQ(items, static_cast<size_t>(std::distance(childrenRange.begin(), childrenRange.end())));
 }

@@ -44,10 +44,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCalli
     constexpr uint64_t counterValue = 4;
     constexpr uint64_t incValue = 2;
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
     auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
@@ -100,10 +96,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCalli
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptModeEnabledWhenDispatchingWalkerWithRegularEventAndNonInOrderCmdListThenSetPostSyncInterruptEnabled, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     auto eventPool = createEvents<FamilyType>(1, false);
 
@@ -170,10 +162,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenAtomicSignallingEnabledWhenD
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
     debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);
@@ -237,9 +225,9 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenAtomicSignallingEnabledWhenD
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData.getOperation());
         } else {
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, postSyncData.getOperation());
-            EXPECT_EQ(POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B, postSyncData.getAtomicOpcode());
+            EXPECT_EQ(POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, postSyncData.getAtomicOpcode());
             EXPECT_EQ(POSTSYNC_DATA_2::ATOMIC_DATA_SIZE_QWORD, postSyncData.getAtomicDataSize());
-            EXPECT_EQ(0u, postSyncData.getImmediateData());
+            EXPECT_EQ(1u, postSyncData.getImmediateData());
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSyncData.getDestinationAddress());
             EXPECT_TRUE(postSyncData.getDataportPipelineFlush());
             EXPECT_TRUE(postSyncData.getDataportSubsliceCacheFlush());
@@ -253,13 +241,111 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenAtomicSignallingEnabledWhenD
     }
 }
 
-HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchingWalkerThenSetCorrectPostSyncFields, IsAtLeastXe3pCore) {
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenSkippedWalkerPostSyncWhenProgrammingNextWalkerThenAddSkippedCounterValues, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_TRUE(immCmdList->isWalkerPostSyncSkipEnabled);
+    ASSERT_TRUE(immCmdList->inOrderExecInfo->isAtomicDeviceSignalling());
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(0u, immCmdList->inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_TRUE(immCmdList->isInOrderCounterSignalPending());
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    int client1, client2;
+    ultCsr->registerClient(&client1);
+    ultCsr->registerClient(&client2);
+    ASSERT_GE(ultCsr->getNumClients(), 2u);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_EQ(3u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(3u, immCmdList->inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_FALSE(immCmdList->isInOrderCounterSignalPending());
+
+    GenCmdList commands;
+    ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto &postSyncData = genCmdCast<DefaultWalkerType *>(*itor)->getPostSync();
+
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, postSyncData.getOperation());
+    EXPECT_EQ(POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, postSyncData.getAtomicOpcode());
+    EXPECT_EQ(POSTSYNC_DATA_2::ATOMIC_DATA_SIZE_QWORD, postSyncData.getAtomicDataSize());
+    EXPECT_EQ(3u, postSyncData.getImmediateData());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSyncData.getDestinationAddress());
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenSkippedWalkerPostSyncAndDuplicatedCounterStorageWhenProgrammingNextWalkerThenSignalDeviceAndHostCounters, IsAtLeastXe3pCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
+
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_TRUE(immCmdList->isWalkerPostSyncSkipEnabled);
+    ASSERT_TRUE(immCmdList->inOrderExecInfo->isAtomicDeviceSignalling());
+    ASSERT_TRUE(immCmdList->inOrderExecInfo->isHostStorageDuplicated());
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(0u, immCmdList->inOrderExecInfo->getProgrammedCounterValue());
+    ASSERT_TRUE(immCmdList->isInOrderCounterSignalPending());
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    int client1, client2;
+    ultCsr->registerClient(&client1);
+    ultCsr->registerClient(&client2);
+
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_EQ(3u, immCmdList->inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(3u, immCmdList->inOrderExecInfo->getProgrammedCounterValue());
+    EXPECT_FALSE(immCmdList->isInOrderCounterSignalPending());
+
+    GenCmdList commands;
+    ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto walker = genCmdCast<DefaultWalkerType *>(*itor);
+    auto &devicePostSync = walker->getPostSync();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, devicePostSync.getOperation());
+    EXPECT_EQ(3u, devicePostSync.getImmediateData());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), devicePostSync.getDestinationAddress());
+
+    auto &hostPostSync = walker->getPostSyncOpn1();
+    EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, hostPostSync.getOperation());
+    EXPECT_EQ(3u, hostPostSync.getImmediateData());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseHostGpuAddress(), hostPostSync.getDestinationAddress());
+}
+
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchingWalkerThenSetCorrectPostSyncFields, IsAtLeastXe3pCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
 
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
@@ -397,10 +483,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventWhenDispatchingWalkerThenSetCorrectPostSyncFields, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);
@@ -579,10 +661,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDuplicatedHostStorageEnabled
 
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     auto eventPool = createEvents<FamilyType>(1, false);
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -633,10 +711,6 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDuplicatedHostStorageEnabled
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDebugFlagSetWhenSettingPostSyncsThenEnableSerialization, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
-
     debugManager.flags.SerializeWalkerPostSyncOps.set(1);
 
     auto eventPool = createEvents<FamilyType>(1, false);
@@ -682,10 +756,6 @@ struct MultiTileInOrderCmdListTestsXe3pCoreAndLater : public InOrderCmdListTests
 HWTEST2_F(MultiTileInOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWhenAppendCalledThenProgramIncOperation, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     uint64_t counterValue = 4;
     uint64_t incValue = 2 * partitionCount;
@@ -763,10 +833,6 @@ HWTEST2_F(MultiTileInOrderCmdListTestsXe3pCoreAndLater, givenSyncDispatchEnabled
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWhenAppendCalledThenProgramIncOperation, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
-
-    if (!device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
 
     uint64_t counterValue = 4;
     uint64_t incValue = 2;
@@ -898,7 +964,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3pAndLater, givenHeaplessModeWhenAppend
     context->freeMem(alloc);
 }
 
-HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnParse, IsAtLeastXe3pCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto prodCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto consCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -907,7 +973,16 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhe
     prodCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     auto event = events[0]->toHandle();
-    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;
@@ -916,7 +991,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhe
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
+    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED);
 }
 
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenHighPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
@@ -929,7 +1004,16 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenHighPriorityCommandListWhenA
 
     device->getNEODevice()->getDefaultEngine().osContext->overrideEngineUsage(NEO::EngineUsage::highPriority);
     auto event = events[0]->toHandle();
-    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;
@@ -941,7 +1025,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenHighPriorityCommandListWhenA
     EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
 }
 
-HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorityCommandListWhenAppendWaitOnEventThenSwitchOnParse, IsAtLeastXe3pCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto prodCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto consCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -951,7 +1035,16 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorit
     prodCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
 
     auto event = events[0]->toHandle();
-    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;
@@ -960,7 +1053,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorit
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL);
+    EXPECT_EQ(cmd->getQueueSwitchMode(), MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED);
 }
 
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndHighPriorityCommandListWhenAppendWaitOnEventThenSwitchOnUnsuccessful, IsAtLeastXe3pCore) {
@@ -974,7 +1067,16 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndHighPriorityC
 
     device->getNEODevice()->getDefaultEngine().osContext->overrideEngineUsage(NEO::EngineUsage::highPriority);
     auto event = events[0]->toHandle();
-    returnValue = consCmdList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;

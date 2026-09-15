@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_kernel_fixture.h"
 
 extern bool generateRandomInput;
 

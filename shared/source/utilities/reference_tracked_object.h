@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,8 @@ class unique_ptr_if_unused : // NOLINT(readability-identifier-naming)
     }
 
     template <typename DT = DataType>
-    static typename std::enable_if_t<std::is_base_of_v<ReferenceTrackedObject<DataType>, DT>, DeleterFuncType> getObjDeleter(DataType *inPtr) {
+        requires(std::is_base_of_v<ReferenceTrackedObject<DataType>, DT>)
+    static DeleterFuncType getObjDeleter(DataType *inPtr) {
         if (inPtr != nullptr) {
             return inPtr->getCustomDeleter();
         }
@@ -89,7 +90,8 @@ class unique_ptr_if_unused : // NOLINT(readability-identifier-naming)
     }
 
     template <typename DT = DataType>
-    static typename std::enable_if_t<!std::is_base_of_v<ReferenceTrackedObject<DataType>, DT>, DeleterFuncType> getObjDeleter(DataType *inPtr) {
+        requires(!std::is_base_of_v<ReferenceTrackedObject<DataType>, DT>)
+    static DeleterFuncType getObjDeleter(DataType *inPtr) {
         return nullptr;
     }
 

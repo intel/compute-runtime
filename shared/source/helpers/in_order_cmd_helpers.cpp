@@ -157,6 +157,7 @@ void InOrderExecInfo::reset() {
 
 void InOrderExecInfo::resetCounterValue() {
     counterValue = getInitialCounterValue();
+    programmedCounterValue = counterValue;
     resetLastWaitedCounterValue();
 
     if (getInterruptFence() != nullptr) {
@@ -290,8 +291,10 @@ void InOrderExecEventHelper::assignData(uint64_t counterValue, uint32_t counterO
 
     this->patchPreambleCounterCpuAddress = nullptr;
     this->patchPreambleCounter = 0;
-    this->patchPreambleDeviceAddress = 0;
-    this->patchPreambleCounterAllocation = nullptr;
+    this->patchPreambleHostGpuAddress = 0;
+    this->patchPreambleHostAllocation = nullptr;
+    this->patchPreambleDeviceGpuAddress = 0;
+    this->patchPreambleDeviceAllocation = nullptr;
 
     dataAssigned = true;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,10 @@ inline static ssize_t openReadReturnFailure(int fd, void *data, size_t sizeOfdat
     return -1;
 }
 
+inline static ssize_t openReadReturnShort(int fd, void *data, size_t sizeOfdata) {
+    return sizeOfdata - sizeof(uint64_t);
+}
+
 inline static long int syscallReturnSuccess(long int sysNo, ...) noexcept {
     return mockPmuFd;
 }
@@ -70,7 +74,21 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingThenFailureIsReturned) {
     pmuInterface->readFunction = openReadReturnFailure;
     int validFd = 10;
     uint64_t data[2];
+
+    errno = EACCES; // errno as set by the failing read()
     EXPECT_EQ(-1, pmuInterface->pmuRead(validFd, data, sizeof(data)));
+    EXPECT_EQ(EACCES, errno); // pmuRead must not overwrite it, only a short read sets EIO
+}
+
+TEST_F(SysmanPmuFixture, GivenShortReadWhenCallingPmuReadThenErrnoIsSetToIoError) {
+    auto pmuInterface = std::make_unique<MockPmuInterfaceImpForSysman>(pLinuxSysmanImp);
+    pmuInterface->readFunction = openReadReturnShort;
+    int validFd = 10;
+    uint64_t data[2];
+
+    errno = 0;
+    EXPECT_EQ(-1, pmuInterface->pmuRead(validFd, data, sizeof(data)));
+    EXPECT_EQ(EIO, errno);
 }
 
 TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEventOpenSucceedsThenVaildFdIsReturned) {
@@ -87,6 +105,14 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEv
     bool isIntegratedDevice = true;
     pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
     EXPECT_EQ(mockPmuFd, pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED));
+}
+
+TEST_F(SysmanPmuFixture, GivenUnavailablePmuEventTypeWhenCallingPmuInterfaceOpenThenErrnoIsSetToNotAvailable) {
+    uint64_t config = 10;
+
+    errno = 0;
+    EXPECT_EQ(-ENOENT, pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED));
+    EXPECT_EQ(ENOENT, errno);
 }
 
 TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenReadingGroupOfEventsUsingGroupFdThenSuccessIsReturned) {

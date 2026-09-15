@@ -6,10 +6,11 @@
  */
 
 #pragma once
+#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
 
 namespace L0 {
 struct CmdListHostFunctionParameters {
-    bool relaxedOrderingDispatch = false;
+    CmdListWaitEventParameters waitEventParams{};
     bool memorySynchronizationRequired = true;
 };
 

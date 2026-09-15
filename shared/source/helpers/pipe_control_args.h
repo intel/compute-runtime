@@ -9,6 +9,11 @@
 
 namespace NEO {
 
+namespace QueueDrainMode {
+constexpr bool drainAllQueues = false;
+constexpr bool drainOnlyCurrentQueue = true;
+} // namespace QueueDrainMode
+
 struct PipeControlArgs {
     PipeControlArgs() = default;
     void *postSyncCmd = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -103,13 +103,13 @@ void testProgrammingStateComputeModeXeLpgWithDisabledWa(ExecutionEnvironment &ex
 using CommandEncoderXeHpgTests = ::testing::Test;
 
 HWTEST2_F(CommandEncoderXeHpgTests, whenProgrammingStateComputeModeThenProperFieldsAreSet, IsXeLpg) {
-    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_U_A0, AOT::MTL_U_B0, AOT::MTL_H_A0, AOT::MTL_H_B0, AOT::ARL_H_A0, AOT::ARL_H_B0};
-    for (auto &ipRelease : ipReleases) {
+    for (auto stateComputeCommandWARequired : {true, false}) {
 
         MockExecutionEnvironment executionEnvironment{};
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-        rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(ipRelease);
-        if (rootDeviceEnvironment.releaseHelper->isProgramAllStateComputeCommandFieldsWARequired()) {
+        auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+        hwInfo->caps.programAllStateComputeCommandFieldsWARequired = stateComputeCommandWARequired;
+        if (hwInfo->caps.programAllStateComputeCommandFieldsWARequired) {
             testProgrammingStateComputeModeXeLpgWithEnabledWa(executionEnvironment);
         } else {
             testProgrammingStateComputeModeXeLpgWithDisabledWa(executionEnvironment);

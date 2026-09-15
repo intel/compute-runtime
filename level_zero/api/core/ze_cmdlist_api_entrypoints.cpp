@@ -7,13 +7,30 @@
 
 #include "level_zero/api/core/ze_cmdlist_api_entrypoints.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 
 namespace L0 {
+
+namespace ApiTemplateValues {
+
+const static CmdListWaitEventParameters defaultWaitEventsParameters{
+    .outWaitCmds = nullptr,
+    .relaxedOrderingAllowed = false,
+    .trackDependencies = true,
+    .waitForImplicitInOrderDependency = false,
+    .skipAddingWaitEventsToResidency = false,
+    .dualStreamCopyOffloadOperation = false,
+    .apiRequest = true,
+    .skipFlush = false};
+
+} // namespace ApiTemplateValues
 
 ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
@@ -76,8 +93,15 @@ ze_result_t ZE_APICALL zeCommandListAppendWriteGlobalTimestamp(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    return cmdList->appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
@@ -94,8 +118,16 @@ ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    return cmdList->appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 }
 
 ze_result_t ZE_APICALL zeCommandListGetDeviceHandle(
@@ -271,8 +303,8 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryCopyWithParameters(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
@@ -290,9 +322,81 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (false == Math::isPow2(patternSize)) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+    if (size % patternSize != 0) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+    CmdListMemoryCopyParams memoryCopyParams{};
+    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
+
+ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
+    ze_command_list_handle_t hCommandList,
+    ze_event_handle_t hEvent) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendSignalEvent>(hCommandList, hEvent);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendSignalEvent(hEvent, false);
+}
+
+ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numEvents,
+    ze_event_handle_t *phEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWaitOnEvents>(hCommandList, numEvents, phEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    CmdListWaitEventParameters waitEventsParameters = ApiTemplateValues::defaultWaitEventsParameters;
+    return cmdList->appendWaitOnEvents(numEvents, phEvents, waitEventsParameters);
+}
+
+ze_result_t ZE_APICALL zeCommandListAppendEventReset(
+    ze_command_list_handle_t hCommandList,
+    ze_event_handle_t hEvent) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendEventReset>(hCommandList, hEvent);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendEventReset(hEvent);
+}
+
+ze_result_t ZE_APICALL zeCommandListAppendSignalEventWithParameters(
+    ze_command_list_handle_t hCommandList,
+    const void *pNext,
+    ze_event_handle_t hEvent) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendSignalEventWithParameters>(hCommandList, pNext, hEvent);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+    return cmdList->appendSignalEvent(hEvent, false);
+}
+
+ze_result_t ZE_APICALL zeCommandListAppendWaitOnEventsWithParameters(
+    ze_command_list_handle_t hCommandList,
+    const void *pNext,
+    uint32_t numEvents,
+    ze_event_handle_t *phEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(hCommandList, pNext, numEvents, phEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    CmdListWaitEventParameters waitEventsParameters = ApiTemplateValues::defaultWaitEventsParameters;
+    return cmdList->appendWaitOnEvents(numEvents, phEvents, waitEventsParameters);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -551,4 +655,46 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
     return L0::zeCommandListAppendHostFunction(
         hCommandList, pfnHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
+    ze_command_list_handle_t hCommandList,
+    ze_event_handle_t hEvent) {
+    return L0::zeCommandListAppendSignalEvent(
+        hCommandList,
+        hEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numEvents,
+    ze_event_handle_t *phEvents) {
+    return L0::zeCommandListAppendWaitOnEvents(
+        hCommandList,
+        numEvents,
+        phEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendEventReset(
+    ze_command_list_handle_t hCommandList,
+    ze_event_handle_t hEvent) {
+    return L0::zeCommandListAppendEventReset(
+        hCommandList,
+        hEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalEventWithParameters(
+    ze_command_list_handle_t hCommandList,
+    const void *pNext,
+    ze_event_handle_t hEvent) {
+    return L0::zeCommandListAppendSignalEventWithParameters(hCommandList, pNext, hEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitOnEventsWithParameters(
+    ze_command_list_handle_t hCommandList,
+    const void *pNext,
+    uint32_t numEvents,
+    ze_event_handle_t *phEvents) {
+    return L0::zeCommandListAppendWaitOnEventsWithParameters(hCommandList, pNext, numEvents, phEvents);
+}
+
 } // extern "C"

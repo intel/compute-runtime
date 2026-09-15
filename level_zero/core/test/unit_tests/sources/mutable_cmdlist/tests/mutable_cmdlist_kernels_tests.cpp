@@ -14,6 +14,8 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/software_tags.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -37,6 +39,7 @@ namespace ult {
 
 using MutableCommandListKernelTest = Test<MutableCommandListFixture<false, -1>>;
 using MutableCommandListKernelInOrderTest = Test<MutableCommandListFixture<true, -1>>;
+using MutableCommandListKernelSWTagsTest = Test<MutableCommandListSWTagsFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
@@ -594,9 +597,10 @@ HWTEST2_F(MutableCommandListKernelTest,
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize() - expectedIohPrefetchSize,
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
 
-    auto maxIsaSize = std::min(mutation.kernelGroup->getMaxIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
+    auto &productHelper = this->device->getProductHelper();
+    auto maxIsaSize = productHelper.getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
-    uint32_t expectedIsaPrefetchSize = std::min(kernel->getImmutableData()->getIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
+    uint32_t expectedIsaPrefetchSize = productHelper.getIsaPrefetchSize(kernel->getImmutableData()->getIsaSize());
     size_t expectedIsaPrefetchPadding =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(maxIsaSize - expectedIsaPrefetchSize,
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
@@ -695,8 +699,7 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
-    uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
-    auto groupMaxIsaSizeToPrefetch = std::min(mutation.kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
+    auto groupMaxIsaSizeToPrefetch = this->device->getProductHelper().getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
     auto expectedMaxSize =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(),
@@ -783,8 +786,7 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
-    uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
-    auto groupMaxIsaSizeToPrefetch = std::min(mutation.kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
+    auto groupMaxIsaSizeToPrefetch = this->device->getProductHelper().getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
     auto expectedMaxSize =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(),
@@ -868,8 +870,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto &prefetchCmdToPatch = mutation.kernelGroup->getPrefetchCmd();
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
-    uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
-    auto groupMaxIsaSizeToPrefetch = std::min(mutation.kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
+    auto groupMaxIsaSizeToPrefetch = this->device->getProductHelper().getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
     auto expectedMaxSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(), this->device->getNEODevice()->getRootDeviceEnvironment()) +
                            NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, this->device->getNEODevice()->getRootDeviceEnvironment());
@@ -984,8 +985,8 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     auto &kernelsInGroup = mutation.kernelGroup->getKernelsInGroup();
     ASSERT_EQ(2u, kernelsInGroup.size());
-    mutableCommandList->updateCmdListScratchPatchCommand(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker());
-    mutableCommandList->updateScratchAddress(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker());
+    mutableCommandList->updateCmdListScratchPatchCommand(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker(), nullptr);
+    mutableCommandList->updateScratchAddress(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker(), nullptr);
 
     auto scratchPatchAddress = mutableCommandList->getCurrentScratchPatchAddress(scratchPatchIndex);
     EXPECT_EQ(0u, scratchPatchAddress);
@@ -1147,6 +1148,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     size_t noopSpace = NEO::KernelHelper::getSyncBufferSize(4);
     EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+    size_t expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(noopSpace);
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     auto syncBufferAllocation = mutationPrivateFirst.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBuffer;
 
@@ -1168,6 +1171,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1198,6 +1202,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, specialKernelGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1210,6 +1215,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     syncBufferAllocation = mutationSlmFirst.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBuffer;
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
@@ -1230,6 +1240,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1249,6 +1260,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1268,6 +1280,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1315,6 +1328,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto requiredSize = NEO::KernelHelper::getSyncBufferSize(4);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
+    size_t expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredSize);
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 
     size_t oldOffset = offset;
     void *oldCpuPtr = cpuPtr;
@@ -1357,6 +1372,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(oldOffset, offset);
     EXPECT_NE(oldCpuPtr, cpuPtr);
     EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredSize);
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1805,6 +1826,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(oldOffset, offset);
     EXPECT_EQ(oldPatchSize, mutableCommandList->base->getTotalNoopSpace());
 
+    size_t expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(oldPatchSize);
+    EXPECT_EQ(expectedPatchSize, mutableCommandList->base->getTotalNoopSpacePatchSize());
+
     // old offset and old gpu sync address in cross-thread data
     memcpy(&syncBufferGpuPatchAddress, syncBufferAddress, sizeof(uint64_t));
 
@@ -1822,6 +1846,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     resizeKernelArg(2);
     prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
     prepareKernelArg(1, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+
+    constexpr uint32_t inlineSlmSize = 256;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.slmInlineSize = inlineSlmSize;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.slmInlineSize = inlineSlmSize;
 
     uint32_t slmSize = 512;
 
@@ -1863,10 +1891,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto kernel2SlmBufferVariable1 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->desc.slmValue.slmSize);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->desc.slmValue.slmOffsetValue);
+    EXPECT_EQ(0u, kernel2SlmBufferVariable1->desc.slmValue.slmBaseOffset);
 
-    auto kernel2SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
+    auto kernel2SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[1]);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->desc.slmValue.slmSize);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->desc.slmValue.slmOffsetValue);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->desc.slmValue.slmBaseOffset);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1911,6 +1941,153 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto kernel1SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[1]);
     EXPECT_EQ(slmSize2, kernel1SlmBufferVariable2->desc.slmValue.slmSize);
     EXPECT_EQ(slmSize1, kernel1SlmBufferVariable2->desc.slmValue.slmOffsetValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenRuntimeAdjustedSlmAllocationModeWithInlineSlmWhenMutatingKernelAndLocalArgumentsInReverseOrderThenLocalArgumentOffsetsIncludeInlineSlm) {
+    constexpr uint32_t inlineSlmSize = 256;
+    constexpr size_t initialSlmArg0Size = 512;
+    constexpr size_t initialSlmArg1Size = 256;
+    constexpr size_t mutatedSlmArg0Size = 1024;
+    constexpr size_t mutatedSlmArg1Size = 512;
+
+    resizeKernelArg(2);
+    prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+    prepareKernelArg(1, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+
+    for (auto kernelImmData : {mockKernelImmData.get(), mockKernelImmData2.get()}) {
+        auto &kernelDescriptor = *kernelImmData->kernelDescriptor;
+        kernelDescriptor.kernelAttributes.slmInlineSize = inlineSlmSize;
+        kernelDescriptor.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+    }
+    mockKernelImmData->kernelDescriptor->patchOffsetInSlmIfRequired(kernel->getCrossThreadDataSpan());
+    mockKernelImmData2->kernelDescriptor->patchOffsetInSlmIfRequired(kernel2->getCrossThreadDataSpan());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, initialSlmArg1Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel2->setArgBuffer(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel2->setArgBuffer(1, initialSlmArg1Size, nullptr));
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_kernel_argument_exp_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_exp_desc_t slmArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    slmArg0.argIndex = 0;
+    slmArg0.argSize = mutatedSlmArg0Size;
+    slmArg0.commandId = commandId;
+    slmArg0.pArgValue = nullptr;
+    slmArg1.argIndex = 1;
+    slmArg1.argSize = mutatedSlmArg1Size;
+    slmArg1.commandId = commandId;
+    slmArg1.pArgValue = nullptr;
+    slmArg1.pNext = &slmArg0;
+    mutableCommandsDesc.pNext = &slmArg1;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    auto kernelDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    auto ioh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
+    auto crossThreadData = reinterpret_cast<uint8_t *>(ptrOffset(ioh->getCpuBase(), kernelDispatch->offsets.crossThreadOffset));
+    const auto &explicitArgs = mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs;
+    const auto arg0SlmOffset = explicitArgs[0].as<NEO::ArgDescPointer>().slmOffset;
+    const auto arg1SlmOffset = explicitArgs[1].as<NEO::ArgDescPointer>().slmOffset;
+
+    EXPECT_EQ(inlineSlmSize, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, arg0SlmOffset)));
+    EXPECT_EQ(inlineSlmSize + mutatedSlmArg0Size, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, arg1SlmOffset)));
+
+    constexpr uint32_t expectedSlmTotalSize = 2 * MemoryConstants::kiloByte;
+    EXPECT_EQ(expectedSlmTotalSize, kernelDispatch->slmTotalSizePerThreadGroup);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenRuntimeAdjustedSlmAllocationModeWithInlineSlmWhenMutatingToKernelWithUnsetLocalArgumentsThenLocalArgumentOffsetsIncludeInlineSlm) {
+    constexpr uint32_t inlineSlmSize = 256;
+    constexpr size_t initialSlmArg0Size = 512;
+    constexpr size_t initialSlmArg1Size = 256;
+    constexpr size_t mutatedSlmArg0Size = 1024;
+    constexpr size_t mutatedSlmArg1Size = 512;
+
+    resizeKernelArg(2);
+    prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+    prepareKernelArg(1, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+
+    for (auto kernelImmData : {mockKernelImmData.get(), mockKernelImmData2.get()}) {
+        auto &kernelDescriptor = *kernelImmData->kernelDescriptor;
+        kernelDescriptor.kernelAttributes.slmInlineSize = inlineSlmSize;
+        kernelDescriptor.kernelAttributes.slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::runtimeAdjusted;
+    }
+    mockKernelImmData->kernelDescriptor->patchOffsetInSlmIfRequired(kernel->getCrossThreadDataSpan());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, initialSlmArg1Size, nullptr));
+    EXPECT_EQ(0u, kernel2->getSlmArgSizes()[0]);
+    EXPECT_EQ(0u, kernel2->getSlmArgSizes()[1]);
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto inactiveKernelSlmVariables = getVariableList(commandId, L0::MCL::VariableType::slmBuffer, kernel2.get());
+    ASSERT_EQ(2u, inactiveKernelSlmVariables.size());
+    EXPECT_EQ(inlineSlmSize, inactiveKernelSlmVariables[0]->getDesc().slmValue.slmBaseOffset);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, inactiveKernelSlmVariables[1]->getDesc().slmValue.slmBaseOffset);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_kernel_argument_exp_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_exp_desc_t slmArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    slmArg0.argIndex = 0;
+    slmArg0.argSize = mutatedSlmArg0Size;
+    slmArg0.commandId = commandId;
+    slmArg0.pArgValue = nullptr;
+    slmArg0.pNext = &slmArg1;
+    slmArg1.argIndex = 1;
+    slmArg1.argSize = mutatedSlmArg1Size;
+    slmArg1.commandId = commandId;
+    slmArg1.pArgValue = nullptr;
+    mutableCommandsDesc.pNext = &slmArg0;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    auto kernelDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    auto ioh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
+    auto crossThreadData = reinterpret_cast<uint8_t *>(ptrOffset(ioh->getCpuBase(), kernelDispatch->offsets.crossThreadOffset));
+    const auto &explicitArgs = mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs;
+    const auto arg0SlmOffset = explicitArgs[0].as<NEO::ArgDescPointer>().slmOffset;
+    const auto arg1SlmOffset = explicitArgs[1].as<NEO::ArgDescPointer>().slmOffset;
+
+    EXPECT_EQ(inlineSlmSize, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, arg0SlmOffset)));
+    EXPECT_EQ(inlineSlmSize + mutatedSlmArg0Size, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, arg1SlmOffset)));
+
+    constexpr uint32_t expectedSlmTotalSize = 2 * MemoryConstants::kiloByte;
+    EXPECT_EQ(expectedSlmTotalSize, kernelDispatch->slmTotalSizePerThreadGroup);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -2008,6 +2185,85 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     memcpy(&usmPatchAddressValue, gpuVa2PatchFullAddress, sizeof(uint64_t));
     EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelSWTagsTest,
+            givenEnableSWTagsWhenAppendLaunchKernelForTwoKernelMutationGroupThenSingleKernelSwTagIsInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    // Create a kernel group with two kernels - only the main (active) kernel is dispatched,
+    // the other kernel is only command-viewed and must not produce its own SW tag.
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+
+    auto cmdStream = mutableCommandList->getBase()->getCmdContainer().getCommandStream();
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    result = mutableCommandList->close();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+
+    // SW tag for the active kernel of the kernel group must be inserted exactly once,
+    // the inactive command-viewed kernel must not add its own SW tag.
+    uint32_t kernelSwTagMarkerCount = 0;
+    for (auto it = noops.begin(); it != noops.end(); ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::kernelName) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true) {
+            ++kernelSwTagMarkerCount;
+        }
+    }
+    EXPECT_EQ(1u, kernelSwTagMarkerCount);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenForcePipeControlPriorToWalkerWhenAppendLaunchKernelForTwoKernelMutationGroupThenSinglePipeControlIsInsertedBeforeWalker) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    debugManager.flags.ForcePipeControlPriorToWalker.set(1);
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto cmdStream = mutableCommandList->getBase()->getCmdContainer().getCommandStream();
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(cmdStream->getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    // ForcePipeControlPriorToWalker must insert exactly one PIPE_CONTROL before the walker.
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), itorWalker);
+    EXPECT_EQ(1u, pipeControls.size());
 }
 
 } // namespace ult

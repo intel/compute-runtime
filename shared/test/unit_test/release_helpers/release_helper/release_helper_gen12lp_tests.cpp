@@ -1,0 +1,90 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/unit_test/release_helpers/release_helper/release_helper_tests_base.h"
+
+#include "gtest/gtest.h"
+
+struct ReleaseHelperGen12LpTests : public ReleaseHelperTestsBase, public ::testing::WithParamInterface<uint32_t> {
+
+    void SetUp() override {
+        ipVersion.architecture = 12;
+        ipVersion.release = GetParam();
+    }
+
+    std::vector<uint32_t> getRevisions() override {
+        return {0};
+    }
+};
+
+TEST_P(ReleaseHelperGen12LpTests, whenGettingCapabilitiesThenCorrectPropertiesAreReturned) {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
+        EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
+    }
+}
+
+TEST_P(ReleaseHelperGen12LpTests, whenGettingSupportedNumGrfsThenValue128Returned) {
+    whenGettingSupportedNumGrfsThenValue128Returned();
+}
+
+TEST_P(ReleaseHelperGen12LpTests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
+    whenGettingThreadsPerEuConfigsThen4And8AreReturned();
+}
+
+TEST_P(ReleaseHelperGen12LpTests, whenGettingTotalMemBankSizeThenReturn32GB) {
+    whenGettingTotalMemBankSizeThenReturn32GB();
+}
+
+TEST_P(ReleaseHelperGen12LpTests, whenGettingPreferredSlmSizeThenAllEntriesEmpty) {
+    whenGettingPreferredSlmSizeThenAllEntriesEmpty();
+}
+
+TEST_P(ReleaseHelperGen12LpTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+    whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
+}
+
+TEST_P(ReleaseHelperGen12LpTests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+}
+
+TEST_P(ReleaseHelperGen12LpTests, givenDebugFlagSetTo1WhenIsPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenTrueReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
+
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
+    }
+}
+
+TEST_P(ReleaseHelperGen12LpTests, givenDebugFlagSetTo0WhenIsPipeControlPriorToNonPipelinedStateCommandsExtendedWARequiredCalledThenFalseReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
+
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(*defaultHwInfo, false));
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    AllGen12LpReleases,
+    ReleaseHelperGen12LpTests,
+    ::testing::Values(0u, 1u, 2u, 3u, 4u, 10u));

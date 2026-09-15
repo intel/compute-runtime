@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/memory_manager/engine_completion_snapshot.h"
+#include "shared/source/memory_manager/free_policy_type.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
@@ -17,12 +19,25 @@
 
 #include <functional>
 #include <map>
+#include <vector>
 namespace NEO {
 class GraphicsAllocation;
 class MemoryManager;
 class MemoryOperationsHandler;
 class SVMAllocsManager;
+class UsmMemAllocPool;
 struct SvmAllocationData;
+
+// pool is a bare pointer into a UsmMemAllocPoolsManager bucket, returned after the manager
+// lock is dropped. Only a live chunk keeps that pool off trimEmptyPools; the residency paths
+// deliberately dereference it without one and rely on the API-level pointer being valid.
+struct UsmPoolLookupResult {
+    UsmMemAllocPool *pool{nullptr};
+    PoolInfo poolInfo{};
+    void *pooledAllocationBasePtr{nullptr};
+    size_t pooledAllocationSize{0u};
+    bool isAllocatedInPool() const { return nullptr != pooledAllocationBasePtr; }
+};
 
 class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   public:
@@ -31,6 +46,13 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         size_t size;
         size_t requestedSize;
         std::unordered_map<Device *, bool> isResident;
+    };
+
+    // A chunk freed with FreePolicyType::defer. The chunk is withheld from
+    // chunkAllocator until the pool allocation retires the work snapshotted here.
+    struct DeferredFreeInfo {
+        AllocationInfo allocationInfo;
+        EngineCompletionSnapshot snapshot;
     };
 
     enum class ResidencyOperationType {
@@ -49,20 +71,18 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void cleanup();
     static bool alignmentIsAllowed(size_t alignment);
     static bool flagsAreAllowed(const UnifiedMemoryProperties &memoryProperties);
-    static bool freeIfOwned(UsmMemAllocPool *pool, const void *ptr, bool blocking);
+    static bool freeIfOwned(UsmMemAllocPool *pool, const void *ptr, FreePolicyType policy);
     static double getPercentOfFreeMemoryForRecycling(InternalMemoryType memoryType);
     bool sizeIsAllowed(size_t size);
     bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
     MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
-    bool isInPool(const void *ptr) const;
+    bool isInPoolRange(const void *ptr) const;
     bool isEmpty() const;
-    MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, bool blocking);
-    size_t getPooledAllocationSize(const void *ptr);
-    void *getPooledAllocationBasePtr(const void *ptr);
-    bool isPooledAllocation(const void *ptr);
+    MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
+    void reclaimDeferredFreeChunks();
+    UsmPoolLookupResult lookupAlloc(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
     uint64_t getPoolAddress() const;
-    PoolInfo getPoolInfo() const;
     std::mutex &getMutex() noexcept { return mtx; }
     void enableResidencyTracking() { this->trackResidency = true; }
     bool isTrackingResidency() { return this->trackResidency; }
@@ -103,13 +123,18 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   protected:
     MemoryOperationsStatus evictPool(Device *targetDevice);
     MemoryOperationsStatus makePoolResident(Device *targetDevice);
+    // Caller must hold mtx.
+    void drainDeferredFreeChunks();
+    // Gives the chunk space back and drops the residency it held. Caller must hold mtx.
+    void releaseChunk(const AllocationInfo &allocationInfo);
     CustomCleanupFn customCleanup = nullptr;
     std::unique_ptr<HeapAllocator> chunkAllocator;
     void *pool{};
     void *poolEnd{};
     SVMAllocsManager *svmMemoryManager{};
     AllocationsInfoStorage allocations;
-    std::mutex mtx;
+    std::vector<DeferredFreeInfo> deferredFreeChunks;
+    mutable std::mutex mtx;
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitFields;
     Device *device{};
@@ -142,11 +167,8 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     UsmMemAllocPool *tryAddPool(PoolInfo poolInfo);
     MOCKABLE_VIRTUAL bool canAddPool(PoolInfo poolInfo);
     void trimEmptyPools(PoolInfo poolInfo);
-    bool freeSVMAlloc(const void *ptr, bool blocking);
-    size_t getPooledAllocationSize(const void *ptr);
-    void *getPooledAllocationBasePtr(const void *ptr);
-    size_t getOffsetInPool(const void *ptr);
-    UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
+    bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
+    UsmPoolLookupResult getPoolContainingAlloc(const void *ptr);
     void enableResidencyTracking() { this->trackResidency = true; }
     void setCustomCleanup(CustomCleanupFn customCleanup) {
         this->customCleanup = std::move(customCleanup);
@@ -175,14 +197,15 @@ class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
         bool compressedHint{false};
     };
     static bool poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault);
+    static bool isPoolManagerSupported(InternalMemoryType memoryType, const Device *device);
     bool initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager, const InitParams &initParams);
     bool isInitialized() const;
     void cleanup();
     void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
-    bool freeSVMAlloc(const void *ptr, bool blocking);
+    bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
-    UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
+    UsmPoolLookupResult getPoolContainingAlloc(const void *ptr);
     UsmMemAllocPool *getPool() const { return pool.get(); }
     UsmMemAllocPoolsManager *getPoolManager() const { return poolManager.get(); }
 

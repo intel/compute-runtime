@@ -22,7 +22,6 @@ const std::string_view telem3GuidFileName("/sys/class/intel_pmt/telem3/guid");
 const std::string_view telem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
 
 using SysmanXeProductHelperPowerTest = SysmanDevicePowerFixtureXe;
-using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
 
 constexpr uint32_t bmgPowerHandleComponentCount = 4u;
 constexpr uint32_t bmgPowerLimitSupportedCount = 3u;
@@ -73,31 +72,31 @@ inline static int mockStatSuccess(const std::string &filePath, struct stat *stat
 HWTEST2_F(SysmanDevicePowerFixtureXe, GivenVariousPowerLimitFileExistanceStatesWhenIsPowerModuleSupportedIsCalledForRootDeviceHandleThenCorrectSupportStatusIsReturnedForCardDomain, IsBMG) {
     // Loop through all combinations of the three boolean flags (false/true) for the file existence
     for (bool isEnergyCounterFilePresent : {false, true}) {
-        for (bool isTelemetrySupportAvailable : {false, true}) {
+        for (bool isPmtBasedPowerSupported : {false, true}) {
             for (bool isSustainedPowerLimitFilePresent : {false, true}) {
                 for (bool isCriticalPowerLimitPresent : {false, true}) {
                     for (bool isBurstPowerLimitPresent : {false, true}) {
                         // Set the file existence flags based on the current combination
-                        pSysfsAccess->isCardEnergyCounterFilePresent = isEnergyCounterFilePresent;
-                        pSysfsAccess->isCardSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
-                        pSysfsAccess->isCardCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
-                        pSysfsAccess->isCardBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
-                        pSysfsAccess->isPackageEnergyCounterFilePresent = isEnergyCounterFilePresent;
-                        pSysfsAccess->isPackageSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
-                        pSysfsAccess->isPackageCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
-                        pSysfsAccess->isPackageBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
+                        pFsAccess->isCardEnergyCounterFilePresent = isEnergyCounterFilePresent;
+                        pFsAccess->isCardSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
+                        pFsAccess->isCardCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
+                        pFsAccess->isCardBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
+                        pFsAccess->isPackageEnergyCounterFilePresent = isEnergyCounterFilePresent;
+                        pFsAccess->isPackageSustainedPowerLimitFilePresent = isSustainedPowerLimitFilePresent;
+                        pFsAccess->isPackageCriticalPowerLimitFilePresent = isCriticalPowerLimitPresent;
+                        pFsAccess->isPackageBurstPowerLimitFilePresent = isBurstPowerLimitPresent;
 
                         // The expected result is true if at least one of the files is present
-                        bool expected = (isTelemetrySupportAvailable || isEnergyCounterFilePresent || isSustainedPowerLimitFilePresent ||
+                        bool expected = (isPmtBasedPowerSupported || isEnergyCounterFilePresent || isSustainedPowerLimitFilePresent ||
                                          isCriticalPowerLimitPresent || isBurstPowerLimitPresent);
 
                         // Verify if the power module is supported as expected
                         auto pPowerImpForCard = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
-                        pPowerImpForCard->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+                        pPowerImpForCard->isPmtBasedPowerSupported = isPmtBasedPowerSupported;
                         EXPECT_EQ(pPowerImpForCard->isPowerModuleSupported(), expected);
 
                         auto pPowerImpForPackage = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
-                        pPowerImpForPackage->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+                        pPowerImpForPackage->isPmtBasedPowerSupported = isPmtBasedPowerSupported;
                         EXPECT_EQ(pPowerImpForPackage->isPowerModuleSupported(), expected);
                     }
                 }
@@ -126,12 +125,32 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenComponentCountZeroWhenEnumerating
         return count;
     });
 
+    pFsAccess->isTelemetryDataFilePresent = true;
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, bmgPowerHandleComponentCount);
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterForUnknownPowerDomainThenFailureIsReturned, IsBmgOrCri) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<int> mockErrno(&errno);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telemOffset = 0;
+        constexpr std::string_view validOobmsmGuid = "0x5e2f8211";
+        constexpr std::string_view validPunitGuid = "0x1e2f8200";
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validOobmsmGuid.data(), count);
+        } else if (fd == 6) {
+            memcpy(buf, validPunitGuid.data(), count);
+        }
+        return count;
+    });
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_power_energy_counter_t energyCounter = {};
     auto result = pSysmanProductHelper->getPowerEnergyCounter(&energyCounter, pLinuxSysmanImp, ZES_POWER_DOMAIN_UNKNOWN, 0u);
@@ -197,17 +216,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
         constexpr uint64_t telemOffset = 0;
         std::string_view validOobmsmGuid = "";
         std::string_view validPunitGuid = "";
-        size_t xtalReturnCount = 0;
         ssize_t ret = count;
 
         if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
             validOobmsmGuid = "0x5e2f8211";
             validPunitGuid = "0x1e2f8200";
-            xtalReturnCount = sizeof(uint64_t);
         } else if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
             validOobmsmGuid = "0x5e2fa230";
             validPunitGuid = "0x1e2fa030";
-            xtalReturnCount = sizeof(uint32_t);
         }
 
         if (fd == 4) {
@@ -252,7 +268,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
                     errno = ENOENT;
                     ret = -1;
                 } else {
-                    ret = static_cast<ssize_t>(xtalReturnCount);
+                    ret = sizeof(uint64_t); // XTAL_COUNT is read as a 64 bit value
                 }
                 break;
             default:
@@ -269,6 +285,37 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
         EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
         readFailCount++;
     }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGettingPowerEnergyCounterForMemoryDomainAndReadValueFailsThenFailureIsReturned, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<int> mockErrno(&errno);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view validOobmsmGuid = "0x5e2fa230";
+        constexpr std::string_view validPunitGuid = "0x1e2fa030";
+        constexpr off_t vramEnergyAccumulatorOffset = 200;
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validOobmsmGuid.data(), validOobmsmGuid.size());
+        } else if (fd == 6) {
+            memcpy(buf, validPunitGuid.data(), validPunitGuid.size());
+        } else if ((fd == 8) && (offset == vramEnergyAccumulatorOffset)) {
+            errno = ENOENT;
+            return -1;
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_power_energy_counter_t energyCounter = {};
+    auto result = pSysmanProductHelper->getPowerEnergyCounter(&energyCounter, pLinuxSysmanImp, ZES_POWER_DOMAIN_MEMORY, 0u);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPowerEnergyCounterThenValidValuesAreReturnedFromBothOobmsmAndPunitPath, IsBMG) {
@@ -324,6 +371,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     constexpr uint64_t mockTimestamp = 0xabef;
     constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
 
+    pFsAccess->isTelemetryDataFilePresent = true;
     auto handles = getPowerHandles();
     EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
 
@@ -352,19 +400,16 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
         std::string_view validOobmsmGuid = "";
         std::string_view validPunitGuid = "";
         constexpr uint32_t mockEnergyCounter = 0xabcd;
-        constexpr uint32_t mockMemoryEnergyCounter = 0x12345678; // Non-zero upper and lower 16 bits for memory domain
+        constexpr uint64_t mockMemoryEnergyCounter = 0x12345678abcdef01; // Non-zero upper and lower 32 bits for memory domain
         constexpr uint32_t mockXtalFrequency = 0xef;
-        constexpr uint64_t mockTimestamp = 0xabef;
-        size_t xtalReturnCount = 0;
+        constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
 
         if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
             validOobmsmGuid = "0x5e2f8211";
             validPunitGuid = "0x1e2f8200";
-            xtalReturnCount = sizeof(uint64_t);
         } else if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
             validOobmsmGuid = "0x5e2fa230";
             validPunitGuid = "0x1e2fa030";
-            xtalReturnCount = sizeof(uint32_t);
         }
 
         if (fd == 4) {
@@ -388,7 +433,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
                 memcpy(buf, &mockXtalFrequency, count);
                 break;
             case 1024:
-                memcpy(buf, &mockTimestamp, xtalReturnCount);
+                memcpy(buf, &mockTimestamp, count);
                 break;
             case 44:
             case 48:
@@ -397,7 +442,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
             case 1640:
                 memcpy(buf, &mockEnergyCounter, count);
                 break;
-            case 188:
+            case 200: // CRI: 64 bit VRAM energy accumulator container
                 memcpy(buf, &mockMemoryEnergyCounter, count);
                 break;
             default:
@@ -408,11 +453,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     });
 
     constexpr uint32_t mockEnergyCounter = 0xabcd;
-    constexpr uint32_t mockMemoryEnergyCounter = 0x12345678; // Non-zero upper and lower 16 bits for memory domain
+    constexpr uint64_t mockMemoryEnergyCounter = 0x12345678abcdef01; // Non-zero upper and lower 32 bits for memory domain
     constexpr uint32_t mockXtalFrequency = 0xef;
-    constexpr uint64_t mockTimestamp = 0xabef;
+    constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
     constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
 
+    pFsAccess->isTelemetryDataFilePresent = true;
     auto handles = getPowerHandles();
     EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
 
@@ -431,7 +477,9 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
         uint64_t expectedEnergyCounter = 0;
 
         if ((defaultHwInfo->platform.eProductFamily == IGFX_CRI) && (extProperties.domain == ZES_POWER_DOMAIN_MEMORY)) {
-            const double finalValue = convertU18p14((mockMemoryEnergyCounter >> 16) & 0xFFFF) + convertU18p14(mockMemoryEnergyCounter & 0xFFFF);
+            // VCCDDRQ_ENERGY_ACCUMULATOR: bits [0:31] and VCCDDRQX_ENERGY_ACCUMULATOR: bits [32:63]
+            const double finalValue = convertU18p14(static_cast<uint32_t>(mockMemoryEnergyCounter & 0xFFFFFFFF)) +
+                                      convertU18p14(static_cast<uint32_t>(mockMemoryEnergyCounter >> 32));
             expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
         } else {
             const double finalValue = convertU18p14(mockEnergyCounter);
@@ -446,12 +494,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportNotAvailableButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode, IsBMG) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWithPmtBasedPowerNotSupportedButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode, IsBMG) {
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_CARD};
     for (const auto &powerDomain : powerDomains) {
         zes_power_energy_counter_t energyCounter = {};
         std::unique_ptr<XePublicLinuxPowerImp> pLinuxPowerImp(new XePublicLinuxPowerImp(pOsSysman, false, 0, powerDomain));
-        pLinuxPowerImp->isTelemetrySupportAvailable = false;
+        pLinuxPowerImp->isPmtBasedPowerSupported = false;
         const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
         EXPECT_EQ(energyCounter.energy, xeMockEnergyCounter);
@@ -460,10 +508,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySup
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForSustainedPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -472,8 +520,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 
         for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
             for (ze_result_t sustainedLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-                pSysfsAccess->sustainedReadResult = sustainedLimitResult;
-                pSysfsAccess->sustainedIntervalReadResult = sustainedLimitIntervalResult;
+                pFsAccess->sustainedReadResult = sustainedLimitResult;
+                pFsAccess->sustainedIntervalReadResult = sustainedLimitIntervalResult;
 
                 uint32_t count = 0;
                 EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
@@ -485,14 +533,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
                 EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
 
                 if (sustainedLimitResult == ZE_RESULT_SUCCESS) {
-                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor));
+                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pFsAccess->sustainedPowerLimitVal / milliFactor));
                     EXPECT_EQ(allLimits[0].enabledStateLocked, true);
                     EXPECT_EQ(allLimits[0].intervalValueLocked, false);
                     EXPECT_EQ(allLimits[0].limitValueLocked, false);
                     EXPECT_EQ(allLimits[0].source, ZES_POWER_SOURCE_ANY);
                     EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_SUSTAINED);
                     EXPECT_EQ(allLimits[0].limitUnit, ZES_LIMIT_UNIT_POWER);
-                    EXPECT_EQ(allLimits[0].interval, (sustainedLimitIntervalResult == ZE_RESULT_SUCCESS) ? pSysfsAccess->sustainedPowerLimitIntervalVal : -1);
+                    EXPECT_EQ(allLimits[0].interval, (sustainedLimitIntervalResult == ZE_RESULT_SUCCESS) ? pFsAccess->sustainedPowerLimitIntervalVal : -1);
                 }
             }
         }
@@ -500,10 +548,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsWriteResultsForSustainedPowerLimitIntervalWhenSetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -511,7 +559,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
         auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
         for (ze_result_t sustainedLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-            pSysfsAccess->sustainedIntervalWriteResult = sustainedLimitIntervalResult;
+            pFsAccess->sustainedIntervalWriteResult = sustainedLimitIntervalResult;
 
             uint32_t count = 0;
 
@@ -536,10 +584,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForBurstPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -548,8 +596,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 
         for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
             for (ze_result_t burstLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-                pSysfsAccess->burstReadResult = burstLimitResult;
-                pSysfsAccess->burstIntervalReadResult = burstLimitIntervalResult;
+                pFsAccess->burstReadResult = burstLimitResult;
+                pFsAccess->burstIntervalReadResult = burstLimitIntervalResult;
 
                 uint32_t count = 0;
                 EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
@@ -561,14 +609,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
                 EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
 
                 if (burstLimitResult == ZE_RESULT_SUCCESS) {
-                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor));
+                    EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pFsAccess->burstPowerLimitVal / milliFactor));
                     EXPECT_EQ(allLimits[0].enabledStateLocked, true);
                     EXPECT_EQ(allLimits[0].intervalValueLocked, false);
                     EXPECT_EQ(allLimits[0].limitValueLocked, false);
                     EXPECT_EQ(allLimits[0].source, ZES_POWER_SOURCE_ANY);
                     EXPECT_EQ(allLimits[0].level, ZES_POWER_LEVEL_BURST);
                     EXPECT_EQ(allLimits[0].limitUnit, ZES_LIMIT_UNIT_POWER);
-                    EXPECT_EQ(allLimits[0].interval, (burstLimitIntervalResult == ZE_RESULT_SUCCESS) ? pSysfsAccess->burstPowerLimitIntervalVal : -1);
+                    EXPECT_EQ(allLimits[0].interval, (burstLimitIntervalResult == ZE_RESULT_SUCCESS) ? pFsAccess->burstPowerLimitIntervalVal : -1);
                 }
             }
         }
@@ -576,10 +624,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsWriteResultsForBurstPowerLimitIntervalWhenSetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -587,7 +635,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
         auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
         for (ze_result_t burstLimitIntervalResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-            pSysfsAccess->burstIntervalWriteResult = burstLimitIntervalResult;
+            pFsAccess->burstIntervalWriteResult = burstLimitIntervalResult;
 
             uint32_t count = 0;
 
@@ -612,10 +660,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAndSysfsReadResultsForPeakPowerLimitWhenGetLimitsExtIsCalledThenProperResultsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -623,7 +671,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
         auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
         for (ze_result_t criticalLimitResult : {ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ZE_RESULT_SUCCESS}) {
-            pSysfsAccess->criticalReadResult = criticalLimitResult;
+            pFsAccess->criticalReadResult = criticalLimitResult;
 
             uint32_t count = 0;
             EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, nullptr));
@@ -635,7 +683,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
             EXPECT_EQ(expectedResult, pPowerImp->getLimitsExt(&count, allLimits.data()));
 
             if (criticalLimitResult == ZE_RESULT_SUCCESS) {
-                EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pSysfsAccess->criticalPowerLimitVal / milliFactor));
+                EXPECT_EQ(allLimits[0].limit, static_cast<int32_t>(pFsAccess->criticalPowerLimitVal / milliFactor));
                 EXPECT_EQ(allLimits[0].enabledStateLocked, true);
                 EXPECT_EQ(allLimits[0].intervalValueLocked, true);
                 EXPECT_EQ(allLimits[0].limitValueLocked, false);
@@ -663,27 +711,27 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainsAn
         EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&count, allLimits.data()));
 
         uint8_t index = 0;
-        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pFsAccess->sustainedPowerLimitVal / milliFactor));
         EXPECT_EQ(allLimits[index].enabledStateLocked, true);
         EXPECT_EQ(allLimits[index].intervalValueLocked, false);
         EXPECT_EQ(allLimits[index].limitValueLocked, false);
         EXPECT_EQ(allLimits[index].source, ZES_POWER_SOURCE_ANY);
         EXPECT_EQ(allLimits[index].level, ZES_POWER_LEVEL_SUSTAINED);
         EXPECT_EQ(allLimits[index].limitUnit, ZES_LIMIT_UNIT_POWER);
-        EXPECT_EQ(allLimits[index].interval, pSysfsAccess->sustainedPowerLimitIntervalVal);
+        EXPECT_EQ(allLimits[index].interval, pFsAccess->sustainedPowerLimitIntervalVal);
 
         index++;
-        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pFsAccess->burstPowerLimitVal / milliFactor));
         EXPECT_EQ(allLimits[index].enabledStateLocked, true);
         EXPECT_EQ(allLimits[index].intervalValueLocked, false);
         EXPECT_EQ(allLimits[index].limitValueLocked, false);
         EXPECT_EQ(allLimits[index].source, ZES_POWER_SOURCE_ANY);
         EXPECT_EQ(allLimits[index].level, ZES_POWER_LEVEL_BURST);
         EXPECT_EQ(allLimits[index].limitUnit, ZES_LIMIT_UNIT_POWER);
-        EXPECT_EQ(allLimits[index].interval, pSysfsAccess->burstPowerLimitIntervalVal);
+        EXPECT_EQ(allLimits[index].interval, pFsAccess->burstPowerLimitIntervalVal);
 
         index++;
-        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pSysfsAccess->criticalPowerLimitVal / milliFactor));
+        EXPECT_EQ(allLimits[index].limit, static_cast<int32_t>(pFsAccess->criticalPowerLimitVal / milliFactor));
         EXPECT_EQ(allLimits[index].enabledStateLocked, true);
         EXPECT_EQ(allLimits[index].intervalValueLocked, true);
         EXPECT_EQ(allLimits[index].limitValueLocked, false);
@@ -707,12 +755,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainAnd
         for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
             for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
                 for (ze_result_t peakLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
-                    pSysfsAccess->sustainedReadResult = sustainedLimitResult;
-                    pSysfsAccess->burstReadResult = burstLimitResult;
-                    pSysfsAccess->criticalReadResult = peakLimitResult;
-                    pSysfsAccess->sustainedWriteResult = sustainedLimitResult;
-                    pSysfsAccess->burstWriteResult = burstLimitResult;
-                    pSysfsAccess->criticalWriteResult = peakLimitResult;
+                    pFsAccess->sustainedReadResult = sustainedLimitResult;
+                    pFsAccess->burstReadResult = burstLimitResult;
+                    pFsAccess->criticalReadResult = peakLimitResult;
+                    pFsAccess->sustainedWriteResult = sustainedLimitResult;
+                    pFsAccess->burstWriteResult = burstLimitResult;
+                    pFsAccess->criticalWriteResult = peakLimitResult;
 
                     ze_result_t expectedResult = ((sustainedLimitResult == ZE_RESULT_SUCCESS) && (burstLimitResult == ZE_RESULT_SUCCESS) && (peakLimitResult == ZE_RESULT_SUCCESS))
                                                      ? ZE_RESULT_SUCCESS
@@ -805,10 +853,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlySustainedAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -837,10 +885,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlyBurstAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -869,10 +917,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlyPeakAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -900,8 +948,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndSustainedAndBurstAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = false;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
 
@@ -970,20 +1018,20 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileExistanceSta
         for (bool sustainedLimitFilePresent : {false, true}) {
             for (bool burstLimitFilePresent : {false, true}) {
                 // Set the file existence flags based on the current combination
-                pSysfsAccess->isCardSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
-                pSysfsAccess->isCardBurstPowerLimitFilePresent = burstLimitFilePresent;
-                pSysfsAccess->isPackageSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
-                pSysfsAccess->isPackageBurstPowerLimitFilePresent = burstLimitFilePresent;
+                pFsAccess->isCardSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
+                pFsAccess->isCardBurstPowerLimitFilePresent = burstLimitFilePresent;
+                pFsAccess->isPackageSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
+                pFsAccess->isPackageBurstPowerLimitFilePresent = burstLimitFilePresent;
 
                 auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
                 for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
                     for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
                         // Set the Read/Write results based on the current combination
-                        pSysfsAccess->sustainedReadResult = sustainedLimitResult;
-                        pSysfsAccess->burstReadResult = burstLimitResult;
-                        pSysfsAccess->sustainedWriteResult = sustainedLimitResult;
-                        pSysfsAccess->burstWriteResult = burstLimitResult;
+                        pFsAccess->sustainedReadResult = sustainedLimitResult;
+                        pFsAccess->burstReadResult = burstLimitResult;
+                        pFsAccess->sustainedWriteResult = sustainedLimitResult;
+                        pFsAccess->burstWriteResult = burstLimitResult;
 
                         ze_result_t expectedResult = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 
@@ -1002,9 +1050,9 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileExistanceSta
                         }
 
                         if (sustainedLimitFilePresent && (sustainedLimitResult == ZE_RESULT_SUCCESS)) {
-                            EXPECT_EQ(static_cast<uint32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor), limit);
+                            EXPECT_EQ(static_cast<uint32_t>(pFsAccess->sustainedPowerLimitVal / milliFactor), limit);
                         } else if (burstLimitFilePresent && (burstLimitResult == ZE_RESULT_SUCCESS)) {
-                            EXPECT_EQ(static_cast<uint32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor), limit);
+                            EXPECT_EQ(static_cast<uint32_t>(pFsAccess->burstPowerLimitVal / milliFactor), limit);
                         }
                     }
                 }
@@ -1020,11 +1068,11 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileExistanceSta
             for (bool burstLimitFilePresent : {false, true}) {
                 for (bool criticalLimitFilePresent : {false, true}) {
                     // Set the file existence flags based on the current combination
-                    pSysfsAccess->isCardSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
-                    pSysfsAccess->isCardBurstPowerLimitFilePresent = burstLimitFilePresent;
-                    pSysfsAccess->isCardCriticalPowerLimitFilePresent = criticalLimitFilePresent;
-                    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
-                    pSysfsAccess->isPackageBurstPowerLimitFilePresent = burstLimitFilePresent;
+                    pFsAccess->isCardSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
+                    pFsAccess->isCardBurstPowerLimitFilePresent = burstLimitFilePresent;
+                    pFsAccess->isCardCriticalPowerLimitFilePresent = criticalLimitFilePresent;
+                    pFsAccess->isPackageSustainedPowerLimitFilePresent = sustainedLimitFilePresent;
+                    pFsAccess->isPackageBurstPowerLimitFilePresent = burstLimitFilePresent;
 
                     ze_result_t expectedReasult = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
                     if ((powerDomain == ZES_POWER_DOMAIN_CARD) && (sustainedLimitFilePresent || burstLimitFilePresent || criticalLimitFilePresent)) {
@@ -1050,12 +1098,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileReadStatuses
         for (ze_result_t sustainedLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
             for (ze_result_t burstLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
                 for (ze_result_t peakLimitResult : {ZE_RESULT_ERROR_NOT_AVAILABLE, ZE_RESULT_SUCCESS}) {
-                    pSysfsAccess->sustainedReadResult = sustainedLimitResult;
-                    pSysfsAccess->burstReadResult = burstLimitResult;
-                    pSysfsAccess->criticalReadResult = peakLimitResult;
-                    pSysfsAccess->sustainedWriteResult = sustainedLimitResult;
-                    pSysfsAccess->burstWriteResult = burstLimitResult;
-                    pSysfsAccess->criticalWriteResult = peakLimitResult;
+                    pFsAccess->sustainedReadResult = sustainedLimitResult;
+                    pFsAccess->burstReadResult = burstLimitResult;
+                    pFsAccess->criticalReadResult = peakLimitResult;
+                    pFsAccess->sustainedWriteResult = sustainedLimitResult;
+                    pFsAccess->burstWriteResult = burstLimitResult;
+                    pFsAccess->criticalWriteResult = peakLimitResult;
 
                     ze_result_t expectedResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
                     if (powerDomain == ZES_POWER_DOMAIN_CARD) {
@@ -1081,9 +1129,9 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileReadStatuses
                     EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt2(&testLimitRetrieved));
 
                     if (sustainedLimitResult == ZE_RESULT_SUCCESS) {
-                        EXPECT_EQ(static_cast<uint32_t>(pSysfsAccess->sustainedPowerLimitVal / milliFactor), testLimitRetrieved);
+                        EXPECT_EQ(static_cast<uint32_t>(pFsAccess->sustainedPowerLimitVal / milliFactor), testLimitRetrieved);
                     } else if (burstLimitResult == ZE_RESULT_SUCCESS) {
-                        EXPECT_EQ(static_cast<uint32_t>(pSysfsAccess->burstPowerLimitVal / milliFactor), testLimitRetrieved);
+                        EXPECT_EQ(static_cast<uint32_t>(pFsAccess->burstPowerLimitVal / milliFactor), testLimitRetrieved);
                     }
                 }
             }
@@ -1092,29 +1140,29 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenVariousPowerLimitFileReadStatuses
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenCardDomainAndOnlyCriticalLimitFilePresentWhenSetLimitsExt2IsCalledThenCriticalLimitIsUpdatedWithMultiplier, IsCRI) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = true;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = true;
 
     auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
 
     constexpr uint32_t testLimit = 300u;
     const uint64_t convertedLimit = (static_cast<uint64_t>(testLimit) / milliFactor) * criticalLimitMultiplyFactor;
     const uint64_t expectedLimit = std::max(convertedLimit, xeMockMinPowerLimitVal);
-    const uint64_t sustainedLimitBeforeSet = pSysfsAccess->sustainedPowerLimitVal;
-    const uint64_t burstLimitBeforeSet = pSysfsAccess->burstPowerLimitVal;
+    const uint64_t sustainedLimitBeforeSet = pFsAccess->sustainedPowerLimitVal;
+    const uint64_t burstLimitBeforeSet = pFsAccess->burstPowerLimitVal;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->setLimitsExt2(testLimit));
-    EXPECT_EQ(expectedLimit, pSysfsAccess->criticalPowerLimitVal);
-    EXPECT_EQ(sustainedLimitBeforeSet, pSysfsAccess->sustainedPowerLimitVal);
-    EXPECT_EQ(burstLimitBeforeSet, pSysfsAccess->burstPowerLimitVal);
+    EXPECT_EQ(expectedLimit, pFsAccess->criticalPowerLimitVal);
+    EXPECT_EQ(sustainedLimitBeforeSet, pFsAccess->sustainedPowerLimitVal);
+    EXPECT_EQ(burstLimitBeforeSet, pFsAccess->burstPowerLimitVal);
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenCardDomainAndCriticalLimitWriteFailsWhenSetLimitsExt2IsCalledThenMappedErrorIsReturned, IsCRI) {
-    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isCardCriticalPowerLimitFilePresent = true;
-    pSysfsAccess->criticalWriteResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    pFsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCardBurstPowerLimitFilePresent = false;
+    pFsAccess->isCardCriticalPowerLimitFilePresent = true;
+    pFsAccess->criticalWriteResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 
     auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
 
@@ -1122,15 +1170,15 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenCardDomainAndCriticalLimitWriteFa
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenPackageDomainAndOnlyCriticalLimitFilePresentWhenSetLimitsExt2IsCalledThenDependencyUnavailableIsReturned, IsCRI) {
-    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
-    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = true;
+    pFsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pFsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pFsAccess->isPackageCriticalPowerLimitFilePresent = true;
 
     auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
-    const uint64_t criticalLimitBeforeSet = pSysfsAccess->criticalPowerLimitVal;
+    const uint64_t criticalLimitBeforeSet = pFsAccess->criticalPowerLimitVal;
 
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPowerImp->setLimitsExt2(300u));
-    EXPECT_EQ(criticalLimitBeforeSet, pSysfsAccess->criticalPowerLimitVal);
+    EXPECT_EQ(criticalLimitBeforeSet, pFsAccess->criticalPowerLimitVal);
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenPowerHandlesWhenGetAndSetLimitsExt2AreCalledThenUnsupportedFeatureErrorIsReturnedForGpuAndMemoryDomains, IsCRI) {
@@ -1180,10 +1228,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysfsReadFailsWithVariousErrorCod
 
     for (auto powerDomain : powerDomains) {
         for (auto errorCode : errorCodes) {
-            pSysfsAccess->isCardSustainedPowerLimitFilePresent = true;
-            pSysfsAccess->isPackageSustainedPowerLimitFilePresent = true;
-            pSysfsAccess->sustainedReadResult = errorCode;
-            pSysfsAccess->mockRead64Result = errorCode;
+            pFsAccess->isCardSustainedPowerLimitFilePresent = true;
+            pFsAccess->isPackageSustainedPowerLimitFilePresent = true;
+            pFsAccess->sustainedReadResult = errorCode;
+            pFsAccess->mockRead64Result = errorCode;
 
             auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
 
@@ -1194,7 +1242,17 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysfsReadFailsWithVariousErrorCod
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerUsageThenUnsupportedFeatureIsReturned, IsNotCRI) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenTrueIsReturned, IsDg2BmgOrCri) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported());
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenFalseIsReturned, IsNotDg2BmgOrCri) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported());
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerUsageThenUnsupportedFeatureIsReturned, IsNotBmgOrCri) {
     auto handles = getPowerHandles();
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -1205,7 +1263,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPow
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageAndNoTelemDataFoundThenUnsupportedFeatureIsReturned, IsCRI) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageAndNoTelemDataFoundThenUnsupportedFeatureIsReturned, IsBmgOrCri) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t instantPower = 0u;
     uint32_t averagePower = 0u;
@@ -1213,7 +1271,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageAndReadGuidFailsFromPmtUtilThenFailureIsReturned, IsCRI) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageAndReadGuidFailsFromPmtUtilThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
@@ -1232,7 +1290,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageAndKeyOffsetMapIsNotAvailableThenFailureIsReturned, IsCRI) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageAndKeyOffsetMapIsNotAvailableThenFailureIsReturned, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
@@ -1256,8 +1314,9 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageAndReadValueFailsForDifferentKeysThenFailureIsReturned, IsCRI) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageAndReadValueFailsThenFailureIsReturned, IsBmgOrCri) {
     static int readFailCount = 1;
+    static int energyCounterReadCount = 0;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -1266,35 +1325,42 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         constexpr uint64_t telemOffset = 0;
-        constexpr std::string_view validPunitGuid = "0x1e2fa030";
-        const uint64_t instantPowerOffset = 128;
-        const uint64_t averagePowerOffset = 136;
+        std::string_view validPunitGuid = "";
+        constexpr uint64_t instantPowerContainerOffset = 128;
+        constexpr uint64_t averagePowerContainerOffset = 136; // CRI: AVERAGE_POWER_CONTAINER
+        constexpr uint64_t bmgAccumPsysEnergyOffset = 52;     // BMG: ACCUM_PSYS_ENERGY for CARD domain
         ssize_t ret = count;
+
+        const bool isBmg = (defaultHwInfo->platform.eProductFamily == IGFX_BMG);
+        if (isBmg) {
+            validPunitGuid = "0x1e2f8201";
+        } else {
+            validPunitGuid = "0x1e2fa030";
+        }
+
+        // BMG uses energy counter delta for average power; CRI reads AVERAGE_POWER_CONTAINER
+        uint64_t failOffset = isBmg ? bmgAccumPsysEnergyOffset : averagePowerContainerOffset;
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 6) {
             memcpy(buf, validPunitGuid.data(), count);
         } else if (fd == 8) {
-            switch (offset) {
-            case instantPowerOffset:
-                if (readFailCount == 1) {
+            if (offset == instantPowerContainerOffset && readFailCount == 1) {
+                // readFailCount == 1: fail the instantaneous power read.
+                errno = ENOENT;
+                ret = -1;
+            } else if (static_cast<uint64_t>(offset) == failOffset && readFailCount >= 2) {
+                // readFailCount == 2: fail the 1st energy read; == 3: fail the 2nd energy read.
+                // BMG reads the energy counter twice (before and after the sampling interval), so the
+                // target index selects which read fails. CRI reads its average power container only once,
+                // so both cases target that single read.
+                const int targetEnergyReadIndex = isBmg ? (readFailCount - 2) : 0;
+                if (energyCounterReadCount == targetEnergyReadIndex) {
                     errno = ENOENT;
                     ret = -1;
-                } else {
-                    ret = sizeof(uint64_t);
                 }
-                break;
-            case averagePowerOffset:
-                if (readFailCount == 2) {
-                    errno = ENOENT;
-                    ret = -1;
-                } else {
-                    ret = sizeof(uint64_t);
-                }
-                break;
-            default:
-                break;
+                energyCounterReadCount++;
             }
         }
         return ret;
@@ -1303,39 +1369,59 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t instantPower = 0u;
     uint32_t averagePower = 0u;
-    for (readFailCount = 1; readFailCount <= 2; readFailCount++) {
+    for (readFailCount = 1; readFailCount <= 3; readFailCount++) {
+        energyCounterReadCount = 0; // Reset energy read counter before each getPowerUsage call
         auto result = pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, &instantPower, &averagePower);
-        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+        EXPECT_NE(ZE_RESULT_SUCCESS, result);
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageThenProperValuesAreReturned, IsCRI) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageThenProperValuesAreReturned, IsBmgOrCri) {
+    static int energyReadCount = 0;
+
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         constexpr uint64_t telemOffset = 0;
-        constexpr std::string_view validPunitGuid = "0x1e2fa030";
-        constexpr uint64_t instantPowerOffset = 128;
-        constexpr uint64_t averagePowerOffset = 136;
-        constexpr uint64_t instantPower = 0x5678ABCD12344321;
-        constexpr uint64_t averagePower = 0x8765DCBA43211234;
+        std::string_view validPunitGuid = "";
+        constexpr uint64_t instantPowerContainerOffset = 128;
+        constexpr uint64_t averagePowerContainerOffset = 136;
+        constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
+        constexpr uint64_t averagePowerContainerValue = 0x8765DCBA43211234;
+        // BMG energy counter offsets (PUNIT rev2: 0x1e2f8201) and mock values
+        constexpr uint64_t bmgAccumPackageEnergyOffset = 48;
+        constexpr uint64_t bmgAccumPsysEnergyOffset = 52;
+        constexpr uint64_t bmgVccgtEnergyOffset = 1628;
+        constexpr uint64_t bmgVccddrEnergyOffset = 1640;
+        constexpr uint32_t mockEnergyCounterE1 = 0x10000;
+        constexpr uint32_t mockEnergyCounterE2 = 0x18000;
+
+        if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+            validPunitGuid = "0x1e2f8201";
+        } else {
+            validPunitGuid = "0x1e2fa030";
+        }
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 6) {
             memcpy(buf, validPunitGuid.data(), count);
         } else if (fd == 8) {
-            switch (offset) {
-            case instantPowerOffset:
-                memcpy(buf, &instantPower, count);
-                break;
-            case averagePowerOffset:
-                memcpy(buf, &averagePower, count);
-                break;
-            default:
-                break;
+            if (offset == instantPowerContainerOffset) {
+                memcpy(buf, &instantPowerContainerValue, count);
+            } else if (offset == averagePowerContainerOffset) {
+                // CRI reads AVERAGE_POWER_CONTAINER for average power
+                memcpy(buf, &averagePowerContainerValue, count);
+            } else if (offset == bmgAccumPackageEnergyOffset || offset == bmgAccumPsysEnergyOffset || offset == bmgVccgtEnergyOffset || offset == bmgVccddrEnergyOffset) {
+                // BMG energy counter reads: first read returns e1, second returns e2
+                if (energyReadCount % 2 == 0) {
+                    memcpy(buf, &mockEnergyCounterE1, count);
+                } else {
+                    memcpy(buf, &mockEnergyCounterE2, count);
+                }
+                energyReadCount++;
             }
         }
         return count;
@@ -1345,37 +1431,56 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     uint32_t instantPower = 0u;
     uint32_t averagePower = 0u;
 
-    constexpr uint64_t instantPowerValue = 0x5678ABCD12344321;
-    constexpr uint64_t averagePowerValue = 0x8765DCBA43211234;
-    uint32_t expectedInstantPower = 0u;
-    uint32_t expectedAveragePower = 0u;
+    constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
+    constexpr uint64_t averagePowerContainerValue = 0x8765DCBA43211234;
+    constexpr uint32_t mockEnergyCounterE1 = 0x10000;
+    constexpr uint32_t mockEnergyCounterE2 = 0x18000;
+    // BMG average power = (convertU18p14(e2) - convertU18p14(e1)) / 0.1s * milliFactor
+    const uint32_t expectedBmgAveragePower = static_cast<uint32_t>(((convertU18p14(mockEnergyCounterE2) - convertU18p14(mockEnergyCounterE1)) / 0.1) * milliFactor);
 
-    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_MEMORY, ZES_POWER_DOMAIN_GPU};
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_MEMORY, ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_GPU, ZES_POWER_DOMAIN_UNKNOWN};
 
     for (const auto &powerDomain : powerDomains) {
+        energyReadCount = 0; // Reset energy read counter before each getPowerUsage call
         auto result = pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, powerDomain, &instantPower, &averagePower);
 
         switch (powerDomain) {
-        case ZES_POWER_DOMAIN_CARD:
-            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-            expectedInstantPower = static_cast<uint32_t>(convertU13p3((instantPowerValue >> 32) & 0xFFFF) * milliFactor);
-            expectedAveragePower = static_cast<uint32_t>(convertU13p3((averagePowerValue >> 32) & 0xFFFF) * milliFactor);
-            EXPECT_EQ(instantPower, expectedInstantPower);
-            EXPECT_EQ(averagePower, expectedAveragePower);
-            break;
         case ZES_POWER_DOMAIN_PACKAGE:
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-            expectedInstantPower = static_cast<uint32_t>(convertU13p3(instantPowerValue & 0xFFFF) * milliFactor);
-            expectedAveragePower = static_cast<uint32_t>(convertU13p3(averagePowerValue & 0xFFFF) * milliFactor);
-            EXPECT_EQ(instantPower, expectedInstantPower);
-            EXPECT_EQ(averagePower, expectedAveragePower);
+            EXPECT_EQ(static_cast<uint32_t>(convertU13p3(instantPowerContainerValue & 0xFFFF) * milliFactor), instantPower); // instantaneous package power: bits [0:15]
+            if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+                EXPECT_EQ(expectedBmgAveragePower, averagePower); // BMG: average power from energy counter delta
+            } else {
+                EXPECT_EQ(static_cast<uint32_t>(convertU13p3(averagePowerContainerValue & 0xFFFF) * milliFactor), averagePower); // average package power: bits [0:15]
+            }
             break;
         case ZES_POWER_DOMAIN_MEMORY:
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-            expectedInstantPower = static_cast<uint32_t>((convertU13p3((instantPowerValue >> 16) & 0xFFFF) + convertU13p3((instantPowerValue >> 48) & 0xFFFF)) * milliFactor);
-            expectedAveragePower = static_cast<uint32_t>((convertU13p3((averagePowerValue >> 16) & 0xFFFF) + convertU13p3((averagePowerValue >> 48) & 0xFFFF)) * milliFactor);
-            EXPECT_EQ(instantPower, expectedInstantPower);
-            EXPECT_EQ(averagePower, expectedAveragePower);
+            if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+                EXPECT_EQ(static_cast<uint32_t>(convertU13p3((instantPowerContainerValue >> 16) & 0xFFFF) * milliFactor), instantPower); // instantaneous memory power: bits [16:31]
+                EXPECT_EQ(expectedBmgAveragePower, averagePower);                                                                        // BMG: average power from energy counter delta
+            } else {
+                EXPECT_EQ(static_cast<uint32_t>((convertU13p3((instantPowerContainerValue >> 16) & 0xFFFF) + convertU13p3((instantPowerContainerValue >> 48) & 0xFFFF)) * milliFactor), instantPower); // instantaneous memory power: bits [16:31] + bits [48:63]
+                EXPECT_EQ(0u, averagePower);                                                                                                                                                           // CRI: no VRAM average power in Container 17
+            }
+            break;
+        case ZES_POWER_DOMAIN_CARD:
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            EXPECT_EQ(static_cast<uint32_t>(convertU13p3((instantPowerContainerValue >> 32) & 0xFFFF) * milliFactor), instantPower); // instantaneous card power: bits [32:47]
+            if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+                EXPECT_EQ(expectedBmgAveragePower, averagePower); // BMG: average power from energy counter delta
+            } else {
+                EXPECT_EQ(static_cast<uint32_t>(convertU13p3((averagePowerContainerValue >> 32) & 0xFFFF) * milliFactor), averagePower); // average card power: bits [32:47]
+            }
+            break;
+        case ZES_POWER_DOMAIN_GPU:
+            if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+                EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+                EXPECT_EQ(0u, instantPower);
+                EXPECT_EQ(expectedBmgAveragePower, averagePower); // BMG: average power from energy counter delta
+            } else {
+                EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+            }
             break;
         default:
             EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);

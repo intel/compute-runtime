@@ -107,8 +107,9 @@ TEST_F(SysmanDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDevic
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::fabricPortGetMultiPortThroughput(invalidHandle, count, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::deviceEnumEnabledVF(invalidHandle, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::memoryGetPageOfflineStateExp(invalidHandle, zes_intel_mem_page_status_exp_t(1), &count, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::getDeviceHealthExp(invalidHandle, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::setDeviceHealthExp(invalidHandle, ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::getDeviceHealthStatus(invalidHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::setDeviceHealthStatus(invalidHandle, ZES_DEVICE_HEALTH_STATUS_EXT_OK));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::getPowerOffReasonExp(invalidHandle, nullptr));
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {
@@ -164,6 +165,10 @@ TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenRetrievingUuidThenTrueIsR
     EXPECT_TRUE(result);
 }
 
+TEST_F(SysmanDeviceFixture, GivenWddmSysmanImpWhenCallingGetPciUuidThenEmptyStringIsReturned) {
+    EXPECT_TRUE(pWddmSysmanImp->getPciUuid().empty());
+}
+
 TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceHandleWhenRetrievingBdfInfoThenNullptrIsReturned) {
 
     auto hwDeviceId = std::make_unique<NEO::HwDeviceId>(NEO::DriverModelType::wddm);
@@ -172,6 +177,33 @@ TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceHandleWhenRetrievingBdfInfoThe
     auto pciBdfInfo = pOsSysman->getPciBdfInfo();
 
     EXPECT_EQ(nullptr, pciBdfInfo);
+}
+
+TEST_F(SysmanDeviceFixture, GivenEmptyPciUuidWhenCallingUpdatePciUuidMapThenNoEntryIsInserted) {
+    auto pMockOsSysman = std::make_unique<MockPciUuidWddmSysmanImp>(pSysmanDeviceImp);
+    pMockOsSysman->mockPciUuid = "";
+    auto pOrigOsSysman = pSysmanDeviceImp->pOsSysman;
+    pSysmanDeviceImp->pOsSysman = pMockOsSysman.get();
+
+    const size_t sizeBefore = driverHandle->pciUuidToPciBusInfoMap.size();
+    driverHandle->updatePciUuidMap(pSysmanDeviceImp);
+    EXPECT_EQ(sizeBefore, driverHandle->pciUuidToPciBusInfoMap.size());
+    EXPECT_EQ(driverHandle->pciUuidToPciBusInfoMap.end(), driverHandle->pciUuidToPciBusInfoMap.find(""));
+
+    pSysmanDeviceImp->pOsSysman = pOrigOsSysman;
+}
+
+TEST_F(SysmanDeviceFixture, GivenNonEmptyPciUuidWhenCallingUpdatePciUuidMapThenEntryIsInserted) {
+    const std::string mockPciUuid = "0000:03:00.0-uuid";
+    auto pMockOsSysman = std::make_unique<MockPciUuidWddmSysmanImp>(pSysmanDeviceImp);
+    pMockOsSysman->mockPciUuid = mockPciUuid;
+    auto pOrigOsSysman = pSysmanDeviceImp->pOsSysman;
+    pSysmanDeviceImp->pOsSysman = pMockOsSysman.get();
+
+    driverHandle->updatePciUuidMap(pSysmanDeviceImp);
+    EXPECT_NE(driverHandle->pciUuidToPciBusInfoMap.end(), driverHandle->pciUuidToPciBusInfoMap.find(mockPciUuid));
+
+    pSysmanDeviceImp->pOsSysman = pOrigOsSysman;
 }
 
 } // namespace ult

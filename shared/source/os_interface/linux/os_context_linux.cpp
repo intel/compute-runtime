@@ -20,7 +20,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -92,6 +92,10 @@ bool OsContextLinux::initializeContext() {
     return true;
 }
 
+void OsContextLinux::onFirstSubmission() {
+    drm.getIoctlHelper()->onFirstSubmission(*this);
+}
+
 void OsContextLinux::isOpenVinoLoaded() {
     std::call_once(this->ovLoadedFlag, [this]() {
         this->ovLoaded = NEO::Linux::isLibraryLoaded("libopenvino_intel_gpu_plugin.so");
@@ -101,9 +105,9 @@ void OsContextLinux::isOpenVinoLoaded() {
 bool OsContextLinux::isDirectSubmissionSupported() const {
     auto &rootDeviceEnvironment = this->getDrm().getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
-    return (this->getDrm().isVmBindAvailable() || (this->ovLoaded && releaseHelper.isDirectSubmissionLightSupported())) && productHelper.isDirectSubmissionSupported();
+    return (this->getDrm().isVmBindAvailable() || (this->ovLoaded && hwInfo.caps.directSubmissionLightSupported)) && productHelper.isDirectSubmissionSupported();
 }
 
 Drm &OsContextLinux::getDrm() const {

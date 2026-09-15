@@ -66,6 +66,20 @@ bool CommandListCoreFamilyImmediate<IGFX_XE_HPC_CORE>::isRelaxedOrderingDispatch
     return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*csr, numEvents);
 }
 
+template <>
+bool CommandListCoreFamily<IGFX_XE_HPC_CORE>::isResolveIoqDependencyWithBarrier(bool implicitDependency, bool copyOnlyWait, bool dualStreamCopyOffloadOperation) const {
+    const bool crossEngineDependency = (this->latestFlushIsDualCopyOffload != dualStreamCopyOffloadOperation);
+    const bool sameEngineImplicitDependency = !crossEngineDependency && !copyOnlyWait && implicitDependency;
+    if (!sameEngineImplicitDependency) {
+        return false;
+    }
+    const auto isBarrierRequired = this->latestOperationHasHeapfullCbEventWithProfiling;
+    if (!isBarrierRequired && NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1) {
+        return true;
+    }
+    return isBarrierRequired;
+}
+
 template struct CommandListCoreFamily<IGFX_XE_HPC_CORE>;
 template struct CommandListCoreFamilyImmediate<IGFX_XE_HPC_CORE>;
 

@@ -147,7 +147,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPro
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDirectoriesFailAndTelemetrySupportNotAvailableWhenGettingCardPowerThenFailureIsReturned) {
 
-    pSysfsAccess->mockscanDirEntriesResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pFsAccess->mockscanDirEntriesResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
@@ -177,8 +177,8 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenReadingToSysNodesFailsWhe
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysfsAccess->isSustainedPowerLimitFilePresent = false;
-    pSysfsAccess->isCriticalPowerLimitFilePresent = false;
+    pFsAccess->isSustainedPowerLimitFilePresent = false;
+    pFsAccess->isCriticalPowerLimitFilePresent = false;
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
 
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);

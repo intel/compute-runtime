@@ -175,6 +175,30 @@ ze_result_t ZE_APICALL zeCommandListAppendMemoryFillWithParameters(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents);
 
+ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
+    ze_command_list_handle_t hCommandList,
+    ze_event_handle_t hEvent);
+
+ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numEvents,
+    ze_event_handle_t *phEvents);
+
+ze_result_t ZE_APICALL zeCommandListAppendEventReset(
+    ze_command_list_handle_t hCommandList,
+    ze_event_handle_t hEvent);
+
+ze_result_t ZE_APICALL zeCommandListAppendSignalEventWithParameters(
+    ze_command_list_handle_t hCommandList,
+    const void *pNext,
+    ze_event_handle_t hEvent);
+
+ze_result_t ZE_APICALL zeCommandListAppendWaitOnEventsWithParameters(
+    ze_command_list_handle_t hCommandList,
+    const void *pNext,
+    uint32_t numEvents,
+    ze_event_handle_t *phEvents);
+
 } // namespace L0
 
 extern "C" {
@@ -333,5 +357,29 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
+    ze_command_list_handle_t hCommandList,
+    ze_event_handle_t hEvent);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numEvents,
+    ze_event_handle_t *phEvents);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendEventReset(
+    ze_command_list_handle_t hCommandList,
+    ze_event_handle_t hEvent);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalEventWithParameters(
+    ze_command_list_handle_t hCommandList,
+    const void *pNext,
+    ze_event_handle_t hEvent);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitOnEventsWithParameters(
+    ze_command_list_handle_t hCommandList,
+    const void *pNext,
+    uint32_t numEvents,
+    ze_event_handle_t *phEvents);
 
 } // extern "C"

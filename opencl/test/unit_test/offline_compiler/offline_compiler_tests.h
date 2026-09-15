@@ -21,6 +21,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace NEO {
 class MultiCommand;

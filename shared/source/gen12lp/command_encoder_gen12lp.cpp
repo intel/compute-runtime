@@ -31,7 +31,7 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/implicit_args_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "encode_surface_state_args.h"
 
@@ -445,7 +445,7 @@ inline void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerT
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, const uint32_t totalDispatchedThreadGroupCount, uint32_t slmTotalSizePerThreadGroup, SlmPolicy slmPolicy) {}
+void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs) {}
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
@@ -630,7 +630,7 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
 
 template <typename Family>
 template <typename WalkerType>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {
@@ -824,11 +824,6 @@ void EncodeDataMemory<Family>::programFrontEndState(
 
 template <typename Family>
 void EncodeSurfaceState<Family>::setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState) {
-}
-
-template <typename Family>
-size_t EncodeSemaphore<Family>::getSizeMiSemaphoreWait() {
-    return sizeof(MI_SEMAPHORE_WAIT);
 }
 
 template <typename Family>

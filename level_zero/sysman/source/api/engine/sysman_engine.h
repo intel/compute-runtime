@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ class Engine : _zes_engine_handle_t {
     }
     inline zes_engine_handle_t toHandle() { return this; }
     bool initSuccess = false;
+    virtual void reInit() = 0;
 };
 
 struct EngineHandleContext {
@@ -43,6 +44,8 @@ struct EngineHandleContext {
     virtual ~EngineHandleContext();
     MOCKABLE_VIRTUAL void init(uint32_t subDeviceCount);
     void releaseEngines();
+
+    void reInit();
 
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine);
 

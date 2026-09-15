@@ -22,7 +22,7 @@ bool addTracingClient() {
     state = TRACING_SET_ENABLED_BIT(state);
     state = TRACING_UNSET_LOCKED_BIT(state);
     AtomicBackoff backoff;
-    while (!tracingState.compare_exchange_weak(state, state + 1, std::memory_order_release,
+    while (!tracingState.compare_exchange_weak(state, state + 1, std::memory_order_acq_rel,
                                                std::memory_order_acquire)) {
         if (!TRACING_GET_ENABLED_BIT(state)) {
             return false;
@@ -50,7 +50,7 @@ static void lockTracingState() {
     state = TRACING_UNSET_LOCKED_BIT(state);
     AtomicBackoff backoff;
     while (!tracingState.compare_exchange_weak(state, TRACING_SET_LOCKED_BIT(state),
-                                               std::memory_order_release, std::memory_order_acquire)) {
+                                               std::memory_order_acq_rel, std::memory_order_acquire)) {
         state = TRACING_ZERO_CLIENT_COUNTER(state);
         state = TRACING_UNSET_LOCKED_BIT(state);
         backoff.pause();

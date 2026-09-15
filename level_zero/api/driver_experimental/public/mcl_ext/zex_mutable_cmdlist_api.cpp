@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,7 +110,6 @@ zexCommandListGetVariable(
     ze_command_list_handle_t hCmdList,
     const zex_variable_desc_t *pVariableDescriptor,
     zex_variable_handle_t *phVariable) {
-    hCmdList = toInternalType(hCmdList);
     if (nullptr == hCmdList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -143,7 +142,6 @@ zexKernelSetArgumentVariable(
     ze_kernel_handle_t hKernel,
     uint32_t argIndex,
     zex_variable_handle_t hVariable) {
-    hKernel = toInternalType(hKernel);
     if (nullptr == hKernel) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -173,7 +171,6 @@ zexCommandListGetLabel(
     ze_command_list_handle_t hCommandList,
     const zex_label_desc_t *pLabelDesc,
     zex_label_handle_t *phLabel) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -195,7 +192,6 @@ ze_result_t ZE_APICALL
 zexCommandListSetLabel(
     ze_command_list_handle_t hCommandList,
     zex_label_handle_t hLabel) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -211,7 +207,6 @@ zexCommandListAppendJump(
     ze_command_list_handle_t hCommandList,
     zex_label_handle_t hLabel,
     zex_operand_desc_t *pCondition) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -240,7 +235,6 @@ zexCommandListAppendLoadRegVariable(
     ze_command_list_handle_t hCommandList,
     zex_mcl_alu_reg_t reg,
     zex_variable_handle_t hVariable) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -257,7 +251,6 @@ zexCommandListAppendStoreRegVariable(
     ze_command_list_handle_t hCommandList,
     zex_mcl_alu_reg_t reg,
     zex_variable_handle_t hVariable) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -274,7 +267,6 @@ zexCommandListAppendMILoadRegReg(
     ze_command_list_handle_t hCommandList,
     zex_mcl_alu_reg_t destination,
     zex_mcl_alu_reg_t source) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -286,7 +278,6 @@ zexCommandListAppendMILoadRegMem(
     ze_command_list_handle_t hCommandList,
     zex_mcl_alu_reg_t reg,
     uint64_t address) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -298,7 +289,6 @@ zexCommandListAppendMILoadRegImm(
     ze_command_list_handle_t hCommandList,
     zex_mcl_alu_reg_t destination,
     uint32_t val) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -310,7 +300,6 @@ zexCommandListAppendMIStoreRegMem(
     ze_command_list_handle_t hCommandList,
     zex_mcl_alu_reg_t reg,
     uint64_t address) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -322,7 +311,6 @@ zexCommandListAppendMIMath(
     ze_command_list_handle_t hCommandList,
     zex_mcl_alu_operation_t *opArray,
     size_t noOperations) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -333,7 +321,6 @@ ze_result_t ZE_APICALL
 zexCommandListTempMemSetEleCount(
     ze_command_list_handle_t hCommandList,
     size_t eleCount) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -356,7 +343,6 @@ ze_result_t ZE_APICALL
 zexCommandListTempMemSet(
     ze_command_list_handle_t hCommandList,
     const void *pTempMem) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -371,7 +357,6 @@ zexCommandListGetNativeBinary(
     size_t *pBinarySize,
     const void *pModule,
     size_t moduleSize) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -384,7 +369,6 @@ zexCommandListLoadNativeBinary(
     ze_command_list_handle_t hCommandList,
     const void *pBinary,
     size_t binarySize) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -414,7 +398,6 @@ zexCommandListGetVariablesList(
     ze_command_list_handle_t hCommandList,
     uint32_t *pVariablesCount,
     const zex_variable_info_t **pVariablesInfos) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -429,7 +412,6 @@ ze_result_t ZE_APICALL
 zexKernelSetVariableGroupSize(
     ze_kernel_handle_t hKernel,
     zex_variable_handle_t hGroupSizeVariable) {
-    hKernel = toInternalType(hKernel);
     if (nullptr == hKernel) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -448,11 +430,9 @@ zexCommandListAppendVariableLaunchKernel(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    hCommandList = toInternalType(hCommandList);
     if (nullptr == hCommandList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    hKernel = toInternalType(hKernel);
     if (nullptr == hKernel) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -460,15 +440,10 @@ zexCommandListAppendVariableLaunchKernel(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    std::vector<ze_event_handle_t> translatedEvents{};
-    for (auto i = 0u; i < numWaitEvents; i++) {
-        translatedEvents.push_back(toInternalType(phWaitEvents[i]));
-    }
-    hSignalEvent = toInternalType(hSignalEvent);
     auto kernel = Kernel::fromHandle(hKernel);
     auto groupCount = Variable::fromHandle(hGroupCountVariable);
     auto signalEvent = Event::fromHandle(hSignalEvent);
-    return MutableCommandList::fromHandle(hCommandList)->appendVariableLaunchKernel(kernel, groupCount, signalEvent, numWaitEvents, translatedEvents.data());
+    return MutableCommandList::fromHandle(hCommandList)->appendVariableLaunchKernel(kernel, groupCount, signalEvent, numWaitEvents, phWaitEvents);
 }
 
 } // namespace L0::MCL

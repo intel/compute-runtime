@@ -11,7 +11,6 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
@@ -145,10 +144,6 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
         size_t lws[3] = {1, 1, 1};
         cl_uint workDim = 1;
 
-        KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-        const char *pSource = "example_kernel(){}";
-        size_t sourceSize = strlen(pSource);
-
         MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
 
         const cl_device_id deviceId = &mockClDevice;
@@ -160,27 +155,8 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, queue);
 
-        const char *sources[1] = {pSource};
-        auto program = clCreateProgramWithSource(
-            context,
-            1,
-            sources,
-            &sourceSize,
-            &retVal);
-        ASSERT_NE(nullptr, program);
-
-        retVal = clBuildProgram(
-            program,
-            1,
-            &deviceId,
-            nullptr,
-            nullptr,
-            nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        auto kernel = clCreateKernel(program, "CopyBuffer", &retVal);
-        ASSERT_NE(nullptr, kernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+        MockKernelWithInternals mockKernel(*NEO::castToObject<Context>(context), MockKernelWithInternalsConfig{.addDefaultArgs = true});
+        auto kernel = mockKernel.mockMultiDeviceKernel;
 
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto buffer0 = clCreateBuffer(context, flags, bufferSize, nullptr, &retVal);
@@ -228,12 +204,6 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
         retVal = clReleaseMemObject(buffer1);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = clReleaseKernel(kernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        retVal = clReleaseProgram(program);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
         retVal = clReleaseCommandQueue(queue);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -263,10 +233,6 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
         size_t lws[3] = {1, 1, 1};
         cl_uint workDim = 1;
 
-        KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-        const char *pSource = "example_kernel(){}";
-        size_t sourceSize = strlen(pSource);
-
         MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
 
         const cl_device_id deviceId = &mockClDevice;
@@ -278,27 +244,8 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, queue);
 
-        const char *sources[1] = {pSource};
-        auto program = clCreateProgramWithSource(
-            context,
-            1,
-            sources,
-            &sourceSize,
-            &retVal);
-        ASSERT_NE(nullptr, program);
-
-        retVal = clBuildProgram(
-            program,
-            1,
-            &deviceId,
-            nullptr,
-            nullptr,
-            nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        auto kernel = clCreateKernel(program, "CopyBuffer", &retVal);
-        ASSERT_NE(nullptr, kernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+        MockKernelWithInternals mockKernel(*NEO::castToObject<Context>(context), MockKernelWithInternalsConfig{.addDefaultArgs = true});
+        auto kernel = mockKernel.mockMultiDeviceKernel;
 
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto buffer0 = clCreateBuffer(context, flags, bufferSize, nullptr, &retVal);
@@ -354,12 +301,6 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
         retVal = clReleaseMemObject(buffer1);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = clReleaseKernel(kernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        retVal = clReleaseProgram(program);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
         retVal = clReleaseCommandQueue(queue);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -390,10 +331,6 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
         size_t lws[3] = {1, 1, 1};
         cl_uint workDim = 1;
 
-        KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-        const char *pSource = "example_kernel(){}";
-        size_t sourceSize = strlen(pSource);
-
         MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
 
         const cl_device_id deviceId = &mockClDevice;
@@ -401,27 +338,8 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, context);
 
-        const char *sources[1] = {pSource};
-        auto program = clCreateProgramWithSource(
-            context,
-            1,
-            sources,
-            &sourceSize,
-            &retVal);
-        ASSERT_NE(nullptr, program);
-
-        retVal = clBuildProgram(
-            program,
-            1,
-            &deviceId,
-            nullptr,
-            nullptr,
-            nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        auto kernel = clCreateKernel(program, "CopyBuffer", &retVal);
-        ASSERT_NE(nullptr, kernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+        MockKernelWithInternals mockKernel(*NEO::castToObject<Context>(context), MockKernelWithInternalsConfig{.addDefaultArgs = true});
+        auto kernel = mockKernel.mockMultiDeviceKernel;
 
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto buffer0 = clCreateBuffer(context, flags, bufferSize, nullptr, &retVal);
@@ -472,12 +390,6 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
         retVal = clReleaseMemObject(buffer1);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = clReleaseKernel(kernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        retVal = clReleaseProgram(program);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
         retVal = clReleaseContext(context);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
@@ -505,10 +417,6 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
         size_t lws[3] = {1, 1, 1};
         cl_uint workDim = 1;
 
-        KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-        const char *pSource = "example_kernel(){}";
-        size_t sourceSize = strlen(pSource);
-
         MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
 
         const cl_device_id deviceId = &mockClDevice;
@@ -516,27 +424,8 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, context);
 
-        const char *sources[1] = {pSource};
-        auto program = clCreateProgramWithSource(
-            context,
-            1,
-            sources,
-            &sourceSize,
-            &retVal);
-        ASSERT_NE(nullptr, program);
-
-        retVal = clBuildProgram(
-            program,
-            1,
-            &deviceId,
-            nullptr,
-            nullptr,
-            nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        auto kernel = clCreateKernel(program, "CopyBuffer", &retVal);
-        ASSERT_NE(nullptr, kernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+        MockKernelWithInternals mockKernel(*NEO::castToObject<Context>(context), MockKernelWithInternalsConfig{.addDefaultArgs = true});
+        auto kernel = mockKernel.mockMultiDeviceKernel;
 
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto buffer0 = clCreateBuffer(context, flags, bufferSize, nullptr, &retVal);
@@ -606,12 +495,6 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         retVal = clReleaseMemObject(buffer1);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        retVal = clReleaseKernel(kernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        retVal = clReleaseProgram(program);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         retVal = clReleaseContext(context);

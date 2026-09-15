@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/kernel_max_cooperative_groups_count_fixture.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -27,7 +28,7 @@ void KernelImpSuggestMaxCooperativeGroupCountFixture::setUp() {
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
     availableSlm = dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.maxProgrammableSlmSize;
-    maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
+    maxBarrierCount = CommonConstants::maxBarrierRegisterPerSlice;
 
     kernelInfo.kernelDescriptor->kernelAttributes.simdSize = simd;
     kernelInfo.kernelDescriptor->kernelAttributes.numGrfRequired = numGrf;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
@@ -291,6 +292,13 @@ TEST(CreateProgramTests, givenNullContextWhenCreateProgramWithBinaryThenReturnsI
     EXPECT_EQ(CL_INVALID_CONTEXT, binaryStatus);
     ASSERT_NE(nullptr, program);
     EXPECT_EQ(CL_SUCCESS, clReleaseProgram(program));
+}
+
+TEST(CreateProgramTests, givenAnyInputWhenCreateProgramWithBuiltInKernelsThenErrcodeIsSetToInvalidValue) {
+    cl_int errcode = CL_SUCCESS;
+    auto program = clCreateProgramWithBuiltInKernels(nullptr, 0, nullptr, "", &errcode);
+    EXPECT_EQ(nullptr, program);
+    EXPECT_EQ(CL_INVALID_VALUE, errcode);
 }
 
 TEST(CreateProgramTests, givenNullContextWhenCreateProgramWithILThenReturnsInvalidContextAndReleasableProgram) {

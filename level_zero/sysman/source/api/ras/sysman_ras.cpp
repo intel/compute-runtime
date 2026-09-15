@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,12 @@ void RasHandleContext::init(uint32_t subDeviceCount) {
         for (const auto &type : errorTypeSubDev) {
             createHandle(type, isSubDevice, subDeviceId);
         }
+    }
+}
+
+void RasHandleContext::reInit() {
+    for (Ras *pRas : handleList) {
+        pRas->reInit();
     }
 }
 

@@ -47,29 +47,6 @@ zeCommandListAppendHostFunction(
     ze_event_handle_t *phWaitEvents);
 
 ze_result_t ZE_APICALL
-zexCommandListAppendMemoryCopyWithParameters(
-    ze_command_list_handle_t hCommandList,
-    void *dstptr,
-    const void *srcptr,
-    size_t size,
-    const void *pNext,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents,
-    ze_event_handle_t hSignalEvent);
-
-ze_result_t ZE_APICALL
-zexCommandListAppendMemoryFillWithParameters(
-    ze_command_list_handle_t hCommandList,
-    void *ptr,
-    const void *pattern,
-    size_t patternSize,
-    size_t size,
-    const void *pNext,
-    ze_event_handle_t hEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents);
-
-ze_result_t ZE_APICALL
 zexCommandListAppendCustomOperation(
     ze_command_list_handle_t hCommandList,
     const void *pNext,
@@ -96,36 +73,5 @@ ze_result_t ZE_APICALL
 zeCommandListVisitExt(
     ze_command_list_handle_t cmdlist,
     const ze_visit_ext_desc_t *desc);
-
-ze_result_t ZE_APICALL zeCommandListGetDeviceHandle(
-    ze_command_list_handle_t hCommandList,
-    ze_device_handle_t *phDevice);
-ze_result_t ZE_APICALL zeCommandListGetContextHandle(
-    ze_command_list_handle_t hCommandList,
-    ze_context_handle_t *phContext);
-ze_result_t ZE_APICALL zeCommandListGetOrdinal(
-    ze_command_list_handle_t hCommandList,
-    uint32_t *pOrdinal);
-ze_result_t ZE_APICALL zeCommandListGetFlags(
-    ze_command_list_handle_t hCommandList,
-    ze_command_list_flags_t *pFlags);
-ze_result_t ZE_APICALL zeCommandListImmediateGetIndex(
-    ze_command_list_handle_t hCommandListImmediate,
-    uint32_t *pIndex);
-ze_result_t ZE_APICALL zeCommandListImmediateGetFlags(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_flags_t *pFlags);
-ze_result_t ZE_APICALL zeCommandListImmediateGetMode(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_mode_t *pMode);
-ze_result_t ZE_APICALL zeCommandListImmediateGetPriority(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_priority_t *pPriority);
-ze_result_t ZE_APICALL zeCommandListIsImmediate(
-    ze_command_list_handle_t hCommandList,
-    ze_bool_t *pIsImmediate);
-ze_result_t ZE_APICALL zeCommandListIsMutableExp(
-    ze_command_list_handle_t hCommandList,
-    ze_bool_t *pIsMutable);
 
 } // namespace L0

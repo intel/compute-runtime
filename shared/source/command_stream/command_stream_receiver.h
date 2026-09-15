@@ -185,6 +185,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint64_t getUcTagGPUAddress() const;
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
+    virtual WaitStatus waitForFlushStamp(FlushStamp &flushStampToWait, uint64_t timeoutNanoseconds) { return WaitStatus::notReady; }
 
     TaskCountType peekTaskCount() const { return taskCount; }
 
@@ -262,8 +263,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
+    virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) { return WaitStatus::notReady; }
     virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
-    virtual WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
+    WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
     MOCKABLE_VIRTUAL bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait);
     void downloadAllocations(bool blockingWait) { downloadAllocations(blockingWait, this->latestFlushedTaskCount); };
     virtual void downloadAllocations(bool blockingWait, TaskCountType taskCount) {};
@@ -717,7 +719,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     volatile DebugPauseState *debugPauseStateAddress = nullptr;
     SpinLock debugPauseStateLock;
     static void *asyncDebugBreakConfirmation(void *arg);
-    static std::function<void()> debugConfirmationFunction;
+    std::function<void()> debugConfirmationFunction;
     std::function<void(GraphicsAllocation &, uint64_t offset, size_t size)> downloadAllocationImpl;
     std::function<void(GraphicsAllocation &, uint64_t offset, size_t size)> uploadAllocationChunkImpl;
 

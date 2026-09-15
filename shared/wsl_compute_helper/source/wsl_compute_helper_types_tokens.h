@@ -187,7 +187,8 @@ static_assert(std::is_standard_layout_v<TokenPointer>, "");
 static_assert(sizeof(TokenPointer) == sizeof(TokenQword), "");
 
 template <typename T>
-inline std::enable_if_t<false == std::is_pointer_v<T>, T> readTokValue(const TokenHeader &token) {
+    requires(false == std::is_pointer_v<T>)
+inline T readTokValue(const TokenHeader &token) {
     T ret = {};
     switch (token.valueDwordCount) {
     default:
@@ -206,7 +207,8 @@ inline std::enable_if_t<false == std::is_pointer_v<T>, T> readTokValue(const Tok
     return ret;
 }
 template <typename T>
-inline std::enable_if_t<std::is_pointer_v<T>, T> readTokValue(const TokenHeader &token) {
+    requires(std::is_pointer_v<T>)
+inline T readTokValue(const TokenHeader &token) {
     T ret = {};
     switch (token.valueDwordCount) {
     default:
@@ -293,13 +295,11 @@ enum TOK : uint32_t {
     TOK_S_GMM_RESOURCE_FLAG_REC__ANONYMOUS12521 = 92,
     TOK_S_GMM_OFFSET_INFO_REC__ANONYMOUS3429 = 94,
     TOK_S_TIME_STAMP_DATA_HEADER = 96,
-    TOK_S_GT_CACHE_TYPES = 97,
     TOK_S_FRAME_RATE = 99,
     TOK_S_KMD_OVERLAY_CAPS_INFO__ANONYMOUS5171 = 100,
     TOK_S_GMM_RESOURCE_MSAA_INFO_REC = 102,
     TOK_S_GMM_TEXTURE_INFO_REC = 103,
     TOK_S_GMM_RESOURCE_ALIGNMENT_REC = 104,
-    TOK_S_GT_CACHE_TYPES__ANONYMOUS9544 = 105,
     TOK_S_TIME_STAMP_DATA_HEADER__ANONYMOUS2466 = 109,
     TOK_S_GMM_TEXTURE_INFO_REC__ANONYMOUS4927 = 111,
     TOK_S_KMD_OVERLAY_CAPS_INFO__ANONYMOUS5171__ANONYMOUS5191 = 112,
@@ -382,10 +382,6 @@ enum TOK : uint32_t {
     TOK_FBB_GT_MULTI_TILE_ARCH_INFO__IS_VALID = 278,
     TOK_FBD_GT_SQIDI_INFO__NUMBEROF_SQIDI = 279,
     TOK_FBD_GT_SQIDI_INFO__NUMBEROF_DOORBELL_PER_SQIDI = 280,
-    TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__L3 = 281,
-    TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__LLC = 282,
-    TOK_FBD_GT_CACHE_TYPES__ANONYMOUS9544__E_DRAM = 283,
-    TOK_FBD_GT_CACHE_TYPES__CACHE_TYPE_MASK = 285,
     TOK_FBD_GT_SYSTEM_INFO__EUCOUNT = 299,
     TOK_FBD_GT_SYSTEM_INFO__THREAD_COUNT = 300,
     TOK_FBD_GT_SYSTEM_INFO__SLICE_COUNT = 301,
@@ -420,7 +416,6 @@ enum TOK : uint32_t {
     TOK_FS_GT_SYSTEM_INFO__VEBOX_INFO = 331,
     TOK_FBD_GT_SYSTEM_INFO__NUM_THREADS_PER_EU = 336,
     TOK_FBD_GT_SYSTEM_INFO__SLMSIZE_IN_KB = 361,
-    TOK_FS_GT_SYSTEM_INFO__CACHE_TYPES = 363,
     TOK_FBD_GT_SYSTEM_INFO__MAX_VECS = 371,
     TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_BLITTER_RING = 396,
     TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT = 423,

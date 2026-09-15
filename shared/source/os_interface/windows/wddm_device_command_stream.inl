@@ -166,6 +166,11 @@ bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSt
 }
 
 template <typename GfxFamily>
+WaitStatus WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait, uint64_t timeoutNanoseconds) {
+    return wddm->waitFromCpu(flushStampToWait, *static_cast<OsContextWin *>(this->osContext), timeoutNanoseconds);
+}
+
+template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::isTlbFlushRequiredForStateCacheFlush() {
     return true;
 }

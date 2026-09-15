@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInf
     outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.flags.ftrL3IACoherency;
 
     setupDefaultEngineType(*outHwInfo, rootDeviceEnvironment);
-    setupPreemptionMode(*outHwInfo, rootDeviceEnvironment, true);
+    setupPreemptionMode(*outHwInfo, true);
     setupPreemptionSurfaceSize(*outHwInfo, rootDeviceEnvironment);
     setupKmdNotifyProperties(outHwInfo->capabilityTable.kmdNotifyProperties);
     auto ret = setupProductSpecificConfig(*outHwInfo, rootDeviceEnvironment);

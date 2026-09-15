@@ -20,18 +20,11 @@
 
 namespace L0 {
 
-decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc = nullptr;
 decltype(&zelSetDriverTeardown) setDriverTeardownFunc = nullptr;
 
 void globalDriverSetup() {
     if (!globalDriverHandles) {
         globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
-    }
-    NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");
-    loaderLibraryProperties.performSelfLoad = true;
-    std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(loaderLibraryProperties)};
-    if (loaderLibrary) {
-        loaderTranslateHandleFunc = reinterpret_cast<decltype(&zelLoaderTranslateHandle)>(loaderLibrary->getProcAddress("zelLoaderTranslateHandle"));
     }
 
     if (!NEO::LEO::platformsImpl) {
@@ -67,8 +60,6 @@ void globalDriverTeardown() {
             if (setDriverTeardownFunc) {
                 setDriverTeardownFunc();
             }
-        } else {
-            loaderTranslateHandleFunc = nullptr;
         }
     }
 

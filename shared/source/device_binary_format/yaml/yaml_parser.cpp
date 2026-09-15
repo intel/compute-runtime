@@ -378,7 +378,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
             if (lineId > 0u && false == isEmptyVector(tokens[lines[lastUsedLine].first], lastUsedLine, outErrReason)) {
                 return false;
             }
-            reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
+            reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId, 2U);
             auto &prev = *outNodes.rbegin();
             auto &parent = outNodes[*nesting.rbegin()];
             if (invalidNodeID != unfinalizedSingleEntryDictNodeId) {
@@ -404,7 +404,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 outErrReason = constructYamlError(lineId, tokens[lines[lineId].first].pos, tokens[lines[lineId].first].pos + 1, "Invalid indentation");
                 return false;
             } else {
-                reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
+                reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId, 2U);
                 auto &prev = outNodes[*nesting.rbegin()];
                 auto &parent = outNodes[prev.parentId];
                 if (invalidNodeID != unfinalizedSingleEntryDictNodeId) {

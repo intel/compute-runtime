@@ -38,6 +38,7 @@ class Power : _zes_pwr_handle_t {
     inline zes_pwr_handle_t toHandle() { return this; }
     bool initSuccess = false;
     bool isCardPower = false;
+    virtual void reInit() = 0;
 };
 struct PowerHandleContext {
     PowerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman) {};
@@ -48,6 +49,8 @@ struct PowerHandleContext {
     ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower);
 
     void releasePowerHandles();
+
+    void reInit();
 
     OsSysman *pOsSysman = nullptr;
     std::vector<Power *> handleList = {};

@@ -241,7 +241,7 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenSettingKernelA
 
 HWTEST_F(KernelArgBufferTestBindless, givenBindlessArgBufferWhenSettingKernelArgThenSurfaceStateIsEncodedAtProperOffset) {
     const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
     const auto surfaceStateHeapSize = pKernel->getSurfaceStateHeapSize();
 
     EXPECT_EQ(pKernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize, surfaceStateHeapSize);

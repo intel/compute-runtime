@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,19 @@ struct MakeResidentCall : CallResult {
 };
 struct WaitFromCpuResult : CallResult {
     const MonitoredFence *monitoredFence = nullptr;
+};
+struct MonitoredFenceKmdWaitEventResult {
+    uint32_t createCalled = 0;
+    uint32_t resetCalled = 0;
+    uint32_t waitCalled = 0;
+    HANDLE eventHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(1));
+    HANDLE resetEventHandle = nullptr;
+    HANDLE waitEventHandle = nullptr;
+    bool resetSuccess = true;
+    bool waitResult = false;
+    uint32_t timeoutMilliseconds = 0;
+    volatile uint64_t *fenceAddressToSignal = nullptr;
+    uint64_t fenceValueToSignal = 0;
 };
 struct FreeGpuVirtualAddressCall : CallResult {
     uint64_t sizePassed = -1;

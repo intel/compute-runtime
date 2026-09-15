@@ -12,7 +12,7 @@
 
 namespace L0 {
 namespace Sysman {
-static constexpr std::string_view libUdevlFile = "libudev.so";
+static constexpr std::string_view libUdevlFile = "libudev.so.1";
 const std::string udevNewRoutine = "udev_new";
 const std::string udevMonitorNewFromNetlinkRoutine = "udev_monitor_new_from_netlink";
 const std::string udevMonitorFilterAddMatchSubsystemDevtypeRoutine = "udev_monitor_filter_add_match_subsystem_devtype";

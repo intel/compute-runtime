@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ class MockFabricFsAccess : public FsAccess {
   public:
     ze_result_t mockListDirectory = ZE_RESULT_SUCCESS;
     ze_result_t canRead(const std::string file) override {
-        if (accessibleNodes.find(file) != accessibleNodes.end()) {
+        if (accessibleNodes.contains(file)) {
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_UNKNOWN;

@@ -58,6 +58,8 @@ set(TEST_TARGETS
     zello_function_pointers_cl
     zello_global_bindless_kernel
     zello_graph
+    zello_graph_gemm_submit
+    zello_overcommit
     zello_visit
     zello_host_function
     zello_host_pointer
@@ -66,6 +68,8 @@ set(TEST_TARGETS
     zello_immediate
     zello_ipc_copy_dma_buf
     zello_ipc_copy_dma_buf_p2p
+    zello_ipc_reserved_physical_offset
+    zello_ipc_range
     zello_memFree_callback
     zello_multidev
     zello_printf
@@ -95,6 +99,12 @@ foreach(TEST_NAME ${TEST_TARGETS})
       continue()
     endif()
     if(${TEST_NAME} STREQUAL "zello_ipc_copy_dma_buf_p2p")
+      continue()
+    endif()
+    if(${TEST_NAME} STREQUAL "zello_ipc_reserved_physical_offset")
+      continue()
+    endif()
+    if(${TEST_NAME} STREQUAL "zello_ipc_range")
       continue()
     endif()
     if(${TEST_NAME} STREQUAL "zello_export_import_memory")

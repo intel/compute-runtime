@@ -76,7 +76,7 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
                 auto pooledPtr = allocPool->createUnifiedMemoryAllocation(totalSize, unifiedMemoryProperties);
                 if (pooledPtr) {
                     allocationOffset = allocPool->getOffsetInPool(pooledPtr);
-                    allocatedSize = allocPool->getPooledAllocationSize(pooledPtr);
+                    allocatedSize = allocPool->lookupAlloc(pooledPtr).pooledAllocationSize;
                     auto usmAlloc = svmAllocManager->getSVMAlloc(reinterpret_cast<void *>(allocPool->getPoolAddress()));
                     UNRECOVERABLE_IF(usmAlloc == nullptr);
                     gpuAllocation = usmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);

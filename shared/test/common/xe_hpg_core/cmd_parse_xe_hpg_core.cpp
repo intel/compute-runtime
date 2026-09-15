@@ -10,6 +10,7 @@
 using GenStruct = NEO::XeHpgCore;
 using GenGfxFamily = NEO::XeHpgCoreFamily;
 
+#include "shared/test/common/cmd_parse/cmd_parse_from_gen12lp_to_xe3_core.inl"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 using L3_CONTROL = GenStruct::L3_CONTROL;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ using namespace NEO;
 
 struct CreateCommandStreamReceiverTest : public ::testing::TestWithParam<CommandStreamReceiverType> {};
 
-HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetToValidTypeThenTheFuntionReturnsCommandStreamReceiver) {
+HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamAndSetCommandStreamReceiverSetThenCsrOfRequestedOrDefaultTypeIsReturned) {
     DebugManagerStateRestore stateRestorer;
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
@@ -41,10 +41,19 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
     {
         auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 0, 1));
 
-        if (csrType < CommandStreamReceiverType::typesNum) {
-            EXPECT_NE(nullptr, csr.get());
-        } else {
-            EXPECT_EQ(nullptr, csr.get());
+        EXPECT_NE(nullptr, csr.get());
+
+        switch (csrType) {
+        default:
+            EXPECT_EQ(csrType, csr->getType());
+            break;
+        case CommandStreamReceiverType::aub:
+        case CommandStreamReceiverType::nullAub:
+            EXPECT_EQ(CommandStreamReceiverType::aub, csr->getType());
+            break;
+        case CommandStreamReceiverType::typesNum:
+            EXPECT_EQ(CommandStreamReceiverType::hardware, csr->getType());
+            break;
         }
     }
 

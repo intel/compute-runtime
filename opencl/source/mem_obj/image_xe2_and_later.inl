@@ -21,8 +21,8 @@ void ImageHw<Family>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceS
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     if (getMcsAllocation() || getIsUnifiedMcsSurface()) {
         auto mcsGmm = getMcsAllocation() ? getMcsAllocation()->getDefaultGmm() : getMultiGraphicsAllocation().getDefaultGraphicsAllocation()->getDefaultGmm();
-        const auto &releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
-        EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
+        const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(surfaceState, hwInfo);
         surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
         surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
         EncodeSurfaceState<Family>::setClearColorParams(surfaceState, mcsGmm);

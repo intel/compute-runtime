@@ -74,7 +74,7 @@ CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIn
 }
 
 CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
-    EXPECT_FALSE(productHelper->useSharedSystemUsm());
+    EXPECT_TRUE(productHelper->useSharedSystemUsm());
 }
 
 using CriHwInfoLinux = ::testing::Test;
@@ -101,4 +101,8 @@ CRITEST_F(CriHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
+}
+
+CRITEST_F(CriProductHelperLinux, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }

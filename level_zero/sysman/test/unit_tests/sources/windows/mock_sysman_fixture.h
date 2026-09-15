@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,15 @@ class PublicWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
     using WddmSysmanImp::pKmdSysManager;
     using WddmSysmanImp::pPmt;
     using WddmSysmanImp::pSysmanProductHelper;
+};
+
+class MockPciUuidWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
+  public:
+    using L0::Sysman::WddmSysmanImp::WddmSysmanImp;
+    std::string mockPciUuid = "";
+    std::string getPciUuid() override {
+        return mockPciUuid;
+    }
 };
 
 class SysmanDeviceFixture : public ::testing::Test {

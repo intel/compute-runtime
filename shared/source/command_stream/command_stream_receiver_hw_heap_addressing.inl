@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 
@@ -19,6 +20,10 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
 
     if (isTbxMode() && (status == SubmissionStatus::success)) {
         waitForCompletionWithTimeout({true, false, true, TimeoutControls::maxTimeout}, this->taskCount);
+    }
+
+    if (status == SubmissionStatus::success) {
+        this->osContext->onFirstSubmission();
     }
 
     return status;

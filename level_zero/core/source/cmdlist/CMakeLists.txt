@@ -16,6 +16,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_immediate.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_launch_params.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_memory_copy_params.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_wait_parameters.h
                ${CMAKE_CURRENT_SOURCE_DIR}/command_to_patch.h
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}cmdlist_launch_params_ext.h
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}cmdlist_memory_copy_params_ext.h

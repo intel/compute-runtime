@@ -23,6 +23,7 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/leo_gmm_types_converter.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 
@@ -184,7 +185,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     l0d3dTextureExtDesc.arrayIndex = arrayIndex;
 
     ze_image_desc_t l0imageDesc{ZE_STRUCTURE_TYPE_IMAGE_DESC};
-    l0imageDesc.miplevels = textureDesc.MipLevels;
+    l0imageDesc.miplevels = 0;
     l0imageDesc.pNext = &l0d3dTextureExtDesc;
     l0imageDesc.type = ze_image_type_t::ZE_IMAGE_TYPE_2D;
     l0imageDesc.width = textureDesc.Width;
@@ -239,16 +240,15 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     ze_image_handle_t imageHandle{};
 
     if (needsView) {
-        if (imagePlane == ImagePlane::planeU || imagePlane == ImagePlane::planeV || imagePlane == ImagePlane::planeUV) {
-            l0imageDesc.width /= 2;
-            l0imageDesc.height /= 2;
-        }
         ret = zeImageViewCreateExp(context->getL0ContextHandle(), context->getClDevice()->getL0Handle(), &l0imageDesc, baseImageHandle, &imageHandle);
     } else {
         ret = zeImageCreate(context->getL0ContextHandle(), context->getClDevice()->getL0Handle(), &l0imageDesc, &imageHandle);
     }
 
     if (ret != ZE_RESULT_SUCCESS) {
+        if (baseImageHandle != nullptr) {
+            zeImageDestroy(baseImageHandle);
+        }
         err.set(L0ToClResultMapper(ret));
         return nullptr;
     }

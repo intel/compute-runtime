@@ -19,6 +19,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -125,7 +126,7 @@ void Image::transferData(void *dest, size_t destRowPitch, size_t destSlicePitch,
     size_t pixelSize = surfaceFormatInfo.surfaceFormat.imageElementSizeInBytes;
     size_t lineWidth = copyRegion[0] * pixelSize;
 
-    DBG_LOG(LogMemoryObject, __FUNCTION__, "memcpy dest:", dest, "sizeRowToCopy:", lineWidth, "src:", src);
+    DBG_LOG(LogMemoryObject, NEO_FUNCTION_NAME, "memcpy dest:", dest, "sizeRowToCopy:", lineWidth, "src:", src);
 
     if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
         // For 1DArray type, array region and origin are stored on 2nd position. For 2Darray its on 3rd position.
@@ -285,7 +286,7 @@ Image *Image::create(Context *context,
         allocationInfo.memory->setMemObjectsAllocationWithWritableFlags(isWritable);
         allocationInfo.transferNeeded |= memoryProperties.flags.copyHostPtr;
 
-        DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", allocationInfo.memory->getUnderlyingBufferSize(),
+        DBG_LOG(LogMemoryObject, NEO_FUNCTION_NAME, "hostPtr:", hostPtr, "size:", allocationInfo.memory->getUnderlyingBufferSize(),
                 "memoryStorage:", allocationInfo.memory->getUnderlyingBuffer(), "GPU address:", std::hex, allocationInfo.memory->getGpuAddress());
 
         multiGraphicsAllocation.addAllocation(allocationInfo.memory);
@@ -405,11 +406,41 @@ Image *Image::createImageHw(Context *context, const MemoryProperties &memoryProp
     return image;
 }
 
+bool Image::isMultisampleConfigurationSupported(const NEO::Device &device, const ImageInfo &imgInfo,
+                                                const GraphicsAllocation *mcsAllocation, bool hasUnifiedMcsSurface) {
+    const auto &gfxCoreHelper = device.getGfxCoreHelper();
+
+    const bool usesReducedSurfaceState =
+        gfxCoreHelper.getRenderSurfaceStateSize(device.getRootDeviceEnvironment()) < gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    if (!usesReducedSurfaceState || (imgInfo.imgDesc.numSamples <= 1u)) {
+        return true;
+    }
+
+    constexpr uint32_t maxSampleCountInReducedState = 8u;
+    return (imgInfo.imgDesc.numSamples <= maxSampleCountInReducedState) &&
+           (mcsAllocation == nullptr) && !hasUnifiedMcsSurface;
+}
+
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, const McsSurfaceInfo &mcsSurfaceInfo,
                                 MultiGraphicsAllocation multiGraphicsAllocation, GraphicsAllocation *mcsAllocation,
                                 cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const ClSurfaceFormatInfo *surfaceFormat,
-                                ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount, bool hasUnifiedMcsSurface) {
+                                ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount, bool hasUnifiedMcsSurface,
+                                cl_int *errcodeRet) {
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
+
+    if (!isMultisampleConfigurationSupported(context->getDevice(0)->getDevice(), imgInfo, mcsAllocation, hasUnifiedMcsSurface)) {
+        delete sharingHandler;
+        auto memoryManager = context->getMemoryManager();
+        for (auto allocation : multiGraphicsAllocation.getGraphicsAllocations()) {
+            memoryManager->freeGraphicsMemory(allocation);
+        }
+        memoryManager->freeGraphicsMemory(mcsAllocation);
+        if (errcodeRet != nullptr) {
+            *errcodeRet = CL_INVALID_OPERATION;
+        }
+        return nullptr;
+    }
+
     auto size = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getUnderlyingBufferSize();
     auto sharedImage = createImageHw(
         context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),

@@ -24,7 +24,6 @@
 #include "level_zero/core/test/aub_tests/fixtures/multicontext_l0_aub_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
-#include "level_zero/driver_experimental/zex_api.h"
 
 extern std::optional<uint32_t> blitterMaskOverride;
 
@@ -265,6 +264,74 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
 }
 
+using AUBAppendQueryKernelTimestampsImmediateL0 = Test<AUBFixtureL0>;
+
+HWTEST_F(AUBAppendQueryKernelTimestampsImmediateL0, whenAppendQueryKernelTimestampsOnImmediateCommandListThenKernelTimestampsAreWritten) {
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    std::unique_ptr<L0::CommandList> immediateCommandList(CommandList::createImmediate(neoDevice->getHardwareInfo().platform.eProductFamily,
+                                                                                       device, &queueDesc, false,
+                                                                                       NEO::EngineGroupType::compute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto cmdListHandle = immediateCommandList->toHandle();
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    auto deviceHandle = device->toHandle();
+    ze_event_pool_handle_t eventPool = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &deviceHandle, &eventPool));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t kernelTimestampEvent = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPool, &eventDesc, &kernelTimestampEvent));
+
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
+
+    const uint32_t groupSize[] = {1, 1, 1};
+    const uint32_t expectedGlobalWorkSize[] = {1, 1, 1};
+    auto kernelOutput = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(3 * sizeof(uint32_t), unifiedMemoryProperties);
+    memset(kernelOutput, 0, 3 * sizeof(uint32_t));
+
+    auto timestampResult = static_cast<ze_kernel_timestamp_result_t *>(
+        driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_kernel_timestamp_result_t), unifiedMemoryProperties));
+    memset(timestampResult, 0, sizeof(ze_kernel_timestamp_result_t));
+
+    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
+    ASSERT_NE(nullptr, moduleHandle);
+    ze_kernel_handle_t kernel;
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "test_get_global_sizes";
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernel));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel, groupSize[0], groupSize[1], groupSize[2]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &kernelOutput));
+
+    ze_group_count_t dispatchTraits = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernel, &dispatchTraits, kernelTimestampEvent, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendQueryKernelTimestamps(cmdListHandle, 1, &kernelTimestampEvent, timestampResult, nullptr, nullptr, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventHostSynchronize(kernelTimestampEvent, std::numeric_limits<uint64_t>::max()));
+
+    EXPECT_TRUE(csr->expectMemory(kernelOutput, expectedGlobalWorkSize, sizeof(expectedGlobalWorkSize), aub_stream::CompareOperationValues::CompareEqual));
+
+    uint64_t zeroTimestamp = 0;
+    EXPECT_TRUE(csr->expectMemory(&timestampResult->global.kernelStart, &zeroTimestamp, sizeof(uint64_t), aub_stream::CompareOperationValues::CompareNotEqual));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
+    driverHandle->svmAllocsManager->freeSVMAlloc(kernelOutput);
+    driverHandle->svmAllocsManager->freeSVMAlloc(timestampResult);
+    zeEventDestroy(kernelTimestampEvent);
+    zeEventPoolDestroy(eventPool);
+}
+
 template <uint32_t TileCount>
 struct BcsSplitAubFixture : public MulticontextL0AubFixture {
     virtual void setUp() {
@@ -346,20 +413,20 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
         void *devAddress = nullptr;
         context->allocDeviceMem(rootDevice->toHandle(), &deviceDesc, sizeof(uint64_t), 4096u, &devAddress);
         ze_event_handle_t outEvent = nullptr;
-        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {
-            .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES,
+        ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {
+            .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC,
             .deviceAddress = reinterpret_cast<uint64_t *>(devAddress),
             .incrementValue = incValue,
             .completionValue = completionValue,
         };
 
-        zex_counter_based_event_desc_t counterBasedDesc = {
-            .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
+        ze_event_counter_based_desc_t counterBasedDesc = {
+            .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
             .pNext = &externalStorageAllocProperties,
-            .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE,
+            .flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE,
         };
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context.get(), rootDevice, &counterBasedDesc, &outEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context.get(), rootDevice, &counterBasedDesc, &outEvent));
 
         return DestroyableZeUniquePtr<Event>(Event::fromHandle(outEvent));
     }

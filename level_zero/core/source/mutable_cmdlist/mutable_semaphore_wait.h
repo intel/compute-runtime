@@ -14,11 +14,12 @@ struct MutableSemaphoreWait {
     enum Type {
         regularEventWait,
         cbEventTimestampSyncWait,
-        cbEventWait
+        cbEventWait,
+        cbEventWaitPatchPreambleCounter,
     };
 
-    MutableSemaphoreWait(uint64_t gpuDestination, void *cmdView, size_t commandSize)
-        : gpuDestinationAddress(gpuDestination), commandView(cmdView), commandSize(commandSize) {}
+    MutableSemaphoreWait(uint64_t gpuDestination, void *cmdView, size_t commandSize, Type type)
+        : gpuDestinationAddress(gpuDestination), commandView(cmdView), commandSize(commandSize), type(type) {}
     virtual ~MutableSemaphoreWait() = default;
 
     virtual void setSemaphoreAddress(GpuAddress semaphoreAddress) = 0;
@@ -29,11 +30,14 @@ struct MutableSemaphoreWait {
     uint64_t getGpuDestinationAddress() const { return gpuDestinationAddress; }
     void *getCommandView() const { return commandView; }
     size_t getCommandSize() const { return commandSize; }
+    Type getType() const { return type; }
 
   protected:
     uint64_t gpuDestinationAddress = 0;
     void *commandView = nullptr;
     size_t commandSize = 0;
+
+    Type type;
 };
 
 } // namespace L0::MCL

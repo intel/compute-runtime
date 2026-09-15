@@ -27,7 +27,6 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -35,7 +34,8 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/query_peer_access.h"
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
@@ -57,6 +57,7 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
       globalSurfacePoolAllocator(this),
       constantSurfacePoolAllocator(this),
       commandBufferPoolAllocator(this),
+      semaphorePoolAllocator(this),
       deviceUsmMemAllocPoolFacade(std::make_unique<UsmMemAllocPoolsFacade>()) {
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
@@ -111,6 +112,7 @@ Device::~Device() {
     linearStreamPoolAllocator.releasePools();
     internalHeapPoolAllocator.releasePools();
     commandBufferPoolAllocator.releasePools();
+    semaphorePoolAllocator.releasePools();
     executionEnvironment->memoryManager->waitForDeletions();
 
     executionEnvironment->decRefInternal();
@@ -396,8 +398,6 @@ bool Device::createEngines() {
     }
 
     if (gfxCoreHelper.areSecondaryContextsSupported()) {
-        auto &hwInfo = this->getHardwareInfo();
-
         auto hpCopyEngine = getHpCopyEngine();
 
         for (auto engineGroupType : {EngineGroupType::compute, EngineGroupType::copy, EngineGroupType::linkedCopy}) {
@@ -423,11 +423,6 @@ bool Device::createEngines() {
                 highPriorityContextCount = std::max(contextCount / 2, 1u);
 
             } else {
-                if (engineGroupType == EngineGroupType::compute && hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1) {
-                    contextCount = contextCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-                    highPriorityContextCount = highPriorityContextCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-                }
-
                 if (engineGroupType == EngineGroupType::copy || engineGroupType == EngineGroupType::linkedCopy) {
                     gfxCoreHelper.adjustCopyEngineRegularContextCount(engineGroup->engines.size(), contextCount);
                 }
@@ -443,7 +438,7 @@ bool Device::createEngines() {
                     continue;
                 }
 
-                UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
+                UNRECOVERABLE_IF(secondaryEngines.contains(engineType));
                 auto &secondaryEnginesForType = secondaryEngines[engineType];
 
                 auto primaryEngine = engineGroup->engines[engineIndex];
@@ -456,7 +451,7 @@ bool Device::createEngines() {
             auto engineType = hpCopyEngine->getEngineType();
             if ((static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0) {
 
-                UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
+                UNRECOVERABLE_IF(secondaryEngines.contains(engineType));
                 auto &secondaryEnginesForType = secondaryEngines[engineType];
 
                 auto primaryEngine = *hpCopyEngine;
@@ -498,9 +493,15 @@ void Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
             engineTypeUsage.second = EngineUsage::highPriority;
         }
         this->createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage);
+        if (regularContextCount == 0) {
+            this->secondaryCsrs.back()->getOsContext().setExclusivelyHpContext();
+        }
     }
 
     UNRECOVERABLE_IF(primaryEngine.osContext->isPartOfContextGroup() == false);
+    if (regularContextCount == 0) {
+        primaryEngine.osContext->setExclusivelyHpContext();
+    }
 }
 
 void Device::allocateDebugSurface(size_t debugSurfaceSize) {
@@ -626,9 +627,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
 }
 
 bool Device::initializeEngines() {
-    EnvironmentVariableReader envReader;
-    bool sysmanNoContextMode = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
-    if (sysmanNoContextMode) {
+    if (NEO::debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.get()) {
         return true;
     }
     uint32_t deviceCsrIndex = 0;
@@ -878,10 +877,6 @@ void Device::allocateSyncBufferHandler() {
 
 UsmMemAllocPoolsFacade &Device::getDeviceUsmMemAllocPoolFacade() {
     return *deviceUsmMemAllocPoolFacade;
-}
-
-UsmMemAllocPool *Device::getUsmPoolOwningPtr(const void *ptr) {
-    return deviceUsmMemAllocPoolFacade->getPoolContainingAlloc(ptr);
 }
 
 uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {
@@ -1148,6 +1143,10 @@ const ReleaseHelper &Device::getReleaseHelper() const {
     return getRootDeviceEnvironment().getReleaseHelper();
 }
 
+const CompilerReleaseHelper &Device::getCompilerReleaseHelper() const {
+    return getRootDeviceEnvironment().getCompilerReleaseHelper();
+}
+
 AILConfiguration *Device::getAilConfigurationHelper() const {
     return getRootDeviceEnvironment().getAILConfigurationHelper();
 }
@@ -1219,8 +1218,9 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         tileCount = this->getNumSubDevices();
     }
 
+    const auto &hwInfo = this->getHardwareInfo();
     auto dispatchGlobalsSize = tileCount * dispatchGlobalsStride;
-    auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, tileCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
+    auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(hwInfo, tileCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
 
     std::unique_ptr<RTDispatchGlobalsInfo> dispatchGlobalsInfo = std::make_unique<RTDispatchGlobalsInfo>();
 
@@ -1239,10 +1239,8 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     }
 
     auto maxBvhLevelsToProgram = maxBvhLevels;
-    if constexpr (RayTracingHelper::maxBVHLevelsIsBitfield) {
-        if (maxBvhLevels == 8) {
-            maxBvhLevelsToProgram = 0;
-        }
+    if (maxBvhLevels == 8) {
+        maxBvhLevelsToProgram = 0;
     }
 
     for (unsigned int tile = 0; tile < tileCount; tile++) {
@@ -1262,16 +1260,15 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
             break;
         }
 
-        auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(*this);
-        const auto &releaseHelper = getReleaseHelper();
+        auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(hwInfo);
 
         RTDispatchGlobals dispatchGlobals = {
             .rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize,
             .callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr),
-            .stackSizePerRay = releaseHelper.getStackSizePerRay(),
+            .stackSizePerRay = hwInfo.caps.stackSizePerRay,
             .numDSSRTStacks = rtStacksPerDss,
             .maxBVHLevels = maxBvhLevelsToProgram,
-            .flags = RayTracingHelper::depthTestLessEqualFlag,
+            .flags = RTDispatchGlobals::depthTestLessEqualFlag,
         };
 
         getGfxCoreHelper().adjustRTDispatchGlobals(dispatchGlobals, rtStacksPerDss);
@@ -1490,7 +1487,7 @@ bool Device::canAccessPeer(Device *peerDevice) {
     GraphicsAllocation *probeAllocation = nullptr;
 
     auto lock = executionEnvironment->obtainPeerAccessQueryLock();
-    if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) == this->crossAccessEnabledDevices.end()) {
+    if (!this->crossAccessEnabledDevices.contains(peerRootDeviceIndex)) {
         bool canAccess = this->queryPeerAccess(*peerDevice, &probeAllocation, &handle);
         this->updatePeerAccessCache(peerDevice, canAccess);
     }
@@ -1503,8 +1500,8 @@ bool Device::canAccessPeer(Device *peerDevice) {
 
 void Device::initializePeerAccessForDevices(const std::vector<NEO::Device *> &devices) {
     for (auto &device : devices) {
-        const auto &releaseHelper = device->getReleaseHelper();
-        if (!releaseHelper.shouldQueryPeerAccess()) {
+        const auto &hwInfo = device->getHardwareInfo();
+        if (!hwInfo.caps.queryPeerAccess) {
             continue;
         }
 

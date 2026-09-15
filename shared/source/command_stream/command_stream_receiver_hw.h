@@ -113,6 +113,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo);
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override;
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle, uint64_t timeoutNanoseconds) override;
 
     void collectStateBaseAddresPatchInfo(
         uint64_t commandBufferAddress,

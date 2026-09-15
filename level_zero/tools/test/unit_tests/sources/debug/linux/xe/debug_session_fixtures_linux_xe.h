@@ -83,6 +83,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
         } else if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlVmOpen)) && (arg != nullptr)) {
             NEO::EuDebugVmOpen *vmOpenIn = reinterpret_cast<NEO::EuDebugVmOpen *>(arg);
             vmOpen = *vmOpenIn;
+            vmOpenCalled++;
             return vmOpenRetVal;
         } else if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlEuControl)) && (arg != nullptr)) {
             NEO::EuDebugEuControl *euControlArg = reinterpret_cast<NEO::EuDebugEuControl *>(arg);
@@ -158,22 +159,27 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
     std::unique_ptr<uint8_t[]> outputBitmask;
     size_t outputBitmaskSize = 0;
     int vmOpenRetVal = 600;
+    int vmOpenCalled = 0;
     int debugEventAckCount = 0;
 };
 
 struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::allThreads;
     using L0::DebugSessionImp::apiEvents;
+    using L0::DebugSessionImp::attentionEventContext;
     using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::fifoPollInterval;
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::interruptTimeout;
     using L0::DebugSessionImp::openSipWrapper;
     using L0::DebugSessionImp::readFifo;
+    using L0::DebugSessionImp::readPackedRegisters;
+    using L0::DebugSessionImp::readRegsetForStoppedThread;
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::triggerEvents;
     using L0::DebugSessionLinux::getClientConnection;
     using L0::DebugSessionLinux::maxRetries;
+    using L0::DebugSessionLinux::resumeImp;
     using L0::DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents;
     using L0::DebugSessionLinuxXe::addThreadToNewlyStoppedFromRaisedAttentionForTileSession;
     using L0::DebugSessionLinuxXe::asyncThread;
@@ -184,6 +190,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::ClientConnectionXe;
     using L0::DebugSessionLinuxXe::clientHandleClosed;
     using L0::DebugSessionLinuxXe::clientHandleToConnection;
+    using L0::DebugSessionLinuxXe::closeAllCachedVmFds;
     using L0::DebugSessionLinuxXe::convertToApi;
     using L0::DebugSessionLinuxXe::convertToPhysicalWithinDevice;
     using L0::DebugSessionLinuxXe::convertToThreadId;
@@ -191,6 +198,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::euControlInterruptSeqno;
     using L0::DebugSessionLinuxXe::euDebugInterface;
     using L0::DebugSessionLinuxXe::eventTypeIsAttention;
+    using L0::DebugSessionLinuxXe::flushVmCache;
     using L0::DebugSessionLinuxXe::getModule;
     using L0::DebugSessionLinuxXe::getThreadStateMutexForTileSession;
     using L0::DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle;
@@ -210,6 +218,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::startAsyncThread;
     using L0::DebugSessionLinuxXe::threadControl;
     using L0::DebugSessionLinuxXe::ThreadControlCmd;
+    using L0::DebugSessionLinuxXe::vmFdCache;
 
     MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, std::make_unique<MockEuDebugInterface>(), params) {
         clientHandleToConnection[mockClientHandle].reset(new ClientConnectionXe(euDebugInterface.get()));
@@ -294,6 +303,10 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
             readInternalEventsAsync();
         }
         return DebugSessionLinuxXe::getInternalEvent();
+    }
+
+    float getThreadStartLimitTime() override {
+        return threadStartLimit;
     }
 
     bool pushApiEventValidateAckEvents = false;
@@ -383,6 +396,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
     size_t numThreadsPassedToThreadControl = 0;
     bool synchronousInternalEventRead = false;
+    float threadStartLimit = 0.0;
     std::atomic<int> getInternalEventCounter = 0;
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
     static constexpr uint64_t mockClientHandle = 1;

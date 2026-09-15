@@ -76,7 +76,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kerne
     if (pImplicitArgs) {
         size += ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, rootDeviceEnvironment);
     }
-    return alignUp(size, NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment(false));
+    return alignUp(size, NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment(false, hwInfo));
 }
 
 template <typename GfxFamily>
@@ -162,8 +162,14 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                                 sizeCrossThreadData, sizePerThreadData, device.getRootDeviceEnvironment());
 
-    EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&interfaceDescriptor, device.getRootDeviceEnvironment(),
-                                                              threadsPerThreadGroup, threadGroupCount, slmTotalSizePerThreadGroup, SlmPolicy::slmPolicyNone);
+    EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = threadsPerThreadGroup,
+        .workloadThreadGroupCount = threadGroupCount,
+        .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+        .grfCount = kernelDescriptor.kernelAttributes.numGrfRequired,
+        .slmPolicy = SlmPolicy::slmPolicyNone};
+
+    EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmArgs);
 
     if constexpr (heaplessModeEnabled == false) {
         interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
@@ -347,7 +353,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
                                           WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
         walkerCmd->setIndirectDataLength(indirectDataLength);
     }
-    ioh.align(NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment(ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()));
+    ioh.align(NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment(ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool(), device.getHardwareInfo()));
 
     return offsetCrossThreadData;
 }

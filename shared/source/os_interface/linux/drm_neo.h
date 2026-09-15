@@ -47,7 +47,7 @@ enum class CacheRegion : uint16_t;
 enum class SubmissionStatus : uint32_t;
 
 class BufferObject;
-class ReleaseHelper;
+class CompilerReleaseHelper;
 class DeviceFactory;
 class MemoryInfo;
 class OsContext;
@@ -63,7 +63,7 @@ struct SystemInfo;
 struct DeviceDescriptor {
     unsigned short deviceId;
     const HardwareInfo *pHwInfo;
-    void (*setupHardwareInfo)(HardwareInfo *, bool, const ReleaseHelper *);
+    void (*setupHardwareInfo)(HardwareInfo *, bool, const CompilerReleaseHelper *);
     const char *devName;
 };
 
@@ -82,6 +82,7 @@ class Drm : public DriverModel {
     ~Drm() override;
 
     virtual int ioctl(DrmIoctl request, void *arg);
+    int ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName);
 
     unsigned int getDeviceHandle() const override {
         return 0;
@@ -102,7 +103,7 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
-    int queryAdapterBDF();
+    MOCKABLE_VIRTUAL int queryAdapterBDF();
     MOCKABLE_VIRTUAL int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
     MOCKABLE_VIRTUAL int createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested);
@@ -225,11 +226,6 @@ class Drm : public DriverModel {
     const RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return rootDeviceEnvironment;
     }
-
-    const std::vector<uint32_t> &getVirtualMemoryIds() const {
-        return virtualMemoryIds;
-    }
-
     const HardwareInfo *getHardwareInfo() const override;
     static bool isDrmSupported(int fileDescriptor);
 
@@ -283,8 +279,8 @@ class Drm : public DriverModel {
 
     uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled, bool isSystemMemory, bool forceCoherent) const;
     bool isVmBindPatIndexProgrammingSupported() const { return vmBindPatIndexProgrammingSupported; }
-    MOCKABLE_VIRTUAL bool getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate);
-    MOCKABLE_VIRTUAL bool getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize);
+    uint32_t getDeviceMemoryMaxClockRateInMhz(uint32_t tileId) override;
+    uint64_t getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId) override;
     void cleanup() override;
     bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();

@@ -7,7 +7,6 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -22,8 +21,6 @@
 #include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
@@ -223,7 +220,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     auto verifyHash = [&]() -> void {
         std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcRegKeys, libSize, libMTime);
 
-        ASSERT_TRUE(hashes.find(hash) == hashes.end());
+        ASSERT_FALSE(hashes.contains(hash));
         hashes.emplace(hash);
     };
     verifyHash();
@@ -410,24 +407,6 @@ TEST(CompilerCacheTests, GivenTooShortKernelFileHashWhenGetCachedBinaryIsCalledT
     EXPECT_EQ(0U, size);
 }
 
-struct CompilerInterfaceCachedTests : public ::testing::Test {
-    void SetUp() override {
-        MockCompilerDebugVars fclDebugVars;
-
-        std::string modeOptions = "";
-        if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
-            modeOptions = std::string("-heapless_") + CompilerOptions::kernelOptions.c_str();
-        }
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".spv");
-
-        gEnvironment->fclPushDebugVars(fclDebugVars);
-    }
-
-    void TearDown() override {
-        gEnvironment->fclPopDebugVars();
-    }
-};
-
 TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsReturned) {
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
@@ -435,12 +414,7 @@ TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsRet
 
     inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
-    MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
-    gEnvironment->fclPushDebugVars(fclDebugVars);
-
     MockCompilerDebugVars igcDebugVars;
-    igcDebugVars.fileName = gEnvironment->igcGetMockFile();
     igcDebugVars.forceBuildFailure = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
@@ -453,7 +427,6 @@ TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsRet
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::buildFailure, err);
 
-    gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
 }
 
@@ -463,16 +436,12 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
     auto src = "#include \"header.h\"\n__kernel k() {}";
     inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
-    std::string options = CompilerOptions::kernelOptions.c_str();
-    std::replace(options.begin(), options.end(), ' ', '_');
-
-    MockCompilerDebugVars fclDebugVars;
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".spv", options);
-    gEnvironment->fclPushDebugVars(fclDebugVars);
-
+    char binaryToReturn[1]{};
     MockCompilerDebugVars igcDebugVars;
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".bin", options);
+    igcDebugVars.binaryToReturn = binaryToReturn;
+    igcDebugVars.binaryToReturnSize = sizeof(binaryToReturn);
     igcDebugVars.forceBuildFailure = true;
+    igcDebugVars.forceBuildFailureBackendOnly = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
     std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
@@ -485,7 +454,6 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, err);
 
-    gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
 }
 
@@ -499,12 +467,10 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     // we force both compilers to fail compilation request
     // at the end we expect CL_SUCCESS which means compilation ends in cache
     MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
     fclDebugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(fclDebugVars);
 
     MockCompilerDebugVars igcDebugVars;
-    igcDebugVars.fileName = gEnvironment->igcGetMockFile();
     igcDebugVars.forceBuildFailure = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
@@ -529,7 +495,6 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
     inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
     MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
     fclDebugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(fclDebugVars);
 
@@ -558,52 +523,28 @@ class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public Compiler
 
         mockCompilerCache = static_cast<CompilerCacheMock *>(compilerInterface->cache.get());
 
-        fclDebugVars.fileName = gEnvironment->fclGetMockFile();
-        gEnvironment->fclPushDebugVars(fclDebugVars);
-
-        std::string options = CompilerOptions::kernelOptions.c_str();
-        if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
-            options = std::string("-heapless_") + CompilerOptions::kernelStatelessOptions.c_str();
-        }
-        std::replace(options.begin(), options.end(), ' ', '_');
-        std::string igcFileName;
-        retrieveBinaryKernelFilename(igcFileName, KernelBinaryHelper::BUILT_INS + "_", ".spv", options);
-
         igcFclDebugVarsForceBuildFailure.forceBuildFailure = true;
+        igcFclDebugVarsForceBuildFailure.forceBuildFailureBackendOnly = true;
+        // When used for the front-end (FCL-role) IGC call (products where
+        // useIgcAsFcl() is true), forceBuildFailureBackendOnly means this call
+        // must actually succeed, so it needs valid output data - reuse the
+        // same content as igcDebugVarsDeviceBinary so the resulting
+        // intermediate representation - and thus its cache hash - matches the
+        // first (successful, non-cached) build() call exactly.
+        igcFclDebugVarsForceBuildFailure.binaryToReturn = deviceBinaryData.data();
+        igcFclDebugVarsForceBuildFailure.binaryToReturnSize = deviceBinaryData.size();
 
-        igcDebugVarsDeviceBinary.fileName = igcFileName;
         igcDebugVarsDeviceBinary.forceBuildFailure = false;
         igcDebugVarsDeviceBinary.binaryToReturn = deviceBinaryData.data();
         igcDebugVarsDeviceBinary.binaryToReturnSize = deviceBinaryData.size();
-
-        igcDebugVarsDeviceBinaryDebugData.fileName = igcFileName;
-        igcDebugVarsDeviceBinaryDebugData.forceBuildFailure = false;
-        igcDebugVarsDeviceBinaryDebugData.binaryToReturn = deviceBinaryData.data();
-        igcDebugVarsDeviceBinaryDebugData.binaryToReturnSize = deviceBinaryData.size();
-        igcDebugVarsDeviceBinaryDebugData.debugDataToReturn = debugDataToReturn.data();
-        igcDebugVarsDeviceBinaryDebugData.debugDataToReturnSize = debugDataToReturn.size();
-
-        MockCompilerDebugVars fclDebugVars;
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".spv", options);
-
-        gEnvironment->fclPushDebugVars(fclDebugVars);
     }
 
-    void TearDown() override {
-        gEnvironment->fclPopDebugVars();
-        gEnvironment->fclPopDebugVars();
-    }
-
-    MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcFclDebugVarsForceBuildFailure;
     MockCompilerDebugVars igcDebugVarsDeviceBinary;
-    MockCompilerDebugVars igcDebugVarsDeviceBinaryDebugData;
     std::vector<uint8_t> deviceBinaryData;
-    std::string debugDataToReturn = "dbgdata";
 
     std::unique_ptr<MockCompilerInterface> compilerInterface;
     CompilerCacheMock *mockCompilerCache;
-    std::unique_ptr<VariableBackup<HardwareInfo>> hwInfoBackup;
 };
 
 TEST_F(CompilerInterfaceOclElfCacheTest, givenIncorrectBinaryCausingPackDeviceBinaryToReturnEmptyVectorWhenPackAndCacheBinaryThenBinaryIsNotStoredInCache) {

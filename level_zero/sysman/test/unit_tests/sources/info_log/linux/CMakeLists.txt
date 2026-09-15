@@ -10,8 +10,10 @@ set(L0_TESTS_SYSMAN_INFO_LOG_LINUX
 )
 
 if(UNIX)
-  target_sources(${TARGET_NAME}
-                 PRIVATE
-                 ${L0_TESTS_SYSMAN_INFO_LOG_LINUX}
-  )
+  if(LIBTRACEFS_FOUND)
+    target_sources(${TARGET_NAME}
+                   PRIVATE
+                   ${L0_TESTS_SYSMAN_INFO_LOG_LINUX}
+    )
+  endif()
 endif()

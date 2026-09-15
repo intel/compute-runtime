@@ -96,22 +96,24 @@ ze_result_t ZE_APICALL zeCommandListEndGraphCaptureExt(ze_command_list_handle_t 
 
     auto *graph = cmdList->getGraphCaptureTarget();
     if (nullptr == graph) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING;
     }
 
     if ((nullptr == phGraph) && (false == graph->wasPreallocated())) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    cmdList->getGraphCaptureTarget()->stopCapturing();
+    graph->stopCapturing();
 
     if (nullptr == phGraph) {
         UNRECOVERABLE_IF(false == graph->wasPreallocated());
-        cmdList->setGraphCaptureTarget(nullptr);
-        return ZE_RESULT_SUCCESS;
     } else {
         *phGraph = graph->toHandle();
-        cmdList->setGraphCaptureTarget(nullptr);
+    }
+    cmdList->setGraphCaptureTarget(nullptr);
+
+    if (false == graph->valid()) {
+        return ZE_RESULT_ERROR_GRAPH_UNJOINED_FORKS;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -132,7 +134,8 @@ ze_result_t ZE_APICALL zeGraphInstantiateExt(ze_graph_handle_t hGraph, const voi
     }
 
     if (false == virtualGraph->validForInstantiation()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return virtualGraph->closed() ? ZE_RESULT_ERROR_INVALID_GRAPH
+                                      : ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     auto execGraph = std::make_unique<ExecutableGraph>();
@@ -193,18 +196,16 @@ ze_result_t ZE_APICALL zeCommandListIsGraphCaptureEnabledExt(ze_command_list_han
 
 ze_result_t ZE_APICALL zeCommandListGetGraphExt(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph) {
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    if ((nullptr == cmdList) || (nullptr == phGraph) || (nullptr == cmdList->getGraphCaptureTarget())) {
+    if ((nullptr == cmdList) || (nullptr == phGraph)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    auto rootGraph = cmdList->getGraphCaptureTarget();
 
-    if (rootGraph) {
-        while (rootGraph->getParentGraph() != nullptr) {
-            rootGraph = rootGraph->getParentGraph();
-        }
+    auto *graph = cmdList->getGraphCaptureTarget();
+    if (nullptr == graph) {
+        *phGraph = nullptr;
+        return ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING;
     }
-
-    *phGraph = rootGraph;
+    *phGraph = graph->getRootGraph();
     return ZE_RESULT_SUCCESS;
 }
 
@@ -230,16 +231,39 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExt(ze_graph_handle_t hGraph, const ch
     }
 
     L0::GraphExportStyle exportStyle = L0::GraphExportStyle::detailed;
+    L0::GraphExportEventNodes exportEventNodes = L0::GraphExportEventNodes::hideInternal;
     const ze_base_desc_t *desc = reinterpret_cast<const ze_base_desc_t *>(pNext);
 
     if (desc != nullptr) {
-        if ((desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC) || (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC)) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC) {
             const auto *dumpDesc = reinterpret_cast<const ze_record_replay_graph_exp_dump_desc_t *>(desc);
-            if (dumpDesc->mode == ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE) {
+            switch (dumpDesc->mode) {
+            case ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED:
+                break;
+            case ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE:
                 exportStyle = L0::GraphExportStyle::simple;
-            } else if (dumpDesc->mode == ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED) {
-                exportStyle = L0::GraphExportStyle::detailed;
-            } else {
+                break;
+            case ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED_WITH_EVENT_NODES:
+                exportEventNodes = L0::GraphExportEventNodes::show;
+                break;
+            case ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE_WITH_EVENT_NODES:
+                exportStyle = L0::GraphExportStyle::simple;
+                exportEventNodes = L0::GraphExportEventNodes::show;
+                break;
+            default:
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided graph EXP dump mode, mode: 0x%x.\n",
+                             dumpDesc->mode);
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC) {
+            const auto *dumpDesc = reinterpret_cast<const ze_record_replay_graph_ext_dump_desc_t *>(desc);
+            switch (dumpDesc->mode) {
+            case ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_DETAILED:
+                break;
+            case ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_SIMPLE:
+                exportStyle = L0::GraphExportStyle::simple;
+                break;
+            default:
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided graph dump mode, mode: 0x%x.\n",
                              dumpDesc->mode);
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -251,7 +275,7 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExt(ze_graph_handle_t hGraph, const ch
         }
     }
 
-    L0::GraphDotExporter exporter{exportStyle};
+    L0::GraphDotExporter exporter{exportStyle, exportEventNodes};
     return exporter.exportToFile(*graph, filePath);
 }
 
@@ -284,12 +308,7 @@ ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto *rootGraph = graph;
-    while (rootGraph->getParentGraph() != nullptr) {
-        rootGraph = rootGraph->getParentGraph();
-    }
-
-    auto *primaryCmdList = rootGraph->getPrimaryCaptureSource();
+    auto *primaryCmdList = graph->getRootGraph()->getPrimaryCaptureSource();
     if (nullptr == primaryCmdList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

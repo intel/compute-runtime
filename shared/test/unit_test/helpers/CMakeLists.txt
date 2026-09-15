@@ -7,6 +7,7 @@
 target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/addressing_mode_helper_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/affinity_mask_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_classification_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_tests.cpp
@@ -91,6 +92,10 @@ if(TESTS_XE2_AND_LATER)
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe2_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_xe2_and_later.cpp
   )
+endif()
+
+if(TESTS_XE3_AND_LATER)
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe3_and_later.cpp)
 endif()
 
 if(TESTS_XE3P_AND_LATER)

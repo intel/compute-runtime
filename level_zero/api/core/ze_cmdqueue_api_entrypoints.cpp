@@ -31,7 +31,7 @@ ze_result_t ZE_APICALL zeCommandQueueExecuteCommandLists(
     uint32_t numCommandLists,
     ze_command_list_handle_t *phCommandLists,
     ze_fence_handle_t hFence) {
-    CommandListExecutionInternalOptions internalOptions = {0, nullptr, nullptr, true};
+    CommandListExecutionInternalOptions internalOptions = {0u, 0u, nullptr, nullptr, true};
     return L0::CommandQueue::fromHandle(hCommandQueue)->executeCommandLists(numCommandLists, phCommandLists, hFence, internalOptions);
 }
 

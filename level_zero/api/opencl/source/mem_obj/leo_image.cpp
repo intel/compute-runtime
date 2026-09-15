@@ -10,6 +10,7 @@
 #include "shared/source/helpers/get_info.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include <level_zero/ze_api.h>
 
@@ -17,6 +18,19 @@
 
 namespace NEO {
 namespace LEO {
+
+Image::Image(Context *context, MemoryProperties &properties, cl_mem_flags flags, ze_image_handle_t imageHandle,
+             void *cpuPtr, ze_image_handle_t baseImageHandle, bool externalHandle, cl_image_format originalFormat,
+             cl_mem memObject)
+    : MemObj(context, properties, flags, cpuPtr, externalHandle, MemObjType::image),
+      imageHandle(imageHandle), baseImageHandle(baseImageHandle), originalFormat(originalFormat) {
+    this->associatedMemObject = memObject ? castToObject<MemObj>(memObject) : nullptr;
+    if (this->associatedMemObject) {
+        // Image borrows the parent's storage, so the parent must outlive it.
+        this->associatedMemObject->incRefInternal();
+        this->setParentSharingHandler(this->associatedMemObject->getSharingHandler());
+    }
+}
 
 Image::~Image() {
     if (!externalHandle && this->imageHandle) {
@@ -27,6 +41,10 @@ Image::~Image() {
     }
     if (this->baseImageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->baseImageHandle) != ZE_RESULT_SUCCESS);
+    }
+    // Must follow zeImageDestroy above - the parent owns the storage backing this image.
+    if (this->associatedMemObject) {
+        this->associatedMemObject->decRefInternal();
     }
 }
 
@@ -58,6 +76,23 @@ bool Image::isSRGB(cl_channel_order clChannelOrder) {
 void Image::clToL0ImageFormat(ze_image_format_t &l0Format, cl_channel_order clChannelOrder, cl_channel_type clChannelType) {
     int channelNumber = 0;
     switch (clChannelOrder) {
+    // Media layouts ignore the format type and the swizzles, the layout alone describes them.
+    case CL_NV12_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_NV12;
+        return;
+    case CL_YUYV_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_YUYV;
+        return;
+    case CL_VYUY_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_VYUY;
+        return;
+    case CL_YVYU_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_YVYU;
+        return;
+    case CL_UYVY_INTEL:
+        l0Format.layout = ZE_IMAGE_FORMAT_LAYOUT_UYVY;
+        return;
+
     case CL_R:
         l0Format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
         l0Format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
@@ -270,6 +305,19 @@ const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, 
     return nullptr;
 }
 
+size_t Image::getRowPitchForImageFromBuffer(cl_mem_flags flags, const cl_image_format *imageFormat, const cl_image_desc *imageDesc) {
+    // Per the OpenCL spec, when image_row_pitch is 0 it is calculated as
+    // image_width * size of element in bytes.
+    if (imageDesc->mem_object == nullptr || imageDesc->image_row_pitch != 0) {
+        return imageDesc->image_row_pitch;
+    }
+    auto surfaceFormat = getSurfaceFormatFromTable(flags, imageFormat);
+    if (surfaceFormat == nullptr) {
+        return imageDesc->image_row_pitch;
+    }
+    return imageDesc->image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
+}
+
 cl_int Image::getImageInfo(cl_image_info paramName,
                            size_t paramValueSize,
                            void *paramValue,
@@ -439,13 +487,39 @@ size_t Image::getApiSize() const {
     return this->calculateTotalSizeForImage(sizes);
 }
 
+size_t Image::calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes) const {
+    auto l0Image = getL0Object();
+    const auto &l0ImgInfo = l0Image->getImageInfo();
+    auto retSize = l0ImgInfo.surfaceFormat->imageElementSizeInBytes * sizes[0];
+    auto rowPitch = l0ImgInfo.rowPitch;
+    auto slicePitch = l0ImgInfo.slicePitch;
+    const size_t precedingRows = sizes[1] > 0u ? sizes[1] - 1u : 0u;
+    const size_t precedingSlices = sizes[2] > 0u ? sizes[2] - 1u : 0u;
+
+    switch (l0ImgInfo.imgDesc.imageType) {
+    case NEO::ImageType::image1DArray:
+        retSize += slicePitch * precedingRows;
+        break;
+    case NEO::ImageType::image2D:
+        retSize += rowPitch * precedingRows;
+        break;
+    case NEO::ImageType::image2DArray:
+    case NEO::ImageType::image3D:
+        retSize += rowPitch * precedingRows + slicePitch * precedingSlices;
+        break;
+    default:
+        break;
+    }
+    return retSize;
+}
+
 size_t Image::getHostptrSize() const {
     auto l0Image = getL0Object();
     const auto &l0ImgInfo = l0Image->getImageInfo();
     MemObjSizeArray sizes{l0ImgInfo.imgDesc.imageWidth,
                           l0ImgInfo.imgDesc.imageType == ImageType::image1DArray ? l0ImgInfo.imgDesc.imageArraySize : l0ImgInfo.imgDesc.imageHeight,
                           l0ImgInfo.imgDesc.imageType == ImageType::image2DArray ? l0ImgInfo.imgDesc.imageArraySize : l0ImgInfo.imgDesc.imageDepth};
-    return this->calculateTotalSizeForImage(sizes);
+    return this->calculateHostPtrSizeForImage(sizes);
 }
 
 bool Image::isCompressionEnabled() {

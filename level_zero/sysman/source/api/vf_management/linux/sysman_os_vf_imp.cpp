@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/vf_management/linux/sysman_os_vf_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/utilities/directory.h"
 
@@ -29,12 +30,12 @@ ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t
     std::string vfPath = pathForVfBdf + std::to_string(vfIdMinusOne);
     ze_result_t result = pSysfsAccess->getRealPath(vfPath, vfRealPath);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the real path and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the real path and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     std::size_t loc = vfRealPath.find_last_of('/');
     if (loc == std::string::npos) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the last occurrence of '/' and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the last occurrence of '/' and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     std::string vfBdfString = vfRealPath.substr(loc + 1);
@@ -43,7 +44,7 @@ ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t
     uint16_t domain = -1;
     uint8_t bus = -1, device = -1, function = -1;
     if (NEO::parseBdfString(vfBdfString, domain, bus, device, function) != vfBdfTokensNum) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the correct token sum and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the correct token sum and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     address->domain = domain;
@@ -122,13 +123,15 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
 
     auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
     if (hwDeviceId.getFileDescriptor() < 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not get Device Id Fd and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not get Device Id Fd and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        engineDataInitStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return engineDataInitStatus;
     }
 
     if (pDrm->sysmanQueryEngineInfo() == false) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        engineDataInitStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return engineDataInitStatus;
     }
 
     vfGetInstancesFromEngineInfo(pDrm);
@@ -138,26 +141,29 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
         std::pair<uint64_t, uint64_t> configPair{UINT64_MAX, UINT64_MAX};
         auto result = pSysmanKmdInterface->getBusyAndTotalTicksConfigsForVf(pPmuInterface, vfId, engine.second.first, engineClass->second, engine.second.second, configPair);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the busy config and total ticks config and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the busy config and total ticks config and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             cleanup();
-            return result;
+            engineDataInitStatus = result;
+            return engineDataInitStatus;
         }
 
         uint64_t busyTicksConfig = configPair.first;
         int64_t busyTicksFd = pPmuInterface->pmuInterfaceOpen(busyTicksConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
         if (busyTicksFd < 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+            engineDataInitStatus = pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle and returning error:0x%x \n", NEO_FUNCTION_NAME, engineDataInitStatus);
             cleanup();
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return engineDataInitStatus;
         }
 
         uint64_t totalTicksConfig = configPair.second;
         int64_t totalTicksFd = pPmuInterface->pmuInterfaceOpen(totalTicksConfig, static_cast<int32_t>(busyTicksFd), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
         if (totalTicksFd < 0) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Ticks Handle and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+            engineDataInitStatus = pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Ticks Handle and returning error:0x%x \n", NEO_FUNCTION_NAME, engineDataInitStatus);
             NEO::SysCalls::close(static_cast<int>(busyTicksFd));
             cleanup();
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return engineDataInitStatus;
         }
 
         EngineUtilsData pEngineUtilsData;
@@ -166,7 +172,8 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
         pEngineUtilsData.totalTicksFd = totalTicksFd;
         pEngineUtils.push_back(pEngineUtilsData);
     }
-    return ZE_RESULT_SUCCESS;
+    engineDataInitStatus = ZE_RESULT_SUCCESS;
+    return engineDataInitStatus;
 }
 
 ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) {
@@ -179,9 +186,13 @@ ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_e
         this->vfEngineDataInit();
     });
 
+    if (engineDataInitStatus != ZE_RESULT_SUCCESS) {
+        return engineDataInitStatus;
+    }
+
     uint32_t engineCount = static_cast<uint32_t>(pEngineUtils.size());
     if (engineCount == 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Total Engine Count Is Zero and hence returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Total Engine Count Is Zero and hence returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -200,7 +211,7 @@ ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_e
             uint64_t pmuData[4] = {};
             auto ret = pPmuInterface->pmuRead(static_cast<int>(pEngineUtils[i].busyTicksFd), pmuData, sizeof(pmuData));
             if (ret < 0) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", NEO_FUNCTION_NAME, ret, ZE_RESULT_ERROR_UNKNOWN);
                 *pCount = 0;
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
@@ -220,7 +231,7 @@ bool LinuxVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) {
     auto result = pSysfsAccess->read(pathForDeviceMemUsed.data(), lMemUsed);
     if (result != ZE_RESULT_SUCCESS) {
         lMemUsed = 0;
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Used with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Used with error 0x%x \n", NEO_FUNCTION_NAME, result);
         return false;
     }
     return true;
@@ -244,6 +255,12 @@ void LinuxVfImp::cleanup() {
     pEngineUtils.clear();
 }
 
+void LinuxVfImp::reInit() {
+    cleanup();
+    engineGroupInstance.clear();
+    vfEngineDataInit();
+}
+
 LinuxVfImp::~LinuxVfImp() {
     cleanup();
 }
@@ -262,7 +279,7 @@ uint32_t OsVf::getNumEnabledVfs(OsSysman *pOsSysman) {
     auto result = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
     if (result != ZE_RESULT_SUCCESS) {
         numberOfVfs = 0;
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Number Of Vfs with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Number Of Vfs with error 0x%x \n", NEO_FUNCTION_NAME, result);
     }
     return numberOfVfs;
 }

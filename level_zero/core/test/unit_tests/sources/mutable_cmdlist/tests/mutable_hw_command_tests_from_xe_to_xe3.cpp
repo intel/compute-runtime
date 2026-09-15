@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,6 +166,20 @@ HWTEST2_F(MutableHwCommandTestXeCore, givenMutableComputeWalkerWhenSettingScratc
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
 
     mutableWalker->updateWalkerScratchPatchAddress(scratchPatchAddress);
+
+    EXPECT_EQ(0, memcmp(this->cmdBufferCpuPtr, &walkerTemplate, this->walkerCmdSize));
+    EXPECT_EQ(0, memcmp(this->cmdBufferGpuPtr, &walkerTemplate, this->walkerCmdSize));
+}
+
+HWTEST2_F(MutableHwCommandTestXeCore, givenMutableComputeWalkerWhenUpdateL3FlushAfterWalkerThenNoActionIsTaken, IsWithinXeCoreAndXe3Core) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
+
+    this->stageCommit = false;
+    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
+
+    mutableWalker->updateL3FlushAfterWalker(1u, 1u);
 
     EXPECT_EQ(0, memcmp(this->cmdBufferCpuPtr, &walkerTemplate, this->walkerCmdSize));
     EXPECT_EQ(0, memcmp(this->cmdBufferGpuPtr, &walkerTemplate, this->walkerCmdSize));

@@ -15,6 +15,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace NEO {
@@ -53,6 +54,7 @@ class SysmanProductHelper {
     // Frequency
     virtual void getFrequencyStepSize(double *pStepSize) = 0;
     virtual bool isFrequencySetRangeSupported() = 0;
+    virtual bool isMediaDomainSupported(LinuxSysmanImp *pLinuxSysmanImp) = 0;
     virtual bool isMemoryDomainSupported() = 0;
     virtual ze_result_t getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) = 0;
     virtual ze_result_t getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) = 0;
@@ -63,6 +65,7 @@ class SysmanProductHelper {
     virtual ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) = 0;
     virtual void getMemoryHealthIndicator(LinuxSysmanImp *pLinuxSysmanImp, zes_mem_health_t *health) = 0;
     virtual ze_result_t getNumberOfMemoryChannels(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pNumChannels) = 0;
+    virtual ze_result_t getMemoryVendorId(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pVendorId) = 0;
 
     // Performance
     virtual void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) = 0;
@@ -72,8 +75,9 @@ class SysmanProductHelper {
     virtual ze_result_t getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
     virtual ze_result_t getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
     virtual ze_result_t getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
-    virtual ze_result_t getVoltageRegulatorMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
-    virtual ze_result_t getGpuBoardMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
+    virtual ze_result_t getVoltageRegulatorTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) = 0;
+    virtual ze_result_t getGpuBoardTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) = 0;
+    virtual ze_result_t getCompositeTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
     virtual bool isMemoryMaxTemperatureSupported() = 0;
     virtual void getSupportedSensors(std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) = 0;
 
@@ -85,6 +89,7 @@ class SysmanProductHelper {
     virtual bool isRepairStatusSupported() = 0;
     virtual ze_result_t memoryGetPageOfflineStateExp(SysFsAccessInterface *pSysFsAccess, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, std::vector<MemPageInfo> &memPageInfoList, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) = 0;
     virtual ze_result_t getMaxMemoryOfflinePages(SysFsAccessInterface *pSysFsAccess, uint32_t *pMaxOfflinePages) = 0;
+    virtual ze_result_t getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
 
     // power
     virtual int32_t getPowerLimitValue(uint64_t value) = 0;
@@ -94,13 +99,16 @@ class SysmanProductHelper {
     virtual std::string getPackageCriticalPowerLimitFile() = 0;
     virtual SysfsValueUnit getPackageCriticalPowerLimitNativeUnit() = 0;
     virtual ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subDeviceId) = 0;
-    virtual ze_result_t getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) = 0;
-    virtual ze_result_t setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) = 0;
+    virtual ze_result_t getLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, uint32_t *pLimit) = 0;
+    virtual ze_result_t setLimitsExt2(SysmanKmdInterface *pSysmanKmdInterface, const std::map<std::string, std::pair<std::string, bool>> &powerLimitFiles, zes_power_domain_t powerDomain, const uint32_t limit) = 0;
     virtual ze_result_t getPowerUsage(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) = 0;
 
     // standby
     virtual bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) = 0;
     virtual bool isSetStandbyModeSupported() = 0;
+    virtual std::string getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) = 0;
+    virtual ze_result_t getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) = 0;
+    virtual ze_result_t setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) = 0;
 
     // Firmware
     virtual void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) = 0;
@@ -127,6 +135,9 @@ class SysmanProductHelper {
 
     // Netlink
     virtual bool isNetlinkEventSupported() = 0;
+
+    // Pmt
+    virtual bool isPmtBasedPowerSupported() = 0;
 
     virtual ~SysmanProductHelper() = default;
     virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;

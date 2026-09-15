@@ -36,3 +36,7 @@ NVLSTEST_F(NvlsProductHelperWindows, givenOverrideDirectSubmissionTimeoutsCalled
     EXPECT_EQ(timeoutUs, 2'000ull);
     EXPECT_EQ(maxTimeoutUs, 3'000ull);
 }
+
+NVLSTEST_F(NvlsProductHelperWindows, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isLEOSupported());
+}

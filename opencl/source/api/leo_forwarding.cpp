@@ -10,6 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_library.h"
 
+#include <atomic>
+
 namespace NEO {
 
 static void loadL0Library();
@@ -19,11 +21,18 @@ bool isLEOEnabled() {
     if (flag == 0) {
         return false;
     }
-    loadL0Library();
     if (flag == 1) {
+        loadL0Library();
         return true;
     }
-    return l0ForwardingState && l0ForwardingState->hasPlatforms;
+    return l0ForwardingState && l0ForwardingState->forwardingActive.load(std::memory_order_acquire);
+}
+
+void activateLeoForwarding() {
+    loadL0Library();
+    if (l0ForwardingState) {
+        l0ForwardingState->forwardingActive.store(true, std::memory_order_release);
+    }
 }
 
 L0ForwardingState *l0ForwardingState = nullptr;
@@ -58,20 +67,15 @@ static void loadL0Library() {
     properties.performSelfLoad = leoForwardingSelfLoad();
     l0ForwardingState->library.reset(OsLibrary::loadFunc(properties));
     if (l0ForwardingState->library && l0ForwardingState->library->isLoaded() && !properties.performSelfLoad) {
-        l0ForwardingState->clGetPlatformIDsFunc = reinterpret_cast<pfnClIcdGetPlatformIDsKHR>(l0ForwardingState->library->getProcAddress("clIcdGetPlatformIDsKHR"));
-        l0ForwardingState->clGetPlatformInfoFunc = reinterpret_cast<decltype(&clGetPlatformInfo)>(l0ForwardingState->library->getProcAddress("clGetPlatformInfo"));
-        l0ForwardingState->clGetDeviceIDsFunc = reinterpret_cast<decltype(&clGetDeviceIDs)>(l0ForwardingState->library->getProcAddress("clGetDeviceIDs"));
         l0ForwardingState->clGetExtensionFunctionAddressFunc = reinterpret_cast<decltype(&clGetExtensionFunctionAddress)>(l0ForwardingState->library->getProcAddress("clGetExtensionFunctionAddress"));
+        l0ForwardingState->clGetPlatformInfoFunc = reinterpret_cast<decltype(&clGetPlatformInfo)>(l0ForwardingState->library->getProcAddress("clGetPlatformInfo"));
+        if (l0ForwardingState->clGetExtensionFunctionAddressFunc) {
+            l0ForwardingState->clGetPlatformIDsFunc = reinterpret_cast<pfnClIcdGetPlatformIDsKHR>(l0ForwardingState->clGetExtensionFunctionAddressFunc("clIcdGetPlatformIDsKHR"));
+        }
         l0ForwardingState->clEnqueueMarkerWithSyncObjectINTELFunc = reinterpret_cast<pfnClEnqueueMarkerWithSyncObjectINTEL>(l0ForwardingState->library->getProcAddress("clEnqueueMarkerWithSyncObjectINTEL"));
         l0ForwardingState->clGetCLObjectInfoINTELFunc = reinterpret_cast<pfnClGetCLObjectInfoINTEL>(l0ForwardingState->library->getProcAddress("clGetCLObjectInfoINTEL"));
         l0ForwardingState->clGetCLEventInfoINTELFunc = reinterpret_cast<pfnClGetCLEventInfoINTEL>(l0ForwardingState->library->getProcAddress("clGetCLEventInfoINTEL"));
         l0ForwardingState->clReleaseGlSharedEventINTELFunc = reinterpret_cast<pfnClReleaseGlSharedEventINTEL>(l0ForwardingState->library->getProcAddress("clReleaseGlSharedEventINTEL"));
-
-        if (l0ForwardingState->clGetPlatformIDsFunc) {
-            cl_uint numPlatforms = 0u;
-            l0ForwardingState->clGetPlatformIDsFunc(0, nullptr, &numPlatforms);
-            l0ForwardingState->hasPlatforms = (numPlatforms > 0u);
-        }
     }
 }
 
@@ -90,13 +94,6 @@ cl_int forwardClGetPlatformInfo(cl_platform_id platform, cl_platform_info paramN
         return l0ForwardingState->clGetPlatformInfoFunc(platform, paramName, paramValueSize, paramValue, paramValueSizeRet);
     }
     return CL_INVALID_PLATFORM;
-}
-
-cl_int forwardClGetDeviceIDs(cl_platform_id platform, cl_device_type deviceType, cl_uint numEntries, cl_device_id *devices, cl_uint *numDevices) {
-    if (l0ForwardingState && l0ForwardingState->clGetDeviceIDsFunc) [[likely]] {
-        return l0ForwardingState->clGetDeviceIDsFunc(platform, deviceType, numEntries, devices, numDevices);
-    }
-    return CL_DEVICE_NOT_FOUND;
 }
 
 void *forwardClGetExtensionFunctionAddress(const char *funcName) {

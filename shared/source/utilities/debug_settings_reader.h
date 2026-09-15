@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class SettingsReader {
     }
     static SettingsReader *createOsReader(bool userScope, const std::string &regKey);
     static SettingsReader *createFileReader();
+    virtual bool hasSetting(const char *settingName, DebugVarPrefix &type) = 0;
     virtual int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) = 0;
     virtual int32_t getSetting(const char *settingName, int32_t defaultValue) = 0;
     virtual int64_t getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) = 0;

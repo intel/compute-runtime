@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,11 +45,11 @@ class BaseSortedPointerWithValueVector {
         }
     }
 
-    void remove(const void *ptr) {
-        auto removeIt = std::remove_if(allocations.begin(), allocations.end(), [&ptr](const PointerPair &other) {
+    bool remove(const void *ptr) {
+        auto numRemoved = std::erase_if(allocations, [&ptr](const PointerPair &other) {
             return ptr == other.first;
         });
-        allocations.erase(removeIt);
+        return numRemoved > 0;
     }
 
     template <bool allowOffset>

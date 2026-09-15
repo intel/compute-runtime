@@ -76,6 +76,9 @@ class PmuRasUtil : public RasUtil {
   private:
     std::vector<int64_t> memberFds = {};
     int64_t groupFd = -1;
+    // Holds the mapped errno when PMU init fails with one, otherwise stays at
+    // DEPENDENCY_UNAVAILABLE to report that no PMU event could be enumerated.
+    ze_result_t initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     uint64_t absoluteErrorCount[maxRasErrorCategoryExpCount] = {0};
     uint32_t clearStatus = 0;
     std::map<zes_ras_error_category_exp_t, uint64_t> errorCategoryToEventCount;

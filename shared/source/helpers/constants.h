@@ -36,6 +36,7 @@ inline constexpr size_t minBufferAlignment = 4;
 inline constexpr size_t cacheLineSize = 64;
 inline constexpr size_t cacheLineSize256B = 256;
 inline constexpr size_t pageSize = 4 * kiloByte;
+inline constexpr uint64_t maxStatefulBufferSize = fullStatefulRegion - 2 * pageSize; // Two pages reserved because driver may pad the buffer with additional pages for over fetching
 inline constexpr size_t pageSize64k = 64 * kiloByte;
 inline constexpr size_t pageSize2M = 2 * megaByte;
 inline constexpr size_t preferredAlignment = pageSize;  // alignment preferred for performance reasons, i.e. internal allocations
@@ -94,9 +95,23 @@ inline constexpr uint32_t maximalSimdSize = 32;
 inline constexpr uint32_t maximalSizeOfAtomicType = 8;
 inline constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::maxEngineGroups);
 inline constexpr uint32_t maxWorkgroupSize = 1024u;
+inline constexpr uint32_t maxBarrierRegisterPerSlice = 32u;
 inline constexpr uint32_t minimalSyncBufferSize = 12;
 inline constexpr uint32_t gpuHangCheckTimeInUS = 500'000;
 inline constexpr double defaultProfilingTimerResolution = 83.333;
 inline constexpr uint64_t nsecPerSec = 1000000000ull;
 inline constexpr uint32_t maxAllowedEnvVariableSize = 4096u;
 } // namespace CommonConstants
+
+namespace SamplerConstants {
+inline constexpr uint32_t borderColorStateSize = 64u;
+} // namespace SamplerConstants
+
+namespace DeviceVectorWidthConstants {
+inline constexpr uint32_t charWidth = 16u;
+inline constexpr uint32_t shortWidth = 8u;
+inline constexpr uint32_t intWidth = 4u;
+inline constexpr uint32_t longWidth = 1u;
+inline constexpr uint32_t floatWidth = 1u;
+inline constexpr uint32_t halfWidth = 8u;
+} // namespace DeviceVectorWidthConstants

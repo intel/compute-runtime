@@ -60,56 +60,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitFo
     EXPECT_EQ(1, mock->ioctlCount.gemWait);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenGpuHangDetectedWhenWaitForCompletionCompletesThenGpuHangIsReturned) {
-    csr->initializeTagAllocation();
-
-    // Force isGpuHangDetected() via the real reset-stats path: report an active batch for the context
-    auto osContextLinux = static_cast<OsContextLinux *>(osContext.get());
-    for (const auto drmContextId : osContextLinux->getDrmContextIds()) {
-        ResetStats resetStats{};
-        resetStats.contextId = drmContextId;
-        resetStats.batchActive = 1;
-        mock->resetStatsToReturn.push_back(resetStats);
-    }
-    ASSERT_FALSE(mock->resetStatsToReturn.empty());
-
-    // taskCountToWait == 0 -> the wait completes (ready), then the DRM override probes for a hang and reports it
-    const auto waitStatus = csr->waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, 0u);
-    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenBaseWaitReturnsNotReadyWhenWaitForCompletionThenHangCheckIsSkippedAndNotReadyIsReturned) {
-    csr->initializeTagAllocation();
-
-    // Drive the base wait to notReady: tag stays below the requested count and the wait times out.
-    auto tagAddress = const_cast<TagAddressType *>(csr->getTagAddress());
-    *tagAddress = 0u;
-    static_cast<MockDrmCsr<FamilyType> *>(csr)->latestFlushedTaskCount = 1u; // skip flush paths, go straight to the poll loop
-
-    // Prime a hang that WOULD be reported if the check ran
-    auto osContextLinux = static_cast<OsContextLinux *>(osContext.get());
-    for (const auto drmContextId : osContextLinux->getDrmContextIds()) {
-        ResetStats resetStats{};
-        resetStats.contextId = drmContextId;
-        resetStats.batchActive = 1;
-        mock->resetStatsToReturn.push_back(resetStats);
-    }
-    mock->ioctlCount.getResetStats = 0;
-
-    // Base wait returns notReady, so `waitStatus == ready` is false and isGpuHangDetected() is never called
-    const auto waitStatus = csr->waitForCompletionWithTimeout(WaitParams{false, true, false, 0}, 1u);
-    EXPECT_EQ(WaitStatus::notReady, waitStatus);
-    EXPECT_EQ(0, mock->ioctlCount.getResetStats); // short-circuit: no reset-stats probe was issued
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenNoGpuHangWhenWaitForCompletionCompletesThenReadyIsReturned) {
-    csr->initializeTagAllocation();
-
-    // No reset stats primed -> isGpuHangDetected() returns false, so a completed wait stays ready
-    const auto waitStatus = csr->waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, 0u);
-    EXPECT_EQ(WaitStatus::ready, waitStatus);
-}
-
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCallExit) {
     uint32_t expectedExitCounter = 13;
 

@@ -14,9 +14,11 @@ namespace NEO {
 void translateDebugSettings(DebugVariables &debugVariables) {
     translateDebugSettingsImpl(debugVariables);
 
-    if (debugVariables.FlushAllCaches.get() == 1) {
+#if !defined(NEO_USE_CONSTEXPR_DEBUG_VARIABLES)
+    if (debugVariables.FlushAllCaches.get() & 1) {
         debugVariables.FlushAllCaches.set(FlushCachesBitmask::allCaches);
     }
+#endif
 }
 
 } // namespace NEO

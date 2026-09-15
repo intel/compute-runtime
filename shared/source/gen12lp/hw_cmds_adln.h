@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,13 +21,13 @@ struct ADLN : public Gen12LpFamily {
     static const uint32_t maxSubslicesSupported = 6;
     static const uint32_t maxDualSubslicesSupported = 12;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper);
+    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
-    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
 };
 class AdlnHwConfig : public ADLN {
   public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
     static const HardwareInfo hwInfo;
 
   private:

@@ -23,6 +23,7 @@ const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(bool isDebu
     case GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP:
         return writeByPassCachingPolicy;
     case GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB:
+    case GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WS:
         return writeBackCachingPolicy;
     case GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_UC:
         return uncachedCachingPolicy;

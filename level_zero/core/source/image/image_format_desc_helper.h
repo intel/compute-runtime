@@ -40,4 +40,7 @@ struct Swizzles {
 cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription);
 cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription, bool srgb = false);
 
+// Chroma plane is half sized. Excludes 3-plane layouts (RGBP, BRGP, I420).
+bool isTwoPlaneYuv420Format(ze_image_format_layout_t layout);
+
 } // namespace L0

@@ -59,6 +59,8 @@ zesGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnEnumOverclockDomains, L0::globalDriverDispatch.sysmanDevice.pfnEnumOverclockDomains, version, ZE_API_VERSION_1_5);
     fillDdiEntry(pDdiTable->pfnResetExt, L0::globalDriverDispatch.sysmanDevice.pfnResetExt, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnPciLinkSpeedUpdateExt, L0::globalDriverDispatch.sysmanDevice.pfnPciLinkSpeedUpdateExt, version, ZE_API_VERSION_1_15);
+    fillDdiEntry(pDdiTable->pfnGetHealthStatusExt, L0::globalDriverDispatch.sysmanDevice.pfnGetHealthStatusExt, version, ZE_API_VERSION_1_18);
+    fillDdiEntry(pDdiTable->pfnSetHealthStatusExt, L0::globalDriverDispatch.sysmanDevice.pfnSetHealthStatusExt, version, ZE_API_VERSION_1_18);
 
     return result;
 }

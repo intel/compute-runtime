@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ class WddmEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;
     ze_result_t getProperties(zes_engine_properties_t &properties) override;
     bool isEngineModuleSupported() override;
+    void reInit() override {};
 
     WddmEngineImp() = default;
     WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t tileId);

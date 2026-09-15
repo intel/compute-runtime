@@ -123,10 +123,7 @@ HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGro
 
     numberOfBarriers = 16;
 
-    auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
-    auto maxBarrierCount = helper.getMaxBarrierRegisterPerSlice();
-
-    auto expected = static_cast<uint32_t>(dssCount * (maxBarrierCount / numberOfBarriers));
+    auto expected = dssCount * (CommonConstants::maxBarrierRegisterPerSlice / numberOfBarriers);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
@@ -167,8 +164,6 @@ HWTEST_F(KernelHelperMaxWorkGroupsTests, givenZeroBarriersAndSlmNotUsedWhenCalcu
 }
 
 HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWorkGroupsCountThenLowestResultIsAlwaysReturned, HasDispatchAllSupport) {
-    auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
-
     engineType = EngineGroupType::cooperativeCompute;
     usedSlm = 1 * MemoryConstants::kiloByte;
     numberOfBarriers = 1;
@@ -181,7 +176,7 @@ HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWo
     hwInfo->gtSystemInfo.ThreadCount = 1024;
     EXPECT_NE(1u, getMaxWorkGroupCount());
 
-    numberOfBarriers = static_cast<uint8_t>(helper.getMaxBarrierRegisterPerSlice());
+    numberOfBarriers = static_cast<uint8_t>(CommonConstants::maxBarrierRegisterPerSlice);
     EXPECT_EQ(1u, getMaxWorkGroupCount());
 
     numberOfBarriers = 1;

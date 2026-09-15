@@ -83,6 +83,251 @@ TEST_F(ContextIsShareable, whenCreatingContextThenOpaqueHandleSupportIsEnabled) 
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+struct IpcImportFdLifetimeFixture : GetMemHandlePtrTestFixture {
+    struct ScopedReservedMemoryManager : NEO::MemoryManagerMemHandleMock {
+        explicit ScopedReservedMemoryManager(L0::DriverHandle &driverHandle)
+            : driverHandle(driverHandle), previousMemoryManager(driverHandle.getMemoryManager()) {
+            driverHandle.setMemoryManager(this);
+        }
+        ~ScopedReservedMemoryManager() override {
+            driverHandle.setMemoryManager(previousMemoryManager);
+        }
+        int getImportHandleFromReservedHandleData(void *, uint32_t) override { return 701; }
+        L0::DriverHandle &driverHandle;
+        NEO::MemoryManager *previousMemoryManager;
+    };
+
+    void setUp() {
+        GetMemHandlePtrTestFixture::setUp();
+        context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+        context->settings.handleType = IpcHandleType::fdHandle;
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+        currMemoryManager->ntHandle = false;
+        driverHandle->allocationToReturn = &allocation;
+        closedFds.clear();
+        closeSink = &closedFds;
+        nextFd = 200;
+        NEO::SysCalls::sysCallsPidfdOpen = [](pid_t, unsigned int) { return 100; };
+        NEO::SysCalls::sysCallsPidfdGetfd = [](int, int, unsigned int) { return nextFd++; };
+        NEO::SysCalls::sysCallsClose = [](int fd) { closeSink->push_back(fd); return 0; };
+    }
+    auto open(bool opaque = true, void *reserved = nullptr, bool host = false) {
+        return context->getMemHandlePtr(device, 42, NEO::AllocationType::buffer, host, 1234, 0, 123456, reserved, false, opaque, 0);
+    }
+    DebugManagerStateRestore restore;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdOpen)> openBackup{&NEO::SysCalls::sysCallsPidfdOpen};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> getfdBackup{&NEO::SysCalls::sysCallsPidfdGetfd};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup{&NEO::SysCalls::sysCallsClose};
+    NEO::MockGraphicsAllocation allocation;
+    std::vector<int> closedFds;
+    static std::vector<int> *closeSink;
+    static int nextFd;
+};
+std::vector<int> *IpcImportFdLifetimeFixture::closeSink = nullptr;
+int IpcImportFdLifetimeFixture::nextFd = 200;
+using IpcImportFdLifetimeTest = Test<IpcImportFdLifetimeFixture>;
+
+TEST_F(IpcImportFdLifetimeTest, givenRepeatedOpaqueImportsWhenImportingThenEachOwnedFdClosesWithoutCacheOrStaleHandle) {
+    for (int i = 0; i < 30; ++i) {
+        allocation.setSharedHandle(200 + i);
+        auto result = open();
+        EXPECT_NE(nullptr, result.second);
+        EXPECT_EQ(&allocation, result.first);
+        EXPECT_EQ(NEO::Sharing::nonSharedResource, allocation.peekSharedHandle());
+        EXPECT_EQ(200 + i, closedFds.back());
+    }
+    EXPECT_EQ(60u, closedFds.size());
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenFailedDeviceImportWhenImportingThenOwnedFdIsClosed) {
+    driverHandle->failHandleLookup = true;
+    EXPECT_EQ(nullptr, open().second);
+    EXPECT_EQ((std::vector<int>{100, 200}), closedFds);
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenFailedFdAcquisitionWhenImportingThenBorrowedExporterFdIsNotClosed) {
+    NEO::SysCalls::sysCallsPidfdGetfd = [](int, int, unsigned int) { return -1; };
+    EXPECT_EQ(nullptr, open().second);
+    EXPECT_EQ((std::vector<int>{100}), closedFds);
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenFailedPidfdOpenWhenImportingOpaqueHostOrDeviceMemoryThenLocalFdIsNotUsed) {
+    NEO::SysCalls::sysCallsPidfdOpen = [](pid_t, unsigned int) { return -1; };
+    allocation.setSharedHandle(42);
+    for (bool host : {false, true}) {
+        auto result = open(true, nullptr, host);
+        EXPECT_EQ(nullptr, result.first);
+        EXPECT_EQ(nullptr, result.second);
+    }
+    EXPECT_EQ(42u, allocation.peekSharedHandle());
+    EXPECT_TRUE(closedFds.empty());
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenSuccessfulImportThenPidfdOpenFailsWhenReopeningThenLocalFdIsNotUsed) {
+    EXPECT_NE(nullptr, open().second);
+    closedFds.clear();
+    allocation.setSharedHandle(42);
+    NEO::SysCalls::sysCallsPidfdOpen = [](pid_t, unsigned int) { return -1; };
+    for (bool host : {false, true}) {
+        EXPECT_EQ(nullptr, open(true, nullptr, host).second);
+    }
+    EXPECT_EQ(42u, allocation.peekSharedHandle());
+    EXPECT_TRUE(closedFds.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenFailedPidfdGetfdWhenImportingHostMemoryThenLocalFdIsNotUsed) {
+    NEO::SysCalls::sysCallsPidfdGetfd = [](int, int, unsigned int) { return -1; };
+    allocation.setSharedHandle(42);
+    EXPECT_EQ(nullptr, open(true, nullptr, true).second);
+    EXPECT_EQ(42u, allocation.peekSharedHandle());
+    EXPECT_EQ((std::vector<int>{100}), closedFds);
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenFailedImportAndFailedReservedRetryThenBothOwnedFdsClose) {
+    ScopedReservedMemoryManager memoryManager(*driverHandle);
+    closedFds.clear();
+    driverHandle->remainingFdImportFailures = 2;
+    char reserved[32] = {};
+    auto result = open(true, reserved);
+    EXPECT_EQ(nullptr, result.first);
+    EXPECT_EQ(nullptr, result.second);
+    EXPECT_EQ((std::vector<int>{100, 200, 701}), closedFds);
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenFailedPidfdGetfdWhenSocketFallbackSucceedsThenReceivedFdIsClosed) {
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    NEO::SysCalls::sysCallsPidfdGetfd = [](int, int, unsigned int) { return -1; };
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSocket)> socketBackup(&NEO::SysCalls::sysCallsSocket, [](int, int, int) { return 801; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsConnect)> connectBackup(&NEO::SysCalls::sysCallsConnect, [](int, const sockaddr *, socklen_t) { return 0; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSend)> sendBackup(&NEO::SysCalls::sysCallsSend, [](int, const void *, size_t size, int) { return static_cast<ssize_t>(size); });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRecvmsg)> receiveBackup(&NEO::SysCalls::sysCallsRecvmsg, [](int, msghdr *msg, int) {
+        auto payload = static_cast<NEO::IpcSocketResponsePayload *>(msg->msg_iov[0].iov_base);
+        payload->success = true;
+        auto cmsg = CMSG_FIRSTHDR(msg);
+        cmsg->cmsg_level = SOL_SOCKET;
+        cmsg->cmsg_type = SCM_RIGHTS;
+        cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+        *reinterpret_cast<int *>(CMSG_DATA(cmsg)) = 350;
+        return static_cast<ssize_t>(sizeof(*payload));
+    });
+    EXPECT_NE(nullptr, open().second);
+    EXPECT_EQ((std::vector<int>{100, 801, 350}), closedFds);
+    EXPECT_EQ(NEO::Sharing::nonSharedResource, allocation.peekSharedHandle());
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenFailedPidfdOpenAndSocketConnectThenLocalFdIsNotUsed) {
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    NEO::SysCalls::sysCallsPidfdOpen = [](pid_t, unsigned int) { return -1; };
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSocket)> socketBackup(&NEO::SysCalls::sysCallsSocket, [](int, int, int) { return 801; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsConnect)> connectBackup(&NEO::SysCalls::sysCallsConnect, [](int, const sockaddr *, socklen_t) { return -1; });
+    allocation.setSharedHandle(42);
+    EXPECT_EQ(nullptr, open().second);
+    EXPECT_EQ(42u, allocation.peekSharedHandle());
+    EXPECT_EQ((std::vector<int>{801}), closedFds);
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenSocketResponseFailureWithReceivedFdThenReceivedFdIsClosedOnce) {
+    context->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSocket)> socketBackup(&NEO::SysCalls::sysCallsSocket, [](int, int, int) { return 801; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsConnect)> connectBackup(&NEO::SysCalls::sysCallsConnect, [](int, const sockaddr *, socklen_t) { return 0; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSend)> sendBackup(&NEO::SysCalls::sysCallsSend, [](int, const void *, size_t size, int) { return static_cast<ssize_t>(size); });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRecvmsg)> receiveBackup(&NEO::SysCalls::sysCallsRecvmsg, [](int, msghdr *msg, int) {
+        auto payload = static_cast<NEO::IpcSocketResponsePayload *>(msg->msg_iov[0].iov_base);
+        payload->success = false;
+        auto cmsg = CMSG_FIRSTHDR(msg);
+        cmsg->cmsg_level = SOL_SOCKET;
+        cmsg->cmsg_type = SCM_RIGHTS;
+        cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+        *reinterpret_cast<int *>(CMSG_DATA(cmsg)) = 350;
+        return static_cast<ssize_t>(sizeof(*payload));
+    });
+    allocation.setSharedHandle(42);
+    EXPECT_EQ(nullptr, open().second);
+    EXPECT_EQ(42u, allocation.peekSharedHandle());
+    EXPECT_EQ((std::vector<int>{350, 801}), closedFds);
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenNonOpaqueBorrowedHandleWhenImportingThenOwnershipIsUnchanged) {
+    allocation.setSharedHandle(42);
+    EXPECT_NE(nullptr, open(false).second);
+    EXPECT_EQ(42u, allocation.peekSharedHandle());
+    EXPECT_TRUE(closedFds.empty());
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenFailedImportAndReservedRetryWhenImportingThenBothOwnedFdsClose) {
+    ScopedReservedMemoryManager memoryManager(*driverHandle);
+    closedFds.clear();
+    driverHandle->remainingFdImportFailures = 1;
+    char reserved[32] = {};
+    EXPECT_NE(nullptr, open(true, reserved).second);
+    EXPECT_EQ((std::vector<int>{100, 200, 701}), closedFds);
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenOpaqueHostImportWhenImportingThenFdOwnershipIsRetainedByAllocation) {
+    allocation.setSharedHandle(200);
+    auto result = open(true, nullptr, true);
+    EXPECT_NE(nullptr, result.second);
+    EXPECT_EQ(&allocation, result.first);
+    EXPECT_EQ(200u, allocation.peekSharedHandle());
+    EXPECT_EQ((std::vector<int>{100}), closedFds);
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
+TEST_F(IpcImportFdLifetimeTest, givenForcedSocketImportWithCachingWhenReimportingThenCachedFdIsDuplicatedWithoutReimporting) {
+    debugManager.flags.ForceIpcSocketFallback.set(1);
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets;
+    VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> openCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0);
+    VariableBackup<decltype(NEO::SysCalls::pidfdgetfdCalled)> getfdCalledBackup(&NEO::SysCalls::pidfdgetfdCalled, 0);
+    VariableBackup<decltype(NEO::SysCalls::socketCalled)> socketCalledBackup(&NEO::SysCalls::socketCalled, 0);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> dupBackup(&NEO::SysCalls::sysCallsDup, [](int fd) { return fd + 1; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSocket)> socketBackup(&NEO::SysCalls::sysCallsSocket, [](int, int, int) { return 801; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsConnect)> connectBackup(&NEO::SysCalls::sysCallsConnect, [](int, const sockaddr *, socklen_t) { return 0; });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSend)> sendBackup(&NEO::SysCalls::sysCallsSend, [](int, const void *, size_t size, int) { return static_cast<ssize_t>(size); });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRecvmsg)> receiveBackup(&NEO::SysCalls::sysCallsRecvmsg, [](int, msghdr *msg, int) {
+        auto payload = static_cast<NEO::IpcSocketResponsePayload *>(msg->msg_iov[0].iov_base);
+        payload->success = true;
+        auto cmsg = CMSG_FIRSTHDR(msg);
+        cmsg->cmsg_level = SOL_SOCKET;
+        cmsg->cmsg_type = SCM_RIGHTS;
+        cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+        *reinterpret_cast<int *>(CMSG_DATA(cmsg)) = 350;
+        return static_cast<ssize_t>(sizeof(*payload));
+    });
+
+    auto result = context->importOpaqueHandleWithFallback(42, 1234, 123456, nullptr, neoDevice, true);
+    EXPECT_TRUE(result.success);
+    EXPECT_TRUE(result.opaqueHandlesAttempted);
+    EXPECT_EQ(350u, result.importHandle);
+    EXPECT_EQ(1u, driverHandle->opaqueHandleImportCache.size());
+
+    debugManager.flags.ForceIpcSocketFallback.set(0);
+    auto cachedResult = context->importOpaqueHandleWithFallback(42, 1234, 123456, nullptr, neoDevice, true);
+    EXPECT_TRUE(cachedResult.success);
+    EXPECT_FALSE(cachedResult.opaqueHandlesAttempted);
+    EXPECT_EQ(352u, cachedResult.importHandle);
+    EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
+    EXPECT_EQ(0, NEO::SysCalls::pidfdgetfdCalled);
+    EXPECT_EQ(1, NEO::SysCalls::socketCalled);
+    EXPECT_EQ((std::vector<int>{801}), closedFds);
+
+    context->releaseImportedRangeChunkHandles({{result.importHandle, 123456}});
+    EXPECT_EQ((std::vector<int>{801, 350}), closedFds);
+    EXPECT_EQ(1u, driverHandle->opaqueHandleImportCache.size());
+    context->releaseImportedRangeChunkHandles({{cachedResult.importHandle, 123456}});
+    EXPECT_EQ((std::vector<int>{801, 350, 352, 351}), closedFds);
+    EXPECT_TRUE(driverHandle->opaqueHandleImportCache.empty());
+}
+
 using GetMemHandlePtrTest = Test<GetMemHandlePtrTestFixture>;
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidNTHandleThenSuccessIsReturned) {
     MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
@@ -91,7 +336,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidNTHandleThenSucce
 
     // Test Successfully returning NT Handle
     fixtureMemoryManager->ntHandle = true;
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false).second);
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false, 0u).second);
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullptrIsReturned) {
@@ -103,11 +348,11 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullp
 
     // Test Failing returning NT Handle
     fixtureMemoryManager->ntHandle = true;
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false).second);
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false, 0u).second);
 
     // Test Failing returning fd Handle
     fixtureMemoryManager->ntHandle = false;
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false).second);
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false, 0u).second);
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithDRMDriverTypeWithNonNTHandleThenSuccessIsReturned) {
@@ -118,7 +363,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithDRMDriverTypeWithNonNT
 
     // Test Successfully returning fd Handle
     fixtureMemoryManager->ntHandle = false;
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false).second);
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false, 0u).second);
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithWDDMDriverTypeWithNonNTHandleThenNullPtrIsReturned) {
@@ -129,7 +374,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithWDDMDriverTypeWithNonN
 
     // Test Successfully returning fd Handle
     fixtureMemoryManager->ntHandle = false;
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false).second);
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false, 0u).second);
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleEnabledAndProcessIdZeroThenPidfdNotCalledAndSuccessIsReturned) {
@@ -151,7 +396,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleEnabledAnd
     uint64_t handle = 57;
 
     // When processId is 0, the pidfd approach should be skipped entirely
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false).second);
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false, 0u).second);
     EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(0, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -193,7 +438,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithReservedHandleDataAndI
 
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, reservedHandleData, false, true).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, reservedHandleData, false, true, 0u).second;
 
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
@@ -202,6 +447,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithReservedHandleDataAndI
 }
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithReservedHandleDataReturningMinusOneThenFallbackToPidfdIsUsed) {
+    driverHandle->failHandleLookup = true;
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableIpcSocketFallback.set(0);
 
@@ -250,7 +496,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithReservedHandleDataRetu
         return 888; // Return new valid fd
     });
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, reservedHandleData, false, true).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, reservedHandleData, false, true, 0u).second;
 
     // pidfd is attempted first, then reserved handle is tried as fallback (when alloc is null)
     EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
@@ -268,7 +514,6 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpe
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableIpcSocketFallback.set(0);
 
-    // Enable pidfd only (not sockets) for IPC so it falls back to original handle
     context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -285,7 +530,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpe
 
     uint64_t handle = 57;
 
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true).second);
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true, 0u).second);
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(0, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -310,7 +555,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
     });
     uint64_t handle = 57;
 
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true).second);
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true, 0u).second);
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
 }
@@ -349,7 +594,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
         return -2;             // Fail with a different negative value
     });
 
-    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true, 0u).second;
 
     // With new behavior: when pidfd fails and no socket fallback is available, should return nullptr
     EXPECT_EQ(nullptr, result);
@@ -390,7 +635,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGet
         return 0; // Return 0 (valid fd)
     });
 
-    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, originalHandle, NEO::AllocationType::buffer, false, 1234u, 0, 0u, nullptr, false, true, 0u).second;
 
     // Reset opaque IPC handle setting.
     context->settings.useOpaqueHandle = useOpaque;
@@ -797,7 +1042,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsWithSocketFallbackEnabled
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true, 0u).second;
     EXPECT_EQ(nullptr, result);
     EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
     EXPECT_GT(NEO::SysCalls::socketCalled, 0);
@@ -855,7 +1100,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsAndSocketFallbackSucceeds
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true, 0u).second;
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
     EXPECT_GT(NEO::SysCalls::socketCalled, 0);
@@ -907,7 +1152,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdFailsAndSocketConnectsButReque
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true, 0u).second;
     EXPECT_EQ(nullptr, result);
     EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
     EXPECT_GT(NEO::SysCalls::socketCalled, 0);
@@ -943,7 +1188,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndForceIpcSocketFallbackThenPidfdIsSk
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true, 0u).second;
     EXPECT_EQ(nullptr, result);
     EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled); // pidfd should be skipped
     EXPECT_GT(NEO::SysCalls::socketCalled, 0);    // Socket should be attempted
@@ -975,7 +1220,7 @@ TEST_F(GetMemHandlePtrTest, givenDRMDriverAndPidfdSucceedsThenSocketFallbackNotU
 
     uint64_t handle = 57;
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 1234, 0, 0u, nullptr, false, true, 0u).second;
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
@@ -1311,7 +1556,7 @@ TEST_F(GetMemHandlePtrTest, givenProcessIdZeroWhenCallingGetMemHandlePtrThenOpaq
 
     uint64_t handle = 42;
     // Pass processId = 0, which should skip opaque handle logic
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, 0u, nullptr, false, false, 0u).second;
 
     // Should succeed using regular path
     EXPECT_NE(nullptr, result);
@@ -1332,7 +1577,7 @@ TEST_F(GetMemHandlePtrTest, givenOpaqueHandleDisabledWhenCallingGetMemHandlePtrT
 
     uint64_t handle = 42;
     unsigned int processId = 1234;
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false, 0u).second;
 
     // Should succeed using regular path
     EXPECT_NE(nullptr, result);
@@ -1360,7 +1605,7 @@ TEST_F(GetMemHandlePtrTest, givenSocketOnlyModeWhenCallingGetMemHandlePtrThenPid
     driverHandle->registerIpcHandleWithServer(handle, static_cast<int>(handle));
 
     // Mock the socket client to succeed
-    [[maybe_unused]] void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false).second;
+    [[maybe_unused]] void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false, 0u).second;
 
     // Should either succeed or fail depending on socket availability, but pidfd should not be called
     // This tests that the pidfd branch is skipped when settings.useOpaqueHandle == sockets
@@ -1389,7 +1634,7 @@ TEST_F(GetMemHandlePtrTest, givenForceSocketFallbackWhenCallingGetMemHandlePtrTh
     // Track if pidfdopen is called
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
 
-    [[maybe_unused]] void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false).second;
+    [[maybe_unused]] void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false, 0u).second;
 
     // pidfdopen should NOT be called because ForceIpcSocketFallback is set
     EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
@@ -1419,7 +1664,7 @@ TEST_F(GetMemHandlePtrTest, givenCachedImportHandleWhenCallingGetMemHandlePtrThe
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
 
     // Call getMemHandlePtr - should use cached handle and NOT call pidfdopen
-    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false).second;
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false, 0u).second;
 
     // Verify pidfdopen was NOT called because cache hit
     EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
@@ -1449,7 +1694,7 @@ TEST_F(GetMemHandlePtrTest, givenPidfdDisabledAndSocketsEnabledWhenCallingGetMem
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
 
     // Call getMemHandlePtr - should NOT call pidfdopen because pidfd is not enabled
-    [[maybe_unused]] void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false).second;
+    [[maybe_unused]] void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false, 0u).second;
 
     // Verify pidfdopen was NOT called because (settings.useOpaqueHandle & OpaqueHandlingType::pidfd) is false
     EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
@@ -1479,14 +1724,14 @@ TEST_F(GetMemHandlePtrTest, givenPidfdSuccessFromCacheWhenCallingGetMemHandlePtr
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
 
     // Call getMemHandlePtr - should use cached handle, mark pidfdSuccess=true, and skip all import logic
-    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false).second;
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, 0u, 0, processId, nullptr, false, false, 0u).second;
 
     // Verify no syscalls were made because cache hit set pidfdSuccess=true
     EXPECT_EQ(0, static_cast<int>(NEO::SysCalls::pidfdopenCalled));
     EXPECT_NE(nullptr, result);
 }
 
-TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndValidCacheIDThenCacheIDIsStoredInIPCMap) {
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndValidCacheIDThenExportTrackingIsUnchanged) {
     DebugManagerStateRestore restorer;
 
     // Enable opaque handles
@@ -1503,27 +1748,21 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndValidCa
     unsigned int processId = 1234;
     uint64_t cacheID = (static_cast<uint64_t>(processId) << 32) | (exportHandle & 0xFFFFFFFF);
 
-    // Pre-populate IPC map with an entry for the handle that will be imported
-    // tryGetCachedImportHandle returns a dup'd fd, so the IPC map
-    // entry must be keyed by the dup'd value that importFdHandle will receive
     auto &ipcMap = driverHandle->getIPCHandleMap();
     IpcHandleTracking *ipcHandleData = new IpcHandleTracking();
-    ipcHandleData->cacheID = 0;         // Will be updated by getMemHandlePtr
+    ipcHandleData->cacheID = 0;
     uint64_t dupFdValue = exportHandle; // ULT mock SysCalls::dup returns oldfd
     ipcMap[dupFdValue] = ipcHandleData;
 
-    // Pre-populate cache to skip pidfd/socket logic
     driverHandle->setCachedImportHandle(cacheID, exportHandle);
 
-    // Call getMemHandlePtr - should succeed and store cacheID in IPC map
-    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true, 0u).second;
 
     EXPECT_NE(nullptr, result);
 
-    // Verify cacheID was stored in the IPC map entry
     auto ipcIter = ipcMap.find(dupFdValue);
     ASSERT_NE(ipcIter, ipcMap.end());
-    EXPECT_EQ(cacheID, ipcIter->second->cacheID);
+    EXPECT_EQ(0u, ipcIter->second->cacheID);
 
     // Cleanup
     delete ipcHandleData;
@@ -1553,7 +1792,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleAndCacheID
     // Do NOT add handle to IPC map - this tests the ipcIter == ipcMap.end() branch
 
     // Call getMemHandlePtr - should succeed but NOT update any IPC map entry
-    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true, 0u).second;
 
     EXPECT_NE(nullptr, result);
 
@@ -1587,7 +1826,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleButZeroCac
     ipcMap[exportHandle] = ipcHandleData;
 
     // Call getMemHandlePtr with zero cacheID - should NOT update IPC map
-    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true, 0u).second;
 
     EXPECT_NE(nullptr, result);
 
@@ -1624,7 +1863,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithOpaqueHandleDisabledAn
     ipcMap[exportHandle] = ipcHandleData;
 
     // Call getMemHandlePtr with opaque handles disabled - should NOT update cacheID
-    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true, 0u).second;
 
     EXPECT_NE(nullptr, result);
 
@@ -1668,7 +1907,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithImportFailureAndNonZer
     ipcMap[exportHandle] = ipcHandleData;
 
     // Call getMemHandlePtr - should fail (return nullptr) and NOT update cacheID
-    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true).second;
+    void *result = context->getMemHandlePtr(device, exportHandle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true, 0u).second;
 
     EXPECT_EQ(nullptr, result); // Import should fail
 
@@ -1837,7 +2076,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithForceIpcSocketFallback
     unsigned int processId = 1234;
 
     // Socket fallback will fail since there's no mock server, so expect nullptr
-    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, nullptr, false, true).second);
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, nullptr, false, true, 0u).second);
 
     // With ForceIpcSocketFallback, pidfd should be skipped entirely
     EXPECT_EQ(0, NEO::SysCalls::pidfdopenCalled);
@@ -1865,15 +2104,14 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithNullReservedHandleData
 
     // Call with nullptr for reservedHandleData - this should skip the reserved handle path
     // and proceed to pidfd path at line 159
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, nullptr, false, true).second);
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, 0u, nullptr, false, true, 0u).second);
 
     // Pidfd should be called since we're not using reserved handles
     EXPECT_EQ(1, NEO::SysCalls::pidfdopenCalled);
     EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
 }
 
-TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithCachedHandleAndReservedHandleDataThenReservedHandlePathIsSkipped) {
-    // Coverage for line 152: decision when pidfdSuccess is true from cache (first part of condition is false)
+TEST_F(GetMemHandlePtrTest, givenSuccessfulOpaqueImportWhenReservedHandleDataIsProvidedThenRetryIsSkipped) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceIpcSocketFallback.set(0);
 
@@ -1902,6 +2140,8 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithCachedHandleAndReserve
     currMemoryManager = reservedMock;
     delete oldMemoryManager;
 
+    NEO::MockGraphicsAllocation allocation;
+    driverHandle->allocationToReturn = &allocation;
     uint64_t handle = 57;
     unsigned int processId = 1234;
     uint64_t cacheID = 12345;
@@ -1910,15 +2150,12 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithCachedHandleAndReserve
     ipcData.reservedHandleData[0] = 0xAA; // Make it non-empty
     void *reservedHandleData = static_cast<void *>(ipcData.reservedHandleData);
 
-    // First call to cache the import handle
-    context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true);
+    context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, cacheID, nullptr, false, true, 0u);
 
     // Now call again with the same cacheID and provide reservedHandleData
-    // Since the handle is cached, pidfdSuccess will be true, so the reserved handle check should be skipped
-    auto result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, cacheID, reservedHandleData, false, true);
+    auto result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, cacheID, reservedHandleData, false, true, 0u);
 
     EXPECT_NE(nullptr, result.second);
-    // Reserved handle data should NOT have been accessed because cache hit sets pidfdSuccess=true
     EXPECT_EQ(nullptr, reservedMock->lastReservedHandleData);
 }
 
@@ -1962,7 +2199,7 @@ TEST_F(GetMemHandlePtrTest, givenValidImportHandleFromReservedDataThenPidfdPathI
 
     VariableBackup<decltype(NEO::SysCalls::pidfdopenCalled)> pidfdOpenCalledBackup(&NEO::SysCalls::pidfdopenCalled, 0u);
 
-    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, cacheID, reservedHandleData, false, true).second;
+    void *result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, cacheID, reservedHandleData, false, true, 0u).second;
 
     EXPECT_NE(nullptr, result);
     EXPECT_EQ(1, static_cast<int>(NEO::SysCalls::pidfdopenCalled));

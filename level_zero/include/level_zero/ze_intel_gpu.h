@@ -23,6 +23,13 @@ extern "C" {
 #define ZE_INTEL_GPU_VERSION_MINOR 1
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Module format is PISA intermediate representation
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 18)
+#define ZE_MODULE_FORMAT_PISA static_cast<ze_module_format_t>(2U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#define ZE_MODULE_FORMAT_OCLC static_cast<ze_module_format_t>(3U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME
 /// @brief Module DP properties driver extension name
 #define ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME "ZE_intel_experimental_device_module_dp_properties"
@@ -331,6 +338,38 @@ zeIntelKernelGetBinaryExp(
     char *pKernelBinary         ///< [in,out] pointer to storage area for GEN ISA binary function
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieve the handle of the Module that a given Kernel was created from
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hKernel`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == phModule`
+ze_result_t ZE_APICALL
+zeKernelGetModuleHandleExt(
+    ze_kernel_handle_t hKernel,  ///< [in] handle of the kernel
+    ze_module_handle_t *phModule ///< [out] handle of the module the kernel was created from
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieve the handle of the Device that a given Module was created for
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hModule`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == phDevice`
+ze_result_t ZE_APICALL
+zeModuleGetDeviceHandleExt(
+    ze_module_handle_t hModule,  ///< [in] handle of the module
+    ze_device_handle_t *phDevice ///< [out] handle of the device the module was created for
+);
+
 #ifndef ZE_INTEL_DRM_FORMAT_MODIFIER_EXP_NAME
 /// @brief DRM format modifier extension name
 #define ZE_INTEL_DRM_FORMAT_MODIFIER_EXP_NAME "ZE_intel_experimental_drm_format_modifier"
@@ -593,49 +632,6 @@ typedef struct _zex_bfloat16_atomic_ext_properties_t {
     void *pNext;                                   ///< [in, out][optional] pointer to extension-specific structure
     ze_device_fp_atomic_ext_flags_t bfloat16Flags; ///< [out] Capabilities for brain floating-point atomic operations
 } zex_bfloat16_atomic_ext_properties_t;
-
-#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 15)
-#define ZE_HOST_MEM_ALLOC_FLAG_MEM_READ_ONLY ZE_BIT(4)
-#endif
-
-#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 16)
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetFlags(
-    ze_command_list_handle_t hCommandList,
-    ze_command_list_flags_t *pFlags);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetFlags(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_flags_t *pFlags);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetMode(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_mode_t *pMode);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetPriority(
-    ze_command_list_handle_t hCommandListImmediate,
-    ze_command_queue_priority_t *pPriority);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetFlags(
-    ze_command_queue_handle_t hCommandQueue,
-    ze_command_queue_flags_t *pFlags);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetMode(
-    ze_command_queue_handle_t hCommandQueue,
-    ze_command_queue_mode_t *pMode);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetPriority(
-    ze_command_queue_handle_t hCommandQueue,
-    ze_command_queue_priority_t *pPriority);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExp(
-    ze_command_list_handle_t hCommandList,
-    ze_bool_t *pIsMutable);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeEventGetCounterBasedFlags(
-    ze_event_handle_t hEvent,              ///< [in] handle of the event
-    ze_event_counter_based_flags_t *pFlags ///< [out] pointer to value indicating the flags of the counter based event
-);
-#endif
 
 #if defined(__cplusplus)
 } // extern "C"

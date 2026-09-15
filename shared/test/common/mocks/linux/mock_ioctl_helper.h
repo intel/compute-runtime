@@ -31,8 +31,9 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     ADDMETHOD_CONST_NOBASE(isImmediateVmBindRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getIoctlRequestValue, unsigned int, 1234u, (DrmIoctl));
     ADDMETHOD_CONST_NOBASE(requiresUserFenceSetup, bool, false, (bool));
-    ADDMETHOD_CONST_NOBASE(makeResidentBeforeLockNeeded, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isDeferBackingEnabledForSize, bool, false, (size_t allocationSize));
     ADDMETHOD_CONST_NOBASE(isDrmFabricSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isMmapWindowRelocationSupported, bool, false, ());
 
     ADDMETHOD_NOBASE(vmBind, int, 0, (const VmBindParams &));
     ADDMETHOD_NOBASE(vmUnbind, int, 0, (const VmBindParams &));
@@ -99,6 +100,13 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     void *pciBarrierMmap() override {
         pciBarrierMmapCalled = true;
         return pciBarrierMmapReturnValue;
+    }
+
+    void *timestampPtrReturnValue = nullptr;
+    bool getTimestampPtrCalled = false;
+    void *getTimestampPtr() override {
+        getTimestampPtrCalled = true;
+        return timestampPtrReturnValue;
     }
 };
 } // namespace NEO

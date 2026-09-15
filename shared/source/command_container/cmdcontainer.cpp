@@ -14,6 +14,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/alignment_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -155,7 +156,8 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
     addToResidencyContainer(cmdBufferAllocation);
     if (requireHeaps) {
-        heapHelper = std::make_unique<HeapHelper>(device, device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u);
+        auto csrForHeapReuse = this->immediateCmdListCsr ? this->immediateCmdListCsr : device->getDefaultEngine().commandStreamReceiver;
+        heapHelper = std::make_unique<HeapHelper>(device, csrForHeapReuse->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u);
 
         for (uint32_t i = 0; i < IndirectHeap::Type::numTypes; i++) {
             auto heapType = static_cast<HeapType>(i);
@@ -193,7 +195,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
         iddBlock = nullptr;
         nextIddInBlock = this->getNumIddPerBlock();
         auto heapAlignment = productHelper.getCacheLineSize();
-        if (indirectHeapInLocalMemory) {
+        if (indirectHeapInLocalMemory && AlignmentHelper::isReducedAlignmentAllowed(device->getHardwareInfo())) {
             heapAlignment = MemoryConstants::cacheLineSize;
         }
         this->threadDataTracker = std::make_unique<ThreadDataTracker>();
@@ -726,6 +728,41 @@ void *CommandContainer::findCpuBaseForCmdBufferAddress(void *cmdBufferAddress) {
     return nullptr;
 }
 
+GraphicsAllocation *CommandContainer::findGraphicsAllocationForCpuAddress(void *cpuAddress) {
+    uintptr_t cpuAddressValue = reinterpret_cast<uintptr_t>(cpuAddress);
+
+    auto containsCpuAddress = [cpuAddressValue](GraphicsAllocation *allocation) {
+        if (allocation == nullptr) {
+            return false;
+        }
+        uintptr_t allocationCpuBase = reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer());
+        return (allocationCpuBase <= cpuAddressValue) && (cpuAddressValue < (allocationCpuBase + allocation->getUnderlyingBufferSize()));
+    };
+
+    if (containsCpuAddress(commandStream->getGraphicsAllocation())) {
+        return commandStream->getGraphicsAllocation();
+    }
+
+    for (auto *cmdBufferAllocation : cmdBufferAllocations) {
+        if (containsCpuAddress(cmdBufferAllocation)) {
+            return cmdBufferAllocation;
+        }
+    }
+
+    if (auto *indirectObjectAllocation = getIndirectHeapAllocation(HeapType::indirectObject); containsCpuAddress(indirectObjectAllocation)) {
+        return indirectObjectAllocation;
+    }
+
+    // indirect heaps replaced by createAndAssignNewHeap are retained for deferred deallocation - an older heap may still back the address
+    for (auto *deallocation : deallocationContainer) {
+        if (containsCpuAddress(deallocation)) {
+            return deallocation;
+        }
+    }
+
+    return nullptr;
+}
+
 void CommandContainer::extractCommonThreadData() {
     if (this->isIOHCacheEnabled && !this->threadDataTracker->isEmpty()) {
         auto [hash, threadData] = this->threadDataTracker->getCommonThreadData();
@@ -734,8 +771,8 @@ void CommandContainer::extractCommonThreadData() {
     }
 }
 
-void CommandContainer::registerThreadData(uint64_t hash, std::span<const uint8_t> threadData) {
-    this->threadDataTracker->registerThreadData(hash, threadData);
+void CommandContainer::registerThreadData(uint64_t hash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) {
+    this->threadDataTracker->registerThreadData(hash, crossThreadData, perThreadData);
 }
 
 std::optional<uint64_t> CommandContainer::getCachedIohOffset(uint64_t threadDataHash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const {

@@ -7,14 +7,20 @@
 
 #include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/os_library.h"
 
 namespace L0 {
 namespace Sysman {
 
 static constexpr std::string_view libTraceFsFile = "libtracefs.so.1";
+
+static constexpr std::string_view minimumLibTraceFsVersion = "1.8.0";
+
 static constexpr std::string_view traceFsInstanceCreateRoutine = "tracefs_instance_create";
+static constexpr std::string_view traceFsInstanceIsNewRoutine = "tracefs_instance_is_new";
 static constexpr std::string_view traceFsInstanceDestroyRoutine = "tracefs_instance_destroy";
 static constexpr std::string_view traceFsInstanceFreeRoutine = "tracefs_instance_free";
 static constexpr std::string_view traceFsInstanceGetNameRoutine = "tracefs_instance_get_name";
@@ -28,30 +34,40 @@ static constexpr std::string_view traceFsTraceOffRoutine = "tracefs_trace_off";
 static constexpr std::string_view traceFsEventEnableRoutine = "tracefs_event_enable";
 static constexpr std::string_view traceFsEventDisableRoutine = "tracefs_event_disable";
 static constexpr std::string_view traceFsLocalEventsRoutine = "tracefs_local_events";
-static constexpr std::string_view traceFsLocalEventsFreeRoutine = "tracefs_local_events_free";
 static constexpr std::string_view traceFsInstanceGetBufferPercentRoutine = "tracefs_instance_get_buffer_percent";
 static constexpr std::string_view traceFsInstanceSetBufferPercentRoutine = "tracefs_instance_set_buffer_percent";
 static constexpr std::string_view traceFsInstanceGetBufferSizeRoutine = "tracefs_instance_get_buffer_size";
 static constexpr std::string_view traceFsInstanceSetBufferSizeRoutine = "tracefs_instance_set_buffer_size";
 static constexpr std::string_view traceFsInstanceGetFileRoutine = "tracefs_instance_get_file";
 static constexpr std::string_view traceFsGetTracingFileRoutine = "tracefs_get_tracing_file";
+static constexpr std::string_view traceFsPutTracingFileRoutine = "tracefs_put_tracing_file";
 
 template <class T>
 bool TraceFsApi::getSymbolAddr(std::string_view name, T &sym) {
     sym = reinterpret_cast<T>(traceFsLibraryHandle->getProcAddress(std::string(name)));
-    return nullptr != sym;
+    if (nullptr == sym) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Entry point '%.*s' not found in %.*s, libtracefs %.*s or newer is required\n",
+                     NEO_FUNCTION_NAME, static_cast<int>(name.length()), name.data(),
+                     static_cast<int>(libTraceFsFile.length()), libTraceFsFile.data(),
+                     static_cast<int>(minimumLibTraceFsVersion.length()), minimumLibTraceFsVersion.data());
+        return false;
+    }
+    return true;
 }
 
 bool TraceFsApi::loadEntryPoints() {
     if (!isAvailable()) {
         traceFsLibraryHandle.reset(NEO::OsLibrary::loadFunc(std::string(libTraceFsFile)));
         if (!isAvailable()) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to load %.*s\n", NEO_FUNCTION_NAME,
+                         static_cast<int>(libTraceFsFile.length()), libTraceFsFile.data());
             return false;
         }
     }
 
     bool allEntryPointsLoaded = true;
     allEntryPointsLoaded = getSymbolAddr(traceFsInstanceCreateRoutine, traceFsInstanceCreateEntry);
+    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceIsNewRoutine, traceFsInstanceIsNewEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceDestroyRoutine, traceFsInstanceDestroyEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceFreeRoutine, traceFsInstanceFreeEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetNameRoutine, traceFsInstanceGetNameEntry);
@@ -65,13 +81,13 @@ bool TraceFsApi::loadEntryPoints() {
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsEventEnableRoutine, traceFsEventEnableEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsEventDisableRoutine, traceFsEventDisableEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsLocalEventsRoutine, traceFsLocalEventsEntry);
-    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsLocalEventsFreeRoutine, traceFsLocalEventsFreeEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetBufferPercentRoutine, traceFsInstanceGetBufferPercentEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceSetBufferPercentRoutine, traceFsInstanceSetBufferPercentEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetBufferSizeRoutine, traceFsInstanceGetBufferSizeEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceSetBufferSizeRoutine, traceFsInstanceSetBufferSizeEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetFileRoutine, traceFsInstanceGetFileEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsGetTracingFileRoutine, traceFsGetTracingFileEntry);
+    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsPutTracingFileRoutine, traceFsPutTracingFileEntry);
 
     return allEntryPointsLoaded;
 }
@@ -81,6 +97,13 @@ struct tracefs_instance *TraceFsApi::traceFsInstanceCreate(const char *name) {
         return nullptr;
     }
     return (*traceFsInstanceCreateEntry)(name);
+}
+
+bool TraceFsApi::traceFsInstanceIsNew(struct tracefs_instance *instance) {
+    if (nullptr == traceFsInstanceIsNewEntry) {
+        return false;
+    }
+    return (*traceFsInstanceIsNewEntry)(instance);
 }
 
 void TraceFsApi::traceFsInstanceDestroy(struct tracefs_instance *instance) {
@@ -174,13 +197,6 @@ struct tep_handle *TraceFsApi::traceFsLocalEvents(const char *tracingDir) {
     return (*traceFsLocalEventsEntry)(tracingDir);
 }
 
-void TraceFsApi::traceFsLocalEventsFree(struct tep_handle *tep) {
-    if (nullptr == traceFsLocalEventsFreeEntry) {
-        return;
-    }
-    (*traceFsLocalEventsFreeEntry)(tep);
-}
-
 int TraceFsApi::traceFsInstanceGetBufferPercent(struct tracefs_instance *instance) {
     if (nullptr == traceFsInstanceGetBufferPercentEntry) {
         return -1;
@@ -221,6 +237,13 @@ char *TraceFsApi::traceFsGetTracingFile(const char *file) {
         return nullptr;
     }
     return (*traceFsGetTracingFileEntry)(file);
+}
+
+void TraceFsApi::traceFsPutTracingFile(char *file) {
+    if (nullptr == traceFsPutTracingFileEntry) {
+        return;
+    }
+    (*traceFsPutTracingFileEntry)(file);
 }
 
 TraceFsApi::TraceFsApi() = default;

@@ -32,8 +32,6 @@ namespace ult {
 class WddmSemaphoreFixture : public DeviceFixture {
   public:
     void setUp() {
-        debugManager.flags.DisableGpuHangDetection.set(1);
-
         DeviceFixture::setUp();
 
         auto &rootDeviceEnvironment{*neoDevice->executionEnvironment->rootDeviceEnvironments[0]};
@@ -46,8 +44,6 @@ class WddmSemaphoreFixture : public DeviceFixture {
     void tearDown() {
         DeviceFixture::tearDown();
     }
-
-    DebugManagerStateRestore restorer;
 
     void ensureThreadCompletion(ExternalSemaphoreController &controller) {
         while (true) {
@@ -229,6 +225,9 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenSemaphoreSignalOperationEventWhenExte
 }
 
 HWTEST_F(WddmExternalSemaphoreMTTest, givenImmediateCommandListWhenAppendWaitExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -274,6 +273,9 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenImmediateCommandListWhenAppendWaitExt
 }
 
 HWTEST_F(WddmExternalSemaphoreMTTest, givenRegularCommandListWhenAppendWaitExternalSemaphoresExpIsCalledThenInvalidArgumentIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -310,6 +312,9 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenRegularCommandListWhenAppendWaitExter
 }
 
 HWTEST_F(WddmExternalSemaphoreMTTest, givenInternalProxyEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsNotReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -354,6 +359,9 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenInternalProxyEventFailsToAppendWhenAp
 }
 
 HWTEST_F(WddmExternalSemaphoreMTTest, givenWaitEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -398,6 +406,9 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenWaitEventFailsToAppendWhenAppendWaitE
 }
 
 HWTEST_F(WddmExternalSemaphoreMTTest, givenSignalEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsNotReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;

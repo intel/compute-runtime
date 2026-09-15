@@ -137,6 +137,19 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingSysfsFileNameIfB
     EXPECT_STREQ("", pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMaxFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
 }
 
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNamesThenProperNamesAreReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_STREQ("xe_amc_alert_reason", pSysmanKmdInterface->getNodeFileName(NodeName::nodeNameAmcAlertReason).c_str());
+    EXPECT_STREQ("temp2_emergency", pSysmanKmdInterface->getNodeFileName(NodeName::nodeNameTemperatureEmergency).c_str());
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNameForUnmappedNodeThenEmptyNameIsReturned) {
+    auto pMockSysmanKmdInterface = std::make_unique<MockSysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
+    pMockSysmanKmdInterface->nodeNameToFileMap.clear();
+    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::nodeNameAmcAlertReason).empty());
+    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::nodeNameTemperatureEmergency).empty());
+}
+
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCallingGetPowerLimitFilePathsThenProperPathsAreReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     bool baseDirectoryExists = false;
@@ -192,7 +205,6 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailab
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_FALSE(pSysmanKmdInterface->isDefaultFrequencyAvailable());
     EXPECT_FALSE(pSysmanKmdInterface->isBoostFrequencyAvailable());
-    EXPECT_FALSE(pSysmanKmdInterface->isTdpFrequencyAvailable());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCallingGetNativeUnitWithProperSysfsNameThenValidValuesAreReturned) {
@@ -499,14 +511,14 @@ TEST_F(SysmanFixtureDeviceXe, GivenVfsEnabledAndPmuInterfaceOpenFailsWhenCalling
 class SysmanKmdInterfaceFdoFixtureXe : public SysmanDeviceFixture {
   protected:
     MockSysmanKmdInterfaceXe *pMockSysmanKmdInterface = nullptr;
-    MockFdoSysFsAccessInterface *pMockSysFsAccess = nullptr;
-    MockFdoFsAccessInterface *pMockFsAccess = nullptr;
+    MockSysFsAccessInterface *pMockSysFsAccess = nullptr;
+    MockFsAccessInterface *pMockFsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         pMockSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
-        pMockSysFsAccess = new MockFdoSysFsAccessInterface();
-        pMockFsAccess = new MockFdoFsAccessInterface();
+        pMockSysFsAccess = new MockSysFsAccessInterface();
+        pMockFsAccess = new MockFsAccessInterface();
         pMockSysmanKmdInterface->pSysfsAccess.reset(pMockSysFsAccess);
         pMockSysmanKmdInterface->pFsAccess.reset(pMockFsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pMockSysmanKmdInterface);
@@ -542,6 +554,32 @@ TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityF
     pMockFsAccess->mockFdoValue = "enabled";
 
     EXPECT_TRUE(pSysmanKmdInterface->isDeviceInFdoMode());
+}
+
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenDriverSymLinkIsReadableThenIsDriverLoadedReturnsTrue) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_SUCCESS;
+
+    EXPECT_TRUE(pSysmanKmdInterface->isDriverLoaded());
+}
+
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenIsDriverLoadedIsCalledThenDriverSymLinkIsQueriedWithAbsolutePciPath) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_SUCCESS;
+    pSysmanKmdInterface->isDriverLoaded();
+
+    EXPECT_EQ(0u, pMockFsAccess->readSymLinkPathRequested.find("/sys/bus/pci/devices/"));
+    EXPECT_NE(std::string::npos, pMockFsAccess->readSymLinkPathRequested.find("/driver"));
+}
+
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenDriverSymLinkCannotBeReadThenIsDriverLoadedReturnsFalse) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_FALSE(pSysmanKmdInterface->isDriverLoaded());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenDeviceIsNotWedgedThenGetWedgedStatusDoesNotSetWedgedFlag) {

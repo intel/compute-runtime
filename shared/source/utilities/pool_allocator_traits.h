@@ -84,4 +84,13 @@ struct InternalHeapPoolTraits {
     static bool isEnabled(const ProductHelper &productHelper);
 };
 
+struct SemaphorePoolTraits {
+    static constexpr AllocationType allocationType = AllocationType::semaphoreBuffer;
+    static constexpr size_t maxAllocationSize = MemoryConstants::pageSize;
+    static constexpr size_t defaultPoolSize = MemoryConstants::pageSize2M;
+    static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
+
+    static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
+};
+
 } // namespace NEO

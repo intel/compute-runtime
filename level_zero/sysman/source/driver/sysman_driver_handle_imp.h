@@ -6,8 +6,13 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/os_interface.h"
+
 #include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 
+#include <chrono>
+#include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -15,6 +20,7 @@
 
 namespace NEO {
 class ExecutionEnvironment;
+struct PhysicalDevicePciBusInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -25,6 +31,8 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     ~SysmanDriverHandleImp() override;
     SysmanDriverHandleImp();
     ze_result_t initialize(NEO::ExecutionEnvironment &executionEnvironment);
+    virtual ze_result_t performDeferredDiscovery();
+    void initializeDeferredMode(NEO::ExecutionEnvironment *executionEnvironment);
     ze_result_t getDevice(uint32_t *pCount, zes_device_handle_t *phDevices) override;
     ze_result_t getDeviceByUuid(zes_uuid_t uuid, zes_device_handle_t *phDevice, ze_bool_t *onSubdevice, uint32_t *subdeviceId) override;
     ze_result_t getExtensionProperties(uint32_t *pCount, zes_driver_extension_properties_t *pExtensionProperties,
@@ -33,30 +41,54 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
                                    uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
     ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                      uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
+    ze_result_t sysmanDriverEventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
+                                         uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents,
+                                         zes_event_type_flags_t *pDriverEvents) override;
     std::vector<SysmanDevice *> sysmanDevices;
     uint32_t numDevices = 0;
     ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override;
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
     SysmanDevice *getSysmanDeviceFromCoreDeviceHandle(ze_device_handle_t hDevice);
     SysmanDriverHandle *getSysmanDriverHandleFromCoreDriverHandle(ze_driver_handle_t handle);
+    ze_result_t driverEventRegister(zes_event_type_flags_t events) override;
     ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override;
+    ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) override;
+    ze_result_t getDriverProperties(zes_intel_driver_properties_exp_t *pProperties) override;
     const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {
         return uuidDeviceMap;
     }
+    uint64_t getUuidTimestamp() const { return uuidTimestamp; }
     // list of supported extension apis
     static const std::vector<std::pair<std::string, uint32_t>> extensionsSupported;
 
-  private:
+    bool isDeferredDiscoveryMode() const { return deferredDiscoveryMode; }
+    bool areDevicesDiscovered() const { return devicesDiscovered; }
+
     void updateUuidMap(SysmanDevice *sysmanDevice);
+    void updatePciUuidMap(SysmanDevice *sysmanDevice);
+    std::map<std::string, std::unique_ptr<NEO::PhysicalDevicePciBusInfo>> pciUuidToPciBusInfoMap;
+
+  private:
     SysmanDevice *findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle);
     SysmanDriverHandle *findSysmanDriverHandleFromCoreToSysmanDriverMap(ze_driver_handle_t handle);
     std::mutex coreToSysmanDeviceMapLock;
+    std::mutex rescanMutex;
     std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap{};
 
   protected:
+    uint64_t uuidTimestamp = 0u;
     std::unordered_map<std::string, SysmanDevice *> uuidDeviceMap{};
     std::unordered_map<ze_driver_handle_t, SysmanDriverHandle *> coreToSysmanDriverMap{};
     std::mutex coreToSysmanDriverMapLock;
+
+    // Deferred discovery state
+    bool deferredDiscoveryMode = false;
+    bool devicesDiscovered = false;
+    NEO::ExecutionEnvironment *savedExecutionEnvironment = nullptr;
+    std::mutex deferredDiscoveryMutex;
+
+    using HwDeviceIds = std::vector<std::unique_ptr<NEO::HwDeviceId>>;
+    virtual HwDeviceIds discoverHwDevices(NEO::ExecutionEnvironment &executionEnvironment);
 };
 
 extern struct SysmanDriverHandleImp *globalSysmanDriver;

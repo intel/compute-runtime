@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,8 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
                                                              const NEO::SurfaceStateInHeapInfo &ssInHeap, const NEO::KernelDescriptor &kernelDescriptor) {
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     void *surfaceStateAddress = nullptr;
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device.getRootDeviceEnvironment());
+    auto bindlessSurfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
     bool useTempBuffer = false;
 
     if (NEO::isValidOffset(ptr.bindless)) {
@@ -67,7 +68,7 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
             }
 
             if (index < std::numeric_limits<uint32_t>::max()) {
-                surfaceStateAddress = ptrOffset(surfaceStateHeap.begin(), index * surfaceStateSize);
+                surfaceStateAddress = ptrOffset(surfaceStateHeap.begin(), index * bindlessSurfaceStateSize);
             }
         }
     }
@@ -76,7 +77,7 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
         std::unique_ptr<uint64_t[]> surfaceState;
 
         if (useTempBuffer) {
-            surfaceState = std::make_unique<uint64_t[]>(surfaceStateSize / sizeof(uint64_t));
+            surfaceState = std::make_unique_for_overwrite<uint64_t[]>(surfaceStateSize / sizeof(uint64_t));
         }
 
         auto addressToPatch = allocation->getGpuAddress();

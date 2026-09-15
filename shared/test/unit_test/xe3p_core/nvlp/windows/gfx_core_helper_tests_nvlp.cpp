@@ -19,12 +19,16 @@ using namespace NEO;
 
 using GfxCoreHelperTestsNvlp = GfxCoreHelperTest;
 
-NVLPTEST_F(GfxCoreHelperTestsNvlp, whenCallingAreSecondaryContextsSupportedThenTrueIsReturnedAndContextGroupCountIs8) {
+namespace ContextGroup {
+extern uint32_t maxContextCount;
+}
+
+NVLPTEST_F(GfxCoreHelperTestsNvlp, whenCallingAreSecondaryContextsSupportedThenTrueIsReturnedAndContextGroupCountEqualsMaxContextCount) {
     auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto hwInfo = *NEO::defaultHwInfo.get();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
 
     EXPECT_TRUE(executionEnvironment->rootDeviceEnvironments[0]->gfxCoreHelper->areSecondaryContextsSupported());
-    EXPECT_EQ(8u, executionEnvironment->rootDeviceEnvironments[0]->gfxCoreHelper->getContextGroupContextsCount());
+    EXPECT_EQ(ContextGroup::maxContextCount, executionEnvironment->rootDeviceEnvironments[0]->gfxCoreHelper->getContextGroupContextsCount());
 }

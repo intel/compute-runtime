@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,8 +75,9 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
 
 void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
     if (heapType == IndirectHeap::Type::surfaceState) {
-        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
-        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
         indirectHeap->getSpace(surfaceStateSize);
     }
 }

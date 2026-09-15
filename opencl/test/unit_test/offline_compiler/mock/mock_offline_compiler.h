@@ -28,6 +28,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::binaryOutputFile;
     using OfflineCompiler::cache;
     using OfflineCompiler::compilerProductHelper;
+    using OfflineCompiler::compilerReleaseHelper;
     using OfflineCompiler::dbgHash;
     using OfflineCompiler::debugDataBinary;
     using OfflineCompiler::debugDataBinarySize;
@@ -67,11 +68,9 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::outputFile;
     using OfflineCompiler::outputNoSuffix;
     using OfflineCompiler::parseCommandLine;
-    using OfflineCompiler::parseCommandLineExt;
     using OfflineCompiler::parseDebugSettings;
     using OfflineCompiler::pBuildInfo;
     using OfflineCompiler::perDeviceOptions;
-    using OfflineCompiler::releaseHelper;
     using OfflineCompiler::revisionId;
     using OfflineCompiler::setStatelessToStatefulBufferOffsetFlag;
     using OfflineCompiler::sourceCode;

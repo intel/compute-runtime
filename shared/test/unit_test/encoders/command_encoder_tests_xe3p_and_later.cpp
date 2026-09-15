@@ -8,12 +8,17 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -30,7 +35,6 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
     using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
 
     DebugManagerStateRestore restore;
-    UnitTestSetter::setupSemaphore64bCmdSupport(restore, this->pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -51,7 +55,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
         ASSERT_NE(nullptr, semaphoreCmd);
 
-        EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+        EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
     }
     {
         debugManager.flags.DirectSubmissionSwitchSemaphoreMode.set(1);
@@ -97,6 +101,64 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingS
 
         EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED, semaphoreCmd->getQueueSwitchMode());
     }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHighestPriorityLevelSetWhenProgrammingSemaphoreSectionThenSetSwitchMode, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
+
+    struct MockOsContext : public OsContext {
+        using OsContext::priorityLevel;
+    };
+    auto highestPriority = pDevice->getGfxCoreHelper().getHwQueuePriority(pDevice->getGfxCoreHelper().getHighestQueuePriorityLevel());
+    reinterpret_cast<MockOsContext *>(pDevice->getDefaultEngine().osContext)->priorityLevel = highestPriority;
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+
+    auto &cmdStream = directSubmission.ringCommandStream;
+    auto offset = cmdStream.getUsed();
+    GenCmdList cmdList;
+
+    directSubmission.dispatchSemaphoreSection(1u);
+
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream.getCpuBase(), offset), (cmdStream.getUsed() - offset)));
+
+    auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphore);
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+    ASSERT_NE(nullptr, semaphoreCmd);
+
+    EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHighPriorityContextSetWhenProgrammingSemaphoreSectionThenSetSwitchMode, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
+
+    pDevice->getDefaultEngine().osContext->overrideEngineUsage(EngineUsage::highPriority);
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+
+    auto &cmdStream = directSubmission.ringCommandStream;
+    auto offset = cmdStream.getUsed();
+    GenCmdList cmdList;
+
+    directSubmission.dispatchSemaphoreSection(1u);
+
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream.getCpuBase(), offset), (cmdStream.getUsed() - offset)));
+
+    auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphore);
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+    ASSERT_NE(nullptr, semaphoreCmd);
+
+    EXPECT_EQ(QUEUE_SWITCH_MODE::QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL, semaphoreCmd->getQueueSwitchMode());
 }
 
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenProgramBatchBufferStartCommandWhenItIsCalledThenCommandIsProgrammedCorrectly, IsAtLeastXe3pCore) {
@@ -172,7 +234,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenComputeWalker2WhenEncodingWa
 
     auto usedAfter = heap->getUsed();
     auto iohDiff = usedAfter - usedBefore;
-    auto iohDiffAligned = alignUp(iohDiff, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false));
+    auto iohDiffAligned = alignUp(iohDiff, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, pDevice->getHardwareInfo()));
 
     EXPECT_EQ(iohDiffAligned, iohDiff);
 }
@@ -343,7 +405,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndDefaultArgs
 
     auto &postSyncData = walkerCmd.getPostSync();
     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, postSyncData.getOperation());
-    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B, postSyncData.getAtomicOpcode());
+    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, postSyncData.getAtomicOpcode());
 }
 
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndInterruptFenceWhencallingSetupPostSyncForInOrderExecThenCorrectValuesAreSet, IsAtLeastXe3pCore) {
@@ -403,7 +465,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2WithVariousAto
                 auto &postSyncData = walkerCmd.getPostSync();
                 if (atomicSignalling) {
                     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, postSyncData.getOperation());
-                    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B, postSyncData.getAtomicOpcode());
+                    EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, postSyncData.getAtomicOpcode());
                 } else {
                     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, postSyncData.getOperation());
                 }
@@ -466,14 +528,14 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenUsingCsrHeapWithoutScratchNo
 
     struct TestParam {
         uint8_t scratchPointerSize;
-        InlineDataOffset scratchOffset;
+        CrossThreadDataOffset scratchOffset;
         uint8_t indirectDataPointerSize;
         InlineDataOffset indirectDataOffset;
     };
 
     std::vector<TestParam> testParams = {
         {undefined<uint8_t>, 0u, undefined<uint8_t>, 8u},
-        {8u, undefined<InlineDataOffset>, 8u, undefined<InlineDataOffset>}};
+        {8u, undefined<CrossThreadDataOffset>, 8u, undefined<InlineDataOffset>}};
 
     for (const auto &testParam : testParams) {
         dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = testParam.scratchPointerSize;
@@ -936,4 +998,236 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenOverrideThreadArbitrationPol
         EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
         EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA_2::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
     }
+}
+
+using MemorySynchronizationCommandsTestXe3pAndLater = ::testing::Test;
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenLinearStreamWhenSingleBarrierIsProgrammedThenOnlyCurrentQueueIsDrainedByDefaultAndAllQueuesAreDrainedWithDebugKey, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    PipeControlArgs args{};
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.PcQueueDrainMode.set(0);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenStallingBarrierWhenProgrammedThenOnlyCurrentQueueIsDrainedByDefaultAndDebugKeyControlsDrainScope, IsAtLeastXe3pCore) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    uint32_t buffer[2 * sizeof(RESOURCE_BARRIER)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    auto resourceBarrier = reinterpret_cast<RESOURCE_BARRIER *>(buffer);
+
+    PipeControlArgs args{};
+    args.csStallOnly = true;
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.PcQueueDrainMode.set(0);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    debugManager.flags.PcQueueDrainMode.set(1);
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, resourceBarrier->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesEnabledAndCacheInvalidationWhenSingleBarrierIsProgrammedThenAllQueuesAreDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
+
+    bool PipeControlArgs::*const invalidationFlags[] = {
+        &PipeControlArgs::instructionCacheInvalidateEnable,
+        &PipeControlArgs::stateCacheInvalidationEnable,
+        &PipeControlArgs::textureCacheInvalidationEnable,
+        &PipeControlArgs::constantCacheInvalidationEnable,
+        &PipeControlArgs::tlbInvalidation,
+    };
+
+    for (auto flag : invalidationFlags) {
+        PipeControlArgs args{};
+        args.*flag = true;
+        MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+        EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+        linearStream.replaceBuffer(buffer, sizeof(buffer));
+    }
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesEnabledAndCacheInvalidationForcedByDebugKeyWhenSingleBarrierIsProgrammedThenAllQueuesAreDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    const int32_t invalidationMasks[] = {
+        FlushCachesBitmask::instructionCache,
+        FlushCachesBitmask::textureCache,
+        FlushCachesBitmask::constantCache,
+        FlushCachesBitmask::stateCache,
+        FlushCachesBitmask::tlb,
+    };
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
+
+    for (auto mask : invalidationMasks) {
+        debugManager.flags.FlushAllCaches.set(mask);
+
+        PipeControlArgs args{};
+        MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+        EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+        linearStream.replaceBuffer(buffer, sizeof(buffer));
+    }
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesOnCacheInvalidationDisabledWhenCacheIsInvalidatedThenOnlyCurrentQueueIsDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(0);
+
+    PipeControlArgs args{};
+    args.tlbInvalidation = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    debugManager.flags.FlushAllCaches.set(FlushCachesBitmask::allCaches);
+
+    PipeControlArgs argsWithoutInvalidation{};
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, argsWithoutInvalidation);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesOnCacheInvalidationEnabledWhenCacheIsInvalidatedThenAllQueuesAreDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
+
+    PipeControlArgs args{};
+    args.tlbInvalidation = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenNonTriggeringCacheFlagsWhenSingleBarrierIsProgrammedThenOnlyCurrentQueueIsDrained, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    PipeControlArgs args{};
+    args.dcFlushEnable = true;
+    args.renderTargetCacheFlushEnable = true;
+    args.vfCacheInvalidationEnable = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
+}
+
+HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenStateCacheFlushWhenProgrammedThenAllQueuesAreDrainedByDefaultAndDebugKeysControlDrainScope, IsAtLeastXe3pCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_TRUE(pc->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pc->getTextureCacheInvalidationEnable());
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
+    linearStream.replaceBuffer(buffer, sizeof(buffer));
+
+    debugManager.flags.PcQueueDrainMode.set(1);
+
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
 }

@@ -7,7 +7,6 @@
 
 #pragma once
 #include <memory>
-#include <string>
 
 namespace NEO {
 class Context;
@@ -37,17 +36,6 @@ class ProgramFixture {
                                  const ClDeviceVector &deviceVector,
                                  const unsigned char **binary,
                                  const size_t *binarySize);
-
-    void createProgramFromBinary(Context *pContext,
-                                 const ClDeviceVector &deviceVector,
-                                 const std::string &binaryFileName,
-                                 cl_int &retVal,
-                                 const std::string &options = "");
-
-    void createProgramFromBinary(Context *pContext,
-                                 const ClDeviceVector &deviceVector,
-                                 const std::string &binaryFileName,
-                                 const std::string &options = "");
 
     void createProgramWithSource(Context *pContext);
 

@@ -8,7 +8,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -22,8 +23,8 @@
 struct GfxCoreHelperTestsCri : public GfxCoreHelperTest {
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        auto releaseHelper = ReleaseHelper::create(hardwareInfo.ipVersion);
-        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, releaseHelper.get());
+        auto compilerReleaseHelper = CompilerReleaseHelper::create(hardwareInfo.ipVersion);
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, compilerReleaseHelper.get());
         DeviceFixture::setUpImpl(&hardwareInfo);
     }
 
@@ -186,9 +187,9 @@ CRITEST_F(GfxCoreHelperTestsCri, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroup
     std::array<std::array<uint32_t, 3>, 15> values = {{
         {128u, 16u, 1024u}, // Grf Size, SIMT Size, Max Num of threads
         {128u, 32u, 1024u},
-        {160u, 16u, 768u},
+        {160u, 16u, 1024u},
         {160u, 32u, 1024u},
-        {192u, 16u, 640u},
+        {192u, 16u, 1024u},
         {192u, 32u, 1024u},
         {256u, 16u, 512u},
         {256u, 32u, 1024u},
@@ -206,11 +207,74 @@ CRITEST_F(GfxCoreHelperTestsCri, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroup
     }
 }
 
+CRITEST_F(GfxCoreHelperTestsCri, givenVariousGrfCountsWhenCallingCalculateAvailableThreadCountAndThreadCountAvailableIsBiggerThenCorrectValueIsReturned) {
+    setUpImpl();
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    constexpr auto grfTestInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 8u},
+                                                                                 {64u, 8u},
+                                                                                 {96u, 8u},
+                                                                                 {128u, 8u},
+                                                                                 {160u, 8u},
+                                                                                 {192u, 8u},
+                                                                                 {256u, 8u},
+                                                                                 {512u, 4u}});
+
+    auto hwInfo = hardwareInfo;
+    for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
+        auto expectedThreadCount = expectedThreadCountPerEu * hwInfo.gtSystemInfo.EUCount;
+        // force thread count bigger than calculation
+        hwInfo.gtSystemInfo.ThreadCount = expectedThreadCount * 2;
+        EXPECT_EQ(expectedThreadCount, gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount, rootDeviceEnvironment)) << "grfCount: " << grfCount;
+    }
+}
+
+CRITEST_F(GfxCoreHelperTestsCri, givenVariousGrfCountsWhenCallingCalculateAvailableThreadCountAndThreadCountAvailableIsSmallerThenCorrectValueIsReturned) {
+    setUpImpl();
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    constexpr auto grfTestInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 8u},
+                                                                                 {64u, 8u},
+                                                                                 {96u, 8u},
+                                                                                 {128u, 8u},
+                                                                                 {160u, 8u},
+                                                                                 {192u, 8u},
+                                                                                 {256u, 8u},
+                                                                                 {512u, 4u}});
+
+    auto hwInfo = hardwareInfo;
+    for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
+        // force thread count smaller than calculation
+        hwInfo.gtSystemInfo.ThreadCount = expectedThreadCountPerEu * hwInfo.gtSystemInfo.EUCount / 2;
+        EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount, rootDeviceEnvironment)) << "grfCount: " << grfCount;
+    }
+}
+
+CRITEST_F(GfxCoreHelperTestsCri, givenModifiedGtSystemInfoWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
+    setUpImpl();
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    constexpr auto testInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 256u},
+                                                                              {48u, 384u},
+                                                                              {64u, 512u}});
+
+    auto hwInfo = hardwareInfo;
+    for (const auto &[euCount, expectedThreadCount] : testInputs) {
+        hwInfo.gtSystemInfo.EUCount = euCount;
+        // force thread count bigger than calculation
+        hwInfo.gtSystemInfo.ThreadCount = expectedThreadCount * 2;
+        EXPECT_EQ(expectedThreadCount, gfxCoreHelper.calculateAvailableThreadCount(hwInfo, 256u, rootDeviceEnvironment)) << "euCount: " << euCount;
+    }
+}
+
 struct GfxCoreHelperTestsCriWithEnginesCheck : public GfxCoreHelperTestWithEnginesCheck {
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        auto releaseHelper = ReleaseHelper::create(hardwareInfo.ipVersion);
-        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, releaseHelper.get());
+        auto compilerReleaseHelper = CompilerReleaseHelper::create(hardwareInfo.ipVersion);
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, compilerReleaseHelper.get());
         DeviceFixture::setUpImpl(&hardwareInfo);
     }
 
@@ -235,10 +299,10 @@ CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTw
 
         auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-        const auto &releaseHelper = device->getReleaseHelper();
+        const auto &hwInfo = device->getHardwareInfo();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
 
-        bool cccsEnabled = !releaseHelper.isRcsExposureDisabled() || debugFlag;
+        bool cccsEnabled = !hwInfo.caps.rcsExposureDisabled || debugFlag;
 
         if (cccsEnabled) {
             EXPECT_EQ(numEnginesWithCccs, device->allEngines.size());

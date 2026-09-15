@@ -14,6 +14,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 #include <fcntl.h>
+#include <limits>
 #include <sys/resource.h>
 
 namespace L0 {
@@ -21,6 +22,7 @@ namespace ult {
 
 struct WhiteBoxContext : public Context {
     using Context::Context;
+    using Context::getMaxIpcRangeHandleCount;
     using Context::initOpaqueHandleResourcesImpl;
 };
 
@@ -228,6 +230,27 @@ TEST_F(InitOpaqueHandleResourcesTest, GivenValidOverrideAtUlimitWhenCallingInitO
 
     EXPECT_EQ(static_cast<int>(mockRlimitCur), static_cast<int>(NEO::SysCalls::openFuncCalled));
     EXPECT_EQ(static_cast<int>(mockRlimitCur), static_cast<int>(NEO::SysCalls::closeFuncCalled));
+}
+
+TEST_F(InitOpaqueHandleResourcesTest, GivenGetrlimitSucceedingWhenQueryingMaxIpcRangeHandleCountThenSoftFdLimitIsReturned) {
+    mockRlimitCur = 2048;
+    mockGetrlimitRetVal = 0;
+
+    EXPECT_EQ(2048u, whiteBoxCtx->getMaxIpcRangeHandleCount());
+}
+
+TEST_F(InitOpaqueHandleResourcesTest, GivenGetrlimitFailingWhenQueryingMaxIpcRangeHandleCountThenDefaultIsReturned) {
+    mockRlimitCur = 2048;
+    mockGetrlimitRetVal = -1;
+
+    EXPECT_EQ(1024u, whiteBoxCtx->getMaxIpcRangeHandleCount());
+}
+
+TEST_F(InitOpaqueHandleResourcesTest, GivenSoftFdLimitAboveUint32MaxWhenQueryingMaxIpcRangeHandleCountThenValueIsClamped) {
+    mockRlimitCur = static_cast<rlim_t>(std::numeric_limits<uint32_t>::max()) + 1u;
+    mockGetrlimitRetVal = 0;
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), whiteBoxCtx->getMaxIpcRangeHandleCount());
 }
 
 } // namespace ult

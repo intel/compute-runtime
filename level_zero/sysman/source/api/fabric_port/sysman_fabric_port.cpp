@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ ze_result_t FabricPortHandleContext::fabricPortGet(uint32_t *pCount, zes_fabric_
 
 ze_result_t FabricPortHandleContext::fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) {
     if (!numPorts) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid number of ports \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid number of ports \n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

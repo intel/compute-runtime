@@ -35,10 +35,12 @@ class RegularEventsManager {
     struct EventPoolGroup {
         std::vector<ze_event_pool_handle_t> pools{};
         std::vector<ze_event_handle_t> freeEvents{};
+        std::vector<ze_event_handle_t> pendingEvents{};
         uint32_t createdFromLatestPool = eventCountInPool;
     };
 
     ze_event_handle_t createEvent(EventPoolGroup &group, bool timestamp);
+    ze_event_handle_t takeCompletedPendingEvent(EventPoolGroup &group);
     EventPoolGroup &getGroup(bool timestamp) { return timestamp ? timestampGroup : hostVisibleGroup; }
 
     ze_context_handle_t contextHandle = nullptr;

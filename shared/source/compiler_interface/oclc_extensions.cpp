@@ -13,14 +13,14 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/release_helper/release_helper.h"
 
-#include <sstream>
+#include <algorithm>
 #include <string>
+#include <string_view>
 
 namespace NEO {
 
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures, const CompilerProductHelper &compilerProductHelper, const ReleaseHelper &releaseHelper) {
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures) {
     cl_name_version openClCFeature;
     openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
 
@@ -110,28 +110,28 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
     strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit_packed");
     openclCFeatures.push_back(openClCFeature);
 
-    uint32_t fp16AdditionalCaps = releaseHelper.getAdditionalFp16Caps();
-    uint32_t fpExtraAdditionalCaps = releaseHelper.getAdditionalExtraCaps();
+    uint32_t fp16AtomicCapabilities = hwInfo.caps.kernelFp16AtomicCapabilities;
+    uint32_t bFloat16AtomicCapabilities = hwInfo.caps.kernelBFloat16AtomicCapabilities;
 
-    if (isValueSet(fp16AdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+    if (isValueSet(fp16AtomicCapabilities, FpAtomicExtFlags::addAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_add");
         openclCFeatures.push_back(openClCFeature);
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_add");
         openclCFeatures.push_back(openClCFeature);
     }
-    if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::addAtomicCaps)) {
+    if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::addAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_add");
         openclCFeatures.push_back(openClCFeature);
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_add");
         openclCFeatures.push_back(openClCFeature);
     }
-    if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::loadStoreAtomicCaps)) {
+    if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::loadStoreAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_load_store");
         openclCFeatures.push_back(openClCFeature);
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_load_store");
         openclCFeatures.push_back(openClCFeature);
     }
-    if (isValueSet(fpExtraAdditionalCaps, FpAtomicExtFlags::minMaxAtomicCaps)) {
+    if (isValueSet(bFloat16AtomicCapabilities, FpAtomicExtFlags::minMaxAtomicCaps)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_global_atomic_min_max");
         openclCFeatures.push_back(openClCFeature);
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_bfloat16_local_atomic_min_max");
@@ -142,15 +142,17 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enabledExtensions,
                                                               OpenClCFeaturesContainer &openclCFeatures) {
 
-    std::string extensionsList = enabledExtensions;
+    std::string extensionsList = " -cl-ext=-all,";
     extensionsList.reserve(1500);
-    extensionsList = " -cl-ext=-all,";
-    std::istringstream extensionsStringStream(enabledExtensions);
-    std::string extension;
-    while (extensionsStringStream >> extension) {
-        extensionsList.append("+");
-        extensionsList.append(extension);
-        extensionsList.append(",");
+    std::string_view extensions = enabledExtensions;
+    for (size_t begin = 0; begin < extensions.size();) {
+        auto end = std::min(extensions.find(' ', begin), extensions.size());
+        if (end > begin) {
+            extensionsList.append("+");
+            extensionsList.append(extensions, begin, end - begin);
+            extensionsList.append(",");
+        }
+        begin = end + 1;
     }
     for (auto &feature : openclCFeatures) {
         extensionsList.append("+");
@@ -169,6 +171,8 @@ cl_version getOclCExtensionVersion(std::string name, cl_version defaultVer) {
         return CL_MAKE_VERSION(1u, 2u, 0);
     } else if (name.compare("cl_khr_external_memory") == 0) {
         return CL_MAKE_VERSION(0, 9u, 1u);
+    } else if (name.compare("cl_khr_command_buffer") == 0) {
+        return CL_MAKE_VERSION(0, 9u, 8u);
     } else {
         return defaultVer;
     }

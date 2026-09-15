@@ -79,7 +79,8 @@ HWTEST_F(HostFunctionTests, givenInvalidWaitEventsHandleWhenAppendHostFunctionIs
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    CmdListHostFunctionParameters parameters{.relaxedOrderingDispatch = false};
+    CmdListHostFunctionParameters parameters;
+    parameters.waitEventParams.relaxedOrderingAllowed = false;
 
     uint32_t numWaitEvents = 1;
     ze_event_handle_t *phWaitEvents = nullptr;
@@ -124,12 +125,12 @@ HWTEST_F(HostFunctionTests, givenWaitEventWhenAppendHostFunctionIsCalledThenSema
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
     EXPECT_EQ(cmd->getCompareOperation(),
               MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
+    EXPECT_EQ(static_cast<uint32_t>(-1), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd));
     auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
     uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
-    EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
+    EXPECT_EQ(gpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
 }
 
 HWTEST_F(HostFunctionTests, givenOOQCmdListAndCounterBasedEventThenAppendHostFunctionIsCalledThenInvalidArgumentErrorIsReturned) {
@@ -151,7 +152,8 @@ HWTEST_F(HostFunctionTests, givenOOQCmdListAndCounterBasedEventThenAppendHostFun
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false)));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    CmdListHostFunctionParameters parameters{.relaxedOrderingDispatch = false};
+    CmdListHostFunctionParameters parameters;
+    parameters.waitEventParams.relaxedOrderingAllowed = false;
 
     ze_command_queue_desc_t queueDesc = {};
     std::unique_ptr<Mock<CommandQueue>> queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -332,7 +334,6 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
 
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
-    UnitTestSetter::setupSemaphore64bCmdSupport(restore, defaultHwInfo->platform.eRenderCoreFamily);
 
     auto queueMode = GetParam();
 
@@ -386,8 +387,8 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
 
     // wait for completion
     auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[0]);
-    EXPECT_EQ(hostFunctionIdAddress, miWaitTag->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+    EXPECT_EQ(hostFunctionIdAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
+    EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
 
@@ -412,7 +413,6 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseMemorySynchronizationForHostFunction.set(0);
-    UnitTestSetter::setupSemaphore64bCmdSupport(restorer, defaultHwInfo->platform.eRenderCoreFamily);
 
     auto queueMode = GetParam();
 
@@ -468,8 +468,8 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
         auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[partitionId]);
 
         auto expectedAddress = hostFunctionIdBaseAddress + partitionId * partitionOffset;
-        EXPECT_EQ(expectedAddress, miWaitTag->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+        EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
+        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
         EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
 
@@ -578,6 +578,24 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
 
     EXPECT_EQ(1u, events[0]->inOrderExecHelper.getEventData()->counterValue);
     EXPECT_EQ(2u, events[1]->inOrderExecHelper.getEventData()->counterValue);
+}
+
+HWTEST_F(HostFunctionsInOrderCmdListTests, givenProfilingEnabledCounterBasedEventWhenAppendHostFunctionThenTimestampNodeIsAssignedAndSuccessIsReturned) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    ASSERT_TRUE(events[0]->isEventTimestampFlagSet());
+    EXPECT_FALSE(events[0]->hasInOrderTimestampNode());
+
+    CmdListHostFunctionParameters parameters{};
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+
+    auto result = immCmdList->appendHostFunction(pHostFunction, pUserData, nullptr, events[0]->toHandle(), 0, nullptr, parameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(events[0]->hasInOrderTimestampNode());
+    EXPECT_NE(0u, events[0]->getGpuAddress(device));
 }
 
 HWTEST_F(HostFunctionsInOrderCmdListTests, givenImmediateCmdListWhenAppendHostFunctionThenPerformMigrationsIsFalse) {

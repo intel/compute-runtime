@@ -83,14 +83,21 @@ struct DeviceFixtureWithCustomMemoryManager : public DeviceFixture {
 };
 
 struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandle {
-    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override {
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) override {
+        if (remainingFdImportFailures > 0) {
+            --remainingFdImportFailures;
+            return nullptr;
+        }
         if (failHandleLookup) {
             return nullptr;
+        }
+        if (pAloc && allocationToReturn) {
+            *pAloc = allocationToReturn;
         }
         return &mockFd;
     }
 
-    std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) override {
+    std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) override {
         if (failHandleLookup) {
             return {nullptr, nullptr};
         }
@@ -102,6 +109,8 @@ struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandle {
     uint64_t mockHandle = 57;
     int mockFd = 57;
     bool failHandleLookup = false;
+    uint32_t remainingFdImportFailures = 0;
+    NEO::GraphicsAllocation *allocationToReturn = nullptr;
 };
 
 struct GetMemHandlePtrTestFixture {

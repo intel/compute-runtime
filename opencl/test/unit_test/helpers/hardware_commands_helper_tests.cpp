@@ -43,15 +43,12 @@ void HardwareCommandsTest::SetUp() {
     cl_device_id device = pClDevice;
     ContextFixture::setUp(1, &device);
     ASSERT_NE(nullptr, pContext);
-    BuiltInFixture::setUp(pDevice);
-    ASSERT_NE(nullptr, pBuiltIns);
 
     mockKernelWithInternal = std::make_unique<MockKernelWithInternals>(*pContext);
 }
 
 void HardwareCommandsTest::TearDown() {
     mockKernelWithInternal.reset(nullptr);
-    BuiltInFixture::tearDown();
     ContextFixture::tearDown();
     ClDeviceFixture::tearDown();
 }
@@ -1122,7 +1119,7 @@ HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirect
     EXPECT_EQ(0, std::memcmp(expectedDestinationInHeap, mockKernel.getSurfaceStateHeap(), mockKernel.getSurfaceStateHeapSize()));
 
     const auto &gfxCoreHelper = mockKernel.getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
 
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + ssIndex * surfaceStateSize);

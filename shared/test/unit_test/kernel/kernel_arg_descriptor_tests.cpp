@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,10 +86,6 @@ TEST(ArgDescImage, WhenDefaultInitializedThenOffsetsAreUndefined) {
     EXPECT_TRUE(NEO::isUndefinedOffset(argImage.metadataPayload.arraySize));
     EXPECT_TRUE(NEO::isUndefinedOffset(argImage.metadataPayload.numSamples));
     EXPECT_TRUE(NEO::isUndefinedOffset(argImage.metadataPayload.numMipLevels));
-    EXPECT_TRUE(NEO::isUndefinedOffset(argImage.metadataPayload.flatBaseOffset));
-    EXPECT_TRUE(NEO::isUndefinedOffset(argImage.metadataPayload.flatWidth));
-    EXPECT_TRUE(NEO::isUndefinedOffset(argImage.metadataPayload.flatHeight));
-    EXPECT_TRUE(NEO::isUndefinedOffset(argImage.metadataPayload.flatPitch));
 }
 
 TEST(ArgDescSampler, WhenDefaultInitializedThenOffsetsAreUndefined) {
@@ -367,11 +363,6 @@ TEST(ArgDescriptorCopyAssign, GivenImageArgWhenCopyAssignedThenCopiesDataBasedOn
     argImage.metadataPayload.numSamples = 23;
     argImage.metadataPayload.numMipLevels = 29;
 
-    argImage.metadataPayload.flatBaseOffset = 31;
-    argImage.metadataPayload.flatWidth = 37;
-    argImage.metadataPayload.flatHeight = 41;
-    argImage.metadataPayload.flatPitch = 43;
-
     NEO::ArgDescriptor arg2;
     arg2 = arg0;
     EXPECT_EQ(argImage.metadataPayload.imgWidth, arg2.as<NEO::ArgDescImage>().metadataPayload.imgWidth);
@@ -382,10 +373,6 @@ TEST(ArgDescriptorCopyAssign, GivenImageArgWhenCopyAssignedThenCopiesDataBasedOn
     EXPECT_EQ(argImage.metadataPayload.arraySize, arg2.as<NEO::ArgDescImage>().metadataPayload.arraySize);
     EXPECT_EQ(argImage.metadataPayload.numSamples, arg2.as<NEO::ArgDescImage>().metadataPayload.numSamples);
     EXPECT_EQ(argImage.metadataPayload.numMipLevels, arg2.as<NEO::ArgDescImage>().metadataPayload.numMipLevels);
-    EXPECT_EQ(argImage.metadataPayload.flatBaseOffset, arg2.as<NEO::ArgDescImage>().metadataPayload.flatBaseOffset);
-    EXPECT_EQ(argImage.metadataPayload.flatWidth, arg2.as<NEO::ArgDescImage>().metadataPayload.flatWidth);
-    EXPECT_EQ(argImage.metadataPayload.flatHeight, arg2.as<NEO::ArgDescImage>().metadataPayload.flatHeight);
-    EXPECT_EQ(argImage.metadataPayload.flatPitch, arg2.as<NEO::ArgDescImage>().metadataPayload.flatPitch);
 }
 
 TEST(ArgDescriptorCopyAssign, GivenSamplerArgWhenCopyAssignedThenCopiesDataBasedOnArgType) {

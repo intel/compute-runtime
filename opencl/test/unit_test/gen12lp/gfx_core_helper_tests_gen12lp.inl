@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, givenTglLpThenAuxTranslationIsRequire
 GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
-    EXPECT_EQ(expectedCapabilities, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(getRootDeviceEnvironment()));
+    EXPECT_EQ(expectedCapabilities, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hardwareInfo));
 }
 
 using GfxCoreHelperTestGen12Lp = GfxCoreHelperTest;
@@ -86,11 +86,6 @@ HWTEST2_F(GfxCoreHelperTestGen12Lp, givenFtrCcsNodeNotSetAndBcsInfoSetWhenGetGpg
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[3].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[4].first);
-}
-
-GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
-    auto &helper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
@@ -296,11 +291,6 @@ GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFiel
     MemorySynchronizationCommands<FamilyType>::setCacheFlushExtraProperties(args);
     EXPECT_TRUE(args.hdcPipelineFlush);
     EXPECT_FALSE(args.constantCacheInvalidationEnable);
-}
-
-GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenGen12WhenCallIsPackedSupportedThenReturnTrue) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.packedFormatsSupported());
 }
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, whenRequestingMocsThenProperMocsIndicesAreBeingReturned) {

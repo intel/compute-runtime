@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,19 +42,6 @@ class GmmResourceInfoDrmTest : public ::testing::Test {
 };
 
 TEST_F(GmmResourceInfoDrmTest, givenDrmImplementationWhenGetDriverProtectionBitsIsCalledThenReturnsZero) {
-    // Test DRM implementation which always returns 0
-    uint64_t result = gmmResourceInfo->getDriverProtectionBits(GMM_RESOURCE_USAGE_OCL_BUFFER, false);
-    EXPECT_EQ(0u, result);
-}
-
-TEST_F(GmmResourceInfoDrmTest, givenDrmImplementationWhenGetDriverProtectionBitsIsCalledWithCompressionDeniedThenReturnsZero) {
-    // Test DRM implementation with compression denied - should still return 0
-    uint64_t result = gmmResourceInfo->getDriverProtectionBits(GMM_RESOURCE_USAGE_OCL_BUFFER, true);
-    EXPECT_EQ(0u, result);
-}
-
-TEST_F(GmmResourceInfoDrmTest, givenDrmImplementationWhenGetDriverProtectionBitsIsCalledWithDifferentUsageTypeThenReturnsZero) {
-    // Test DRM implementation with different usage type - should still return 0
-    uint64_t result = gmmResourceInfo->getDriverProtectionBits(GMM_RESOURCE_USAGE_RENDER_TARGET, false);
+    uint64_t result = gmmResourceInfo->getDriverProtectionBits(false);
     EXPECT_EQ(0u, result);
 }

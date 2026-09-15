@@ -249,8 +249,9 @@ class IDList : NEO::NonCopyableAndNonMovableClass {
     NodeObjectType *peekTailImpl(NodeObjectType *, void *) {
         return tail;
     }
-    template <bool c = ownsNodes>
-    typename std::enable_if<c, void>::type cleanup() {
+    template <bool listOwnsNodes = ownsNodes>
+        requires(listOwnsNodes)
+    void cleanup() {
         if (head != nullptr) {
             head->deleteThisAndAllNext();
         }
@@ -258,8 +259,9 @@ class IDList : NEO::NonCopyableAndNonMovableClass {
         tail = nullptr;
     }
 
-    template <bool c = ownsNodes>
-    typename std::enable_if<!c, void>::type cleanup() {
+    template <bool listOwnsNodes = ownsNodes>
+        requires(!listOwnsNodes)
+    void cleanup() {
         ;
     }
 
@@ -269,8 +271,9 @@ class IDList : NEO::NonCopyableAndNonMovableClass {
         }
     }
 
-    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node1, void *data), bool c1 = threadSafe, bool c2 = supportRecursiveLock>
-    typename std::enable_if<c1 && !c2, NodeObjectType *>::type processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
+    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node1, void *data), bool listIsThreadSafe = threadSafe, bool recursiveLockIsSupported = supportRecursiveLock>
+        requires(listIsThreadSafe && !recursiveLockIsSupported)
+    NodeObjectType *processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
         while (locked.test_and_set(std::memory_order_acquire)) {
             notifySpinLocked();
         }
@@ -288,8 +291,9 @@ class IDList : NEO::NonCopyableAndNonMovableClass {
         return ret;
     }
 
-    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node1, void *data), bool c1 = threadSafe, bool c2 = supportRecursiveLock>
-    typename std::enable_if<c1 && c2, NodeObjectType *>::type processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
+    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node1, void *data), bool listIsThreadSafe = threadSafe, bool recursiveLockIsSupported = supportRecursiveLock>
+        requires(listIsThreadSafe && recursiveLockIsSupported)
+    NodeObjectType *processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
         std::thread::id currentThreadId = std::this_thread::get_id();
         if (lockOwner == currentThreadId) {
             return (static_cast<T *>(this)->*process)(node1, data);
@@ -316,8 +320,9 @@ class IDList : NEO::NonCopyableAndNonMovableClass {
         return ret;
     }
 
-    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node, void *data), bool c = threadSafe>
-    typename std::enable_if<!c, NodeObjectType *>::type processLocked(NodeObjectType *node = nullptr, void *data = nullptr) {
+    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node, void *data), bool listIsThreadSafe = threadSafe>
+        requires(!listIsThreadSafe)
+    NodeObjectType *processLocked(NodeObjectType *node = nullptr, void *data = nullptr) {
         return (this->*process)(node, data);
     }
 

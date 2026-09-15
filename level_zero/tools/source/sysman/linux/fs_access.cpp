@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
+#include <sstream>
 #include <unistd.h>
 
 namespace L0 {

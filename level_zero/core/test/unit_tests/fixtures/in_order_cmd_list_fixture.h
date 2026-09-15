@@ -26,7 +26,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
-#include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
 namespace ult {
@@ -118,7 +117,6 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         createKernel();
 
         const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.flags.usesPrintf = false;
-        UnitTestSetter::setupSemaphore64bCmdSupport(restorer, hardwareInfo->platform.eRenderCoreFamily);
     }
 
     void TearDown() override {
@@ -129,16 +127,16 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
     DestroyableZeUniquePtr<InOrderFixtureMockEvent> createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
         ze_event_handle_t outEvent = nullptr;
-        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
+        ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
         externalStorageAllocProperties.completionValue = counterValue;
         externalStorageAllocProperties.deviceAddress = deviceAddress;
         externalStorageAllocProperties.incrementValue = incrementValue;
 
-        zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-        counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+        ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
         counterBasedDesc.pNext = &externalStorageAllocProperties;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &outEvent));
 
         auto eventObj = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(outEvent));
 
@@ -152,7 +150,6 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
             .eventPoolAllocation = nullptr,
             .extensions = pNext,
             .totalEventSize = 0,
-            .maxKernelCount = EventPacketsCount::maxKernelSplit,
             .maxPacketsCount = 0,
             .counterBasedFlags = counterBasedFlags,
             .index = 0,
@@ -320,6 +317,9 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     template <typename GfxFamily>
     bool verifyInOrderDependency(GenCmdList::iterator &cmd, uint64_t counter, uint64_t syncVa, bool qwordCounter, bool isBcs);
 
+    template <typename GfxFamily>
+    typename GfxFamily::PIPE_CONTROL *findInOrderCounterSignalPipeControl(GenCmdList &cmdList, uint64_t deviceSyncVa);
+
     DebugManagerStateRestore restorer;
     std::unique_ptr<NEO::MockOsContext> mockCopyOsContext;
 
@@ -337,15 +337,6 @@ template <typename GfxFamily>
 bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, uint64_t counter, uint64_t syncVa, bool qwordCounter, bool isBcs) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-    using StallingBarrierType = typename GfxFamily::StallingBarrierType;
-
-    if (counter == 0) {
-        auto barrierCmd = genCmdCast<StallingBarrierType *>(*cmd);
-        if (barrierCmd) {
-            cmd++;
-            return true;
-        }
-    }
 
     const bool useSemaphore64bCmd = this->device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
     const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(qwordCounter, useSemaphore64bCmd);
@@ -373,28 +364,52 @@ bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, u
         return false;
     }
 
-    EXPECT_EQ(syncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(syncVa, NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitAddress(semaphoreCmd));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
     if (qwordCounter) {
         if (lriRequired) {
-            EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(0u, NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitData(semaphoreCmd));
         } else {
-            EXPECT_EQ(getLowPart(counter), semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(counter, NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitData(semaphoreCmd));
         }
     } else {
         EXPECT_EQ(0u, getHighPart(counter));
-        EXPECT_EQ(getLowPart(counter), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(getLowPart(counter), NEO::UnitTestHelper<GfxFamily>::getSemaphoreWaitData(semaphoreCmd));
     }
 
     cmd++;
     return true;
 }
 
+template <typename GfxFamily>
+typename GfxFamily::PIPE_CONTROL *InOrderCmdListFixture::findInOrderCounterSignalPipeControl(GenCmdList &cmdList, uint64_t deviceSyncVa) {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    for (auto &it : pipeControls) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pcCmd == nullptr || pcCmd->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE) {
+            continue;
+        }
+
+        uint64_t address = pcCmd->getAddressHigh();
+        address <<= 32;
+        address |= pcCmd->getAddress();
+
+        if (address == deviceSyncVa) {
+            return pcCmd;
+        }
+    }
+
+    return nullptr;
+}
+
 struct MultiTileInOrderCmdListFixture : public InOrderCmdListFixture {
     void SetUp() override {
         NEO::debugManager.flags.CreateMultipleSubDevices.set(partitionCount);
         NEO::debugManager.flags.EnableImplicitScaling.set(4);
+        NEO::debugManager.flags.EnableWalkerPostSyncSkip.set(0);
 
         InOrderCmdListFixture::SetUp();
     }
@@ -430,8 +445,10 @@ struct MultiTileSynchronizedDispatchFixture : public MultiTileInOrderCmdListFixt
 struct AggregatedBcsSplitTests : public ::testing::Test {
     using MockEvent = WhiteBox<L0::EventImp<uint64_t>>;
 
+    virtual bool useAggregatedEventsMode() const { return true; }
+
     void SetUp() override {
-        debugManager.flags.SplitBcsAggregatedEventsMode.set(1);
+        debugManager.flags.SplitBcsAggregatedEventsMode.set(useAggregatedEventsMode() ? 1 : 0);
         debugManager.flags.SplitBcsCopy.set(1);
         debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount);
         debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
@@ -447,7 +464,6 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         auto hwInfo = *NEO::defaultHwInfo;
         hwInfo.featureTable.ftrBcsInfo = 0b111111111;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
-        UnitTestSetter::setupSemaphore64bCmdSupport(restore, hwInfo.platform.eRenderCoreFamily);
         auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
 
         NEO::DeviceVector devices;
@@ -523,16 +539,16 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
 
     DestroyableZeUniquePtr<MockEvent> createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
         ze_event_handle_t outEvent = nullptr;
-        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
+        ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
         externalStorageAllocProperties.completionValue = counterValue;
         externalStorageAllocProperties.deviceAddress = deviceAddress;
         externalStorageAllocProperties.incrementValue = incrementValue;
 
-        zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-        counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+        ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
         counterBasedDesc.pNext = &externalStorageAllocProperties;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &outEvent));
 
         auto eventObj = static_cast<MockEvent *>(Event::fromHandle(outEvent));
 

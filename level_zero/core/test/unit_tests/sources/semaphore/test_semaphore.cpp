@@ -42,8 +42,8 @@ class MockNeoExtSemaphore : public NEO::ExternalSemaphore {
         return enqueueWaitReturnValue;
     }
 
-    bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override {
-        return true;
+    ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override {
+        return ImportResult::success;
     }
 
     bool enqueueSignal(uint64_t *fenceValue) override {
@@ -53,12 +53,30 @@ class MockNeoExtSemaphore : public NEO::ExternalSemaphore {
         return enqueueSignalReturnValue;
     }
 
+    uint64_t acquireWaitFenceValue(uint64_t fenceValue) override {
+        acquireWaitFenceValueCalledTimes++;
+        lastAcquireWaitFenceValueArg = fenceValue;
+        return acquireWaitFenceValueReturnValue;
+    }
+
+    uint64_t acquireSignalFenceValue(uint64_t fenceValue) override {
+        acquireSignalFenceValueCalledTimes++;
+        lastAcquireSignalFenceValueArg = fenceValue;
+        return acquireSignalFenceValueReturnValue;
+    }
+
     uint32_t enqueueWaitCalledTimes = 0u;
     uint32_t enqueueSignalCalledTimes = 0u;
     uint64_t lastWaitValue = 0u;
     uint64_t lastSignalValue = 0u;
     bool enqueueWaitReturnValue = true;
     bool enqueueSignalReturnValue = true;
+    uint32_t acquireWaitFenceValueCalledTimes = 0u;
+    uint32_t acquireSignalFenceValueCalledTimes = 0u;
+    uint64_t lastAcquireWaitFenceValueArg = 0u;
+    uint64_t lastAcquireSignalFenceValueArg = 0u;
+    uint64_t acquireWaitFenceValueReturnValue = 0u;
+    uint64_t acquireSignalFenceValueReturnValue = 0u;
 };
 
 class MockExtEvent : public MockEvent {
@@ -121,10 +139,9 @@ class MockEmptyEvent : public ::L0::Event {
     ze_result_t getWaitScope(ze_event_scope_flags_t *) override { return ZE_RESULT_SUCCESS; };
 
     uint32_t getPacketsInUse() const override { return 0u; };
-    uint32_t getPacketsUsedInLastKernel() override { return 0u; };
     uint64_t getPacketAddress(L0::Device *) override { return 0u; };
 
-    void resetKernelCountAndPacketUsedCount() override {};
+    void resetPacketsUsedCount() override {};
     void setPacketsInUse(uint32_t) override {};
 
     ze_result_t hostEventSetValue(State) override { return ZE_RESULT_SUCCESS; };
@@ -218,6 +235,9 @@ HWTEST_F(ExternalSemaphoreTest, DISABLED_givenExternalSemaphoreControllerStartCa
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSemaphoresIsCalledThenInvalidArgumentIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -228,6 +248,9 @@ HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSem
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendSignalExternalSemaphoresIsCalledThenInvalidArgumentIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -395,6 +418,9 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     ExternalSemaphoreImp semaphore;
+    auto neoSemaphore = new MockNeoExtSemaphore();
+    neoSemaphore->acquireWaitFenceValueReturnValue = 456u;
+    semaphore.neoExternalSemaphore.reset(neoSemaphore);
     ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
     ze_external_semaphore_wait_params_ext_t waitParams = {};
     waitParams.value = 123u;
@@ -408,7 +434,10 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     auto hostFunctionData = static_cast<MockCommandListExtSem<FamilyType::gfxCoreFamily>::ExternalSemaphoreHostFunctionData *>(cmdList.capturedUserData);
     ASSERT_EQ(1u, hostFunctionData->operationData.semaphores.size());
     EXPECT_EQ(&semaphore, hostFunctionData->operationData.semaphores[0].first);
-    EXPECT_EQ(123u, hostFunctionData->operationData.semaphores[0].second);
+    EXPECT_EQ(1u, neoSemaphore->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore->acquireSignalFenceValueCalledTimes);
+    EXPECT_EQ(123u, neoSemaphore->lastAcquireWaitFenceValueArg);
+    EXPECT_EQ(456u, hostFunctionData->operationData.semaphores[0].second);
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledWhenAppendSignalExternalSemaphoresIsCalledOnRegularCmdListThenSignalHostFunctionIsAppended) {
@@ -419,6 +448,9 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     ExternalSemaphoreImp semaphore;
+    auto neoSemaphore = new MockNeoExtSemaphore();
+    neoSemaphore->acquireSignalFenceValueReturnValue = 654u;
+    semaphore.neoExternalSemaphore.reset(neoSemaphore);
     ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
     ze_external_semaphore_signal_params_ext_t signalParams = {};
     signalParams.value = 321u;
@@ -432,7 +464,10 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     auto hostFunctionData = static_cast<MockCommandListExtSem<FamilyType::gfxCoreFamily>::ExternalSemaphoreHostFunctionData *>(cmdList.capturedUserData);
     ASSERT_EQ(1u, hostFunctionData->operationData.semaphores.size());
     EXPECT_EQ(&semaphore, hostFunctionData->operationData.semaphores[0].first);
-    EXPECT_EQ(321u, hostFunctionData->operationData.semaphores[0].second);
+    EXPECT_EQ(1u, neoSemaphore->acquireSignalFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(321u, neoSemaphore->lastAcquireSignalFenceValueArg);
+    EXPECT_EQ(654u, hostFunctionData->operationData.semaphores[0].second);
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledWhenAppendWaitExternalSemaphoresIsCalledOnImmediateCmdListThenWaitHostFunctionIsAppended) {
@@ -449,6 +484,9 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     cmdList.setCmdListContext(context);
 
     ExternalSemaphoreImp semaphore;
+    auto neoSemaphore = new MockNeoExtSemaphore();
+    neoSemaphore->acquireWaitFenceValueReturnValue = 77u;
+    semaphore.neoExternalSemaphore.reset(neoSemaphore);
     ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
     ze_external_semaphore_wait_params_ext_t waitParams = {};
     waitParams.value = 55u;
@@ -462,7 +500,10 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     auto hostFunctionData = static_cast<MockCommandListExtSem<FamilyType::gfxCoreFamily>::ExternalSemaphoreHostFunctionData *>(cmdList.capturedUserData);
     ASSERT_EQ(1u, hostFunctionData->operationData.semaphores.size());
     EXPECT_EQ(&semaphore, hostFunctionData->operationData.semaphores[0].first);
-    EXPECT_EQ(55u, hostFunctionData->operationData.semaphores[0].second);
+    EXPECT_EQ(1u, neoSemaphore->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore->acquireSignalFenceValueCalledTimes);
+    EXPECT_EQ(55u, neoSemaphore->lastAcquireWaitFenceValueArg);
+    EXPECT_EQ(77u, hostFunctionData->operationData.semaphores[0].second);
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledWhenAppendSignalExternalSemaphoresIsCalledOnImmediateCmdListThenSignalHostFunctionIsAppended) {
@@ -479,6 +520,9 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     cmdList.setCmdListContext(context);
 
     ExternalSemaphoreImp semaphore;
+    auto neoSemaphore = new MockNeoExtSemaphore();
+    neoSemaphore->acquireSignalFenceValueReturnValue = 88u;
+    semaphore.neoExternalSemaphore.reset(neoSemaphore);
     ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
     ze_external_semaphore_signal_params_ext_t signalParams = {};
     signalParams.value = 66u;
@@ -492,7 +536,10 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     auto hostFunctionData = static_cast<MockCommandListExtSem<FamilyType::gfxCoreFamily>::ExternalSemaphoreHostFunctionData *>(cmdList.capturedUserData);
     ASSERT_EQ(1u, hostFunctionData->operationData.semaphores.size());
     EXPECT_EQ(&semaphore, hostFunctionData->operationData.semaphores[0].first);
-    EXPECT_EQ(66u, hostFunctionData->operationData.semaphores[0].second);
+    EXPECT_EQ(1u, neoSemaphore->acquireSignalFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(66u, neoSemaphore->lastAcquireSignalFenceValueArg);
+    EXPECT_EQ(88u, hostFunctionData->operationData.semaphores[0].second);
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledWhenSemaphoreWaitHostFunctionIsCalledOnRegularCmdListThenHostFunctionDataIsPreserved) {
@@ -594,8 +641,102 @@ HWTEST_F(ExternalSemaphoreTest, givenHostFunctionBasedExternalSemaphoresEnabledW
     EXPECT_EQ(neoSemaphore->lastSignalValue, 7u);
 }
 
-HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+HWTEST_F(ExternalSemaphoreTest, givenProxyEventBasedExternalSemaphoresWhenAppendSignalExternalSemaphoresIsCalledThenAcquiredFenceValueIsPassedToController) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    auto neoSemaphore = new MockNeoExtSemaphore();
+    neoSemaphore->acquireSignalFenceValueReturnValue = 654u;
+    externalSemaphore->neoExternalSemaphore.reset(neoSemaphore);
+
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
+    auto driverHandle = std::make_unique<MockDriverHandle>();
+
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
+
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
+    auto semController = driverHandle->externalSemaphoreController.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.setCmdListContext(context);
+
+    ze_external_semaphore_signal_params_ext_t signalParams = {};
+    signalParams.value = 321u;
+
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_result_t result = cmdList.appendSignalExternalSemaphores(1, &hSemaphore, &signalParams, nullptr, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(1u, neoSemaphore->acquireSignalFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(321u, neoSemaphore->lastAcquireSignalFenceValueArg);
+
+    ASSERT_EQ(1u, semController->proxyEvents.size());
+    EXPECT_EQ(externalSemaphore->toBase(), semController->proxyEvents[0].extSemaphore);
+    EXPECT_EQ(654u, semController->proxyEvents[0].fenceValue);
+    EXPECT_EQ(ExternalSemaphoreController::SemaphoreOperation::Signal, semController->proxyEvents[0].operation);
+}
+
+HWTEST_F(ExternalSemaphoreTest, givenProxyEventBasedExternalSemaphoresWhenAppendWaitExternalSemaphoresIsCalledThenAcquiredFenceValueIsPassedToController) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
+    auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    auto neoSemaphore = new MockNeoExtSemaphore();
+    neoSemaphore->acquireWaitFenceValueReturnValue = 456u;
+    externalSemaphore->neoExternalSemaphore.reset(neoSemaphore);
+
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
+    auto driverHandle = std::make_unique<MockDriverHandle>();
+
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandle.get());
+
+    driverHandle->externalSemaphoreController = ExternalSemaphoreController::create();
+    auto semController = driverHandle->externalSemaphoreController.get();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.setCmdListContext(context);
+
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    waitParams.value = 123u;
+
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(1u, neoSemaphore->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore->acquireSignalFenceValueCalledTimes);
+    EXPECT_EQ(123u, neoSemaphore->lastAcquireWaitFenceValueArg);
+
+    ASSERT_EQ(1u, semController->proxyEvents.size());
+    EXPECT_EQ(externalSemaphore->toBase(), semController->proxyEvents[0].extSemaphore);
+    EXPECT_EQ(456u, semController->proxyEvents[0].fenceValue);
+    EXPECT_EQ(ExternalSemaphoreController::SemaphoreOperation::Wait, semController->proxyEvents[0].operation);
+}
+
+HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
+    auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandle = std::make_unique<MockDriverHandle>();
@@ -625,7 +766,11 @@ HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExterna
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendSignalExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandle = std::make_unique<MockDriverHandle>();
@@ -655,7 +800,11 @@ HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendSignal
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendWaitForExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandle = std::make_unique<MockDriverHandle>();
@@ -684,7 +833,11 @@ HWTEST_F(ExternalSemaphoreTest, givenInOrderImmediateCommandListWhenAppendWaitFo
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendSignalExternalSemaphoresExpIsCalledThenErrorIsNotReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandle = std::make_unique<MockDriverHandle>();
@@ -719,8 +872,10 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendSignalExter
 
 HWTEST_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExternalSemaphoresExpIsCalledThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
 
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto failMemoryManager = std::make_unique<FailMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
 
@@ -750,7 +905,11 @@ HWTEST_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExterna
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandle = std::make_unique<MockDriverHandle>();
@@ -779,7 +938,11 @@ HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExternalS
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandle = std::make_unique<MockDriverHandle>();
@@ -809,7 +972,11 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendWaitExterna
 }
 
 HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsNotReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandle = std::make_unique<MockDriverHandle>();
@@ -843,8 +1010,10 @@ HWTEST_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendWaitExterna
 
 HWTEST_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.set(0);
 
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
+    externalSemaphore->neoExternalSemaphore.reset(new MockNeoExtSemaphore());
     auto failMemoryManager = std::make_unique<FailMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandle = std::make_unique<MockDriverHandle>();

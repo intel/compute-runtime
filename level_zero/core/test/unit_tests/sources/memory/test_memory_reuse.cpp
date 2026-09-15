@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -77,6 +78,49 @@ using SingleDeviceReuseTest = UsmReuseMemoryTest<2, 8, 1>;
 TEST_F(SingleDeviceReuseTest, givenUsmReuseEnabledWhenInitializingDriverHandleThenInitializeUsmReuse) {
     EXPECT_NE(nullptr, svmAllocsManager->usmHostAllocationsCache.get());
     EXPECT_NE(nullptr, svmAllocsManager->usmDeviceAllocationsCache.get());
+}
+
+struct SingleDeviceReuseWithoutPoolingTest : public UsmReuseMemoryTest<2, 8, 1> {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        UsmReuseMemoryTest<2, 8, 1>::SetUp();
+    }
+};
+
+TEST_F(SingleDeviceReuseWithoutPoolingTest, givenMemAdvisedAllocationWhenAllocationIsReusedFromCacheThenMemAdviseStateIsNotInherited) {
+    constexpr size_t size = MemoryConstants::pageSize;
+    auto device = driverHandle->devices[0];
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    result = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_UNCACHED);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, device->memAdviseSharedAllocations.count(allocData));
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *reusedPtr = nullptr;
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &reusedPtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(allocData, svmAllocsManager->getSVMAlloc(reusedPtr));
+
+    EXPECT_EQ(0u, device->memAdviseSharedAllocations.count(allocData));
+
+    result = context->freeMem(reusedPtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 } // namespace ult
 } // namespace L0

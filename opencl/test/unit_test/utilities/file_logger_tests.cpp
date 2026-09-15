@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"
 
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -434,7 +435,7 @@ TEST(FileLogger, GivenDisabledDebugFunctionalityWhenLoggingThenDumpingDoesNotOcc
     EXPECT_FALSE(kernelDumpCreated);
 
     // test api logging
-    fileLogger.logApiCall(__FUNCTION__, true, 0);
+    fileLogger.logApiCall(NEO_FUNCTION_NAME, true, 0);
     logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 

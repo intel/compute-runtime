@@ -1729,8 +1729,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
     EXPECT_EQ(0u, requiredWalkOrder);
 
     lws[0] = 15;
-    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, false, requiredWalkOrder, simd));
+    EXPECT_EQ(4u, requiredWalkOrder);
 
     lws[1] = 15;
     lws[2] = 15;

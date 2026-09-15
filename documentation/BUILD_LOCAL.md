@@ -15,9 +15,10 @@ local prefix without sudo if they are not.
 The easiest approach is to use the provided script which automates all steps:
 
 ```shell
-./scripts/build_local.sh <tag> [install_prefix]
+./scripts/build_local.sh <tag> [install_prefix] [build_type]
 # Example:
 ./scripts/build_local.sh 26.09.37435.1 /opt/my_prefix
+./scripts/build_local.sh 26.09.37435.1 /opt/my_prefix Debug
 ```
 
 The steps below document the same process manually. `PREFIX` is the directory
@@ -25,6 +26,10 @@ where GmmLib and IGC are installed. It is passed as `CMAKE_PREFIX_PATH` and
 `PKG_CONFIG_PATH` during the build, and must be on `LD_LIBRARY_PATH` at
 driver load time. It defaults to `$HOME/local` when using the script, but
 any writable path that does not require sudo works:
+
+`build_type` sets `CMAKE_BUILD_TYPE` for every component built from source
+(GmmLib and compute-runtime). Accepted values are `Release` (default),
+`Debug` and `RelWithDebInfo`.
 
 ```shell
 export PREFIX=/tmp/my_prefix   # any writable path that does not require sudo
@@ -81,7 +86,7 @@ GMMLIB_REV=$(grep -A5 'gmmlib:' manifests/manifest.yml | grep revision | awk '{p
 cd /tmp
 git clone --depth 1 -b "${GMMLIB_REV}" https://github.com/intel/gmmlib.git
 cd gmmlib && mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${PREFIX}" ..
+cmake -DCMAKE_BUILD_TYPE="${BUILD_TYPE:-Release}" -DCMAKE_INSTALL_PREFIX="${PREFIX}" ..
 make -j$(nproc)
 make install
 ```
@@ -120,7 +125,7 @@ prefix=${PREFIX}
 cd /path/to/compute-runtime
 mkdir -p build && cd build
 PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig" cmake \
-  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_BUILD_TYPE="${BUILD_TYPE:-Release}" \
   -DNEO_SKIP_UNIT_TESTS=1 \
   -DCMAKE_PREFIX_PATH="${PREFIX}" \
   -DCOMPILE_BUILT_INS=OFF \
@@ -138,9 +143,13 @@ make -j$(nproc)
 
 - **level-zero headers** must be cloned at the revision pinned in `manifests/manifest.yml` as a sibling directory named `level_zero` next to the compute-runtime source. The system-installed headers may be too old and lack recently-added headers (e.g. `zer_ddi.h` added in v1.28).
 - **`-DCOMPILE_BUILT_INS=OFF`** is required when using a local IGC install because `ocloc` loads IGC via `dlopen` at runtime and may find an incompatible system-installed version instead of the local one. To enable built-in kernel compilation, either replace the system IGC or set `LD_LIBRARY_PATH=${PREFIX}/lib`.
-- **Built artifacts** are placed in `build/bin/`:
-  - `libze_intel_gpu.so.1` -- Level Zero driver
-  - `libigdrcl.so` -- OpenCL driver
-  - `ocloc` -- Offline compiler
+- **Build type**: the script's optional `build_type` argument (default `Release`) sets `CMAKE_BUILD_TYPE` for every component built from source (GmmLib and compute-runtime). Accepted values are CMake's own build type names: `Release`, `Debug` and `RelWithDebInfo`; an invalid value causes the script to exit with an error before doing any work.
+- **Built artifacts**: when using the script, the driver, `ocloc` and their supporting libraries are copied from the temporary build directory into `${PREFIX}/bin/` once the build succeeds, so they remain available after the temporary work directory is removed:
+  - `${PREFIX}/bin/libze_intel_gpu.so.1` -- Level Zero driver
+  - `${PREFIX}/bin/libigdrcl.so` -- OpenCL driver
+  - `${PREFIX}/bin/ocloc-*` -- Offline compiler
+
+  When following the manual steps, the equivalent files are in `build/bin/` inside the compute-runtime source tree instead.
+- **Temporary work directory**: the script clones and builds everything in a directory created with `mktemp -d`. If the build succeeds, this directory is removed automatically. If the build fails, it is kept (and its path printed) so you can inspect logs or resume manually; remove it with `rm -rf <workdir>` once you no longer need it.
 - Check `manifests/manifest.yml` for the exact dependency versions expected by each release.
 - Find the latest release tag via: https://github.com/intel/compute-runtime/releases/latest

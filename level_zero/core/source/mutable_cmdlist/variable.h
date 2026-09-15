@@ -10,7 +10,6 @@
 #include "level_zero/core/source/mutable_cmdlist/usage.h"
 #include "level_zero/core/source/mutable_cmdlist/variable_handle.h"
 
-#include <memory>
 #include <string>
 
 namespace L0::MCL::Program::Decoder {
@@ -74,7 +73,10 @@ struct EventValueProperties {
     Event *event = nullptr;
     NEO::GraphicsAllocation *eventPoolAllocation = nullptr;
     NEO::GraphicsAllocation *cbEventDeviceCounterAllocation = nullptr;
+    NEO::GraphicsAllocation *patchPreambleCounterDeviceAllocation = nullptr;
     uint64_t inOrderExecBaseSignalValue = 0;
+    uint64_t patchPreambleCounterValue = 0;
+    uint64_t patchPreambleCounterDeviceGpuAddress = 0;
 
     MutableComputeWalker *walkerCmd = nullptr;
     MutablePipeControl *postSyncCmd = nullptr;
@@ -83,7 +85,6 @@ struct EventValueProperties {
     std::vector<MutableStoreDataImm *> storeDataImmCmds;
     std::vector<MutableStoreRegisterMem *> storeRegMemCmds;
 
-    uint32_t kernelCount = 0;
     uint32_t packetCount = 0;
     uint32_t waitPackets = 0;
     uint32_t inOrderAllocationOffset = 0;
@@ -94,12 +95,17 @@ struct EventValueProperties {
     bool isCbEventBoundToCmdList = false;
     bool hasStandaloneProfilingNode = false;
     bool isExternalFlag = false;
+    bool patchPreambleNoopState = false;
+    bool qwordInUse = false;
+    bool useSemaphore64bCmd = false;
+    bool qwordIndirect = false;
 };
 
 struct SlmValueProperties {
     Variable *nextSlmVariable = nullptr;
     SlmOffset slmSize = 0;
     SlmOffset slmOffsetValue = 0;
+    SlmOffset slmBaseOffset = undefined<SlmOffset>;
     uint8_t slmAlignment = 0;
 };
 
@@ -251,6 +257,9 @@ struct Variable : public VariableHandle {
     void setNextSlmVariable(Variable *nextSlmVariable) {
         desc.slmValue.nextSlmVariable = nextSlmVariable;
     }
+    void setSlmBaseOffset(SlmOffset slmBaseOffset) {
+        desc.slmValue.slmBaseOffset = slmBaseOffset;
+    }
     void setNextSlmVariableOffset(SlmOffset nextSlmOffset);
     void processVariableDispatchForSlm();
     uint32_t getAlignedSlmSize(uint32_t slmSize);
@@ -302,12 +311,17 @@ struct Variable : public VariableHandle {
     ze_result_t selectImmediateAddKernelArgUsageHandler(const NEO::ArgDescriptor &kernelArg, IndirectObjectHeapOffset iohOffset, IndirectObjectHeapOffset iohFullOffset,
                                                         CommandBufferOffset walkerCmdOffset, MutableComputeWalker *mutableComputeWalker, bool inlineData);
 
+    void handleBufferTypeChange(const void *oldArgValue, NEO::GraphicsAllocation *oldAllocation,
+                                const void *newArgValue, NEO::GraphicsAllocation *newAllocation);
+
     enum CbWaitEventOperationType {
         set,
         noop,
         restore
     };
     void setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper);
+    void setCbWaitEventPatchPreambleSemWaitOperation(CbWaitEventOperationType operation, MutableSemaphoreWait *mutableSemWait, uint64_t counter, uint64_t deviceGpuAddress, bool newPatchPreambleNoop, bool qwordIndirect);
+    void setCbWaitEventPatchPreambleLoadRegImmOperation(CbWaitEventOperationType operation, MutableLoadRegisterImm *mutableLoadRegImm, uint64_t counter, uint32_t cmdIndex, bool newPatchPreambleNoop);
     void addCommitVariableToBaseCmdList();
     void setCommitVariable() {
         if (desc.isStageCommit) {

@@ -125,7 +125,7 @@ HWTEST_F(KernelArgSvmTest, GivenSvmPtrBindlessWhenSettingKernelArgThenArgumentsA
     auto svmPtr = std::make_unique<char[]>(256);
 
     const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
 
     const auto bindlessOffset = 0x10;
     pKernelInfo->argAsPtr(0).bindless = bindlessOffset;
@@ -284,7 +284,7 @@ HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocBindlessWhenSettingKernelArgThenArg
     }
 
     const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
 
     auto svmPtr = std::make_unique<char[]>(256);
 
@@ -318,7 +318,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetSvmPointerBindlessWhenSetArgSvmAllocIsCall
     }
 
     const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
 
     std::unique_ptr<char[]> svmPtr(new char[256]);
 
@@ -403,7 +403,7 @@ HWTEST_F(KernelArgSvmTest, givenBindlessArgAndDeviceSupportingSharedSystemAlloca
     }
 
     const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
 
     this->pClDevice->deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
 

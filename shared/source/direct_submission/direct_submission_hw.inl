@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
@@ -27,7 +28,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include "create_direct_submission_hw.inl"
 
@@ -47,7 +48,6 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     memoryOperationHandler = inputParams.rootDeviceEnvironment.memoryOperationsInterface.get();
 
     auto &productHelper = inputParams.rootDeviceEnvironment.getHelper<ProductHelper>();
-    const auto &releaseHelper = inputParams.rootDeviceEnvironment.getReleaseHelper();
     auto &compilerProductHelper = inputParams.rootDeviceEnvironment.getHelper<CompilerProductHelper>();
 
     if (debugManager.flags.DirectSubmissionMaxRingBuffers.get() != -1) {
@@ -89,13 +89,20 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         relaxedOrderingEnabled = (debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
     }
 
-    this->isSwitchOnUnsuccessful = true;
+    this->isSwitchOnUnsuccessful = false;
+    if (!this->osContext.isExclusivelyHpContext()) {
+        if (this->osContext.isHighPriority()) {
+            this->isSwitchOnUnsuccessful = true;
+        } else if (this->osContext.hasPriorityLevel()) {
+            this->isSwitchOnUnsuccessful = this->osContext.getPriorityLevel() == gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getHighestQueuePriorityLevel());
+        }
+    }
     if (debugManager.flags.DirectSubmissionSwitchSemaphoreMode.get() != -1) {
         this->isSwitchOnUnsuccessful = !!debugManager.flags.DirectSubmissionSwitchSemaphoreMode.get();
     }
 
     currentQueueWorkCount = getInitialSemaphoreValue();
-    this->useSemaphore64bCmd = releaseHelper.isAvailableSemaphore64(*inputParams.rootDeviceEnvironment.getHardwareInfo());
+    this->useSemaphore64bCmd = inputParams.rootDeviceEnvironment.getCompilerReleaseHelper().isAvailableSemaphore64(*inputParams.rootDeviceEnvironment.getHardwareInfo());
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -117,7 +124,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
                                                              true, MemoryConstants::pageSize,
                                                              AllocationType::semaphoreBuffer,
                                                              isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
-    semaphores = memoryManager->allocateGraphicsMemoryWithProperties(semaphoreAllocationProperties);
+    auto device = this->csr.getDevice();
+    if (device && this->rootDeviceEnvironment.getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+        !this->memoryManager->isSystemMemoryPreferred(semaphoreAllocationProperties)) {
+        this->semaphores = device->getSemaphorePoolAllocator().allocate(semaphoreAllocationProperties.size);
+    }
+    if (!this->semaphores) {
+        this->semaphores = this->memoryManager->allocateGraphicsMemoryWithProperties(semaphoreAllocationProperties);
+    }
     UNRECOVERABLE_IF(semaphores == nullptr);
     allocations.push_back(semaphores);
 
@@ -164,7 +178,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     }
 
     handleResidency(nullptr);
-    ringCommandStream.replaceBuffer(this->ringBuffers[0u].ringBuffer->getUnderlyingBuffer(), minimumRingRequiredSize);
+    ringCommandStream.replaceBuffer(this->ringBuffers[0u].ringBuffer->getUnderlyingBuffer(), this->getRingBufferUsableSize(*this->ringBuffers[0u].ringBuffer));
     ringCommandStream.replaceGraphicsAllocation(this->ringBuffers[0].ringBuffer);
 
     semaphorePtr = semaphores->getUnderlyingBuffer();
@@ -740,12 +754,20 @@ inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers(Res
         dispatchSwitchRingBufferSection(nextRingBuffer->getGpuAddress());
     }
 
-    ringCommandStream.replaceBuffer(nextRingBuffer->getUnderlyingBuffer(), ringCommandStream.getMaxAvailableSpace());
+    ringCommandStream.replaceBuffer(nextRingBuffer->getUnderlyingBuffer(), this->getRingBufferUsableSize(*nextRingBuffer));
     ringCommandStream.replaceGraphicsAllocation(nextRingBuffer);
 
     handleSwitchRingBuffers(allocationsForResidency);
 
     return currentBufferGpuVa;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getRingBufferUsableSize(const GraphicsAllocation &ringBuffer) const {
+    if (this->rootDeviceEnvironment.getProductHelper().is2MBLocalMemAlignmentEnabled() && ringBuffer.isAllocatedInLocalMemoryPool()) {
+        return ringBuffer.getUnderlyingBufferSize() - additionalRingAllocationSize;
+    }
+    return minimumRingRequiredSize;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -756,6 +778,11 @@ GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::allocateRingBuffe
                                                            true, allocationSize,
                                                            AllocationType::ringBuffer,
                                                            isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
+    if (this->rootDeviceEnvironment.getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+        this->memoryManager->isLocalMemorySupported(this->rootDeviceIndex) &&
+        !this->memoryManager->isSystemMemoryPreferred(commandStreamAllocationProperties)) {
+        commandStreamAllocationProperties.size = alignUp(allocationSize, MemoryConstants::pageSize2M);
+    }
     return memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
 }
 
@@ -859,9 +886,13 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::deallocateResources() {
         memoryManager->freeGraphicsMemory(this->ringBuffers[ringBufferIndex].ringBuffer);
     }
     this->ringBuffers.clear();
-    if (semaphores) {
-        memoryManager->freeGraphicsMemory(semaphores);
-        semaphores = nullptr;
+    if (this->semaphores) {
+        if (this->semaphores->isView()) {
+            this->csr.getDevice()->getSemaphorePoolAllocator().free(this->semaphores);
+        } else {
+            this->memoryManager->freeGraphicsMemory(this->semaphores);
+        }
+        this->semaphores = nullptr;
     }
 
     memoryManager->freeGraphicsMemory(deferredTasksListAllocation);
@@ -890,7 +921,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreForPagin
     EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
                                                           this->gpuVaForPagingFenceSemaphore,
                                                           value,
-                                                          COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, this->isSwitchOnUnsuccessful, this->useSemaphore64bCmd, nullptr);
+                                                          COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, false, this->useSemaphore64bCmd, nullptr);
 }
 
 template <typename GfxFamily, typename Dispatcher>

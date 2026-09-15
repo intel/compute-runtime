@@ -982,10 +982,6 @@ inline void marshall(TOKSTR__ADAPTER_INFO &dst, const _ADAPTER_INFOT &src) {
     dst.SystemInfo.VEBoxInfo.NumberOfVEBoxEnabled.setValue(src.SystemInfo.VEBoxInfo.NumberOfVEBoxEnabled);
     dst.SystemInfo.VEBoxInfo.IsValid.setValue(src.SystemInfo.VEBoxInfo.IsValid);
     dst.SystemInfo.NumThreadsPerEu.setValue(src.SystemInfo.NumThreadsPerEu);
-    dst.SystemInfo.CacheTypes.L3.setValue(src.SystemInfo.CacheTypes.L3);
-    dst.SystemInfo.CacheTypes.LLC.setValue(src.SystemInfo.CacheTypes.LLC);
-    dst.SystemInfo.CacheTypes.eDRAM.setValue(src.SystemInfo.CacheTypes.eDRAM);
-    dst.SystemInfo.CacheTypes.CacheTypeMask.setValue(src.SystemInfo.CacheTypes.CacheTypeMask);
     dst.SystemInfo.MaxVECS.setValue(src.SystemInfo.MaxVECS);
     dst.DeferredWaitInfo.FeatureSupported.setValue(src.DeferredWaitInfo.FeatureSupported);
     dst.DeferredWaitInfo.ActiveDisplay.setValue(src.DeferredWaitInfo.ActiveDisplay);

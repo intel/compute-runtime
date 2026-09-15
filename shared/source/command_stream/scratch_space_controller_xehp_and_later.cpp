@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,9 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
                                                                        ExecutionEnvironment &environment,
                                                                        InternalAllocationStorage &allocationStorage)
     : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
-    auto &gfxCoreHelper = environment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
-    singleSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto &rootDeviceEnvironment = *environment.rootDeviceEnvironments[rootDeviceIndex];
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    singleSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
     if (debugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
         twoSlotScratchSpaceSupported = !!debugManager.flags.EnablePrivateScratchSlot1.get();
     }

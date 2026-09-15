@@ -8,38 +8,27 @@
 #include "shared/source/compiler_interface/default_cache_config.h"
 
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/path.h"
-#include "shared/source/os_interface/debug_env_reader.h"
-#include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/utilities/debug_settings_reader.h"
 
 #include <string>
 
 namespace NEO {
 
-const std::string neoCachePersistent = "NEO_CACHE_PERSISTENT";
-const std::string neoCacheMaxSize = "NEO_CACHE_MAX_SIZE";
-const std::string neoCacheDir = "NEO_CACHE_DIR";
-const std::string neoCacheStats = "NEO_CACHE_STATS";
-
-const int64_t neoCacheMaxSizeDefault = static_cast<int64_t>(MemoryConstants::gigaByte);
-
 CompilerCacheConfig getDefaultCompilerCacheConfig() {
     CompilerCacheConfig ret;
-    NEO::EnvironmentVariableReader envReader;
+    auto &flags = NEO::debugManager.flags;
 
-    if (envReader.getSetting(neoCachePersistent.c_str(), ApiSpecificConfig::compilerCacheDefaultEnabled()) != 0) {
+    if (flags.EnvCachePersistent.get() != 0) {
         ret.enabled = true;
 
-        ret.statsEnabled = (envReader.getSetting(neoCacheStats.c_str(), 0) != 0);
+        ret.statsEnabled = flags.EnvCacheStats.get();
 
-        std::string emptyString = "";
-        ret.cacheDir = envReader.getSetting(neoCacheDir.c_str(), emptyString);
+        ret.cacheDir = flags.EnvCacheDir.get();
 
         if (ret.cacheDir.empty()) {
-            if (!checkDefaultCacheDirSettings(ret.cacheDir, envReader)) {
+            if (!checkDefaultCacheDirSettings(ret.cacheDir)) {
                 ret.enabled = false;
                 ret.statsEnabled = false;
                 return ret;
@@ -54,13 +43,13 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         }
 
         ret.cacheFileExtension = ApiSpecificConfig::compilerCacheFileExtension();
-        ret.cacheSize = static_cast<size_t>(envReader.getSetting(neoCacheMaxSize.c_str(), neoCacheMaxSizeDefault));
+        ret.cacheSize = static_cast<size_t>(flags.EnvCacheMaxSize.get());
 
         if (ret.cacheSize == 0u) {
             ret.cacheSize = std::numeric_limits<size_t>::max();
         }
 
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "NEO_CACHE_PERSISTENT is enabled. Cache is located in: %s\n\n",
+        PRINT_STRING(flags.PrintDebugMessages.get(), stdout, "NEO_CACHE_PERSISTENT is enabled. Cache is located in: %s\n\n",
                      ret.cacheDir.c_str());
 
         return ret;

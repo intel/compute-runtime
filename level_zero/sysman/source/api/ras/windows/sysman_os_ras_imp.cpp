@@ -21,6 +21,7 @@ class WddmRasImp : public OsRas {
     ze_result_t osRasGetStateExp2(const uint32_t categoryCount, const zes_ras_error_category_exp_t *pCategories, zes_ras_state_exp2_t *pStates) override;
     ze_result_t osRasGetConfigExp(const uint32_t count, zes_ras_config_exp_t *pConfig) override;
     ze_result_t osRasSetConfigExp(const uint32_t count, const zes_ras_config_exp_t *pConfig) override;
+    void reInit() override {}
 };
 
 void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId) {}

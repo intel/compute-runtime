@@ -157,3 +157,20 @@ HWTEST_F(RenderDispatcherTest, givenRenderWithDcFlushFlagTrueWhenAddingMonitorFe
 HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingIsCopyThenReturnFalse) {
     EXPECT_FALSE(RenderDispatcher<FamilyType>::isCopy());
 }
+
+HWTEST_F(RenderDispatcherTest, givenRenderWhenDispatchingTlbFlushThenExpectPipeControlWithCacheInvalidation) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    RenderDispatcher<FamilyType>::dispatchTlbFlush(cmdBuffer, 0ull, this->pDevice->getRootDeviceEnvironment());
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(cmdBuffer);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    ASSERT_EQ(1u, hwParse.pipeControlList.size());
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*hwParse.pipeControlList.begin());
+    EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
+    EXPECT_TRUE(pipeControl->getTlbInvalidate());
+    EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+}

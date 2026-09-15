@@ -176,6 +176,7 @@ class MockDevice : public RootDevice {
     void finalizeRayTracing();
 
     const ReleaseHelper &getReleaseHelper() const override;
+    const CompilerReleaseHelper &getCompilerReleaseHelper() const override;
     AILConfiguration *getAilConfigurationHelper() const override;
 
     void setRTDispatchGlobalsForceAllocation() {
@@ -225,6 +226,7 @@ class MockDevice : public RootDevice {
     bool stopDirectSubmissionCalled = false;
     bool pollForCompletionCalled = false;
     ReleaseHelper *mockReleaseHelper = nullptr;
+    CompilerReleaseHelper *mockCompilerReleaseHelper = nullptr;
     AILConfiguration *mockAilConfigurationHelper = nullptr;
     uint64_t getGlobalMemorySizeReturn = 0u;
     bool callBaseGetGlobalMemorySize = true;

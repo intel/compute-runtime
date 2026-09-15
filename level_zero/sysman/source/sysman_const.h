@@ -101,6 +101,14 @@ inline constexpr double convertU13p3(uint16_t rawValue) {
     return (static_cast<double>(integerPart) + fractionalPart);
 }
 
+inline constexpr double convertU1p8(uint16_t rawValue) {
+    // Convert U1.8 fixed-point format (1 integer bit + 8 fractional bits) to a floating-point value
+    const uint32_t integerPart = rawValue >> 8;
+    const uint32_t fractionalBits = rawValue & 0xFF; // 8 bits
+    const double fractionalPart = static_cast<double>(fractionalBits) / (1 << 8);
+    return (static_cast<double>(integerPart) + fractionalPart);
+}
+
 inline constexpr double convertU18p14(uint32_t rawValue) {
     // Convert U18.14 fixed-point format (18 integer bits + 14 fractional bits) to a floating-point value
     const uint32_t integerPart = rawValue >> 14;

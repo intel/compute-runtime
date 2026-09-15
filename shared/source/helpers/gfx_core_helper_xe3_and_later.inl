@@ -25,6 +25,8 @@ uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareIn
         maxThreadsPerEuCount = 5;
     } else if (grfCount <= 256u) {
         maxThreadsPerEuCount = 4;
+    } else if (grfCount <= 512u) {
+        maxThreadsPerEuCount = 2;
     }
 
     maxThreadsPerEuCount = releaseHelper.adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, grfCount);

@@ -239,7 +239,7 @@ struct Graph : _ze_graph_handle_t {
     template <CaptureApi api, typename... TArgs>
     ze_result_t capture(TArgs... apiArgs) {
         if (false == Closure<api>::isSupported) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED;
         }
 
         auto graphCommandId = orderedCommands->acquireNextGraphCommandId();
@@ -292,21 +292,35 @@ struct Graph : _ze_graph_handle_t {
         return ctx;
     }
 
+    Graph *getRootGraph() {
+        return findRootGraph(this);
+    }
+
+    const Graph *getRootGraph() const {
+        return findRootGraph(this);
+    }
+
     uint64_t getId() const {
-        const Graph *root = this;
-        while (nullptr != root->parentGraph) {
-            root = root->parentGraph;
-        }
-        return root->id;
+        return getRootGraph()->id;
     }
 
     struct CaptureTargetDesc {
         ze_device_handle_t hDevice = nullptr;
-        ze_command_list_desc_t desc{};
+        ze_command_list_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+        ze_mutable_command_list_exp_desc_t mutableExpDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC};
     };
 
     const CaptureTargetDesc &getCaptureTargetDesc() const {
         return captureTargetDesc;
+    }
+
+    void enableMutableCommandList() {
+        captureTargetDesc.desc.pNext = &captureTargetDesc.mutableExpDesc;
+        mutableCmdlist = true;
+    }
+
+    bool isMutableCommandList() const {
+        return mutableCmdlist;
     }
 
     bool empty() const {
@@ -402,9 +416,18 @@ struct Graph : _ze_graph_handle_t {
     }
 
   protected:
+    template <typename GraphT>
+    static GraphT *findRootGraph(GraphT *graph) {
+        while (nullptr != graph->parentGraph) {
+            graph = graph->parentGraph;
+        }
+        return graph;
+    }
+
     void setCaptureTargetRecursively(bool attach);
     void setRecordedSignalsRecursively(bool attach);
     void unregisterSignallingEvents();
+    void markSignallingEventsAsGraphInternal();
 
     RecordedApiCommands recordedApiCommands;
     CaptureTargetDesc captureTargetDesc;
@@ -428,6 +451,7 @@ struct Graph : _ze_graph_handle_t {
     bool preallocated = false;
     bool wasCapturingStopped = false;
     bool multiEngineGraph = false;
+    bool mutableCmdlist = false;
 
     WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
 
@@ -443,7 +467,11 @@ void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&
 void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Graph &captureTarget, ze_event_handle_t event);
 
 bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList);
+bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
+bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events);
+bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent);
+bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents);
 
 template <CaptureApi api, typename... TArgs>
 ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarget, RecordedApiCommands *flatCaptureTarget, TArgs... apiArgs) {
@@ -455,16 +483,39 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
+    if (isGraphInstantiationTarget(srcCmdList)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
     auto eventsWaitList = getCommandsWaitEventsList<api>(apiArgs...);
+    const auto signalEvent = getCommandsSignalEvent<api>(apiArgs...);
     if (false == isGraphCapturingAllowed(srcCmdList)) {
-        // it's an error to try and fork to a cmdlist that doesn't support capturing
-        return usesForkEvents(eventsWaitList) ? ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE : ZE_RESULT_ERROR_NOT_AVAILABLE;
+        if (usesForkEvents(eventsWaitList)) {
+            // it's an error to try and fork to a cmdlist that doesn't support capturing
+            return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
+        }
+        if (usesGraphInternalEvents(eventsWaitList, signalEvent)) {
+            return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    } else if ((false == eventsWaitList.empty()) && (nullptr != graphCaptureTarget)) {
+        // it's an error to merge two capture sessions by waiting on an event recorded by a different one
+        if (usesForkEventsFromOtherSession(graphCaptureTarget->getRootGraph(), eventsWaitList)) {
+            return ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT;
+        }
+        // a non-external counter-based event bound outside the graph cannot be re-resolved per replay
+        if (waitsOnCbEventSignalledOutsideGraph(eventsWaitList)) {
+            return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
+        }
     }
     if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation
         recordHandleWaitEventsFromNextCommand(srcCmdList, graphCaptureTarget, eventsWaitList);
     }
 
     if (nullptr == graphCaptureTarget) {
+        if (usesGraphInternalEvents(eventsWaitList, signalEvent)) {
+            return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
+        }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -472,9 +523,14 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     if (ZE_RESULT_SUCCESS != ret) {
         return ret;
     }
+    for (const auto &event : eventsWaitList) {
+        if (L0::Event::fromHandle(event)->isExternalEvent()) {
+            graphCaptureTarget->enableMutableCommandList();
+        }
+    }
 
-    if (getCommandsSignalEvent<api>(apiArgs...)) {
-        recordHandleSignalEventFromPreviousCommand(srcCmdList, *graphCaptureTarget, getCommandsSignalEvent<api>(apiArgs...));
+    if (signalEvent) {
+        recordHandleSignalEventFromPreviousCommand(srcCmdList, *graphCaptureTarget, signalEvent);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -484,6 +540,10 @@ using GraphSubmissionSegment = std::variant<L0::CommandList *, ExecutableGraph *
 using GraphSubmissionChain = std::vector<GraphSubmissionSegment>;
 
 void handleExternalCbEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext);
+void handleExternalCbWaitEvents(uint32_t numWaitEvents,
+                                ze_event_handle_t *phWaitEvents,
+                                CbExternalEventInstantiateContext &cbEventContext,
+                                L0::CommandList *executionTarget);
 
 struct GraphInstatiateSettings {
     GraphInstatiateSettings() = default;
@@ -550,6 +610,14 @@ struct ExecGraphBuilder final {
         return {std::move(this->trailingEvents)};
     }
 
+    GraphInternalEvents &getInternalEvents() {
+        return internalEvents;
+    }
+
+    GraphInternalEvents releaseInternalEvents() {
+        return {std::move(this->internalEvents)};
+    }
+
   protected:
     void createEventPoolForTrailingEvents(size_t numEvents);
     L0::Event *createTrailingEvent();
@@ -560,6 +628,7 @@ struct ExecGraphBuilder final {
     std::unordered_map<const Graph *, ExecSubGraphBuilder> subgraphs;
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
+    GraphInternalEvents internalEvents;
 };
 
 struct ExecutableGraph : _ze_executable_graph_handle_t {
@@ -607,8 +676,12 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
         return externalCbEventStorage;
     }
 
+    const GraphInternalEvents &getInternalEvents() const {
+        return internalEvents;
+    }
+
     bool segmentRequiresSeperateSubmission(GraphCommandId segmentStart) const {
-        return this->myOrderedSegments.end() != this->myOrderedSegments.find(segmentStart);
+        return this->myOrderedSegments.contains(segmentStart);
     }
 
     WeaklyShared<OrderedExecutableSegmentsList> getOrderedCommands() {
@@ -637,7 +710,10 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
 
+    GraphInternalEvents internalEvents;
+
     bool usePatchingPreamble = true;
+    bool mutableExecGraph = false;
 };
 
 constexpr size_t maxVariantSize = 2 * 64;

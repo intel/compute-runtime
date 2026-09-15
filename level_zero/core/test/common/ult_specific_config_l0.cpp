@@ -8,7 +8,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/tests_configuration.h"
 

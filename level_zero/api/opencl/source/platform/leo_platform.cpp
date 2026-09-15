@@ -11,7 +11,6 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/pin/pin.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
@@ -24,7 +23,9 @@ namespace LEO {
 
 std::vector<std::unique_ptr<Platform>> *platformsImpl = nullptr;
 
-Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformInfo), driverHandle(driverHandle) {
+std::mutex Platform::platformsMutex;
+
+Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformInfo), asyncEventsHandler(new AsyncEventsHandler), driverHandle(driverHandle) {
     const auto &deviceHandles = L0::DriverHandle::fromHandle(driverHandle)->devicesToExpose;
     clDevices.reserve(deviceHandles.size());
     for (const auto &deviceHandle : deviceHandles) {
@@ -45,9 +46,11 @@ Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformI
 
     this->platformInfo->extensions = this->clDevices[0]->getDeviceInfo().deviceExtensions;
 
-    auto preferredPlatformName = this->clDevices[0]->getL0Object()->getHwInfo().capabilityTable.preferredPlatformName;
-    if (preferredPlatformName != nullptr) {
-        this->platformInfo->name = preferredPlatformName;
+    const auto &capabilityTable = this->clDevices[0]->getHardwareInfo().capabilityTable;
+    if (capabilityTable.preferredPlatformName != nullptr) {
+        this->platformInfo->name = capabilityTable.preferredPlatformName;
+    } else {
+        this->platformInfo->name += capabilityTable.isIntegratedDevice ? " (integrated)" : " (discrete)";
     }
 
     if (debugManager.flags.OverridePlatformName.get() != "unk") {
@@ -58,6 +61,14 @@ Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformI
     this->platformInfo->numericVersion = CL_MAKE_VERSION(3, 0, 0);
 
     sharingFactory.fillGlobalDispatchTable();
+}
+
+Platform::~Platform() {
+    this->asyncEventsHandler->closeThread();
+}
+
+AsyncEventsHandler &Platform::getAsyncEventsHandler() const {
+    return *this->asyncEventsHandler;
 }
 
 cl_int Platform::getInfo(cl_platform_info paramName,
@@ -145,8 +156,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
 
 void Platform::tryNotifyGtpinInit() {
     std::call_once(oclInitGtpinOnce, []() {
-        EnvironmentVariableReader envReader;
-        if (envReader.getSetting("ZET_ENABLE_PROGRAM_INSTRUMENTATION", false)) {
+        if (NEO::debugManager.flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION.get()) {
             const std::string gtpinFuncName{"OpenGTPinOCL"};
             PinContext::init(gtpinFuncName);
         }

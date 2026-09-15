@@ -22,9 +22,12 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::getPrimaryContextId;
     using IoctlHelperXe::ioctl;
     using IoctlHelperXe::IoctlHelperXe;
+    using IoctlHelperXe::isDeferBackingSupported;
     using IoctlHelperXe::isLowLatencyHintAvailable;
+    using IoctlHelperXe::localMemRegionsUsage;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
+    using IoctlHelperXe::noCompressionHintAvailable;
     using IoctlHelperXe::queryGtListData;
     using IoctlHelperXe::queryHwIpVersion;
     using IoctlHelperXe::setContextProperties;

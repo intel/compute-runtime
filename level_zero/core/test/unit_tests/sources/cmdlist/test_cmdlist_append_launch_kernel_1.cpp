@@ -116,8 +116,11 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAll
     ASSERT_FALSE(commandList->hasIndirectAllocationsAllowed());
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, GivenSignalWithUserInterruptEventWhenAppendingLaunchKernelThenMiUserInterruptIsGenerated) {
+HWTEST_F(CommandListAppendLaunchKernel, GivenLinuxUserFenceKmdWaitAndSignalWithUserInterruptEventsWhenAppendingLaunchKernelThenMiUserInterruptIsGeneratedOnlyForSignalWithUserInterrupt) {
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.set(true);
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().isWaitUserFenceNotEqualSupportedValue = true;
     createKernel();
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -135,6 +138,8 @@ HWTEST_F(CommandListAppendLaunchKernel, GivenSignalWithUserInterruptEventWhenApp
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     auto event = std::unique_ptr<::L0::Event>(::L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_TRUE(event->isLinuxUserFenceKmdWaitEnabled());
+    ASSERT_FALSE(event->isSignalWithUserInterrupt());
 
     ze_group_count_t groupCount{1, 1, 1};
 
@@ -151,7 +156,7 @@ HWTEST_F(CommandListAppendLaunchKernel, GivenSignalWithUserInterruptEventWhenApp
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         CmdListKernelLaunchParams launchParams = {};
         ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
-        // Without the dedicated flag no standalone MI_USER_INTERRUPT must be generated.
+        // Linux user-fence KMD wait does not require a standalone MI_USER_INTERRUPT.
         EXPECT_EQ(0u, countUserInterrupts(commandList.get()));
     }
 
@@ -1455,12 +1460,12 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
         auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
         EXPECT_EQ(cmd->getCompareOperation(),
                   MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
+        EXPECT_EQ(static_cast<uint32_t>(-1), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd));
         auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
         uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
-        EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
+        EXPECT_EQ(gpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
     }
 }
 
@@ -1608,9 +1613,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListAndCsrNotRequir
 
 HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteArgAndPlatformRequiresFlushWhenLaunchingKernelThenPipeControlWithTextureCacheInvalidationIsAdded, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isPostImageWriteFlushRequiredResult = true;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.postImageWriteFlushRequired = true;
 
     auto kernel = std::make_unique<Mock<KernelImp>>();
     kernel->setModule(module.get());
@@ -1656,9 +1660,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     kernel->setModule(module.get());
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isPostImageWriteFlushRequiredResult = true;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.postImageWriteFlushRequired = true;
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -1676,7 +1679,15 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendBarrier(nullptr, 0, nullptr, false);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(commandList->isTextureCacheFlushPending());
 
@@ -1701,9 +1712,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendi
     StackVec<ze_command_list_flags_t, 2> testedCmdListFlags = {ZE_COMMAND_LIST_FLAG_IN_ORDER,
                                                                ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING};
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isPostImageWriteFlushRequiredResult = true;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.postImageWriteFlushRequired = true;
     for (auto cmdListFlags : testedCmdListFlags) {
         auto kernel = std::make_unique<Mock<KernelImp>>();
         kernel->setModule(module.get());
@@ -1762,9 +1772,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenText
     kernel->setModule(module.get());
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isPostImageWriteFlushRequiredResult = true;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.postImageWriteFlushRequired = true;
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
     ze_command_list_flags_t flags = ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING;
@@ -1960,19 +1969,17 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKer
     EXPECT_FALSE(textureCacheInvBeforeWalker);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenCreatedThenIsPreImageReadFlushRequiredMatchesReleaseHelper, IsAtLeastXeCore) {
-    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
-    auto *releaseHelperPtr = mockReleaseHelper.get();
-    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(mockReleaseHelper);
+HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenCreatedThenPreImageReadFlushRequiredMatchesCaps, IsAtLeastXeCore) {
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
 
     ze_result_t returnValue;
 
-    releaseHelperPtr->isPreImageReadFlushRequiredResult = true;
+    hwInfo.caps.preImageReadFlushRequired = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto *cmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
     EXPECT_TRUE(cmdListHw->isPreImageReadFlushRequired);
 
-    releaseHelperPtr->isPreImageReadFlushRequiredResult = false;
+    hwInfo.caps.preImageReadFlushRequired = false;
     std::unique_ptr<L0::CommandList> commandList2(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto *cmdListHw2 = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList2.get());
     EXPECT_FALSE(cmdListHw2->isPreImageReadFlushRequired);
@@ -1995,6 +2002,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenHeapfulSupportWhenAppendVfeStateCm
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
         auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         EXPECT_EQ(0u, commandList->getFrontEndPatchListCount());
+        EXPECT_EQ(0u, commandList->getFrontEndPatchSize());
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         auto expectedGpuAddress = commandList->getCmdContainer().getCommandStream()->getCurrentGpuAddressPosition();
@@ -2002,9 +2010,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenHeapfulSupportWhenAppendVfeStateCm
         ASSERT_NE(0u, commandList->commandsToPatch.size());
         EXPECT_EQ(expectedGpuAddress, std::get<PatchFrontEndState>(commandList->commandsToPatch[0]).gpuAddress);
         EXPECT_EQ(1u, commandList->getFrontEndPatchListCount());
+        commandList->close();
+        size_t expectedSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(typename FamilyType::CFE_STATE));
+        EXPECT_EQ(expectedSize, commandList->getFrontEndPatchSize());
 
         commandList->reset();
         EXPECT_EQ(0u, commandList->getFrontEndPatchListCount());
+        EXPECT_EQ(0u, commandList->getFrontEndPatchSize());
     }
 }
 
@@ -2049,6 +2061,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCo
         EXPECT_EQ(2u, commandList->getFrontEndPatchListCount());
 
         commandList->close();
+        size_t expectedSize = 2 * NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(typename FamilyType::CFE_STATE));
+        EXPECT_EQ(expectedSize, commandList->getFrontEndPatchSize());
 
         void *cfeInputPtr = std::get<PatchFrontEndState>(commandList->commandsToPatch[0]).pCommand;
         void *cfeInputPtr2 = std::get<PatchFrontEndState>(commandList->commandsToPatch[1]).pCommand;

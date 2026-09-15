@@ -9,10 +9,8 @@
 
 using Family = NEO::XeHpcCoreFamily;
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
@@ -139,7 +137,10 @@ template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    const bool globalFenceRequired = (fenceType == FenceType::acquire)
+                                         ? productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)
+                                         : productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = globalFenceRequired ? AdditionalSynchronizationType::fence : AdditionalSynchronizationType::none;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
@@ -158,7 +159,9 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
 
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::acquire)
+                                                                    ? productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)
+                                                                    : productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }

@@ -66,6 +66,7 @@ void GlBuffer::synchronizeObject(UpdateData &updateData) {
     updateData.sharedHandle = bufferInfo.globalShareHandle;
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
     graphicsAllocation->setAllocationOffset(bufferInfo.bufferOffset);
+    updateData.memObject->refreshDeviceAddress(updateData.rootDeviceIndex);
 
     const auto currentSharedHandle = graphicsAllocation->peekSharedHandle();
     if (currentSharedHandle != updateData.sharedHandle) {
@@ -93,6 +94,7 @@ void GlBuffer::resolveGraphicsAllocationChange(osHandle currentSharedHandle, Upd
 
         if (updateData->synchronizationStatus == SynchronizeStatus::ACQUIRE_SUCCESFUL) {
             memObject->getGraphicsAllocation(updateData->rootDeviceIndex)->setAllocationOffset(bufferInfo->bufferOffset);
+            memObject->refreshDeviceAddress(updateData->rootDeviceIndex);
         }
     }
 }

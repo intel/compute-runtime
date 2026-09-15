@@ -47,7 +47,7 @@
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
@@ -58,6 +58,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include <iostream>
 #include <limits>
 #include <map>
 #include <sstream>
@@ -111,6 +112,10 @@ void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
 
 int Drm::ioctl(DrmIoctl request, void *arg) {
     auto requestValue = getIoctlRequestValue(request, ioctlHelper.get());
+    return ioctlWithRequestValue(request, arg, requestValue, nullptr);
+}
+
+int Drm::ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName) {
     int ret;
     int returnedErrno = 0;
     SYSTEM_ENTER();
@@ -120,9 +125,11 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         std::chrono::steady_clock::time_point end;
 
         auto printIoctl = debugManager.flags.PrintIoctlEntries.get();
+        std::string ioctlName;
 
         if (printIoctl) {
-            PRINT_STRING(true, stdout, "IOCTL %s called\n", ioctlHelper->getIoctlString(request).c_str());
+            ioctlName = requestName ? requestName : ioctlHelper->getIoctlString(request);
+            PRINT_STRING(true, stdout, "IOCTL %s called\n", ioctlName.c_str());
         }
 
         if (measureTime) {
@@ -158,10 +165,10 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         if (printIoctl) {
             if (ret == 0) {
                 PRINT_STRING(true, stdout, "IOCTL %s returns %d\n",
-                             ioctlHelper->getIoctlString(request).c_str(), ret);
+                             ioctlName.c_str(), ret);
             } else {
                 PRINT_STRING(true, stdout, "IOCTL %s returns %d, errno %d(%s)\n",
-                             ioctlHelper->getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+                             ioctlName.c_str(), ret, returnedErrno, strerror(returnedErrno));
             }
         }
 
@@ -276,58 +283,36 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
     return ret;
 }
 
-void inline printFault(const ResetStatsFault &fault, const std::string &idLabel, uint32_t contextId, const std::string &engineName, bool banned) {
-    IoFunctions::fprintf(stderr, "Segmentation fault from GPU at 0x%llx, %s: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
-                         fault.addr,
-                         idLabel.c_str(),
-                         contextId,
-                         engineName.c_str(),
-                         fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
-                         fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
-                         fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
-                         banned);
-    IoFunctions::fprintf(stdout, "Segmentation fault from GPU at 0x%llx, %s: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
-                         fault.addr,
-                         idLabel.c_str(),
-                         contextId,
-                         engineName.c_str(),
-                         fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
-                         fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
-                         fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
-                         banned);
-}
-
 bool Drm::checkResetStatus(OsContext &osContext) {
-    const auto osContextLinux = osContext.asOsContextLinux();
-    if (!osContextLinux) {
-        return false;
-    }
+    const auto osContextLinux = static_cast<OsContextLinux *>(&osContext);
     const auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     for (const auto drmContextId : drmContextIds) {
-        ResetStats resetStats{};
-        resetStats.contextId = drmContextId;
-        uint32_t status = 0;
-        std::vector<ResetFaultContext> faultsVector;
-        bool reportFaults = true;
-        const auto retVal{ioctlHelper->getResetStats(resetStats, &status, osContextLinux, faultsVector, reportFaults)};
-        if (retVal != 0) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "getResetStats failed with error %d for contextId %u, checking VM faults\n",
-                         retVal, drmContextId);
-        }
-
-        if (!reportFaults) {
-            return false;
-        }
-
-        if (!faultsVector.empty()) {
-            for (const auto &fault : faultsVector) {
-                printFault(fault.fault, fault.vmFault ? "vm_id" : "ctx_id", fault.id, EngineHelpers::engineTypeToString(osContext.getEngineType()), fault.banned);
+        ContextHealth contextHealth{};
+        contextHealth.contextId = drmContextId;
+        const auto retVal{ioctlHelper->getContextHealth(contextHealth)};
+        UNRECOVERABLE_IF(retVal != 0);
+        auto debuggingEnabled = rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled();
+        if (checkToDisableScratchPage() && contextHealth.faultValid) {
+            const auto &fault = contextHealth.fault;
+            if (!contextHealth.banned && debuggingEnabled) {
+                return false;
             }
+            auto printFault = [&](FILE *stream) {
+                IoFunctions::fprintf(stream, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                                     fault.addr,
+                                     contextHealth.contextId,
+                                     EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
+                                     fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
+                                     fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
+                                     fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
+                                     contextHealth.banned);
+            };
+            printFault(stderr);
+            printFault(stdout);
             UNRECOVERABLE_IF(true);
         }
-        if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
+        if (contextHealth.banReason == ContextBanReason::gpuHang) {
             PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
             osContextLinux->setHangDetected();
             return true;
@@ -549,7 +534,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
 
     rootDeviceEnvironment.initProductHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
-    rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper();
+    rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper(true);
     rootDeviceEnvironment.initApiGfxCoreHelper();
     rootDeviceEnvironment.initCompilerProductHelper();
     rootDeviceEnvironment.initAilConfigurationHelper();
@@ -562,9 +547,10 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
 
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
+    rootDeviceEnvironment.initCompilerReleaseHelper();
 
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, &releaseHelper);
+    const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
+    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, &compilerReleaseHelper);
     this->adjustSharedSystemMemCapabilities();
 
     querySystemInfo();
@@ -1107,31 +1093,28 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     return getMaxGpuFrequencyOfDevice(*this, maxGpuFrequency);
 }
 
-bool Drm::getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate) {
+uint32_t Drm::getDeviceMemoryMaxClockRateInMhz(uint32_t tileId) {
     const std::string relativefilePath = ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(tileId);
     std::string readString(64, '\0');
     errno = 0;
     if (readSysFsAsString(relativefilePath, readString) == false) {
-        return false;
+        return 0u;
     }
 
     char *endPtr = nullptr;
-    uint32_t retClkRate = static_cast<uint32_t>(std::strtoul(readString.data(), &endPtr, 10));
+    const uint32_t clkRate = static_cast<uint32_t>(std::strtoul(readString.data(), &endPtr, 10));
     if ((endPtr == readString.data()) || (errno != 0)) {
-        return false;
+        return 0u;
     }
-    clkRate = retClkRate;
-    return true;
+    return clkRate;
 }
 
-bool Drm::getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize) {
+uint64_t Drm::getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId) {
     if (memoryInfo == nullptr || memoryInfo->getLocalMemoryRegions().size() == 0U) {
-        physicalSize = 0U;
-        return false;
+        return 0u;
     }
 
-    physicalSize = memoryInfo->getLocalMemoryRegionSize(tileId);
-    return true;
+    return memoryInfo->getLocalMemoryRegionSize(tileId);
 }
 
 bool Drm::useVMBindImmediate() const {
@@ -1347,14 +1330,11 @@ bool Drm::hasPageFaultSupport() const {
 }
 
 bool Drm::hasKmdMigrationSupport() const {
-    const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto kmdMigrationSupported = hasPageFaultSupport() && productHelper.isKmdMigrationSupported();
-
     if (debugManager.flags.UseKmdMigration.get() != -1) {
         return !!debugManager.flags.UseKmdMigration.get();
     }
 
-    return kmdMigrationSupported;
+    return false;
 }
 
 void Drm::configureScratchPagePolicy() {
@@ -1601,7 +1581,8 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
 
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    GmmResourceUsageType usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper, getHardwareInfo());
+    const bool forceUncached = (cachePolicy == CachePolicy::uncached);
+    GmmResourceUsageType usageType = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, productHelper, getHardwareInfo());
     auto isUncachedType = CacheSettingsHelper::isUncachedType(usageType);
 
     if (isUncachedType && debugManager.flags.OverridePatIndexForUncachedTypes.get() != -1) {
@@ -1901,10 +1882,9 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     }
 
     bool useVmBind = isVmBindAvailable();
-    bool disableScratch = checkToDisableScratchPage();
-    bool enablePageFault = (hasPageFaultSupport() && useVmBind) || disableScratch;
+    bool enablePageFault = hasPageFaultSupport() && useVmBind;
 
-    ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
+    ctl.flags = ioctlHelper->getFlagsForVmCreate(checkToDisableScratchPage(), enablePageFault, useVmBind);
 
     auto ret = ioctlHelper->ioctl(DrmIoctl::gemVmCreate, &ctl);
 

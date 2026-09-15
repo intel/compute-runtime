@@ -60,7 +60,7 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, ptr);
 
-        signalAllPackets = L0GfxCoreHelper::useSignalAllEventPackets(device->getHwInfo());
+        signalAllPackets = true;
     }
 
     void tearDown() {
@@ -145,7 +145,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                            size_t dstRowPitch, size_t dstSlicePitch,
                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                            Event *signalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams, bool doubleStreamCopyOffload) override {
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override {
         if (signalEvent) {
             useEvents = true;
         } else {
@@ -162,7 +162,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, Event *signalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                         bool relaxedOrderingDispatch) override {
+                                         CmdListWaitEventParameters &waitEventParamters) override {
         appendMemoryCopyKernel2dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -174,7 +174,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          Event *signalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
+                                         ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventParamters) override {
         appendMemoryCopyKernel3dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -270,18 +270,18 @@ bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64
         return false;
     }
 
-    EXPECT_EQ(compareAddr, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(compareAddr, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     EXPECT_EQ(semaphoreCmd->getCompareOperation(), compareMode);
     EXPECT_EQ(semaphoreCmd->getWaitMode(), MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
 
     if (useQwordData) {
         if (expectLriForQwordData) {
-            EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(0u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
         } else {
-            EXPECT_EQ(compareData, semaphoreCmd->getSemaphoreDataDword());
+            EXPECT_EQ(compareData, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
         }
     } else {
-        EXPECT_EQ(getLowPart(compareData), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(getLowPart(compareData), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
         EXPECT_EQ(0u, getHighPart(compareData));
     }
 
@@ -765,7 +765,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMem
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
 
-    EXPECT_EQ(expectedGpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
+    EXPECT_EQ(expectedGpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
 
     commandList->removeHostPtrAllocations();
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
@@ -1014,7 +1014,7 @@ class ImmediateCommandListWaitOnMemFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, ptr);
 
-        signalAllPackets = L0GfxCoreHelper::useSignalAllEventPackets(device->getHwInfo());
+        signalAllPackets = true;
     }
 
     void tearDown() {

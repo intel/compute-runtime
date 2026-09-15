@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/preprocessor.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
@@ -12,13 +14,19 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 
 #include <bit>
+#include <chrono>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_BMG;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
+
+constexpr static std::string_view standbyPowerControlDefault("auto");
+constexpr static std::string_view standbyPowerControlNever("on");
+static const std::string standbyPowerControlFile("device/power/control");
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
@@ -31,6 +39,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
     {"0x1e2f8200", // BMG PUNIT rev 1
      {{"XTAL_CLK_FREQUENCY", 4},
       {"VRAM_BANDWIDTH", 56},
+      {"VRAM_FREQUENCY", 56},
+      {"VRAM_VID", 60},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -39,6 +50,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
+      {"VRAM_FREQUENCY", 56},
+      {"VRAM_VID", 60},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -47,6 +61,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
+      {"VRAM_FREQUENCY", 56},
+      {"VRAM_VID", 60},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -567,6 +584,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
+      {"VRAM_FREQUENCY", 56},
+      {"VRAM_VID", 60},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -575,6 +595,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"ACCUM_PACKAGE_ENERGY", 48},
       {"ACCUM_PSYS_ENERGY", 52},
       {"VRAM_BANDWIDTH", 56},
+      {"VRAM_FREQUENCY", 56},
+      {"VRAM_VID", 60},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
       {"XTAL_COUNT", 1024},
       {"VCCGT_ENERGY_ACCUMULATOR", 1628},
       {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
@@ -1257,6 +1280,11 @@ const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelpe
 }
 
 template <>
+bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported() {
+    return true;
+}
+
+template <>
 bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
 }
@@ -1269,36 +1297,35 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciProperties(zes_pci_properti
     return ZE_RESULT_SUCCESS;
 }
 
+static ze_result_t readVoltageRegulatorTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                                   double *pTemperature, uint32_t sensorIndex) {
+    // Build the key name based on sensor index
+    std::string key = "PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[" + std::to_string(sensorIndex) + "]";
+
+    uint32_t vrTemperature = 0;
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vrTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+        return result;
+    }
+
+    *pTemperature = static_cast<double>(vrTemperature);
+    return ZE_RESULT_SUCCESS;
+}
+
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) {
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
-    double maxVrTemperature = 0.0;
-
-    // Read all VR temperature sensors (0-3) and return the maximum
-    for (uint32_t i = 0; i < maxVrTemperatureSensorCount; i++) {
-        std::string key = "PLATFORM_VR_TEMPERATURE_0_2_0_GTTMMADR[" + std::to_string(i) + "]";
-
-        uint32_t vrTemperature = 0;
-        ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vrTemperature);
-        if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read VR temperature value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
-            return result;
-        }
-
-        maxVrTemperature = std::max(maxVrTemperature, static_cast<double>(vrTemperature));
-    }
-
-    *pTemperature = maxVrTemperature;
-    return ZE_RESULT_SUCCESS;
+    return readVoltageRegulatorTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature, sensorIndex);
 }
 
 static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemNodeDir) {
@@ -1403,6 +1430,19 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     return result;
 };
 
+static ze_result_t readGpuMaxTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                         double *pTemperature) {
+    uint32_t gpuMaxTemperature = 0;
+    std::string key("SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]");
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, gpuMaxTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+        return result;
+    }
+    *pTemperature = static_cast<double>(gpuMaxTemperature);
+    return ZE_RESULT_SUCCESS;
+}
+
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
@@ -1411,24 +1451,30 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
-    uint32_t gpuMaxTemperature = 0;
-    std::string key("SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]");
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, gpuMaxTemperature);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
-        return result;
-    }
-    *pTemperature = static_cast<double>(gpuMaxTemperature);
-    return ZE_RESULT_SUCCESS;
+    return readGpuMaxTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature);
 }
 
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
     return true;
+}
+
+static ze_result_t readMemoryMaxTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                            double *pTemperature) {
+    uint32_t memoryMaxTemperature = 0;
+    std::string key("VRAM_TEMPERATURE_0_2_0_GTTMMADR");
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, memoryMaxTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+        return result;
+    }
+    memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
+    *pTemperature = static_cast<double>(memoryMaxTemperature);
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>
@@ -1439,20 +1485,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
 
     ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
-    uint32_t memoryMaxTemperature = 0;
-    std::string key("VRAM_TEMPERATURE_0_2_0_GTTMMADR");
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, memoryMaxTemperature);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
-        return result;
-    }
-    memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
-    *pTemperature = static_cast<double>(memoryMaxTemperature);
-    return ZE_RESULT_SUCCESS;
+    return readMemoryMaxTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature);
 }
 
 template <>
@@ -1460,27 +1497,42 @@ void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_se
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GLOBAL] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
-    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 1;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = maxVrTemperatureSensorCount;
 }
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    // All sensors are read from the same set of telemetry nodes, hence the key offsets are looked up only once.
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
     double gpuMaxTemperature = 0;
-    ze_result_t result = this->getGpuMaxTemperature(pLinuxSysmanImp, &gpuMaxTemperature, subdeviceId);
+    result = readGpuMaxTemperature(keyOffsetMap, keyTelemInfoMap, &gpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
     double memoryMaxTemperature = 0;
-    result = this->getMemoryMaxTemperature(pLinuxSysmanImp, &memoryMaxTemperature, subdeviceId);
+    result = readMemoryMaxTemperature(keyOffsetMap, keyTelemInfoMap, &memoryMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
     double vrMaxTemperature = 0;
-    result = this->getVoltageRegulatorMaxTemperature(pLinuxSysmanImp, &vrMaxTemperature, subdeviceId);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
+    for (uint32_t sensorIndex = 0; sensorIndex < maxVrTemperatureSensorCount; sensorIndex++) {
+        double vrTemperature = 0;
+        result = readVoltageRegulatorTemperature(keyOffsetMap, keyTelemInfoMap, &vrTemperature, sensorIndex);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+        vrMaxTemperature = std::max(vrMaxTemperature, vrTemperature);
     }
 
     *pTemperature = std::max({gpuMaxTemperature, memoryMaxTemperature, vrMaxTemperature});
@@ -1678,7 +1730,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSy
     }
 
     if (keyOffsetMap.empty()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): key Offset map is empty\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): key Offset map is empty\n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -1697,81 +1749,64 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSy
     return ZE_RESULT_SUCCESS;
 }
 
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
+static bool isPowerDomainSupported(zes_power_domain_t powerDomain) {
+    const std::unordered_set<zes_power_domain_t> supportedPowerDomains = {
+        ZES_POWER_DOMAIN_PACKAGE,
+        ZES_POWER_DOMAIN_CARD,
+        ZES_POWER_DOMAIN_MEMORY,
+        ZES_POWER_DOMAIN_GPU};
+    return supportedPowerDomains.contains(powerDomain);
+}
 
+static ze_result_t readEnergyCounter(const std::map<std::string, uint64_t> &keyOffsetMap,
+                                     std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                     zes_power_domain_t powerDomain,
+                                     uint32_t &rawEnergyCounter) {
     const std::unordered_map<zes_power_domain_t, std::vector<std::string>> powerDomainToKeyMap = {
         {ZES_POWER_DOMAIN_PACKAGE, {"ACCUM_PACKAGE_ENERGY", "PACKAGE_ENERGY_STATUS_SKU_0_0_0_PCU"}},
         {ZES_POWER_DOMAIN_CARD, {"ACCUM_PSYS_ENERGY", "PLATFORM_ENERGY_STATUS"}},
         {ZES_POWER_DOMAIN_MEMORY, {"VCCDDR_ENERGY_ACCUMULATOR"}},
         {ZES_POWER_DOMAIN_GPU, {"VCCGT_ENERGY_ACCUMULATOR"}}};
 
-    auto powerDomainToKeyMapIter = powerDomainToKeyMap.find(powerDomain);
-    if (powerDomainToKeyMapIter == powerDomainToKeyMap.end()) {
+    ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    for (const auto &key : powerDomainToKeyMap.at(powerDomain)) {
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, rawEnergyCounter);
+        if (result == ZE_RESULT_SUCCESS) {
+            break;
+        }
+    }
+    return result;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
+    if (!isPowerDomainSupported(powerDomain)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<uint32_t, std::string> telemNodes = {};
-    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
-    if (telemNodes.empty()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
 
-    std::map<std::string, uint64_t> keyOffsetMap = {};
-    std::unordered_map<std::string, std::string> keyTelemInfoMap = {};
-
-    // Iterate through all the TelemNodes to find both OOBMSM and PUNIT guids along with their keyOffsetMap
-    for (const auto &telemNode : telemNodes) {
-        std::string telemNodeDir = telemNode.second;
-
-        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
-        int errorNum = 0;
-        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString, errorNum)) {
-            continue;
-        }
-
-        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
-        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
-            continue;
-        }
-
-        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
-        for (auto it = tempKeyOffsetMap.begin(); it != tempKeyOffsetMap.end(); it++) {
-            keyOffsetMap[it->first] = it->second;
-            keyTelemInfoMap[it->first] = telemNodeDir;
-        }
-    }
-
-    if (keyOffsetMap.empty()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
     }
 
     // Energy Counter calculation
     uint32_t energyCounter = 0;
-    bool isReadValueSuccess = false;
-    for (const auto &key : powerDomainToKeyMapIter->second) {
-        if (PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter) == ZE_RESULT_SUCCESS) {
-            isReadValueSuccess = true;
-            break;
-        }
+    result = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
-
-    if (!isReadValueSuccess) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    // Energy counter is in U(18.14) format. Need to convert it into uint64_t and then in MicroJoule
-    const uint32_t energyIntegerPart = static_cast<uint32_t>(energyCounter >> 14);
-    const uint32_t energyDecimalBits = static_cast<uint32_t>((energyCounter & 0x3FFF));
-    const double energyDecimalPart = static_cast<double>(energyDecimalBits) / (1 << 14);
-    const double energyInJoules = static_cast<double>(energyIntegerPart + energyDecimalPart);
-    pEnergy->energy = static_cast<uint64_t>((energyInJoules * convertJouleToMicroJoule));
+    pEnergy->energy = static_cast<uint64_t>(convertU18p14(energyCounter) * convertJouleToMicroJoule);
 
     // Timestamp calculation
     uint64_t timestamp64 = 0;
     std::string key = "XTAL_COUNT";
-    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestamp64);
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestamp64);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -1786,6 +1821,76 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     // 0x3 masks the 2-bit XTAL_CLK_FREQUENCY field (register bits [1:0]).
     double timestamp = timestamp64 / indexToXtalClockFrequencyMap[frequency & 0x3];
     pEnergy->timestamp = static_cast<uint64_t>(timestamp);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    if (!isPowerDomainSupported(powerDomain)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    // Average power calculation based on energy counter samples with 100ms sampling interval
+    // averagePower (W) = convertU18p14(energyCounterSample2 - energyCounterSample1) / sampleIntervalSeconds
+    // averagePower (mW) = averagePower (W) * milliFactor
+
+    // Read first energy counter sample
+    uint32_t energyCounterSample1 = 0;
+    ze_result_t energyResult = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounterSample1);
+    if (energyResult != ZE_RESULT_SUCCESS) {
+        return energyResult;
+    }
+
+    // Sampling interval (100ms)
+    constexpr uint32_t sampleIntervalMilliSeconds = 100;
+    constexpr double sampleIntervalSeconds = sampleIntervalMilliSeconds / 1000.0;
+    NEO::sleep(std::chrono::milliseconds(sampleIntervalMilliSeconds));
+
+    // Read second energy counter sample
+    uint32_t energyCounterSample2 = 0;
+    energyResult = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounterSample2);
+    if (energyResult != ZE_RESULT_SUCCESS) {
+        return energyResult;
+    }
+
+    // Unsigned subtraction handles counter rollover correctly for a single wrap of the uint32_t counter.
+    *pAveragePower = static_cast<uint32_t>((convertU18p14(energyCounterSample2 - energyCounterSample1) / sampleIntervalSeconds) * milliFactor);
+
+    // Instantaneous power calculation
+    uint64_t instantaneousPowerValue = 0;
+    std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    // Instantaneous power values are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
+    if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        // bits [0:15] - PACKAGE_POWER (instantaneous)
+        *pInstantPower = static_cast<uint32_t>(convertU13p3(instantaneousPowerValue & 0xFFFF) * milliFactor);
+    } else if (powerDomain == ZES_POWER_DOMAIN_CARD) {
+        // bits [32:47] - PSYSGPU_POWER (instantaneous)
+        *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 32) & 0xFFFF) * milliFactor);
+    } else if (powerDomain == ZES_POWER_DOMAIN_MEMORY) {
+        // bits [16:31] - VRAM_POWER (instantaneous)
+        *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 16) & 0xFFFF) * milliFactor);
+    } else {
+        // ZES_POWER_DOMAIN_GPU: instantaneous power is not available in INSTANTANEOUS_POWER_CONTAINER
+        *pInstantPower = 0;
+    }
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1808,7 +1913,99 @@ int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
 
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
-    return false;
+    return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pActual) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    uint32_t memoryActualFreq = 0;
+    uint64_t telemOffset = 0;
+    std::string key("VRAM_FREQUENCY");
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryActualFreq);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+        return result;
+    }
+    *pActual = static_cast<double>(memoryActualFreq & 0xFFFF);
+
+    return result;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp *pLinuxSysmanImp, zes_freq_domain_t frequencyDomain, uint32_t subdeviceId, double *pVoltage) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    uint32_t memoryVoltage = 0;
+    uint64_t telemOffset = 0;
+    std::string key("VRAM_VID");
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, memoryVoltage);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+        return result;
+    }
+
+    *pVoltage = convertU1p8(memoryVoltage & 0x1FF);
+
+    return result;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) {
+    return true;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isSetStandbyModeSupported() {
+    return true;
+}
+
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getStandbyModeFile(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subDeviceId) {
+    return standbyPowerControlFile;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t &mode) {
+    std::string currentMode;
+    ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
+    if (ZE_RESULT_SUCCESS != result) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <failed to read file %s> <result: 0x%x>\n", NEO_FUNCTION_NAME, standbyModeFile.c_str(), result);
+        return result;
+    }
+    if (standbyPowerControlDefault == currentMode) {
+        mode = ZES_STANDBY_PROMO_MODE_DEFAULT;
+    } else if (standbyPowerControlNever == currentMode) {
+        mode = ZES_STANDBY_PROMO_MODE_NEVER;
+    } else {
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "error@<%s> <unknown or internal error occurred> <currentMode: %s & result: 0x%x>\n", NEO_FUNCTION_NAME, currentMode.c_str(), result);
+    }
+    return result;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::setStandbyMode(SysFsAccessInterface *pSysfsAccess, const std::string &standbyModeFile, zes_standby_promo_mode_t mode) {
+    return pSysfsAccess->write(standbyModeFile, (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) ? standbyPowerControlDefault : standbyPowerControlNever);
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

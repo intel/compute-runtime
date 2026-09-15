@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 
 #include "drm_fourcc.h"
@@ -256,6 +257,9 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     }
 
     if (ret != ZE_RESULT_SUCCESS) {
+        if (baseImageHandle != nullptr) {
+            zeImageDestroy(baseImageHandle);
+        }
         errorCode.set(L0ToClResultMapper(ret));
         return nullptr;
     }

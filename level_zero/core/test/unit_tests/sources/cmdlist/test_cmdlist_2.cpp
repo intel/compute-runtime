@@ -110,7 +110,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                            size_t dstRowPitch, size_t dstSlicePitch,
                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                            L0::Event *signalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams, bool doubleStreamCopyOffload) override {
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override {
         if (signalEvent) {
             useEvents = true;
         } else {
@@ -128,7 +128,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, L0::Event *signalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                         bool relaxedOrderingDispatch) override {
+                                         CmdListWaitEventParameters &waitEventParamters) override {
         appendMemoryCopyKernel2dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -140,7 +140,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          L0::Event *signalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
+                                         ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventParamters) override {
         appendMemoryCopyKernel3dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -315,7 +315,16 @@ HWTEST_F(CommandListAppend, givenCommandListWhenQueryKernelTimestampsCalledWithN
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *dstPtr = nullptr;
     ze_event_handle_t eventHandle = {};
-    ze_result_t ret = cmdList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 1, nullptr);
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = false,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = true};
+    ze_result_t ret = cmdList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 1, nullptr, waitEventsParameters);
     EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
@@ -1027,6 +1036,46 @@ HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullDestinationRegionWhenIma
     EXPECT_FALSE(cmdList.useEvents);
 }
 
+HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullRegionWhenImageCopyToMemoryFromChromaViewThenCopySizeIsHalved, ImageSupport) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    constexpr uint32_t width = 32;
+    constexpr uint32_t height = 32;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_P010, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A};
+    zeDesc.width = width;
+    zeDesc.height = height;
+    zeDesc.depth = 1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &zeDesc));
+
+    ze_image_view_planar_exp_desc_t chromaPlaneDesc = {};
+    chromaPlaneDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    chromaPlaneDesc.planeIndex = 1u;
+
+    // Frame dimensions, as the sharing layers pass them.
+    ze_image_desc_t chromaViewDesc = zeDesc;
+    chromaViewDesc.pNext = &chromaPlaneDesc;
+    chromaViewDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16;
+
+    ze_image_handle_t chromaView = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->createView(device, &chromaViewDesc, &chromaView));
+
+    Vec3<size_t> expectedRegionCopySize = {width / 2, height / 2, 1};
+    cmdList.appendImageCopyToMemory(dstPtr, chromaView, nullptr, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+
+    zeImageDestroy(chromaView);
+}
+
 HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullDestinationRegionWhen1DImageCopyFromMemoryWithInvalidHeightAndDepthThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -1321,9 +1370,9 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhen1DArrayImageCopyRegionThenAp
     cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, copyParams);
 
     EXPECT_EQ(cmdList.appendCopyImageSrcRowPitch, imageHWSrc->getImageInfo().rowPitch);
-    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, srcRegion.height * imageHWSrc->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, imageHWSrc->getImageInfo().slicePitch);
     EXPECT_EQ(cmdList.appendCopyImageDstRowPitch, imageHWDst->getImageInfo().rowPitch);
-    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, dstRegion.height * imageHWDst->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, imageHWDst->getImageInfo().slicePitch);
     Vec3<size_t> expectedRegionCopySize = {srcRegion.width, srcRegion.height, srcRegion.depth};
     Vec3<size_t> expectedRegionSrcOrigin = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
     Vec3<size_t> expectedRegionDstOrigin = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
@@ -1363,9 +1412,9 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhen2DArrayImageCopyRegionThenAp
     cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, copyParams);
 
     EXPECT_EQ(cmdList.appendCopyImageSrcRowPitch, imageHWSrc->getImageInfo().rowPitch);
-    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, srcRegion.height * imageHWSrc->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, imageHWSrc->getImageInfo().slicePitch);
     EXPECT_EQ(cmdList.appendCopyImageDstRowPitch, imageHWDst->getImageInfo().rowPitch);
-    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, dstRegion.height * imageHWDst->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, imageHWDst->getImageInfo().slicePitch);
     Vec3<size_t> expectedRegionCopySize = {srcRegion.width, srcRegion.height, srcRegion.depth};
     Vec3<size_t> expectedRegionSrcOrigin = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
     Vec3<size_t> expectedRegionDstOrigin = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
@@ -1634,7 +1683,7 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenCopyRegionWithinMaxBli
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr, 0, nullptr, copyParams, false);
+    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr, 0, nullptr, copyParams);
     GenCmdList cmdList;
 
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1686,7 +1735,7 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenCopyRegionWithinMaxBli
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr, 0, nullptr, copyParams, false);
+    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr, 0, nullptr, copyParams);
     uint32_t bytesPerPixel = NEO::BlitCommandsHelper<FamilyType>::getAvailableBytesPerPixel(copySize.x, srcRegion.originX, dstRegion.originY, srcSize.x, dstSize.x);
     GenCmdList cmdList;
 
@@ -1737,7 +1786,7 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenCopyRegionGreaterThanM
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr, 0, nullptr, copyParams, false);
+    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr, 0, nullptr, copyParams);
     GenCmdList cmdList;
 
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1765,7 +1814,7 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
                                            size_t dstRowPitch, size_t dstSlicePitch,
                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                            L0::Event *signalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams, bool doubleStreamCopyOffload) override {
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override {
         this->srcSize = srcSize;
         this->dstSize = dstSize;
         return ZE_RESULT_SUCCESS;
@@ -1823,7 +1872,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListThenSshCorrectlyReserved, IsGe
     MockCommandListHw<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
     auto &gfxCoreHelper = commandList.device->getGfxCoreHelper();
-    auto size = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto size = gfxCoreHelper.getRenderSurfaceStateSize(commandList.device->getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(commandList.getReserveSshSize(), size);
 }
 

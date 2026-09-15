@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -170,9 +171,14 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
     auto pCmdQ1 = context->getSpecialQueue(1u);
     auto pCmdQ2 = context->getSpecialQueue(2u);
 
-    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
+    MockZebinWrapper<>::Descriptor desc{};
+    desc.isStateless = true;
+    MockZebinWrapper mockZebin{*defaultHwInfo, desc};
+    mockZebin.setAsMockCompilerReturnedBinary();
+
+    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>(mockZebin.kernelName, context.get(), context->getDevices(), &retVal));
     program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
-    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context->getDevice(0), retVal));
+    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel(mockZebin.kernelName), *context->getDevice(0), retVal));
 
     size_t svmSize = 4096;
     void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
@@ -225,12 +231,12 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
         EXPECT_EQ(2u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd0));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node4->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd0));
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd1));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node5->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd1));
     }
 
     {
@@ -253,12 +259,12 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
         EXPECT_EQ(2u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
-        EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), semaphoreCmd0->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd0));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node1->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd0));
 
         auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
-        EXPECT_EQ(1u, semaphoreCmd1->getSemaphoreDataDword());
-        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), semaphoreCmd1->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(1u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd1));
+        EXPECT_EQ(reinterpret_cast<uint64_t>(node3->getContextEndAddress(0u)), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd1));
     }
     alignedFree(svmPtr);
 }

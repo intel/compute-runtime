@@ -114,11 +114,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(Lin
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
-    const auto &releaseHelper = getReleaseHelper();
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
-    const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+    const bool isBasicWARequired = device.getHardwareInfo().caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
 
     if (isBasicWARequired && debuggingEnabled) {
         NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, this->peekRootDeviceEnvironment(), isRcs());

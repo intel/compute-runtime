@@ -18,8 +18,9 @@
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
@@ -37,10 +38,12 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/utilities/destructor_counted.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
@@ -1000,6 +1003,15 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelAndHostPointerC
     delete[] buffer;
 }
 
+TEST_F(DeviceHostPointerTest, givenPointerOutsideCpuVirtualAddressRangeThenAllocationIsNullAndHostCopyIsNotAttempted) {
+    REQUIRE_64BIT_OR_SKIP();
+
+    auto foreignDeviceUsmPtr = reinterpret_cast<void *>(maxNBitValue(56) + 1);
+
+    auto allocation = device->allocateMemoryFromHostPtr(foreignDeviceUsmPtr, MemoryConstants::pageSize, true);
+    EXPECT_EQ(nullptr, allocation);
+}
+
 TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemandAndHandleDestruction) {
     uint32_t destructorId = 0u;
 
@@ -1264,9 +1276,9 @@ HWTEST_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenProperties
     EXPECT_NE(37u, rayTracingProperties.maxBVHLevels);
 
     unsigned int expectedMaxBVHLevels = 0;
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         expectedMaxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
     }
 
@@ -1292,8 +1304,8 @@ HWTEST_F(DeviceTest, givenSetMaxBVHLevelsWhenPassingRaytracingExpStructToGetProp
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(ZE_DEVICE_RAYTRACING_EXT_FLAG_FORCE_UINT32, rayTracingProperties.flags);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
-    if (releaseHelper.isRayTracingSupported()) {
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_EQ(7u, rayTracingProperties.maxBVHLevels);
     } else {
         EXPECT_EQ(0u, rayTracingProperties.maxBVHLevels);
@@ -1633,13 +1645,11 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
 
     auto &rootDeviceEnvironment = this->neoDevice->getRootDeviceEnvironment();
     const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-
     if (compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
     } else {
         EXPECT_EQ(deviceProperties.maxMemAllocSize,
-                  std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), gfxCoreHelper.getMaxMemAllocSize()));
+                  std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), MemoryConstants::maxStatefulBufferSize));
     }
 }
 
@@ -1901,7 +1911,8 @@ TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitiali
 }
 struct GetGlobalTimestampTest : public DeviceTest {
     struct MockCommandListAppendWriteGlobalTimestamp : public MockCommandList {
-        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                               CmdListWaitEventParameters &waitEventParams) override {
             isAppendWriteGlobalTimestampCalled = true;
             *dstptr = 123456u; // dummy value
             return ZE_RESULT_SUCCESS;
@@ -1957,6 +1968,26 @@ TEST_F(GetGlobalTimestampTest, whenTbxModeThenSetGlobalTimestampViaSubmission) {
     EXPECT_TRUE(mockCommandList->isAppendWriteGlobalTimestampCalled);
 }
 
+TEST_F(GetGlobalTimestampTest, givenTbxModeAndTimestampPtrWhenGettingGlobalTimestampThenOsInterfaceIsUsed) {
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+    uint64_t timestampValue = 0x500001234u;
+
+    auto osTime = std::make_unique<NEO::MockOSTime>();
+    osTime->deviceTime->timestampPtr = &timestampValue;
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.osTime = std::move(osTime);
+
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(NEO::CommandStreamReceiverType::tbx));
+
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0x500001234u, deviceTs);
+    EXPECT_FALSE(mockCommandList->isAppendWriteGlobalTimestampCalled);
+}
+
 TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithOsInterfaceThenSuccessIsReturnedAndValuesSetCorrectly) {
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
@@ -1990,7 +2021,8 @@ TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithSubmissionThenSuccessIsRetu
 
 TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUsingSubmissionThenErrorIsReturned) {
     struct MockCommandListAppendWriteGlobalTimestampFail : public MockCommandList {
-        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                               CmdListWaitEventParameters &waitEventParams) override {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     };
@@ -2011,8 +2043,15 @@ TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUs
     auto actualGlobalTimestampCommandList = device->globalTimestampCommandList;
     // Swap the command list with the mock command list.
     device->globalTimestampCommandList = mockCommandListHandle;
-
-    L0::CommandList::fromHandle(device->globalTimestampCommandList)->appendWriteGlobalTimestamp(nullptr, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    L0::CommandList::fromHandle(device->globalTimestampCommandList)->appendWriteGlobalTimestamp(nullptr, nullptr, 0, nullptr, waitEventsParameters);
 
     result = device->getGlobalTimestamps(&hostTs, &deviceTs);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
@@ -2368,7 +2407,7 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM4,
-        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR6,
     };
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*this->neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
@@ -2392,13 +2431,15 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
         EXPECT_EQ(res, ZE_RESULT_SUCCESS);
         EXPECT_EQ(1u, count);
 
-        auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0) / 1000000000;
+        const auto bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0);
+        const auto bandwidthPerNanoSecond = bandwidthInBytesPerSecond / 1000000000;
+        const auto expectedBandwidthUnit = (bandwidthInBytesPerSecond == 0) ? ZE_BANDWIDTH_UNIT_UNKNOWN : ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
 
         EXPECT_EQ(memExtProperties.type, sysInfoMemType[memoryTypeIndex]);
-        EXPECT_EQ(memExtProperties.physicalSize, productHelper.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
+        EXPECT_EQ(0u, memExtProperties.physicalSize);
         EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond);
         EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
-        EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+        EXPECT_EQ(memExtProperties.bandwidthUnit, expectedBandwidthUnit);
     }
 }
 
@@ -2414,7 +2455,7 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnext
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM4,
-        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR6,
     };
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
@@ -2443,14 +2484,35 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnext
         EXPECT_EQ(res, ZE_RESULT_SUCCESS);
         EXPECT_EQ(1u, count);
 
-        auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0) / 1000000000;
+        const auto bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0);
+        const auto bandwidthPerNanoSecond = bandwidthInBytesPerSecond / 1000000000;
+        const auto expectedBandwidthUnit = (bandwidthInBytesPerSecond == 0) ? ZE_BANDWIDTH_UNIT_UNKNOWN : ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
 
         EXPECT_EQ(memExtProperties.type, sysInfoMemType[memoryTypeIndex]);
-        EXPECT_EQ(memExtProperties.physicalSize, productHelper.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
+        EXPECT_EQ(0u, memExtProperties.physicalSize);
         EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond);
         EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
-        EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+        EXPECT_EQ(memExtProperties.bandwidthUnit, expectedBandwidthUnit);
     }
+}
+
+TEST_F(DeviceGetMemoryTests, givenDriverModelReportingPhysicalMemorySizeWhenCallingGetMemoryPropertiesForMemoryExtPropertiesThenReportedSizeIsReturned) {
+    constexpr uint64_t physicalSize = 4096u;
+    auto driverModel = std::make_unique<NEO::MockDriverModel>();
+    driverModel->getDeviceMemoryPhysicalSizeInBytesResult = physicalSize;
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::move(driverModel));
+
+    uint32_t count = 1;
+    ze_device_memory_properties_t memProperties = {};
+    ze_device_memory_ext_properties_t memExtProperties = {};
+    memExtProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES;
+    memProperties.pNext = &memExtProperties;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMemoryProperties(&count, &memProperties));
+    EXPECT_EQ(physicalSize, memExtProperties.physicalSize);
 }
 
 TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWhenPnextIsNonNullAndStypeIsUnSupportedThenNoErrorIsReturned) {
@@ -2544,7 +2606,8 @@ TEST_F(DeviceHasNoFp64HasFp64EmulationTest, givenDefaultFp64EmulationSettingsAnd
 }
 
 TEST_F(DeviceHasNoFp64HasFp64EmulationTest, givenFp64EmulationEnabledAndDeviceSupportingFp64EmulationAndWithoutNativeFp64ThenReportCorrectFp64Flags) {
-    neoDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.NEO_FP64_EMULATION.set(true);
     ze_device_module_properties_t kernelProperties = {};
     memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
     kernelProperties.pNext = nullptr;
@@ -2826,6 +2889,13 @@ HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabled
     L0::Device *device = driverHandle->devices[0];
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
 
+    constexpr uint64_t physicalSizePerTile = 1024u;
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    auto driverModel = std::make_unique<NEO::MockDriverModel>();
+    driverModel->getDeviceMemoryPhysicalSizeInBytesResult = physicalSizePerTile;
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface());
+    rootDeviceEnvironment.osInterface->setDriverModel(std::move(driverModel));
+
     // Test all memory types
     for (uint32_t memoryTypeIndex = 0; memoryTypeIndex < sysInfoMemType.size(); memoryTypeIndex++) {
         // Set the memory type in hardware info
@@ -2844,13 +2914,15 @@ HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabled
         EXPECT_EQ(res, ZE_RESULT_SUCCESS);
         EXPECT_EQ(1u, count);
 
-        auto bandwidthPerNanoSecond = raii.mockProductHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0) / 1000000000;
+        const auto bandwidthInBytesPerSecond = raii.mockProductHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0);
+        const auto bandwidthPerNanoSecond = bandwidthInBytesPerSecond / 1000000000;
+        const auto expectedBandwidthUnit = (bandwidthInBytesPerSecond == 0) ? ZE_BANDWIDTH_UNIT_UNKNOWN : ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
 
         EXPECT_EQ(memExtProperties.type, sysInfoMemType[memoryTypeIndex]);
-        EXPECT_EQ(memExtProperties.physicalSize, raii.mockProductHelper->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0) * numSubDevices);
+        EXPECT_EQ(memExtProperties.physicalSize, physicalSizePerTile * numSubDevices);
         EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond * numSubDevices);
         EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
-        EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+        EXPECT_EQ(memExtProperties.bandwidthUnit, expectedBandwidthUnit);
     }
 }
 
@@ -4214,7 +4286,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
 
         auto &secondaryEngines = neoMockDevice->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(index)];
 
-        ASSERT_EQ(8u / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, secondaryEngines.engines.size());
+        ASSERT_EQ(8u, secondaryEngines.engines.size());
 
         auto highPriorityIndex = secondaryEngines.regularEnginesTotal;
         ASSERT_LT(highPriorityIndex, static_cast<uint32_t>(secondaryEngines.engines.size()));
@@ -5660,6 +5732,38 @@ TEST_F(DeviceTest, givenDeviceWithNoVmBindWhenQueryingReadonlyMemoryCapabilityTh
     EXPECT_EQ(ZE_DEVICE_READONLY_MEMORY_CAPABILITY_NONE, roProps.readonlyCapability);
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+struct MockProductHelperWideCacheLine : NEO::ProductHelperHw<gfxProduct> {
+    uint32_t getCacheLineSize() const override { return 256u; }
+};
+
+HWTEST_F(DeviceTest, givenCacheLineWiderThanTagWhenTakingFillPatternTagsThenNoTwoTagsShareACacheLine) {
+    NEO::RAIIProductHelperFactory<MockProductHelperWideCacheLine<IGFX_UNKNOWN>> raiiProductHelper{
+        *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]};
+
+    const auto cacheLineSize = device->getProductHelper().getCacheLineSize();
+
+    auto allocator = device->getFillPatternAllocator();
+    ASSERT_NE(nullptr, allocator);
+
+    constexpr size_t tagCount = 4;
+    NEO::TagNodeBase *tags[tagCount] = {};
+    for (auto &tag : tags) {
+        tag = allocator->getTag();
+        ASSERT_NE(nullptr, tag);
+    }
+
+    for (size_t i = 0; i < tagCount; i++) {
+        for (size_t j = i + 1; j < tagCount; j++) {
+            EXPECT_NE(tags[i]->getGpuAddress() / cacheLineSize, tags[j]->getGpuAddress() / cacheLineSize);
+        }
+    }
+
+    for (auto &tag : tags) {
+        tag->returnTag();
+    }
+}
+
 struct RTASDeviceTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
@@ -5741,9 +5845,9 @@ HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesThenCor
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5766,19 +5870,17 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
 
 HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned) {
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    auto &hwInfo = *this->neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    if (!releaseHelper.isRayTracingSupported()) {
-        GTEST_SKIP();
-    }
+    hwInfo.caps.rayTracingSupported = true;
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = true;
     MockOsLibrary::failGetProcAddress = true;
@@ -5800,11 +5902,9 @@ HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenC
 }
 
 HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned) {
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    auto &hwInfo = *this->neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    if (!releaseHelper.isRayTracingSupported()) {
-        GTEST_SKIP();
-    }
+    hwInfo.caps.rayTracingSupported = true;
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = false;
     MockOsLibrary::failGetProcAddress = true;
@@ -5844,9 +5944,9 @@ HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesExtThen
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5869,19 +5969,17 @@ HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesExt
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
 
-    if (releaseHelper.isRayTracingSupported()) {
+    if (hwInfo.caps.rayTracingSupported) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
     }
 }
 
 HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThenCorrectPropertiesIsReturned) {
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    auto &hwInfo = *this->neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    if (!releaseHelper.isRayTracingSupported()) {
-        GTEST_SKIP();
-    }
+    hwInfo.caps.rayTracingSupported = true;
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = true;
     MockOsLibrary::failGetProcAddress = true;
@@ -5903,11 +6001,9 @@ HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThe
 }
 
 HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesExtThenCorrectPropertiesIsReturned) {
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
+    auto &hwInfo = *this->neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    if (!releaseHelper.isRayTracingSupported()) {
-        GTEST_SKIP();
-    }
+    hwInfo.caps.rayTracingSupported = true;
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = false;
     MockOsLibrary::failGetProcAddress = true;
@@ -6264,14 +6360,21 @@ TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceMclPropertiesWhenReturnM
 }
 
 TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceRecordReplayGraphWhenReturnReplayGraphPropertiesThenProvidePerDeviceCapability) {
-    ze_record_replay_graph_exp_properties_t recordReplayGraphProperties{ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES};
+    uint32_t deviceRecordReplayGraphCapability = device->getL0GfxCoreHelper().getRecordReplayGraphCapabilities(device->getNEODevice()->getRootDeviceEnvironment());
+
+    ze_record_replay_graph_exp_properties_t recordReplayGraphPropertiesExp{ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES};
 
     ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.pNext = &recordReplayGraphPropertiesExp;
+
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ(deviceRecordReplayGraphCapability, recordReplayGraphPropertiesExp.graphFlags);
+
+    ze_record_replay_graph_ext_properties_t recordReplayGraphProperties{ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_PROPERTIES};
+
     deviceProperties.pNext = &recordReplayGraphProperties;
 
     device->getProperties(&deviceProperties);
-
-    uint32_t deviceRecordReplayGraphCapability = device->getL0GfxCoreHelper().getRecordReplayGraphCapabilities(device->getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(deviceRecordReplayGraphCapability, recordReplayGraphProperties.graphFlags);
 }
 

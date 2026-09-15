@@ -9,11 +9,13 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/device_caps_reader_test_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -98,6 +100,16 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
     EXPECT_EQ(config, exposedReleaseHelper->hardwareIpVersion.value);
 }
 
+TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCompilerReleaseHelperIsCreated) {
+    ExecutionEnvironment executionEnvironment{};
+    auto config = defaultHwInfo.get()->ipVersion.value;
+    debugManager.flags.OverrideHwIpVersion.set(config);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_TRUE(success);
+    EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->compilerReleaseHelper.get());
+}
+
 TEST_F(DeviceFactoryTests, givenHwIpVersionAndDeviceIdOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCorrectValueIsSet) {
     ExecutionEnvironment executionEnvironment{};
     auto config = defaultHwInfo.get()->ipVersion.value;
@@ -127,12 +139,14 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionAndProductFamilyOverrideWhenPrepareDe
         GTEST_SKIP();
     }
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    debugManager.flags.OverrideHwIpVersion.set(0x1234u);
+
+    auto overriddenConfig = defaultHwInfo->ipVersion.value;
+    debugManager.flags.OverrideHwIpVersion.set(overriddenConfig);
     debugManager.flags.ProductFamilyOverride.set(productAcronym);
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_TRUE(success);
-    EXPECT_EQ(0x1234u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
+    EXPECT_EQ(overriddenConfig, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
 }
 
 TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledThenSetFtrFlag) {
@@ -141,8 +155,8 @@ TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledTh
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);
 
-    const auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-    EXPECT_NE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode, releaseHelper.isRcsExposureDisabled());
+    const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+    EXPECT_NE(hwInfo.featureTable.flags.ftrRcsNode, hwInfo.caps.rcsExposureDisabled);
 }
 
 TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsForAtLeastOneDeviceThenSuccessIsReturned) {
@@ -307,6 +321,28 @@ TEST_F(DeviceFactoryOverrideTest, givenDebugFlagWithZeroXWhenPrepareDeviceEnviro
 
     EXPECT_TRUE(success);
     EXPECT_EQ(0x1234u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
+}
+
+HWTEST_F(DeviceFactoryOverrideTest, givenProductFamilyOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenGfxCoreHelperIsInitializedFromProductHelperWithHwQueuesSupported) {
+    struct MockGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
+        using GfxCoreHelperHw<FamilyType>::secondaryContextsEnabled;
+        void initializeFromProductHelper(const ProductHelper &productHelper, bool hwQueuesSupported) override {
+            initializeFromProductHelperCalled = true;
+            passedHwQueuesSupported = hwQueuesSupported;
+            GfxCoreHelperHw<FamilyType>::initializeFromProductHelper(productHelper, hwQueuesSupported);
+        }
+        bool initializeFromProductHelperCalled = false;
+        bool passedHwQueuesSupported = false;
+    };
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*executionEnvironment.rootDeviceEnvironments[0]);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(raii.mockGfxCoreHelper->initializeFromProductHelperCalled);
+    EXPECT_TRUE(raii.mockGfxCoreHelper->passedHwQueuesSupported);
+    EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[0]->productHelper->areSecondaryContextsSupported(), raii.mockGfxCoreHelper->secondaryContextsEnabled);
 }
 
 TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideSlmSize) {

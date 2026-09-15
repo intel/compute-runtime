@@ -178,41 +178,67 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsFailureWhenlisteningForRes
     delete pUdevLibLocal;
 }
 
-TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenListeningForEventsThenEventListenReturnsErrorUninitialized) {
-    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
-        pipeFd[0] = mockReadPipeFd;
-        pipeFd[1] = mockWritePipeFd;
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        for (uint64_t i = 0; i < numberOfFds; i++) {
-            if (pollFd[i].fd == mockUdevFd) {
-                pollFd[i].revents = POLLIN;
-            }
-        }
-        return 1;
-    });
+TEST_F(SysmanEventsFixture, GivenDeviceHandleWhichCannotBeResolvedToASysmanDeviceWhenListeningForEventsThenInvalidArgumentIsReturned) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
 
-    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
-    auto pOsSysmanDriverOriginal = driverHandle->pOsSysmanDriver;
-    driverHandle->pOsSysmanDriver = static_cast<L0::Sysman::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp.get());
+    VariableBackup<decltype(globalSysmanDriver)> globalSysmanDriverBackup(&globalSysmanDriver, nullptr);
 
-    auto pUdevLibLocal = std::make_unique<EventsUdevLibMock>();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-
-    auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
-    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal.get();
-
-    std::unique_ptr<zes_device_handle_t[]> phDevices(new zes_device_handle_t[1]);
-    phDevices[0] = nullptr;
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     uint32_t numDeviceEvents = 0;
-    std::unique_ptr<zes_event_type_flags_t[]> pDeviceEvents(new zes_event_type_flags_t[1]);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.get(), &numDeviceEvents, pDeviceEvents.get()));
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
 
-    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibOriginal;
-    driverHandle->pOsSysmanDriver = pOsSysmanDriverOriginal;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, eventsUtil->eventsListen(0u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+}
+
+TEST_F(SysmanEventsFixture, GivenLiveAndStaleTracePipeDescriptorsWhenUpdatingCperPollSourcesThenStaleSourcesAreDroppedAndOnlyTheMissingOnesAreAdded) {
+    constexpr int mockLiveTracePipeFd = 21;
+    constexpr int mockUnpolledTracePipeFd = 22;
+    constexpr int mockStaleTracePipeFd = 23;
+
+    PublicLinuxSysmanDriverImp driverImp = {};
+    driverImp.registerCperTracePipeFd(mockLiveTracePipeFd);
+    driverImp.registerCperTracePipeFd(mockUnpolledTracePipeFd);
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+
+    // A source that is not a trace pipe at all, a trace pipe the driver still knows about, and a trace
+    // pipe whose collection instance has been deleted since the previous listen call.
+    std::vector<PollDescriptor> pollSources = {
+        {{mockReadPipeFd, POLLIN, 0}, PollSourceType::pipe},
+        {{mockLiveTracePipeFd, POLLIN, 0}, PollSourceType::tracefs},
+        {{mockStaleTracePipeFd, POLLIN, 0}, PollSourceType::tracefs}};
+
+    bool cperRegistered = false;
+    eventsUtil->updateCperPollSource(ZES_INTEL_CPER_DATA_AVAILABLE, pollSources, cperRegistered);
+
+    EXPECT_TRUE(cperRegistered);
+    ASSERT_EQ(3u, pollSources.size());
+    // Sources that are not trace pipes are left alone.
+    EXPECT_EQ(mockReadPipeFd, pollSources[0].pfd.fd);
+    EXPECT_EQ(PollSourceType::pipe, pollSources[0].type);
+    // The still registered trace pipe keeps its existing source rather than being dropped and added again.
+    EXPECT_EQ(mockLiveTracePipeFd, pollSources[1].pfd.fd);
+    EXPECT_EQ(PollSourceType::tracefs, pollSources[1].type);
+    // Only the registered trace pipe that was not being polled yet is appended, and the stale one is gone.
+    EXPECT_EQ(mockUnpolledTracePipeFd, pollSources[2].pfd.fd);
+    EXPECT_EQ(PollSourceType::tracefs, pollSources[2].type);
+}
+
+TEST_F(SysmanEventsFixture, GivenEventsUtilFailsWhenListeningForEventsThroughOsSysmanDriverThenErrorIsPropagatedAndSurvivabilityHandlingIsSkipped) {
+    PublicLinuxSysmanDriverImp driverImp = {};
+
+    VariableBackup<decltype(globalSysmanDriver)> globalSysmanDriverBackup(&globalSysmanDriver, nullptr);
+
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, driverImp.eventsListen(0u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+    EXPECT_FALSE(pSysmanDeviceImp->isDeviceInSurvivabilityMode);
 }
 
 TEST_F(SysmanEventsFixture, GivenPipeSystemCallReturnsFailureWhenlisteningForResetRequiredEventThenDeviceListenReturnsResetRequiredEvent) {
@@ -2216,30 +2242,19 @@ TEST_F(SysmanEventsFixture, GivenNullFsAccessWhenWedgedEventPathReachesIsSurviva
     EXPECT_EQ(0u, pEvents[0]);
 }
 
-TEST_F(SysmanEventsFixture, GivenDeviceAlreadyInSurvivabilityModeWhenEventsListenIsCalledThenEventIsReturnedImmediately) {
+TEST_F(SysmanEventsFixture, GivenDeviceAlreadyInSurvivabilityModeWhenEventsListenIsCalledThenNoEventIsReturnedWithoutUeventNotification) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
     pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
 
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     uint32_t numDeviceEvents = 0;
     std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
-    EXPECT_EQ(1u, numDeviceEvents);
-    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED, pDeviceEvents[0]);
-
-    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
-}
-
-TEST_F(SysmanEventsFixture, GivenDeviceNotInSurvivabilityModeWhenEventsListenIsCalledThenNoPreCheckEventIsReturned) {
-    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
-    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
-    uint32_t numDeviceEvents = 0;
-    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
     // Use timeout=0 so listenSystemEvents returns immediately with no udev event
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 0u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
     EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
 }
 
 TEST_F(SysmanEventsFixture, GivenActionIsNotChangeWhenCheckingWedgedEventThenFalseIsReturned) {
@@ -2386,6 +2401,8 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForSurvivabilityM
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
     EXPECT_EQ(1u, numDeviceEvents);
     EXPECT_EQ(ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED, pDeviceEvents[0]);
+    EXPECT_TRUE(pSysmanDeviceImp->isDeviceInSurvivabilityMode);
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForSurvivabilityModeEventAndSysfsNodeReadsZeroThenEventListenAPIDoesNotReturnEvent) {
@@ -2521,7 +2538,7 @@ TEST_F(SysmanEventsFixture, GivenInvalidDeviceRealPathWhenListeningForSurvivabil
     EXPECT_EQ(0u, numDeviceEvents);
 }
 
-TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenCallingDriverEventListenThenInvalidArgumentErrorIsReturned) {
+TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenCallingDriverEventListenThenInvalidArgumentIsReturned) {
     auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
     VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
 
@@ -2529,6 +2546,7 @@ TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenCallingDriverEventListenThe
     uint32_t numDeviceEvents = 0;
     std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
 }
 
 TEST_F(SysmanEventsFixture,

@@ -302,7 +302,7 @@ unsigned int IoctlHelperI915::getIoctlRequestValue(DrmIoctl ioctlRequest) const 
         return DRM_IOCTL_I915_GEM_CONTEXT_DESTROY;
     case DrmIoctl::regRead:
         return DRM_IOCTL_I915_REG_READ;
-    case DrmIoctl::getResetStats:
+    case DrmIoctl::queryContextHealth:
         return DRM_IOCTL_I915_GET_RESET_STATS;
     case DrmIoctl::gemContextGetparam:
         return DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM;
@@ -394,7 +394,7 @@ std::string IoctlHelperI915::getIoctlString(DrmIoctl ioctlRequest) const {
         return "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY";
     case DrmIoctl::regRead:
         return "DRM_IOCTL_I915_REG_READ";
-    case DrmIoctl::getResetStats:
+    case DrmIoctl::queryContextHealth:
         return "DRM_IOCTL_I915_GET_RESET_STATS";
     case DrmIoctl::gemContextGetparam:
         return "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM";

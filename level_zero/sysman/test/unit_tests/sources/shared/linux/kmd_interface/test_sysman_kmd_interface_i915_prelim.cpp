@@ -15,7 +15,9 @@
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysfs_interface.h"
 
 #include "gtest/gtest.h"
 
@@ -97,9 +99,10 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCalling
     EXPECT_STREQ("engine", pSysmanKmdInterface->getEngineBasePath(0).c_str());
 }
 
-TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetTemperatureMaxFileNameThenEmptyPathIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenGettingNodeFileNamesThenEmptyNamesAreReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    EXPECT_TRUE(pSysmanKmdInterface->getTemperatureMaxFileName().empty());
+    EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::nodeNameAmcAlertReason).empty());
+    EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::nodeNameTemperatureEmergency).empty());
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenCallingGetSysmanDeviceDirNameForDiscreteDeviceThenCorrectNameIsReturned) {
@@ -228,11 +231,36 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndIsNotInt
     EXPECT_EQ(0u, pSysmanKmdInterface->getEventType());
 }
 
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenDifferentErrnoValuesWhenCheckingErrorNumberThenProperErrorIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+
+    errno = EPERM;
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+
+    errno = EACCES;
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+
+    errno = ENOENT;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+
+    errno = EBUSY;
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenFileHandleErrnoWhenCheckingErrorNumberThenDependencyUnavailableIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+
+    errno = EMFILE;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+
+    errno = ENFILE;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pSysmanKmdInterface->checkErrorNumberAndReturnStatus());
+}
+
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfFrequencyFilesThenTrueValueIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_TRUE(pSysmanKmdInterface->isDefaultFrequencyAvailable());
     EXPECT_TRUE(pSysmanKmdInterface->isBoostFrequencyAvailable());
-    EXPECT_TRUE(pSysmanKmdInterface->isTdpFrequencyAvailable());
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineClassStringForComputeThenValidStringIsReturned) {
@@ -331,6 +359,44 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenCallingIsLateBi
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenCallingIsDeviceInSurvivabilityModeThenFalseIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_FALSE(pSysmanKmdInterface->isDeviceInSurvivabilityMode());
+}
+
+class SysmanKmdInterfaceDriverLoadedFixtureI915Prelim : public SysmanDeviceFixture {
+  protected:
+    MockSysmanKmdInterfacePrelim *pMockSysmanKmdInterface = nullptr;
+    MockSysFsAccessInterface *pMockSysFsAccess = nullptr;
+    MockFsAccessInterface *pMockFsAccess = nullptr;
+
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+        pMockSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
+        pMockSysFsAccess = new MockSysFsAccessInterface();
+        pMockFsAccess = new MockFsAccessInterface();
+        pMockSysmanKmdInterface->pSysfsAccess.reset(pMockSysFsAccess);
+        pMockSysmanKmdInterface->pFsAccess.reset(pMockFsAccess);
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pMockSysmanKmdInterface);
+    }
+
+    void TearDown() override {
+        SysmanDeviceFixture::TearDown();
+    }
+};
+
+TEST_F(SysmanKmdInterfaceDriverLoadedFixtureI915Prelim, GivenSysmanKmdInterfaceWhenDriverSymLinkIsReadableThenIsDriverLoadedReturnsTrue) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_SUCCESS;
+    pMockFsAccess->mockDriverSymLinkValue = "../../../../../../bus/pci/drivers/i915";
+
+    EXPECT_TRUE(pSysmanKmdInterface->isDriverLoaded());
+}
+
+TEST_F(SysmanKmdInterfaceDriverLoadedFixtureI915Prelim, GivenSysmanKmdInterfaceWhenDriverSymLinkCannotBeReadThenIsDriverLoadedReturnsFalse) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    pMockFsAccess->readSymLinkResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_FALSE(pSysmanKmdInterface->isDriverLoaded());
 }
 
 } // namespace ult

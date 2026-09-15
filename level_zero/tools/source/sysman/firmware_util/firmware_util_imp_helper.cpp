@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util_imp.h"
 
@@ -73,7 +74,7 @@ ze_result_t FirmwareUtilImp::fwGetMemoryErrorCount(zes_ras_error_type_t type, ui
 
     if (ret != IGSC_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): Could not retrieve tile count from igsc\n", __FUNCTION__);
+                     "Error@ %s(): Could not retrieve tile count from igsc\n", NEO_FUNCTION_NAME);
         // igsc_gfsp_count_tiles returns max tile info rather than actual count, igsc behaves in such a way that
         // it expects buffer (igsc_gfsp_mem_err) to be allocated for max tile count and not actual tile count.
         // This is fallback path when igsc_gfsp_count_tiles fails, where buffer for actual tile count is used to
@@ -90,13 +91,13 @@ ze_result_t FirmwareUtilImp::fwGetMemoryErrorCount(zes_ras_error_type_t type, ui
         ret = gfspMemoryErrors(&fwDeviceHandle, tiles);
         if (ret != IGSC_SUCCESS) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Error@ %s(): Could not retrieve memory errors from igsc (error:0x%x) \n", __FUNCTION__, ret);
+                         "Error@ %s(): Could not retrieve memory errors from igsc (error:0x%x) \n", NEO_FUNCTION_NAME, ret);
             return ZE_RESULT_ERROR_UNINITIALIZED;
         }
 
         if (tiles->num_of_tiles < subDeviceCount) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Error@ %s(): Inappropriate tile count \n", __FUNCTION__);
+                         "Error@ %s(): Inappropriate tile count \n", NEO_FUNCTION_NAME);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         if (type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
@@ -137,7 +138,7 @@ void FirmwareUtilImp::fwGetMemoryHealthIndicator(zes_mem_health_t *health) {
         }
     }
 
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(); Could not get memory health indicator from igsc\n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(); Could not get memory health indicator from igsc\n", NEO_FUNCTION_NAME);
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) {
@@ -203,8 +204,10 @@ ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_re
 }
 
 static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
-    uint32_t percent = (done * 100) / total;
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
+    if (NEO::debugManager.flags.PrintDebugMessages.get()) {
+        uint32_t percent = (done * 100) / total;
+        PRINT_STRING(true, stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
+    }
 }
 
 ze_result_t FirmwareUtilImp::pscGetVersion(std::string &fwVersion) {

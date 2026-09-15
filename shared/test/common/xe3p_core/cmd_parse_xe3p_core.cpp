@@ -17,6 +17,7 @@ using GenGfxFamily = NEO::Xe3pCoreFamily;
 #include "shared/test/common/cmd_parse/cmd_parse_state_context_data_base_address.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_state_prefetch.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_system_mem_fence_address.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_xe3p_and_later.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_xy_block_copy.inl"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 

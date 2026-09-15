@@ -7,7 +7,9 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 #include "aubstream/product_family.h"
 
@@ -47,6 +49,12 @@ void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize)
 }
 
 template <>
+uint32_t ProductHelperHw<gfxProduct>::getDefaultMidthreadPreemptionDelayTimer() const {
+    // MTP_TIMER_VAL_150 - give threads about to exit 150 us to retire instead of saving their state
+    return 3u;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::checkBcsForDirectSubmissionStop() const {
     return true;
 }
@@ -64,6 +72,45 @@ bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
 template <>
 bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
     return false;
+}
+
+template <>
+size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferType) const {
+    size_t threshold = 0u;
+
+    switch (transferType) {
+    case TransferType::deviceUsmToDeviceUsm:
+        threshold = 4 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::deviceUsmToHostUsm:
+        threshold = 4 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::deviceUsmToHostNonUsm:
+        threshold = 64 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::hostUsmToDeviceUsm:
+        threshold = 64 * MemoryConstants::kiloByte;
+        break;
+    case TransferType::hostUsmToHostUsm:
+        threshold = 1 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostUsmToHostNonUsm:
+        threshold = 64 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostNonUsmToDeviceUsm:
+        threshold = 10 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostNonUsmToHostUsm:
+        threshold = 64 * MemoryConstants::megaByte;
+        break;
+    case TransferType::hostNonUsmToHostNonUsm:
+        threshold = 64 * MemoryConstants::megaByte;
+        break;
+    default:
+        break;
+    }
+
+    return threshold;
 }
 
 } // namespace NEO

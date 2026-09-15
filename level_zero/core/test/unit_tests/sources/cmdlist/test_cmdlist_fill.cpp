@@ -38,6 +38,30 @@ HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillThenSuccessIsReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(AppendFillTest, givenZeroCopySvmAllocationWhenAppendMemoryFillCalledThenDestinationIsTreatedAsSystemMemory) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    driverHandle->allocationTypeToReturn = NEO::AllocationType::svmZeroCopy;
+
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+}
+
+HWTEST_F(AppendFillTest, givenDeviceStorageSvmAllocationWhenAppendMemoryFillCalledThenDestinationIsNotTreatedAsSystemMemory) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    driverHandle->allocationTypeToReturn = NEO::AllocationType::svmGpu;
+
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+}
+
 HWTEST_F(AppendFillTest, givenZeroPatternSizeWhenAppendMemoryFillCalledThenInvalidSizeIsReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -403,31 +427,19 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPtrWithOffsetAndFailAppendUnal
     delete[] ptr;
 }
 
-HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeThenSuccessIsReturned) {
-    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-
-    size_t nonMultipleSize = allocSize + 1;
-    uint8_t *nonMultipleDstPtr = new uint8_t[nonMultipleSize];
-    CmdListMemoryCopyParams copyParams = {};
-    auto result = commandList->appendMemoryFill(nonMultipleDstPtr, pattern, 4, nonMultipleSize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    delete[] nonMultipleDstPtr;
-}
-
-HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned) {
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithDataSizeNotAlignedToSizeOfFillDataAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 1;
 
-    size_t nonMultipleSize = allocSize + 1;
-    uint8_t *nonMultipleDstPtr = new uint8_t[nonMultipleSize];
-    CmdListMemoryCopyParams copyParams = {};
-    auto result = commandList->appendMemoryFill(nonMultipleDstPtr, pattern, 4, nonMultipleSize, nullptr, 0, nullptr, copyParams);
-    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+    // allocSize is a multiple of the pattern size, but not of the fill data size, so a remainder kernel is dispatched after the main one
+    constexpr size_t twoBytePatternSize = 2;
+    static_assert(allocSize % twoBytePatternSize == 0);
+    static_assert(allocSize % sizeof(uint32_t) != 0);
 
-    delete[] nonMultipleDstPtr;
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryFill(dstPtr, pattern, twoBytePatternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 
 HWTEST2_F(AppendFillTest,
@@ -462,7 +474,6 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -518,7 +529,6 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(1u, event->getPacketsInUse());
-    EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -552,8 +562,8 @@ HWTEST_F(AppendFillTest, givenInvalidExtWhenAppendMemoryFillWithParametersCalled
     uint32_t dstBuffer = 0;
     uint8_t pattern = 1;
     ze_base_desc_t desc{};
-
-    ze_result_t result = commandList.appendMemoryFillWithParameters(&dstBuffer, &pattern, sizeof(pattern), sizeof(dstBuffer), &desc, nullptr, 0, nullptr);
+    CmdListMemoryCopyParams memoryCopyParams{};
+    ze_result_t result = commandList.appendMemoryFillWithParameters(&dstBuffer, &pattern, sizeof(pattern), sizeof(dstBuffer), &desc, nullptr, 0, nullptr, memoryCopyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 

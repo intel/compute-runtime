@@ -15,8 +15,9 @@
 namespace L0 {
 namespace ImageFormats {
 inline constexpr uint32_t maxLayoutCount = 46u;
+inline constexpr uint32_t maxTypeCount = 5u;
 
-using FormatTypes = std::array<NEO::SurfaceFormatInfo, 7u>;
+using FormatTypes = std::array<NEO::SurfaceFormatInfo, maxTypeCount>;
 
 inline constexpr std::array<NEO::SurfaceFormatInfo, 7u> surfaceFormatsForRedescribe = {
     {{GMM_FORMAT_R8_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 1, 1, 1},

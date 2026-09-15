@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,7 @@ class WddmFrequencyImp : public OsFrequency, NEO::NonCopyableAndNonMovableClass 
     ze_result_t setOcIccMax(double ocIccMax) override;
     ze_result_t getOcTjMax(double *pOcTjMax) override;
     ze_result_t setOcTjMax(double ocTjMax) override;
+    void reInit() override {}
 
     WddmFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t type);
     WddmFrequencyImp() = default;

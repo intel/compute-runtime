@@ -9,6 +9,8 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
+#include <vector>
+
 namespace NEO {
 class OsContext;
 struct ImageInfo;
@@ -55,6 +57,8 @@ struct AllocationProperties {
     bool makeDeviceBufferLockable = false;
     bool isaPaddingIncluded = false;
     uint32_t ipcHandleTypeFlags = 0;
+    // Per-handle physical offsets for range IPC import (createGraphicsAllocationFromMultipleSharedHandles).
+    std::vector<uint64_t> physicalOffsets;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)

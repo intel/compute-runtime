@@ -29,9 +29,16 @@ void FanHandleContext::init() {
     }
 }
 
+void FanHandleContext::reInit() {
+    for (auto &handle : handleList) {
+        handle->reInit();
+    }
+}
+
 ze_result_t FanHandleContext::fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) {
     std::call_once(initFanOnce, [this]() {
         this->init();
+        this->fanInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

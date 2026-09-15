@@ -24,7 +24,7 @@
 namespace NEO {
 
 template <typename Family>
-void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const ReleaseHelper &releaseHelper) {
+void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }
 
@@ -152,8 +152,8 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
     const bool deviceInterrupt = (args.interruptEvent && !args.inOrderExecInfo->isHostStorageDuplicated());
 
     if (args.inOrderExecInfo->isAtomicDeviceSignalling()) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, 0, static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B),
-                        mocs, deviceInterrupt, requiresSystemMemoryFence);
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, args.inOrderAtomicSignallingValue,
+                        static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, deviceInterrupt, requiresSystemMemoryFence);
     } else {
         setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, mocs, deviceInterrupt, requiresSystemMemoryFence);
     }
@@ -248,12 +248,6 @@ void EncodeCommandLevelMocs<Family>::apply(CmdType &cmd) {
             cmd.setMocsIndex(EncodeCommandLevelMocs<Family>::defaultMocs);
         }
     }
-}
-
-template <typename Family>
-size_t EncodeSemaphore<Family>::getSizeMiSemaphoreWait() {
-    static_assert(sizeof(MI_SEMAPHORE_WAIT) == sizeof(typename Family::MI_SEMAPHORE_WAIT_LEGACY), "MI_SEMAPHORE_WAIT_64/MI_SEMAPHORE_WAIT size mismatch");
-    return sizeof(MI_SEMAPHORE_WAIT);
 }
 
 template <typename Family>

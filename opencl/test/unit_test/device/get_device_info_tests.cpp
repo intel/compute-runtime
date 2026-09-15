@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
@@ -1086,10 +1086,11 @@ struct DeviceAttributeQueryTest : public ::testing::Test {
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
+        const auto &hwInfo = device.getHardwareInfo();
+
         switch (param) {
         case CL_DEVICE_IP_VERSION_INTEL: {
             auto pDeviceIpVersion = reinterpret_cast<cl_version *>(object.get());
-            auto &hwInfo = device.getHardwareInfo();
 
             auto &compilerProductHelper = device.getCompilerProductHelper();
             EXPECT_EQ(static_cast<cl_version>(compilerProductHelper.getHwIpVersion(hwInfo)), *pDeviceIpVersion);
@@ -1098,13 +1099,13 @@ struct DeviceAttributeQueryTest : public ::testing::Test {
         }
         case CL_DEVICE_ID_INTEL: {
             auto pDeviceId = reinterpret_cast<cl_uint *>(object.get());
-            EXPECT_EQ(device.getHardwareInfo().platform.usDeviceID, *pDeviceId);
+            EXPECT_EQ(hwInfo.platform.usDeviceID, *pDeviceId);
             EXPECT_EQ(sizeof(cl_uint), sizeReturned);
             break;
         }
         case CL_DEVICE_NUM_SLICES_INTEL: {
             auto pNumSlices = reinterpret_cast<cl_uint *>(object.get());
-            const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
+            const auto &gtSysInfo = hwInfo.gtSystemInfo;
             EXPECT_EQ(gtSysInfo.SliceCount * std::max(device.getNumGenericSubDevices(), 1u), *pNumSlices);
             EXPECT_EQ(sizeof(cl_uint), sizeReturned);
             break;
@@ -1117,14 +1118,14 @@ struct DeviceAttributeQueryTest : public ::testing::Test {
         }
         case CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL: {
             auto pNumEusPerSubslice = reinterpret_cast<cl_uint *>(object.get());
-            const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
+            const auto &gtSysInfo = hwInfo.gtSystemInfo;
             EXPECT_EQ(gtSysInfo.MaxEuPerSubSlice, *pNumEusPerSubslice);
             EXPECT_EQ(sizeof(cl_uint), sizeReturned);
             break;
         }
         case CL_DEVICE_NUM_THREADS_PER_EU_INTEL: {
             auto pNumThreadsPerEu = reinterpret_cast<cl_uint *>(object.get());
-            const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
+            const auto &gtSysInfo = hwInfo.gtSystemInfo;
             EXPECT_EQ(gtSysInfo.ThreadCount / gtSysInfo.EUCount, *pNumThreadsPerEu);
             EXPECT_EQ(sizeof(cl_uint), sizeReturned);
             break;
@@ -1132,7 +1133,7 @@ struct DeviceAttributeQueryTest : public ::testing::Test {
         case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
             auto pCapabilities = reinterpret_cast<cl_device_feature_capabilities_intel *>(object.get());
             auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-            EXPECT_EQ(clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(device.getRootDeviceEnvironment()), *pCapabilities);
+            EXPECT_EQ(clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hwInfo), *pCapabilities);
             EXPECT_EQ(sizeof(cl_device_feature_capabilities_intel), sizeReturned);
             break;
         }
@@ -1145,10 +1146,9 @@ struct DeviceAttributeQueryTest : public ::testing::Test {
     DebugManagerStateRestore restorer;
 };
 
-TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFromReleaseHelperIsReturnedOrNone) {
+TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFromCapsIsReturnedOrNone) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    const auto &releaseHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getReleaseHelper();
-    uint32_t extraKernelCapabilities = releaseHelper.getAdditionalExtraCaps();
+    const auto &hwInfo = device->getHardwareInfo();
     uint64_t value = 0u;
     size_t retSize = 0u;
 
@@ -1159,7 +1159,7 @@ TEST(GetDeviceInfo, WhenQueryingDeviceBfloatAtomicCapabilitiesThenProperValueFro
         &retSize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(extraKernelCapabilities, value);
+    EXPECT_EQ(hwInfo.caps.kernelBFloat16AtomicCapabilities, value);
     EXPECT_EQ(sizeof(cl_device_atomic_capabilities), retSize);
 }
 

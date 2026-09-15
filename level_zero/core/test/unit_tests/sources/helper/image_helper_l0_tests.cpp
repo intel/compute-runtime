@@ -71,13 +71,13 @@ HWTEST_F(ImageHelperFixture, givenPackedSurfaceStateWhenCopyingImageThenSurfaceS
     imageHWSrc->initialize(device, &zeDesc);
     imageHWDst->initialize(device, &zeDesc);
 
-    EXPECT_EQ(imageHWSrc->packedSurfaceState.getSurfaceFormat(), 0u);
-    EXPECT_EQ(imageHWSrc->packedSurfaceState.getWidth(), 1u);
-    EXPECT_EQ(imageHWSrc->packedSurfaceState.getHeight(), 1u);
+    EXPECT_EQ(imageHWSrc->getPackedSurfaceState().getSurfaceFormat(), 0u);
+    EXPECT_EQ(imageHWSrc->getPackedSurfaceState().getWidth(), 1u);
+    EXPECT_EQ(imageHWSrc->getPackedSurfaceState().getHeight(), 1u);
 
-    EXPECT_EQ(imageHWDst->packedSurfaceState.getSurfaceFormat(), 0u);
-    EXPECT_EQ(imageHWDst->packedSurfaceState.getWidth(), 1u);
-    EXPECT_EQ(imageHWDst->packedSurfaceState.getHeight(), 1u);
+    EXPECT_EQ(imageHWDst->getPackedSurfaceState().getSurfaceFormat(), 0u);
+    EXPECT_EQ(imageHWDst->getPackedSurfaceState().getWidth(), 1u);
+    EXPECT_EQ(imageHWDst->getPackedSurfaceState().getHeight(), 1u);
 }
 
 } // namespace ult

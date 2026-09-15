@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/get_info.h"
+
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 
@@ -17,6 +19,7 @@ cl_accelerator_intel CL_API_CALL clCreateAcceleratorINTEL(
     const void *descriptor,
     cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateAcceleratorINTEL, &context, &acceleratorType, &descriptorSize, &descriptor, &errcodeRet);
+    ErrorCodeHelper err(errcodeRet, CL_INVALID_OPERATION);
     cl_accelerator_intel accelerator = nullptr;
     TRACING_EXIT(ClCreateAcceleratorINTEL, &accelerator);
     return accelerator;

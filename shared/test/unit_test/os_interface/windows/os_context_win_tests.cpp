@@ -75,6 +75,19 @@ TEST_F(OsContextWinTest, givenReinitializeContextWhenContextIsNotInitThenContext
     EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }
 
+TEST_F(OsContextWinTest, givenKmdWaitEventWhenReinitializingContextThenEventIsClosedAndWaitStateIsReset) {
+    auto &waitData = osContext->getMonitoredFenceKmdWaitData();
+    waitData.eventHandle = reinterpret_cast<HANDLE>(dummyHandle);
+    waitData.pendingFenceValue = 7u;
+    const auto closeHandleCalledBefore = SysCalls::closeHandleCalled;
+
+    osContext->reInitializeContext();
+
+    EXPECT_EQ(closeHandleCalledBefore + 1u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(nullptr, waitData.eventHandle);
+    EXPECT_EQ(0u, waitData.pendingFenceValue);
+}
+
 TEST_F(OsContextWinTest, givenOsContextWinWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
     EXPECT_EQ(0u, osContext->getOfflineDumpContextId(0));
@@ -314,4 +327,19 @@ TEST_F(OsContextWinTestNoCleanup, givenReinitializeContextWhenContextIsInitThenC
     EXPECT_TRUE(this->wddm->skipResourceCleanup());
     EXPECT_NO_THROW(osContext->reInitializeContext());
     EXPECT_NO_THROW(osContext->ensureContextInitialized());
+}
+
+TEST_F(OsContextWinTestNoCleanup, givenKmdWaitEventAndResourceCleanupDisabledWhenReinitializingContextThenEventIsClosedAndWaitStateIsReset) {
+    auto &waitData = osContext->getMonitoredFenceKmdWaitData();
+    waitData.eventHandle = reinterpret_cast<HANDLE>(dummyHandle);
+    waitData.pendingFenceValue = 7u;
+    const auto closeHandleCalledBefore = SysCalls::closeHandleCalled;
+    const auto destroyContextCalledBefore = this->wddm->destroyContextResult.called;
+
+    osContext->reInitializeContext();
+
+    EXPECT_EQ(closeHandleCalledBefore + 1u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(destroyContextCalledBefore, this->wddm->destroyContextResult.called);
+    EXPECT_EQ(nullptr, waitData.eventHandle);
+    EXPECT_EQ(0u, waitData.pendingFenceValue);
 }

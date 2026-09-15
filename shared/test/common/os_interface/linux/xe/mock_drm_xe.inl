@@ -12,7 +12,6 @@ inline constexpr int testValuePrime = 0x4321;
 inline constexpr uint32_t testValueGemCreate = 0x8273;
 struct DrmMockXe : public DrmMockCustom {
     using Drm::engineInfo;
-    using Drm::virtualMemoryIds;
 
     static std::unique_ptr<DrmMockXe> create(RootDeviceEnvironment &rootDeviceEnvironment);
 
@@ -50,6 +49,7 @@ struct DrmMockXe : public DrmMockCustom {
     uint64_t queryEngineCycles[5]{}; // 1 qword for eci and 4 qwords
     StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
     StackVec<drm_xe_vm_bind, 1> vmBindInputs;
+    StackVec<drm_xe_vm_bind_op, 2> vmBindOpsInputs;
     StackVec<drm_xe_sync, 1> syncInputs;
     StackVec<drm_xe_ext_set_property, 1> execQueueProperties;
     drm_xe_exec_queue_create latestExecQueueCreate = {};
@@ -57,25 +57,12 @@ struct DrmMockXe : public DrmMockCustom {
     drm_xe_exec_queue_set_property latestExecQueueSetProperty = {};
 
     int waitUserFenceReturn = 0;
-    int execQueueBanPropertyReturn = 0;
-    int getResetStatsReturn = 0;
+    uint64_t execQueueBanPropertyReturn = 0;
     uint32_t createParamsFlags = 0u;
     uint16_t createParamsCpuCaching = 0u;
     uint32_t createParamsPlacement = 0u;
     bool ioctlCalled = false;
     bool forceMmapOffsetFail = false;
-
-    // VM faults mock data
-    struct VmFaultMock {
-        uint64_t address;
-        uint32_t addressPrecision;
-        uint8_t accessType;
-        uint8_t faultType;
-        uint8_t faultLevel;
-    };
-    std::vector<VmFaultMock> mockVmFaults;
-    int vmGetPropertyCallCount = 0;
-    int vmGetPropertyFailOnCall = 0; // 0 = never fail, N = fail on Nth call
 
   protected:
     // Don't call directly, use the create() function

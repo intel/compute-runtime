@@ -222,8 +222,13 @@ static_assert(NEO::NonCopyableAndNonMovable<FileLogger<DebugFunctionalityLevel::
 static_assert(NEO::NonCopyableAndNonMovable<FileLogger<DebugFunctionalityLevel::full>>);
 static_assert(NEO::NonCopyableAndNonMovable<FileLogger<DebugFunctionalityLevel::regKeys>>);
 
+class UsmReusePerfLogger final : public FileLogger<globalDebugFunctionalityLevel> {
+  public:
+    UsmReusePerfLogger();
+};
+static_assert(NEO::NonCopyableAndNonMovable<UsmReusePerfLogger>);
+
 extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
-extern FileLogger<globalDebugFunctionalityLevel> &usmReusePerfLoggerInstance();
 
 template <bool enabled>
 class LoggerApiEnterWrapper {

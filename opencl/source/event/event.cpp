@@ -20,6 +20,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
+#include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
@@ -119,12 +120,25 @@ Event::~Event() {
     }
 
     if (cmdQueue != nullptr) {
-        {
+        auto &gpgpuCsr = cmdQueue->getGpgpuCommandStreamReceiver();
+
+        const TaskCountType eventTaskCount = this->taskCount;
+
+        EngineCompletionSnapshot completionSnapshot{{&gpgpuCsr, eventTaskCount}};
+        if (bcsState.isValid()) {
+            // a copy-only enqueue leaves the gpgpu count untouched, so the copy engine is the only one that can be behind
+            completionSnapshot.push_back({cmdQueue->getBcsCommandStreamReceiver(bcsState.engineType), bcsState.taskCount});
+        }
+
+        // notReady means the command was aborted before submission, so it says nothing about the queue
+        if ((eventTaskCount == CompletionStamp::notReady) ||
+            isEngineCompletionSnapshotReady(completionSnapshot)) {
             TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
             cmdQueue->handlePostCompletionOperations(true);
-
-            this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocations(true);
         }
+
+        gpgpuCsr.downloadAllocations(true);
+
         if (timeStampNode != nullptr) {
             timeStampNode->returnTag();
         }
@@ -383,8 +397,11 @@ void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContai
             continue;
         }
         for (auto i = 0u; i < timestamp->getPacketsUsed(); ++i) {
-            globalStartTS = std::min(globalStartTS, timestamp->getGlobalStartValue(i));
-            globalEndTS = std::max(globalEndTS, timestamp->getGlobalEndValue(i));
+            uint64_t packetGlobalStartTS = 0u;
+            uint64_t packetGlobalEndTS = 0u;
+            timestamp->getGlobalTimestampValues(i, packetGlobalStartTS, packetGlobalEndTS);
+            globalStartTS = std::min(globalStartTS, packetGlobalStartTS);
+            globalEndTS = std::max(globalEndTS, packetGlobalEndTS);
         }
     }
 }
@@ -744,6 +761,8 @@ bool Event::isWaitForTimestampsEnabled() const {
         break;
     case 4:
         enabled = true;
+        break;
+    default:
         break;
     }
 

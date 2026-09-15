@@ -71,10 +71,17 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenNullptrWaitEventsArrayAndCountGreaterTh
 
     uint32_t numWaitEvents{1};
     ze_event_handle_t *phWaitEvents{nullptr};
-
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
     result = commandList->appendMemoryRangesBarrier(numRanges, &pRangeSizes,
                                                     pRanges, nullptr, numWaitEvents,
-                                                    phWaitEvents);
+                                                    phWaitEvents, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     commandList->destroy();
@@ -96,10 +103,17 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenImmediateListAndExecutionSuccessWhenApp
     cmdList->cmdQImmediate = queue.get();
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList->executeCommandListImmediateWithFlushTaskReturnValue = ZE_RESULT_SUCCESS;
-
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
     result = cmdList->appendMemoryRangesBarrier(numRanges, &rangeSizes,
                                                 ranges, nullptr, 0,
-                                                nullptr);
+                                                nullptr, waitEventsParameters);
     EXPECT_EQ(1u, cmdList->executeCommandListImmediateWithFlushTaskCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -122,10 +136,17 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenImmediateListAndGpuFailureWhenAppending
     cmdList->cmdQImmediate = queue.get();
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList->executeCommandListImmediateWithFlushTaskReturnValue = ZE_RESULT_ERROR_DEVICE_LOST;
-
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
     result = cmdList->appendMemoryRangesBarrier(numRanges, &rangeSizes,
                                                 ranges, nullptr, 0,
-                                                nullptr);
+                                                nullptr, waitEventsParameters);
     EXPECT_EQ(1u, cmdList->executeCommandListImmediateWithFlushTaskCalledCount);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 
@@ -146,9 +167,17 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryNotInSvmManagerWhenAppendingM
 
     auto usedSpaceBefore =
         commandList->commandContainer.getCommandStream()->getUsed();
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
     result = commandList->appendMemoryRangesBarrier(numRanges, &pRangeSizes,
                                                     pRanges, nullptr, 0,
-                                                    nullptr);
+                                                    nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter =
@@ -181,9 +210,17 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryInSvmManagerWhenAppendingMemo
 
     auto usedSpaceBefore =
         commandList->commandContainer.getCommandStream()->getUsed();
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
     result = commandList->appendMemoryRangesBarrier(numRanges, &pRangeSizes,
                                                     pRanges, nullptr, 0,
-                                                    nullptr);
+                                                    nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto usedSpaceAfter =
         commandList->commandContainer.getCommandStream()->getUsed();
@@ -244,9 +281,17 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryWhenAppendingMemoryBarrierThe
 
     auto usedSpaceBefore =
         commandList->commandContainer.getCommandStream()->getUsed();
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
     result = commandList->appendMemoryRangesBarrier(numRanges, &pRangeSizes,
                                                     pRanges, nullptr, 0,
-                                                    nullptr);
+                                                    nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto usedSpaceAfter =
         commandList->commandContainer.getCommandStream()->getUsed();

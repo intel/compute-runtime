@@ -32,7 +32,6 @@
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
@@ -146,9 +145,7 @@ TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThe
         memcpy(buf, testData.data(), testData.length() + 1);
         return 4;
     });
-    uint32_t clkRate = 0;
-    EXPECT_TRUE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
-    EXPECT_EQ(clkRate, 800u);
+    EXPECT_EQ(800u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
 TEST(DrmTest, givenFailedProductHelperSetupHardwareInfoWhenDrmSetupHardwareInfoCalledThenFailureIsReturned) {
@@ -167,7 +164,7 @@ TEST(DrmTest, givenFailedProductHelperSetupHardwareInfoWhenDrmSetupHardwareInfoC
 
     executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(productHelper);
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
 
     drm.overrideDeviceDescriptor = &device;
@@ -195,7 +192,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndNotSupportedWhenSetupHardwareI
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setPciPath("0000:ab:cd.e");
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
 
     auto mockIoctlHelper = std::make_unique<MockIoctlHelperForSmallBar>(drm);
@@ -217,7 +214,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndSupportedWhenSetupHardwareInfo
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setPciPath("0000:ab:cd.e");
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
 
     auto mockIoctlHelper = std::make_unique<MockIoctlHelperForSmallBar>(drm);
@@ -246,9 +243,7 @@ TEST(DrmTest, GivenMemoryInfoWithLocalMemoryRegionsWhenGetDeviceMemoryPhysicalSi
     memRegions[2] = {{memoryClassDevice, 1}, 3072};
     drm.memoryInfo.reset(new MemoryInfo{memRegions, drm});
 
-    uint64_t size{0U};
-    EXPECT_TRUE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
-    EXPECT_EQ(2048u, size);
+    EXPECT_EQ(2048u, drm.getDeviceMemoryPhysicalSizeInBytes(0));
 }
 
 TEST(DrmTest, GivenMemoryInfoWithNoLocalMemoryRegionsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenZeroIsReturned) {
@@ -261,18 +256,14 @@ TEST(DrmTest, GivenMemoryInfoWithNoLocalMemoryRegionsWhenGetDeviceMemoryPhysical
     memRegions[0] = {{memoryClassSystem, 0}, 2048};
     drm.memoryInfo.reset(new MemoryInfo{memRegions, drm});
 
-    uint64_t size{0U};
-    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
-    EXPECT_EQ(0U, size);
+    EXPECT_EQ(0u, drm.getDeviceMemoryPhysicalSizeInBytes(0));
 }
 
 TEST(DrmTest, GivenNoMemoryInfoWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenZeroIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    uint64_t size{0U};
-    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
-    EXPECT_EQ(0U, size);
+    EXPECT_EQ(0u, drm.getDeviceMemoryPhysicalSizeInBytes(0));
 }
 
 TEST(DrmTest, GivenInValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnSuccess) {
@@ -284,8 +275,7 @@ TEST(DrmTest, GivenInValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledT
         return -1;
     });
 
-    uint32_t clkRate = 0;
-    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
 TEST(DrmTest, givenSysfsNodeReadFailsWithErrnoWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnError) {
@@ -303,8 +293,7 @@ TEST(DrmTest, givenSysfsNodeReadFailsWithErrnoWhenGetDeviceMemoryMaxClockRateInM
         errno = 1;
         return 4;
     });
-    uint32_t clkRate = 0;
-    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
 TEST(DrmTest, givenSysfsNodeReadFailsWithImproperDataWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnError) {
@@ -321,8 +310,7 @@ TEST(DrmTest, givenSysfsNodeReadFailsWithImproperDataWhenGetDeviceMemoryMaxClock
         memcpy(buf, testData.data(), testData.length() + 1);
         return 4;
     });
-    uint32_t clkRate = 0;
-    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
 TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {
@@ -1024,7 +1012,7 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     drm.storedSSVal = 6;
     hwInfo->gtSystemInfo.SliceCount = 2;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.ioctlHelper.reset();
@@ -1044,7 +1032,7 @@ TEST(DrmQueryTest, GivenForceDeviceIdSetWhenSetupHardwareInfoCalledThenProperlyC
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
     drm.overrideDeviceDescriptor = &device;
 
@@ -1567,7 +1555,7 @@ TEST(DrmTest, GivenMinusEbusyIoctlErrorWhenCallingExecbufferThenCallIoctlAgain) 
     EXPECT_EQ(0, drm.Drm::ioctl(DrmIoctl::gemExecbuffer2, nullptr));
 }
 
-TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenNoHangDetected) {
+TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
     MockExecutionEnvironment executionEnvironment{};
 
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
@@ -1578,26 +1566,7 @@ TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenNoHangDetected) {
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    // getResetStats fails (no resetStatsToReturn entries), but gracefully handled
-    EXPECT_FALSE(drm.isGpuHangDetected(mockOsContextLinux));
-    EXPECT_FALSE(mockOsContextLinux.isHangDetected());
-}
-
-TEST(DrmTest, GivenNonLinuxOsContextWhenCheckResetStatusIsCalledThenFalseIsReturnedAndNoResetStatsIoctlIsIssued) {
-    MockExecutionEnvironment executionEnvironment{};
-
-    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
-
-    // Prime the mock so a hang would be reported if the reset-stats path were reached
-    ResetStats resetStats{};
-    resetStats.batchActive = 2;
-    drm.resetStatsToReturn.push_back(resetStats);
-
-    MockOsContext baseOsContext{0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
-    EXPECT_EQ(nullptr, baseOsContext.asOsContextLinux());
-
-    EXPECT_FALSE(drm.checkResetStatus(baseOsContext));
-    EXPECT_EQ(0, drm.ioctlCount.getResetStats);
+    EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
 }
 
 TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCalledThenNoHangIsReported) {
@@ -1611,7 +1580,7 @@ TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCa
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -1634,7 +1603,7 @@ TEST(DrmTest, GivenBatchActiveGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThen
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -1657,7 +1626,7 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(8);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 8;
     resetStats.batchPending = 7;
     drm.resetStatsToReturn.push_back(resetStats);
@@ -1667,38 +1636,19 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     EXPECT_TRUE(isGpuHangDetected);
 }
 
-class MockIoctlHelperResetStats : public MockIoctlHelper {
+class MockIoctlHelperContextHealth : public MockIoctlHelper {
   public:
     using MockIoctlHelper::MockIoctlHelper;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) override {
-        int ret = MockIoctlHelper::getResetStats(resetStats, status, osContextLinux, faultsVector, reportFaults);
-        if (status) {
-            *status = statusReturnValue;
-        }
-
-        faultsVector.clear();
-        ResetFaultContext faultContext{};
-        faultContext.id = resetStats.contextId;
-        faultContext.banned = statusReturnValue;
-        faultContext.fault = resetStatsFaultReturnValue;
-        faultsVector.push_back(faultContext);
+    int getContextHealth(ContextHealth &contextHealth) override {
+        int ret = MockIoctlHelper::getContextHealth(contextHealth);
+        contextHealth.banned = bannedReturnValue;
+        contextHealth.fault = faultReturnValue;
+        contextHealth.faultValid = true;
         return ret;
     }
 
-    bool validPageFault(uint16_t flags) override {
-        return true;
-    }
-
-    uint32_t getStatusForResetStats(bool banned) override {
-        if (banned) {
-            return statusReturnValue;
-        } else {
-            return 0u;
-        }
-    }
-
-    uint32_t statusReturnValue = 0;
-    ResetStatsFault resetStatsFaultReturnValue{};
+    bool bannedReturnValue = false;
+    ContextFault faultReturnValue{};
 };
 
 TEST(DrmTest, GivenResetStatsWithValidFaultAndContextNotBannedAndDebuggingEnabledWhenIsGpuHangIsCalledThenProcessNotTerminated) {
@@ -1712,23 +1662,22 @@ TEST(DrmTest, GivenResetStatsWithValidFaultAndContextNotBannedAndDebuggingEnable
     drm.configureGpuFaultCheckThreshold();
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
-    auto ioctlHelper = std::make_unique<MockIoctlHelperResetStats>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperContextHealth>(drm);
 
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStatsExpected{};
-    ResetStatsFault resetStatsFaultExpected{};
+    MockResetStats resetStatsExpected{};
+    ContextFault resetStatsFaultExpected{};
     resetStatsExpected.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStatsExpected);
 
-    resetStatsFaultExpected.flags = 1;
     resetStatsFaultExpected.addr = 0x1234;
     resetStatsFaultExpected.type = 2;
     resetStatsFaultExpected.level = 3;
 
-    ioctlHelper->statusReturnValue = 0u;
-    ioctlHelper->resetStatsFaultReturnValue = resetStatsFaultExpected;
+    ioctlHelper->bannedReturnValue = false;
+    ioctlHelper->faultReturnValue = resetStatsFaultExpected;
 
     drm.ioctlHelper = std::move(ioctlHelper);
     EXPECT_FALSE(drm.isGpuHangDetected(mockOsContextLinux));
@@ -1744,23 +1693,22 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
     drm.configureGpuFaultCheckThreshold();
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
-    auto ioctlHelper = std::make_unique<MockIoctlHelperResetStats>(drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperContextHealth>(drm);
 
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStatsExpected{};
-    ResetStatsFault resetStatsFaultExpected{};
+    MockResetStats resetStatsExpected{};
+    ContextFault resetStatsFaultExpected{};
     resetStatsExpected.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStatsExpected);
 
-    resetStatsFaultExpected.flags = 1;
     resetStatsFaultExpected.addr = 0x1234;
     resetStatsFaultExpected.type = 2;
     resetStatsFaultExpected.level = 3;
 
-    ioctlHelper->statusReturnValue = 2u;
-    ioctlHelper->resetStatsFaultReturnValue = resetStatsFaultExpected;
+    ioctlHelper->bannedReturnValue = true;
+    ioctlHelper->faultReturnValue = resetStatsFaultExpected;
 
     drm.ioctlHelper = std::move(ioctlHelper);
 
@@ -1901,7 +1849,7 @@ TEST(DrmTest, givenDisableScratchPagesSetWhenSettingGpuFaultCheckThresholdThenFa
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -1944,7 +1892,7 @@ TEST(DrmTest, givenDisableScratchPagesSetWhenSettingGpuFaultCheckThresholdToZero
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -1980,7 +1928,7 @@ TEST(DrmTest, whenNotDisablingScratchPagesThenFaultCheckingDoesNotHappen) {
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStats{};
+    MockResetStats resetStats{};
     resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
@@ -2264,7 +2212,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutSystemInfoWhenSettingHwInfoThenCorre
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2320,7 +2268,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithAsymtricTopologyMappingWhenSettingHwInf
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2365,7 +2313,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceWhenSettingHwInfoThenCorrect
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2414,7 +2362,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutTopologyMappingWhenSettingHwInfoThen
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2452,7 +2400,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithIncorrectSliceMaskWhenSettingHwInfoThen
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2486,7 +2434,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndNoCommonSubSliceMaskWhenS
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2523,7 +2471,7 @@ TEST(DrmHwInfoTest, givenOverrideMaxSlicesSupportedIsFalseThenMaxSlicesSupported
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
     hwInfo->gtSystemInfo = {};
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {
         hwInfo->gtSystemInfo.MaxSlicesSupported = 8;
     };
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
@@ -2557,7 +2505,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndMoreSubslicesThanMaxSubsl
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
@@ -2597,7 +2545,7 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutL3BankCountWhenSettingHwInfoThenL3Ba
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {
         hwInfo->gtSystemInfo.MaxSubSlicesSupported = 8;
         hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = 8;
     };
@@ -2674,17 +2622,6 @@ TEST(IoctlHelperTest, givenIoctlHelperWhenCallCreateGemThenProperValuesSet) {
     // dummy mock handle
     EXPECT_EQ(1u, drm.createParamsHandle);
     EXPECT_EQ(handle, drm.createParamsHandle);
-}
-
-TEST(IoctlHelperTest, givenIoctlHelperWhenCallGetStatusForResetStatsThenProperValueReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    auto ioctlHelper = drm.getIoctlHelper();
-    ASSERT_NE(nullptr, ioctlHelper);
-
-    EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(true));
-    EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(false));
 }
 
 TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorrectRegionsSet) {
@@ -2926,7 +2863,7 @@ HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitia
     DebugManagerStateRestore restore;
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
 
-        void initializeFromProductHelper(const ProductHelper &productHelper) override {
+        void initializeFromProductHelper(const ProductHelper &productHelper, [[maybe_unused]] bool hwQueuesSupported) override {
             initFromProductHelperCalled = true;
         }
         bool initFromProductHelperCalled = false;
@@ -2936,7 +2873,7 @@ HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitia
     NEO::RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*executionEnvironment->rootDeviceEnvironments[0]);
 
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), setupHardwareInfo};
 
     drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
@@ -3083,7 +3020,7 @@ TEST(DrmTest, givenSetupHardwareInfoWhenTopologyDataHasRegionCountThenFeatureTab
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;

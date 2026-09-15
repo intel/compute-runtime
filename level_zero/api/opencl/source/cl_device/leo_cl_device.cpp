@@ -11,8 +11,14 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 
+#include "level_zero/api/opencl/source/platform/leo_platform.h"
+
 namespace NEO {
 namespace LEO {
+
+Platform *ClDevice::getPlatform() const {
+    return castToObject<Platform>(this->platform);
+}
 
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
     return CL_QUEUE_CAPABILITY_CREATE_SINGLE_QUEUE_EVENTS_INTEL |

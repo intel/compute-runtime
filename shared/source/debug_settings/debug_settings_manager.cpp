@@ -13,6 +13,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/logger.h"
@@ -26,8 +27,41 @@
 
 namespace NEO {
 
+DebugVariables::DebugVariables() = default;
+DebugVariables::DebugVariables(const DebugVariables &other) = default;
+DebugVariables::DebugVariables(DebugVariables &&other) = default;
+DebugVariables &DebugVariables::operator=(const DebugVariables &other) = default;
+DebugVariables &DebugVariables::operator=(DebugVariables &&other) = default;
+DebugVariables::~DebugVariables() = default;
+
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RAW_ENV_SCOPED_V(dataType, variableName, envVarName, defaultValue, description, ...) \
+    DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description)
+
+bool DebugVariables::operator==(const DebugVariables &other) const {
+#define COMPARE_VARIABLE(variableName)                          \
+    if (variableName.getRef() != other.variableName.getRef()) { \
+        return false;                                           \
+    }
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) COMPARE_VARIABLE(variableName)
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) COMPARE_VARIABLE(variableName)
+#include "debug_variables.inl"
+#undef DECLARE_DEBUG_VARIABLE_OPT
+#undef DECLARE_DEBUG_VARIABLE
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) COMPARE_VARIABLE(variableName)
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) COMPARE_VARIABLE(variableName)
+#include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
+#define DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description) COMPARE_VARIABLE(variableName)
+#define DECLARE_RAW_ENV_VARIABLE_OPT(enabled, dataType, variableName, envVarName, defaultValue, description) COMPARE_VARIABLE(variableName)
+#include "env_variables.inl"
+#undef DECLARE_RAW_ENV_VARIABLE_OPT
+#undef DECLARE_RAW_ENV_VARIABLE
+#undef COMPARE_VARIABLE
+    return true;
+}
 
 template <typename T>
 static std::string toString(const T &arg) {
@@ -35,6 +69,54 @@ static std::string toString(const T &arg) {
         return static_cast<std::string>(arg);
     } else {
         return std::to_string(arg);
+    }
+}
+
+template <typename DataType>
+static void dumpFlagValue(const char *prefix, const char *keyName, const DataType &variableValue, const DataType &defaultValue,
+                          std::ostringstream &allFlagsStream, std::ostringstream &changedFlagsStream, bool isEnvOnly) {
+    std::string neoKey = prefix;
+    neoKey += keyName;
+    allFlagsStream << neoKey.c_str() << " = " << variableValue << '\n';
+    if (variableValue != defaultValue) {
+        const auto variableStringValue = toString(variableValue);
+        changedFlagsStream << "Non-default value of debug variable: " << neoKey.c_str() << " = " << variableStringValue.c_str();
+        if (isEnvOnly) {
+            changedFlagsStream << " (env-only variable)";
+        }
+        changedFlagsStream << '\n';
+    }
+}
+
+template <typename DataType>
+static void injectDebugSetting(SettingsReader &reader, DVarsScopeMask scope, const char *keyName, DebugVarBase<DataType> &variable) {
+    DebugVarPrefix type;
+    DataType tempData = reader.getSetting(keyName, variable.get(), type);
+    if (0 != (scope & variable.getScopeMask())) {
+        variable.setPrefixType(type);
+        variable.set(tempData);
+    }
+}
+
+template <typename DataType>
+static void injectReleaseSetting(SettingsReader &reader, SettingsReader &envOnlyReader, DVarsScopeMask scope, const char *keyName, DebugVarBase<DataType> &variable) {
+    DebugVarPrefix type = DebugVarPrefix::none;
+    DataType tempData = variable.get();
+    if (reader.hasSetting(keyName, type)) {
+        tempData = reader.getSetting(keyName, tempData, type);
+    } else if (envOnlyReader.hasSetting(keyName, type)) {
+        tempData = envOnlyReader.getSetting(keyName, tempData, type);
+    }
+    if (0 != (scope & variable.getScopeMask())) {
+        variable.setPrefixType(type);
+        variable.set(tempData);
+    }
+}
+
+template <typename DataType>
+static void injectEnvSetting(SettingsReader &envOnlyReader, DVarsScopeMask scope, const char *envVarName, DebugVarBase<DataType> &variable) {
+    if (0 != (scope & variable.getScopeMask())) {
+        variable.set(envOnlyReader.getSetting(envVarName, variable.get()));
     }
 }
 
@@ -85,15 +167,6 @@ static const char *convPrefixToString(DebugVarPrefix prefix) {
 }
 
 template <DebugFunctionalityLevel debugLevel>
-template <typename DataType>
-void DebugSettingsManager<debugLevel>::dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue, std::ostringstream &ostring) {
-    if (variableValue != defaultValue) {
-        const auto variableStringValue = toString(variableValue);
-        ostring << "Non-default value of debug variable: " << variableName << " = " << variableStringValue.c_str() << '\n';
-    }
-}
-
-template <DebugFunctionalityLevel debugLevel>
 void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags, std::string &changedFlags) const {
     std::ostringstream allFlagsStream;
     allFlagsStream.str("");
@@ -101,30 +174,23 @@ void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags,
     std::ostringstream changedFlagsStream;
     changedFlagsStream.str("");
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                 \
-    {                                                                                                             \
-        std::string neoKey = convPrefixToString(flags.variableName.getPrefixType());                              \
-        constexpr auto keyName = getNonReleaseKeyName(#variableName);                                             \
-        neoKey += keyName;                                                                                        \
-        allFlagsStream << neoKey.c_str() << " = " << flags.variableName.get() << '\n';                            \
-        dumpNonDefaultFlag<dataType>(neoKey.c_str(), flags.variableName.get(), defaultValue, changedFlagsStream); \
-    }
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                        \
+    dumpFlagValue<dataType>(convPrefixToString(flags.variableName.getPrefixType()), getNonReleaseKeyName(#variableName), \
+                            flags.variableName.get(), defaultValue, allFlagsStream, changedFlagsStream, false);
 #define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
     if constexpr (enabled) {                                                                   \
         DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
+#if !defined(NEO_USE_CONSTEXPR_DEBUG_VARIABLES)
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
+#endif
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                               \
-    {                                                                                                             \
-        std::string neoKey = convPrefixToString(flags.variableName.getPrefixType());                              \
-        neoKey += #variableName;                                                                                  \
-        allFlagsStream << neoKey.c_str() << " = " << flags.variableName.get() << '\n';                            \
-        dumpNonDefaultFlag<dataType>(neoKey.c_str(), flags.variableName.get(), defaultValue, changedFlagsStream); \
-    }
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                \
+    dumpFlagValue<dataType>(convPrefixToString(flags.variableName.getPrefixType()), #variableName, \
+                            flags.variableName.get(), defaultValue, allFlagsStream, changedFlagsStream, false);
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
     if constexpr (enabled) {                                                                     \
         DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)              \
@@ -132,6 +198,15 @@ void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags,
 #include "release_variables.inl"
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
+#define DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description) \
+    dumpFlagValue<dataType>("", envVarName, flags.variableName.get(), defaultValue, allFlagsStream, changedFlagsStream, true);
+#define DECLARE_RAW_ENV_VARIABLE_OPT(enabled, dataType, variableName, envVarName, defaultValue, description) \
+    if constexpr (enabled) {                                                                                 \
+        DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description)              \
+    }
+#include "env_variables.inl"
+#undef DECLARE_RAW_ENV_VARIABLE_OPT
+#undef DECLARE_RAW_ENV_VARIABLE
 
     allFlags = allFlagsStream.str();
     changedFlags = changedFlagsStream.str();
@@ -155,43 +230,41 @@ void DebugSettingsManager<debugLevel>::dumpFlags() const {
 template <DebugFunctionalityLevel debugLevel>
 void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)            \
-    {                                                                                        \
-        DebugVarPrefix type;                                                                 \
-        constexpr auto keyName = getNonReleaseKeyName(#variableName);                        \
-        dataType tempData = readerImpl->getSetting(keyName, flags.variableName.get(), type); \
-        if (0 != (this->scope & flags.variableName.getScopeMask())) {                        \
-            flags.variableName.setPrefixType(type);                                          \
-            flags.variableName.set(tempData);                                                \
-        }                                                                                    \
-    }
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    injectDebugSetting(*readerImpl, this->scope, getNonReleaseKeyName(#variableName), flags.variableName);
 #define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
     if constexpr (enabled) {                                                                   \
         DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
 
+#if !defined(NEO_USE_CONSTEXPR_DEBUG_VARIABLES)
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
+#endif
 #undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                \
-    {                                                                                              \
-        DebugVarPrefix type;                                                                       \
-        dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get(), type); \
-        if (0 != (this->scope & flags.variableName.getScopeMask())) {                              \
-            flags.variableName.setPrefixType(type);                                                \
-            flags.variableName.set(tempData);                                                      \
-        }                                                                                          \
-    }
-
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) \
+    injectReleaseSetting(*readerImpl, envOnlyReader, this->scope, #variableName, flags.variableName);
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
     if constexpr (enabled) {                                                                     \
         DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)              \
     }
+    // A reader that always goes straight to the OS environment, bypassing readerImpl - used both as
+    // the release-variable env fallback above and for env variables below.
+    EnvironmentVariableReader envOnlyReader;
 #include "release_variables.inl"
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
+#define DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description) \
+    injectEnvSetting(envOnlyReader, this->scope, envVarName, flags.variableName);
+#define DECLARE_RAW_ENV_VARIABLE_OPT(enabled, dataType, variableName, envVarName, defaultValue, description) \
+    if constexpr (enabled) {                                                                                 \
+        DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description)              \
+    }
+#include "env_variables.inl"
+#undef DECLARE_RAW_ENV_VARIABLE_OPT
+#undef DECLARE_RAW_ENV_VARIABLE
 } // namespace NEO
 
 void logDebugString(std::string_view debugString) {

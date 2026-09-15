@@ -11,8 +11,10 @@ set(NEO_CORE_DEBUG_SETTINGS
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_variables_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_variables_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/release_variables_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/env_variables_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}debug_variables.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}release_variables.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}env_variables.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}translate_debug_settings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/translate_debug_settings.h
     ${CMAKE_CURRENT_SOURCE_DIR}/translate_debug_settings_base.cpp

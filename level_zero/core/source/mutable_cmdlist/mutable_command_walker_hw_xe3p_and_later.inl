@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
@@ -244,9 +245,11 @@ void *MutableComputeWalkerHw<GfxFamily>::createCommandBuffer() {
 }
 
 template <typename GfxFamily>
-void MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer() {
+void MutableComputeWalkerHw<GfxFamily>::deleteCommandBuffer(void *input) {
     using WalkerType = typename GfxFamily::DefaultWalkerType;
-    delete (reinterpret_cast<WalkerType *>(cpuBuffer));
+    if (input != nullptr) {
+        delete (reinterpret_cast<WalkerType *>(input));
+    }
 }
 
 template <typename GfxFamily>
@@ -302,12 +305,14 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
     }
 
     if (args.isSlmKernel && (args.updateGroupSize || args.updateSlm)) {
-        NEO::EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&idd,
-                                                                       device.getRootDeviceEnvironment(),
-                                                                       args.threadsPerThreadGroup,
-                                                                       args.threadGroupCount,
-                                                                       args.slmTotalSizePerThreadGroup,
-                                                                       static_cast<NEO::SlmPolicy>(args.slmPolicy));
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = args.threadsPerThreadGroup,
+            .workloadThreadGroupCount = args.threadGroupCount,
+            .slmTotalSizePerThreadGroup = args.slmTotalSizePerThreadGroup,
+            .grfCount = args.grfCount,
+            .slmPolicy = static_cast<NEO::SlmPolicy>(args.slmPolicy)};
+
+        NEO::EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerSubSlice(&idd, device.getRootDeviceEnvironment(), slmArgs);
     }
 
     if (args.updateGroupCount || args.updateGroupSize) {
@@ -351,6 +356,32 @@ void MutableComputeWalkerHw<GfxFamily>::setSlmSize(uint32_t slmSize) {
         auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
         walkerCmd->getInterfaceDescriptor().getRawData(slmSizeIddIndex) = cpuBufferIdd.getRawData(slmSizeIddIndex);
     }
+}
+
+template <typename GfxFamily>
+void MutableComputeWalkerHw<GfxFamily>::updateL3FlushAfterWalker(uint32_t systemMemoryAllocsCount, uint32_t importedAllocationsCount) {
+    using WalkerType = typename GfxFamily::DefaultWalkerType;
+    auto cpuBufferWalker = reinterpret_cast<WalkerType *>(this->cpuBuffer);
+
+    bool l2Flush = importedAllocationsCount > 0;
+    bool l2TransientFlush = systemMemoryAllocsCount > 0;
+
+    auto flushCachesMask = NEO::debugManager.flags.FlushAllCaches.get();
+    if (flushCachesMask) {
+        if (flushCachesMask & NEO::FlushCachesBitmask::l2Flush) {
+            l2Flush = true;
+        }
+        if (flushCachesMask & NEO::FlushCachesBitmask::l2TransientFlush) {
+            l2TransientFlush = true;
+        }
+    }
+
+    cpuBufferWalker->getPostSync().setL2Flush(l2Flush);
+    cpuBufferWalker->getPostSync().setL2TransientFlush(l2TransientFlush);
+
+    // update cmdbuffer
+    auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
+    walkerCmd->getPostSync().getRawData(0) = cpuBufferWalker->getPostSync().getRawData(0);
 }
 
 } // namespace L0::MCL

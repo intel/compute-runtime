@@ -246,6 +246,152 @@ TEST_F(MultiDeviceContextTests,
 }
 
 TEST_F(MultiDeviceContextTests,
+       GivenDeviceMemoryMadeResidentOnPeerDeviceWhenEvictMemoryCalledThenSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = context->allocDeviceMem(driverHandle->devices[0], &deviceDesc, size, 0, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->makeMemoryResident(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Device *l0Device1 = static_cast<Device *>(driverHandle->devices[1]);
+    {
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        EXPECT_NE(iter, l0Device1->peerAllocations.allocations.end());
+    }
+
+    res = contextImp->evictMemory(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto mockMemIface = static_cast<NEO::MockMemoryOperations *>(
+        driverHandle->devices[1]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    EXPECT_EQ(1, mockMemIface->evictCalledCount.load());
+
+    res = contextImp->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
+       GivenPeerAllocationCachedByMakeMemoryResidentWhenFindPeerAllocationCalledThenCachedAllocationReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = context->allocDeviceMem(driverHandle->devices[0], &deviceDesc, size, 0, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Device *l0Device1 = static_cast<Device *>(driverHandle->devices[1]);
+
+    EXPECT_EQ(nullptr, driverHandle->findPeerAllocation(l0Device1, ptr));
+
+    res = contextImp->makeMemoryResident(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+    ASSERT_NE(iter, l0Device1->peerAllocations.allocations.end());
+    auto cachedAllocation = iter->second.gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(nullptr, cachedAllocation);
+    EXPECT_EQ(cachedAllocation, driverHandle->findPeerAllocation(l0Device1, ptr));
+
+    res = contextImp->evictMemory(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
+       GivenUnknownPointerWhenEvictMemoryCalledOnPeerDeviceThenInvalidArgumentReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    const size_t size = 4096;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    res = contextImp->evictMemory(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
+       GivenPeerAllocationEntryWithNullGraphicsAllocationWhenEvictMemoryCalledThenInvalidArgumentReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    const size_t size = 4096;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    Device *l0Device1 = static_cast<Device *>(driverHandle->devices[1]);
+    l0Device1->peerAllocations.allocations.try_emplace(ptr, l0Device1->getNEODevice()->getRootDeviceIndex());
+
+    {
+        auto iter = l0Device1->peerAllocations.allocations.find(ptr);
+        ASSERT_NE(iter, l0Device1->peerAllocations.allocations.end());
+        ASSERT_EQ(nullptr, iter->second.gpuAllocations.getDefaultGraphicsAllocation());
+    }
+
+    res = contextImp->evictMemory(driverHandle->devices[1], ptr, size);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+TEST_F(MultiDeviceContextTests,
        GivenInvalidDeviceMemoryWhenMakeResidentCalledOnPeerDeviceThenSuccessReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -1780,6 +1926,123 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesOnPhysicalDeviceMemoryThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, givenBindlessSlotAllocatedWhenUnMappingPhysicalDeviceMemoryThenSlotIsReleasedToReusePoolAndAllocationHasNoSlot) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto neoDevice = device->getNEODevice();
+    auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    auto bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+    rootDeviceEnvironment.bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(nullptr, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocation = reinterpret_cast<NEO::GraphicsAllocation *>(mem);
+    EXPECT_TRUE(driverHandle->getMemoryManager()->allocateBindlessSlot(allocation));
+    EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+    const auto slotOffsetBeforeUnmap = allocation->getBindlessInfo().surfaceStateOffset;
+
+    const auto releasePoolIndex = bindlessHeapsHelperPtr->releasePoolIndex;
+    const auto pooledSlotsBefore = bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() +
+                                   bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size();
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+
+    const auto pooledSlotsAfter = bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() +
+                                  bindlessHeapsHelperPtr->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size();
+    EXPECT_EQ(pooledSlotsBefore + 1u, pooledSlotsAfter);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_TRUE(driverHandle->getMemoryManager()->allocateBindlessSlot(allocation));
+    EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+    EXPECT_NE(slotOffsetBeforeUnmap, allocation->getBindlessInfo().surfaceStateOffset);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenNoBindlessHeapsHelperWhenUnMappingPhysicalDeviceMemoryThenSuccessIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto neoDevice = device->getNEODevice();
+    auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+    rootDeviceEnvironment.bindlessHeapsHelper.reset();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, 4096u, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(nullptr, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto allocation = reinterpret_cast<NEO::GraphicsAllocation *>(mem);
+    allocation->setBindlessInfo({allocation, 0u, nullptr, 0u});
+    EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 TEST_F(ContextTest, whenMappingSamePhysicalMemoryToMoreThanOneVirtualAddressThenInvalidArgumentIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -2101,7 +2364,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryFreeWithInvalidValuesThenFailuresRet
     res = contextImp->freeVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
 
     res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
@@ -2185,7 +2448,7 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override { return false; };
     bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
         if (failMapVirtualMemory) {
             return false;
@@ -2236,6 +2499,236 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     size_t size = 0;
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
 };
+
+struct FoldPrefixMemoryManagerMock : public NEO::MockMemoryManager {
+    using NEO::MockMemoryManager::MockMemoryManager;
+    bool isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) override { return foldRequired; }
+    NEO::AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override {
+        auto range = NEO::MockMemoryManager::reserveCpuAddress(requiredStartAddress, size + MemoryConstants::pageSize2M);
+        if (range.address == 0) {
+            return range;
+        }
+        const uint64_t misalignedBase = alignUp(range.address, MemoryConstants::pageSize2M) + MemoryConstants::pageSize64k;
+        allocatedBases[misalignedBase] = range;
+        return {misalignedBase, size};
+    }
+    bool reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) override {
+        reserveExactCalls++;
+        lastReserveExactAddress = requiredStartAddress;
+        lastReserveExactSize = size;
+        if (failReserveExactCpuAddress) {
+            return false;
+        }
+        claimedAddresses.insert(requiredStartAddress);
+        return true;
+    }
+    void freeCpuAddress(NEO::AddressRange addressRange) override {
+        freedCpuRanges.push_back(addressRange);
+        if (claimedAddresses.erase(addressRange.address) > 0) {
+            return;
+        }
+        auto it = allocatedBases.find(addressRange.address);
+        if (it != allocatedBases.end()) {
+            auto backing = it->second;
+            allocatedBases.erase(it);
+            NEO::MockMemoryManager::freeCpuAddress(backing);
+            return;
+        }
+        NEO::MockMemoryManager::freeCpuAddress(addressRange);
+    }
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, NEO::MultiGraphicsAllocation &multiGraphicsAllocation, NEO::GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override {
+        if (failMapPhysicalHostMemory) {
+            return false;
+        }
+        return NEO::MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset);
+    }
+    bool foldRequired = false;
+    bool failMapPhysicalHostMemory = false;
+    bool failReserveExactCpuAddress = false;
+    uint32_t reserveExactCalls = 0u;
+    uint64_t lastReserveExactAddress = 0u;
+    size_t lastReserveExactSize = 0u;
+    std::vector<NEO::AddressRange> freedCpuRanges;
+    std::set<uint64_t> claimedAddresses;
+    std::map<uint64_t, NEO::AddressRange> allocatedBases;
+};
+
+struct ContextFoldPrefixTest : public ContextTest {
+    void TearDown() override {
+        memoryManagerBackup.reset();
+        memoryManagerMock.reset();
+        ContextTest::TearDown();
+    }
+    void setUpMock(bool foldRequired) {
+        ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&desc, 0u, nullptr, &hContext));
+        contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->queryVirtualMemPageSize(device, 1024, &pagesize));
+
+        memoryManagerMock = std::make_unique<FoldPrefixMemoryManagerMock>(*neoDevice->executionEnvironment);
+        memoryManagerMock->foldRequired = foldRequired;
+        memoryManagerBackup = std::make_unique<VariableBackup<NEO::MemoryManager *>>(&driverHandle->memoryManager, memoryManagerMock.get());
+
+        NEO::debugManager.flags.EnableReservingInSvmRange.set(1);
+        contextImp->settings.enableSvmHeapReservation = true;
+
+        device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+            std::make_unique<NEO::MockMemoryOperations>();
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->reserveVirtualMem(nullptr, 2 * pagesize, &reservedPtr));
+
+        ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_HOST, 3 * MemoryConstants::pageSize2M};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->createPhysicalMem(device, &descMem, &physicalMem));
+
+        auto reservation = getReservation();
+        ASSERT_NE(nullptr, reservation);
+        ASSERT_EQ(castToUint64(reservedPtr) - reservation->reservationBase, reservation->foldHeadroomSize);
+        ASSERT_GT(reservation->foldHeadroomSize, virtualMemoryFoldHeadroom);
+    }
+    void tearDownMock(void *mappedPtr = nullptr) {
+        if (mappedPtr != nullptr) {
+            contextImp->unMapVirtualMem(mappedPtr, pagesize);
+        }
+        if (reservedPtr != nullptr) {
+            contextImp->freeVirtualMem(reservedPtr, 2 * pagesize);
+        }
+        contextImp->destroyPhysicalMem(physicalMem);
+        L0::Context::fromHandle(hContext)->destroy();
+    }
+    NEO::VirtualMemoryReservation *getReservation() {
+        auto &reservationMap = driverHandle->getMemoryManager()->getVirtualMemoryReservationMap();
+        auto it = reservationMap.find(reservedPtr);
+        return (it == reservationMap.end()) ? nullptr : it->second;
+    }
+    ze_context_handle_t hContext = nullptr;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    Context *contextImp = nullptr;
+    size_t pagesize = 0u;
+    void *reservedPtr = nullptr;
+    ze_physical_mem_handle_t physicalMem = {};
+    std::unique_ptr<FoldPrefixMemoryManagerMock> memoryManagerMock;
+    std::unique_ptr<VariableBackup<NEO::MemoryManager *>> memoryManagerBackup;
+    DebugManagerStateRestore debugRestore;
+};
+
+TEST_F(ContextFoldPrefixTest, givenHostBackedRangeWhenSettingAccessAttributeThenItIsRemappedWithTheSamePhysicalHandleAndOffset) {
+    setUpMock(true);
+    auto reservation = getReservation();
+    ASSERT_NE(nullptr, reservation);
+    const size_t offset = pagesize;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, offset, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    ASSERT_EQ(1u, reservation->mappedAllocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
+
+    ASSERT_EQ(1u, reservation->mappedAllocations.size());
+    auto mappedRange = reservation->mappedAllocations.begin()->second;
+    EXPECT_EQ(static_cast<void *>(physicalMem), mappedRange->physicalHandle);
+    EXPECT_EQ(offset, mappedRange->mappedPhysicalOffset);
+
+    tearDownMock(reservedPtr);
+}
+
+TEST_F(ContextFoldPrefixTest, givenUnmapFailingWhenSettingAccessAttributeThenErrorIsReturnedWithoutRemapping) {
+    setUpMock(true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    memoryManagerMock->failUnMapPhysicalToVirtualMemory = true;
+    EXPECT_NE(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
+    memoryManagerMock->failUnMapPhysicalToVirtualMemory = false;
+
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenRemapFailingWhenSettingAccessAttributeThenErrorIsReturnedInsteadOfSuccess) {
+    setUpMock(true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    memoryManagerMock->failMapPhysicalHostMemory = true;
+    EXPECT_NE(ZE_RESULT_SUCCESS, contextImp->setVirtualMemAccessAttribute(reservedPtr, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY));
+    memoryManagerMock->failMapPhysicalHostMemory = false;
+
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenOffsetFoldRequiredWhenMappingHostPhysicalMemoryAwayFromReservationBaseThenInvalidArgumentIsReturned) {
+    setUpMock(true);
+
+    void *interiorPtr = reinterpret_cast<void *>(castToUint64(reservedPtr) + pagesize);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT,
+              contextImp->mapVirtualMem(interiorPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(0u, memoryManagerMock->reserveExactCalls);
+
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenOffsetWithinReservationHeadroomWhenMappingHostPhysicalMemoryThenNoAddressRangeIsTakenFromTheOs) {
+    setUpMock(true);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(0u, memoryManagerMock->reserveExactCalls);
+
+    tearDownMock(reservedPtr);
+}
+
+TEST_F(ContextFoldPrefixTest, givenOffsetBeyondReservationHeadroomWhenMappingHostPhysicalMemoryThenOnlyTheExcessIsClaimedAndReleasedWithTheReservation) {
+    setUpMock(true);
+    auto reservation = getReservation();
+    ASSERT_NE(nullptr, reservation);
+
+    ASSERT_EQ(castToUint64(reservedPtr) - reservation->reservationBase, reservation->foldHeadroomSize);
+    ASSERT_GT(reservation->foldHeadroomSize, virtualMemoryFoldHeadroom);
+
+    const size_t offset = reservation->foldHeadroomSize + pagesize;
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, offset, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(1u, memoryManagerMock->reserveExactCalls);
+    EXPECT_EQ(castToUint64(reservedPtr) - offset, memoryManagerMock->lastReserveExactAddress);
+    EXPECT_EQ(pagesize, memoryManagerMock->lastReserveExactSize);
+    EXPECT_EQ(reservation->reservationBase, memoryManagerMock->lastReserveExactAddress + memoryManagerMock->lastReserveExactSize);
+
+    const uint64_t claimBase = castToUint64(reservedPtr) - offset;
+    contextImp->unMapVirtualMem(reservedPtr, pagesize);
+    memoryManagerMock->freedCpuRanges.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, contextImp->freeVirtualMem(reservedPtr, 2 * pagesize));
+
+    bool excessReleased = false;
+    for (auto &range : memoryManagerMock->freedCpuRanges) {
+        excessReleased |= (range.address == claimBase) && (range.size == pagesize);
+    }
+    EXPECT_TRUE(excessReleased);
+
+    reservedPtr = nullptr;
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenPrefixClaimFailingWhenMappingHostPhysicalMemoryWithOffsetThenOutOfHostMemoryIsReturned) {
+    setUpMock(true);
+    auto reservation = getReservation();
+    ASSERT_NE(nullptr, reservation);
+    memoryManagerMock->failReserveExactCpuAddress = true;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY,
+              contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, reservation->foldHeadroomSize + pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(1u, memoryManagerMock->reserveExactCalls);
+
+    tearDownMock();
+}
+
+TEST_F(ContextFoldPrefixTest, givenWindowRelocationSupportedWhenMappingHostPhysicalMemoryWithOffsetThenNoPrefixIsClaimedAndInteriorPointerIsAllowed) {
+    setUpMock(false);
+
+    void *interiorPtr = reinterpret_cast<void *>(castToUint64(reservedPtr) + pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              contextImp->mapVirtualMem(interiorPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    EXPECT_EQ(0u, memoryManagerMock->reserveExactCalls);
+
+    tearDownMock(interiorPtr);
+}
 
 TEST_F(ContextTest, givenValidHandleAndExportFdExtensionWhenCallingGetPhysicalMemPropertiesThenFdIsPopulated) {
     ze_context_handle_t hContext;
@@ -2370,7 +2863,7 @@ TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartAboveSvmRangeWithSucce
     reserveMemoryManager->failReserveGpuAddress = false;
     driverHandle->setMemoryManager(reserveMemoryManager.get());
 
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     void *pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
     size_t size = 4096u;
     void *ptr = nullptr;
@@ -2553,7 +3046,7 @@ HWTEST2_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOut
     res = contextImp->reserveVirtualMem(pStart, pageSize, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
 
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
     res = contextImp->reserveVirtualMem(pStart, pageSize, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
@@ -2857,16 +3350,20 @@ class MockCpuInfoOverrideVirtualAddressSize {
         using CpuInfo::virtualAddressSize;
     } *mockCpuInfo = reinterpret_cast<MockCpuInfo *>(const_cast<CpuInfo *>(&CpuInfo::getInstance()));
 
-    MockCpuInfoOverrideVirtualAddressSize(uint32_t newCpuVirtualAddressSize) {
+    MockCpuInfoOverrideVirtualAddressSize(uint32_t newCpuVirtualAddressSize, bool la57Present = false) {
         virtualAddressSizeSave = mockCpuInfo->getVirtualAddressSize();
+        cpuFlagsSave = mockCpuInfo->cpuFlags;
         mockCpuInfo->virtualAddressSize = newCpuVirtualAddressSize;
+        mockCpuInfo->cpuFlags = la57Present ? "la57" : "lm";
     }
 
     ~MockCpuInfoOverrideVirtualAddressSize() {
         mockCpuInfo->virtualAddressSize = virtualAddressSizeSave;
+        mockCpuInfo->cpuFlags = cpuFlagsSave;
     }
 
     uint32_t virtualAddressSizeSave = 0;
+    std::string cpuFlagsSave;
 };
 
 HWTEST2_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
@@ -2941,7 +3438,7 @@ HWTEST2_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservat
     res = contextImp->freeVirtualMem(ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    pStart = addrToPtr(maxNBitValue(47) + 0x1234);
+    pStart = addrToPtr(NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress() + 0x1234);
 
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
@@ -2960,7 +3457,7 @@ HWTEST2_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservat
 
 HWTEST2_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
 
-    MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(57);
+    MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(57, true);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -2986,7 +3483,7 @@ HWTEST2_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservat
     res = contextImp->freeVirtualMem(ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    pStart = addrToPtr(maxNBitValue(56) + 0x1234);
+    pStart = addrToPtr(NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress() + 0x1234);
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
 
@@ -3023,7 +3520,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithUnAlignedPstartThenNe
     size_t size = MemoryConstants::pageSize;
     void *ptr = nullptr;
 
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     void *pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
 
     // pStart is not aligned to any pagesize. The reserveVirtualMem will properly align it.
@@ -4550,11 +5047,13 @@ class ZexMemFreeRegisterCallbackExtTests : public Test<DeviceFixture> {
         Test<DeviceFixture>::SetUp();
         testCallbackExecuted = false;
         testCallbackUserData = nullptr;
+        invocationCounter = 0u;
     }
 
     void TearDown() override {
         testCallbackExecuted = false;
         testCallbackUserData = nullptr;
+        invocationCounter = 0u;
         Test<DeviceFixture>::TearDown();
     }
 
@@ -4564,13 +5063,56 @@ class ZexMemFreeRegisterCallbackExtTests : public Test<DeviceFixture> {
         testCallbackUserData = pUserData;
     }
 
+    // Order is stamped per tracker instead of logged into a container: the leak listener
+    // compares allocation counts per test, so a static container growing during a test
+    // would be reported as a leak.
+    struct CallbackTracker {
+        uint32_t invocations = 0u;
+        uint32_t invocationOrder = 0u;
+    };
+
+    static void trackingCallback(void *pUserData) {
+        auto tracker = reinterpret_cast<CallbackTracker *>(pUserData);
+        tracker->invocations++;
+        tracker->invocationOrder = ++invocationCounter;
+    }
+
+    zex_memory_free_callback_ext_desc_t makeCallbackDesc(CallbackTracker &tracker) {
+        zex_memory_free_callback_ext_desc_t callbackDesc = {};
+        callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+        callbackDesc.pfnCallback = trackingCallback;
+        callbackDesc.pUserData = &tracker;
+        return callbackDesc;
+    }
+
+    NEO::UsmMemAllocPool *getPoolOwningPtr(const void *ptr) {
+        auto svmData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+        return svmData ? context->getUsmPoolOwningPtr(ptr, svmData).pool : nullptr;
+    }
+
+    void *allocHostMem(size_t size) {
+        void *ptr = nullptr;
+        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 0u, &ptr));
+        return ptr;
+    }
+
+    void *allocDeviceMem(size_t size) {
+        void *ptr = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr));
+        return ptr;
+    }
+
     static bool testCallbackExecuted;
     static void *testCallbackUserData;
+    static uint32_t invocationCounter;
 };
 
 // Static member definitions
 bool ZexMemFreeRegisterCallbackExtTests::testCallbackExecuted = false;
 void *ZexMemFreeRegisterCallbackExtTests::testCallbackUserData = nullptr;
+uint32_t ZexMemFreeRegisterCallbackExtTests::invocationCounter = 0u;
 
 TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithValidParametersThenSuccessIsReturned) {
     ze_context_handle_t hContext;
@@ -4788,6 +5330,171 @@ TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallback
 
     res = zeContextDestroy(hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+struct ZexMemFreeRegisterCallbackExtNotPooledTests : public ZexMemFreeRegisterCallbackExtTests {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+
+        ZexMemFreeRegisterCallbackExtTests::SetUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(ZexMemFreeRegisterCallbackExtNotPooledTests, givenTwoCallbacksRegisteredWhenMemoryIsFreedThenBothAreInvoked) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker firstTracker{};
+    CallbackTracker secondTracker{};
+    auto firstCallbackDesc = makeCallbackDesc(firstTracker);
+    auto secondCallbackDesc = makeCallbackDesc(secondTracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &firstCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &secondCallbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, firstTracker.invocations);
+    EXPECT_EQ(1u, secondTracker.invocations);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtNotPooledTests, givenMultipleCallbacksRegisteredWhenMemoryIsFreedThenTheyAreInvokedInRegistrationOrder) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker firstTracker{};
+    CallbackTracker secondTracker{};
+    CallbackTracker thirdTracker{};
+    auto firstCallbackDesc = makeCallbackDesc(firstTracker);
+    auto secondCallbackDesc = makeCallbackDesc(secondTracker);
+    auto thirdCallbackDesc = makeCallbackDesc(thirdTracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &firstCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &secondCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &thirdCallbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, firstTracker.invocationOrder);
+    EXPECT_EQ(2u, secondTracker.invocationOrder);
+    EXPECT_EQ(3u, thirdTracker.invocationOrder);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtNotPooledTests, givenSameCallbackRegisteredTwiceWhenMemoryIsFreedThenItIsInvokedTwice) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(2u, tracker.invocations);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtNotPooledTests, givenCallbacksRegisteredWhenFreedWithDeferPolicyThenTheyAreInvoked) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker firstTracker{};
+    CallbackTracker secondTracker{};
+    auto firstCallbackDesc = makeCallbackDesc(firstTracker);
+    auto secondCallbackDesc = makeCallbackDesc(secondTracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &firstCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &secondCallbackDesc, ptr));
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, ptr));
+
+    EXPECT_EQ(1u, firstTracker.invocations);
+    EXPECT_EQ(1u, secondTracker.invocations);
+}
+
+struct ZexMemFreeRegisterCallbackExtReuseTests : public ZexMemFreeRegisterCallbackExtNotPooledTests {
+    void SetUp() override {
+        // forces the host reuse cache on regardless of product helper, with a 16GB budget
+        NEO::debugManager.flags.ExperimentalEnableHostAllocationCache.set(100);
+
+        ZexMemFreeRegisterCallbackExtNotPooledTests::SetUp();
+    }
+};
+
+TEST_F(ZexMemFreeRegisterCallbackExtReuseTests, givenAllocationFreedAndAddressReusedWhenFreeingAgainThenNoCallbackIsInvoked) {
+    auto ptr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_EQ(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, tracker.invocations);
+
+    // Same size, flags and alignment, so the reuse cache returns the very allocation just
+    // freed, reusing its SvmAllocationData. The callback list must not ride along.
+    auto reusedPtr = allocHostMem(4096u);
+    ASSERT_NE(nullptr, reusedPtr);
+    ASSERT_EQ(ptr, reusedPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(reusedPtr));
+    EXPECT_EQ(1u, tracker.invocations);
+}
+
+struct ZexMemFreeRegisterCallbackExtPooledTests : public ZexMemFreeRegisterCallbackExtTests {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+
+        ZexMemFreeRegisterCallbackExtTests::SetUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenPointerInsidePoolRangeThatIsNotAllocatedWhenCallingFreeMemThenCallbacksAreNotInvoked) {
+    // ptr keeps the pool alive, so freedPtr stays inside pool address space after being freed
+    auto ptr = allocDeviceMem(4096u);
+    auto freedPtr = allocDeviceMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_NE(nullptr, freedPtr);
+    auto usmPool = getPoolOwningPtr(ptr);
+    ASSERT_NE(nullptr, usmPool);
+
+    // freedPtr has to be freed before the callback is registered: pooled chunks share one
+    // SvmAllocationData, so freeing any live chunk would drain the list and leave nothing
+    // for the invalid free below to expose.
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freedPtr));
+    ASSERT_FALSE(usmPool->lookupAlloc(freedPtr).isAllocatedInPool());
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->freeMem(freedPtr));
+    EXPECT_EQ(0u, tracker.invocations);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, tracker.invocations);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenPooledAllocationWithCallbackWhenFreedWithDeferPolicyThenItIsInvoked) {
+    auto ptr = allocDeviceMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_NE(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, ptr));
+
+    EXPECT_EQ(1u, tracker.invocations);
 }
 
 TEST_F(ContextTest, whenSettingVirtualMemAccessAttributeWithChangedFlagsAndMappedAllocationsThenUnmapAndRemapIsCalled) {
@@ -6747,6 +7454,121 @@ TEST_F(ContextTest, whenCallingGetIpcMemHandleWithHostPhysicalMemoryHandleThenSu
     res = contextImp->destroyPhysicalMem(mem);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenGettingIpcHandleForReservedDeviceMemoryWithPhysicalOffsetThenReservedDeviceTypeAndPoolOffsetAreSet) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    context->settings.enableIpcHandleSharingByDefault = true;
+
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 1u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    const uint64_t physicalOffset = 0x2000u;
+    allocData->memoryType = InternalMemoryType::reservedDeviceMemory;
+    allocData->mappedPhysicalOffset = physicalOffset;
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::reservedDeviceMemory), ipcData->type);
+    EXPECT_EQ(physicalOffset, ipcData->poolOffset);
+
+    result = context->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    allocData->memoryType = InternalMemoryType::deviceUnifiedMemory;
+    allocData->mappedPhysicalOffset = 0u;
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(ContextTest, whenGettingIpcHandleForReservedHostMemoryWithPhysicalOffsetThenReservedHostTypeAndPoolOffsetAreSet) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    context->settings.enableIpcHandleSharingByDefault = true;
+
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 1u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    const uint64_t physicalOffset = 0x3000u;
+    allocData->memoryType = InternalMemoryType::reservedHostMemory;
+    allocData->mappedPhysicalOffset = physicalOffset;
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::IpcMemoryData *ipcData = reinterpret_cast<L0::IpcMemoryData *>(ipcHandle.data);
+    EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::reservedHostMemory), ipcData->type);
+    EXPECT_EQ(physicalOffset, ipcData->poolOffset);
+
+    result = context->putIpcMemHandle(ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    allocData->memoryType = InternalMemoryType::deviceUnifiedMemory;
+    allocData->mappedPhysicalOffset = 0u;
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(ContextTest, whenCallingSetIPCHandleDataWithPhysicalOffsetAndNoPoolThenPoolOffsetIsSetToPhysicalOffset) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextWhiteboxForIpcTesting contextWhitebox(driverHandle.get());
+
+    NEO::MockGraphicsAllocation mockAllocation;
+
+    uint64_t handle = 55555;
+    L0::IpcMemoryData ipcData;
+    ipcData.handle = handle;
+    ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::reservedHostMemory);
+    ipcData.poolOffset = 0;
+
+    uint64_t ptrAddress = 0x1000;
+    uint8_t type = static_cast<uint8_t>(InternalIpcMemoryType::reservedHostMemory);
+    const uint64_t physicalOffset = 0x7000u;
+
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr, physicalOffset);
+
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    ASSERT_EQ(1u, ipcHandleMap.size());
+    auto handleIterator = ipcHandleMap.find(handle);
+    ASSERT_NE(handleIterator, ipcHandleMap.end());
+    EXPECT_EQ(physicalOffset, handleIterator->second->ipcData.poolOffset);
+
+    delete handleIterator->second;
+    driverHandle->getIPCHandleMap().clear();
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }

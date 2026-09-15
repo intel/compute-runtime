@@ -11,14 +11,11 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 
-#include <vector>
-
 namespace L0 {
 ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_command_id_exp_desc_t *desc,
     uint64_t *pCommandId) {
-    hCommandList = toInternalType(hCommandList);
     auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, 0, nullptr, pCommandId);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -36,7 +33,6 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_commands_exp_desc_t *desc) {
-    hCommandList = toInternalType(hCommandList);
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandsExp(desc);
 }
 
@@ -44,8 +40,6 @@ ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExp(
     ze_command_list_handle_t hCommandList,
     uint64_t commandId,
     ze_event_handle_t hSignalEvent) {
-    hCommandList = toInternalType(hCommandList);
-    hSignalEvent = toInternalType(hSignalEvent);
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandSignalEventExp(commandId, hSignalEvent);
 }
 
@@ -54,7 +48,6 @@ ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandWaitEventsExp(
     uint64_t commandId,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    hCommandList = toInternalType(hCommandList);
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandWaitEventsExp(commandId, numWaitEvents, phWaitEvents);
 }
 
@@ -64,22 +57,13 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExp(
     uint32_t numKernels,
     ze_kernel_handle_t *phKernels,
     uint64_t *pCommandId) {
-    hCommandList = toInternalType(hCommandList);
-    StackVec<ze_kernel_handle_t, 16> translatedKernels{};
-    translatedKernels.reserve(numKernels);
-    if (phKernels != nullptr) {
-        for (auto i = 0u; i < numKernels; i++) {
-            translatedKernels.push_back(toInternalType(phKernels[i]));
-        }
-    }
-    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, numKernels, translatedKernels.data(), pCommandId);
+    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, numKernels, phKernels, pCommandId);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto kernelsForCapture = translatedKernels.empty() ? nullptr : translatedKernels.data();
-    auto captureResult = cmdList->capture<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(hCommandList, desc, numKernels, kernelsForCapture, pCommandId);
+    auto captureResult = cmdList->capture<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(hCommandList, desc, numKernels, phKernels, pCommandId);
     if ((captureResult != ZE_RESULT_SUCCESS) && (captureResult != ZE_RESULT_ERROR_NOT_AVAILABLE)) {
         return captureResult;
     }
@@ -92,14 +76,12 @@ ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
     uint32_t numKernels,
     uint64_t *pCommandId,
     ze_kernel_handle_t *phKernels) {
-    hCommandList = toInternalType(hCommandList);
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandKernelsExp(numKernels, pCommandId, phKernels);
 }
 
 ze_result_t ZE_APICALL zeCommandListIsMutableExp(
     ze_command_list_handle_t hCommandList,
     ze_bool_t *pIsMutable) {
-    hCommandList = toInternalType(hCommandList);
     return L0::CommandList::fromHandle(hCommandList)->isMutableExp(pIsMutable);
 }
 

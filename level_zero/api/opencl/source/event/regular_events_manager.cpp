@@ -7,6 +7,8 @@
 
 #include "level_zero/api/opencl/source/event/regular_events_manager.h"
 
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
+
 #include <utility>
 
 namespace NEO {
@@ -18,6 +20,9 @@ RegularEventsManager::RegularEventsManager(ze_context_handle_t contextHandle, st
 RegularEventsManager::~RegularEventsManager() {
     for (auto *group : {&hostVisibleGroup, &timestampGroup}) {
         for (auto event : group->freeEvents) {
+            zeEventDestroy(event);
+        }
+        for (auto event : group->pendingEvents) {
             zeEventDestroy(event);
         }
         for (auto pool : group->pools) {
@@ -39,17 +44,46 @@ ze_event_handle_t RegularEventsManager::obtainEvent(bool timestamp) {
         zeEventDestroy(event);
     }
 
+    if (group.createdFromLatestPool < eventCountInPool) {
+        return this->createEvent(group, timestamp);
+    }
+
+    auto pendingEvent = this->takeCompletedPendingEvent(group);
+    if (pendingEvent != nullptr) {
+        return pendingEvent;
+    }
+
     return this->createEvent(group, timestamp);
 }
 
 void RegularEventsManager::returnEvent(ze_event_handle_t event, bool timestamp) {
     std::lock_guard<std::mutex> lock(this->mtx);
 
+    auto &group = this->getGroup(timestamp);
     if (zeEventQueryStatus(event) == ZE_RESULT_SUCCESS) {
-        this->getGroup(timestamp).freeEvents.push_back(event);
+        group.freeEvents.push_back(event);
     } else {
-        zeEventDestroy(event);
+        group.pendingEvents.push_back(event);
     }
+}
+
+ze_event_handle_t RegularEventsManager::takeCompletedPendingEvent(EventPoolGroup &group) {
+    for (auto it = group.pendingEvents.begin(); it != group.pendingEvents.end(); ++it) {
+        if (zeEventQueryStatus(*it) != ZE_RESULT_SUCCESS) {
+            continue;
+        }
+
+        auto event = *it;
+        group.pendingEvents.erase(it);
+
+        if (ZE_RESULT_SUCCESS == zeEventHostReset(event)) {
+            return event;
+        }
+        zeEventDestroy(event);
+        return nullptr;
+    }
+
+    return nullptr;
 }
 
 ze_event_handle_t RegularEventsManager::createEvent(EventPoolGroup &group, bool timestamp) {

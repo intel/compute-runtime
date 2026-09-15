@@ -105,8 +105,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
             for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                 auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[partitionId]);
                 auto expectedAddress = hostFunctionIdBaseAddress + partitionId * partitionOffset;
-                EXPECT_EQ(expectedAddress, miWaitTag->getSemaphoreGraphicsAddress());
-                EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+                EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
+                EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
 
@@ -241,8 +241,8 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
                 auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[partitionId]);
                 auto expectedAddress = hostFunctionIdBaseAddress + partitionId * partitionOffset;
 
-                EXPECT_EQ(expectedAddress, miWaitTag->getSemaphoreGraphicsAddress());
-                EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+                EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
+                EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
 
@@ -530,6 +530,36 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWhenEnsur
     EXPECT_EQ(expectedHostFunctionIdAddress, streamer->getHostFunctionIdGpuAddress(0u));
 
     EXPECT_EQ(expectedHostFunctionIdAddress + csr->immWritePostSyncWriteOffset, streamer->getHostFunctionIdGpuAddress(1u));
+}
+
+TEST(CommandStreamReceiverHostFunctionsTest, givenReadyHostFunctionWhenItIsReservedForExecutionThenItCannotBeReservedAgain) {
+    MockGraphicsAllocation allocation;
+    uint64_t hostFunctionIdAddress = 1u;
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> downloadAllocationImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+    std::function<void(GraphicsAllocation &, uint64_t, size_t)> uploadAllocationChunkImpl = [](GraphicsAllocation &, uint64_t, size_t) {};
+    std::mutex tbxWriteMutex;
+
+    HostFunctionStreamer streamer(nullptr,
+                                  &allocation,
+                                  &hostFunctionIdAddress,
+                                  downloadAllocationImpl,
+                                  uploadAllocationChunkImpl,
+                                  1u,
+                                  sizeof(uint64_t),
+                                  false,
+                                  false,
+                                  false,
+                                  tbxWriteMutex);
+
+    HostFunction hostFunction{};
+    streamer.addHostFunction(1u, std::move(hostFunction));
+
+    auto reservedHostFunctionId = streamer.tryReserveHostFunctionReadyToExecute();
+
+    ASSERT_TRUE(reservedHostFunctionId.has_value());
+    EXPECT_EQ(1u, reservedHostFunctionId.value());
+    EXPECT_FALSE(streamer.tryReserveHostFunctionReadyToExecute().has_value());
+    EXPECT_FALSE(streamer.getHostFunctionReadyToExecute().has_value());
 }
 
 TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceiverWhenEnsureHostFunctionDataInitializationCalledThenHostFunctionAllocationsDeallocated) {

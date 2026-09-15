@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,19 @@
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandlesWhenCallingReInitOnFirmwareHandleContextThenHandlesRemainValid) {
+    initFirmware();
+    auto handleCountBeforeReInit = static_cast<uint32_t>(pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
+    ASSERT_LT(0u, handleCountBeforeReInit);
+
+    pSysmanDeviceImp->pFirmwareHandleContext->reInit();
+
+    EXPECT_EQ(handleCountBeforeReInit, static_cast<uint32_t>(pSysmanDeviceImp->pFirmwareHandleContext->handleList.size()));
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        EXPECT_NE(nullptr, handle);
+    }
+}
 
 TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwarePropertiesThenVersionIsReturned) {
     initFirmware();

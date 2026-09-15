@@ -33,7 +33,7 @@ bool IoctlHelperUpstream::isVmBindAvailable() {
     return false;
 }
 
-int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) {
+int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, [[maybe_unused]] GemCreateExtHint hint, [[maybe_unused]] std::optional<bool> deferBacking) {
     bool isPatIndexValid = (patIndex != CommonConstants::unsupportedPatIndex) && (patIndex <= std::numeric_limits<uint32_t>::max());
     bool useSetPat = this->isSetPatSupported && isPatIndexValid;
 
@@ -249,8 +249,18 @@ int IoctlHelperUpstream::vmUnbind(const VmBindParams &vmBindParams) {
     return 0;
 }
 
-int IoctlHelperUpstream::getResetStats(ResetStats &resetStats, uint32_t *status, OsContextLinux *osContextLinux, std::vector<ResetFaultContext> &faultsVector, bool &reportFaults) {
-    return ioctl(DrmIoctl::getResetStats, &resetStats);
+int IoctlHelperUpstream::getContextHealth(ContextHealth &contextHealth) {
+    drm_i915_reset_stats resetStats{};
+    resetStats.ctx_id = contextHealth.contextId;
+
+    const auto retVal = ioctl(DrmIoctl::queryContextHealth, &resetStats);
+    if (retVal != 0) {
+        return retVal;
+    }
+    contextHealth.banReason = ((resetStats.batch_active > 0) || (resetStats.batch_pending > 0))
+                                  ? ContextBanReason::gpuHang
+                                  : ContextBanReason::none;
+    return retVal;
 }
 
 UuidRegisterResult IoctlHelperUpstream::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {

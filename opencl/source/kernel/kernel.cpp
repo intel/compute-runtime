@@ -145,7 +145,7 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
         } else if (isValidOffset(arg.bindless)) {
             auto &gfxCoreHelper = clDevice.getDevice().getGfxCoreHelper();
             void *surfaceState = nullptr;
-            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+            auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
             if (clDevice.getDevice().getBindlessHeapsHelper()) {
                 auto &ssInHeap = allocation.getBindlessInfo();
@@ -246,7 +246,7 @@ cl_int Kernel::initialize() {
         memcpy_s(pSshLocal.get(), sshLocalSize,
                  heapInfo.pSsh, heapInfo.surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelDescriptor)) {
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getBindlessSurfaceStateSlotSize());
         sshLocalSize = (kernelDescriptor.kernelAttributes.numArgsStateful +
                         +kernelDescriptor.kernelAttributes.numBindlessImages) *
                        surfaceStateSize;
@@ -975,7 +975,7 @@ cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, G
                                 areMultipleSubDevicesInContext());
     } else if (isValidOffset(argAsPtr.bindless)) {
         auto &gfxCoreHelper = this->getGfxCoreHelper();
-        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+        auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
         auto ssIndex = getSurfaceStateIndexForBindlessOffset(argAsPtr.bindless);
         if (ssIndex < std::numeric_limits<uint32_t>::max()) {
@@ -1048,7 +1048,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             }
 
             auto &gfxCoreHelper = this->getGfxCoreHelper();
-            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+            auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
             auto ssIndex = getSurfaceStateIndexForBindlessOffset(argAsPtr.bindless);
             if (ssIndex < std::numeric_limits<uint32_t>::max()) {
@@ -1318,6 +1318,12 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
         commandStreamReceiver.makeResident(*(program->getExportedFunctionsSurface(rootDeviceIndex)));
     }
 
+    for (const auto *lib : program->getRequiredLibPrograms(rootDeviceIndex)) {
+        if (auto *libSurface = lib->getExportedFunctionsSurface(rootDeviceIndex)) {
+            commandStreamReceiver.makeResident(*libSurface);
+        }
+    }
+
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
         commandStreamReceiver.makeResident(*gfxAlloc);
     }
@@ -1384,6 +1390,12 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
         dst.push_back(surface);
     }
 
+    for (const auto *lib : program->getRequiredLibPrograms(rootDeviceIndex)) {
+        if (auto *libSurface = lib->getExportedFunctionsSurface(rootDeviceIndex)) {
+            dst.push_back(new GeneralSurface(libSurface));
+        }
+    }
+
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
         GeneralSurface *surface = new GeneralSurface(gfxAlloc);
         dst.push_back(surface);
@@ -1445,6 +1457,15 @@ void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &al
                                    .size = exportedFunctionsSurface->getUnderlyingBufferSize(),
                                    .type = CL_MEM_TYPE_UNKNOWN_INTEL,
                                    .arg_index = -1});
+    }
+
+    for (const auto *lib : program->getRequiredLibPrograms(rootDeviceIndex)) {
+        if (auto *libSurface = lib->getExportedFunctionsSurface(rootDeviceIndex)) {
+            allocationsInfo.push_back({.base = reinterpret_cast<void *>(libSurface->getGpuAddress()),
+                                       .size = libSurface->getUnderlyingBufferSize(),
+                                       .type = CL_MEM_TYPE_UNKNOWN_INTEL,
+                                       .arg_index = -1});
+        }
     }
 
     auto internalMemoryTypeToClMemTypeINTEL = [](InternalMemoryType internalType) -> cl_unified_shared_memory_type_intel {
@@ -1597,7 +1618,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         if (isValidOffset(argAsPtr.stateless)) {
             auto patchLocation = ptrOffset(crossThreadData, argAsPtr.stateless);
-            uint64_t addressToPatch = buffer->setArgStateless(patchLocation, argAsPtr.pointerSize, rootDeviceIndex, !this->isBuiltIn);
+            [[maybe_unused]] uint64_t addressToPatch = buffer->setArgStateless(patchLocation, argAsPtr.pointerSize, rootDeviceIndex, !this->isBuiltIn);
 
             if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
                 PatchInfoData patchInfoData(addressToPatch - buffer->getOffset(), static_cast<uint64_t>(buffer->getOffset()),
@@ -1631,7 +1652,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                                    areMultipleSubDevicesInContext());
         } else if (isValidOffset(argAsPtr.bindless)) {
             auto &gfxCoreHelper = this->getGfxCoreHelper();
-            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+            auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
             auto ssIndex = getSurfaceStateIndexForBindlessOffset(argAsPtr.bindless);
             if (ssIndex < std::numeric_limits<uint32_t>::max()) {
@@ -1720,7 +1741,7 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
             auto ssIndex = getSurfaceStateIndexForBindlessOffset(argAsImg.bindless);
             if (ssIndex < std::numeric_limits<uint32_t>::max()) {
                 auto &gfxCoreHelper = this->getGfxCoreHelper();
-                auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+                auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
                 surfaceState = ptrOffset(getSurfaceStateHeap(), ssIndex * surfaceStateSize);
             }
         } else {
@@ -1732,7 +1753,6 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         pImage->setImageArg(surfaceState, arg.getExtendedTypeInfo().isMediaBlockImage, mipLevel, rootDeviceIndex);
         auto &imageDesc = pImage->getImageDesc();
         auto &imageFormat = pImage->getImageFormat();
-        auto graphicsAllocation = pImage->getGraphicsAllocation(rootDeviceIndex);
 
         patch<uint32_t, cl_uint>(imageDesc.num_samples, crossThreadData, argAsImg.metadataPayload.numSamples);
         patch<uint32_t, cl_uint>(imageDesc.num_mip_levels, crossThreadData, argAsImg.metadataPayload.numMipLevels);
@@ -1742,12 +1762,6 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         patch<uint32_t, uint64_t>(imageDesc.image_array_size, crossThreadData, argAsImg.metadataPayload.arraySize);
         patch<uint32_t, cl_channel_type>(imageFormat.image_channel_data_type, crossThreadData, argAsImg.metadataPayload.channelDataType);
         patch<uint32_t, cl_channel_order>(imageFormat.image_channel_order, crossThreadData, argAsImg.metadataPayload.channelOrder);
-
-        auto pixelSize = pImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-        patch<uint64_t, uint64_t>(graphicsAllocation->getGpuAddress(), crossThreadData, argAsImg.metadataPayload.flatBaseOffset);
-        patch<uint32_t, uint64_t>((imageDesc.image_width * pixelSize) - 1, crossThreadData, argAsImg.metadataPayload.flatWidth);
-        patch<uint32_t, uint64_t>((imageDesc.image_height * pixelSize) - 1, crossThreadData, argAsImg.metadataPayload.flatHeight);
-        patch<uint32_t, uint64_t>(imageDesc.image_row_pitch - 1, crossThreadData, argAsImg.metadataPayload.flatPitch);
 
         retVal = CL_SUCCESS;
     }
@@ -2016,7 +2030,7 @@ uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, c
 }
 void *Kernel::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
     auto &gfxCoreHelper = this->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
     NEO::BindlessHeapsHelper *bindlessHeapsHelper = getDevice().getDevice().getBindlessHeapsHelper();
     auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::globalSsh);
     auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
@@ -2039,7 +2053,7 @@ void Kernel::patchBindlessSurfaceStatesForImplicitArgs(uint64_t bindlessSurfaceS
     auto implicitArgsVec = kernelInfo.kernelDescriptor.getImplicitArgBindlessCandidatesVec();
 
     auto &gfxCoreHelper = this->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
     auto *crossThreadDataPtr = reinterpret_cast<uint8_t *>(getCrossThreadData());
 
     for (size_t i = 0; i < implicitArgsVec.size(); i++) {
@@ -2066,7 +2080,7 @@ void Kernel::patchBindlessSurfaceStatesForImplicitArgs(uint64_t bindlessSurfaceS
 template <bool heaplessEnabled>
 void Kernel::patchBindlessSurfaceStatesInCrossThreadData(uint64_t bindlessSurfaceStatesBaseAddress) const {
     auto &gfxCoreHelper = this->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
     auto *crossThreadDataPtr = reinterpret_cast<uint8_t *>(getCrossThreadData());
 
     const auto &explicitArgs = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs;

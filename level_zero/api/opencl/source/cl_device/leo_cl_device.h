@@ -17,6 +17,8 @@
 namespace NEO {
 namespace LEO {
 
+class Platform;
+
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
     typedef class ClDevice DerivedType;
@@ -66,6 +68,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
     ze_device_handle_t getL0Handle() const { return this->deviceHandle; }
     L0::Device *getL0Object() const { return L0::Device::fromHandle(this->deviceHandle); }
+    Platform *getPlatform() const;
 
   protected:
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return getDevice().getRootDeviceEnvironment(); };

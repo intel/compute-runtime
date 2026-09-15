@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/release_helpers/caps/caps_setup.h"
 
 #include "aubstream/engine_node.h"
 
@@ -97,7 +98,7 @@ void DG1::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
@@ -114,6 +115,7 @@ void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
+    setupCaps(*hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
@@ -129,8 +131,8 @@ const HardwareInfo Dg1HwConfig::hwInfo = {
     DG1::capabilityTable};
 
 GT_SYSTEM_INFO Dg1HwConfig::gtSystemInfo = {0};
-void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -146,16 +148,16 @@ void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 
 const HardwareInfo DG1::hwInfo = Dg1HwConfig::hwInfo;
 
-void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
+void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
     if (hwInfoConfig == 0x100060010) {
-        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*DG1::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupDG1HardwareInfoImpl;
+void (*DG1::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupDG1HardwareInfoImpl;
 } // namespace NEO

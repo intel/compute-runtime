@@ -25,3 +25,16 @@ inline uint32_t getL0ImageRowPitch(cl_mem_object_type imageType, size_t rowPitch
     }
     return static_cast<uint32_t>(rowPitch);
 }
+
+inline void resolveHostPitchesForCustomPitchImage(bool imageHasCustomPitch, size_t elementSize,
+                                                  const size_t *region, size_t &rowPitch, size_t &slicePitch) {
+    if (!imageHasCustomPitch) {
+        return;
+    }
+    if (rowPitch == 0) {
+        rowPitch = region[0] * elementSize;
+    }
+    if (slicePitch == 0) {
+        slicePitch = region[1] * rowPitch;
+    }
+}

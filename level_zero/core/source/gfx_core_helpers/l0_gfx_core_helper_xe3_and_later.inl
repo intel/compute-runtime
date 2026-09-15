@@ -21,8 +21,6 @@ void L0GfxCoreHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::v
     bitmaskSize = std::max(highestEnabledSlice, hwInfo.gtSystemInfo.MaxSlicesSupported) * numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     bitmask = std::make_unique<uint8_t[]>(bitmaskSize);
 
-    memset(bitmask.get(), 0, bitmaskSize);
-
     for (auto &thread : threads) {
         uint8_t *sliceData = ptrOffset(bitmask.get(), threadsSizePerSlice * thread.slice);
 
@@ -73,16 +71,6 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
     }
 
     return threads;
-}
-
-template <typename Family>
-ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExp() const {
-    return static_cast<ze_rtas_format_exp_t>(RTASDeviceFormatInternal::version2);
-}
-
-template <typename Family>
-ze_rtas_format_ext_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExt() const {
-    return static_cast<ze_rtas_format_ext_t>(RTASDeviceFormatInternal::version2);
 }
 
 template <typename Family>

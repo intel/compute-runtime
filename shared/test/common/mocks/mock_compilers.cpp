@@ -163,34 +163,14 @@ IgcOptionsAndCapabilities<0>::IgcOptionsAndCapabilities(ArgsT &&...args) {}
 
 namespace NEO {
 
-template <typename StrT>
-std::unique_ptr<unsigned char[]> loadVirtualBinaryFile(StrT &&fileName, size_t &fileSize) {
-    std::filesystem::path filePath = std::forward<StrT>(fileName);
-    std::string fileNameWithExtension = filePath.filename().string();
-    if (!virtualFileExists(fileNameWithExtension)) {
-        auto kernelData = loadDataFromVirtualFileTestKernelsOnly(filePath.string().c_str(), fileSize);
-        if (kernelData) {
-            std::unique_ptr<unsigned char[]> ucharData(new unsigned char[fileSize]);
-            std::memcpy(ucharData.get(), kernelData.get(), fileSize);
-            return ucharData;
-        }
-        fileSize = 0;
-        return nullptr;
-    }
-
-    std::unique_ptr<char[]> charData = loadDataFromVirtualFile(fileNameWithExtension.c_str(), fileSize);
-
-    std::unique_ptr<unsigned char[]> ucharData(new unsigned char[fileSize]);
-    std::memcpy(ucharData.get(), charData.get(), fileSize);
-
-    return ucharData;
-};
-
 void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::BufferSimple *options,
-               CIF::Builtins::BufferSimple *internalOptions, MockOclTranslationOutput *out) {
+               CIF::Builtins::BufferSimple *internalOptions, MockOclTranslationOutput *out,
+               IGC::CodeType::CodeType_t outType = IGC::CodeType::undefined) {
     MockCompilerDebugVars &debugVars = (usingIgc) ? *NEO::igcDebugVars : *fclDebugVars;
 
-    if (debugVars.receivedInput != nullptr) {
+    // Only the first call's input is captured - a build may invoke translate() more than
+    // once, and callers generally want the earliest one, not whichever ran last.
+    if (debugVars.receivedInput != nullptr && debugVars.receivedInput->empty()) {
         if (src != nullptr) {
             debugVars.receivedInput->assign(src->GetMemory<char>(),
                                             src->GetMemory<char>() + src->GetSizeRaw());
@@ -204,15 +184,17 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         }
     }
 
+    bool forceFailure = debugVars.forceBuildFailure;
+    if (forceFailure && debugVars.forceBuildFailureBackendOnly && (outType != IGC::CodeType::oclGenBin)) {
+        forceFailure = false;
+    }
+
     if (debugVars.forceSuccessWithEmptyOutput) {
         if (out) {
             out->setOutput(nullptr, 0);
         }
-        return;
-    }
-
-    if ((debugVars.forceBuildFailure == false) &&
-        (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
+    } else if ((forceFailure == false) &&
+               (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
 
         if (debugVars.internalOptionsExpected) {
             if (internalOptions->GetSizeRaw() < 1 || internalOptions->GetMemoryRaw() == nullptr) { // NOLINT(clang-analyzer-core.CallAndMessage)
@@ -222,64 +204,20 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
             }
         }
 
-        std::string inputFile{}, debugFile{};
-        std::string opts(options->GetMemory<char>(), options->GetMemory<char>() + options->GetSize<char>());
-
-        if (false == debugVars.fileName.empty()) {
-            auto fileBaseName = debugVars.fileName;
-            auto pos = debugVars.fileName.rfind('.');
-            auto extension = debugVars.fileName.substr(pos, debugVars.fileName.length());
-            if (false == debugVars.fileNameSuffix.empty()) {
-                pos = debugVars.fileName.rfind(debugVars.fileNameSuffix);
-            }
-            fileBaseName = fileBaseName.substr(0, pos);
-
-            if (debugVars.appendOptionsToFileName && false == opts.empty()) {
-                // handle special option "-create-library" - just erase it
-                auto optPos = opts.find(CompilerOptions::createLibrary.data(), 0);
-                if (optPos != std::string::npos) {
-                    opts.erase(optPos, CompilerOptions::createLibrary.length());
-                }
-                std::replace(opts.begin(), opts.end(), ' ', '_');
-            }
-
-            inputFile.append(fileBaseName);
-            debugFile.append(fileBaseName);
-
-            if (false == debugVars.fileNameSuffix.empty()) {
-                inputFile.append(debugVars.fileNameSuffix);
-                debugFile.append(debugVars.fileNameSuffix);
-            }
-            if (debugVars.appendOptionsToFileName && false == opts.empty()) {
-                auto optString = opts + "_";
-                inputFile.append(optString);
-                debugFile.append(optString);
-            }
-
-            inputFile.append(extension);
-            debugFile.append(".dbg");
-        }
-        if ((debugVars.binaryToReturn != nullptr) || (debugVars.binaryToReturnSize != 0)) {
-            out->setOutput(debugVars.binaryToReturn, debugVars.binaryToReturnSize);
-        } else {
-            size_t fileSize = 0;
-            auto fileData = loadVirtualBinaryFile(inputFile, fileSize);
-
-            out->setOutput(fileData.get(), fileSize);
-            if (fileSize == 0) {
-                out->setError("error: Mock compiler could not find cached input file: " + inputFile);
-            }
+        out->setOutput(debugVars.binaryToReturn, debugVars.binaryToReturnSize);
+        if (debugVars.binaryToReturn == nullptr && debugVars.binaryToReturnSize == 0) {
+            out->setError("error: Mock compiler has no binaryToReturn configured");
         }
 
         if (debugVars.debugDataToReturn != nullptr || debugVars.debugDataToReturnSize != 0) {
             out->setDebugData(debugVars.debugDataToReturn, debugVars.debugDataToReturnSize);
-        } else if (debugFile != "") {
-            size_t fileSize = 0;
-            auto fileData = loadVirtualBinaryFile(debugFile, fileSize);
-            out->setDebugData(fileData.get(), fileSize);
         }
     } else {
         out->setError();
+    }
+
+    if (out != nullptr && !debugVars.buildLogToReturn.empty()) {
+        out->setBuildLog(debugVars.buildLogToReturn);
     }
 }
 
@@ -313,7 +251,9 @@ IGC::IgcOclTranslationCtxBase *MockIgcOclDeviceCtx::CreateTranslationCtxImpl(CIF
     }
 
     requestedTranslationCtxs.emplace_back(inType, outType);
-    return new MockIgcOclTranslationCtx;
+    auto ctx = new MockIgcOclTranslationCtx;
+    ctx->createdOutType = outType;
+    return ctx;
 }
 
 bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine,
@@ -377,7 +317,7 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     }
 
     auto out = new MockOclTranslationOutput();
-    translate(true, src, options, internalOptions, out);
+    translate(true, src, options, internalOptions, out, createdOutType);
     return out;
 }
 
@@ -394,7 +334,7 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     }
 
     auto out = new MockOclTranslationOutput();
-    translate(true, src, options, internalOptions, out);
+    translate(true, src, options, internalOptions, out, createdOutType);
     return out;
 }
 
@@ -420,7 +360,7 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     }
 
     auto out = new MockOclTranslationOutput();
-    translate(true, src, options, internalOptions, out);
+    translate(true, src, options, internalOptions, out, createdOutType);
     return out;
 }
 
@@ -446,6 +386,10 @@ MockOclTranslationOutput::~MockOclTranslationOutput() {
 
 void MockOclTranslationOutput::setError(const std::string &message) {
     failed = true;
+    this->log->SetUnderlyingStorage(message.c_str(), message.size());
+}
+
+void MockOclTranslationOutput::setBuildLog(const std::string &message) {
     this->log->SetUnderlyingStorage(message.c_str(), message.size());
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class StandbyImp : public Standby, NEO::NonCopyableAndNonMovableClass {
     ze_result_t standbyGetProperties(zes_standby_properties_t *pProperties) override;
     ze_result_t standbyGetMode(zes_standby_promo_mode_t *pMode) override;
     ze_result_t standbySetMode(const zes_standby_promo_mode_t mode) override;
+    void reInit() override;
 
     StandbyImp() = default;
     StandbyImp(OsSysman *pOsSysman, bool onSubdevice, uint32_t subDeviceId);

@@ -10,12 +10,13 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
+
+#include <algorithm>
 
 namespace NEO {
 
@@ -57,16 +58,15 @@ void ProductHelper::applyLimitGrfSupported(SupportedNumGrfs &grfs) const {
     DEBUG_BREAK_IF(grfs.empty());
     const auto limit = static_cast<uint32_t>(debugManager.flags.LimitNumGrfsSupported.get());
     if (limit < grfs.back()) {
-        const auto it = std::find_if(grfs.begin(), grfs.end(), [limit](uint32_t numGrfs) { return numGrfs > limit; });
+        const auto it = std::find_if(grfs.begin(), grfs.end(), [=](uint32_t numGrfs) { return numGrfs > limit; });
         grfs.resize(static_cast<size_t>(it - grfs.begin()));
         DEBUG_BREAK_IF(grfs.empty());
     }
 }
 
-void ProductHelper::setupPreemptionMode(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment, bool kmdPreemptionSupport) {
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+void ProductHelper::setupPreemptionMode(HardwareInfo &hwInfo, bool kmdPreemptionSupport) {
     PreemptionHelper::adjustDefaultPreemptionMode(hwInfo.capabilityTable,
-                                                  compilerProductHelper.isMidThreadPreemptionSupported(hwInfo) && kmdPreemptionSupport,
+                                                  static_cast<bool>(hwInfo.featureTable.flags.ftrWalkerMTP) && kmdPreemptionSupport,
                                                   static_cast<bool>(hwInfo.featureTable.flags.ftrGpGpuThreadGroupLevelPreempt) && kmdPreemptionSupport,
                                                   static_cast<bool>(hwInfo.featureTable.flags.ftrGpGpuMidBatchPreempt) && kmdPreemptionSupport);
 }

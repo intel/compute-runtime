@@ -33,6 +33,7 @@ BOOL registerWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject, WAITOR
 BOOL unregisterWait(HANDLE waitHandle);
 BOOL closeHandle(HANDLE hObject);
 BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr);
+BOOL getLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationshipType, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer, PDWORD returnedLength);
 BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
 DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
 UINT getTempFileNameA(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPSTR lpTempFileName);

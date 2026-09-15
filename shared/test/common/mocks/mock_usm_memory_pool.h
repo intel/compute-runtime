@@ -15,6 +15,7 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     using UsmMemAllocPool::allocations;
     using UsmMemAllocPool::chunkAllocator;
     using UsmMemAllocPool::customCleanup;
+    using UsmMemAllocPool::deferredFreeChunks;
     using UsmMemAllocPool::device;
     using UsmMemAllocPool::pool;
     using UsmMemAllocPool::poolEnd;
@@ -51,9 +52,9 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     uint32_t cleanupCalled = 0u;
     bool callBaseCleanup = true;
 
-    bool freeSVMAlloc(const void *ptr, bool blocking) override {
+    bool freeSVMAlloc(const void *ptr, FreePolicyType policy) override {
         ++freeSVMAllocCalled;
-        return UsmMemAllocPool::freeSVMAlloc(ptr, blocking);
+        return UsmMemAllocPool::freeSVMAlloc(ptr, policy);
     };
     uint32_t freeSVMAllocCalled = 0u;
 };

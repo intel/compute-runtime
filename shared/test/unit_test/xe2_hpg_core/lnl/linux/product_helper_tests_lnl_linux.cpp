@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,10 +54,6 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammin
 
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isPageFaultSupported());
-}
-
-LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {

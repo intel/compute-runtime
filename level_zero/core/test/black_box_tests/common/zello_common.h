@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "level_zero/driver_experimental/zex_event.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_visit.h"
 #include <level_zero/ze_api.h>
@@ -15,6 +14,7 @@
 #include <level_zero/zer_api.h>
 
 #include <bitset>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -33,8 +33,6 @@ inline void validate(ResulT result, const char *message, int line);
 #define SUCCESS_OR_WARNING_BOOL(FLAG) LevelZeroBlackBoxTests::validate<false>(!(FLAG), #FLAG, __LINE__)
 
 namespace LevelZeroBlackBoxTests {
-extern decltype(&zexCounterBasedEventCreate2) zexCounterBasedEventCreate2Func;
-
 extern bool verbose;
 
 template <bool terminateOnFailure, typename ResulT>
@@ -89,6 +87,8 @@ inline void selectQueueMode(ze_command_queue_desc_t &desc, bool useSync) {
 uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength);
 
 void getErrorMax(int argc, char *argv[]);
+
+void printTestHeader(const std::string_view currentTest);
 
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string_view blackBoxName, const std::string_view currentTest);
 
@@ -216,14 +216,13 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_event_pool_handle_t &eventPool,
                               ze_event_pool_flags_t poolFlag,
                               bool counterEvents,
-                              const zex_counter_based_event_desc_t *counterBasedDesc,
+                              const ze_event_counter_based_desc_t *counterBasedDesc,
                               uint32_t poolSize,
                               ze_event_handle_t *events,
                               ze_event_scope_flags_t signalScope,
                               ze_event_scope_flags_t waitScope);
 
 bool counterBasedEventsExtensionPresent(ze_driver_handle_t &driverHandle);
-void loadCounterBasedEventCreateFunction(ze_driver_handle_t &driverHandle);
 
 std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, uint32_t &subDevCount);
 
@@ -417,5 +416,22 @@ struct VisitApi {
 
 VisitApi &loadVisitApi(ze_driver_handle_t driver);
 } // namespace VisitExtension
+
+struct TestDuration {
+    enum Units {
+        seconds,
+        milliseconds,
+        microseconds,
+        max
+    };
+    TestDuration(int argc, char *argv[]);
+    TestDuration() : TestDuration(Units::seconds) {}
+    TestDuration(Units units);
+    ~TestDuration();
+
+  private:
+    std::chrono::high_resolution_clock::time_point startTime;
+    Units units;
+};
 
 } // namespace LevelZeroBlackBoxTests

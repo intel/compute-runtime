@@ -37,10 +37,13 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
 
     ~ExternalSemaphoreWindows() override {};
 
-    bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
+    ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
 
     bool enqueueWait(uint64_t *fenceValue) override;
     bool enqueueSignal(uint64_t *fenceValue) override;
+
+    uint64_t acquireWaitFenceValue(uint64_t fenceValue) override;
+    uint64_t acquireSignalFenceValue(uint64_t fenceValue) override;
 
     SharedMemoryContentHeader *getSharedMemoryContentHeader() {
         return reinterpret_cast<SharedMemoryContentHeader *>(this->pCpuAddress);

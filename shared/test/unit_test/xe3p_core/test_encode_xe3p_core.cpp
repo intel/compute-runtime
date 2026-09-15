@@ -216,50 +216,6 @@ XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenOffsetWhenProgrammingStatePrefet
     }
 }
 
-XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenLinearStreamWhenSingleBarrierIsProgrammedThenQueueDrainModeIsEnabledByDefaultAndDisabledWithDebugKey) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    uint32_t buffer[2 * sizeof(PIPE_CONTROL)] = {};
-    LinearStream linearStream(buffer, sizeof(buffer));
-
-    auto pc = reinterpret_cast<PIPE_CONTROL *>(buffer);
-
-    PipeControlArgs args{};
-    NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
-    EXPECT_TRUE(pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-
-    NEO::MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
-    EXPECT_TRUE(pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-
-    NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
-    EXPECT_TRUE(pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-
-    NEO::MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, args);
-    EXPECT_TRUE(pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-
-    DebugManagerStateRestore restore;
-    debugManager.flags.PcQueueDrainMode.set(0);
-
-    NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, PostSyncMode::noWrite, 0, 0, args);
-    EXPECT_FALSE(pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-
-    NEO::MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, PostSyncMode::noWrite, 0, 0, args);
-    EXPECT_FALSE(pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-
-    NEO::MemorySynchronizationCommands<FamilyType>::addSingleBarrier(linearStream, args);
-    EXPECT_FALSE(pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-
-    NEO::MemorySynchronizationCommands<FamilyType>::setSingleBarrier(buffer, args);
-    EXPECT_FALSE(pc->getQueueDrainMode());
-    linearStream.replaceBuffer(buffer, sizeof(buffer));
-}
-
 using EncodeKernelXe3pCoreTest = Test<CommandEncodeStatesFixture>;
 
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchRequiredWhenEncodeComputeWalker2ThenInlineDataContainCorrectScratchAddress) {
@@ -464,6 +420,57 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndScratchRequiredWhenEnc
     auto scratchAddressProgrammed = inlineData[1];
 
     EXPECT_EQ(expectedAddress, scratchAddressProgrammed);
+}
+
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchPointerBeyondInlineDataWhenEncodeComputeWalker2ThenScratchAddressPatchedIntoCrossThreadDataAndNotInlineData) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr uint32_t inlineDataSize = WalkerType::getInlineDataSize();
+    const uint32_t scratchOffset = inlineDataSize + 8u;
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    dispatchInterface->getCrossThreadDataSizeResult = 256u;
+    dispatchInterface->kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 1024u;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = true;
+    dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = static_cast<InlineDataOffset>(scratchOffset);
+    dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    dispatchArgs.isHeaplessModeEnabled = true;
+    dispatchArgs.immediateScratchAddressPatching = true;
+
+    auto *csr = dispatchArgs.device->getDefaultEngine().commandStreamReceiver;
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    EncodeDispatchKernel<FamilyType>::template encode<WalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    auto itor = find<WalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto walkerCmd = genCmdCast<WalkerType *>(*itor);
+    auto inlineData = reinterpret_cast<uint64_t *>(walkerCmd->getInlineDataPointer());
+
+    IndirectHeap *ssh = nullptr;
+    if (csr->getGlobalStatelessHeapAllocation() != nullptr) {
+        ssh = csr->getGlobalStatelessHeap();
+    } else {
+        ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
+    }
+    auto scratchController = csr->getScratchSpaceController();
+    auto expectedAddress = scratchController->getScratchPatchAddress() + ssh->getGpuBase();
+
+    ASSERT_NE(nullptr, dispatchArgs.outCrossThreadDataPtr);
+    auto crossThreadDataScratch = *reinterpret_cast<uint64_t *>(ptrOffset(dispatchArgs.outCrossThreadDataPtr, scratchOffset - inlineDataSize));
+    EXPECT_EQ(expectedAddress, crossThreadDataScratch);
+
+    const uint32_t inlineScratchQwordIndex = scratchOffset / sizeof(uint64_t);
+    EXPECT_GE(inlineScratchQwordIndex, inlineDataSize / sizeof(uint64_t));
+    for (uint32_t qwordIndex = 0; qwordIndex < inlineDataSize / sizeof(uint64_t); qwordIndex++) {
+        EXPECT_NE(expectedAddress, inlineData[qwordIndex]);
+    }
 }
 
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndBindlessHeapsHelperWhenEncodeKernelWithSamplerThenCorrectSamplerAddressIsPassedToPatch) {
@@ -1031,24 +1038,24 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenXe3pThenPipelineSelectIsNotProgra
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrderThenDispatchWalkOrderIsProgrammedCorrectly) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
 
     DefaultWalkerType walkerCmd{};
     uint32_t yOrder = 2u;
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[yOrder], HwWalkOrderHelper::yOrderWalk);
 
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, yOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, yOrder, hwInfo);
     EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK, walkerCmd.getDispatchWalkOrder());
 
     uint32_t linearOrder = 0u;
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[linearOrder], HwWalkOrderHelper::linearWalk);
 
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, linearOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, linearOrder, hwInfo);
     EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK, walkerCmd.getDispatchWalkOrder());
 
     auto currentDispatchWalkOrder = walkerCmd.getDispatchWalkOrder();
     uint32_t fakeOrder = 5u;
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, fakeOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, fakeOrder, hwInfo);
     EXPECT_EQ(currentDispatchWalkOrder, walkerCmd.getDispatchWalkOrder()); // no change
 }
 
@@ -1383,7 +1390,7 @@ XE3P_CORETEST_F(CommandContainerXe3pTest, GivenComputeWalker2AndArgsWhencallingS
 XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenSurfaceStateWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, *releaseHelper);
+    auto hwInfo = *defaultHwInfo;
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }

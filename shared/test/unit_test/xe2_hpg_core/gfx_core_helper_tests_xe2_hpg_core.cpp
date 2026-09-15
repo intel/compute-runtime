@@ -564,8 +564,8 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenDontProgramGlobalFenceAsMi
     EXPECT_EQ(1u, hwParser.cmdList.size());
     auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*hwParser.cmdList.begin());
     ASSERT_NE(nullptr, semaphoreCmd);
-    EXPECT_EQ(static_cast<uint32_t>(-2), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(static_cast<uint32_t>(-2), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+    EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 }
 
@@ -589,6 +589,42 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenProgramGlobalFenceAsMiMemF
     auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
     ASSERT_NE(nullptr, fenceCmd);
     EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
+}
+
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenIntegratedDeviceWhenGettingSizeForAcquireAdditionalSynchronizationThenZeroIsReturned) {
+    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    EXPECT_EQ(0u, MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::acquire, rootDeviceEnvironment));
+}
+
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenIntegratedDeviceWhenAddingAcquireAdditionalSynchronizationThenNoCommandIsProgrammed) {
+    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    uint8_t buffer[128] = {};
+    LinearStream commandStream(buffer, 128);
+
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x1000, NEO::FenceType::acquire, rootDeviceEnvironment);
+
+    EXPECT_EQ(0u, commandStream.getUsed());
+}
+
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenDiscreteDeviceWhenAddingAcquireAdditionalSynchronizationThenMemoryFenceIsProgrammed) {
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    uint8_t buffer[128] = {};
+    LinearStream commandStream(buffer, 128);
+
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x1000, NEO::FenceType::acquire, rootDeviceEnvironment);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream);
+    EXPECT_EQ(1u, hwParser.cmdList.size());
+    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
+    ASSERT_NE(nullptr, fenceCmd);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE, fenceCmd->getFenceType());
 }
 
 using ProductHelperTestXe2HpgCore = Test<DeviceFixture>;
@@ -878,6 +914,7 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenXe2HpgWhenSetStallOnlyBarr
     EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(itor));
     auto resourceBarrier = genCmdCast<RESOURCE_BARRIER *>(*itor);
     EXPECT_NE(nullptr, resourceBarrier);
+    EXPECT_EQ(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU, resourceBarrier->getSignalStage());
     EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
     EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
 }

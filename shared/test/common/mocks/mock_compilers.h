@@ -44,11 +44,13 @@ struct MockCompilerDebugVars {
     bool shouldReturnInvalidTranslationOutput = false;
     bool shouldFailCreationOfTranslationContext = false;
     bool forceBuildFailure = false;
+    // When true, forceBuildFailure only applies to IGC translation contexts
+    // created with outType == oclGenBin (the actual backend/build step), not
+    // to front-end (FCL-role) IGC translation contexts used when a device's
+    // compilerProductHelper::useIgcAsFcl() is true.
+    bool forceBuildFailureBackendOnly = false;
     bool forceSuccessWithEmptyOutput = false;
-    bool forceCreateFailure = false;
-    bool forceRegisterFail = false;
     bool internalOptionsExpected = false;
-    bool appendOptionsToFileName = true;
     void *debugDataToReturn = nullptr;
     size_t debugDataToReturnSize = 0;
     void *binaryToReturn = nullptr;
@@ -64,8 +66,7 @@ struct MockCompilerDebugVars {
     std::string *receivedInternalOptionsOutput = nullptr;
     std::string *receivedInput = nullptr;
 
-    std::string fileName;
-    std::string fileNameSuffix;
+    std::string buildLogToReturn;
     std::string translationContextCreationError;
 };
 
@@ -155,6 +156,11 @@ struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
     MockIgcOclTranslationCtx();
     ~MockIgcOclTranslationCtx() override;
 
+    // outType this context was created with (see MockIgcOclDeviceCtx::CreateTranslationCtxImpl).
+    // Used to distinguish front-end (FCL-role) from backend/build translation
+    // calls when forceBuildFailureBackendOnly is set.
+    IGC::CodeType::CodeType_t createdOutType = IGC::CodeType::undefined;
+
     IGC::OclTranslationOutputBase *TranslateImpl(
         CIF::Version_t outVersion,
         CIF::Builtins::BufferSimple *src,
@@ -204,6 +210,7 @@ struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
         setError("");
     }
     void setError(const std::string &message);
+    void setBuildLog(const std::string &message);
     void setOutput(const void *data, size_t dataLen);
     void setDebugData(const void *data, size_t dataLen);
 
@@ -213,7 +220,7 @@ struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
     MockCIFBuffer *debugData = nullptr;
 };
 
-struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<6>> {
+struct MockIgcOclDeviceCtx : MockCIF<NEO::IgcOclDeviceCtxTag> {
     static CIF::ICIF *Create(CIF::InterfaceId_t intId, CIF::Version_t version); // NOLINT(readability-identifier-naming)
 
     MockIgcOclDeviceCtx();

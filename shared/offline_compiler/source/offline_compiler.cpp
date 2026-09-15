@@ -32,12 +32,10 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
-#include "shared/source/os_interface/debug_env_reader.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include "neo_aot_platforms.h"
-#include "offline_compiler_ext.h"
 
 #include <filesystem>
 #include <iomanip>
@@ -47,6 +45,42 @@
 #include <set>
 
 namespace NEO {
+
+namespace {
+
+std::string prefixNonEmptyLines(const std::string &log, ConstStringRef deviceName) {
+    if (log.empty()) {
+        return log;
+    }
+
+    const auto prefix = "[" + deviceName.str() + "] ";
+
+    std::string prefixedLog;
+    prefixedLog.reserve(log.size() + prefix.size());
+
+    size_t lineStart = 0;
+    while (lineStart < log.size()) {
+        const auto newlinePos = log.find('\n', lineStart);
+        const auto lineEnd = newlinePos == std::string::npos ? log.size() : newlinePos;
+        const auto lineLength = lineEnd - lineStart;
+        const bool emptyLine = lineLength == 0 || (lineLength == 1 && log[lineStart] == '\r');
+
+        if (!emptyLine) {
+            prefixedLog.append(prefix);
+        }
+        prefixedLog.append(log, lineStart, lineLength);
+
+        if (newlinePos == std::string::npos) {
+            break;
+        }
+        prefixedLog.push_back('\n');
+        lineStart = newlinePos + 1;
+    }
+
+    return prefixedLog;
+}
+
+} // namespace
 
 std::string convertToPascalCase(const std::string &inString) {
     std::string outString;
@@ -130,7 +164,7 @@ std::vector<NameVersionPair> OfflineCompiler::getExtensions(ConstStringRef produ
     if (nullptr == compiler) {
         return {};
     }
-    auto extensionsStr = compiler->compilerProductHelper->getDeviceExtensions(compiler->hwInfo, *compiler->releaseHelper);
+    auto extensionsStr = compiler->compilerProductHelper->getDeviceExtensions(compiler->hwInfo);
     auto extensions = NEO::CompilerOptions::tokenize(extensionsStr, ' ');
     ret.reserve(extensions.size());
     for (const auto &ext : extensions) {
@@ -154,7 +188,7 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCVersions(ConstStringRef 
         return {};
     }
 
-    auto deviceOpenCLCVersions = compiler->compilerProductHelper->getDeviceOpenCLCVersions(compiler->getHardwareInfo(), {});
+    auto deviceOpenCLCVersions = compiler->compilerProductHelper->getDeviceOpenCLCVersions({});
     NameVersionPair openClCVersion{"OpenCL C", 0};
 
     std::vector<NameVersionPair> allSupportedVersions;
@@ -177,7 +211,7 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef 
     }
 
     OpenClCFeaturesContainer availableFeatures;
-    NEO::getOpenclCFeaturesList(compiler->getHardwareInfo(), availableFeatures, *compiler->compilerProductHelper, *compiler->releaseHelper);
+    NEO::getOpenclCFeaturesList(compiler->getHardwareInfo(), availableFeatures);
 
     std::vector<NameVersionPair> allSupportedFeatures;
     for (auto &feature : availableFeatures) {
@@ -861,7 +895,7 @@ int OfflineCompiler::buildSourceCode() {
     UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
     UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
 
-    updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
+    updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw(), deviceName);
 
     if (igcOutput->GetOutput()->GetSizeRaw() != 0) {
         storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
@@ -894,6 +928,7 @@ int OfflineCompiler::build() {
     size_t sourceFromFileSize = 0;
     sourceFromFile = argHelper->loadDataFromFile(inputFile, sourceFromFileSize);
     if (sourceFromFileSize == 0) {
+        argHelper->printf("Error: Input file %s is empty.\n", inputFile.c_str());
         return OCLOC_INVALID_FILE;
     }
     if (this->inputCodeType == IGC::CodeType::oclC) {
@@ -949,16 +984,24 @@ int OfflineCompiler::build() {
 }
 
 void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t errorStringSize) {
+    updateBuildLog(pErrorString, errorStringSize, ConstStringRef{});
+}
+
+void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t errorStringSize, ConstStringRef deviceName) {
     if (pErrorString != nullptr) {
         std::string log(pErrorString, pErrorString + errorStringSize);
         ConstStringRef errorString(log);
         const bool warningFound = errorString.containsCaseInsensitive("warning");
         if (!isQuiet() || !warningFound) {
+            log.resize(std::char_traits<char>::length(log.c_str()));
+            if (!deviceName.empty()) {
+                log = prefixNonEmptyLines(log, deviceName);
+            }
             if (buildLog.empty()) {
-                buildLog.assign(errorString.data());
+                buildLog.assign(log);
             } else {
                 buildLog.append("\n");
-                buildLog.append(errorString.data());
+                buildLog.append(log);
             }
         }
     }
@@ -980,7 +1023,7 @@ const HardwareInfo *getHwInfoForDeprecatedAcronym(const std::string &deviceName)
     return nullptr;
 }
 
-int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(const std::string &deviceName, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper) {
+int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(const std::string &deviceName, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::CompilerReleaseHelper> &compilerReleaseHelper) {
     auto foundHwInfo = getHwInfoForDeprecatedAcronym(deviceName);
     if (nullptr == foundHwInfo) {
         return OCLOC_INVALID_DEVICE;
@@ -996,8 +1039,8 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(const std::string &de
 
     uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
     setHwInfoValuesFromConfig(config, hwInfo);
-    releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, releaseHelper.get());
+    compilerReleaseHelper = NEO::CompilerReleaseHelper::create(hwInfo.ipVersion);
+    hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, compilerReleaseHelper.get());
     UNRECOVERABLE_IF(compilerProductHelper == nullptr);
     productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
 
@@ -1015,7 +1058,7 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
 
     if (isArgumentDeviceId(deviceName)) {
         auto deviceID = static_cast<unsigned short>(std::stoi(deviceName, 0, 16));
-        productConfig = argHelper->getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(hwInfo, deviceID, revisionId, compilerProductHelper, releaseHelper);
+        productConfig = argHelper->getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(hwInfo, deviceID, revisionId, compilerProductHelper, compilerReleaseHelper);
         if (productConfig == AOT::UNKNOWN_ISA) {
             return OCLOC_INVALID_DEVICE;
         }
@@ -1023,13 +1066,13 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
         argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
     } else if (revisionId == -1) {
         productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(deviceName);
-        if (!argHelper->setHwInfoForProductConfig(productConfig, hwInfo, compilerProductHelper, releaseHelper)) {
+        if (!argHelper->setHwInfoForProductConfig(productConfig, hwInfo, compilerProductHelper, compilerReleaseHelper)) {
             return OCLOC_INVALID_DEVICE;
         }
     } else {
         return OCLOC_INVALID_DEVICE;
     }
-    argHelper->setHwInfoForHwInfoConfig(hwInfo, hwInfoConfig, compilerProductHelper, releaseHelper);
+    argHelper->setHwInfoForHwInfoConfig(hwInfo, hwInfoConfig, compilerProductHelper, compilerReleaseHelper);
     deviceConfig = hwInfo.ipVersion.value;
     productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
     return OCLOC_SUCCESS;
@@ -1042,14 +1085,17 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     }
 
     retVal = initHardwareInfoForProductConfig(deviceName);
-    if (retVal == OCLOC_SUCCESS) {
+    if (retVal != OCLOC_SUCCESS) {
+        retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, compilerProductHelper, compilerReleaseHelper);
+    }
+
+    if (retVal != OCLOC_SUCCESS) {
+        argHelper->printf("Could not determine device target: %s.\n", deviceName.c_str());
         return retVal;
     }
 
-    retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, compilerProductHelper, releaseHelper);
-    if (retVal != OCLOC_SUCCESS) {
-        argHelper->printf("Could not determine device target: %s.\n", deviceName.c_str());
-    }
+    compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
+
     return retVal;
 }
 
@@ -1162,9 +1208,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             return retVal;
         }
     }
-    NEO::EnvironmentVariableReader envReader;
-
-    if (envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true) == false) {
+    if (NEO::debugManager.flags.EnvOneapiPvcSendWarWa.get() == false) {
         CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::optDisableSendWarWa);
     }
     parseDebugSettings();
@@ -1361,12 +1405,16 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-spec_const" == currArg && hasMoreArgs) {
             specConstantsFile = argv[argIndex + 1];
             argIndex++;
+        } else if ("-pisa_input" == currArg) {
+            this->inputCodeType = NEO::pisaCodeType;
+            this->intermediateRepresentation = NEO::pisaCodeType;
+        } else if ("-emit_pisa" == currArg) {
+            this->intermediateRepresentation = NEO::pisaCodeType;
+            this->onlyIr = true;
         } else {
-            retVal = parseCommandLineExt(numArgs, argv, argIndex);
-            if (OCLOC_INVALID_COMMAND_LINE == retVal) {
-                argHelper->printf("Invalid option (arg %u): %s\n", argIndex, argv[argIndex].c_str());
-                break;
-            }
+            argHelper->printf("Invalid option (arg %u): %s\n", argIndex, argv[argIndex].c_str());
+            retVal = OCLOC_INVALID_COMMAND_LINE;
+            break;
         }
     }
 
@@ -1490,9 +1538,6 @@ void OfflineCompiler::unifyExcludeIrFlags() {
 
 void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
     bool isStatelessToStatefulBufferOffsetSupported = true;
-    if (!deviceName.empty()) {
-        isStatelessToStatefulBufferOffsetSupported = compilerProductHelper->isStatelessToStatefulBufferOffsetSupported();
-    }
     if (debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         isStatelessToStatefulBufferOffsetSupported = debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
@@ -1502,19 +1547,19 @@ void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
 }
 
 int OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
-    if (addressingMode == "bindful" && compilerProductHelper->isForceBindlessRequired(hwInfo)) {
+    if (addressingMode == "bindful" && compilerProductHelper->isHeaplessModeEnabled(hwInfo)) {
         argHelper->printf("Error: bindful addressing mode is not supported on this device (heapless platform). Use bindless or default mode.\n");
         return OCLOC_INVALID_COMMAND_LINE;
     }
     if (compilerProductHelper->isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
-    if (compilerProductHelper->isForceEmuInt32DivRemSPRequired()) {
+    if (hwInfo.caps.forceEmuInt32DivRemSPRequired) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
-    if ((!releaseHelper->isBindlessAddressingDisabled() && addressingMode != "bindful") ||
+    if ((!hwInfo.caps.bindlessAddressingDisabled && addressingMode != "bindful") ||
         addressingMode == "bindless" ||
-        compilerProductHelper->isForceBindlessRequired(hwInfo)) {
+        compilerProductHelper->isHeaplessModeEnabled(hwInfo)) {
         if (internalOptions.find("-cl-intel-use-bindless") == std::string::npos) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
         }
@@ -1758,14 +1803,21 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 -spec_const <filename>                      File containing specialization constants for SPIR-V input.
                                             Each line should contain: <spec_constant_id>: <value>
                                             Example: 0: 32505859
-%s
+
+  -pisa_input                               Indicates that input file is a pisa file.
+                                            This option is exclusive with -spirv_input.
+                                            This option is exclusive with -llvm_text.
+                                            This option is exclusive with -llvm_input.
+
+  -emit_pisa                                Will emit pisa file.
+                                            This option is exclusive with -spv_only.
+
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Xe3Core.bin)
     ocloc -file source_file.cl -device ptl-h
 )OCLOC_HELP",
                       getSupportedDevices(argHelper).c_str(),
-                      getDeprecatedDevices(argHelper).c_str(),
-                      getOfflineCompilerOptionsExt().c_str());
+                      getDeprecatedDevices(argHelper).c_str());
 }
 
 void OfflineCompiler::storeBinary(

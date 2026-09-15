@@ -584,8 +584,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == unknown.compare(properties.boardNumber));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenAgamaFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenAgamaFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -603,8 +603,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenAgamaFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenAgamaFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -621,8 +621,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == driverVersion.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenSrcVersionFileIsAbsentUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenSrcVersionFileIsAbsentUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -640,8 +640,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenSrcVersionFileIsPresentAndUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenSrcVersionFileIsPresentAndUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -659,8 +659,8 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_TRUE(0 == srcVersion.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionWhenDriverVersionFileReadFailsThenVerifyzesDeviceGetPropertiesCallSucceeds) {
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionWhenDriverVersionFileReadFailsThenVerifyzesDeviceGetPropertiesCallSucceeds, IsNotCRI) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -700,6 +700,34 @@ TEST_F(SysmanGlobalOperationsFixture,
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_STREQ("i915", drvName.driverName);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForDeviceIndexThenValidDeviceIndexIsReturned) {
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    properties.pNext = &deviceIndexProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pSysmanDeviceImp->getRootDeviceIndex(), deviceIndexProperties.deviceIndex);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesWithDeviceIndexChainedWithOtherExtensionsThenAllExtensionsArePopulated) {
+
+    pLinuxSysmanImp->setDriverName("i915");
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
+    properties.pNext = &deviceIndexProperties;
+    deviceIndexProperties.pNext = &drvName;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pSysmanDeviceImp->getRootDeviceIndex(), deviceIndexProperties.deviceIndex);
     EXPECT_STREQ("i915", drvName.driverName);
 }
 
@@ -1567,6 +1595,25 @@ HWTEST2_F(SysmanDevicePropertiesExtensionTestMultiDevice,
     EXPECT_FALSE(extProperties.flags & ZES_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
 
+TEST_F(SysmanDevicePropertiesExtensionTestMultiDevice,
+       GivenMultipleDevicesWhenCallingZesDeviceGetPropertiesForDeviceIndexThenSequentialDeviceIndicesAreReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getDevice(&count, nullptr));
+    EXPECT_EQ(numRootDevices, count);
+
+    std::vector<zes_device_handle_t> devices(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getDevice(&count, devices.data()));
+
+    for (uint32_t i = 0; i < count; i++) {
+        zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+        properties.pNext = &deviceIndexProperties;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetProperties(devices[i], &properties));
+        EXPECT_EQ(i, deviceIndexProperties.deviceIndex);
+    }
+}
+
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenSuccessResultIsReturned) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1633,6 +1680,55 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceFDWhenRetrievingUuidTh
     EXPECT_EQ(true, result);
 
     std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidUuidCacheWhenCallingClearCachesThenUuidCacheIsInvalidated) {
+    initGlobalOps();
+
+    std::unique_ptr<ProductHelper> mockProductHelper = std::make_unique<MockGlobalOperationsProductHelper>();
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironmentRef();
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    EXPECT_TRUE(pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid));
+
+    auto pLinuxGlobalOps = static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations);
+    EXPECT_TRUE(pLinuxGlobalOps->uuid[0].isValid);
+
+    pGlobalOperationsImp->clearCaches();
+
+    for (uint32_t i = 0; i < maxUuidsPerDevice; i++) {
+        EXPECT_FALSE(pLinuxGlobalOps->uuid[i].isValid);
+    }
+
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenNullOsGlobalOperationsWhenCallingClearCachesThenNoCrashOccurs) {
+    auto pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
+    pGlobalOperationsImp->pOsGlobalOperations = nullptr;
+
+    pGlobalOperationsImp->clearCaches();
+
+    pGlobalOperationsImp->pOsGlobalOperations = pOsGlobalOperationsPrev;
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenLinuxGlobalOperationsWhenCallingClearUuidCacheDirectlyThenAllEntriesAreInvalidated) {
+    initGlobalOps();
+    auto pLinuxGlobalOps = static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations);
+    for (uint32_t i = 0; i < maxUuidsPerDevice; i++) {
+        pLinuxGlobalOps->uuid[i].isValid = true;
+        pLinuxGlobalOps->uuid[i].id.fill(0xAB);
+    }
+
+    pLinuxGlobalOps->clearUuidCache();
+
+    for (uint32_t i = 0; i < maxUuidsPerDevice; i++) {
+        EXPECT_FALSE(pLinuxGlobalOps->uuid[i].isValid);
+        for (const auto &byte : pLinuxGlobalOps->uuid[i].id) {
+            EXPECT_EQ(0u, byte);
+        }
+    }
 }
 
 using SysmanSubDevicePropertiesExperimentalTestMultiDevice = SysmanMultiDeviceFixture;
@@ -1812,36 +1908,36 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenValidFirmwareInterfaceWhe
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenNullFirmwareInterfaceWhenRetrievingSerialNumberThenUnknownIsReturned) {
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(0 == unknown.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_TRUE(0 == unknown.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenFirmwareErrorWhenRetrievingSerialNumberThenUnknownIsReturned) {
     pFwInterface->mockSerialNumberError = ZE_RESULT_ERROR_UNINITIALIZED;
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(0 == unknown.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_TRUE(0 == unknown.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithNonPrintableCharactersWhenRetrievingSerialNumberThenOnlyPrintablePartIsReturned) {
@@ -1855,12 +1951,12 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithNonPrinta
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberExceedingBufferSizeWhenRetrievingSerialNumberThenTruncatedSerialNumberIsReturned) {
@@ -1878,26 +1974,26 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberExceedingBuff
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     // Should be limited to IGSC_MAX_OEM_SN_LENGTH (512) since that's the firmware buffer size
-    EXPECT_EQ(strlen(oemSerialNumber.oemSerialNumber), static_cast<size_t>(IGSC_MAX_OEM_SN_LENGTH));
-    EXPECT_EQ('\0', oemSerialNumber.oemSerialNumber[IGSC_MAX_OEM_SN_LENGTH]);
+    EXPECT_EQ(strlen(oemSerialId.oemSerialId), static_cast<size_t>(IGSC_MAX_OEM_SN_LENGTH));
+    EXPECT_EQ('\0', oemSerialId.oemSerialId[IGSC_MAX_OEM_SN_LENGTH]);
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenEmptySerialNumberWhenRetrievingSerialNumberThenEmptyStringIsReturned) {
     pFwInterface->mockSerialNumberLen = 0;
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ('\0', oemSerialNumber.oemSerialNumber[0]);
+    EXPECT_EQ('\0', oemSerialId.oemSerialId[0]);
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithMultipleFieldsWhenRetrievingSerialNumberThenOnlyFirstFieldIsReturned) {
@@ -1916,12 +2012,12 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithMultipleF
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
 TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithControlCharactersWhenRetrievingSerialNumberThenStopsAtFirstControlChar) {
@@ -1935,12 +2031,12 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithControlCh
     }
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_oem_serial_number_exp_properties_t oemSerialNumber = {ZES_INTEL_OEM_SERIAL_NUMBER_EXP_PROPERTIES};
-    properties.pNext = &oemSerialNumber;
+    zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
+    properties.pNext = &oemSerialId;
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialNumber.oemSerialNumber));
+    EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
 } // namespace ult

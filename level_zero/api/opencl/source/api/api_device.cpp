@@ -14,12 +14,18 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/device/device.h"
 
 #include "CL/cl.h"
+
+namespace NEO {
+namespace LEO {
+
+extern "C" {
 
 cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                   cl_device_type deviceType,
@@ -49,19 +55,29 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         return tracingRetVal;
     }
 
-    if (numDevices) {
-        if (deviceType != CL_DEVICE_TYPE_GPU && deviceType != CL_DEVICE_TYPE_ALL && deviceType != CL_DEVICE_TYPE_DEFAULT) {
+    if ((deviceType & CL_DEVICE_TYPE_ALL) == CL_DEVICE_TYPE_ALL) {
+        deviceType = CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU |
+                     CL_DEVICE_TYPE_ACCELERATOR | CL_DEVICE_TYPE_DEFAULT;
+    }
+
+    const bool allGpusRequested = (deviceType & CL_DEVICE_TYPE_GPU) != 0;
+    const bool defaultGpuRequested = (deviceType & CL_DEVICE_TYPE_DEFAULT) != 0;
+    if (!allGpusRequested && !defaultGpuRequested) {
+        if (numDevices) {
             *numDevices = 0;
-            cl_int tracingRetVal = CL_DEVICE_NOT_FOUND;
-            TRACING_EXIT(ClGetDeviceIDs, &tracingRetVal);
-            return tracingRetVal;
-        } else {
-            *numDevices = deviceType == CL_DEVICE_TYPE_DEFAULT ? 1u : static_cast<cl_uint>(pPlatform->getDevices().size());
         }
+        cl_int tracingRetVal = CL_DEVICE_NOT_FOUND;
+        TRACING_EXIT(ClGetDeviceIDs, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    const auto numAvailableDevices = allGpusRequested ? static_cast<cl_uint>(pPlatform->getDevices().size()) : 1u;
+    if (numDevices) {
+        *numDevices = numAvailableDevices;
     }
 
     if (devices) {
-        auto numDevicesToReturn = deviceType == CL_DEVICE_TYPE_DEFAULT ? 1u : std::min(static_cast<cl_uint>(pPlatform->getDevices().size()), numEntries);
+        auto numDevicesToReturn = std::min(numAvailableDevices, numEntries);
         for (cl_uint i = 0; i < numDevicesToReturn; ++i) {
             devices[i] = pPlatform->getDevices()[i].get();
         }
@@ -95,7 +111,18 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
                                       cl_device_id *outDevices,
                                       cl_uint *numDevicesRet) {
     TRACING_ENTER(ClCreateSubDevices, &inDevice, &properties, &numDevices, &outDevices, &numDevicesRet);
-    cl_int tracingRetVal = CL_SUCCESS;
+    auto pInDevice = NEO::LEO::castToObject<NEO::LEO::ClDevice>(inDevice);
+    if (pInDevice == nullptr) [[unlikely]] {
+        cl_int tracingRetVal = CL_INVALID_DEVICE;
+        TRACING_EXIT(ClCreateSubDevices, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    if (numDevicesRet != nullptr) {
+        *numDevicesRet = 0;
+    }
+
+    cl_int tracingRetVal = CL_DEVICE_PARTITION_FAILED;
     TRACING_EXIT(ClCreateSubDevices, &tracingRetVal);
     return tracingRetVal;
 }
@@ -247,3 +274,8 @@ clSetPerformanceConfigurationINTEL(
     cl_uint *values) {
     return CL_INVALID_OPERATION;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

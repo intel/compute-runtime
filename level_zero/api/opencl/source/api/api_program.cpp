@@ -143,6 +143,7 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
                                                          const char *kernelNames,
                                                          cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateProgramWithBuiltInKernels, &context, &numDevices, &deviceList, &kernelNames, &errcodeRet);
+    ErrorCodeHelper err(errcodeRet, CL_INVALID_VALUE);
     cl_program tracingRetVal = nullptr;
     TRACING_EXIT(ClCreateProgramWithBuiltInKernels, &tracingRetVal);
     return tracingRetVal;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
@@ -32,7 +33,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetProperties(zes_perf_properties_
 ze_result_t LinuxPerformanceImp::getBaseScaleFactor() {
     auto result = pSysfsAccess->read(baseScale, baseScaleReading);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, baseScale.c_str(), getErrorCode(result));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, baseScale.c_str(), getErrorCode(result));
         return getErrorCode(result);
     }
     return ZE_RESULT_SUCCESS;
@@ -41,7 +42,7 @@ ze_result_t LinuxPerformanceImp::getBaseScaleFactor() {
 ze_result_t LinuxPerformanceImp::getMediaScaleFactor() {
     auto result = pSysfsAccess->read(mediaScale, mediaScaleReading);
     if (ZE_RESULT_SUCCESS != result) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, mediaScale.c_str(), getErrorCode(result));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, mediaScale.c_str(), getErrorCode(result));
         return getErrorCode(result);
     }
     return ZE_RESULT_SUCCESS;
@@ -57,7 +58,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
         result = pSysfsAccess->read(sysPwrBalance, sysPwrBalanceReading);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, sysPwrBalance.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sysPwrBalance.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         if (sysPwrBalanceReading >= 0 && sysPwrBalanceReading <= 16.0) {
@@ -71,7 +72,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
         result = pSysfsAccess->read(mediaFreqFactor, mediaFactorReading);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, mediaFreqFactor.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, mediaFreqFactor.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         multiplier = (mediaFactorReading * mediaScaleReading); // Value retrieved from media_freq_factor file is in U(fixed point decimal) format convert it into decimal by multiplication with scale factor
@@ -82,14 +83,14 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
         } else if (multiplier == 0) {
             *pFactor = minPerformanceFactor;
         } else {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): multiper:%d for MEDIA is not matching with given presets and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNKNOWN);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): multiper:%d for MEDIA is not matching with given presets and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNKNOWN);
             result = ZE_RESULT_ERROR_UNKNOWN;
         }
         break;
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
         result = pSysfsAccess->read(baseFreqFactor, baseFactorReading);
         if (ZE_RESULT_SUCCESS != result) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, baseFreqFactor.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, baseFreqFactor.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         multiplier = (baseFactorReading * baseScaleReading); // Value retrieved from base_freq_factor file is in U(fixed point decimal) format convert it into decimal by multiplication with scale factor
@@ -98,12 +99,12 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
         } else if (multiplier > 1 && multiplier <= 2) {
             *pFactor = (2 - multiplier) * 50;
         } else {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): multiper:%d for COMPUTE is not matching with given presets and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNKNOWN);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): multiper:%d for COMPUTE is not matching with given presets and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNKNOWN);
             result = ZE_RESULT_ERROR_UNKNOWN;
         }
         break;
     default:
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", NEO_FUNCTION_NAME);
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         break;
     }
@@ -158,7 +159,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
         result = pSysfsAccess->write(baseFreqFactor, multiplier);
         break;
     default:
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", NEO_FUNCTION_NAME);
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         break;
     }
@@ -170,13 +171,13 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
     switch (domain) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
         if (pSysfsAccess->canRead(sysPwrBalance) != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_OTHER returns false \n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_OTHER returns false \n", NEO_FUNCTION_NAME);
             return false;
         }
         break;
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
         if (pSysfsAccess->canRead(mediaFreqFactor) != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_MEDIA returns false \n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_MEDIA returns false \n", NEO_FUNCTION_NAME);
             return false;
         }
         if (getMediaScaleFactor() != ZE_RESULT_SUCCESS) {
@@ -185,7 +186,7 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
         break;
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
         if (pSysfsAccess->canRead(baseFreqFactor) != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_COMPUTE returns false \n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_COMPUTE returns false \n", NEO_FUNCTION_NAME);
             return false;
         }
         if (getBaseScaleFactor() != ZE_RESULT_SUCCESS) {

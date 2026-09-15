@@ -10,6 +10,7 @@
 #include "shared/source/aub/aub_subcapture.h"
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
 #include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/submission_status.h"
@@ -112,8 +113,9 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName) {
     if (aubManager) {
         if (!aubManager->isOpen()) {
+            AUBCommandStreamReceiver::createDirectoriesForFilePath(fileName);
             aubManager->open(fileName);
-            // This UNRECOVERABLE_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
+            // This UNRECOVERABLE_IF most probably means the AUB file could not be created - check the write permissions of the target directory
             UNRECOVERABLE_IF(!aubManager->isOpen());
 
             std::ostringstream str;

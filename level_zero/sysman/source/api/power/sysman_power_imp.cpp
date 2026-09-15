@@ -39,6 +39,10 @@ ze_result_t PowerImp::powerGetEnergyCounter(zes_power_energy_counter_t *pEnergy)
     return pOsPower->getEnergyCounter(pEnergy);
 }
 
+void PowerImp::reInit() {
+    pOsPower->reInit();
+}
+
 ze_result_t PowerImp::powerGetLimits(zes_power_sustained_limit_t *pSustained, zes_power_burst_limit_t *pBurst, zes_power_peak_limit_t *pPeak) {
     return pOsPower->getLimits(pSustained, pBurst, pPeak);
 }

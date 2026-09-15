@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     int eventAckIoctl(EventToAck &event) override;
     Module &getModule(uint64_t moduleHandle) override {
         auto connection = clientHandleToConnection[clientHandle].get();
-        DEBUG_BREAK_IF(connection->uuidToModule.find(moduleHandle) == connection->uuidToModule.end());
+        DEBUG_BREAK_IF(!connection->uuidToModule.contains(moduleHandle));
         return connection->uuidToModule[moduleHandle];
     }
 

@@ -18,7 +18,8 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/device_caps_reader_test_helper.h"
@@ -51,6 +52,7 @@ ProductHelperTest::ProductHelperTest() {
     productHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     compilerProductHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     releaseHelper = &executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
+    compilerReleaseHelper = &executionEnvironment->rootDeviceEnvironments[0]->getCompilerReleaseHelper();
 }
 
 ProductHelperTest::~ProductHelperTest() = default;
@@ -398,21 +400,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsSkippingStatefulInformation
     EXPECT_FALSE(productHelper->isSkippingStatefulInformationRequired(kernelDescriptor));
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isAdditionalMediaSamplerProgrammingRequired());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfInitialFlagsProgrammingIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isInitialFlagsProgrammingRequired());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfReturnedCmdSizeForMediaSamplerAdjustmentIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isReturnedCmdSizeForMediaSamplerAdjustmentRequired());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlWAIsRequiredThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->pipeControlWARequired(pInHwInfo));
@@ -457,11 +444,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfEuDebugPageFaultIsSuppo
     EXPECT_FALSE(productHelper->isEuDebugPageFaultSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupportedThenReturnFalse) {
-
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindDecompressionProbeAllowedThenReturnFalse, IsAtMostXeCore) {
 
     EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
@@ -485,18 +467,26 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfVmBindDecompressionPro
     EXPECT_FALSE(productHelper->isVmBindDecompressionProbeAllowed(pInHwInfo));
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithoutDebugFlagThenReturnFalse, IsNotBMG) {
-    EXPECT_FALSE(productHelper->isDeferBackingEnabled());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsDeferBackingEnabledCalledWithDebugFlagSetToOneThenReturnTrue, IsNotBMG) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferBacking.set(1);
-    EXPECT_TRUE(productHelper->isDeferBackingEnabled());
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsSupportedThenReturnFalse, IsAtMostXeHpgCore) {
     EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetCpuCopyThresholdThenReturnBaselineThresholds, IsNotBmgOrCri) {
+    EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::unknown));
+
+    EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToDeviceUsm));
+    EXPECT_EQ(128u, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostUsm));
+    EXPECT_EQ(1 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm));
+
+    EXPECT_EQ(50 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToDeviceUsm));
+    EXPECT_EQ(200 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToHostUsm));
+    EXPECT_EQ(500 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToHostNonUsm));
+
+    EXPECT_EQ(4 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm));
+    EXPECT_EQ(1 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToHostUsm));
+    EXPECT_EQ(1 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToHostNonUsm));
+
+    EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsSupportedForDebuggerThenReturnTrue, IsNotDG2) {
@@ -1064,12 +1054,6 @@ HWTEST_F(ProductHelperTest, givenBooleanUncachedWhenCallOverridePatIndexThenProp
     EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
 }
 
-HWTEST_F(ProductHelperTest, givenGmmUsageTypeWhenCallingGetGmmResourceUsageOverrideThenReturnNoOverride) {
-    constexpr uint32_t noOverride = GMM_RESOURCE_USAGE_UNKNOWN;
-    EXPECT_EQ(noOverride, productHelper->getGmmResourceUsageOverride(GMM_RESOURCE_USAGE_OCL_BUFFER));
-    EXPECT_EQ(noOverride, productHelper->getGmmResourceUsageOverride(GMM_RESOURCE_USAGE_XADAPTER_SHARED_RESOURCE));
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCorrectValueIsReturned) {
     EXPECT_EQ(releaseHelper->getSupportedNumGrfs(), productHelper->getSupportedNumGrfs(*releaseHelper));
 }
@@ -1141,10 +1125,6 @@ HWTEST_F(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreference
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
         EXPECT_FALSE(preferredAllocationMethod.has_value());
     }
-}
-
-HWTEST_F(ProductHelperTest, whenAskingForLocalDispatchSizeThenReturnEmpty) {
-    EXPECT_EQ(0u, productHelper->getSupportedLocalDispatchSizes(pInHwInfo).size());
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSupportThenFalseReturned) {
@@ -1334,6 +1314,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingPreferredWorkgroupCount
     EXPECT_EQ(0u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingDefaultMidthreadPreemptionDelayTimerThenZeroReturned) {
+    EXPECT_EQ(0u, productHelper->getDefaultMidthreadPreemptionDelayTimer());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
@@ -1400,6 +1384,26 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingIsRayTracingWalkerAdjus
     EXPECT_FALSE(productHelper->isRayTracingWalkerAdjustmentRequired());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned, IsNotCRI) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned, IsNotLeoSupported) {
     EXPECT_FALSE(productHelper->isLEOSupported());
+}
+
+HWTEST_F(ProductHelperTest, givenIsaSizeExceedingDefaultLimitWhenGettingIsaPrefetchSizeThenDefaultLimitIsReturned) {
+    constexpr uint32_t isaSize = 4 * MemoryConstants::kiloByte;
+
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(isaSize));
+}
+
+HWTEST_F(ProductHelperTest, givenIsaSizeSmallerThanDefaultLimitWhenGettingIsaPrefetchSizeThenIsaSizeIsReturned) {
+    constexpr uint32_t isaSize = MemoryConstants::kiloByte / 2;
+
+    EXPECT_EQ(isaSize, productHelper->getIsaPrefetchSize(isaSize));
+}
+
+HWTEST_F(ProductHelperTest, givenLimitIsaPrefetchSizeDebugFlagSetWhenGettingIsaPrefetchSizeThenDebugFlagValueLimitsIsaSize) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.LimitIsaPrefetchSize.set(2 * MemoryConstants::kiloByte);
+
+    EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte)));
 }

@@ -29,10 +29,10 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
+#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_fcl_facade.h"
@@ -89,7 +89,20 @@ std::string getCompilerOutputFileName(const std::string &fileName, const std::st
 }
 
 bool compilerOutputExists(const std::string &fileName, const std::string &type) {
-    return NEO::virtualFileList.find(getCompilerOutputFileName(fileName, type)) != NEO::virtualFileList.end();
+    return NEO::virtualFileList.contains(getCompilerOutputFileName(fileName, type));
+}
+
+template <typename Predicate>
+bool matchesKnownIrExtension(Predicate matches) {
+    return matches("bc") || matches("spv") || matches("pisa");
+}
+
+bool compilerIrOutputExists(const std::string &fileName) {
+    return matchesKnownIrExtension([&](const std::string &extension) { return compilerOutputExists(fileName, extension); });
+}
+
+bool isIrOutputFileName(const std::string &fileName) {
+    return matchesKnownIrExtension([&](const std::string &extension) { return fileName.find("." + extension) != std::string::npos; });
 }
 
 template <typename SectionHeaders>
@@ -156,7 +169,7 @@ TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsRe
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = pMultiCommand->outDirForBuilds + "/build_no_" + std::to_string(i + 1);
-        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerIrOutputExists(outFileName));
         EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
@@ -193,7 +206,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuc
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = "offline_compiler_test/build_no_" + std::to_string(i + 1);
-        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerIrOutputExists(outFileName));
         EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
@@ -244,7 +257,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = "offline_compiler_test/build_no_" + std::to_string(i + 1);
-        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerIrOutputExists(outFileName));
         EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
@@ -285,7 +298,7 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
 
     std::vector<std::string> singleArgs = {
         "-file",
-        clFiles + "ImANaughtyFile.cl",
+        "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -334,7 +347,7 @@ TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuc
 
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = pMultiCommand->outDirForBuilds + "/build_no_" + std::to_string(i + 1);
-        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerIrOutputExists(outFileName));
         EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
@@ -1267,7 +1280,7 @@ TEST_F(OfflineCompilerTests, givenDeviceAsPvcHexIdAndDeviceOptionsStricteForPvcO
                 exampleDevOptionsStr = "-options -ze-opt-large-register-file";
     const std::vector<std::string> argv = {
         "ocloc",
-        "-file", clFiles + "foo.spv",
+        "-file", "foo.spv",
         "-output_no_suffix",
         "-spirv_input",
         "-device_options", relevantAcronymStr, exampleDevOptionsStr,
@@ -1356,7 +1369,7 @@ TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLin
     const std::vector<std::string> argv = {
         "ocloc",
         "compile",
-        "-file", clFiles + "foo.spv",
+        "-file", "foo.spv",
         "-output_no_suffix",
         "-spirv_input",
         "-device_options", relevantAcronymStr, exampleDevOptionsStr,
@@ -2147,7 +2160,7 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
 
         OpenClCFeaturesContainer openclCFeatures;
         auto compilerProductHelper = CompilerProductHelper::create(mockOfflineCompiler->hwInfo.platform.eProductFamily);
-        getOpenclCFeaturesList(mockOfflineCompiler->hwInfo, openclCFeatures, *compilerProductHelper.get(), *mockOfflineCompiler->releaseHelper);
+        getOpenclCFeaturesList(mockOfflineCompiler->hwInfo, openclCFeatures);
         for (auto &feature : openclCFeatures) {
             if (clStdOptionValue == "-cl-std=CL3.0") {
                 EXPECT_TRUE(hasSubstr(internalOptions, std::string{feature.name}));
@@ -2182,7 +2195,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(compilerOutputExists("some_kernel", "bc") || compilerOutputExists("some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("some_kernel"));
     EXPECT_FALSE(compilerOutputExists("some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("some_kernel", "bin"));
 
@@ -2223,7 +2236,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(compilerOutputExists("some_kernel", "bc") || compilerOutputExists("some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("some_kernel"));
     EXPECT_FALSE(compilerOutputExists("some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("some_kernel", "bin"));
 
@@ -2264,7 +2277,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceIpVersionValueThenBu
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(compilerOutputExists("some_kernel", "bc") || compilerOutputExists("some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("some_kernel"));
     EXPECT_FALSE(compilerOutputExists("some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("some_kernel", "bin"));
 
@@ -2338,10 +2351,10 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
     uint8_t **dataOutputs = nullptr;
     char **nameOutputs = nullptr;
 
-    bool isSpvFile = false;
+    bool isIrFile = false;
     bool isGenFile = false;
     bool isBinFile = false;
-    std::string filePath = clFiles + "copybuffer.cl";
+    std::string filePath = "copybuffer.cl";
 
     const char *argv[] = {
         "ocloc",
@@ -2362,8 +2375,8 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
 
     for (unsigned int i = 0; i < numOutputs; i++) {
         std::string nameOutput(nameOutputs[i]);
-        if (nameOutput.find(".spv") != std::string::npos) {
-            isSpvFile = true;
+        if (isIrOutputFileName(nameOutput)) {
+            isIrFile = true;
         }
         if (nameOutput.find(".gen") != std::string::npos) {
             isGenFile = true;
@@ -2373,7 +2386,7 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
         }
     }
 
-    EXPECT_TRUE(isSpvFile);
+    EXPECT_TRUE(isIrFile);
     EXPECT_FALSE(isGenFile);
     EXPECT_TRUE(isBinFile);
 
@@ -2420,9 +2433,9 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
     uint64_t *lenOutputs = nullptr;
     uint8_t **dataOutputs = nullptr;
     char **nameOutputs = nullptr;
-    std::string filePath = clFiles + "copybuffer.cl";
+    std::string filePath = "copybuffer.cl";
 
-    bool isSpvFile = false;
+    bool isIrFile = false;
     bool isGenFile = false;
     bool isBinFile = false;
 
@@ -2446,8 +2459,8 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
 
     for (unsigned int i = 0; i < numOutputs; i++) {
         std::string nameOutput(nameOutputs[i]);
-        if (nameOutput.find(".spv") != std::string::npos) {
-            isSpvFile = true;
+        if (isIrOutputFileName(nameOutput)) {
+            isIrFile = true;
         }
         if (nameOutput.find(".gen") != std::string::npos) {
             isGenFile = true;
@@ -2457,7 +2470,7 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
         }
     }
 
-    EXPECT_TRUE(isSpvFile);
+    EXPECT_TRUE(isIrFile);
     EXPECT_TRUE(isGenFile);
     EXPECT_TRUE(isBinFile);
 
@@ -2542,7 +2555,7 @@ TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingThenBuildSucceeds) {
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(compilerOutputExists("some_kernel", "cpp"));
-    EXPECT_TRUE(compilerOutputExists("some_kernel", "bc") || compilerOutputExists("some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("some_kernel"));
     EXPECT_FALSE(compilerOutputExists("some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("some_kernel", "bin"));
 
@@ -2567,7 +2580,7 @@ TEST_F(OfflineCompilerTests, GivenOutputDirWhenBuildingThenBuildSucceeds) {
 
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/some_kernel", "bc") || compilerOutputExists("offline_compiler_test/some_kernel", "spv"));
+    EXPECT_TRUE(compilerIrOutputExists("offline_compiler_test/some_kernel"));
     EXPECT_FALSE(compilerOutputExists("offline_compiler_test/some_kernel", "gen"));
     EXPECT_TRUE(compilerOutputExists("offline_compiler_test/some_kernel", "bin"));
 
@@ -2591,7 +2604,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "ImANaughtyFile.cl",
+        "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2610,7 +2623,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFlagWhenBuildingThenInvalidCommandLineE
     std::vector<std::string> argv = {
         "ocloc",
         "-n",
-        clFiles + "ImANaughtyFile.cl",
+        "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2645,7 +2658,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLi
     std::vector<std::string> argvB = {
         "ocloc",
         "-file",
-        clFiles + "ImANaughtyFile.cl",
+        "ImANaughtyFile.cl",
         "-device"};
 
     capture.captureStdout();
@@ -2704,7 +2717,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    gEnvironment->SetInputFileName("invalid_file_name");
+    gEnvironment->setInvalidMockKernel();
 
     StreamCapture capture;
     capture.captureStdout();
@@ -2718,7 +2731,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
     std::string buildLog = pOfflineCompiler->getBuildLog();
     EXPECT_STRNE(buildLog.c_str(), "");
 
-    gEnvironment->SetInputFileName("copybuffer");
+    gEnvironment->setValidMockKernel();
 
     delete pOfflineCompiler;
 }
@@ -3065,6 +3078,61 @@ TEST(OfflineCompilerTest, givenErrorStringsWithExtraNullCharactersWhenUpdatingBu
 
     mockOfflineCompiler->updateBuildLog(additionalErrorMessageArray.data(), additionalErrorMessageArray.size());
     EXPECT_EQ(mockOfflineCompiler->getBuildLog(), expectedBuildLogString);
+}
+
+TEST(OfflineCompilerTest, givenDeviceNameWhenUpdatingMultilineBuildLogThenEveryNonEmptyLineIsPrefixed) {
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const std::string buildLog = "warning: first line\n\nwarning: second line\r\n\r\nerror: final line";
+    mockOfflineCompiler.updateBuildLog(buildLog.data(), buildLog.size(), "12.71.0");
+
+    EXPECT_EQ("[12.71.0] warning: first line\n\n[12.71.0] warning: second line\r\n\r\n[12.71.0] error: final line", mockOfflineCompiler.getBuildLog());
+}
+
+TEST(OfflineCompilerTest, givenDeviceNameAndTrailingNewlineAndNullCharactersWhenUpdatingBuildLogThenFormattingIsPreserved) {
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const std::array<char, sizeof("warning: first line\n\0")> buildLog = {"warning: first line\n\0"};
+    mockOfflineCompiler.updateBuildLog(buildLog.data(), buildLog.size(), "bmg");
+
+    EXPECT_EQ("[bmg] warning: first line\n", mockOfflineCompiler.getBuildLog());
+}
+
+TEST_F(OfflineCompilerTests, givenIgcBuildLogWhenBuildingSourceCodeThenEveryNonEmptyLineIsPrefixedWithTargetDevice) {
+    MockOfflineCompiler mockOfflineCompiler;
+    Source source{reinterpret_cast<const uint8_t *>(spirvMagic.data()), spirvMagic.size(), "some_file.spv"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler.argHelper)->inputs.push_back(source);
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "some_file.spv",
+        "-spirv_input",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    ASSERT_EQ(CL_SUCCESS, initResult);
+
+    char binary[] = {1, 2, 3, 4};
+    MockCompilerDebugVars igcDebugVars(gEnvironment->igcDebugVars);
+    igcDebugVars.binaryToReturn = binary;
+    igcDebugVars.binaryToReturnSize = sizeof(binary);
+    igcDebugVars.buildLogToReturn = "warning: first line\n\nwarning: second line";
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    const auto buildResult = mockOfflineCompiler.build();
+
+    std::string output = capture.getCapturedStdout();
+    EXPECT_STREQ("Compilation from IR - skipping loading of FCL\n", output.c_str());
+
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+
+    EXPECT_EQ(CL_SUCCESS, buildResult);
+    const std::string expectedLog = "[" + gEnvironment->devicePrefix + "] warning: first line\n\n[" + gEnvironment->devicePrefix + "] warning: second line";
+    EXPECT_EQ(expectedLog, mockOfflineCompiler.getBuildLog());
 }
 
 TEST(OfflineCompilerTest, givenValidSizeAndInvalidLogPointerWhenUpdatingBuildLogThenNothingIsWritten) {
@@ -3443,7 +3511,7 @@ TEST_F(OfflineCompilerTests, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTra
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "emptykernel.cl",
+        "emptykernel.cl",
         "-llvm_input",
         "-llvm_bc",
         "-device",
@@ -4100,7 +4168,9 @@ __kernel void shouldfail(global ushort *dst) {
 
         StreamCapture capture;
         capture.captureStdout();
+        gEnvironment->setInvalidMockKernel();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        gEnvironment->setValidMockKernel();
         EXPECT_NE(retVal, OCLOC_SUCCESS);
         std::string output = capture.getCapturedStdout();
         EXPECT_FALSE(output.find("Building with options:\n"
@@ -4125,7 +4195,9 @@ __kernel void shouldfail(global ushort *dst) {
 
         StreamCapture capture;
         capture.captureStdout();
+        gEnvironment->setInvalidMockKernel();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        gEnvironment->setValidMockKernel();
         EXPECT_NE(retVal, OCLOC_SUCCESS);
         std::string output = capture.getCapturedStdout();
         EXPECT_TRUE(output.find("Building with options:\n"
@@ -4154,7 +4226,9 @@ __kernel void shouldfail(global ushort *dst) {
 
         StreamCapture capture;
         capture.captureStdout();
+        gEnvironment->setInvalidMockKernel();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        gEnvironment->setValidMockKernel();
         EXPECT_NE(retVal, OCLOC_SUCCESS);
         std::string output = capture.getCapturedStdout();
         EXPECT_FALSE(output.find("Building with options:\n"
@@ -4248,17 +4322,13 @@ struct OfflineCompilerBindlessOptionsTests : public ::testing::Test {
         mockOfflineCompiler->deviceName = gEnvironment->devicePrefix;
         mockOfflineCompiler->initHardwareInfo(mockOfflineCompiler->deviceName);
         mockOfflineCompiler->internalOptions.clear();
-
-        releaseHelper = std::make_unique<MockReleaseHelper>();
     }
 
     std::unique_ptr<MockOfflineCompiler> mockOfflineCompiler;
-    std::unique_ptr<MockReleaseHelper> releaseHelper;
 };
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingEnabledWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreAddedToInternalOptions) {
-    releaseHelper->isBindlessAddressingDisabledResult = false;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    mockOfflineCompiler->hwInfo.caps.bindlessAddressingDisabled = false;
 
     auto internalOptions = mockOfflineCompiler->internalOptions;
     mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
@@ -4267,8 +4337,7 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingEnabledWhenAp
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessNotEnabledAddrModeSetWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
-    releaseHelper->isBindlessAddressingDisabledResult = false;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    mockOfflineCompiler->hwInfo.caps.bindlessAddressingDisabled = false;
     mockOfflineCompiler->addressingMode = "bindful";
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(false);
@@ -4283,8 +4352,7 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessNotEnabledAddrModeSetWh
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingDisabledWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
-    releaseHelper->isBindlessAddressingDisabledResult = true;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    mockOfflineCompiler->hwInfo.caps.bindlessAddressingDisabled = true;
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(false);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
@@ -4297,13 +4365,11 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingDisabledWhenA
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindfulModeWhenAppendExtraInternalOptionsThenErrorIsReturned) {
-    releaseHelper->isBindlessAddressingDisabledResult = true;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    mockOfflineCompiler->hwInfo.caps.bindlessAddressingDisabled = true;
     mockOfflineCompiler->addressingMode = "bindful";
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
     StreamCapture capture;
@@ -4319,12 +4385,10 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindful
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndDefaultModeWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreAdded) {
-    releaseHelper->isBindlessAddressingDisabledResult = true;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    mockOfflineCompiler->hwInfo.caps.bindlessAddressingDisabled = true;
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
     auto result = mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
@@ -4336,12 +4400,10 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndDefault
 }
 
 TEST_F(OfflineCompilerBindlessOptionsTests, givenForceBindlessRequiredAndBindlessAlreadyInInternalOptionsWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotDuplicated) {
-    releaseHelper->isBindlessAddressingDisabledResult = true;
-    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    mockOfflineCompiler->hwInfo.caps.bindlessAddressingDisabled = true;
 
     std::unique_ptr<CompilerProductHelper> backup = std::make_unique<MockCompilerProductHelperHeapless>(true);
     mockOfflineCompiler->compilerProductHelper.swap(backup);
-    static_cast<MockCompilerProductHelperHeapless *>(mockOfflineCompiler->compilerProductHelper.get())->isForceBindlessRequiredResult = true;
 
     std::string &internalOptions = mockOfflineCompiler->internalOptions;
     internalOptions = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-legacy-mode";
@@ -5661,10 +5723,8 @@ TEST(OfflineCompilerTest, GivenPathWithPermissionDeniedWhenCreatingDirectoryThen
 
 TEST_F(OfflineCompilerTests, givenOneApiPvcSendWarWaEnvSetToFalseWhenInitializingThenInternalOptionShouldContainInternalOption) {
 
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "0"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnvOneapiPvcSendWarWa.set(false);
 
     std::vector<std::string> argv = {
         "ocloc",

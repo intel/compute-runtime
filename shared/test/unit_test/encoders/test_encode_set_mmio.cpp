@@ -100,6 +100,39 @@ HWTEST_F(CommandSetMMIOTest, GivenCaptureIsProvidedWithCommandViewWhenProgrammin
     EXPECT_EQ(nullptr, cmdCaptureData.commandView);
 }
 
+HWTEST_F(CommandSetMMIOTest, GivenCaptureIsProvidedWithCommandViewAndNoopSpaceWhenProgrammingLriCommandThenLoadRegisterImmAndCommandViewProgrammedAreNooped) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    constexpr size_t bufferSize = 128;
+    alignas(4) uint8_t buffer[bufferSize];
+
+    alignas(4) uint8_t noopSpace[sizeof(MI_LOAD_REGISTER_IMM)];
+    memset(noopSpace, 0, sizeof(MI_LOAD_REGISTER_IMM));
+
+    LinearStream stream(buffer, bufferSize);
+
+    constexpr uint64_t gpuBase = 0x1A0000;
+    stream.setGpuBase(gpuBase);
+
+    EncodeCaptureCommandData cmdCaptureData = {};
+    cmdCaptureData.makeCommandView = true;
+    cmdCaptureData.noopSpace = true;
+
+    void *cmd = stream.getSpace(0);
+
+    EncodeSetMMIO<FamilyType>::encodeIMM(stream, 0x2000, 0xbaa, false, false, &cmdCaptureData);
+
+    EXPECT_EQ(cmd, cmdCaptureData.cpuBuffer);
+    EXPECT_EQ(gpuBase, cmdCaptureData.gpuAddress);
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), cmdCaptureData.cmdSize);
+    ASSERT_NE(nullptr, cmdCaptureData.commandView);
+
+    EXPECT_EQ(0, memcmp(noopSpace, cmdCaptureData.commandView, cmdCaptureData.cmdSize));
+    EXPECT_EQ(0, memcmp(noopSpace, cmdCaptureData.cpuBuffer, cmdCaptureData.cmdSize));
+
+    EncodeSetMMIO<FamilyType>::deallocateLoadRegisterImmCommand(cmdCaptureData.commandView);
+}
+
 HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterMemIsUsed) {
     EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x2000, 0xDEADBEEFCAF0, false);
 

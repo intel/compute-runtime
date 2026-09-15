@@ -24,11 +24,13 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -44,6 +46,15 @@ TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnv
     ExecutionEnvironment environment;
     EXPECT_EQ(0, environment.getRefInternalCount());
     EXPECT_EQ(0, environment.getRefApiCount());
+}
+
+TEST(ExecutionEnvironment, givenUsmReusePerfLoggerWhenRequestedMoreThanOnceThenTheSameInstanceIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+
+    auto &firstLogger = executionEnvironment.getUsmReusePerfLogger();
+    auto &secondLogger = executionEnvironment.getUsmReusePerfLogger();
+
+    EXPECT_EQ(&firstLogger, &secondLogger);
 }
 
 TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
@@ -232,11 +243,22 @@ TEST(RootDeviceEnvironment, givenDefaultHardwareInfoWhenPrepareDeviceEnvironment
     rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
     rootDeviceEnvironment->setRcsExposure();
     auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-    const auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
 
-    bool shouldRcsBeDisabled = releaseHelper.isRcsExposureDisabled();
+    bool shouldRcsBeDisabled = hwInfo->caps.rcsExposureDisabled;
     bool isRcsDisabled = hwInfo->featureTable.flags.ftrRcsNode;
     EXPECT_NE(shouldRcsBeDisabled, isRcsDisabled);
+}
+
+TEST(RootDeviceEnvironment, givenCompilerReleaseHelperWhenGetHelperForCompilerReleaseHelperIsCalledThenSameInstanceIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
+
+    auto mockCompilerReleaseHelper = std::make_unique<MockCompilerReleaseHelper>();
+    auto mockCompilerReleaseHelperPtr = mockCompilerReleaseHelper.get();
+    rootDeviceEnvironment->compilerReleaseHelper = std::move(mockCompilerReleaseHelper);
+
+    auto &compilerReleaseHelper = rootDeviceEnvironment->getHelper<CompilerReleaseHelper>();
+    EXPECT_EQ(mockCompilerReleaseHelperPtr, &compilerReleaseHelper);
 }
 
 TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {
@@ -432,7 +454,15 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     EXPECT_NE(0u, executionEnvironment.memoryManager->usmReuseInfo.getMaxAllocationsSavedForReuseSize());
 }
 
+namespace {
+struct UsmReusePerfLoggerMembers {
+    std::once_flag onceFlag;
+    std::unique_ptr<UsmReusePerfLogger> logger;
+};
+} // namespace
+
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManager>) +
+                                                  sizeof(UsmReusePerfLoggerMembers) +
                                                   sizeof(std::unique_ptr<DirectSubmissionController>) +
                                                   sizeof(std::unique_ptr<UnifiedMemoryReuseCleaner>) +
                                                   sizeof(std::unique_ptr<OsEnvironment>) +
@@ -440,14 +470,14 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>>) +
                                                   sizeof(std::unordered_map<std::thread::id, std::string>) +
                                                   2 * sizeof(std::mutex) +
-                                                  5 * sizeof(bool) +
+                                                  3 * sizeof(bool) +
                                                   sizeof(DeviceHierarchyMode) +
                                                   sizeof(DebuggingMode) +
                                                   sizeof(std::unordered_map<uint32_t, uint32_t>) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
                                                   sizeof(std::mutex) +
-                                                  (is64bit ? 19 : 15),
+                                                  (is64bit ? 21 : 13),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
@@ -612,18 +642,6 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
 
         EXPECT_EQ(expectedOsContextCount + expectedOsContextCountForCcs, MemoryManager::maxOsContextCount);
     }
-}
-
-TEST(ExecutionEnvironment, givenDefaultExecutionEnvironmentSettingsWhenCheckingFP64EmulationThenFP64EmulationIsDisabled) {
-    ExecutionEnvironment executionEnvironment{};
-    EXPECT_FALSE(executionEnvironment.isFP64EmulationEnabled());
-}
-
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSettingFP64EmulationEnabledThenFP64EmulationIsEnabled) {
-    ExecutionEnvironment executionEnvironment{};
-    ASSERT_FALSE(executionEnvironment.isFP64EmulationEnabled());
-    executionEnvironment.setFP64EmulationEnabled();
-    EXPECT_TRUE(executionEnvironment.isFP64EmulationEnabled());
 }
 
 TEST(ExecutionEnvironment, givenCorrectZeAffinityMaskWithFlatOrCombinedHierarchyThenMapOfSubDeviceIndicesIsSet) {

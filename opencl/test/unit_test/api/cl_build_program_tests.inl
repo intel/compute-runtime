@@ -280,50 +280,6 @@ TEST_F(ClBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(ClBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildFails) {
-    cl_program pProgram = nullptr;
-    cl_int binaryStatus = CL_SUCCESS;
-    unsigned char llvm[16] = "BC\xc0\xde_unique";
-    size_t binarySize = sizeof(llvm);
-
-    const unsigned char *binaries[1] = {llvm};
-    pProgram = clCreateProgramWithBinary(
-        pContext,
-        1,
-        &testedClDevice,
-        &binarySize,
-        binaries,
-        &binaryStatus,
-        &retVal);
-
-    EXPECT_NE(nullptr, pProgram);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    MockCompilerDebugVars igcDebugVars;
-    SProgramBinaryHeader progBin = {};
-    progBin.Magic = iOpenCL::MAGIC_CL;
-    progBin.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    progBin.Device = pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily;
-    progBin.GPUPointerSizeInBytes = sizeof(uintptr_t);
-    igcDebugVars.binaryToReturn = &progBin;
-    igcDebugVars.binaryToReturnSize = sizeof(progBin);
-    auto prevDebugVars = getIgcDebugVars();
-    setIgcDebugVars(igcDebugVars);
-    retVal = clBuildProgram(
-        pProgram,
-        1,
-        &testedClDevice,
-        "-x spir -spir-std=1.2",
-        nullptr,
-        nullptr);
-    setIgcDebugVars(prevDebugVars);
-
-    EXPECT_EQ(CL_INVALID_BINARY, retVal);
-
-    retVal = clReleaseProgram(pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
 TEST_F(ClBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgramErrorIsReturned) {
     retVal = clBuildProgram(
         nullptr,

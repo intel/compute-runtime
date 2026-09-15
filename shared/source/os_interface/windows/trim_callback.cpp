@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -86,7 +87,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
                 wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
 
-                DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", osContext.getLastTrimFenceValue());
+                DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "lastPeriodicTrimFenceValue = ", osContext.getLastTrimFenceValue());
 
                 if (osContext.wasAllocationUsedSinceLastTrim(wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId)) ||
                     wddmAllocation->isAlwaysResident(osContextId) ||
@@ -103,7 +104,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
                         AllocationStorageData &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId];
                         if (!osContext.wasAllocationUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId)) && fragmentStorageData.residency->resident[osContextId]) {
                             auto osHandle = static_cast<OsHandleWin *>(wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage);
-                            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict fragment: handle =", osHandle->handle, "lastFence =",
+                            DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict fragment: handle =", osHandle->handle, "lastFence =",
                                     wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId));
 
                             handlesToEvict.push_back(static_cast<OsHandleWin *>(fragmentStorageData.osHandleStorage)->handle);
@@ -112,7 +113,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
                     }
                 }
 
-                DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
+                DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
                 wddmAllocation->getResidencyData().resident[osContextId] = false;
 
                 allocationsToRemove.push_back(wddmAllocation);
@@ -145,7 +146,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
         this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
             auto osContext = static_cast<NEO::OsContextWin *>(engine.osContext);
             osContext->updateLastTrimFenceValue();
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", osContext->getLastTrimFenceValue());
+            DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "updated lastPeriodicTrimFenceValue =", osContext->getLastTrimFenceValue());
         });
     }
 
@@ -203,7 +204,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
                     }
                 }
             }
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
+            DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
 
             if (sizeEvicted >= numberOfBytesToTrim) {
                 numberOfBytesToTrim = 0;

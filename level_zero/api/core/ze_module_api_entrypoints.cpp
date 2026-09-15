@@ -271,6 +271,37 @@ ze_result_t ZE_APICALL zeKernelGetAllocationPropertiesExp(
     ze_kernel_allocation_exp_properties_t *pAllocationProperties) {
     return L0::Kernel::fromHandle(hKernel)->getAllocationProperties(pCount, pAllocationProperties);
 }
+
+ze_result_t ZE_APICALL
+zeModuleGetDeviceHandle(
+    ze_module_handle_t hModule,
+    ze_device_handle_t *phDevice) {
+    auto module = L0::Module::fromHandle(hModule);
+    if (nullptr == module) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    if (nullptr == phDevice) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    *phDevice = module->getDevice()->toHandle();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ZE_APICALL
+zeKernelGetModuleHandle(
+    ze_kernel_handle_t hKernel,
+    ze_module_handle_t *phModule) {
+    auto kernel = L0::Kernel::fromHandle(hKernel);
+    if (nullptr == kernel) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    if (nullptr == phModule) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    *phModule = kernel->getModule()->toHandle();
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -578,6 +609,20 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelGetAllocationPropertiesExp(
     uint32_t *pCount,
     ze_kernel_allocation_exp_properties_t *pAllocationProperties) {
     return L0::zeKernelGetAllocationPropertiesExp(hKernel, pCount, pAllocationProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeModuleGetDeviceHandle(
+    ze_module_handle_t hModule,
+    ze_device_handle_t *phDevice) {
+    return L0::zeModuleGetDeviceHandle(hModule, phDevice);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetModuleHandle(
+    ze_kernel_handle_t hKernel,
+    ze_module_handle_t *phModule) {
+    return L0::zeKernelGetModuleHandle(hKernel, phModule);
 }
 
 } // extern "C"

@@ -1,0 +1,36 @@
+/*
+ * Copyright (C) 2025-2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper_base.inl"
+#include "shared/source/xe3p_core/hw_cmds_base.h"
+
+#include "release_definitions.h"
+
+namespace NEO {
+constexpr auto release = ReleaseType::release3511;
+template <>
+const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
+    return {32u, 64u, 96u, 128u, 160u, 192u, 256u, 512u};
+}
+
+template <>
+uint32_t ReleaseHelperHw<release>::adjustMaxThreadsPerEuCount([[maybe_unused]] uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
+    return 512u == grfCount ? 4u : 8u;
+}
+
+template <>
+uint64_t ReleaseHelperHw<release>::getTotalMemBankSize() const {
+    return 8ull * MemoryConstants::gigaByte;
+}
+
+} // namespace NEO
+
+#include "shared/source/release_helpers/release_helper/release_helper_common_xe3_and_later.inl"
+#include "shared/source/release_helpers/release_helper/release_helper_common_xe3p.inl"
+#include "shared/source/release_helpers/release_helper/release_helper_preferred_slm_xe3p_cri_384k.inl"
+template class NEO::ReleaseHelperHw<NEO::release>;

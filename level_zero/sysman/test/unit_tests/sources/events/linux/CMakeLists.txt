@@ -22,4 +22,11 @@ if(UNIX)
                    ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_events_netlink.cpp
     )
   endif()
+
+  if(LIBTRACEFS_FOUND)
+    target_sources(${TARGET_NAME}
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_events_info_log.cpp
+    )
+  endif()
 endif()

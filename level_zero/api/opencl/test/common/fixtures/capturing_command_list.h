@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list_args.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
 #include <cstdint>
@@ -20,11 +21,14 @@ namespace NEO {
 namespace LEO {
 namespace ult {
 
-#define LEO_CAPTURED_APIS(MACRO)                              \
-    MACRO(appendMemoryCopy, AppendMemoryCopyArgs)             \
-    MACRO(appendMemoryCopyRegion, AppendMemoryCopyRegionArgs) \
-    MACRO(appendMemoryFill, AppendMemoryFillArgs)             \
-    MACRO(appendBarrier, AppendBarrierArgs)                   \
+#define LEO_CAPTURED_APIS(MACRO)                                          \
+    MACRO(appendMemoryCopy, AppendMemoryCopyArgs)                         \
+    MACRO(appendMemoryCopyRegion, AppendMemoryCopyRegionArgs)             \
+    MACRO(appendMemoryFill, AppendMemoryFillArgs)                         \
+    MACRO(appendImageCopyFromMemoryExt, AppendImageCopyFromMemoryExtArgs) \
+    MACRO(appendBarrier, AppendBarrierArgs)                               \
+    MACRO(appendHostFunction, AppendHostFunctionArgs)                     \
+    MACRO(appendCommandLists, AppendCommandListsArgs)                     \
     MACRO(hostSynchronize, HostSynchronizeArgs)
 
 enum class ApiId : uint32_t {
@@ -94,11 +98,43 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
                       result);
     }
 
+    ze_result_t appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage, const void *srcptr,
+                                             const ze_image_region_t *pDstRegion, uint32_t srcRowPitch,
+                                             uint32_t srcSlicePitch, ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents, L0::CmdListMemoryCopyParams &memoryCopyParams) override {
+        return record(this->appendImageCopyFromMemoryExtArgs, ApiId::appendImageCopyFromMemoryExt,
+                      AppendImageCopyFromMemoryExtArgs{hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents},
+                      appendImageCopyFromMemoryExtResult);
+    }
+
+    ze_result_t appendImageCopyFromMemoryExtResult = ZE_RESULT_SUCCESS;
+
+    bool completeSignalEventOnAppendBarrier = false;
+
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
-        auto result = BaseClass::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+                              ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters) override {
+        auto result = BaseClass::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+        if (this->completeSignalEventOnAppendBarrier && (hSignalEvent != nullptr) && (result == ZE_RESULT_SUCCESS)) {
+            result = L0::Event::fromHandle(hSignalEvent)->hostSignal(false);
+        }
         return record(this->appendBarrierArgs, ApiId::appendBarrier,
-                      AppendBarrierArgs{hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch}, result);
+                      AppendBarrierArgs{hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters}, result);
+    }
+
+    ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, const void *pNext,
+                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                   L0::CmdListHostFunctionParameters &parameters) override {
+        auto result = BaseClass::appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
+        return record(this->appendHostFunctionArgs, ApiId::appendHostFunction,
+                      AppendHostFunctionArgs{pHostFunction, pUserData, hSignalEvent, numWaitEvents, phWaitEvents}, result);
+    }
+
+    ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
+                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                   L0::CommandListExecutionInternalOptions &internalOptions) override {
+        auto result = BaseClass::appendCommandLists(numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
+        return record(this->appendCommandListsArgs, ApiId::appendCommandLists,
+                      AppendCommandListsArgs{numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents}, result);
     }
 
     ze_result_t hostSynchronize(uint64_t timeout) override {

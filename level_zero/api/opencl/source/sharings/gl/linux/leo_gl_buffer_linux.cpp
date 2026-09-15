@@ -149,6 +149,7 @@ void GlBuffer::resolveGraphicsAllocationChange(osHandle currentSharedHandle, Upd
 
         if (updateData->synchronizationStatus == SynchronizeStatus::ACQUIRE_SUCCESFUL) {
             memObject->getGraphicsAllocation(updateData->rootDeviceIndex)->setAllocationOffset(bufferInfo->bufferOffset);
+            memObject->refreshDeviceAddress(updateData->rootDeviceIndex);
         }
     }
 }

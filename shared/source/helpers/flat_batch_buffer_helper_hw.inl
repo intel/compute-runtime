@@ -158,7 +158,7 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
 
     uint64_t stiCommandOffset = 0;
     std::vector<PatchInfoData> patchInfoCopy = patchInfoCollection;
-    auto buffer = std::make_unique<char[]>(indirectPatchCommandsSize);
+    auto buffer = std::make_unique_for_overwrite<char[]>(indirectPatchCommandsSize);
     LinearStream indirectPatchCommandStream(buffer.get(), indirectPatchCommandsSize);
     patchInfoCollection.clear();
 

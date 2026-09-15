@@ -41,15 +41,6 @@ ze_result_t ZE_APICALL zeEventPoolOpenIpcHandle(
 ze_result_t ZE_APICALL zeEventPoolCloseIpcHandle(
     ze_event_pool_handle_t hEventPool);
 
-ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
-    ze_command_list_handle_t hCommandList,
-    ze_event_handle_t hEvent);
-
-ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
-    ze_command_list_handle_t hCommandList,
-    uint32_t numEvents,
-    ze_event_handle_t *phEvents);
-
 ze_result_t ZE_APICALL zeEventHostSignal(
     ze_event_handle_t hEvent);
 
@@ -58,10 +49,6 @@ ze_result_t ZE_APICALL zeEventHostSynchronize(
     uint64_t timeout);
 
 ze_result_t ZE_APICALL zeEventQueryStatus(
-    ze_event_handle_t hEvent);
-
-ze_result_t ZE_APICALL zeCommandListAppendEventReset(
-    ze_command_list_handle_t hCommandList,
     ze_event_handle_t hEvent);
 
 ze_result_t ZE_APICALL zeEventHostReset(
@@ -162,15 +149,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeEventPoolOpenIpcHandle(
 ZE_APIEXPORT ze_result_t ZE_APICALL zeEventPoolCloseIpcHandle(
     ze_event_pool_handle_t hEventPool);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
-    ze_command_list_handle_t hCommandList,
-    ze_event_handle_t hEvent);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
-    ze_command_list_handle_t hCommandList,
-    uint32_t numEvents,
-    ze_event_handle_t *phEvents);
-
 ZE_APIEXPORT ze_result_t ZE_APICALL zeEventHostSignal(
     ze_event_handle_t hEvent);
 
@@ -179,10 +157,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeEventHostSynchronize(
     uint64_t timeout);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeEventQueryStatus(
-    ze_event_handle_t hEvent);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendEventReset(
-    ze_command_list_handle_t hCommandList,
     ze_event_handle_t hEvent);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeEventHostReset(

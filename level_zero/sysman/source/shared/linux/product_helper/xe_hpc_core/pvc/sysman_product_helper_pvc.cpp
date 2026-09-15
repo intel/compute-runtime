@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
@@ -152,7 +153,7 @@ ze_result_t getVFIDString(std::map<std::string, uint64_t> keyOffsetMap, std::str
     std::string key = "VF0_VFID";
     ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, vf0VfIdVal);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF0_VFID is returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF0_VFID is returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -160,13 +161,13 @@ ze_result_t getVFIDString(std::map<std::string, uint64_t> keyOffsetMap, std::str
     key = "VF1_VFID";
     result = PlatformMonitoringTech::readValue(std::move(keyOffsetMap), telemDir, key, telemOffset, vf1VfIdVal);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
     if (((vf0VfIdVal == 0) && (vf1VfIdVal == 0)) ||
         ((vf0VfIdVal > 0) && (vf1VfIdVal > 0))) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() VF0 returning 0x%x and VF1 returning 0x%x as both should not be the same \n", __FUNCTION__, vf0VfIdVal, vf1VfIdVal);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() VF0 returning 0x%x and VF1 returning 0x%x as both should not be the same \n", NEO_FUNCTION_NAME, vf0VfIdVal, vf1VfIdVal);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -189,7 +190,7 @@ ze_result_t getHBMBandwidth(std::map<std::string, uint64_t> keyOffsetMap, zes_me
     std::string vfId = "";
     result = getVFIDString(keyOffsetMap, vfId, telemDir, telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -198,7 +199,7 @@ ze_result_t getHBMBandwidth(std::map<std::string, uint64_t> keyOffsetMap, zes_me
         std::string readCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_READ";
         ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, counterValue);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
         pBandwidth->readCounter += counterValue;
@@ -207,7 +208,7 @@ ze_result_t getHBMBandwidth(std::map<std::string, uint64_t> keyOffsetMap, zes_me
         std::string writeCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_WRITE";
         result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, writeCounterKey, telemOffset, counterValue);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
         pBandwidth->writeCounter += counterValue;
@@ -260,7 +261,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     std::string vfId = "";
     result = getVFIDString(keyOffsetMap, vfId, telemDir, telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -268,7 +269,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     std::string readCounterKey = vfId + "_HBM_READ_L";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, readCounterL);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterL returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterL returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -276,7 +277,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     readCounterKey = vfId + "_HBM_READ_H";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, readCounterH);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterH returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterH returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -289,7 +290,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     std::string writeCounterKey = vfId + "_HBM_WRITE_L";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, writeCounterKey, telemOffset, writeCounterL);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterL returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterL returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -297,7 +298,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     writeCounterKey = vfId + "_HBM_WRITE_H";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, writeCounterKey, telemOffset, writeCounterH);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterH returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterH returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
@@ -365,7 +366,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     std::string key("TileMaxTemperature");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, globalMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for TileMaxTemperature returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for TileMaxTemperature returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     *pTemperature = static_cast<double>(globalMaxTemperature);
@@ -395,7 +396,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
     std::string key("GTMaxTemperature");
     result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, gpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for GTMaxTemperature returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for GTMaxTemperature returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     *pTemperature = static_cast<double>(gpuMaxTemperature);
@@ -428,7 +429,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
         std::string key = "HBM" + std::to_string(hbmModuleIndex) + "MaxDeviceTemperature";
         ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, maxDeviceTemperature);
         if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for %s returning error:0x%x \n", __FUNCTION__, key.c_str(), result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for %s returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
             return result;
         }
         maxDeviceTemperatureList.push_back(maxDeviceTemperature);

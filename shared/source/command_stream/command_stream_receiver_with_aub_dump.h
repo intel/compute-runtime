@@ -20,6 +20,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
 
   public:
     using BaseCSR::pollForCompletion;
+    using BaseCSR::waitForTaskCountWithKmdNotifyFallback;
     using BaseCSR::writeMemory;
 
     CommandStreamReceiverWithAUBDump(const std::string &baseName,

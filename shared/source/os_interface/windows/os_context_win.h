@@ -10,6 +10,8 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 
+#include <mutex>
+
 namespace NEO {
 
 class Wddm;
@@ -19,6 +21,14 @@ struct HardwareQueue {
     D3DKMT_HANDLE progressFenceHandle = 0;
     VOID *progressFenceCpuVA = nullptr;
     D3DGPU_VIRTUAL_ADDRESS progressFenceGpuVA = 0;
+};
+
+struct MonitoredFenceKmdWaitData {
+    // An asynchronous KMD wait can outlive the API timeout, so keep its event across calls.
+    // The mutex prevents resetting or closing the event while another thread is waiting.
+    std::mutex mutex;
+    HANDLE eventHandle = nullptr;
+    uint64_t pendingFenceValue = 0;
 };
 
 class OsContextWin : public OsContext {
@@ -37,6 +47,8 @@ class OsContextWin : public OsContext {
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController();
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     MonitoredFence &getMonitoredFence() { return monitoredFence; }
+    MonitoredFenceKmdWaitData &getMonitoredFenceKmdWaitData() { return monitoredFenceKmdWaitData; }
+    void releaseMonitoredFenceKmdWaitEvent();
     void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
     bool wasAllocationUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue > lastTrimFenceValue; }
     void updateLastTrimFenceValue() { lastTrimFenceValue = *monitoredFence.cpuAddress; }
@@ -59,6 +71,7 @@ class OsContextWin : public OsContext {
     HardwareQueue hardwareQueue;
 
     MonitoredFence monitoredFence = {};
+    MonitoredFenceKmdWaitData monitoredFenceKmdWaitData;
     uint64_t lastTrimFenceValue = 0u;
 
     Wddm &wddm;

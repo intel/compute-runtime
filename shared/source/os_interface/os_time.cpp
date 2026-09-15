@@ -42,6 +42,16 @@ void DeviceTime::setDeviceTimerResolution() {
     }
 }
 
+void DeviceTime::initTimestampPtr() {
+    if (!debugManager.flags.EnableTimestampMmioRead.getIfNotDefault(false)) {
+        return;
+    }
+
+    timestampPtr = getTimestampPtr();
+
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using timestamp pointer: %d\n", isTimestampPtrAvailable());
+}
+
 bool DeviceTime::isTimestampsRefreshEnabled() const {
     bool timestampsRefreshEnabled = true;
     if (debugManager.flags.EnableReusingGpuTimestamps.get() != -1) {
@@ -59,6 +69,12 @@ bool DeviceTime::isTimestampsRefreshEnabled() const {
  * @return returns appropriate error if internal call to KMD failed. SUCCESS otherwise.
  */
 TimeQueryStatus DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall) {
+    if (timestampPtr) [[unlikely]] {
+        timeStamp->gpuTimeStamp = *timestampPtr;
+        osTime->getCpuTime(&timeStamp->cpuTimeinNS);
+        return TimeQueryStatus::success;
+    }
+
     uint64_t cpuTimeinNS;
     osTime->getCpuTime(&cpuTimeinNS);
 

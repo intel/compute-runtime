@@ -11,7 +11,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
@@ -1312,8 +1312,8 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
             cmdIterator++;
         }
     }
-    const auto &releaseHelper = pDevice->getReleaseHelper();
-    if (releaseHelper.isDummyBlitWaRequired()) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    if (hwInfo.caps.dummyBlitWaRequired) {
         UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
     }
     auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));

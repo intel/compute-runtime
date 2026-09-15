@@ -17,6 +17,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -24,10 +25,237 @@
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 
+#include <algorithm>
+
 using DirectSubmissionTest = Test<DirectSubmissionFixture>;
+
+struct DirectSubmissionLocalMemoryFixture : DirectSubmissionFixture {
+    void setUp() {
+        this->debugRestore = std::make_unique<DebugManagerStateRestore>();
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.DirectSubmissionSemaphorePlacement.set(0);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(0);
+        DirectSubmissionFixture::setUp();
+        this->productHelper = std::make_unique<RAIIProductHelperFactory<MockProductHelper>>(*this->pDevice->getExecutionEnvironment()->rootDeviceEnvironments[this->pDevice->getRootDeviceIndex()]);
+        this->productHelper->mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    }
+
+    void tearDown() {
+        this->productHelper.reset();
+        DirectSubmissionFixture::tearDown();
+        this->debugRestore.reset();
+    }
+
+    std::unique_ptr<DebugManagerStateRestore> debugRestore;
+    std::unique_ptr<RAIIProductHelperFactory<MockProductHelper>> productHelper;
+};
+
+using DirectSubmissionSemaphorePoolTest = Test<DirectSubmissionLocalMemoryFixture>;
+using DirectSubmissionRingSizeTest = Test<DirectSubmissionLocalMemoryFixture>;
+
+HWTEST_F(DirectSubmissionRingSizeTest, givenRingPlacementAndAlignmentPolicyWhenInitializingThenUsableSizeFitsStandaloneAllocation) {
+    auto memoryManager = static_cast<MockMemoryManager *>(this->pDevice->getMemoryManager());
+    VariableBackup localMemorySupportBackup{&memoryManager->localMemorySupported};
+    for (auto localMemorySupported : {false, true}) {
+        memoryManager->localMemorySupported[this->rootDeviceIndex] = localMemorySupported;
+        for (auto alignTo2MB : {false, true}) {
+            this->productHelper->mockProductHelper->is2MBLocalMemAlignmentEnabledResult = alignTo2MB;
+            for (auto useSystemMemory : {false, true}) {
+                debugManager.flags.DirectSubmissionBufferPlacement.set(useSystemMemory ? 1 : 0);
+                auto checkRingSize = [&]<typename Dispatcher>() {
+                    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*this->pDevice->getDefaultEngine().commandStreamReceiver);
+                    ASSERT_TRUE(directSubmission.initialize(false));
+                    const auto useLocalMemory = localMemorySupported && !useSystemMemory;
+                    const auto expectedUsableSize = alignTo2MB && useLocalMemory ? MemoryConstants::pageSize2M - MemoryConstants::pageSize : 256 * MemoryConstants::kiloByte;
+                    const auto expectedAllocationSize = alignUp(expectedUsableSize + MemoryConstants::pageSize, MemoryConstants::pageSize64k);
+                    EXPECT_EQ(expectedUsableSize, directSubmission.ringCommandStream.getMaxAvailableSpace());
+                    for (auto &ring : directSubmission.ringBuffers) {
+                        EXPECT_FALSE(ring.ringBuffer->isView());
+                        EXPECT_EQ(useLocalMemory, ring.ringBuffer->isAllocatedInLocalMemoryPool());
+                        EXPECT_EQ(expectedAllocationSize, ring.ringBuffer->getUnderlyingBufferSize());
+                    }
+                };
+                checkRingSize.template operator()<RenderDispatcher<FamilyType>>();
+                checkRingSize.template operator()<BlitterDispatcher<FamilyType>>();
+            }
+        }
+    }
+}
+
+HWTEST_F(DirectSubmissionRingSizeTest, givenLargeRingWhenFillingBeyond256KBAndSwitchingThenInitialAndAsyncRingsRetainUsableSize) {
+    debugManager.flags.DirectSubmissionBufferPlacement.set(0);
+    this->pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*this->pDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(true));
+    directSubmission.isCompletedReturn = true;
+    const auto initialRingBufferCount = directSubmission.ringBuffers.size();
+
+    const auto usableSize = MemoryConstants::pageSize2M - MemoryConstants::pageSize;
+    for (auto ringIndex = 0u; ringIndex < 3u; ringIndex++) {
+        auto ring = directSubmission.ringCommandStream.getGraphicsAllocation();
+        ASSERT_EQ(MemoryConstants::pageSize2M, ring->getUnderlyingBufferSize());
+        EXPECT_EQ(usableSize, directSubmission.ringCommandStream.getMaxAvailableSpace());
+        auto tail = ptrOffset(ring->getUnderlyingBuffer(), usableSize);
+        memset(tail, 0x5a, MemoryConstants::pageSize);
+
+        const auto remainingSpace = directSubmission.getSizeSwitchRingBufferSection() + directSubmission.getSizeEnd(false);
+        auto bytesToFill = directSubmission.ringCommandStream.getAvailableSpace() - remainingSpace;
+        memset(directSubmission.ringCommandStream.getSpace(bytesToFill), 0, bytesToFill);
+        EXPECT_GT(directSubmission.ringCommandStream.getUsed(), 256 * MemoryConstants::kiloByte);
+        directSubmission.switchRingBuffersNeeded(remainingSpace, nullptr);
+        EXPECT_EQ(ring, directSubmission.ringCommandStream.getGraphicsAllocation());
+        directSubmission.switchRingBuffersNeeded(remainingSpace + 1, nullptr);
+        EXPECT_NE(ring, directSubmission.ringCommandStream.getGraphicsAllocation());
+        EXPECT_EQ(usableSize, directSubmission.ringCommandStream.getMaxAvailableSpace());
+        EXPECT_TRUE(std::all_of(static_cast<uint8_t *>(tail), ptrOffset(static_cast<uint8_t *>(tail), MemoryConstants::pageSize), [](uint8_t value) { return value == 0x5a; }));
+    }
+    EXPECT_GT(directSubmission.fetchAsyncRingBufferCalled, 0u);
+    EXPECT_GT(directSubmission.ringBuffers.size(), initialRingBufferCount);
+}
+
+HWTEST_F(DirectSubmissionRingSizeTest, givenLocalRingWhenSwitchingToAsyncSystemMemoryRingThenStreamCapacityMatchesNewAllocation) {
+    debugManager.flags.DirectSubmissionBufferPlacement.set(0);
+    this->pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*this->pDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    directSubmission.isCompletedReturn = true;
+    EXPECT_EQ(MemoryConstants::pageSize2M - MemoryConstants::pageSize, directSubmission.ringCommandStream.getMaxAvailableSpace());
+
+    debugManager.flags.DirectSubmissionBufferPlacement.set(1);
+    for (auto switchIndex = 0u; switchIndex < 2u; switchIndex++) {
+        directSubmission.switchRingBuffersNeeded(directSubmission.ringCommandStream.getAvailableSpace() + 1, nullptr);
+    }
+    EXPECT_GT(directSubmission.fetchAsyncRingBufferCalled, 0u);
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(directSubmission.ringCommandStream.getGraphicsAllocation()->getMemoryPool()));
+    EXPECT_EQ(256 * MemoryConstants::kiloByte, directSubmission.ringCommandStream.getMaxAvailableSpace());
+}
+
+HWTEST_F(DirectSubmissionSemaphorePoolTest, givenLocalSemaphoresWhenInitializingMultipleDirectSubmissionsThenSeparateViewsShareDevicePool) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> first(*pDevice->getDefaultEngine().commandStreamReceiver);
+    MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> second(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    ASSERT_TRUE(first.initialize(false));
+    first.semaphoreData->queueWorkCount = 123u;
+    ASSERT_TRUE(second.initialize(false));
+
+    ASSERT_TRUE(first.semaphores->isView());
+    ASSERT_TRUE(second.semaphores->isView());
+    auto parent = first.semaphores->getParentAllocation();
+    EXPECT_EQ(parent, second.semaphores->getParentAllocation());
+    EXPECT_TRUE(pDevice->getSemaphorePoolAllocator().isPoolBuffer(parent));
+    EXPECT_EQ(MemoryPool::localMemory, parent->getMemoryPool());
+    EXPECT_EQ(SemaphorePoolTraits::defaultPoolSize, parent->getUnderlyingBufferSize());
+    EXPECT_EQ(AllocationType::semaphoreBuffer, parent->getAllocationType());
+    EXPECT_EQ(pDevice->getRootDeviceIndex(), parent->getRootDeviceIndex());
+    EXPECT_EQ(pDevice->getDeviceBitfield(), parent->storageInfo.subDeviceBitfield);
+
+    for (auto allocation : {first.semaphores, second.semaphores}) {
+        EXPECT_EQ(MemoryConstants::pageSize, allocation->getUnderlyingBufferSize());
+        EXPECT_EQ(parent->getGpuAddress() + allocation->getOffsetInParent(), allocation->getGpuAddress());
+        EXPECT_EQ(ptrOffset(parent->getUnderlyingBuffer(), allocation->getOffsetInParent()), allocation->getUnderlyingBuffer());
+    }
+    EXPECT_NE(first.semaphoreGpuVa, second.semaphoreGpuVa);
+    EXPECT_EQ(first.semaphores->getGpuAddress(), first.semaphoreGpuVa);
+    EXPECT_EQ(second.semaphores->getGpuAddress(), second.semaphoreGpuVa);
+    EXPECT_EQ(123u, first.semaphoreData->queueWorkCount);
+    EXPECT_EQ(0u, second.semaphoreData->queueWorkCount);
+}
+
+HWTEST_F(DirectSubmissionSemaphorePoolTest, givenPlatformWithout2MBAlignmentWhenInitializingDirectSubmissionThenSemaphoreIsNotPooled) {
+    productHelper->mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    ASSERT_TRUE(directSubmission.initialize(false));
+    EXPECT_FALSE(directSubmission.semaphores->isView());
+    EXPECT_EQ(MemoryPool::localMemory, directSubmission.semaphores->getMemoryPool());
+}
+
+HWTEST_F(DirectSubmissionSemaphorePoolTest, givenSystemMemoryPlacementWhenInitializingDirectSubmissionThenSemaphoreIsNotPooled) {
+    debugManager.flags.DirectSubmissionSemaphorePlacement.set(1);
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    ASSERT_TRUE(directSubmission.initialize(false));
+    EXPECT_FALSE(directSubmission.semaphores->isView());
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(directSubmission.semaphores->getMemoryPool()));
+}
+
+HWTEST_F(DirectSubmissionSemaphorePoolTest, givenSemaphoreAllocationOutsideDirectSubmissionWhenAllocatingThenAllocationIsNotPooled) {
+    AllocationProperties properties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize,
+                                    AllocationType::semaphoreBuffer, pDevice->getDeviceBitfield()};
+    auto allocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_FALSE(allocation->isView());
+    pDevice->getMemoryManager()->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(DirectSubmissionSemaphorePoolTest, givenFullSemaphorePoolWhenDirectSubmissionIsDestroyedThenItsChunkCanBeReusedWithoutAffectingOtherSemaphores) {
+    auto &allocator = pDevice->getSemaphorePoolAllocator();
+    auto directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*pDevice->getDefaultEngine().commandStreamReceiver);
+    ASSERT_TRUE(directSubmission->initialize(false));
+    auto parent = directSubmission->semaphores->getParentAllocation();
+    ASSERT_NE(nullptr, parent);
+    auto freedGpuAddress = directSubmission->semaphoreGpuVa;
+    const auto allocationCount = parent->getUnderlyingBufferSize() / MemoryConstants::pageSize;
+    std::vector<GraphicsAllocation *> allocations;
+    for (size_t i = 1; i < allocationCount; i++) {
+        auto allocation = allocator.allocate(MemoryConstants::pageSize);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(parent, allocation->getParentAllocation());
+        allocations.push_back(allocation);
+    }
+    memset(allocations.front()->getUnderlyingBuffer(), 0x5a, MemoryConstants::pageSize);
+    directSubmission.reset();
+
+    auto reused = allocator.allocate(MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, reused);
+    EXPECT_EQ(parent, reused->getParentAllocation());
+    EXPECT_EQ(freedGpuAddress, reused->getGpuAddress());
+    EXPECT_EQ(0x5a, *static_cast<uint8_t *>(allocations.front()->getUnderlyingBuffer()));
+
+    auto overflow = allocator.allocate(MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, overflow);
+    EXPECT_NE(parent, overflow->getParentAllocation());
+    allocator.free(overflow);
+    allocator.free(reused);
+    for (auto allocation : allocations) {
+        allocator.free(allocation);
+    }
+}
+
+HWTEST_F(DirectSubmissionSemaphorePoolTest, givenSemaphorePoolAllocationFailureWhenInitializingDirectSubmissionThenStandaloneAllocationIsUsed) {
+    struct SemaphorePoolFailMemoryManager : MockMemoryManager {
+        using MockMemoryManager::allocateGraphicsMemoryWithProperties;
+        using MockMemoryManager::MockMemoryManager;
+
+        GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+            if (properties.allocationType == AllocationType::semaphoreBuffer && properties.size == SemaphorePoolTraits::defaultPoolSize) {
+                this->poolAllocationAttempts++;
+                return nullptr;
+            }
+            return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);
+        }
+
+        uint32_t poolAllocationAttempts = 0;
+    };
+    auto &executionEnvironment = *pDevice->getExecutionEnvironment();
+    auto memoryManager = std::make_unique<SemaphorePoolFailMemoryManager>(true, executionEnvironment);
+    auto mockMemoryManager = memoryManager.get();
+    std::unique_ptr<MemoryManager> originalMemoryManager = std::move(executionEnvironment.memoryManager);
+    executionEnvironment.memoryManager = std::move(memoryManager);
+    {
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+        EXPECT_TRUE(directSubmission.initialize(false));
+        EXPECT_GT(mockMemoryManager->poolAllocationAttempts, 0u);
+        EXPECT_FALSE(directSubmission.semaphores->isView());
+    }
+    executionEnvironment.memoryManager = std::move(originalMemoryManager);
+}
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionDisabledWhenStopThenRingIsNotStopped) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -673,7 +901,11 @@ HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedA
     nulledAllocation = directSubmission->semaphores;
     directSubmission->semaphores = nullptr;
     directSubmission.reset(nullptr);
-    memoryManager->freeGraphicsMemory(nulledAllocation);
+    if (nulledAllocation->isView()) {
+        pDevice->getSemaphorePoolAllocator().free(nulledAllocation);
+    } else {
+        memoryManager->freeGraphicsMemory(nulledAllocation);
+    }
 }
 
 HWTEST_F(DirectSubmissionTest, givenSuperBaseCsrWhenCheckingDirectSubmissionAvailableThenReturnFalse) {

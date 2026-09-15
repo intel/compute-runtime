@@ -9,14 +9,21 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_error_mappers.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <span>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
 namespace NEO {
+
+struct MemoryProperties;
+
 namespace LEO {
 
+class CommandBuffer;
 class CommandQueue;
 class MemObj;
 class Buffer;
@@ -71,6 +78,7 @@ using ImageObj = TypedMemObj<Image>;
 [[nodiscard]] cl_int validateObject(cl_device_id object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_platform_id object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_command_queue object) noexcept;
+[[nodiscard]] cl_int validateObject(cl_command_buffer_khr object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_event object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_mem object) noexcept;
 [[nodiscard]] cl_int validateObject(cl_sampler object) noexcept;
@@ -95,6 +103,11 @@ struct InternalObjectTypeHelper;
 template <>
 struct InternalObjectTypeHelper<cl_command_queue> {
     using type = CommandQueue;
+};
+
+template <>
+struct InternalObjectTypeHelper<cl_command_buffer_khr> {
+    using type = CommandBuffer;
 };
 
 template <>
@@ -195,9 +208,39 @@ template <typename... CastObjs>
     return std::apply([](auto &&...args) { return detail::validateAndCastImpl(std::forward<decltype(args)>(args)...); }, castObjs);
 }
 
+// Level Zero expresses copy regions and pitches in 32 bits (ze_copy_region_t and the pitch arguments of
+// zeCommandListAppendMemoryCopyRegion / zeCommandListAppendImageCopy*Ext), while OpenCL passes them as size_t.
+// A value that does not fit cannot be forwarded, so it has to be rejected instead of being silently truncated
+// into a transfer at the wrong offset.
+[[nodiscard]] inline constexpr bool fitsInUint32(size_t value) noexcept {
+    return value <= std::numeric_limits<uint32_t>::max();
+}
+
+[[nodiscard]] inline constexpr bool rectArgsFitInUint32(const size_t *origin, const size_t *region,
+                                                        size_t rowPitch, size_t slicePitch) noexcept {
+    return fitsInUint32(origin[0]) && fitsInUint32(origin[1]) && fitsInUint32(origin[2]) &&
+           fitsInUint32(region[0]) && fitsInUint32(region[1]) && fitsInUint32(region[2]) &&
+           fitsInUint32(rowPitch) && fitsInUint32(slicePitch);
+}
+
 [[nodiscard]] cl_int validateYuvOperation(const size_t *origin, const size_t *region) noexcept;
 [[nodiscard]] bool isPackedYuvImage(const cl_image_format *imageFormat) noexcept;
 [[nodiscard]] bool isNV12Image(const cl_image_format *imageFormat) noexcept;
+
+[[nodiscard]] cl_int validateImageFormat(const cl_image_format *imageFormat) noexcept;
+
+[[nodiscard]] cl_int validateStandaloneImageDescriptor(const ClDevice &device,
+                                                       const MemoryProperties &memoryProperties,
+                                                       cl_mem_flags flags,
+                                                       const cl_image_format *imageFormat,
+                                                       const cl_image_desc *imageDesc,
+                                                       const void *hostPtr) noexcept;
+
+[[nodiscard]] cl_int validateImageCopy(const cl_image_format &srcFormat,
+                                       const cl_image_format &dstFormat,
+                                       const size_t *srcOrigin,
+                                       const size_t *dstOrigin,
+                                       const size_t *region) noexcept;
 
 } // namespace LEO
 } // namespace NEO

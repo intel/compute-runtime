@@ -5,11 +5,14 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
+
+#include "drm.h"
 
 namespace L0 {
 
@@ -57,6 +60,18 @@ class SysmanGlobalOperationsFixtureXe : public SysmanDeviceFixture {
         zes_device_state_t deviceState = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
+
+    uint32_t getDeviceStateExtFlags() {
+        zes_device_state_t deviceState = {};
+        deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+        zes_device_ext_state_t extState = {};
+        extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+        extState.pNext = nullptr;
+        deviceState.pNext = &extState;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
+        return extState.flags;
+    }
 };
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenValidDeviceHandleWhenCallingDeviceGetStateThenVerifyDeviceIsNotWedged) {
@@ -87,8 +102,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenValidDeviceHandleWhileRetrievingInf
     EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSrcVersionFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixtureXe,
+          GivenSrcVersionFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned, IsNotCRI) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     pFsAccess->mockReadVal = srcVersion;
     ze_result_t result = zesDeviceGetProperties(device, &properties);
@@ -96,8 +111,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe,
     EXPECT_TRUE(0 == srcVersion.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSrcVersionFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsFixtureXe,
+          GivenSrcVersionFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned, IsNotCRI) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -110,15 +125,15 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInFdoModeWhenCallingDeviceGet
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     deviceState.pNext = &extState;
 
     ze_result_t result = zesDeviceGetState(device, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY | ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE;
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY | ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE;
     EXPECT_EQ(expectedFlags, extState.flags);
 }
 
@@ -128,8 +143,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInSurvivabilityModeButNotFdoW
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     deviceState.pNext = &extState;
 
@@ -137,19 +152,21 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInSurvivabilityModeButNotFdoW
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // In survivability mode (not FDO), wedged and survivability flags should be set
-    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY;
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY;
     EXPECT_EQ(expectedFlags, extState.flags);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceOnlyWedgedWhenCallingDeviceGetStateWithExtensionThenOnlyWedgedFlagIsSet) {
     pFsAccess->mockFdoModeValue = "disabled";
     pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = true;
+    pFsAccess->mockDriverLoaded = true;
     pLinuxSysmanImp->isDeviceInWedgedState = true;
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     deviceState.pNext = &extState;
 
@@ -157,27 +174,107 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceOnlyWedgedWhenCallingDeviceGe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Only wedged flag should be set
-    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED;
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED;
     EXPECT_EQ(expectedFlags, extState.flags);
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe, GivenDeviceInNormalStateWhenCallingDeviceGetStateWithExtensionThenNoFlagsAreSet) {
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathAccessibleAndSampleIoctlFailsWhenCallingDeviceGetStateWithExtensionThenWedgedFlagIsSet) {
     pFsAccess->mockFdoModeValue = "disabled";
     pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = true;
+    pFsAccess->mockDriverLoaded = true;
     pLinuxSysmanImp->isDeviceInWedgedState = false;
+    // DRM get-version IOCTL fails
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        return -1;
+    });
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     deviceState.pNext = &extState;
 
     ze_result_t result = zesDeviceGetState(device, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    // No flags should be set in normal state
-    EXPECT_EQ(0u, extState.flags);
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED;
+    EXPECT_EQ(expectedFlags, extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathInaccessibleWhenCallingDeviceGetStateWithExtensionThenGpuLostFlagIsSet) {
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = false;
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST), extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathAccessibleButDriverNotLoadedWhenCallingDeviceGetStateWithExtensionThenDriverNotLoadedFlagIsSet) {
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = true;
+    pFsAccess->mockDriverLoaded = false;
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED), extState.flags);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathAccessibleAndSampleIoctlSucceedsWhenCallingDeviceGetStateWithExtensionThenNormalFlagIsSet) {
+    pFsAccess->mockFdoModeValue = "disabled";
+    pFsAccess->mockSurvivabilityModeValue = "";
+    pFsAccess->mockDevicePciPathAccessible = true;
+    pFsAccess->mockDriverLoaded = true;
+    pLinuxSysmanImp->isDeviceInWedgedState = false;
+    // DRM get-version IOCTL succeeds and reports a supported driver.
+    // The IOCTL only succeeds on a valid descriptor, mirroring the kernel: sysman
+    // keeps the device node closed while idle, so the probe must open it first.
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        const char *drmVersion = "xe";
+        if (fileDescriptor < 0) {
+            return -1;
+        }
+        if (request == DRM_IOCTL_VERSION) {
+            auto pVersion = static_cast<NEO::DrmVersion *>(arg);
+            memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
+        }
+        return 0;
+    });
+
+    zes_device_state_t deviceState = {};
+    deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
+    extState.pNext = nullptr;
+    deviceState.pNext = &extState;
+
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Only normal flag should be set in normal state
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_NORMAL), extState.flags);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenNullExtensionPointerWhenCallingDeviceGetStateThenSuccessIsReturned) {
@@ -198,8 +295,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenExtensionInPNextChainWhenCallingDev
 
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
-    zes_intel_device_state_exp_t extState = {};
-    extState.stype = ZES_INTEL_STRUCTURE_TYPE_DEVICE_STATE_EXP;
+    zes_device_ext_state_t extState = {};
+    extState.stype = ZES_STRUCTURE_TYPE_DEVICE_EXT_STATE;
     extState.pNext = nullptr;
     extState.flags = 0xFFFFFFFF; // Set to non-zero to verify it gets initialized
 
@@ -209,7 +306,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenExtensionInPNextChainWhenCallingDev
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Verify flags were initialized and then set correctly
-    uint32_t expectedFlags = ZES_INTEL_DEVICE_STATE_FLAG_EXP_WEDGED | ZES_INTEL_DEVICE_STATE_FLAG_EXP_SURVIVABILITY | ZES_INTEL_DEVICE_STATE_FLAG_EXP_FLASH_OVERRIDE;
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY | ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE;
     EXPECT_EQ(expectedFlags, extState.flags);
 }
 
@@ -219,7 +316,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenNonMatchingExtensionInPNextChainWhe
     zes_device_state_t deviceState = {};
     deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
 
-    zes_intel_device_state_exp_t extState = {};
+    zes_device_ext_state_t extState = {};
     extState.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     extState.pNext = nullptr;
     extState.flags = 0xFFFFFFFF; // Set to verify it doesn't get modified
@@ -250,96 +347,224 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenSysfsReadFailsWhenCallingIsDeviceIn
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsOkWhenCallingZesIntelDeviceGetHealthExpThenOkStatusIsReturned) {
+       GivenSysfsReturnsOkWhenCallingZesDeviceGetHealthStatusExtThenOkStatusIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "ok";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
-    EXPECT_EQ(ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, health);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZES_DEVICE_HEALTH_STATUS_EXT_OK, health);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsWarningWhenCallingZesIntelDeviceGetHealthExpThenWarningStatusIsReturned) {
+       GivenSysfsReturnsWarningWhenCallingZesDeviceGetHealthStatusExtThenWarningStatusIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "warning";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
-    EXPECT_EQ(ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING, health);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZES_DEVICE_HEALTH_STATUS_EXT_WARNING, health);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsCriticalWhenCallingZesIntelDeviceGetHealthExpThenCriticalStatusIsReturned) {
+       GivenSysfsReturnsCriticalWhenCallingZesDeviceGetHealthStatusExtThenCriticalStatusIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "critical";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
-    EXPECT_EQ(ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL, health);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL, health);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsFailedWhenCallingZesIntelDeviceGetHealthExpThenFailedStatusIsReturned) {
+       GivenSysfsReturnsFailedWhenCallingZesDeviceGetHealthStatusExtThenFailedStatusIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "failed";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
-    EXPECT_EQ(ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED, health);
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZES_DEVICE_HEALTH_STATUS_EXT_FAILED, health);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReadFailsWhenCallingZesIntelDeviceGetHealthExpThenErrorIsReturned) {
+       GivenSysfsReadFailsWhenCallingZesDeviceGetHealthStatusExtThenErrorIsReturned) {
     pSysfsAccess->mockReadError = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsReturnsUnknownStringWhenCallingZesIntelDeviceGetHealthExpThenUnknownErrorIsReturned) {
+       GivenSysfsReturnsUnknownStringWhenCallingZesDeviceGetHealthStatusExtThenUnknownErrorIsReturned) {
     pSysfsAccess->mockGpuHealthVal = "unknown_value";
-    zes_intel_device_health_status_exp_t health = ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FORCE_UINT32;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelDeviceGetHealthExp(device->toHandle(), &health));
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenOkHealthStatusWhenCallingZesIntelDeviceSetHealthExpThenOkIsWrittenToSysfs) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, nullptr, 0, nullptr));
+       GivenOkHealthStatusWhenCallingZesDeviceSetHealthStatusExtThenOkIsWrittenToSysfs) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
     EXPECT_EQ("ok", pSysfsAccess->mockGpuHealthWrittenVal);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenWarningHealthStatusWhenCallingZesIntelDeviceSetHealthExpThenWarningIsWrittenToSysfs) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_WARNING, nullptr, 0, nullptr));
+       GivenWarningHealthStatusWhenCallingZesDeviceSetHealthStatusExtThenWarningIsWrittenToSysfs) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_WARNING));
     EXPECT_EQ("warning", pSysfsAccess->mockGpuHealthWrittenVal);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenCriticalHealthStatusWhenCallingZesIntelDeviceSetHealthExpThenCriticalIsWrittenToSysfs) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_CRITICAL, nullptr, 0, nullptr));
+       GivenCriticalHealthStatusWhenCallingZesDeviceSetHealthStatusExtThenCriticalIsWrittenToSysfs) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_CRITICAL));
     EXPECT_EQ("critical", pSysfsAccess->mockGpuHealthWrittenVal);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenFailedHealthStatusWhenCallingZesIntelDeviceSetHealthExpThenFailedIsWrittenToSysfs) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_FAILED, nullptr, 0, nullptr));
+       GivenFailedHealthStatusWhenCallingZesDeviceSetHealthStatusExtThenFailedIsWrittenToSysfs) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_FAILED));
     EXPECT_EQ("failed", pSysfsAccess->mockGpuHealthWrittenVal);
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenInvalidHealthEnumWhenCallingZesIntelDeviceSetHealthExpThenInvalidArgumentIsReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelDeviceSetHealthExp(device->toHandle(), static_cast<zes_intel_device_health_status_exp_t>(0xFF), nullptr, 0, nullptr));
+       GivenInvalidHealthEnumWhenCallingZesDeviceSetHealthStatusExtThenInvalidArgumentIsReturned) {
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDeviceSetHealthStatusExt(device->toHandle(), static_cast<zes_device_health_status_ext_t>(0xFF)));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenSysfsWriteFailsWhenCallingZesIntelDeviceSetHealthExpThenErrorIsPropagated) {
+       GivenSysfsWriteFailsWhenCallingZesDeviceSetHealthStatusExtThenErrorIsPropagated) {
     pSysfsAccess->mockWriteError = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenReasonStringExceeds256CharsWhenCallingZesIntelDeviceSetHealthExpThenInvalidArgumentIsReturned) {
-    std::string longReason(257, 'x');
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, longReason.c_str(), 0, nullptr));
+       GivenDeviceInSurvivabilityModeWhenCallingHealthStatusExtApisThenSurvivabilityModeDetectedErrorIsReturned) {
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
+
+    zes_device_health_status_ext_t health = ZES_DEVICE_HEALTH_STATUS_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, zesDeviceGetHealthStatusExt(device->toHandle(), &health));
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, zesDeviceSetHealthStatusExt(device->toHandle(), ZES_DEVICE_HEALTH_STATUS_EXT_OK));
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe,
-       GivenValidReasonStringWhenCallingZesIntelDeviceSetHealthExpThenSuccessIsReturned) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceSetHealthExp(device->toHandle(), ZES_INTEL_DEVICE_HEALTH_STATUS_EXP_OK, "scheduled maintenance", 0, nullptr));
-    EXPECT_EQ("ok", pSysfsAccess->mockGpuHealthWrittenVal);
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeExistsWhenCallingDeviceGetStateWithExtensionThenWedgedAndPowerOffPendingFlagsAreSet) {
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    const uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeExistsButIsUnreadableWhenCallingDeviceGetStateWithExtensionThenWedgedAndPowerOffPendingFlagsAreSet) {
+    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReasonReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    const uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenEachSupportedAlertReasonWhenCallingZesIntelDeviceGetPowerOffReasonExpThenMatchingReasonIsReturned) {
+    const std::map<std::string, zes_intel_device_power_off_reason_exp_flags_t> alertReasonToReason = {
+        {"Firmware Download", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FIRMWARE_DOWNLOAD},
+        {"Thermal Trip", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP},
+        {"OOB Request", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_ALERT},
+        {"OOB Reset", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_RESET},
+        {"Catastrophic", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_CATASTROPHIC_ERROR}};
+
+    for (const auto &[alertReason, expectedReason] : alertReasonToReason) {
+        pFsAccess->mockAlertReason = alertReason;
+        zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+        EXPECT_EQ(expectedReason, powerOffReason.reasons);
+    }
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonIsReportedOnAnOtherwiseHealthyDeviceWhenCallingDeviceGetStateWithExtensionThenNormalFlagIsNotSet) {
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        const char *drmVersion = "xe";
+        if (fileDescriptor < 0) {
+            return -1;
+        }
+        if (request == DRM_IOCTL_VERSION) {
+            auto pVersion = static_cast<NEO::DrmVersion *>(arg);
+            memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
+        }
+        return 0;
+    });
+
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDriverNotLoadedAndAlertReasonNodeExistsWhenCallingDeviceGetStateWithExtensionThenOnlyPowerOffPendingFlagsAreSet) {
+    pFsAccess->mockDriverLoaded = false;
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
+    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonNodeAndDriverNotLoadedWhenCallingDeviceGetStateWithExtensionThenDriverNotLoadedFlagIsSet) {
+    pFsAccess->mockDriverLoaded = false;
+    pFsAccess->mockAlertReasonNodeExists = false;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED), getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonNodeWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
+    pFsAccess->mockAlertReasonNodeExists = false;
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsNotExposedByKmdWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
+    pSysmanKmdInterface->mockNodeFileNameUnavailable = true;
+    pFsAccess->mockAlertReasonNodeExists = true;
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsNotExposedByKmdWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnsupportedFeatureIsReturned) {
+    pSysmanKmdInterface->mockNodeFileNameUnavailable = true;
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDevicePciPathIsUnavailableWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnsupportedFeatureIsReturned) {
+    pSysfsAccess->mockDeviceUnbound = true;
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsUnreadableWhenCallingZesIntelDeviceGetPowerOffReasonExpThenReadErrorIsReturned) {
+    pFsAccess->mockAlertReasonReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsNotReadableByUserWhenCallingZesIntelDeviceGetPowerOffReasonExpThenInsufficientPermissionsIsReturned) {
+    pFsAccess->mockAlertReasonReadResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenEmptyAlertReasonNodeWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnknownErrorIsReturned) {
+    pFsAccess->mockAlertReason = "";
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenUnrecognizedAlertReasonWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnknownErrorIsReturned) {
+    pFsAccess->mockAlertReason = "Some Unknown Reason";
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathIsInaccessibleWhenCallingDeviceGetStateWithExtensionThenOnlyGpuLostFlagIsSet) {
+    pFsAccess->mockDevicePciPathAccessible = false;
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST), getDeviceStateExtFlags());
 }
 
 } // namespace ult

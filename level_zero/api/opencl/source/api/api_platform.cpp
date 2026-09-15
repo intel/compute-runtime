@@ -5,14 +5,13 @@
  *
  */
 
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/product_helper.h"
-
 #include "level_zero/api/opencl/source/api/leo_additional_extensions.h"
 #include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_api.h"
@@ -21,6 +20,11 @@
 
 #include "CL/cl.h"
 
+namespace NEO {
+namespace LEO {
+
+extern "C" {
+
 cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_platform_id *platforms,
                                     cl_uint *numPlatforms) {
@@ -28,16 +32,6 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
     if ((numEntries == 0 && platforms != nullptr) ||
         (numEntries > 0 && platforms == nullptr && numPlatforms == nullptr)) [[unlikely]] {
         cl_int retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClGetPlatformIDs, &retVal);
-        return retVal;
-    }
-
-    auto enableLEOFlag = NEO::debugManager.flags.EnableLEO.get();
-    if (enableLEOFlag == 0) {
-        if (numPlatforms) {
-            *numPlatforms = 0;
-        }
-        cl_int retVal = CL_SUCCESS;
         TRACING_EXIT(ClGetPlatformIDs, &retVal);
         return retVal;
     }
@@ -51,48 +45,35 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         return retVal;
     }
 
-    if (NEO::LEO::platformsImpl->empty()) {
-        uint32_t driverCount = 0;
-        ze_init_driver_type_desc_t desc{ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC, nullptr, ZE_INIT_DRIVER_TYPE_FLAG_GPU};
+    ze_result_t initResult = ZE_RESULT_SUCCESS;
+    {
+        std::lock_guard<std::mutex> lock(NEO::LEO::Platform::platformsMutex);
 
-        ze_result_t ret = zeInitDrivers(&driverCount, nullptr, &desc);
+        if (NEO::LEO::platformsImpl->empty()) {
+            uint32_t driverCount = 0;
+            ze_init_driver_type_desc_t desc{ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC, nullptr, ZE_INIT_DRIVER_TYPE_FLAG_GPU};
 
-        if (ret != ZE_RESULT_SUCCESS) {
-            cl_int retVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClGetPlatformIDs, &retVal);
-            return retVal;
-        }
+            initL0Dispatch();
 
-        std::vector<ze_driver_handle_t> driverHandles(driverCount);
-        zeInitDrivers(&driverCount, driverHandles.data(), &desc);
+            initResult = zeInitDrivers(&driverCount, nullptr, &desc);
 
-        for (int i = 0; i < std::ssize(driverHandles); ++i) {
-            NEO::LEO::platformsImpl->push_back(std::make_unique<NEO::LEO::Platform>(driverHandles[i]));
+            if (initResult == ZE_RESULT_SUCCESS) {
+                std::vector<ze_driver_handle_t> driverHandles(driverCount);
+                initResult = zeInitDrivers(&driverCount, driverHandles.data(), &desc);
+
+                if (initResult == ZE_RESULT_SUCCESS) {
+                    for (int i = 0; i < std::ssize(driverHandles); ++i) {
+                        NEO::LEO::platformsImpl->push_back(std::make_unique<NEO::LEO::Platform>(driverHandles[i]));
+                    }
+                }
+            }
         }
     }
 
-    if (enableLEOFlag != 1 && NEO::LEO::platformsImpl) {
-        bool leoEnabledForAnyDevice = false;
-        for (const auto &platform : *NEO::LEO::platformsImpl) {
-            for (const auto &device : platform->getDevices()) {
-                auto &productHelper = device->getDevice().getRootDeviceEnvironment().getProductHelper();
-                if (productHelper.isLEOSupported()) {
-                    leoEnabledForAnyDevice = true;
-                    break;
-                }
-            }
-            if (leoEnabledForAnyDevice) {
-                break;
-            }
-        }
-        if (!leoEnabledForAnyDevice) {
-            if (numPlatforms) {
-                *numPlatforms = 0;
-            }
-            cl_int retVal = CL_SUCCESS;
-            TRACING_EXIT(ClGetPlatformIDs, &retVal);
-            return retVal;
-        }
+    if (initResult != ZE_RESULT_SUCCESS) {
+        cl_int retVal = L0ToClResultMapper(initResult);
+        TRACING_EXIT(ClGetPlatformIDs, &retVal);
+        return retVal;
     }
 
     if (numPlatforms) {
@@ -201,6 +182,18 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueAcquireExternalMemObjectsKHR);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueReleaseExternalMemObjectsKHR);
 
+    // cl_khr_command_buffer is incomplete, so its entry points resolve only when the
+    // EnableClKhrCommandBuffer debug variable enables it. A client probing for the
+    // function pointer must not be able to mistake it for support.
+    if (NEO::LEO::CommandBuffer::isSupported()) {
+        RETURN_FUNC_PTR_IF_EXIST(clCreateCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clFinalizeCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clRetainCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clReleaseCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clEnqueueCommandBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clGetCommandBufferInfoKHR);
+    }
+
     void *ret = NEO::LEO::sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
         TRACING_EXIT(ClGetExtensionFunctionAddress, &ret);
@@ -228,3 +221,8 @@ void *CL_API_CALL clGetExtensionFunctionAddressForPlatform(cl_platform_id platfo
     TRACING_EXIT(ClGetExtensionFunctionAddressForPlatform, &ret);
     return ret;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

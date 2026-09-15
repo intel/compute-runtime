@@ -44,7 +44,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -641,6 +641,21 @@ const char *Device::getDeviceMemoryName() {
     return "unknown memory type";
 }
 
+uint32_t Device::getEnabledSubDeviceCount() const {
+    if (this->isImplicitScalingCapable() == false) {
+        return 1u;
+    }
+    return static_cast<uint32_t>(this->neoDevice->getDeviceBitfield().count());
+}
+
+uint64_t Device::getDeviceMemoryPhysicalSizeInBytes() const {
+    const auto osInterface = this->neoDevice->getRootDeviceEnvironment().osInterface.get();
+    if (osInterface == nullptr) {
+        return 0u;
+    }
+    return osInterface->getDriverModel()->getDeviceMemoryPhysicalSizeInBytes(0) * this->getEnabledSubDeviceCount();
+}
+
 ze_result_t Device::getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) {
     if (*pCount == 0) {
         *pCount = 1;
@@ -690,23 +705,19 @@ ze_result_t Device::getMemoryProperties(uint32_t *pCount, ze_device_memory_prope
                 ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM4,
-                ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+                ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR6,
             };
 
-            UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sizeof(sysInfoMemType));
+            UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sysInfoMemType.size());
             extendedProperties->type = sysInfoMemType[hwInfo.gtSystemInfo.MemoryType];
 
-            uint32_t enabledSubDeviceCount = 1;
-            if (this->isImplicitScalingCapable()) {
-                enabledSubDeviceCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
-            }
-            extendedProperties->physicalSize = productHelper.getDeviceMemoryPhysicalSizeInBytes(osInterface, 0) * enabledSubDeviceCount;
-            const uint64_t bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, osInterface, 0) * enabledSubDeviceCount;
+            extendedProperties->physicalSize = this->getDeviceMemoryPhysicalSizeInBytes();
+            const uint64_t bandwidthInBytesPerSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, osInterface, 0) * this->getEnabledSubDeviceCount();
 
             // Convert to nano-seconds range
             extendedProperties->readBandwidth = static_cast<uint32_t>(bandwidthInBytesPerSecond * 1e-9);
             extendedProperties->writeBandwidth = extendedProperties->readBandwidth;
-            extendedProperties->bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+            extendedProperties->bandwidthUnit = (bandwidthInBytesPerSecond == 0) ? ZE_BANDWIDTH_UNIT_UNKNOWN : ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
         }
         pNext = static_cast<ze_base_properties_t *>(pNext->pNext);
     }
@@ -793,7 +804,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
                 pKernelProperties->fp32flags |= ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT;
             }
         } else if (hardwareInfo.capabilityTable.ftrSupportsFP64Emulation) {
-            if (neoDevice->getExecutionEnvironment()->isFP64EmulationEnabled()) {
+            if (NEO::debugManager.flags.NEO_FP64_EMULATION.get()) {
                 pKernelProperties->flags |= ZE_DEVICE_MODULE_FLAG_FP64;
                 pKernelProperties->fp64flags = defaultFpFlags | ZE_DEVICE_FP_FLAG_SOFT_FLOAT;
             }
@@ -811,7 +822,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
             ze_float_atomic_ext_properties_t *floatProperties =
                 reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);
-            releaseHelper.getKernelFp16AtomicCapabilities(floatProperties->fp16Flags);
+            floatProperties->fp16Flags = hardwareInfo.caps.kernelFp16AtomicCapabilities;
             compilerProductHelper.getKernelFp32AtomicCapabilities(floatProperties->fp32Flags);
             compilerProductHelper.getKernelFp64AtomicCapabilities(floatProperties->fp64Flags);
             static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");
@@ -842,7 +853,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             ze_device_raytracing_ext_properties_t *rtProperties =
                 reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
 
-            if (releaseHelper.isRayTracingSupported()) {
+            if (hardwareInfo.caps.rayTracingSupported) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
                 rtProperties->maxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
 
@@ -860,15 +871,13 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             dpProperties->flags = 0u;
             dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
 
-            auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
-            const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-            if (releaseHelper.isDotProductAccumulateSystolicSupported()) {
+            if (hardwareInfo.caps.dotProductAccumulateSystolicSupported) {
                 dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
             }
         } else if (static_cast<uint32_t>(extendedProperties->stype) == ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP) {
             zex_device_module_register_file_exp_t *properties = reinterpret_cast<zex_device_module_register_file_exp_t *>(extendedProperties);
 
-            const auto supportedNumGrfs = this->getProductHelper().getSupportedNumGrfs(this->getNEODevice()->getReleaseHelper());
+            const auto supportedNumGrfs = this->getProductHelper().getSupportedNumGrfs(releaseHelper);
 
             const auto registerFileSizesCount = static_cast<uint32_t>(supportedNumGrfs.size());
 
@@ -881,7 +890,7 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
             }
         } else if (static_cast<uint32_t>(extendedProperties->stype) == ZEX_STRUCTURE_TYPE_BFLOAT16_ATOMIC_EXT_PROPERTIES) {
             zex_bfloat16_atomic_ext_properties_t *properties = reinterpret_cast<zex_bfloat16_atomic_ext_properties_t *>(extendedProperties);
-            properties->bfloat16Flags |= releaseHelper.getAdditionalExtraCaps();
+            properties->bfloat16Flags |= hardwareInfo.caps.kernelBFloat16AtomicCapabilities;
         }
 
         pNext = const_cast<void *>(extendedProperties->pNext);
@@ -904,18 +913,18 @@ ze_result_t Device::getVectorWidthPropertiesExt(uint32_t *pCount, ze_device_vect
     auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
     auto vectorWidthSize = gfxCoreHelper.getMinimalSIMDSize();
     pVectorWidthProperties[0].vector_width_size = vectorWidthSize;
-    pVectorWidthProperties[0].preferred_vector_width_char = gfxCoreHelper.getPreferredVectorWidthChar(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_short = gfxCoreHelper.getPreferredVectorWidthShort(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_int = gfxCoreHelper.getPreferredVectorWidthInt(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_long = gfxCoreHelper.getPreferredVectorWidthLong(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_float = gfxCoreHelper.getPreferredVectorWidthFloat(vectorWidthSize);
-    pVectorWidthProperties[0].preferred_vector_width_half = gfxCoreHelper.getPreferredVectorWidthHalf(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_char = gfxCoreHelper.getNativeVectorWidthChar(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_short = gfxCoreHelper.getNativeVectorWidthShort(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_int = gfxCoreHelper.getNativeVectorWidthInt(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_long = gfxCoreHelper.getNativeVectorWidthLong(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_float = gfxCoreHelper.getNativeVectorWidthFloat(vectorWidthSize);
-    pVectorWidthProperties[0].native_vector_width_half = gfxCoreHelper.getNativeVectorWidthHalf(vectorWidthSize);
+    pVectorWidthProperties[0].preferred_vector_width_char = DeviceVectorWidthConstants::charWidth;
+    pVectorWidthProperties[0].preferred_vector_width_short = DeviceVectorWidthConstants::shortWidth;
+    pVectorWidthProperties[0].preferred_vector_width_int = DeviceVectorWidthConstants::intWidth;
+    pVectorWidthProperties[0].preferred_vector_width_long = DeviceVectorWidthConstants::longWidth;
+    pVectorWidthProperties[0].preferred_vector_width_float = DeviceVectorWidthConstants::floatWidth;
+    pVectorWidthProperties[0].preferred_vector_width_half = DeviceVectorWidthConstants::halfWidth;
+    pVectorWidthProperties[0].native_vector_width_char = DeviceVectorWidthConstants::charWidth;
+    pVectorWidthProperties[0].native_vector_width_short = DeviceVectorWidthConstants::shortWidth;
+    pVectorWidthProperties[0].native_vector_width_int = DeviceVectorWidthConstants::intWidth;
+    pVectorWidthProperties[0].native_vector_width_long = DeviceVectorWidthConstants::longWidth;
+    pVectorWidthProperties[0].native_vector_width_float = DeviceVectorWidthConstants::floatWidth;
+    pVectorWidthProperties[0].native_vector_width_half = DeviceVectorWidthConstants::halfWidth;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -925,7 +934,6 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
     const auto &l0GfxCoreHelper = this->getL0GfxCoreHelper();
-    const auto &releaseHelper = this->neoDevice->getReleaseHelper();
 
     pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
 
@@ -1041,10 +1049,10 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXP_PROPERTIES) {
                 ze_rtas_device_exp_properties_t *rtasProperties = reinterpret_cast<ze_rtas_device_exp_properties_t *>(extendedProperties);
                 rtasProperties->flags = 0;
-                rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExp();
+                rtasProperties->rtasFormat = static_cast<ze_rtas_format_exp_t>(hardwareInfo.caps.rtasFormat);
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (releaseHelper.isRayTracingSupported()) {
+                if (hardwareInfo.caps.rayTracingSupported) {
                     ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXP_INVALID;
@@ -1053,10 +1061,10 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXT_PROPERTIES) {
                 ze_rtas_device_ext_properties_t *rtasProperties = reinterpret_cast<ze_rtas_device_ext_properties_t *>(extendedProperties);
                 rtasProperties->flags = 0;
-                rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExt();
+                rtasProperties->rtasFormat = static_cast<ze_rtas_format_ext_t>(hardwareInfo.caps.rtasFormat);
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (releaseHelper.isRayTracingSupported()) {
+                if (hardwareInfo.caps.rayTracingSupported) {
                     ze_result_t result = this->getDriverHandle()->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXT_INVALID;
@@ -1075,8 +1083,11 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 ze_mutable_command_list_exp_properties_t *mclProperties = reinterpret_cast<ze_mutable_command_list_exp_properties_t *>(extendedProperties);
                 mclProperties->mutableCommandListFlags = 0;
                 mclProperties->mutableCommandFlags = getL0GfxCoreHelper().getCmdListUpdateCapabilities(this->getNEODevice()->getRootDeviceEnvironment());
-            } else if ((extendedProperties->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES) || (extendedProperties->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_PROPERTIES)) {
-                auto recordReplayGraphProperties = reinterpret_cast<ze_record_replay_graph_exp_properties_t *>(extendedProperties);
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES) {
+                auto recordReplayExpGraphProperties = reinterpret_cast<ze_record_replay_graph_exp_properties_t *>(extendedProperties);
+                recordReplayExpGraphProperties->graphFlags = static_cast<ze_record_replay_graph_exp_flags_t>(getL0GfxCoreHelper().getRecordReplayGraphCapabilities(this->getNEODevice()->getRootDeviceEnvironment()));
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_PROPERTIES) {
+                auto recordReplayGraphProperties = reinterpret_cast<ze_record_replay_graph_ext_properties_t *>(extendedProperties);
                 recordReplayGraphProperties->graphFlags = getL0GfxCoreHelper().getRecordReplayGraphCapabilities(this->getNEODevice()->getRootDeviceEnvironment());
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_INTEL_XE_DEVICE_EXP_PROPERTIES) {
                 getIntelXeDeviceProperties(extendedProperties);
@@ -1097,8 +1108,9 @@ ze_result_t Device::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *devic
 
     bool useTimestampViaSubmission = false;
     auto csrType = obtainCsrTypeFromIntegerValue(NEO::debugManager.flags.SetCommandStreamReceiver.get(), NEO::CommandStreamReceiverType::hardware);
-    if (csrType == NEO::CommandStreamReceiverType::tbx ||
-        csrType == NEO::CommandStreamReceiverType::tbxWithAub ||
+    const bool tbxCsr = csrType == NEO::CommandStreamReceiverType::tbx ||
+                        csrType == NEO::CommandStreamReceiverType::tbxWithAub;
+    if ((tbxCsr && !this->neoDevice->getOSTime()->isTimestampPtrAvailable()) ||
         NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get() == 1) {
         useTimestampViaSubmission = true;
     }
@@ -1148,8 +1160,15 @@ ze_result_t Device::getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, 
     // Get CPU time first here to be used for averaging later
     uint64_t hostTimestampForAvg = 0;
     bool cpuHostTimeRetVal = this->neoDevice->getOSTime()->getCpuTimeHost(&hostTimestampForAvg);
-
-    auto ret = L0::CommandList::fromHandle(this->globalTimestampCommandList)->appendWriteGlobalTimestamp((uint64_t *)this->globalTimestampAllocation, nullptr, 0, nullptr);
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    auto ret = L0::CommandList::fromHandle(this->globalTimestampCommandList)->appendWriteGlobalTimestamp((uint64_t *)this->globalTimestampAllocation, nullptr, 0, nullptr, waitEventsParameters);
     if (ret != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
@@ -2199,13 +2218,6 @@ uint32_t Device::getEventMaxPacketCount() const {
     return basePackets;
 }
 
-uint32_t Device::getEventMaxKernelCount() const {
-    const auto &hardwareInfo = this->getHwInfo();
-    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-
-    return l0GfxCoreHelper.getEventMaxKernelCount(hardwareInfo);
-}
-
 ze_result_t Device::synchronize() {
 
     auto waitForCsr = [](NEO::CommandStreamReceiver *csr) -> ze_result_t {
@@ -2394,8 +2406,9 @@ NEO::TagAllocatorBase *Device::getFillPatternAllocator() {
 
         if (!this->fillPatternAllocator.get()) {
             RootDeviceIndicesContainer rootDeviceIndices = {getNEODevice()->getRootDeviceIndex()};
-            fillPatternAllocator = std::make_unique<NEO::TagAllocator<NEO::FillPaternNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), static_cast<uint32_t>(MemoryConstants::pageSize2M / MemoryConstants::cacheLineSize),
-                                                                                                MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, 0, false, false, getNEODevice()->getDeviceBitfield());
+            const size_t tagStride = this->getProductHelper().getCacheLineSize();
+            fillPatternAllocator = std::make_unique<NEO::TagAllocator<NEO::FillPaternNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), static_cast<uint32_t>(MemoryConstants::pageSize2M / tagStride),
+                                                                                                tagStride, tagStride, 0, false, false, getNEODevice()->getDeviceBitfield());
         }
     }
 

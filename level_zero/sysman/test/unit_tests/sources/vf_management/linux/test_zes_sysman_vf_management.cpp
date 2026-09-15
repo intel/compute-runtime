@@ -57,6 +57,20 @@ TEST_F(ZesVfFixture, GivenValidDeviceHandleWhenQueryingEnabledVfHandlesThenVfHan
     }
 }
 
+TEST_F(ZesVfFixture, GivenValidVfHandlesWhenCallingReInitOnVfManagementHandleContextThenHandlesRemainValidAndCapabilitiesCanStillBeQueried) {
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    ASSERT_EQ(mockHandleCount, static_cast<uint32_t>(handles.size()));
+
+    pSysmanDeviceImp->pVfManagementHandleContext->reInit();
+
+    EXPECT_EQ(mockHandleCount, static_cast<uint32_t>(pSysmanDeviceImp->pVfManagementHandleContext->handleList.size()));
+    for (auto &pVf : pSysmanDeviceImp->pVfManagementHandleContext->handleList) {
+        ASSERT_NE(nullptr, pVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pVf->vfGetCapabilities(&capabilities));
+    }
+}
+
 TEST_F(ZesVfFixture, GivenValidDeviceHandleWhenQueryingEnabledVfHandlesThenSameVfHandlesAreReturned) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEnabledVFExp(device, &count, nullptr), ZE_RESULT_SUCCESS);

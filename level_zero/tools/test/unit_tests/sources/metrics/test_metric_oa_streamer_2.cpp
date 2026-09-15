@@ -667,15 +667,15 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
     size_t rawSize = 0;
     uint32_t reportCount = 256;
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, reportCount, &rawSize, nullptr), ZE_RESULT_SUCCESS);
-    const size_t expectedRawSize = (metricsSetParams.RawReportSize * reportCount * subDeviceCount) + sizeof(MetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount);
+    const size_t expectedRawSize = (metricsSetParams.RawReportSize * reportCount * subDeviceCount) + sizeof(OaMetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount);
     EXPECT_EQ(rawSize, expectedRawSize);
 
     std::vector<uint8_t> rawData;
     rawData.resize(rawSize);
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, reportCount, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(rawSize, (metricsSetParams.RawReportSize * 30) + sizeof(MetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount));
+    EXPECT_EQ(rawSize, (metricsSetParams.RawReportSize * 30) + sizeof(OaMetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount));
 
-    MetricGroupCalculateHeader *rawDataHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawData.data());
+    OaMetricGroupCalculateHeader *rawDataHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawData.data());
     EXPECT_NE(rawDataHeader, nullptr);
     for (uint32_t i = 0; i < subDeviceCount; ++i) {
         uint32_t rawDataOffset = (reinterpret_cast<uint32_t *>(rawData.data() + rawDataHeader->rawDataOffsets))[i];
@@ -769,7 +769,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
     size_t rawSize = 0;
     uint32_t reportCount = 256;
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, reportCount, &rawSize, nullptr), ZE_RESULT_SUCCESS);
-    const size_t expectedRawSize = (metricsSetParams.RawReportSize * reportCount * subDeviceCount) + sizeof(MetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount);
+    const size_t expectedRawSize = (metricsSetParams.RawReportSize * reportCount * subDeviceCount) + sizeof(OaMetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount);
     EXPECT_EQ(rawSize, expectedRawSize);
 
     std::vector<uint8_t> rawData;

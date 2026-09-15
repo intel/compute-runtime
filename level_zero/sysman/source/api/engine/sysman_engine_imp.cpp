@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,10 @@ ze_result_t EngineImp::engineGetActivity(zes_engine_stats_t *pStats) {
 ze_result_t EngineImp::engineGetProperties(zes_engine_properties_t *pProperties) {
     *pProperties = engineProperties;
     return ZE_RESULT_SUCCESS;
+}
+
+void EngineImp::reInit() {
+    pOsEngine->reInit();
 }
 
 void EngineImp::init() {

@@ -86,6 +86,82 @@ TEST(L0ToClResultMapperTests, givenInvalidSynchronizationObjectWhenMapResultThen
     EXPECT_EQ(CL_INVALID_EVENT, result);
 }
 
+TEST(L0ToClResultMapperTests, givenNotReadyWhenMapResultThenReturnsCLProfilingInfoNotAvailable) {
+    cl_int result = L0ToClResultMapper(ZE_RESULT_NOT_READY);
+    EXPECT_EQ(CL_PROFILING_INFO_NOT_AVAILABLE, result);
+}
+
+TEST(L0ToClResultMapperTests, givenUnavailableDeviceStatesWhenMapResultThenReturnsCLDeviceNotAvailable) {
+    EXPECT_EQ(CL_DEVICE_NOT_AVAILABLE, static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_ERROR_DEVICE_REQUIRES_RESET)));
+    EXPECT_EQ(CL_DEVICE_NOT_AVAILABLE, static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE)));
+}
+
+TEST(L0ToClResultMapperTests, givenInvalidNativeBinaryWhenMapResultThenReturnsCLInvalidBinary) {
+    cl_int result = L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY);
+    EXPECT_EQ(CL_INVALID_BINARY, result);
+}
+
+TEST(L0ToClResultMapperTests, givenSizeErrorsWhenMapResultThenReturnsCLInvalidBufferSize) {
+    EXPECT_EQ(CL_INVALID_BUFFER_SIZE, static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_SIZE)));
+    EXPECT_EQ(CL_INVALID_BUFFER_SIZE, static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_ERROR_UNSUPPORTED_SIZE)));
+}
+
+TEST(L0ToClResultMapperTests, givenUnsupportedFeatureWhenMapResultThenReturnsCLInvalidOperation) {
+    cl_int result = L0ToClResultMapper(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(CL_INVALID_OPERATION, result);
+}
+
+TEST(L0ToClResultMapperTests, givenInvalidGlobalWidthDimensionWhenMapResultThenReturnsCLInvalidGlobalWorkSize) {
+    cl_int result = L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_GLOBAL_WIDTH_DIMENSION);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, result);
+}
+
+TEST(L0ToClResultMapperTests, givenNameLookupFailuresWhenMapResultThenReturnsCLInvalidKernelName) {
+    EXPECT_EQ(CL_INVALID_KERNEL_NAME, static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_GLOBAL_NAME)));
+    EXPECT_EQ(CL_INVALID_KERNEL_NAME, static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_FUNCTION_NAME)));
+}
+
+TEST(L0ToClResultMapperTests, givenInvalidKernelAttributeValueWhenMapResultThenReturnsCLInvalidKernel) {
+    cl_int result = L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE);
+    EXPECT_EQ(CL_INVALID_KERNEL, result);
+}
+
+TEST(L0ToClResultMapperTests, givenInvalidModuleUnlinkedWhenMapResultThenReturnsCLInvalidProgram) {
+    cl_int result = L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED);
+    EXPECT_EQ(CL_INVALID_PROGRAM, result);
+}
+
+TEST(L0ToClResultMapperTests, givenInvalidCommandListTypeWhenMapResultThenReturnsCLInvalidCommandQueue) {
+    cl_int result = L0ToClResultMapper(ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, result);
+}
+
+TEST(L0ToClResultMapperTests, givenGenericArgumentErrorsWhenMapResultThenReturnsCLInvalidValue) {
+    const ze_result_t genericErrors[] = {ZE_RESULT_ERROR_UNINITIALIZED,
+                                         ZE_RESULT_ERROR_INVALID_ARGUMENT,
+                                         ZE_RESULT_ERROR_INVALID_NULL_HANDLE,
+                                         ZE_RESULT_ERROR_INVALID_NULL_POINTER,
+                                         ZE_RESULT_ERROR_INVALID_ENUMERATION,
+                                         ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION,
+                                         ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT,
+                                         ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE,
+                                         ZE_RESULT_ERROR_NOT_AVAILABLE};
+
+    for (auto zeResult : genericErrors) {
+        EXPECT_EQ(CL_INVALID_VALUE, static_cast<cl_int>(L0ToClResultMapper(zeResult))) << "unexpected mapping for " << static_cast<uint32_t>(zeResult);
+    }
+}
+
+TEST(L0ToClResultMapperTests, givenSuccessWhenMapResultThenTheFastPathAndTableAgree) {
+    static_assert(static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_SUCCESS)) == CL_SUCCESS);
+    EXPECT_EQ(CL_SUCCESS, static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_SUCCESS)));
+}
+
+TEST(L0ToClResultMapperTests, givenUnmappedResultsWhenMapResultThenReturnsCLInvalidValue) {
+    EXPECT_EQ(CL_INVALID_VALUE, static_cast<cl_int>(L0ToClResultMapper(ZE_RESULT_ERROR_UNKNOWN)));
+    EXPECT_EQ(CL_INVALID_VALUE, static_cast<cl_int>(L0ToClResultMapper(static_cast<ze_result_t>(0x7ffffffe))));
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO

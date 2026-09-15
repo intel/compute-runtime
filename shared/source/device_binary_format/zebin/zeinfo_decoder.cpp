@@ -1222,9 +1222,16 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         arg.pointerSize = src.size;
         return DecodeError::success;
     };
-    auto populateArgToInlineData = [&src](auto &arg) {
-        arg.offset = src.offset;
-        arg.pointerSize = src.size;
+    auto populateArgToInlineData = [&src, &dst, &kernelName, &outErrReason](auto &arg, ConstStringRef argTypeName) {
+        if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
+            const auto inlineDataPayloadSize = static_cast<int32_t>(dst.kernelAttributes.inlineDataPayloadSize);
+            if ((src.offset + src.size) > inlineDataPayloadSize) {
+                outErrReason.append("DeviceBinaryFormat::zebin : Argument of type " + argTypeName.str() + " is patched only inside inline data, but its offset " + std::to_string(src.offset) + " and size " + std::to_string(src.size) + " exceed inline data payload size " + std::to_string(inlineDataPayloadSize) + " in context of : " + kernelName + ".\n");
+                return DecodeError::invalidBinary;
+            }
+        }
+        arg.offset = static_cast<InlineDataOffset>(src.offset);
+        arg.pointerSize = static_cast<uint8_t>(src.size);
         return DecodeError::success;
     };
     auto populateWithOffset = [&src](auto &dst) {
@@ -1431,11 +1438,29 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     case Types::Kernel::argTypePrivateBaseStateless:
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.privateMemoryAddress);
 
-    case Types::Kernel::argTypeScratchPointer:
-        return populateArgToInlineData(dst.payloadMappings.implicitArgs.scratchPointerAddress);
+    case Types::Kernel::argTypeScratchPointer: {
+        auto &scratchPointerAddress = dst.payloadMappings.implicitArgs.scratchPointerAddress;
+        if (isValidOffset(scratchPointerAddress.offset) || isDefined(scratchPointerAddress.pointerSize)) {
+            outErrReason.append("DeviceBinaryFormat::zebin : Multiple scratch_pointer arguments are not allowed in context of : " + kernelName + ".\n");
+            return DecodeError::invalidBinary;
+        }
+        if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
+            if (src.offset >= static_cast<int32_t>(undefined<CrossThreadDataOffset>)) {
+                outErrReason.append("DeviceBinaryFormat::zebin : scratch_pointer offset " + std::to_string(src.offset) + " is out of representable range in context of : " + kernelName + ".\n");
+                return DecodeError::invalidBinary;
+            }
+            constexpr int32_t compliantScratchPointerOffset = static_cast<int32_t>(sizeof(uint64_t));
+            if (src.offset < compliantScratchPointerOffset) {
+                outWarning.append("DeviceBinaryFormat::zebin : Module is not compliant with xeABI which requires scratch_pointer to be placed as the second qword of indirect data (offset " + std::to_string(compliantScratchPointerOffset) + "). scratch_pointer at offset " + std::to_string(src.offset) + " with size " + std::to_string(src.size) + " in context of : " + kernelName + ".\n");
+            }
+        }
+        scratchPointerAddress.offset = static_cast<CrossThreadDataOffset>(src.offset);
+        scratchPointerAddress.pointerSize = static_cast<uint8_t>(src.size);
+        return DecodeError::success;
+    }
 
     case Types::Kernel::argTypeIndirectDataPointer:
-        return populateArgToInlineData(dst.payloadMappings.implicitArgs.indirectDataPointerAddress);
+        return populateArgToInlineData(dst.payloadMappings.implicitArgs.indirectDataPointerAddress, Tags::Kernel::PayloadArgument::ArgType::indirectDataPointer);
 
     case Types::Kernel::argTypePrintfBuffer:
         dst.kernelAttributes.flags.usesPrintf = true;
@@ -1505,18 +1530,6 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     case Types::Kernel::argTypeImageMipLevels:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.numMipLevels);
-
-    case Types::Kernel::argTypeImageFlatBaseOffset:
-        return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatBaseOffset);
-
-    case Types::Kernel::argTypeImageFlatWidth:
-        return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatWidth);
-
-    case Types::Kernel::argTypeImageFlatHeight:
-        return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatHeight);
-
-    case Types::Kernel::argTypeImageFlatPitch:
-        return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatPitch);
 
     case Types::Kernel::argTypeSamplerAddrMode:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerAddressingMode);

@@ -10,7 +10,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -34,19 +34,6 @@ TEST(OSContextLinux, givenReinitializeContextWhenContextIsInitThenContextIsStill
     OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_NO_THROW(osContext.reInitializeContext());
     EXPECT_NO_THROW(osContext.ensureContextInitialized());
-}
-
-TEST(OSContextLinux, givenOsContextLinuxWhenAsOsContextLinuxIsCalledThenPointerToSelfIsReturned) {
-    MockExecutionEnvironment executionEnvironment;
-    auto mock = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
-    OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-
-    EXPECT_EQ(&osContext, osContext.asOsContextLinux());
-
-    // Ensure the downcast resolves through a base OsContext reference via virtual dispatch
-    OsContext &baseContext = osContext;
-    EXPECT_EQ(&osContext, baseContext.asOsContextLinux());
 }
 
 TEST(OSContextLinux, givenInitializeContextWhenContextCreateIoctlFailsThenContextNotInitialized) {
@@ -238,5 +225,6 @@ TEST(OSContextLinux, givenOVLoadedWhenCheckForDirectSubmissionSupportThenProperV
     auto directSubmissionSupported = osContext.isDirectSubmissionSupported();
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
-    EXPECT_EQ(directSubmissionSupported, productHelper.isDirectSubmissionSupported() && executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper().isDirectSubmissionLightSupported());
+    const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    EXPECT_EQ(directSubmissionSupported, productHelper.isDirectSubmissionSupported() && hwInfo.caps.directSubmissionLightSupported);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ class WddmVfImp : public OsVf {
     ze_result_t vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) override;
     ze_result_t vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) override;
     bool vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) override;
+    void reInit() override {}
     static uint32_t numEnabledVfs;
     static bool localMemoryUsedStatus;
     WddmVfImp() = default;

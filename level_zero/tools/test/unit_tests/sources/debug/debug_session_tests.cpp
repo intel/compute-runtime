@@ -2669,6 +2669,16 @@ struct DebugSessionTestSwFifoFixture : public ::testing::Test {
     uint64_t offsetFifo = 0u;
 };
 
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadingSwFifoThenThreadsFromValidNodesAreMarkedCoherent) {
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    session->readFifo(0, threadsWithAttention);
+
+    ASSERT_EQ(threadsWithAttention.size(), fifoVecFromTail.size() + fifoVecTillHead.size());
+    for (const auto &threadId : threadsWithAttention) {
+        EXPECT_TRUE(session->allThreads[threadId]->isStateSaveAreaCoherent()) << "thread " << EuThread::toString(threadId);
+    }
+}
+
 TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadingSwFifoThenFifoIsCorrectlyReadAndDrained) {
     EXPECT_FALSE(session->stateSaveAreaHeader.empty());
     std::vector<EuThread::ThreadId> threadsWithAttention;
@@ -3711,6 +3721,33 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenG
     EXPECT_EQ(DebugSessionImp::getSbaRegsetDesc(session->getConnectedDevice(), *pStateSaveAreaHeader), nullptr);
 }
 
+TEST_F(DebugSessionRegistersAccessTestV3, GivenCoherentThreadWhenAccessingCommandRegisterThenStoppedThreadReadPathIsNotUsed) {
+    session->allThreads[stoppedThreadId]->stopThread(1u);
+    // Marking the thread coherent is scenario colour, not a precondition - this fixture uses the
+    // base readRegsetForStoppedThread, which ignores the flag. It documents that even a thread
+    // eligible to skip the flush must not do so for the command register, which SIP writes while
+    // parked.
+    session->allThreads[stoppedThreadId]->setStateSaveAreaCoherent(true);
+    session->readRegsetForStoppedThreadCallCount = 0;
+
+    NEO::SipCommandRegisterValues command = {{0}};
+    session->cmdRegisterAccessHelper(stoppedThreadId, command, false);
+
+    EXPECT_EQ(0u, session->readRegsetForStoppedThreadCallCount);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenStoppedThreadWhenReadingRegisterSetThenStoppedThreadReadPathIsUsed) {
+    session->allThreads[stoppedThreadId]->stopThread(1u);
+    session->readRegsetForStoppedThreadCallCount = 0;
+
+    uint32_t regs[8] = {};
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
+                                   session->typeToRegsetDesc(session->getStateSaveAreaHeader(), ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, mockDevice.get()),
+                                   0, 1, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, regs, false);
+
+    EXPECT_EQ(1u, session->readRegsetForStoppedThreadCallCount);
+}
+
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenCmdRegisterAccessHelperCalledThenNullIsReturned) {
     reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
@@ -4295,7 +4332,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
         sbaExpected[i] = i * 0x1000;
     }
 
-    session->readMemoryBuffer.assign(4 * gfxCoreHelper.getRenderSurfaceStateSize(), 5);
+    session->readMemoryBuffer.assign(4 * gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()), 5);
 
     sbaExpected[ZET_DEBUG_SBA_SURFACE_STATE_INTEL_GPU] = reinterpret_cast<uint64_t>(session->readMemoryBuffer.data());
 
@@ -4311,7 +4348,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
         gfxCoreHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
-                                                              &session->readMemoryBuffer[1 * (gfxCoreHelper.getRenderSurfaceStateSize())], 1, scratchAllocationBase, 0,
+                                                              &session->readMemoryBuffer[1 * (gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()))], 1, scratchAllocationBase, 0,
                                                               ptss, nullptr, false, 6, false, true);
 
         r0Thread0[5] = 1 << 10; // first surface state
@@ -4330,7 +4367,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
         gfxCoreHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
-                                                              &session->readMemoryBuffer[1 * (gfxCoreHelper.getRenderSurfaceStateSize())], 1, scratchAllocationBase, 0,
+                                                              &session->readMemoryBuffer[1 * (gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()))], 1, scratchAllocationBase, 0,
                                                               ptss, nullptr, false, 6, false, true);
 
         r0Thread0[5] = 1 << 10; // first surface state
@@ -4359,7 +4396,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
         gfxCoreHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
-                                                              &session->readMemoryBuffer[2 * (gfxCoreHelper.getRenderSurfaceStateSize())], 1, scratchAllocationBase2Canonized, 0,
+                                                              &session->readMemoryBuffer[2 * (gfxCoreHelper.getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment()))], 1, scratchAllocationBase2Canonized, 0,
                                                               ptss, nullptr, false, 6, false, true);
 
         r0Thread1[5] = 2 << 10; // second surface state
@@ -4507,6 +4544,49 @@ TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipWhenCheckingDifferentSip
     reinterpret_cast<SIP::StateSaveArea *>(session->stateSaveAreaHeader.data())->version.patch = 1;
     session->slmSipVersionCheck();
     EXPECT_EQ(session->sipSupportsSlm, true);
+}
+
+TEST(DebugSessionTest, GivenSipReadyWhenWaitingForCmdReadyThenThreadIsMarkedCoherent) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp mockDevice(neoDevice);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
+
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->setStateSaveAreaCoherent(false);
+
+    sessionMock->slmTesting = true;
+    sessionMock->sipSupportsSlm = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, sessionMock->waitForCmdReady(threadId, 1));
+    EXPECT_TRUE(sessionMock->allThreads[threadId]->isStateSaveAreaCoherent());
+}
+
+TEST(DebugSessionTest, GivenSipNeverReadyWhenWaitingForCmdReadyThenThreadIsNotMarkedCoherent) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp mockDevice(neoDevice);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &mockDevice);
+
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->setStateSaveAreaCoherent(false);
+
+    sessionMock->slmTesting = true;
+    sessionMock->sipSupportsSlm = true;
+    // SIP never restores READY, so the poll exhausts its retries.
+    sessionMock->slmCmdRegisterAccessReadyCount = 0xFFFF;
+    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, sessionMock->waitForCmdReady(threadId, 1));
+    EXPECT_FALSE(sessionMock->allThreads[threadId]->isStateSaveAreaCoherent());
 }
 
 TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSlmReadIsSuccessful) {
@@ -5864,6 +5944,13 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStoppedThreadAndSipExternalLibWhe
     auto singleThread = ze_device_thread_t{static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
     auto ret = session->getThreadRegisterSetProperties(singleThread, &count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    // Querying the number of regsets does not need SIP
+    EXPECT_FALSE(session->registerAccessPropertiesCalled);
+
+    count = 1;
+    zet_debug_regset_properties_t regsetProps{};
+    ret = session->getThreadRegisterSetProperties(singleThread, &count, &regsetProps);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // With SIP external lib present, getRegisterAccessProperties should be invoked on session (mock sets flag)
     EXPECT_TRUE(session->registerAccessPropertiesCalled);
     rootEnv.sipExternalLib.reset(originalSipLib);
@@ -5882,6 +5969,41 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
     uint64_t data = 0;
     auto result = session->registersAccessHelper(thread, regdesc, 2, 3, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, &data, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperCalledWithNonZeroStartThenRegisterAtRequestedIndexIsAccessed) {
+    auto neoDevice = mockDevice->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    auto mockSipLib = new MockSipExternalLib();
+
+    constexpr uint32_t regsetStartOffset = 64;
+    constexpr uint32_t startRegister = 18;
+    constexpr uint32_t registerCount = 32;
+    constexpr uint32_t valueAtStartRegister = 0xFF600080;
+    constexpr uint32_t valueAtFirstRegister = 0x08000600;
+
+    mockSipLib->getSipLibRegisterAccessCount = registerCount;
+    mockSipLib->getSipLibRegisterAccessStartOffset = regsetStartOffset;
+    rootEnv.sipExternalLib.reset(mockSipLib);
+
+    SIP::regset_desc regdesc = {};
+    regdesc.num = registerCount;
+    regdesc.bytes = sizeof(uint32_t);
+
+    ASSERT_GE(session->stateSaveAreaHeader.size(), regsetStartOffset + (registerCount * sizeof(uint32_t)));
+    auto regsetBase = reinterpret_cast<uint32_t *>(session->stateSaveAreaHeader.data() + regsetStartOffset);
+    regsetBase[0] = valueAtFirstRegister;
+    regsetBase[startRegister] = valueAtStartRegister;
+
+    uint32_t readValue = 0;
+    auto thread = session->allThreads[stoppedThreadId].get();
+    auto result = session->registersAccessHelper(thread, &regdesc, startRegister, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, &readValue, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(valueAtStartRegister, readValue);
+
     rootEnv.sipExternalLib.reset(originalSipLib);
 }
 
@@ -6523,10 +6645,33 @@ TEST_F(DebugSessionRegistersAccessV5, GivenReadGpuMemorySucceedsWhenReadPackedRe
 
     uint64_t regStartGpuVa = 0x1200;
     std::vector<uint32_t> readData(unpackedValues.size());
-    ze_result_t status = session.readPackedRegisters(testMemoryHandle, regStartGpuVa, packer, readData.data());
+    ze_result_t status = session.readPackedRegisters(*session.allThreads[threadId], regStartGpuVa, packer, readData.data());
 
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
     EXPECT_EQ(session.readGpuMemoryGpuVa.value(), regStartGpuVa + (packer.packedOffset * sizeof(packedValues[0])));
+    EXPECT_EQ(readData, unpackedValues);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenPackedRegisterReadThenStoppedThreadReadPathIsUsed) {
+    const std::vector<uint32_t> packedValues{3, 1, 4, 8, 7};
+    const std::vector<uint32_t> unpackedValues{3, 1, 0, 0, 4, 8, 7, 0};
+
+    const SipRegisterPacker packer = {
+        .stride = 4,
+        .majorStart = 0,
+        .majorCount = 2,
+        .packedOffset = 0x53,
+        .unpackedIndices = {0, 1, 4, 5, 6},
+    };
+
+    const char *readMemoryData = reinterpret_cast<const char *>(packedValues.data());
+    session.readGpuMemoryData = std::vector<char>(readMemoryData, readMemoryData + packedValues.size() * 4);
+    session.readRegsetForStoppedThreadCallCount = 0;
+
+    std::vector<uint32_t> readData(unpackedValues.size());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session.readPackedRegisters(*session.allThreads[threadId], 0x1200, packer, readData.data()));
+
+    EXPECT_EQ(1u, session.readRegsetForStoppedThreadCallCount);
     EXPECT_EQ(readData, unpackedValues);
 }
 
@@ -6541,7 +6686,7 @@ TEST_F(DebugSessionRegistersAccessV5, GivenReadGpuMemoryFailsWhenReadPackedRegis
 
     session.readGpuMemoryReturn = ZE_RESULT_ERROR_UNKNOWN;
     std::vector<char> buf(packer.unpackedIndices.size() * 4);
-    ze_result_t status = session.readPackedRegisters(testMemoryHandle, 0x567, packer, buf.data());
+    ze_result_t status = session.readPackedRegisters(*session.allThreads[threadId], 0x567, packer, buf.data());
 
     EXPECT_EQ(status, ZE_RESULT_ERROR_UNKNOWN);
 }
@@ -6908,8 +7053,8 @@ struct RegistersAccessHelperPackedTest : public ::testing::Test {
 
         std::optional<CapturedArgs> readPackedRegistersArgs;
         ze_result_t readPackedRegistersRetValue = ZE_RESULT_SUCCESS;
-        ze_result_t readPackedRegisters(uint64_t memHandle, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *dest) override {
-            EXPECT_EQ(memHandle, testMemoryHandle);
+        ze_result_t readPackedRegisters(const EuThread &thread, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *dest) override {
+            EXPECT_EQ(thread.getMemoryHandle(), testMemoryHandle);
             readPackedRegistersArgs = CapturedArgs{
                 .regStartGpuVa = regStartGpuVa,
                 .packer = packer,

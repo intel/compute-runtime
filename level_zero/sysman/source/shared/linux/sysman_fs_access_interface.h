@@ -57,6 +57,8 @@ class FsAccessInterface {
     virtual ze_result_t read(const std::string file, int32_t &val);
 
     virtual ze_result_t write(const std::string &file, std::string_view val);
+    virtual ze_result_t write(const std::string &file, const uint64_t val);
+    virtual ze_result_t write(const std::string &file, const int val);
 
     virtual ze_result_t readSymLink(const std::string path, std::string &buf);
     virtual ze_result_t getRealPath(const std::string &path, std::string &buf);
@@ -120,8 +122,8 @@ class SysFsAccessInterface : protected FsAccessInterface {
     ze_result_t read(const std::string file, std::vector<std::string> &val) override;
 
     ze_result_t write(const std::string &file, std::string_view val) override;
-    MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const int val);
-    MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const uint64_t val);
+    ze_result_t write(const std::string &file, const int val) override;
+    ze_result_t write(const std::string &file, const uint64_t val) override;
     MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const double val);
     ze_result_t write(const std::string &file, std::vector<std::string> val);
 
@@ -137,13 +139,15 @@ class SysFsAccessInterface : protected FsAccessInterface {
     std::string getDevicePciBdf();
     std::string getDevicePciPath();
     void clearFdCache() override;
+    void reinit(const std::string &dev);
 
   protected:
     SysFsAccessInterface();
-    SysFsAccessInterface(const std::string file);
+    SysFsAccessInterface(const std::string &file);
     std::vector<std::string> deviceNames;
 
   private:
+    void init(const std::string &dev);
     std::string fullPath(const std::string &file);
     std::string dirname;
     std::string devicePciBdf;

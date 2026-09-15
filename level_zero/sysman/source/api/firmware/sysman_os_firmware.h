@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class OsFirmware {
     virtual ze_result_t osGetSecurityVersion(char *pVersion) = 0;
     virtual ze_result_t osSetSecurityVersion() = 0;
     virtual ze_result_t osGetConsoleLogs(size_t *pSize, char *pFirmwareLog) = 0;
+    virtual void reInit() = 0;
     static std::unique_ptr<OsFirmware> create(OsSysman *pOsSysman, const std::string &fwType);
     static void getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman);
     virtual ~OsFirmware() {}

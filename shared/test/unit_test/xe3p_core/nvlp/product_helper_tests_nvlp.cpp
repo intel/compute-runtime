@@ -26,9 +26,20 @@
 #include "neo_aot_platforms.h"
 #include "per_product_test_definitions.h"
 
+#include <set>
+
 using namespace NEO;
 
 using NvlProductHelper = ProductHelperTest;
+
+NVLPTEST_F(NvlProductHelper, givenPatIndexWhenValidatingForUserptrThenOnlyTwoWayCoherentAndPat19AreAccepted) {
+    const std::set<uint64_t> validPatIndices = {2, 7, 19, 23, 27, 31};
+
+    for (uint64_t patIndex = 0; patIndex < 32; patIndex++) {
+        const bool expected = validPatIndices.contains(patIndex);
+        EXPECT_EQ(expected, productHelper->isPatIndexValidForUserptr(patIndex));
+    }
+}
 
 NVLPTEST_F(NvlProductHelper, whenGettingPreferredAllocationMethodThenAllocateByKmdIsReturned) {
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
@@ -123,6 +134,10 @@ NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocator
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
+NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isLEOSupported());
+}
+
 NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;
@@ -130,4 +145,28 @@ NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCac
 
     allocationData.type = AllocationType::buffer;
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
+}
+
+NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCallingAdjustMaxThreadsPerThreadGroupThenCorrectValueIsReturned) {
+    uint32_t simt = 32;
+    uint32_t maxThreadsPerThreadGroup = 64;
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.ipVersion.value = AOT::NVL_P_B0;
+
+    EXPECT_EQ(16u, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 448));
+    EXPECT_EQ(24u, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 320));
+    EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 256));
+}
+
+NVLPTEST_F(NvlProductHelper, givenNvlPA0WhenCallingAdjustMaxThreadsPerThreadGroupThenValueIsNotAdjusted) {
+    uint32_t simt = 32;
+    uint32_t maxThreadsPerThreadGroup = 64;
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.ipVersion.value = AOT::NVL_P_A0;
+
+    EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 448));
+    EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 320));
+    EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 256));
 }

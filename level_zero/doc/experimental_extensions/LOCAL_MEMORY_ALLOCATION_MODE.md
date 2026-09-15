@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 At the moment this is supported on Windows only.
 
-In Level Zero, the API function to allocate a device (local) memory is [zeMemAllocDevice](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zememallocdevice). For such (device USM) allocations, there are two policies of handling the scenario enough resources being available:
+In Level Zero, the API function to allocate a device (local) memory is [zeMemAllocDevice](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api/apis/mem.html#zememallocdevice). For such (device USM) allocations, there are two policies of handling the scenario enough resources being available:
 - Local-preferred mode: A region is primarily allocated out of local-memory resources, however system-memory may be used as a fallback.
 - Local-only mode: A can only be allocated out of local-memory resources. If the amount of available local-memory is not sufficient the `ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY` error is returned.
 

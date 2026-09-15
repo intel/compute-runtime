@@ -36,15 +36,6 @@ class Driver {
     std::mutex gtpinInitMtx;
 };
 
-struct L0EnvVariables {
-    uint32_t programDebugging;
-    bool metrics;
-    bool pin;
-    bool sysman;
-    bool pciIdDeviceOrder;
-    bool fp64Emulation;
-};
-
 ze_result_t init(ze_init_flags_t);
 ze_result_t initDrivers(uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init_driver_type_desc_t *desc);
 

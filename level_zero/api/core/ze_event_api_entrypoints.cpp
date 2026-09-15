@@ -58,31 +58,6 @@ ze_result_t ZE_APICALL zeEventPoolCloseIpcHandle(
     return L0::EventPool::fromHandle(hEventPool)->closeIpcHandle();
 }
 
-ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
-    ze_command_list_handle_t hCommandList,
-    ze_event_handle_t hEvent) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendSignalEvent>(hCommandList, hEvent);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendSignalEvent(hEvent, false);
-}
-
-ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
-    ze_command_list_handle_t hCommandList,
-    uint32_t numEvents,
-    ze_event_handle_t *phEvents) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWaitOnEvents>(hCommandList, numEvents, phEvents);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
-    }
-
-    return cmdList->appendWaitOnEvents(numEvents, phEvents, nullptr, false, true, true, false, false, false);
-}
-
 ze_result_t ZE_APICALL zeEventHostSignal(
     ze_event_handle_t hEvent) {
     return L0::Event::fromHandle(hEvent)->hostSignal(false);
@@ -96,19 +71,12 @@ ze_result_t ZE_APICALL zeEventHostSynchronize(
 
 ze_result_t ZE_APICALL zeEventQueryStatus(
     ze_event_handle_t hEvent) {
-    return L0::Event::fromHandle(hEvent)->queryStatus(0);
-}
-
-ze_result_t ZE_APICALL zeCommandListAppendEventReset(
-    ze_command_list_handle_t hCommandList,
-    ze_event_handle_t hEvent) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendEventReset>(hCommandList, hEvent);
-    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
-        return ret;
+    auto event = L0::Event::fromHandle(hEvent);
+    if (event->isCapturedGraphInternalEvent() || event->getIsSignalledAsGraphInternalEvent()) {
+        return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
     }
 
-    return cmdList->appendEventReset(hEvent);
+    return event->queryStatus(0);
 }
 
 ze_result_t ZE_APICALL zeEventHostReset(
@@ -276,24 +244,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeEventPoolCloseIpcHandle(
         hEventPool);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
-    ze_command_list_handle_t hCommandList,
-    ze_event_handle_t hEvent) {
-    return L0::zeCommandListAppendSignalEvent(
-        hCommandList,
-        hEvent);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
-    ze_command_list_handle_t hCommandList,
-    uint32_t numEvents,
-    ze_event_handle_t *phEvents) {
-    return L0::zeCommandListAppendWaitOnEvents(
-        hCommandList,
-        numEvents,
-        phEvents);
-}
-
 ZE_APIEXPORT ze_result_t ZE_APICALL zeEventHostSignal(
     ze_event_handle_t hEvent) {
     return L0::zeEventHostSignal(
@@ -311,14 +261,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeEventHostSynchronize(
 ZE_APIEXPORT ze_result_t ZE_APICALL zeEventQueryStatus(
     ze_event_handle_t hEvent) {
     return L0::zeEventQueryStatus(
-        hEvent);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendEventReset(
-    ze_command_list_handle_t hCommandList,
-    ze_event_handle_t hEvent) {
-    return L0::zeCommandListAppendEventReset(
-        hCommandList,
         hEvent);
 }
 

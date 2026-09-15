@@ -9,34 +9,52 @@
 
 #include "level_zero/sysman/source/shared/linux/mtd/sysman_mtd.h"
 
+#include <string>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint32_t mockMtdRegionCount = 5;
 constexpr uint32_t mockMtdOffset = 0x1000;
 constexpr size_t mockMtdSize = 0x100;
 
-// Path to FD mapping for different test scenarios
-inline const std::map<std::string, int> mockMtdPathToFdMap = {
-    {"/dev/mtd3", 3}, // mtd3 maps to fd 3
-    {"/dev/mtd4", 4}, // mtd4 maps to fd 4
-    {"/dev/mtd5", 5}, // mtd5 maps to fd 5
-    {"/dev/mtd6", 6}, // mtd6 maps to fd 6
-    {"/dev/mtd7", 7}  // mtd7 maps to fd 7
+// The DATA device of the device under test is enumerated as /dev/mtd1, as on hardware. The file
+// descriptors are arbitrary tokens, kept away from the standard streams
+inline const std::string mockMtdDevicePath = "/dev/mtd1";
+constexpr int mockMtdDeviceFd = 3;
+inline const std::string mockMtdSecondDevicePath = "/dev/mtd2";
+constexpr int mockMtdSecondDeviceFd = 4;
+
+// MEMERASE is _IOW('M', 2, struct erase_info_user). The value is spelled out, so that the ioctl the
+// driver has to issue is pinned by the test
+constexpr unsigned long memEraseCmd = 0x40084d02;
+
+// Records the arguments of the mtd system calls
+struct MockMtdSysCalls {
+    std::string openedPath;
+    uint32_t openCount = 0;
+    uint32_t eraseStart = 0;
+    uint32_t eraseLength = 0;
+    off_t writeOffset = -1;
+    const void *writeData = nullptr;
+    size_t writeCount = 0;
 };
 
-// Define actual ioctl command values for comparison
-// MEMERASE is _IOW('M', 2, struct erase_info_user)
-// _IOW('M', 2, struct erase_info_user) = (0x1 << 30) | ('M' << 8) | 2 | (sizeof(struct erase_info_user) << 16)
-constexpr unsigned long memEraseCmd = 0x40084d02; // Calculated value for MEMERASE
+inline MockMtdSysCalls mockMtdSysCalls = {};
 
-// Inline mock functions for MTD operations
+inline bool isMockMtdFd(int fd) {
+    return (fd == mockMtdDeviceFd) || (fd == mockMtdSecondDeviceFd);
+}
+
 inline int mockOpenSuccess(const char *pathname, int flags) {
     std::string path(pathname);
-    auto it = mockMtdPathToFdMap.find(path);
-    if (it != mockMtdPathToFdMap.end()) {
-        return it->second;
+    mockMtdSysCalls.openedPath = path;
+    mockMtdSysCalls.openCount++;
+    if (path == mockMtdDevicePath) {
+        return mockMtdDeviceFd;
+    }
+    if (path == mockMtdSecondDevicePath) {
+        return mockMtdSecondDeviceFd;
     }
     return -1;
 }
@@ -46,62 +64,28 @@ inline int mockCloseSuccess(int fd) {
 }
 
 inline int mockIoctlEraseSuccess(int fd, unsigned long request, void *arg) {
-    // Accept fd values 3-7 for MTD devices
-    if ((fd >= 3 && fd <= 7) && request == memEraseCmd) {
+    if (isMockMtdFd(fd) && request == memEraseCmd) {
+        auto pEraseInfo = static_cast<erase_info_t *>(arg);
+        mockMtdSysCalls.eraseStart = pEraseInfo->start;
+        mockMtdSysCalls.eraseLength = pEraseInfo->length;
         return 0;
     }
     return -1;
 }
 
 inline ssize_t mockWriteSuccess(int fd, const void *buf, size_t count) {
-    // Accept fd values 3-7 for MTD devices
-    if (fd >= 3 && fd <= 7) {
+    if (isMockMtdFd(fd)) {
+        mockMtdSysCalls.writeData = buf;
+        mockMtdSysCalls.writeCount = count;
         return static_cast<ssize_t>(count);
     }
     return -1;
 }
 
 inline off_t mockLseekSuccess(int fd, off_t offset, int whence) {
-    // Accept fd values 3-7 for MTD devices
-    if ((fd >= 3 && fd <= 7) && whence == SEEK_SET) {
-        return offset; // Return the requested offset to indicate success
-    }
-    return -1;
-}
-
-inline off_t mockLseekWriteSuccess(int fd, off_t offset, int whence) {
-    // Accept fd values 3-7 for MTD devices
-    if ((fd >= 3 && fd <= 7) && whence == SEEK_SET && offset == mockMtdOffset) {
-        return offset; // Return the expected offset for write operations
-    }
-    return -1;
-}
-
-inline ssize_t mockReadSpiDescriptorSuccess(int fd, void *buf, size_t count) {
-    // Accept fd values 3-7 for MTD devices and return appropriate region limits
-    if ((fd >= 3 && fd <= 7) && count == sizeof(MtdSysman::SpiDescRegionBar)) {
-
-        MtdSysman::SpiDescRegionBar *regionBar = reinterpret_cast<MtdSysman::SpiDescRegionBar *>(buf);
-        regionBar->reserved0 = 0;
-        regionBar->reserved1 = 0;
-
-        // Set different base and limits based on fd
-        // Note: base and limit are 15-bit fields representing bits [26:12] of the address
-        if (fd == 3) {
-            regionBar->base = 0x0 >> 12;         // DESCRIPTOR region: 0x0 (used for both new mtd3 and legacy mtd0)
-            regionBar->limit = 0x00000fff >> 12; // 0x0
-        } else if (fd == 4) {
-            regionBar->base = 0x00083000 >> 12;  // GSC region: 0x83
-            regionBar->limit = 0x004a4fff >> 12; // 0x4a4
-        } else if (fd == 5) {
-            regionBar->base = 0x004a5000 >> 12;  // OptionROM region: 0x4a5
-            regionBar->limit = 0x00ffffff >> 12; // 0xfff
-        } else if (fd == 6 || fd == 7) {
-            regionBar->base = 0x07fff000 >> 12;  // DAM region: 0x7fff
-            regionBar->limit = 0x00000fff >> 12; // 0x0
-        }
-
-        return count;
+    if (isMockMtdFd(fd) && whence == SEEK_SET) {
+        mockMtdSysCalls.writeOffset = offset;
+        return offset;
     }
     return -1;
 }

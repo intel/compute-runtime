@@ -107,13 +107,17 @@ void HostFunctionScheduler::registerHostFunctionStreamer(HostFunctionStreamer *s
 }
 
 bool HostFunctionScheduler::isHostFunctionReadyToExecute(HostFunctionStreamer *streamer, uint64_t &hostFunctionId) {
-    auto id = streamer->getHostFunctionReadyToExecute();
+    if (!semaphore.try_acquire()) {
+        return false;
+    }
 
-    if (id.has_value() && semaphore.try_acquire()) {
+    auto id = streamer->tryReserveHostFunctionReadyToExecute();
+    if (id.has_value()) {
         hostFunctionId = id.value();
         return true;
     }
 
+    semaphore.release();
     return false;
 }
 

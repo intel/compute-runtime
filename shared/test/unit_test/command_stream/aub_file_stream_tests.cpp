@@ -31,7 +31,9 @@
 #include "gtest/gtest.h"
 #include "sys_calls.h"
 
+#include <array>
 #include <memory>
+#include <utility>
 
 using namespace NEO;
 
@@ -485,6 +487,32 @@ HWTEST_F(AubFileStreamTests, givenAUBDumpCaptureDirPathAndGeneratingAubFilePerPr
 
     EXPECT_NE(std::string::npos, fullName.find(expectedDirPath));
     EXPECT_NE(std::string::npos, fullName.find(expectedPerProcessPart.str()));
+}
+
+TEST(AubDirectoryPathTests, givenVariousAubFilePathsWhenGetDirectoryPathForFilePathIsCalledThenDirectoryPartOrEmptyIsReturned) {
+    const std::array<std::pair<std::string, std::string>, 8> testInputs = {{
+        {"/tmp/dir1/dir2/dir3/aubfile.aub", "/tmp/dir1/dir2/dir3"},
+        {"./dir1/dir2/aubfile.aub", "./dir1/dir2"},
+        {"/tmp/dir1//aubfile.aub", "/tmp/dir1"},
+        {"aubfile.aub", ""},
+        {"", ""},
+        {"/aubfile.aub", ""},
+        {"./aubfile.aub", ""},
+        {"C:\\aubfile.aub", ""},
+    }};
+
+    for (const auto &[filePath, expectedDirectoryPath] : testInputs) {
+        EXPECT_STREQ(expectedDirectoryPath.c_str(), AUBCommandStreamReceiver::getDirectoryPathForFilePath(filePath).c_str()) << filePath;
+    }
+}
+
+HWTEST_F(AubFileStreamTests, givenAUBDumpCaptureDirPathWhenGetDirectoryPathForFilePathIsCalledThenThatDirectoryIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.AUBDumpCaptureDirPath.set("/tmp/aubcapture/");
+
+    auto filePath = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", 0u);
+
+    EXPECT_STREQ("/tmp/aubcapture", AUBCommandStreamReceiver::getDirectoryPathForFilePath(filePath).c_str());
 }
 
 HWTEST_F(AubFileStreamTests, givenAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedRootDeviceIndexAndPid) {

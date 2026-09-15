@@ -21,7 +21,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
-#include "shared/source/release_helper/release_helper.h"
+#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -118,6 +118,9 @@ ze_result_t DriverHandle::getApiVersion(ze_api_version_t *version) {
 
 ze_result_t DriverHandle::getProperties(ze_driver_properties_t *properties) {
     uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD);
+    if (NEO::debugManager.flags.OverrideVersionBuild.get() > -1) {
+        versionBuild = static_cast<uint32_t>(NEO::debugManager.flags.OverrideVersionBuild.get());
+    }
 
     properties->driverVersion = DriverHandle::initialDriverVersionValue + versionBuild;
     if (NEO::debugManager.flags.OverrideDriverVersion.get() > -1) {
@@ -166,10 +169,12 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
     bool isBfloat16Supported = false;
     bool isBindlessHeapsSupported = false;
     for (const auto device : devices) {
-        if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper().isBFloat16ConversionSupported()) {
+        const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+        if (hwInfo.caps.bFloat16ConversionSupported) {
             isBfloat16Supported = true;
         }
-        if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
+        if (rootDeviceEnvironment.getBindlessHeapsHelper()) {
             isBindlessHeapsSupported = true;
         }
         if (isBfloat16Supported && isBindlessHeapsSupported) {
@@ -191,13 +196,16 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_1_0);
     }
 
-    if (devices[0]->getProductHelper().isInterruptSupported(devices[0]->getNEODevice()->getRootDeviceEnvironment())) {
+    const auto &rootDeviceEnvironment = devices[0]->getNEODevice()->getRootDeviceEnvironment();
+    if (devices[0]->getProductHelper().isInterruptSupported(rootDeviceEnvironment)) {
         additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_1_0);
     }
 
     NEO::OSInterface *osInterface = devices[0]->getOsInterface();
     if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::drm) {
         additionalExtensions.emplace_back(ZE_CACHE_RESERVATION_EXT_NAME, ZE_CACHE_RESERVATION_EXT_VERSION_1_0);
+        // Range IPC is implemented on drm only; wddm has no working transport yet.
+        additionalExtensions.emplace_back(ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_NAME, ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_VERSION_1_0);
     }
 
     ExtensionInjectorHelper::addAdditionalExtensions(additionalExtensions, devices[0]);
@@ -357,13 +365,13 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
     return ZE_RESULT_SUCCESS;
 }
 
-DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> devices, const L0EnvVariables &envVariables, ze_result_t *returnValue) {
+DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> devices, ze_result_t *returnValue) {
     DriverHandle *driverHandle = new DriverHandle;
     UNRECOVERABLE_IF(nullptr == driverHandle);
 
-    driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(envVariables.programDebugging);
-    driverHandle->enableSysman = envVariables.sysman;
-    driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
+    driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.get());
+    driverHandle->enableSysman = NEO::debugManager.flags.ZES_ENABLE_SYSMAN.get();
+    driverHandle->enablePciIdDeviceOrder = NEO::debugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.get();
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {
@@ -445,7 +453,7 @@ void DriverHandle::initUsmPooling() {
     }
 }
 
-NEO::UsmMemAllocPool *DriverHandle::getHostUsmPoolOwningPtr(const void *ptr) {
+NEO::UsmPoolLookupResult DriverHandle::getHostUsmPoolOwningPtr(const void *ptr) {
     return usmHostMemAllocPoolFacade.getPoolContainingAlloc(ptr);
 }
 
@@ -662,7 +670,8 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
                                    void *basePointer,
                                    NEO::GraphicsAllocation **pAlloc,
                                    NEO::SvmAllocationData &mappedPeerAllocData,
-                                   bool compressedMemory) {
+                                   bool compressedMemory,
+                                   uint64_t physicalOffset) {
     const bool uncachedBias = ((flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) != 0) ||
                               ((flags & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED) != 0);
     return this->getMemoryManager()->importFdHandle(neoDevice,
@@ -674,12 +683,13 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
                                                     pAlloc,
                                                     mappedPeerAllocData,
                                                     compressedMemory,
-                                                    uncachedBias);
+                                                    uncachedBias,
+                                                    physicalOffset);
 }
 
-void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
-    const bool uncachedBias = ((flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) != 0) ||
-                              ((flags & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED) != 0);
+void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, const std::vector<uint64_t> &physicalOffsets) {
+    const bool uncachedBias = (flags & (static_cast<ze_ipc_memory_flags_t>(ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) |
+                                        static_cast<ze_ipc_memory_flags_t>(ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED))) != 0;
     return this->getMemoryManager()->importFdHandles(neoDevice,
                                                      this->getSvmAllocsManager(),
                                                      handles,
@@ -687,7 +697,8 @@ void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_
                                                      pAlloc,
                                                      mappedPeerAllocData,
                                                      compressedMemory,
-                                                     uncachedBias);
+                                                     uncachedBias,
+                                                     physicalOffsets);
 }
 
 bool DriverHandle::isRemoteImageNeeded(Image *image, Device *device) {
@@ -755,7 +766,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                                          bool decompressP2PAllocation) {
     NEO::PeerAllocationDeps deps{};
 
-    // Check if peer access requires reserved handle data
+    // Check if reserved handle data is available as a fallback for peer access
     auto *alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
     if (alloc != nullptr) {
         uint32_t allocOwnerRootDeviceIndex = alloc->getRootDeviceIndex();
@@ -768,7 +779,7 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
         }
 
         if (allocOwnerDevice != nullptr) {
-            deps.requiresReservedHandleData = peerRequiresReservedHandleData(allocOwnerDevice, device);
+            deps.reservedHandleDataAvailable = peerReservedHandleDataAvailable(allocOwnerDevice, device);
         }
     }
 
@@ -777,14 +788,14 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                            NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
         ze_ipc_memory_flags_t flags = {};
         return this->importFdHandle(peerDevice, flags, handle, allocationType, false,
-                                    basePointer, pAlloc, mappedPeerAllocData, compressedMemory);
+                                    basePointer, pAlloc, mappedPeerAllocData, compressedMemory, 0u);
     };
     deps.importFds = [this](NEO::Device *peerDevice, const std::vector<NEO::osHandle> &handles,
                             void *basePointer, NEO::GraphicsAllocation **pAlloc,
                             NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
         ze_ipc_memory_flags_t flags = {};
         return this->importFdHandles(peerDevice, flags, handles, basePointer, pAlloc,
-                                     mappedPeerAllocData, compressedMemory);
+                                     mappedPeerAllocData, compressedMemory, {});
     };
     deps.decompressP2P = [device, this](NEO::GraphicsAllocation *alloc) {
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
@@ -802,11 +813,38 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                                                deps);
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) {
+NEO::GraphicsAllocation *DriverHandle::findPeerAllocation(Device *device, const void *ptr) {
+    std::unique_lock<NEO::SpinLock> lock(device->peerAllocations.mutex);
+    auto peerAllocationIt = device->peerAllocations.allocations.find(ptr);
+    if (peerAllocationIt == device->peerAllocations.allocations.end()) {
+        return nullptr;
+    }
+    return peerAllocationIt->second.gpuAllocations.getDefaultGraphicsAllocation();
+}
+
+NEO::GraphicsAllocation *DriverHandle::resolveMemoryAllocation(Device *device, void *ptr, size_t size, bool allowImport) {
+    auto allocation = this->getDriverSystemMemoryAllocation(ptr, size, device->getNEODevice()->getRootDeviceIndex(), nullptr);
+    if (allocation != nullptr) {
+        return allocation;
+    }
+    allocation = this->findPeerAllocation(device, ptr);
+    if (allocation != nullptr || !allowImport) {
+        return allocation;
+    }
+    NEO::SvmAllocationData *allocData = nullptr;
+    if (this->findAllocationDataForRange(ptr, size, allocData)) {
+        uintptr_t alignedPtr = reinterpret_cast<uintptr_t>(ptr);
+        allocation = this->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr, false);
+    }
+    return allocation;
+}
+
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     NEO::MemoryManager::OsHandleData osHandleData{handle};
     osHandleData.parentProcessId = parentProcessId;
+    osHandleData.physicalOffset = physicalOffset;
     NEO::AllocationProperties properties{neoDevice->getRootDeviceIndex(),
                                          MemoryConstants::pageSize,
                                          allocationType,
@@ -941,24 +979,6 @@ uint32_t DriverHandle::getEventMaxPacketCount(uint32_t numDevices, ze_device_han
     } else {
         for (uint32_t i = 0; i < numDevices; i++) {
             auto deviceMaxCount = Device::fromHandle(deviceHandles[i])->getEventMaxPacketCount();
-            maxCount = std::max(maxCount, deviceMaxCount);
-        }
-    }
-
-    return maxCount;
-}
-
-uint32_t DriverHandle::getEventMaxKernelCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const {
-    uint32_t maxCount = 0;
-
-    if (numDevices == 0) {
-        for (auto device : this->devices) {
-            auto deviceMaxCount = device->getEventMaxKernelCount();
-            maxCount = std::max(maxCount, deviceMaxCount);
-        }
-    } else {
-        for (uint32_t i = 0; i < numDevices; i++) {
-            auto deviceMaxCount = Device::fromHandle(deviceHandles[i])->getEventMaxKernelCount();
             maxCount = std::max(maxCount, deviceMaxCount);
         }
     }

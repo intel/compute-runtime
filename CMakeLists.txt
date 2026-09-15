@@ -289,12 +289,17 @@ if(NOT "${NEO_BITS}" STREQUAL "64")
   message(STATUS "32-bit build: skipping AUB stream detection, AUB tests disabled")
 endif()
 
+if(NOT NEO_PREPARE_KERNELS AND NOT NEO_SKIP_AUB_TESTS_RUN)
+  set(NEO_PREPARE_KERNELS TRUE)
+endif()
+
 if(NEO_IGNORE_INVALID_TEST_EXCLUDES)
   add_definitions(-DNEO_IGNORE_INVALID_TEST_EXCLUDES)
 endif()
 
 message(STATUS "NEO_SKIP_AUB_TESTS: ${NEO_SKIP_AUB_TESTS}")
 message(STATUS "NEO_SKIP_AUB_TESTS_RUN: ${NEO_SKIP_AUB_TESTS_RUN}")
+message(STATUS "NEO_PREPARE_KERNELS: ${NEO_PREPARE_KERNELS}")
 
 # Set our build directory
 if(NOT DEFINED NEO_BUILD_DIR)
@@ -620,13 +625,12 @@ include(cmake${BRANCH_DIR_SUFFIX}/find_drm.cmake)
 # Enable/Disable BuiltIns compilation during build
 set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
 if(NOT DEFINED NEO_KERNELS_BIN_DIR)
-  string(REPLACE "internal" "" NEO_KERNELS_BUILD_TYPE_DIR "${BUILD_TYPE_lower}")
-  message(STATUS "Neo kernels build type dir: ${NEO_KERNELS_BUILD_TYPE_DIR}")
   if(WIN32)
-    get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/windows/${NEO_KERNELS_BUILD_TYPE_DIR}" ABSOLUTE)
+    get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/windows" ABSOLUTE)
   else()
     get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/linux" ABSOLUTE)
   endif()
+  message(STATUS "Neo kernels dir: ${NEO_KERNELS_BIN_DIR}")
 endif()
 
 # Changing the default executable and library output directories
@@ -952,7 +956,8 @@ else()
   endif()
 endif()
 include_directories(${NEO_SHARED_DIRECTORY}/helpers/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SHARED_DIRECTORY}/release_helper/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SHARED_DIRECTORY}/release_helpers/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SHARED_DIRECTORY}/release_helpers/caps/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_platform)
@@ -1008,7 +1013,7 @@ if(MSVC)
   endif()
 endif()
 
-add_subdirectory_unique(shared/source/release_helper)
+add_subdirectory_unique(shared/source/release_helpers)
 add_subdirectory_unique(${OCLOC_DIRECTORY} ${NEO_BUILD_DIR}/offline_compiler)
 target_compile_definitions(ocloc_lib
                            PRIVATE MOCKABLE_VIRTUAL=
@@ -1030,6 +1035,10 @@ set(BUILTINS_SOURCES_LIB_NAME "builtins_sources")
 set(BUILTINS_BINARIES_LIB_NAME "builtins_binaries")
 set(BUILTINS_SPIRV_LIB_NAME "builtins_spirv")
 
+if(NEO_PREPARE_KERNELS)
+  add_custom_target(prepare_kernels)
+endif()
+
 if(WIN32)
   set(NEO_EXTRA_LIBS Ws2_32 winmm)
 else()
@@ -1046,19 +1055,10 @@ else()
 endif()
 
 set(DONT_LINK_ELF_STATICALLY TRUE)
-if(EXISTS ${NEO_SOURCE_DIR}/../internal)
-  add_subdirectory_unique(${NEO_SOURCE_DIR}/../internal ${NEO_BUILD_DIR}/internal)
-endif()
-
 set(NEO_SCRIPT_PROJECTS_FOLDER "neo scripts")
-
-set(NEO_SHARED_BUILTINS_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins/kernels")
-set(NEO_SHARED_TEST_FILES_DIR "${NEO_SOURCE_DIR}/shared/test/common/test_files")
-set(NEO_OPENCL_TEST_FILES_DIR "${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files")
 
 configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
-configure_file(test_files_setup.h.in ${NEO_BUILD_DIR}/test_files_setup.h)
 configure_file(hw_cmds_default.h.in ${NEO_BUILD_DIR}/hw_cmds_default.h)
 
 if(BUILD_WITH_L0)
@@ -1069,5 +1069,9 @@ add_subdirectory_unique(target_unit_tests)
 add_subdirectory_unique(target_aub_tests)
 
 add_subdirectories()
+
+if(EXISTS ${NEO_SOURCE_DIR}/../internal)
+  add_subdirectory_unique(${NEO_SOURCE_DIR}/../internal ${NEO_BUILD_DIR}/internal)
+endif()
 
 include(package.cmake)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,7 @@ class MockFailPageFaultManager : public PageFaultManagerLinux {
 
     bool verifyAndHandlePageFault(void *ptr, bool handlePageFault) override {
         verifyCalled = true;
+        staticVerifyCalled = true;
         if (handlePageFault) {
             numPageFaultHandled++;
         }
@@ -87,12 +88,14 @@ class MockFailPageFaultManager : public PageFaultManagerLinux {
         mockCalled2 = false;
         simpleMockCalled = false;
         simpleMockCalled2 = false;
+        staticVerifyCalled = false;
     }
 
     static bool mockCalled;
     static bool mockCalled2;
     static bool simpleMockCalled;
     static bool simpleMockCalled2;
+    static bool staticVerifyCalled;
     bool verifyCalled = false;
     int numPageFaultHandled = 0;
 };
@@ -101,6 +104,7 @@ bool MockFailPageFaultManager::mockCalled = false;
 bool MockFailPageFaultManager::mockCalled2 = false;
 bool MockFailPageFaultManager::simpleMockCalled = false;
 bool MockFailPageFaultManager::simpleMockCalled2 = false;
+bool MockFailPageFaultManager::staticVerifyCalled = false;
 
 TEST_F(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleAndSigInfoFlagSetThenSaSigactionIsCalled) {
     struct sigaction previousHandler = {};
@@ -141,6 +145,158 @@ TEST_F(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleThenSaHand
     EXPECT_TRUE(MockFailPageFaultManager::simpleMockCalled);
 
     mockPageFaultManager.reset();
+    sigaction(SIGSEGV, &previousHandler, nullptr);
+}
+
+TEST_F(PageFaultManagerLinuxTest, givenNoActivePageFaultManagerWhenWrapperIsRegisteredThenSignalDispositionIsNotModified) {
+    struct sigaction previousHandler = {};
+    struct sigaction wrapperHandler = {};
+    wrapperHandler.sa_flags = SA_SIGINFO;
+    wrapperHandler.sa_sigaction = PageFaultManagerLinux::pageFaultHandlerWrapper;
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    mockPageFaultManager.reset();
+
+    auto retVal = sigaction(SIGSEGV, &wrapperHandler, &previousHandler);
+    EXPECT_EQ(retVal, 0);
+
+    std::raise(SIGSEGV);
+
+    EXPECT_FALSE(MockFailPageFaultManager::staticVerifyCalled);
+
+    struct sigaction currentHandler = {};
+    retVal = sigaction(SIGSEGV, nullptr, &currentHandler);
+    EXPECT_EQ(retVal, 0);
+    EXPECT_EQ(PageFaultManagerLinux::pageFaultHandlerWrapper, currentHandler.sa_sigaction);
+
+    sigaction(SIGSEGV, &previousHandler, nullptr);
+}
+
+TEST_F(PageFaultManagerLinuxTest, givenPageFaultManagerWhenItIsDestroyedThenPreviousHandlerIsRestored) {
+    struct sigaction previousHandler = {};
+    struct sigaction mockHandler = {};
+    mockHandler.sa_handler = MockFailPageFaultManager::mockPageFaultSimpleHandler;
+    auto retVal = sigaction(SIGSEGV, &mockHandler, &previousHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    mockPageFaultManager.reset();
+
+    struct sigaction currentHandler = {};
+    retVal = sigaction(SIGSEGV, nullptr, &currentHandler);
+    EXPECT_EQ(retVal, 0);
+    EXPECT_EQ(MockFailPageFaultManager::mockPageFaultSimpleHandler, currentHandler.sa_handler);
+
+    sigaction(SIGSEGV, &previousHandler, nullptr);
+}
+
+TEST_F(PageFaultManagerLinuxTest, givenPreviousHandlerAlreadyRestoredWhenFaultHandlerIsRegisteredAgainThenWrapperIsNotLeftRegisteredWithoutManager) {
+    struct sigaction originalHandler = {};
+    struct sigaction mockDefaultHandler = {};
+    mockDefaultHandler.sa_handler = SIG_DFL;
+    auto retVal = sigaction(SIGSEGV, &mockDefaultHandler, &originalHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    mockPageFaultManager->callPreviousHandler(0, nullptr, nullptr);
+    EXPECT_TRUE(mockPageFaultManager->previousHandlerRestored);
+
+    mockPageFaultManager->registerFaultHandler();
+    EXPECT_FALSE(mockPageFaultManager->previousHandlerRestored);
+
+    mockPageFaultManager.reset();
+
+    struct sigaction currentHandler = {};
+    retVal = sigaction(SIGSEGV, nullptr, &currentHandler);
+    EXPECT_EQ(retVal, 0);
+    EXPECT_NE(PageFaultManagerLinux::pageFaultHandlerWrapper, currentHandler.sa_sigaction);
+    EXPECT_EQ(SIG_DFL, currentHandler.sa_handler);
+
+    sigaction(SIGSEGV, &originalHandler, nullptr);
+}
+
+TEST_F(PageFaultManagerLinuxTest, givenTwoPageFaultManagersWhenActiveOneIsDestroyedThenWrapperIsNotLeftRegisteredWithoutManager) {
+    struct sigaction previousHandler = {};
+    struct sigaction mockHandler = {};
+    mockHandler.sa_handler = MockFailPageFaultManager::mockPageFaultSimpleHandler;
+    auto retVal = sigaction(SIGSEGV, &mockHandler, &previousHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto firstPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    auto secondPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+
+    EXPECT_EQ(1ul, secondPageFaultManager->previousPageFaultHandlers.size());
+    EXPECT_EQ(PageFaultManagerLinux::pageFaultHandlerWrapper, secondPageFaultManager->previousPageFaultHandlers[0].sa_sigaction);
+
+    secondPageFaultManager.reset();
+
+    struct sigaction currentHandler = {};
+    retVal = sigaction(SIGSEGV, nullptr, &currentHandler);
+    EXPECT_EQ(retVal, 0);
+    EXPECT_EQ(SIG_DFL, currentHandler.sa_handler);
+
+    firstPageFaultManager.reset();
+    sigaction(SIGSEGV, &previousHandler, nullptr);
+}
+
+TEST_F(PageFaultManagerLinuxTest, givenThreePageFaultManagersWhenNotActiveOneIsDestroyedThenPageFaultIsStillHandledByActiveManager) {
+    struct sigaction previousHandler = {};
+    struct sigaction mockHandler = {};
+    mockHandler.sa_handler = MockFailPageFaultManager::mockPageFaultSimpleHandler;
+    auto retVal = sigaction(SIGSEGV, &mockHandler, &previousHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto firstPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+
+    auto secondPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    EXPECT_EQ(PageFaultManagerLinux::pageFaultHandlerWrapper, secondPageFaultManager->previousPageFaultHandlers[0].sa_sigaction);
+
+    struct sigaction mockHandler2 = {};
+    mockHandler2.sa_handler = MockFailPageFaultManager::mockPageFaultSimpleHandler2;
+    retVal = sigaction(SIGSEGV, &mockHandler2, nullptr);
+    EXPECT_EQ(retVal, 0);
+
+    auto thirdPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    secondPageFaultManager.reset();
+
+    struct sigaction currentHandler = {};
+    retVal = sigaction(SIGSEGV, nullptr, &currentHandler);
+    EXPECT_EQ(retVal, 0);
+    ASSERT_EQ(PageFaultManagerLinux::pageFaultHandlerWrapper, currentHandler.sa_sigaction);
+
+    std::raise(SIGSEGV);
+
+    EXPECT_TRUE(thirdPageFaultManager->verifyCalled);
+    EXPECT_EQ(1, thirdPageFaultManager->numPageFaultHandled);
+    EXPECT_TRUE(MockFailPageFaultManager::simpleMockCalled2);
+
+    thirdPageFaultManager.reset();
+    firstPageFaultManager.reset();
+    sigaction(SIGSEGV, &previousHandler, nullptr);
+}
+
+TEST_F(PageFaultManagerLinuxTest, givenNoActivePageFaultManagerWhenAnotherHandlerChainsIntoWrapperThenItsRegistrationIsNotChanged) {
+    struct sigaction previousHandler = {};
+    struct sigaction mockHandler = {};
+    mockHandler.sa_flags = SA_SIGINFO;
+    mockHandler.sa_sigaction = MockFailPageFaultManager::mockPageFaultHandler2;
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    mockPageFaultManager.reset();
+
+    auto retVal = sigaction(SIGSEGV, &mockHandler, &previousHandler);
+    EXPECT_EQ(retVal, 0);
+
+    std::raise(SIGSEGV);
+
+    EXPECT_TRUE(MockFailPageFaultManager::mockCalled2);
+
+    struct sigaction currentHandler = {};
+    retVal = sigaction(SIGSEGV, nullptr, &currentHandler);
+    EXPECT_EQ(retVal, 0);
+    EXPECT_EQ(MockFailPageFaultManager::mockPageFaultHandler2, currentHandler.sa_sigaction);
+
+    MockFailPageFaultManager::mockCalled2 = false;
     sigaction(SIGSEGV, &previousHandler, nullptr);
 }
 

@@ -8,10 +8,12 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
@@ -23,10 +25,12 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/leo_convert_color.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
@@ -36,6 +40,9 @@
 #include "CL/cl.h"
 
 #include <cstring>
+
+namespace NEO {
+namespace LEO {
 
 inline void applyDefaultRectPitches(const size_t *region, size_t &rowPitch, size_t &slicePitch) {
     if (rowPitch == 0) {
@@ -125,6 +132,8 @@ inline L0::ze_image_region_mip_level_exp_desc_t createZeImageRegionWithMipLevel(
     return desc;
 }
 
+extern "C" {
+
 cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
                                        cl_mem buffer,
                                        cl_bool blockingRead,
@@ -202,6 +211,9 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
 
     applyDefaultRectPitches(region, bufferRowPitch, bufferSlicePitch);
     applyDefaultRectPitches(region, hostRowPitch, hostSlicePitch);
+
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(bufferOrigin, region, bufferRowPitch, bufferSlicePitch));
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(hostOrigin, region, hostRowPitch, hostSlicePitch));
 
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(bufferOrigin[0]), static_cast<uint32_t>(bufferOrigin[1]), static_cast<uint32_t>(bufferOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(hostOrigin[0]), static_cast<uint32_t>(hostOrigin[1]), static_cast<uint32_t>(hostOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
@@ -306,6 +318,9 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
 
     applyDefaultRectPitches(region, bufferRowPitch, bufferSlicePitch);
     applyDefaultRectPitches(region, hostRowPitch, hostSlicePitch);
+
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(bufferOrigin, region, bufferRowPitch, bufferSlicePitch));
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(hostOrigin, region, hostRowPitch, hostSlicePitch));
 
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(bufferOrigin[0]), static_cast<uint32_t>(bufferOrigin[1]), static_cast<uint32_t>(bufferOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(hostOrigin[0]), static_cast<uint32_t>(hostOrigin[1]), static_cast<uint32_t>(hostOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
@@ -425,6 +440,9 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
     applyDefaultRectPitches(region, srcRowPitch, srcSlicePitch);
     applyDefaultRectPitches(region, dstRowPitch, dstSlicePitch);
 
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(srcOrigin, region, srcRowPitch, srcSlicePitch));
+    UNRECOVERABLE_IF(!NEO::LEO::rectArgsFitInUint32(dstOrigin, region, dstRowPitch, dstSlicePitch));
+
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(dstOrigin[0]), static_cast<uint32_t>(dstOrigin[1]), static_cast<uint32_t>(dstOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(srcOrigin[0]), static_cast<uint32_t>(srcOrigin[1]), static_cast<uint32_t>(srcOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
 
@@ -473,9 +491,22 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
+    const auto readFormat = pImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&readFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(origin, region);
+        if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueReadImage, &retVal);
+            return retVal;
+        }
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_READ_IMAGE, pCommandQueue);
 
     auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
+    auto l0Image = pImage->getL0Object();
+    resolveHostPitchesForCustomPitchImage(l0Image->hasCustomPitch(), l0Image->getImageInfo().surfaceFormat->imageElementSizeInBytes, region, rowPitch, slicePitch);
+
+    UNRECOVERABLE_IF(!NEO::LEO::fitsInUint32(rowPitch) || !NEO::LEO::fitsInUint32(slicePitch));
 
     auto lock = pCommandQueue->takeOwnership();
     pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
@@ -524,9 +555,22 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
+    const auto writeFormat = pImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&writeFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(origin, region);
+        if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueWriteImage, &retVal);
+            return retVal;
+        }
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_WRITE_IMAGE, pCommandQueue);
 
     auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
+    auto l0Image = pImage->getL0Object();
+    resolveHostPitchesForCustomPitchImage(l0Image->hasCustomPitch(), l0Image->getImageInfo().surfaceFormat->imageElementSizeInBytes, region, inputRowPitch, inputSlicePitch);
+
+    UNRECOVERABLE_IF(!NEO::LEO::fitsInUint32(inputRowPitch) || !NEO::LEO::fitsInUint32(inputSlicePitch));
 
     auto lock = pCommandQueue->takeOwnership();
     pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
@@ -607,11 +651,12 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     auto lock = l0Device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     auto *builtinKernel = l0Device->getBuiltinFunctionsLib()->getImageFunction(L0::ImageBuiltIn::fillImage3d, builtInMode);
 
-    builtinKernel->setArgRedescribedImage(0u, pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()), false, 0u);
+    auto fillRegion = createZeImageRegionWithMipLevel(pImage, origin, region);
+
+    builtinKernel->setArgRedescribedImage(0u, pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()), false, fillRegion.mipLevel);
     builtinKernel->setArgumentValue(1u, sizeof(packedFillColor), packedFillColor);
 
-    auto fillRegion = createZeImageRegionWithMipLevel(pImage, origin, region);
-    uint32_t dstOffset[] = {fillRegion.originX, fillRegion.originY, fillRegion.originZ, fillRegion.mipLevel};
+    uint32_t dstOffset[] = {fillRegion.originX, fillRegion.originY, fillRegion.originZ, 0u};
     builtinKernel->setArgumentValue(2u, sizeof(dstOffset), dstOffset);
 
     uint32_t groupSizeX = static_cast<uint32_t>(region[0]);
@@ -658,6 +703,12 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
         return retVal;
     }
 
+    retVal = NEO::LEO::validateImageCopy(pSrcImage->getOriginalFormat(), pDstImage->getOriginalFormat(), srcOrigin, dstOrigin, region);
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClEnqueueCopyImage, &retVal);
+        return retVal;
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_IMAGE, pCommandQueue);
 
     auto srcMipDesc = createZeImageRegionWithMipLevel(pSrcImage, srcOrigin, region);
@@ -698,6 +749,15 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
         return retVal;
     }
 
+    const auto srcFormat = pSrcImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&srcFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(srcOrigin, region);
+        if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueCopyImageToBuffer, &retVal);
+            return retVal;
+        }
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_IMAGE_TO_BUFFER, pCommandQueue);
 
     auto mipDesc = createZeImageRegionWithMipLevel(pSrcImage, srcOrigin, region);
@@ -733,6 +793,15 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
     if (retVal != CL_SUCCESS) [[unlikely]] {
         TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
         return retVal;
+    }
+
+    const auto dstFormat = pDstImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&dstFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(dstOrigin, region);
+        if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
+            return retVal;
+        }
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_BUFFER_TO_IMAGE, pCommandQueue);
@@ -793,10 +862,10 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
                 return tracingRetVal;
             }
         }
-        if (NEO::isValueSet(mapFlags, CL_MAP_WRITE_INVALIDATE_REGION)) {
-            errcodeHelper.set(clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event));
-        } else if (pBuffer->getUsesSvm()) {
+        if (pBuffer->getUsesSvm()) {
             errcodeHelper.set(clEnqueueSVMMap(commandQueue, false, mapFlags, ptrOffset(pBuffer->getCpuPtr(), offset), cb, numEventsInWaitList, eventWaitList, event));
+        } else if (NEO::isValueSet(mapFlags, CL_MAP_WRITE_INVALIDATE_REGION)) {
+            errcodeHelper.set(clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event));
         } else {
             auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MAP_BUFFER, pCommandQueue);
 
@@ -824,7 +893,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
     NEO::LEO::MemObjSizeArray sizes{cb, 0, 0};
     NEO::LEO::MemObjOffsetArray offsets{offset, 0, 0};
     if (!pBuffer->getMapOperationsHandler().add(ptrOffset(pBuffer->getCpuPtr(), offset), cb, mapFlags, sizes, offsets)) {
-        errcodeHelper.set(CL_OUT_OF_HOST_MEMORY);
+        errcodeHelper.set(CL_INVALID_OPERATION);
         void *tracingRetVal = nullptr;
         TRACING_EXIT(ClEnqueueMapBuffer, &tracingRetVal);
         return tracingRetVal;
@@ -870,19 +939,34 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
         return tracingRetVal;
     }
-    if (!pImage->getCpuPtr()) {
-        ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, 0};
-        void *cpuPtr = nullptr;
-        errcodeHelper.set(L0ToClResultMapper(zeMemAllocHost(pCommandQueue->getL0Object()->getCmdListContext(),
-                                                            &hostDesc,
-                                                            pImage->getHostptrSize(),
-                                                            1,
-                                                            &cpuPtr)));
-        pImage->setCpuPtr(cpuPtr);
-        if (errcodeHelper.localErrcode != CL_SUCCESS) {
+
+    const auto mapFormat = pImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&mapFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(origin, region);
+        if (retVal != CL_SUCCESS) {
+            errcodeHelper.set(retVal);
             void *tracingRetVal = nullptr;
             TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
             return tracingRetVal;
+        }
+    }
+    {
+        auto memObjLock = pImage->takeOwnership();
+        if (!pImage->getCpuPtr()) {
+            ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc{ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC, nullptr, ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE};
+            ze_host_mem_alloc_desc_t hostDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, &relaxedSizeDesc, 0};
+            void *cpuPtr = nullptr;
+            errcodeHelper.set(L0ToClResultMapper(zeMemAllocHost(pCommandQueue->getL0Object()->getCmdListContext(),
+                                                                &hostDesc,
+                                                                pImage->getHostptrSize(),
+                                                                1,
+                                                                &cpuPtr)));
+            pImage->setCpuPtr(cpuPtr);
+            if (errcodeHelper.localErrcode != CL_SUCCESS) {
+                void *tracingRetVal = nullptr;
+                TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
+                return tracingRetVal;
+            }
         }
     }
 
@@ -936,7 +1020,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
     }
 
     if (!pImage->getMapOperationsHandler().add(ptrOffset(pImage->getCpuPtr(), offset), size, mapFlags, sizes, offsets, getOclMipLevel(pImage, origin))) {
-        errcodeHelper.set(CL_OUT_OF_HOST_MEMORY);
+        errcodeHelper.set(CL_INVALID_OPERATION);
         void *tracingRetVal = nullptr;
         TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
         return tracingRetVal;
@@ -1040,18 +1124,16 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
             return tracingRetVal;
         }
 
-        if ((pBuffer->getCpuPtr() != pBuffer->getUsmPtr() || pBuffer->getUsesSvm()) && !mapInfo.readOnly) {
-            if (pBuffer->getUsesSvm()) {
-                cl_int tracingRetVal = clEnqueueSVMUnmap(commandQueue, mappedPtr, numEventsInWaitList, eventWaitList, event);
-                TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-                return tracingRetVal;
-            } else {
-                auto mappedOffset = mapInfo.offset[0];
-                auto mappedSize = mapInfo.ptrLength;
-                cl_int tracingRetVal = clEnqueueWriteBuffer(commandQueue, memObj, false, mappedOffset, mappedSize, mappedPtr, numEventsInWaitList, eventWaitList, event);
-                TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-                return tracingRetVal;
-            }
+        if (pBuffer->getUsesSvm()) {
+            cl_int tracingRetVal = clEnqueueSVMUnmap(commandQueue, mappedPtr, numEventsInWaitList, eventWaitList, event);
+            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
+            return tracingRetVal;
+        } else if (pBuffer->getCpuPtr() != pBuffer->getUsmPtr() && !mapInfo.readOnly) {
+            auto mappedOffset = mapInfo.offset[0];
+            auto mappedSize = mapInfo.ptrLength;
+            cl_int tracingRetVal = clEnqueueWriteBuffer(commandQueue, memObj, false, mappedOffset, mappedSize, mappedPtr, numEventsInWaitList, eventWaitList, event);
+            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
+            return tracingRetVal;
         } else {
             cl_int tracingRetVal = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
             TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
@@ -1124,6 +1206,8 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
+    auto kernelLock = pKernel->takeOwnership();
+
     if (!pKernel->areAllArgsSet()) [[unlikely]] {
         cl_int tracingRetVal = CL_INVALID_KERNEL_ARGS;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
@@ -1137,15 +1221,22 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
+    if (pKernel->isUsingSharedObjArgs()) {
+        pKernel->resetSharedObjectsPatchAddresses();
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
     auto cmdlistHandle = pCommandQueue->getL0Handle();
-    auto lock = pCommandQueue->takeOwnership();
 
     if (!globalWorkSize || globalWorkSize[0] == 0) {
+        kernelLock.unlock();
+        auto lock = pCommandQueue->takeOwnership();
         cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendBarrier(cmdlistHandle, hSignalEvent, waitEvents.size(), waitEvents.data()));
         TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
         return tracingRetVal;
     }
+
+    auto lock = pCommandQueue->takeOwnership();
 
     uint32_t gwo[3] = {globalWorkOffset ? static_cast<uint32_t>(globalWorkOffset[0]) : 0,
                        workDim > 1 ? static_cast<uint32_t>(globalWorkOffset ? globalWorkOffset[1] : 0) : 0,
@@ -1191,11 +1282,13 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
                          workDim > 2 ? static_cast<uint32_t>(globalWorkSize[2] / lws[2]) : 1u};
 
     for (cl_uint i = 0; i < workDim; ++i) {
-        if (static_cast<uint32_t>(globalWorkSize[i]) % lws[i] != 0) [[unlikely]] {
+        if (globalWorkSize[i] % lws[i] != 0) [[unlikely]] {
             cl_int tracingRetVal = CL_INVALID_WORK_GROUP_SIZE;
             TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
             return tracingRetVal;
         }
+        // ze_group_count_t is 32 bit, so a group count that does not fit cannot be dispatched
+        UNRECOVERABLE_IF(!NEO::LEO::fitsInUint32(globalWorkSize[i] / lws[i]));
     }
 
     if (pCommandQueue->isPerfCountersEnabled() && event) {
@@ -1367,7 +1460,14 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
         event = &evntForCallback;
     }
 
-    clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
+    retVal = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        TRACING_EXIT(ClEnqueueSvmFree, &retVal);
+        return retVal;
+    }
+
+    // Marker labels the event CL_COMMAND_MARKER; relabel here.
+    NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_FREE);
 
     struct ClEnqueueSVMFreeUserData {
         cl_command_queue commandQueue = nullptr;
@@ -1378,12 +1478,13 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
                                        void *userData) = nullptr;
         void *userData = nullptr;
 
-        cl_uint numSvmPointers = 0;
-        void **svmPointers = nullptr;
+        StackVec<void *, 8> svmPointers{};
 
         bool ownsEventDeletion = false;
     };
-    auto clEnqueueSVMFreeUserData = new ClEnqueueSVMFreeUserData{commandQueue, pfnFreeFunc, userData, numSvmPointers, svmPointers, ownsEventDeletion};
+    auto clEnqueueSVMFreeUserData = new ClEnqueueSVMFreeUserData{commandQueue, pfnFreeFunc, userData,
+                                                                 StackVec<void *, 8>(svmPointers, svmPointers + numSvmPointers),
+                                                                 ownsEventDeletion};
 
     auto clEnqueueSVMFreeCallbackWrapper = [](cl_event event, cl_int, void *userData) {
         auto clEnqueueSVMFreeUserData = static_cast<ClEnqueueSVMFreeUserData *>(userData);
@@ -1391,17 +1492,15 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
         auto pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(event);
 
         if (clEnqueueSVMFreeUserData->pfnFreeFunc) {
-            clEnqueueSVMFreeUserData->pfnFreeFunc(clEnqueueSVMFreeUserData->commandQueue, clEnqueueSVMFreeUserData->numSvmPointers, clEnqueueSVMFreeUserData->svmPointers, clEnqueueSVMFreeUserData->userData);
+            clEnqueueSVMFreeUserData->pfnFreeFunc(clEnqueueSVMFreeUserData->commandQueue, static_cast<cl_uint>(clEnqueueSVMFreeUserData->svmPointers.size()), clEnqueueSVMFreeUserData->svmPointers.begin(), clEnqueueSVMFreeUserData->userData);
         } else {
-            for (cl_uint i = 0; i < clEnqueueSVMFreeUserData->numSvmPointers; ++i) {
-                clSVMFree(pEvent->getContext(), clEnqueueSVMFreeUserData->svmPointers[i]);
+            for (auto svmPointer : clEnqueueSVMFreeUserData->svmPointers) {
+                clSVMFree(pEvent->getContext(), svmPointer);
             }
         }
 
         if (clEnqueueSVMFreeUserData->ownsEventDeletion) {
             clReleaseEvent(event);
-        } else {
-            pEvent->updateCommandType(CL_COMMAND_SVM_FREE);
         }
 
         delete clEnqueueSVMFreeUserData;
@@ -1433,7 +1532,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemsetINTEL(
     cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendMemoryFill(pCommandQueue->getL0Handle(),
                                                                             dstPtr,
                                                                             &value,
-                                                                            sizeof(cl_int),
+                                                                            1u,
                                                                             size,
                                                                             hSignalEvent,
                                                                             waitEvents.size(),
@@ -1564,7 +1663,7 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
                                       cl_event *event) {
     TRACING_ENTER(ClEnqueueSvmMemcpy, &commandQueue, &blockingCopy, &dstPtr, &srcPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto ret = clEnqueueMemcpyINTEL(commandQueue, blockingCopy, dstPtr, srcPtr, size, numEventsInWaitList, eventWaitList, event);
-    if (event) {
+    if (event && ret == CL_SUCCESS) {
         NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_MEMCPY);
     }
     TRACING_EXIT(ClEnqueueSvmMemcpy, &ret);
@@ -1581,7 +1680,7 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
                                        cl_event *event) {
     TRACING_ENTER(ClEnqueueSvmMemFill, &commandQueue, &svmPtr, &pattern, &patternSize, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto ret = clEnqueueMemFillINTEL(commandQueue, svmPtr, pattern, patternSize, size, numEventsInWaitList, eventWaitList, event);
-    if (event) {
+    if (event && ret == CL_SUCCESS) {
         NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_MEMFILL);
     }
     TRACING_EXIT(ClEnqueueSvmMemFill, &ret);
@@ -1615,21 +1714,21 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
     if (deviceStorage) {
-        auto svmBasePtr = svmData->cpuAllocation->getUnderlyingBuffer();
+        auto cpuAllocation = svmData->cpuAllocation;
+        auto svmBasePtr = cpuAllocation->getUnderlyingBuffer();
         const size_t svmOffset = ptrDiff(svmPtr, svmBasePtr);
         if (svmAllocsManager->getSvmMapOperation(svmPtr) == nullptr) {
-            if (waitEvents.size() > 0) {
-                zeCommandListAppendWaitOnEvents(cmdListHandle, waitEvents.size(), waitEvents.data());
-            }
-            auto rootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
-            ret = pCommandQueue->getL0Object()->appendPageFaultCopy(svmData->cpuAllocation,
-                                                                    svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex),
-                                                                    size, true, svmOffset);
-            zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, 0, nullptr);
+            L0::CmdListMemoryCopyParams memoryCopyParams{};
+            memoryCopyParams.dstAllocInfo.explicitAlloc = cpuAllocation;
+            auto dstPtr = reinterpret_cast<void *>(cpuAllocation->getGpuAddress() + svmOffset);
+
+            ret = pCommandQueue->getL0Object()->appendMemoryCopy(dstPtr, svmPtr, size, hSignalEvent,
+                                                                 static_cast<uint32_t>(waitEvents.size()), waitEvents.data(),
+                                                                 memoryCopyParams);
+            svmAllocsManager->insertSvmMapOperation(svmPtr, size, svmBasePtr, svmOffset, mapFlags == CL_MAP_READ);
         } else {
             ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
         }
-        svmAllocsManager->insertSvmMapOperation(svmPtr, size, svmBasePtr, svmOffset, mapFlags == CL_MAP_READ);
     } else {
         ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
     }
@@ -1674,14 +1773,14 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
     if (deviceStorage) {
         auto mapOperation = svmAllocsManager->getSvmMapOperation(svmPtr);
         if (mapOperation && !mapOperation->readOnlyMap) {
-            if (waitEvents.size() > 0) {
-                zeCommandListAppendWaitOnEvents(cmdListHandle, waitEvents.size(), waitEvents.data());
-            }
-            auto rootDeviceIndex = pCommandQueue->getDevice()->getRootDeviceIndex();
-            ret = pCommandQueue->getL0Object()->appendPageFaultCopy(svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex),
-                                                                    svmData->cpuAllocation,
-                                                                    mapOperation->regionSize, false, mapOperation->offset);
-            zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, 0, nullptr);
+            auto cpuAllocation = svmData->cpuAllocation;
+            L0::CmdListMemoryCopyParams memoryCopyParams{};
+            memoryCopyParams.srcAllocInfo.explicitAlloc = cpuAllocation;
+            auto srcPtr = reinterpret_cast<const void *>(cpuAllocation->getGpuAddress() + mapOperation->offset);
+
+            ret = pCommandQueue->getL0Object()->appendMemoryCopy(svmPtr, srcPtr, mapOperation->regionSize, hSignalEvent,
+                                                                 static_cast<uint32_t>(waitEvents.size()), waitEvents.data(),
+                                                                 memoryCopyParams);
         } else {
             ret = zeCommandListAppendBarrier(cmdListHandle, hSignalEvent, waitEvents.size(), waitEvents.data());
         }
@@ -1852,6 +1951,8 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
 
     auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
 
+    auto kernelLock = pKernel->takeOwnership();
+
     if (!pKernel->areAllArgsSet()) [[unlikely]] {
         cl_int tracingRetVal = CL_INVALID_KERNEL_ARGS;
         TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
@@ -1870,6 +1971,10 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
         cl_int tracingRetVal = CL_INVALID_KERNEL;
         TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
         return tracingRetVal;
+    }
+
+    if (pKernel->isUsingSharedObjArgs()) {
+        pKernel->resetSharedObjectsPatchAddresses();
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
@@ -1990,3 +2095,8 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueExternalMemObjectsKHR(
     TRACING_EXIT(ClEnqueueExternalMemObjectsKHR, &tracingRetVal);
     return tracingRetVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

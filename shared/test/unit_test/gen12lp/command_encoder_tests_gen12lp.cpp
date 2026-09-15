@@ -9,6 +9,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -30,7 +31,14 @@ GEN12LPTEST_F(Gen12LpCommandEncodeTest, givenGen12LpPlatformWhenEncodeSlmSizePer
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
     const INTERFACE_DESCRIPTOR_DATA expectedIdd = FamilyType::cmdInitInterfaceDescriptorData;
 
-    EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, 8u, 1024u, 16 * MemoryConstants::kiloByte, SlmPolicy::slmPolicyLargeSlm);
+    EncodeSlmSizePerSubSliceArgs slmArgs{
+        .threadsPerThreadGroup = 8u,
+        .workloadThreadGroupCount = 1024u,
+        .slmTotalSizePerThreadGroup = 16 * MemoryConstants::kiloByte,
+        .grfCount = GrfConfig::defaultGrfNumber,
+        .slmPolicy = SlmPolicy::slmPolicyLargeSlm};
+
+    EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
 
     EXPECT_EQ(0, memcmp(&expectedIdd, &idd, sizeof(INTERFACE_DESCRIPTOR_DATA)));
 }

@@ -39,7 +39,7 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
     if (debuggingEnabled) {
 
         const auto &releaseHelper = device.getReleaseHelper();
-        const bool isBasicWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsBaseWARequired();
+        const bool isBasicWARequired = hwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired;
         const bool isExtendedWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, isRcs);
         const auto isWARequired = isBasicWARequired || isExtendedWARequired;
 

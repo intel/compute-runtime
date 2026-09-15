@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,6 +136,12 @@ HWTEST2_F(AILTests, givenAilWhenCheckingDrainHostptrsRequiredThenExpectTrue, Mat
 HWTEST2_F(AILTests, givenAilWhenGetMicrosecondResolutionCalledThenCorrectValueReturned, MatchAny) {
     AILWhitebox<productFamily> ail;
     EXPECT_EQ(ail.getMicrosecondResolution(), microsecondAdjustment);
+}
+
+HWTEST2_F(AILTests, givenAilWhenOldOpenVinoVersionWasNotCheckedThenItIsReportedAsNotDetected, MatchAny) {
+    AILWhitebox<productFamily> ail;
+
+    EXPECT_FALSE(ail.getOldOpenVinoVersionDetected());
 }
 
 } // namespace NEO

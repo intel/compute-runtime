@@ -7,7 +7,6 @@
 
 #include "shared/source/xe3p_core/hw_cmds_base.h"
 using Family = NEO::Xe3pCoreFamily;
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
@@ -20,28 +19,9 @@ using Family = NEO::Xe3pCoreFamily;
 
 #include "gfx_core_helper_xe3p_core_additional.inl"
 
-namespace ContextGroup {
-extern uint32_t maxContextCount;
-}
-
 namespace NEO {
 template <>
 const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::none;
-
-template <>
-uint32_t GfxCoreHelperHw<Family>::getContextGroupContextsCount() const {
-    auto contextGroupCount = 64u;
-    if (contextGroupCount > ContextGroup::maxContextCount) {
-        contextGroupCount = ContextGroup::maxContextCount;
-    }
-    if (!secondaryContextsEnabled) {
-        contextGroupCount = 0;
-    }
-    if (debugManager.flags.ContextGroupSize.get() != -1) {
-        return debugManager.flags.ContextGroupSize.get();
-    }
-    return contextGroupCount;
-}
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
@@ -84,7 +64,7 @@ uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t sim
         maxThreadsPerThreadGroup = 48u;
     }
 
-    maxThreadsPerThreadGroup = productHelper.adjustMaxThreadsPerThreadGroup(maxThreadsPerThreadGroup, simd, grfCount);
+    maxThreadsPerThreadGroup = productHelper.adjustMaxThreadsPerThreadGroup(*rootDeviceEnvironment.getHardwareInfo(), maxThreadsPerThreadGroup, simd, grfCount);
 
     numThreadsPerThreadGroup = std::min(numThreadsPerThreadGroup, maxThreadsPerThreadGroup);
     DEBUG_BREAK_IF(numThreadsPerThreadGroup * simd > CommonConstants::maxWorkgroupSize);

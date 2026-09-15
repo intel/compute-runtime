@@ -18,6 +18,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
@@ -30,6 +31,9 @@
 
 #include <limits>
 #include <map>
+
+namespace NEO {
+namespace LEO {
 
 namespace {
 cl_int getKernelSuggestedLocalWorkSizeImpl(NEO::LEO::CommandQueue *commandQueue,
@@ -61,6 +65,8 @@ cl_int getKernelSuggestedLocalWorkSizeImpl(NEO::LEO::CommandQueue *commandQueue,
     return kernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, suggestedLocalWorkSize);
 }
 } // namespace
+
+extern "C" {
 
 cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
                                      const char *kernelName,
@@ -191,11 +197,22 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
         TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
         return tracingRetVal;
     }
+    const auto &argDescriptor = pKernel->getL0Object()->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
+    const bool isImmediateArg = (argDescriptor.type == NEO::ArgDescriptor::argTValue);
+
+    if (isImmediateArg && argValue) {
+        cl_int validationRetVal = pKernel->validateImmediateArgSize(argIndex, argSize);
+        if (validationRetVal != CL_SUCCESS) [[unlikely]] {
+            TRACING_EXIT(ClSetKernelArg, &validationRetVal);
+            return validationRetVal;
+        }
+    }
+
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
+    pKernel->clearSharedObjArg(argIndex);
 
-    const auto &argDescriptor = pKernel->getL0Object()->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
-    if (argDescriptor.type == NEO::ArgDescriptor::argTValue) [[likely]] {
+    if (isImmediateArg) {
         cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, argSize, argValue);
         TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
         return tracingRetVal;
@@ -208,12 +225,14 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
                 return tracingRetVal;
             }
 
-            auto pBuffer = NEO::LEO::castToObject<const NEO::LEO::Buffer>(*reinterpret_cast<const cl_mem *>(argValue));
+            auto pBuffer = NEO::LEO::castToObject<NEO::LEO::Buffer>(*reinterpret_cast<const cl_mem *>(argValue));
             if (!pBuffer) {
                 cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
                 TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
                 return tracingRetVal;
             }
+
+            pKernel->setSharedObjArg(argIndex, pBuffer);
 
             const auto ptr = pBuffer->getUsmPtr();
             cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, sizeof(ptr), &ptr);
@@ -328,6 +347,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
 
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
+    pKernel->clearSharedObjArg(argIndex);
 
     cl_int tracingRetVal = pKernel->setArgumentValue(argIndex, sizeof(argValue), &argValue);
     TRACING_EXIT(ClSetKernelArgSvmPointer, &tracingRetVal);
@@ -610,3 +630,8 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
     TRACING_EXIT(ClCloneKernel, &tracingRetVal);
     return tracingRetVal;
 }
+
+} // extern "C"
+
+} // namespace LEO
+} // namespace NEO

@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -17,6 +18,7 @@
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 namespace L0 {
 namespace Sysman {
@@ -62,7 +64,7 @@ ze_result_t SysmanKmdInterface::initAllAccessInterfaces(const NEO::Drm &drm) {
     std::string deviceName;
     auto result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), drm.getFileDescriptor(), deviceName);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     pSysfsAccess = SysFsAccessInterface::create(std::move(deviceName));
@@ -113,7 +115,7 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForSubDevices(std::m
         auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString);
         if (level0EngineType == sysfsEngineMapToLevel0EngineType.end()) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", __FUNCTION__, sysfEngineString.c_str(),
+                         "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", NEO_FUNCTION_NAME, sysfEngineString.c_str(),
                          ZE_RESULT_ERROR_UNKNOWN);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
@@ -137,7 +139,7 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForDevice(std::strin
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     for_each(localListOfAllEngines.begin(), localListOfAllEngines.end(),
@@ -209,12 +211,25 @@ void SysmanKmdInterface::getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, ze
     }
 }
 
+bool SysmanKmdInterface::isDriverLoaded() {
+    // A kernel driver is bound to the device when its PCI "driver" entry
+    // (e.g. /sys/bus/pci/devices/0000:03:00.0/driver) is a symlink to the bound
+    // driver (e.g. .../bus/pci/drivers/xe). If the symlink cannot be read, no
+    // driver is loaded.
+    // getDevicePciPath() is already absolute, so it must be resolved through
+    // pFsAccess. pSysfsAccess would prepend the per-device sysfs directory.
+    const std::string driverSymLink = pSysfsAccess->getDevicePciPath() + "/driver";
+    std::string driverPath;
+    auto result = pFsAccess->readSymLink(driverSymLink, driverPath);
+    return (result == ZE_RESULT_SUCCESS);
+}
+
 ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
     if (errno == EMFILE || errno == ENFILE) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", NEO_FUNCTION_NAME);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return LinuxSysmanImp::getResult(errno);
 }
 
 void SysmanKmdInterface::updateSysmanDeviceDirName(std::string &dirName) {
@@ -271,7 +286,7 @@ ze_result_t SysmanKmdInterfaceI915::getVfLocalMemoryQuotaI915(SysFsAccessInterfa
     std::string pathForDeviceMemQuota = "iov/vf" + std::to_string(vfId) + pathForLmemQuota;
     auto result = pSysfsAccess->read(std::move(pathForDeviceMemQuota), lMemQuota);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
     return ZE_RESULT_SUCCESS;

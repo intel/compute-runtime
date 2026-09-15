@@ -15,10 +15,11 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "opencl/source/api/additional_extensions.h"
@@ -89,24 +90,33 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
 
         static std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
+        if (isLEOEnabled()) {
+            retVal = forwardClGetPlatformIDs(numEntries, platforms, numPlatforms);
+            break;
+        }
         if (platformsImpl->empty()) {
             auto executionEnvironment = new ClExecutionEnvironment();
             executionEnvironment->incRefInternal();
 
-            NEO::EnvironmentVariableReader envReader;
             if (NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
-                const auto programDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
+                const auto programDebugging = NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.get();
                 const auto dbgMode = NEO::getDebuggingMode(programDebugging);
                 executionEnvironment->setDebuggingMode(dbgMode);
             }
-            if (envReader.getSetting("NEO_FP64_EMULATION", false)) {
-                executionEnvironment->setFP64EmulationEnabled();
-            }
-            bool oneApiPvcWa = envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true);
-            executionEnvironment->setOneApiPvcWaEnv(oneApiPvcWa);
 
-            auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
+            std::vector<std::unique_ptr<Device>> allDevices;
+            bool leoSupported = false;
+            try {
+                allDevices = DeviceFactory::createDevices(*executionEnvironment);
+            } catch (const LeoSupportedException &) {
+                leoSupported = true;
+            }
             executionEnvironment->decRefInternal();
+            if (leoSupported) {
+                activateLeoForwarding();
+                retVal = forwardClGetPlatformIDs(numEntries, platforms, numPlatforms);
+                break;
+            }
             if (allDevices.empty()) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
@@ -200,9 +210,6 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                   cl_uint numEntries,
                                   cl_device_id *devices,
                                   cl_uint *numDevices) {
-    if (isLEOEnabled()) {
-        return forwardClGetDeviceIDs(platform, deviceType, numEntries, devices, numDevices);
-    }
     TRACING_ENTER(ClGetDeviceIDs, &platform, &deviceType, &numEntries, &devices, &numDevices);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -1158,6 +1165,13 @@ cl_int CL_API_CALL clReleaseMemObject(cl_mem memobj) {
     API_ENTER(&retVal);
 
     DBG_LOG_INPUTS("memobj", memobj);
+
+    if (debugManager.flags.FillBufferTailWithPattern.get() != 0) {
+        auto pBuffer = castToObject<Buffer>(memobj);
+        if ((pBuffer != nullptr) && (pBuffer->getRefApiCount() == 1) && (false == pBuffer->isTailPatternValid())) {
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Buffer tail pattern corrupted on release: buffer=%p\n", static_cast<void *>(pBuffer));
+        }
+    }
 
     auto pMemObj = castToObject<MemObj>(memobj);
     if (pMemObj) {
@@ -4162,12 +4176,13 @@ CL_API_ENTRY cl_int CL_API_CALL clMemFreeCommon(cl_context context,
     }
 
     bool successfulFree = false;
+    const auto freePolicy = blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none;
 
-    if (ptr && neoContext->getDeviceMemAllocPoolsManager().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+    if (ptr && neoContext->getDeviceMemAllocPoolsManager().freeSVMAlloc(const_cast<void *>(ptr), freePolicy)) {
         successfulFree = true;
     }
 
-    if (!successfulFree && ptr && neoContext->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+    if (!successfulFree && ptr && neoContext->getDevice(0u)->getPlatform()->getHostMemAllocPoolManager().freeSVMAlloc(const_cast<void *>(ptr), freePolicy)) {
         successfulFree = true;
     }
 
@@ -4697,7 +4712,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSize(cl_command_queue commandQue
                                                      const size_t *globalWorkSize,
                                                      size_t *suggestedLocalWorkSize) {
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSize, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
-    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
                                                       commandQueue,
                                                       kernel,
                                                       workDim,
@@ -4716,7 +4731,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
                                                         size_t *suggestedLocalWorkSize) {
 
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeKHR, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
-    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
                                                       commandQueue,
                                                       kernel,
                                                       workDim,
@@ -6157,7 +6172,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
                                                           size_t *suggestedLocalWorkSize) {
 
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
-    auto retVal = getKernelSuggestedLocalWorkSizeImpl(__FUNCTION__,
+    auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
                                                       commandQueue,
                                                       kernel,
                                                       workDim,

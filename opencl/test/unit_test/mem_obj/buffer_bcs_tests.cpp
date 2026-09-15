@@ -96,7 +96,6 @@ struct BcsBufferTests : public ::testing::Test {
             hwInfo.featureTable.ftrBcsInfo.set(bcsIndex, true);
             hwInfo.featureTable.ftrBcsInfo.set(EngineHelpers::getBcsIndex(aub_stream::EngineType::ENGINE_BCS3)); // add internal engine
         }
-        UnitTestSetter::setupSemaphore64bCmdSupport(restore, hwInfo.platform.eRenderCoreFamily);
 
         deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(1, 0, MockClDevice::prepareExecutionEnvironment(&hwInfo, 0));
         device = deviceFactory->rootDevices[0];
@@ -801,7 +800,7 @@ void BcsBufferTests::waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType>
         EXPECT_EQ(1u + additionalSemaphores, bcsSemaphores.size());
 
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*bcsSemaphores[0]);
-        EXPECT_EQ(cacheFlushWriteAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(cacheFlushWriteAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     } else {
         EXPECT_EQ(additionalSemaphores, bcsSemaphores.size());
     }
@@ -867,11 +866,11 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
 
     if (cmdQ->isCacheFlushForBcsRequired()) {
         EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 4u : 2u, semaphores.size());
-        EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]))->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(pipeControlWriteAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]))));
     } else {
         EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 3u : 1u, semaphores.size());
 
-        EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]))->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(pipeControlWriteAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]))));
     }
 }
 

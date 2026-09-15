@@ -10,22 +10,24 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 
 #include "driver_version.h"
 #include "spirv/unified1/spirv.hpp"
 
+#include <algorithm>
 #include <iterator>
 #include <sstream>
 
@@ -63,7 +65,7 @@ void ClDevice::setupFp64Flags() {
             deviceInfo.preferredVectorWidthDouble = 1;
         } else {
             if (hwInfo.capabilityTable.ftrSupportsFP64Emulation) {
-                if (getDevice().getExecutionEnvironment()->isFP64EmulationEnabled()) {
+                if (debugManager.flags.NEO_FP64_EMULATION.get()) {
                     deviceInfo.doubleFpConfig = defaultFpFlags | CL_FP_SOFT_FLOAT;
                     deviceInfo.nativeVectorWidthDouble = 1;
                     deviceInfo.preferredVectorWidthDouble = 1;
@@ -88,10 +90,9 @@ void ClDevice::initializeCaps() {
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
-    deviceExtensions.append(compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper));
+    deviceExtensions.append(compilerProductHelper.getDeviceExtensions(hwInfo));
 
     driverVersion = NEO_OCL_DRIVER_VERSION;
 
@@ -136,11 +137,9 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.singleFpAtomicCapabilities = defaultFpAtomicCapabilities;
     deviceInfo.halfFpAtomicCapabilities = 0;
-    uint32_t fp16Caps = 0u;
     uint32_t fp32Caps = 0u;
-    releaseHelper.getKernelFp16AtomicCapabilities(fp16Caps);
     compilerProductHelper.getKernelFp32AtomicCapabilities(fp32Caps);
-    deviceInfo.halfFpAtomicCapabilities = fp16Caps;
+    deviceInfo.halfFpAtomicCapabilities = hwInfo.caps.kernelFp16AtomicCapabilities;
     deviceInfo.singleFpAtomicCapabilities = fp32Caps;
 
     const cl_device_fp_atomic_capabilities_ext baseFP64AtomicCapabilities = defaultFpAtomicCapabilities;
@@ -183,6 +182,10 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_pci_bus_info ";
     }
 
+    if (CommandBuffer::isSupported()) {
+        deviceExtensions += "cl_khr_command_buffer ";
+    }
+
     // LEO does not implement cl_intel_driver_diagnostics performance hints
     const std::string driverDiagnosticsExtension = "cl_intel_driver_diagnostics ";
     if (auto pos = deviceExtensions.find(driverDiagnosticsExtension); pos != std::string::npos) {
@@ -211,18 +214,18 @@ void ClDevice::initializeCaps() {
         deviceInfo.partitionAffinityDomain = 0;
     }
     deviceInfo.partitionType[0] = 0;
-    deviceInfo.preferredVectorWidthChar = gfxCoreHelper.getPreferredVectorWidthChar(simdSizeUsed);
-    deviceInfo.preferredVectorWidthShort = gfxCoreHelper.getPreferredVectorWidthShort(simdSizeUsed);
-    deviceInfo.preferredVectorWidthInt = gfxCoreHelper.getPreferredVectorWidthInt(simdSizeUsed);
-    deviceInfo.preferredVectorWidthLong = gfxCoreHelper.getPreferredVectorWidthLong(simdSizeUsed);
-    deviceInfo.preferredVectorWidthFloat = gfxCoreHelper.getPreferredVectorWidthFloat(simdSizeUsed);
-    deviceInfo.preferredVectorWidthHalf = gfxCoreHelper.getPreferredVectorWidthHalf(simdSizeUsed);
-    deviceInfo.nativeVectorWidthChar = gfxCoreHelper.getNativeVectorWidthChar(simdSizeUsed);
-    deviceInfo.nativeVectorWidthShort = gfxCoreHelper.getNativeVectorWidthShort(simdSizeUsed);
-    deviceInfo.nativeVectorWidthInt = gfxCoreHelper.getNativeVectorWidthInt(simdSizeUsed);
-    deviceInfo.nativeVectorWidthLong = gfxCoreHelper.getNativeVectorWidthLong(simdSizeUsed);
-    deviceInfo.nativeVectorWidthFloat = gfxCoreHelper.getNativeVectorWidthFloat(simdSizeUsed);
-    deviceInfo.nativeVectorWidthHalf = gfxCoreHelper.getNativeVectorWidthHalf(simdSizeUsed);
+    deviceInfo.preferredVectorWidthChar = DeviceVectorWidthConstants::charWidth;
+    deviceInfo.preferredVectorWidthShort = DeviceVectorWidthConstants::shortWidth;
+    deviceInfo.preferredVectorWidthInt = DeviceVectorWidthConstants::intWidth;
+    deviceInfo.preferredVectorWidthLong = DeviceVectorWidthConstants::longWidth;
+    deviceInfo.preferredVectorWidthFloat = DeviceVectorWidthConstants::floatWidth;
+    deviceInfo.preferredVectorWidthHalf = DeviceVectorWidthConstants::halfWidth;
+    deviceInfo.nativeVectorWidthChar = DeviceVectorWidthConstants::charWidth;
+    deviceInfo.nativeVectorWidthShort = DeviceVectorWidthConstants::shortWidth;
+    deviceInfo.nativeVectorWidthInt = DeviceVectorWidthConstants::intWidth;
+    deviceInfo.nativeVectorWidthLong = DeviceVectorWidthConstants::longWidth;
+    deviceInfo.nativeVectorWidthFloat = DeviceVectorWidthConstants::floatWidth;
+    deviceInfo.nativeVectorWidthHalf = DeviceVectorWidthConstants::halfWidth;
     deviceInfo.maxReadWriteImageArgs = hwInfo.capabilityTable.supportsImages ? 128 : 0;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 
@@ -358,7 +361,7 @@ void ClDevice::initializeCaps() {
         CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
 
     this->initializeOsSpecificCaps();
-    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures, getDevice().getCompilerProductHelper(), releaseHelper);
+    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures);
 }
 
 void ClDevice::initializeExtensionsWithVersion() {
@@ -375,7 +378,7 @@ void ClDevice::initializeExtensionsWithVersion() {
 }
 
 void ClDevice::initializeOpenclCAllVersions() {
-    auto deviceOpenCLCVersions = this->getCompilerProductHelper().getDeviceOpenCLCVersions(this->getHardwareInfo(), {3, 0});
+    auto deviceOpenCLCVersions = this->getCompilerProductHelper().getDeviceOpenCLCVersions({3, 0});
     cl_name_version openClCVersion;
     strcpy_s(openClCVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, "OpenCL C");
 
@@ -405,6 +408,8 @@ void ClDevice::initializeILsWithVersion() {
 }
 
 void ClDevice::initializeSpirvQueries() {
+    deviceInfo.spirvExtendedInstructionSets.push_back("OpenCL.std");
+
     std::stringstream extStringStream{deviceExtensions};
     std::vector<std::string> extVector{
         std::istream_iterator<std::string>{extStringStream}, std::istream_iterator<std::string>{}};
@@ -415,8 +420,9 @@ void ClDevice::initializeSpirvQueries() {
 
     deviceInfo.spirvCapabilities.reserve(64);
 
-    deviceInfo.spirvExtendedInstructionSets.push_back("OpenCL.std");
-
+    // The base and device-feature capabilities below are not tied to any SPIR-V extension,
+    // IGC does not report them, the runtime always derives them here. The extension-associated set
+    // comes from IGC when its query is available, or from a static fallback otherwise.
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityAddresses);
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityFloat16Buffer);
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt16);
@@ -424,7 +430,6 @@ void ClDevice::initializeSpirvQueries() {
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityKernel);
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityLinkage);
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityVector16);
-
     deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt64);
 
     if (getSharedDeviceInfo().imageSupport) {
@@ -464,16 +469,6 @@ void ClDevice::initializeSpirvQueries() {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupDispatch);
     }
 
-    if (std::find(extVector.begin(), extVector.end(), "cl_khr_expect_assume") != extVector.end()) {
-        deviceInfo.spirvExtensions.push_back("SPV_KHR_expect_assume");
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityExpectAssumeKHR);
-    }
-
-    if (std::find(extVector.begin(), extVector.end(), "cl_khr_extended_bit_ops") != extVector.end()) {
-        deviceInfo.spirvExtensions.push_back("SPV_KHR_bit_instructions");
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityBitInstructions);
-    }
-
     if (std::find(extVector.begin(), extVector.end(), "cl_khr_fp16") != extVector.end()) {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilityFloat16);
     }
@@ -487,31 +482,9 @@ void ClDevice::initializeSpirvQueries() {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt64Atomics);
     }
 
-    if (std::find(extVector.begin(), extVector.end(), "cl_khr_integer_dot_product") != extVector.end()) {
-        deviceInfo.spirvExtensions.push_back("SPV_KHR_integer_dot_product");
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProduct);
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProductInput4x8BitPacked);
-        if (deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) {
-            deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProductInput4x8Bit);
-        }
-    }
-
-    if (std::find(extVector.begin(), extVector.end(), "cl_khr_kernel_clock") != extVector.end()) {
-        deviceInfo.spirvExtensions.push_back("SPV_KHR_shader_clock");
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityShaderClockKHR);
-    }
-
     if (std::find(extVector.begin(), extVector.end(), "cl_khr_mipmap_image") != extVector.end() &&
         std::find(extVector.begin(), extVector.end(), "cl_khr_mipmap_image_writes") != extVector.end()) {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilityImageMipmap);
-    }
-
-    if (std::find(extVector.begin(), extVector.end(), "cl_khr_spirv_linkonce_odr") != extVector.end()) {
-        deviceInfo.spirvExtensions.push_back("SPV_KHR_linkonce_odr");
-    }
-
-    if (std::find(extVector.begin(), extVector.end(), "cl_khr_spirv_no_integer_wrap_decoration") != extVector.end()) {
-        deviceInfo.spirvExtensions.push_back("SPV_KHR_no_integer_wrap_decoration");
     }
 
     if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_ballot") != extVector.end()) {
@@ -535,22 +508,12 @@ void ClDevice::initializeSpirvQueries() {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformVote);
     }
 
-    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_rotate") != extVector.end()) {
-        deviceInfo.spirvExtensions.push_back("SPV_KHR_subgroup_rotate");
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformRotateKHR);
-    }
-
     if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_shuffle") != extVector.end()) {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformShuffle);
     }
 
     if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_shuffle_relative") != extVector.end()) {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformShuffleRelative);
-    }
-
-    if (std::find(extVector.begin(), extVector.end(), "cl_khr_work_group_uniform_arithmetic") != extVector.end()) {
-        deviceInfo.spirvExtensions.push_back("SPV_KHR_uniform_group_instructions");
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupUniformArithmeticKHR);
     }
 
     if (std::find(extVector.begin(), extVector.end(), "cl_ext_float_atomics") != extVector.end()) {
@@ -572,6 +535,7 @@ void ClDevice::initializeSpirvQueries() {
         if (deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)) {
             deviceInfo.spirvCapabilities.push_back(spv::CapabilityAtomicFloat64MinMaxEXT);
         }
+
         if (deviceInfo.singleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT) ||
             deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT)) {
             deviceInfo.spirvExtensions.push_back("SPV_EXT_shader_atomic_float_add");
@@ -584,6 +548,50 @@ void ClDevice::initializeSpirvQueries() {
             deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)) {
             deviceInfo.spirvExtensions.push_back("SPV_EXT_shader_atomic_float_min_max");
         }
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_integer_dot_product") != extVector.end() &&
+        (deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR)) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProductInput4x8Bit);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_expect_assume") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_expect_assume");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityExpectAssumeKHR);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_extended_bit_ops") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_bit_instructions");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityBitInstructions);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_integer_dot_product") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_integer_dot_product");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProduct);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProductInput4x8BitPacked);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_kernel_clock") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_shader_clock");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityShaderClockKHR);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_spirv_linkonce_odr") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_linkonce_odr");
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_spirv_no_integer_wrap_decoration") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_no_integer_wrap_decoration");
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_rotate") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_subgroup_rotate");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformRotateKHR);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_work_group_uniform_arithmetic") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_uniform_group_instructions");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupUniformArithmeticKHR);
     }
 
     if (std::find(extVector.begin(), extVector.end(), "cl_intel_bfloat16_conversions") != extVector.end()) {
@@ -618,6 +626,21 @@ void ClDevice::initializeSpirvQueries() {
     if (std::find(extVector.begin(), extVector.end(), "cl_intel_subgroup_buffer_prefetch") != extVector.end()) {
         deviceInfo.spirvExtensions.push_back("SPV_INTEL_subgroup_buffer_prefetch");
         deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupBufferPrefetchINTEL);
+    }
+
+    if (getDevice().initializeSpirvQueriesFromIGC()) {
+        const auto &sharedDeviceInfo = getSharedDeviceInfo();
+        for (const auto &ext : sharedDeviceInfo.spirvExtensions) {
+            if (std::find_if(deviceInfo.spirvExtensions.begin(), deviceInfo.spirvExtensions.end(),
+                             [&ext](const char *existing) { return ext == existing; }) == deviceInfo.spirvExtensions.end()) {
+                deviceInfo.spirvExtensions.push_back(ext.c_str());
+            }
+        }
+        for (const auto cap : sharedDeviceInfo.spirvCapabilities) {
+            if (std::find(deviceInfo.spirvCapabilities.begin(), deviceInfo.spirvCapabilities.end(), cap) == deviceInfo.spirvCapabilities.end()) {
+                deviceInfo.spirvCapabilities.push_back(cap);
+            }
+        }
     }
 }
 

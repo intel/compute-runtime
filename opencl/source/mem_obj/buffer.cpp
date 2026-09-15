@@ -20,6 +20,7 @@
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/patch_store_operation.h"
+#include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
@@ -188,15 +189,15 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
                 clFinish(pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex()));
             }
         }
-
-        auto extendedPageCount = debugManager.flags.ForceExtendedBufferSize.get();
-        if ((extendedPageCount > 0) && (debugManager.flags.FillBufferTailWithPattern.get())) {
-            auto extSize = MemoryConstants::pageSize * extendedPageCount;
-            auto origSize = size - extSize;
-            const uint8_t fillPattern = Buffer::bufferTailFillPattern;
-            auto specialQueue = pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex());
-            specialQueue->enqueueFillBuffer(pBuffer, &fillPattern, sizeof(fillPattern), origSize, extSize, 0, nullptr, nullptr);
-            clFinish(specialQueue);
+        if (debugManager.flags.FillBufferTailWithPattern.get()) {
+            size_t origSize = 0u;
+            size_t extSize = 0u;
+            if (!expectHostPtr && Buffer::getExtendedTailRegion(size, origSize, extSize)) {
+                const uint8_t fillPattern = Buffer::bufferTailFillPattern;
+                auto specialQueue = pContext->getSpecialQueue(pContext->getDevices()[0]->getRootDeviceIndex());
+                specialQueue->enqueueFillBuffer(pBuffer, &fillPattern, sizeof(fillPattern), origSize, extSize, 0, nullptr, nullptr);
+                clFinish(specialQueue);
+            }
         }
     }
 
@@ -560,7 +561,7 @@ Buffer *Buffer::create(Context *context,
         return nullptr;
     }
 
-    DBG_LOG(LogMemoryObject, __FUNCTION__, "Created Buffer: Handle: ", pBuffer, ", hostPtr: ", hostPtr, ", size: ", size,
+    DBG_LOG(LogMemoryObject, NEO_FUNCTION_NAME, "Created Buffer: Handle: ", pBuffer, ", hostPtr: ", hostPtr, ", size: ", size,
             ", memoryStorage: ", allocationInfo.memory->getUnderlyingBuffer(),
             ", GPU address: ", std::hex, allocationInfo.memory->getGpuAddress(),
             ", memoryPool: ", getMemoryPoolString(allocationInfo.memory));
@@ -785,7 +786,7 @@ bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,
 }
 
 void Buffer::transferData(void *dst, void *src, size_t copySize, size_t copyOffset) {
-    DBG_LOG(LogMemoryObject, __FUNCTION__, " hostPtr: ", hostPtr, ", size: ", copySize, ", offset: ", copyOffset, ", memoryStorage: ", memoryStorage);
+    DBG_LOG(LogMemoryObject, NEO_FUNCTION_NAME, " hostPtr: ", hostPtr, ", size: ", copySize, ", offset: ", copyOffset, ", memoryStorage: ", memoryStorage);
     auto dstPtr = ptrOffset(dst, copyOffset);
     auto srcPtr = ptrOffset(src, copyOffset);
     memcpy_s(dstPtr, copySize, srcPtr, copySize);
@@ -976,5 +977,56 @@ void Buffer::provideCompressionHint(bool compressionEnabled, Context *context, B
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, BUFFER_IS_NOT_COMPRESSED, buffer);
         }
     }
+}
+
+bool Buffer::getExtendedTailRegion(size_t totalSize, size_t &origSize, size_t &extSize) {
+    const auto extendedPageCount = debugManager.flags.ForceExtendedBufferSize.get();
+    if (extendedPageCount < 1) {
+        return false;
+    }
+
+    const size_t tailSize = MemoryConstants::pageSize * static_cast<size_t>(extendedPageCount);
+    if (totalSize <= tailSize) {
+        return false;
+    }
+
+    origSize = totalSize - tailSize;
+    extSize = tailSize;
+    return true;
+}
+
+bool Buffer::isTailPatternValid() {
+    size_t origSize = 0u;
+    size_t extSize = 0u;
+
+    if (isAnyBitSet(this->getFlags(), CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR) || this->isSubBuffer()) {
+        return true;
+    }
+
+    if (this->context == nullptr) {
+        return true;
+    }
+
+    if (false == Buffer::getExtendedTailRegion(this->getSize(), origSize, extSize)) {
+        return true;
+    }
+
+    auto commandQueue = this->context->getSpecialQueue(this->context->getDevices()[0]->getRootDeviceIndex());
+
+    std::vector<uint8_t> tail(extSize, 0u);
+    const auto readResult = commandQueue->enqueueReadBuffer(this, CL_TRUE, origSize, extSize, tail.data(), nullptr, 0, nullptr, nullptr);
+    if (readResult != CL_SUCCESS) {
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Buffer tail pattern check inconclusive: buffer=%p readResult=%d\n", static_cast<void *>(this), readResult);
+        return true;
+    }
+
+    for (size_t offset = 0u; offset < extSize; offset++) {
+        if (tail[offset] != Buffer::bufferTailFillPattern) {
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Buffer tail pattern mismatch: buffer=%p offset=%zu expected=0x%02x actual=0x%02x\n", static_cast<void *>(this), offset, static_cast<uint32_t>(Buffer::bufferTailFillPattern), static_cast<uint32_t>(tail[offset]));
+            return false;
+        }
+    }
+
+    return true;
 }
 } // namespace NEO

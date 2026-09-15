@@ -253,6 +253,7 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromExistingStora
 }
 
 GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+    this->capturedPhysicalOffset = osHandleData.physicalOffset;
     if (osHandleData.handle != invalidSharedHandle) {
         if (storeIpcAllocations && mapPointer == nullptr) {
             auto alloc = storedIpcAllocations.find(osHandleData.handle);

@@ -109,6 +109,18 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateExp2ThenErrorI
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetStateExp2(count, &category, &state));
 }
 
+TEST_F(SysmanRasFixture, GivenValidRasHandlesWhenCallingReInitOnRasHandleContextThenHandlesRemainValid) {
+    Ras *pRas = new L0::Sysman::RasImp(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pRas);
+
+    pSysmanDeviceImp->pRasHandleContext->reInit();
+
+    EXPECT_EQ(1u, static_cast<uint32_t>(pSysmanDeviceImp->pRasHandleContext->handleList.size()));
+    for (auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        EXPECT_NE(nullptr, handle);
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

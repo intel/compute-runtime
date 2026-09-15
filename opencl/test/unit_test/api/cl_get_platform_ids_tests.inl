@@ -1,22 +1,29 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_os_library.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 
+#include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "cl_api_tests.h"
+
+#include <cstring>
 
 using namespace NEO;
 
@@ -136,56 +143,10 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToInitializePlatformThenClGetPlatfom
     platformsImpl->clear();
 }
 
-TEST(clGetPlatformIDsTest, givenOneApiPvcSendWarWaEnvWhenCreatingExecutionEnvironmentThenCorrectEnvValueIsStored) {
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-
-    {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "1"}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-        cl_int retVal = CL_SUCCESS;
-        cl_platform_id platformRet = nullptr;
-        cl_uint numPlatforms = 0;
-
-        platformsImpl->clear();
-
-        retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
-
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        auto executionEnvironment = platform()->peekExecutionEnvironment();
-        EXPECT_TRUE(executionEnvironment->isOneApiPvcWaEnv());
-
-        platformsImpl->clear();
-    }
-    {
-        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "0"}};
-        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-        cl_int retVal = CL_SUCCESS;
-        cl_platform_id platformRet = nullptr;
-        cl_uint numPlatforms = 0;
-
-        platformsImpl->clear();
-
-        retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
-
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        auto executionEnvironment = platform()->peekExecutionEnvironment();
-        EXPECT_FALSE(executionEnvironment->isOneApiPvcWaEnv());
-
-        platformsImpl->clear();
-    }
-}
-
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnabledProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -206,10 +167,7 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnabledProgramDebug
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnableProgramDebuggingWithValue2WhenGettingPlatformIdsThenDebuggingEnabledIsSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -230,10 +188,7 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnableProgramDebugg
 TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnabledProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -254,10 +209,7 @@ TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnabledProgramDebuggingW
 TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnableProgramDebuggingWithValue2WhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -278,10 +230,7 @@ TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnableProgramDebuggingWi
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndZeroProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
-
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "0"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(0);
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -299,32 +248,9 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndZeroProgramDebuggin
     platformsImpl->clear();
 }
 
-TEST(clGetPlatformIDsTest, givenEnabledFP64EmulationWhenGettingPlatformIdsThenFP64EmulationIsEnabled) {
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_FP64_EMULATION", "1"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-    cl_int retVal = CL_SUCCESS;
-    cl_platform_id platformRet = nullptr;
-    cl_uint numPlatforms = 0;
-
-    platformsImpl->clear();
-
-    retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    ASSERT_NE(nullptr, platformsImpl);
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    EXPECT_TRUE(executionEnvironment->isFP64EmulationEnabled());
-
-    platformsImpl->clear();
-}
-
 TEST(clGetPlatformIDsTest, givenDefaultFP64EmulationStateWhenGettingPlatformIdsThenFP64EmulationIsDisabled) {
-    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_FP64_EMULATION", "0"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    DebugManagerStateRestore stateRestore;
+    NEO::debugManager.flags.NEO_FP64_EMULATION.set(false);
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -389,5 +315,86 @@ TEST(clGetPlatformIDsTest, givenMultipleDifferentDevicesWhenGetPlatformIdsThenSe
     EXPECT_EQ(IGFX_LUNARLAKE, platform2->getClDevices()[0]->getHardwareInfo().platform.eProductFamily);
     EXPECT_EQ(IGFX_LUNARLAKE, platform2->getClDevices()[1]->getHardwareInfo().platform.eProductFamily);
     EXPECT_EQ(IGFX_LUNARLAKE, platform2->getClDevices()[2]->getHardwareInfo().platform.eProductFamily);
+}
+
+static cl_int CL_API_CALL mockLeoClGetPlatformIDs(cl_uint numEntries, cl_platform_id *platforms, cl_uint *numPlatforms) {
+    if (numPlatforms) {
+        *numPlatforms = 42u;
+    }
+    return CL_SUCCESS;
+}
+
+static void *CL_API_CALL mockLeoClGetExtensionFunctionAddress(const char *funcName) {
+    if (0 == strcmp(funcName, "clIcdGetPlatformIDsKHR")) {
+        return reinterpret_cast<void *>(mockLeoClGetPlatformIDs);
+    }
+    return nullptr;
+}
+
+struct MockProductHelperLeoSupported : MockProductHelper {
+    MockProductHelperLeoSupported() {
+        isLEOSupportedResult = true;
+    }
+};
+
+TEST(clGetPlatformIDsLeoTest, givenAutoEnableLeoWhenProductSupportsLeoThenClGetPlatformIDsAbandonsNativeInitAndForwardsToLevelZero) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLEO.set(-1);
+    VariableBackup<UltHwConfig> ultHwConfigBackup{&ultHwConfig};
+    ultHwConfig.leoDetectionEnabled = true;
+    ultHwConfig.leoForwardingSelfLoad = false;
+
+    platformsImpl->clear();
+    leoTeardown();
+    leoSetup();
+
+    MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get());
+    RAIIProductHelperFactory<MockProductHelperLeoSupported> raiiProductHelper{*mockExecutionEnvironment.rootDeviceEnvironments[0]};
+
+    auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockLeoClGetExtensionFunctionAddress);
+    auto savedLoadFunc = OsLibrary::loadFunc;
+    MockOsLibrary::loadLibraryNewObject = mockLibrary;
+    OsLibrary::loadFunc = MockOsLibrary::load;
+
+    cl_uint numPlatforms = 0u;
+    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(42u, numPlatforms);
+    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(platformsImpl->empty());
+
+    OsLibrary::loadFunc = savedLoadFunc;
+    platformsImpl->clear();
+    leoTeardown();
+}
+
+TEST(clGetPlatformIDsLeoTest, givenLeoForcedOnThenClGetPlatformIDsForwardsToLevelZeroWithoutNativeInit) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLEO.set(1);
+    VariableBackup<UltHwConfig> ultHwConfigBackup{&ultHwConfig};
+    ultHwConfig.leoForwardingSelfLoad = false;
+
+    platformsImpl->clear();
+    leoTeardown();
+    leoSetup();
+
+    auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockLeoClGetExtensionFunctionAddress);
+    auto savedLoadFunc = OsLibrary::loadFunc;
+    MockOsLibrary::loadLibraryNewObject = mockLibrary;
+    OsLibrary::loadFunc = MockOsLibrary::load;
+
+    cl_uint numPlatforms = 0u;
+    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(42u, numPlatforms);
+    EXPECT_TRUE(platformsImpl->empty());
+
+    OsLibrary::loadFunc = savedLoadFunc;
+    platformsImpl->clear();
+    leoTeardown();
 }
 } // namespace ULT

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,8 @@ struct AUBCommandStreamReceiver {
                                          uint32_t rootDeviceIndex,
                                          const DeviceBitfield deviceBitfield);
     static std::string createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename, uint32_t rootDeviceIndex);
+    static std::string getDirectoryPathForFilePath(const std::string &filePath);
+    static void createDirectoriesForFilePath(const std::string &filePath);
 };
 
 typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const std::string &fileName,

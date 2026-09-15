@@ -13,9 +13,7 @@
 
 #include "level_zero/api/opencl/source/api/leo_dispatch.h"
 
-#include <condition_variable>
 #include <mutex>
-#include <thread>
 
 struct _cl_mem;
 

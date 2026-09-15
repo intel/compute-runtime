@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,10 +49,6 @@ MTLTEST_F(MtlProductHelperLinux, givenMtlWhenisVmBindPatIndexProgrammingSupporte
 
 MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isPageFaultSupported());
-}
-
-MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationsSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
 MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagessSupportedThenReturnFalse) {

@@ -311,7 +311,7 @@ class MetricOaExporter01Logger {
             {ZET_INTEL_METRIC_DF_DELTA_NS_TIME, "ZET_INTEL_METRIC_DF_DELTA_NS_TIME       "},
         };
 
-        if (deltaFunctionMap.find(deltaFunction.functionType) == deltaFunctionMap.end()) {
+        if (!deltaFunctionMap.contains(deltaFunction.functionType)) {
             EXPECT(0);
         }
         SHOW(indent) << "deltaFunction.functionType :" << deltaFunctionMap[deltaFunction.functionType] << std::endl;
@@ -328,7 +328,7 @@ class MetricOaExporter01Logger {
             {ZET_INTEL_METRIC_DF_INFORMATION_TYPE_SAMPLE_PHASE, "ZET_INTEL_METRIC_DF_INFORMATION_TYPE_SAMPLE_PHASE  "},
             {ZET_INTEL_METRIC_DF_INFORMATION_TYPE_GPU_NODE, "ZET_INTEL_METRIC_DF_INFORMATION_TYPE_GPU_NODE      "}};
 
-        if (informationTypeMap.find(infoType) == informationTypeMap.end()) {
+        if (!informationTypeMap.contains(infoType)) {
             EXPECT(0);
         }
         SHOW(indent) << "infoType :" << informationTypeMap[infoType] << std::endl;
@@ -384,7 +384,7 @@ class MetricOaExporter01Logger {
             {ZET_INTEL_METRIC_DF_METRIC_TYPE_RAW, "ZET_INTEL_METRIC_DF_METRIC_TYPE_RAW"},
         };
 
-        if (metricTypeMap.find(metricType) == metricTypeMap.end()) {
+        if (!metricTypeMap.contains(metricType)) {
             EXPECT(0);
         }
 

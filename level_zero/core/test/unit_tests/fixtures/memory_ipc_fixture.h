@@ -18,6 +18,8 @@
 
 #include "gtest/gtest.h"
 
+#include <limits>
+
 using namespace NEO;
 
 namespace NEO {
@@ -35,13 +37,14 @@ namespace ult {
 
 struct DriverHandleGetFdMock : public L0::DriverHandle {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
-                         NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override;
+                         NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) override;
 
     bool initializeIpcSocketServer() override { return true; }
 
     const int mockFd = 57;
     std::pair<void *, int> allocationMap;
     NEO::AllocationType allocationTypeRequested = NEO::AllocationType::unknown;
+    ze_ipc_memory_flags_t ipcFlagsRequested = 0;
 };
 
 struct ContextFdMock : public L0::Context {
@@ -86,10 +89,10 @@ struct MemoryExportImportTest : public ::testing::Test {
 };
 
 struct DriverHandleGetMemHandleMock : public L0::DriverHandle {
-    std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) override;
+    std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) override;
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                          NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer,
-                         NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override;
+                         NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) override;
 
     const int mockFd = 57;
     std::pair<void *, int> allocationFdMap;
@@ -135,7 +138,7 @@ struct MemoryExportImportWSLTest : public ::testing::Test {
 };
 
 struct DriverHandleGetWinHandleMock : public L0::DriverHandle {
-    std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory) override;
+    std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) override;
 
     uint64_t mockHandle = 57;
     std::pair<void *, uint64_t> allocationMap;
@@ -183,7 +186,7 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
 
 struct DriverHandleGetIpcHandleMock : public DriverHandle {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
-                         NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) override;
+                         NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) override;
 
     const int mockFd = 999;
     std::pair<void *, int> allocationMap;
@@ -260,7 +263,7 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override { return false; };
     bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override { return false; };
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override { return false; };
 
@@ -329,6 +332,7 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
     uint64_t sharedHandleAddress = 0x1234;
 
     bool failOnCreateGraphicsAllocationFromSharedHandle = false;
+    uint64_t receivedPhysicalOffset = std::numeric_limits<uint64_t>::max();
 };
 
 struct ContextIpcMock : public L0::Context {
@@ -409,7 +413,7 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override { return false; };
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override { return false; };
     bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override { return false; };
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override { return false; };
 

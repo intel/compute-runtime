@@ -18,24 +18,24 @@ namespace NEO {
 class HeapHelper;
 class IndirectHeap;
 
-struct ThreadDataCounter {
-    size_t count;
-    std::span<const uint8_t> threadData; // combined CTD and PTD
-};
-
 class ThreadDataTracker : NEO::NonCopyableAndNonMovableClass {
   public:
-    void registerThreadData(uint64_t hash, std::span<const uint8_t> threadData);
+    void registerThreadData(uint64_t hash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData);
     std::pair<uint64_t, std::span<const uint8_t>> getCommonThreadData();
     bool isEmpty() const { return threadDataOccurences.isEmpty(); }
 
   private:
+    void storeCommonThreadData(uint64_t hash, size_t occurrences, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData);
+
     struct Hash {
         uint64_t operator()(const uint64_t &key) const noexcept {
             return key;
         }
     };
-    FlatHashMap<uint64_t, ThreadDataCounter, Hash> threadDataOccurences;
+    FlatHashMap<uint64_t, size_t, Hash> threadDataOccurences;
+    std::vector<uint8_t> commonThreadData; // CPU copy of combined CTD and PTD
+    uint64_t commonThreadDataHash = 0;
+    size_t commonThreadDataOccurrences = 0;
 };
 
 class ThreadDataMap : NEO::NonCopyableAndNonMovableClass {

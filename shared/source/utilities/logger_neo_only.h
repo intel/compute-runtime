@@ -60,7 +60,7 @@ void logAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphics
                 return (indexOfAllocation < rootDeviceEnvironments.size()) ? rootDeviceEnvironments[indexOfAllocation].get() : nullptr;
             }()};
             if (rootDeviceEnvironment) {
-                ss << graphicsAllocation->getPatIndexInfoString(rootDeviceEnvironment->getProductHelper());
+                ss << graphicsAllocation->getPatIndexInfoString();
             }
 
             ss << " Total sys mem allocated: " << std::dec << memoryManager->getUsedSystemMemorySize();

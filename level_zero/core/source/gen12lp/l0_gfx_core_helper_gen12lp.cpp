@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,11 +39,6 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking(const N
 }
 
 template <>
-uint32_t L0GfxCoreHelperHw<Family>::getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const {
-    return 1;
-}
-
-template <>
 uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return 1u;
 }
@@ -51,16 +46,6 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDe
 template <>
 NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return NEO::HeapAddressModel::privateHeaps;
-}
-
-template <>
-ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExp() const {
-    return ZE_RTAS_FORMAT_EXP_INVALID;
-}
-
-template <>
-ze_rtas_format_ext_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExt() const {
-    return ZE_RTAS_FORMAT_EXT_INVALID;
 }
 
 template <>

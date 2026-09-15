@@ -84,7 +84,7 @@ void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &ve
                     }
 
                     for (auto [vertexIndex, edgeProperty] : adjacentVerticesMap[currVertexIndex]) {
-                        if (visited.find(vertexIndex) == visited.end()) {
+                        if (!visited.contains(vertexIndex)) {
                             if (strncmp(edgeProperty->model, "XeLink", 7) == 0) {
                                 toVisitIaf.push_back(vertexIndex);
                             } else {
