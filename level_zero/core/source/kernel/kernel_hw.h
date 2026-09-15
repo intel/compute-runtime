@@ -55,7 +55,7 @@ struct KernelHw : public KernelImp {
         const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
         auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
         const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
-        const auto bindlessSurfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+        const auto bindlessSurfaceStateSize = surfaceStateSize;
 
         auto argInfo = sharedState->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(),

@@ -394,8 +394,7 @@ bool Image::isMultisampleConfigurationSupported(const NEO::Device &device, const
                                                 const GraphicsAllocation *mcsAllocation, bool hasUnifiedMcsSurface) {
     const auto &gfxCoreHelper = device.getGfxCoreHelper();
 
-    const bool usesReducedSurfaceState =
-        gfxCoreHelper.getRenderSurfaceStateSize(device.getRootDeviceEnvironment()) < gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    const bool usesReducedSurfaceState = gfxCoreHelper.isReducedSurfaceStateInUse(device.getRootDeviceEnvironment());
     if (!usesReducedSurfaceState || (imgInfo.imgDesc.numSamples <= 1u)) {
         return true;
     }

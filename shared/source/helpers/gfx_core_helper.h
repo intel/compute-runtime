@@ -7,6 +7,8 @@
 
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/device_hierarchy_mode.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -78,7 +80,7 @@ class GfxCoreHelper {
     virtual bool isUpdateTaskCountFromWaitSupported() const = 0;
     virtual bool makeResidentBeforeLockNeeded(bool precondition) const = 0;
     virtual size_t getRenderSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual size_t getBindlessSurfaceStateSlotSize() const = 0;
+    virtual bool isReducedSurfaceStateInUse(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual void setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                          void *surfaceStateBuffer,
                                                          size_t bufferSize,
@@ -235,7 +237,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     size_t getRenderSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
-    size_t getBindlessSurfaceStateSlotSize() const override;
+    bool isReducedSurfaceStateInUse(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     size_t getSamplerStateSize() const override {
         using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
@@ -244,6 +246,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const override {
         using DataPortBindlessSurfaceExtendedMessageDescriptor = typename GfxFamily::DataPortBindlessSurfaceExtendedMessageDescriptor;
+        constexpr uint32_t descriptorOffsetGranularityInBytes = 64u;
+        UNRECOVERABLE_IF((surfStateOffset % descriptorOffsetGranularityInBytes) != 0u);
         DataPortBindlessSurfaceExtendedMessageDescriptor messageExtDescriptor = {};
         messageExtDescriptor.setBindlessSurfaceOffset(surfStateOffset);
         return messageExtDescriptor.getBindlessSurfaceOffsetToPatch();

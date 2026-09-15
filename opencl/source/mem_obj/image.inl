@@ -32,7 +32,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
-    const bool usesReducedSurfaceState = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment) < sizeof(RENDER_SURFACE_STATE);
+    const bool usesReducedSurfaceState = gfxCoreHelper.isReducedSurfaceStateInUse(rootDeviceEnvironment);
     RENDER_SURFACE_STATE localSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
     auto surfaceState = usesReducedSurfaceState ? &localSurfaceState : reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
 

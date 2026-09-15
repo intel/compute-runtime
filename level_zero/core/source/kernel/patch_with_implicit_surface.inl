@@ -49,11 +49,13 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     void *surfaceStateAddress = nullptr;
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device.getRootDeviceEnvironment());
-    auto bindlessSurfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    auto bindlessSurfaceStateSize = surfaceStateSize;
     bool useTempBuffer = false;
 
     if (NEO::isValidOffset(ptr.bindless)) {
         if (device.getBindlessHeapsHelper()) {
+            UNRECOVERABLE_IF(device.getCompilerProductHelper().isHeaplessModeEnabled(device.getHardwareInfo()));
+
             surfaceStateAddress = ssInHeap.ssPtr;
 
             auto patchLocation = ptrOffset(crossThreadData.begin(), ptr.bindless);

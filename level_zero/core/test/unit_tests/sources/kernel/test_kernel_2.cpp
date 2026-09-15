@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/patch_store_operation.h"
@@ -18,6 +19,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -1006,7 +1008,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
     }
 }
 
-HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeCore) {
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsHeapfulRequiredAndAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     HardwareInfo hwInfo = *defaultHwInfo;
 
@@ -1092,7 +1094,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
     }
 }
 
-HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeCore) {
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsHeapfulRequiredAndAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     HardwareInfo hwInfo = *defaultHwInfo;
 

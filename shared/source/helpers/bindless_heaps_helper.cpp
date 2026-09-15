@@ -14,6 +14,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -50,7 +51,7 @@ using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
 BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : rootDevice(rootDevice),
                                                                                              memManager(rootDevice->getMemoryManager()),
                                                                                              deviceBitfield(rootDevice->getDeviceBitfield()),
-                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getBindlessSurfaceStateSlotSize()),
+                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getRenderSurfaceStateSize(rootDevice->getRootDeviceEnvironment())),
                                                                                              rootDeviceIndex(rootDevice->getRootDeviceIndex()),
                                                                                              isMultiOsContextCapable(isMultiOsContextCapable) {
 
@@ -80,6 +81,7 @@ BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsConte
 
     auto &hwInfo = *rootDevice->getRootDeviceEnvironment().getHardwareInfo();
     this->heaplessEnabled = rootDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled(hwInfo);
+    UNRECOVERABLE_IF(hwInfo.caps.reducedSurfaceStateSupported && !this->heaplessEnabled);
 }
 
 std::optional<AddressRange> BindlessHeapsHelper::reserveMemoryRange(size_t size, size_t alignment, HeapIndex heapIndex) {

@@ -43,6 +43,9 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
     const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    const bool usesReducedSurfaceState = gfxCoreHelper.isReducedSurfaceStateInUse(rootDeviceEnvironment);
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
     StructuresLookupTable lookupTable = {};
 
     lookupTable.areImageProperties = true;
@@ -236,7 +239,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
-    if (this->device->getGfxCoreHelper().getRenderSurfaceStateSize(rootDeviceEnvironment) == sizeof(RENDER_SURFACE_STATE)) {
+    if (!usesReducedSurfaceState) {
         getImplicitArgsSurfaceState() = GfxFamily::cmdInitRenderSurfaceState;
     }
 
@@ -330,10 +333,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                                        ? lookupTable.glTextureExt.cubeFaceIndex
                                        : static_cast<uint32_t>(__GMM_NO_CUBE_MAP);
 
-    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-
-    const bool usesReducedSurfaceState = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment) < sizeof(RENDER_SURFACE_STATE);
-
     if (usesReducedSurfaceState && (this->getNumSamples() > 1u)) {
         const bool countTooLarge =
             this->getMcsMultisampleCount() > RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_8;
@@ -398,8 +397,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             if (!sampler) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
-            auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-            auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
             auto samplerStateOffset = static_cast<uint32_t>(NEO::BindlessImageSlot::sampler * surfaceStateSize);
 
             ArrayRef<uint8_t> ssInHeapSpan{reinterpret_cast<uint8_t *>(ssInHeap->ssPtr), ssInHeap->ssSize};
@@ -414,7 +411,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation), *this->device->getNEODevice(), implicitArgsAllocation, 0u, &imageImplicitArgs, NEO::ImageImplicitArgs::getSize());
         this->encodeImplicitArgsSurfaceState();
-        auto surfaceStateSize = this->device->getGfxCoreHelper().getBindlessSurfaceStateSlotSize();
         auto ssInHeap = getBindlessSlot();
         copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false, 0u);
     }
@@ -427,7 +423,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceState(const SurfaceStateSlotCo
     const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
 
-    if (gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment) < sizeof(RENDER_SURFACE_STATE)) {
+    if (gfxCoreHelper.isReducedSurfaceStateInUse(rootDeviceEnvironment)) {
         encodeSurfaceStateReduced(context);
     } else {
         encodeSurfaceStateFull(context);

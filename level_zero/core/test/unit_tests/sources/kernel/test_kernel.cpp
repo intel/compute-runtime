@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/core/ze_module_api_entrypoints.h"
@@ -2585,7 +2586,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenBindlessKernelAndNoGlobalBindlessAlloc
     EXPECT_FALSE(mockKernel.privateState.usingSurfaceStateHeap[0]);
 }
 
-HWTEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessThenSurfaceStateUpdated) {
+HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessThenSurfaceStateUpdated, IsHeapfulRequired) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_kernel_desc_t desc = {};
@@ -2623,7 +2624,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessTh
     EXPECT_FALSE(mockKernel.privateState.usingSurfaceStateHeap[0]);
 }
 
-HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSurfaceStateThenSurfaceStateInKernelHeapIsUsed) {
+HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSurfaceStateThenSurfaceStateInKernelHeapIsUsed, IsHeapfulRequired) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_kernel_desc_t desc = {};
@@ -2671,7 +2672,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSurf
     EXPECT_TRUE(mockKernel.privateState.usingSurfaceStateHeap[0]);
 }
 
-HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenSettingSurfaceStateThenKernelReportsNonZeroSurfaceStateHeapDataSize) {
+HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenSettingSurfaceStateThenKernelReportsNonZeroSurfaceStateHeapDataSize, IsHeapfulRequired) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_kernel_desc_t desc = {};

@@ -70,9 +70,9 @@ size_t GfxCoreHelperHw<Family>::getRenderSurfaceStateSize(const RootDeviceEnviro
 }
 
 template <typename Family>
-size_t GfxCoreHelperHw<Family>::getBindlessSurfaceStateSlotSize() const {
+bool GfxCoreHelperHw<Family>::isReducedSurfaceStateInUse(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
-    return sizeof(RENDER_SURFACE_STATE);
+    return getRenderSurfaceStateSize(rootDeviceEnvironment) < sizeof(RENDER_SURFACE_STATE);
 }
 
 template <typename Family>
