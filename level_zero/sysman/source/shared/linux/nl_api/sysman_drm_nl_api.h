@@ -7,9 +7,10 @@
 
 #pragma once
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_types.h"
-#include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_uapi_ext.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_nl_api.h"
 #include <level_zero/zes_api.h>
+
+#include "third_party/uapi/drm-next/drm/drm_ras.h"
 
 #include <linux/types.h>
 #include <vector>
@@ -84,10 +85,10 @@ class DrmNlApi {
     ze_result_t issueRequestClearErrorCounter(const uint32_t &nodeId, const uint32_t &errorId);
     void setupNlOperations();
 
-    struct genl_cmd newCmds[NEO_DRM_RAS_CMD_MAX] = {};
+    struct genl_cmd newCmds[DRM_RAS_CMD_MAX] = {};
     struct nla_policy nodePolicy[DRM_RAS_A_NODE_ATTRS_MAX + 1] = {};
     struct nla_policy errorPolicy[DRM_RAS_A_ERROR_COUNTER_ATTRS_MAX + 1] = {};
-    struct nla_policy thresholdPolicy[NEO_DRM_RAS_A_ERROR_THRESHOLD_ATTRS_MAX + 1] = {};
+    struct nla_policy eventPolicy[DRM_RAS_A_ERROR_EVENT_ATTRS_MAX + 1] = {};
     struct genl_ops ops = {};
     std::string deviceName = {};
     DrmRasEvent pendingEvent = {};
