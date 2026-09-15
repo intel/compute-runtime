@@ -14,8 +14,9 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_properties.h"
 
-#include <sstream>
+#include <algorithm>
 #include <string>
+#include <string_view>
 
 namespace NEO {
 
@@ -141,15 +142,17 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enabledExtensions,
                                                               OpenClCFeaturesContainer &openclCFeatures) {
 
-    std::string extensionsList = enabledExtensions;
+    std::string extensionsList = " -cl-ext=-all,";
     extensionsList.reserve(1500);
-    extensionsList = " -cl-ext=-all,";
-    std::istringstream extensionsStringStream(enabledExtensions);
-    std::string extension;
-    while (extensionsStringStream >> extension) {
-        extensionsList.append("+");
-        extensionsList.append(extension);
-        extensionsList.append(",");
+    std::string_view extensions = enabledExtensions;
+    for (size_t begin = 0; begin < extensions.size();) {
+        auto end = std::min(extensions.find(' ', begin), extensions.size());
+        if (end > begin) {
+            extensionsList.append("+");
+            extensionsList.append(extensions, begin, end - begin);
+            extensionsList.append(",");
+        }
+        begin = end + 1;
     }
     for (auto &feature : openclCFeatures) {
         extensionsList.append("+");
