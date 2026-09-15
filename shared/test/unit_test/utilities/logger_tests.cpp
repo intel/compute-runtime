@@ -926,3 +926,145 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenFreeAllocationCalledWithRepo
     EXPECT_TRUE(output.find("Peak System Memory") != std::string::npos);
     EXPECT_TRUE(output.find("BUFFER") != std::string::npos);
 }
+
+KernelDispatchStats createKernelDispatchStats(const std::string &kernelName) {
+    KernelDispatchStats stats{};
+    stats.kernelName = kernelName;
+    stats.globalWorkSize[0] = 256;
+    stats.localWorkSize[0] = 64;
+    stats.simdSize = 32;
+    stats.numGrfRequired = 128;
+    stats.slmInlineSize = 1024;
+    stats.slmTotalSizePerThreadGroup = 2048;
+    stats.barrierCount = 1;
+    stats.perThreadScratchSize[0] = 512;
+    stats.threadsPerThreadGroup = 2;
+    stats.threadGroupCount = 4;
+    return stats;
+}
+
+TEST(FileLogger, givenCommandListStatsWhenCollectingWithoutConsumingThenSourceKeepsItsCounts) {
+    KernelDispatchStatsTracker collectedStats;
+    KernelDispatchStatsTracker commandListStats;
+    commandListStats.trackDispatch(createKernelDispatchStats("keptKernel"));
+
+    collectKernelDispatchStats(collectedStats, &commandListStats, false);
+    collectKernelDispatchStats(collectedStats, &commandListStats, false);
+
+    EXPECT_FALSE(commandListStats.isEmpty());
+    EXPECT_NE(std::string::npos, collectedStats.createReport().find("\"keptKernel\",256,0,0,64,0,0,32,128,1024,2048,1,512,0,2,4,0,0,2\n"));
+}
+
+TEST(FileLogger, givenCommandListStatsWhenCollectingWithConsumingThenSourceIsCleared) {
+    KernelDispatchStatsTracker collectedStats;
+    KernelDispatchStatsTracker commandListStats;
+    commandListStats.trackDispatch(createKernelDispatchStats("consumedKernel"));
+
+    collectKernelDispatchStats(collectedStats, &commandListStats, true);
+    collectKernelDispatchStats(collectedStats, &commandListStats, true);
+
+    EXPECT_TRUE(commandListStats.isEmpty());
+    EXPECT_NE(std::string::npos, collectedStats.createReport().find("\"consumedKernel\",256,0,0,64,0,0,32,128,1024,2048,1,512,0,2,4,0,0,1\n"));
+}
+
+TEST(FileLogger, givenNoCommandListStatsWhenCollectingThenNothingIsReported) {
+    KernelDispatchStatsTracker collectedStats;
+
+    collectKernelDispatchStats(collectedStats, nullptr, true);
+
+    EXPECT_TRUE(collectedStats.isEmpty());
+}
+
+TEST(FileLogger, givenKernelDispatchStatsEnabledOnDisabledFileLoggerWhenDestroyedThenReportFileIsNotWritten) {
+    DebugVariables flags;
+    flags.LogKernelDispatchStats.set(true);
+    removeVirtualFile(getKernelDispatchStatsFileName());
+
+    {
+        FullyDisabledFileLogger fileLogger(std::string("testfile"), flags);
+    }
+
+    EXPECT_FALSE(virtualFileExists(getKernelDispatchStatsFileName()));
+}
+
+TEST(FileLogger, givenKernelDispatchStatsEnabledWhenUsmReusePerfLoggerIsDestroyedThenReportFileIsNotWritten) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LogKernelDispatchStats.set(true);
+    removeVirtualFile(getKernelDispatchStatsFileName());
+
+    {
+        UsmReusePerfLogger usmReuseLogger;
+    }
+
+    EXPECT_FALSE(virtualFileExists(getKernelDispatchStatsFileName()));
+}
+
+TEST(FileLogger, givenFileLoggerWithCollectedStatsWhenClearedThenItsReportHasHeaderOnly) {
+    DebugVariables flags;
+    FullyEnabledFileLogger fileLogger(std::string("testfile"), flags);
+
+    KernelDispatchStatsTracker commandListStats;
+    commandListStats.trackDispatch(createKernelDispatchStats("clearedKernel"));
+    fileLogger.getKernelDispatchStats().merge(commandListStats);
+    ASSERT_NE(std::string::npos, fileLogger.createKernelDispatchStatsReport().find("\"clearedKernel\","));
+
+    fileLogger.clearKernelDispatchStats();
+
+    EXPECT_EQ(std::string::npos, fileLogger.createKernelDispatchStatsReport().find("\"clearedKernel\","));
+    EXPECT_TRUE(fileLogger.createKernelDispatchStatsReport().starts_with("kernelName,"));
+}
+
+TEST(FileLogger, givenKernelDispatchStatsDisabledWhenFileLoggerIsDestroyedThenReportFileIsNotCreated) {
+    DebugVariables flags;
+    removeVirtualFile(getKernelDispatchStatsFileName());
+
+    {
+        FullyEnabledFileLogger fileLogger(std::string("testfile"), flags);
+    }
+
+    EXPECT_FALSE(virtualFileExists(getKernelDispatchStatsFileName()));
+}
+
+TEST(FileLogger, givenKernelDispatchStatsEnabledAndNoTrackedDispatchesWhenFileLoggerIsDestroyedThenStaleReportIsOverwritten) {
+    DebugVariables flags;
+    flags.LogKernelDispatchStats.set(true);
+    const auto reportFileName = getKernelDispatchStatsFileName();
+
+    {
+        FullyEnabledFileLogger staleRunLogger(std::string("testfile"), flags);
+        KernelDispatchStatsTracker trackedDispatches;
+        trackedDispatches.trackDispatch(createKernelDispatchStats("staleKernel"));
+        staleRunLogger.getKernelDispatchStats().merge(trackedDispatches);
+    }
+    ASSERT_NE(std::string::npos, NEO::virtualFileList[reportFileName].str().find("\"staleKernel\","));
+
+    {
+        FullyEnabledFileLogger fileLogger(std::string("testfile"), flags);
+    }
+
+    ASSERT_TRUE(virtualFileExists(reportFileName));
+    const auto report = NEO::virtualFileList[reportFileName].str();
+    EXPECT_TRUE(report.starts_with("kernelName,"));
+    EXPECT_EQ(std::string::npos, report.find("\"staleKernel\","));
+    removeVirtualFile(reportFileName);
+}
+
+TEST(FileLogger, givenTrackedKernelDispatchesWhenFileLoggerIsDestroyedThenReportFileHasHeaderAndRow) {
+    DebugVariables flags;
+    flags.LogKernelDispatchStats.set(true);
+    removeVirtualFile(getKernelDispatchStatsFileName());
+
+    KernelDispatchStatsTracker trackedDispatches;
+    trackedDispatches.trackDispatch(createKernelDispatchStats("myKernel"));
+
+    {
+        FullyEnabledFileLogger fileLogger(std::string("testfile"), flags);
+        fileLogger.getKernelDispatchStats().merge(trackedDispatches);
+    }
+
+    ASSERT_TRUE(virtualFileExists(getKernelDispatchStatsFileName()));
+    const auto report = NEO::virtualFileList[getKernelDispatchStatsFileName()].str();
+    EXPECT_TRUE(report.starts_with("kernelName,gwsX,gwsY,gwsZ,lwsX,lwsY,lwsZ,simd,grf,slmInline,slmPerThreadGroup,barriers,scratchSlot0,scratchSlot1,threadsPerThreadGroup,threadGroupCount,systolic,indirect,dispatchCount\n"));
+    EXPECT_NE(std::string::npos, report.find("\"myKernel\","));
+    removeVirtualFile(getKernelDispatchStatsFileName());
+}

@@ -34,6 +34,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -144,6 +145,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
         neoDevice->debugExecutionCounter++;
+    }
+
+    if (NEO::debugManager.flags.LogKernelDispatchStats.get() && (ret == ZE_RESULT_SUCCESS)) {
+        for (auto i = 0u; i < numCommandLists; i++) {
+            auto commandList = CommandList::fromHandle(phCommandLists[i]);
+            NEO::collectKernelDispatchStats(NEO::fileLoggerInstance().getKernelDispatchStats(), commandList->getCmdContainer().peekKernelDispatchStats(), commandList->isImmediateType());
+        }
     }
 
     return ret;

@@ -81,6 +81,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX}sku_info.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/directory.h
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.h
+    ${NEO_SHARED_DIRECTORY}/utilities/kernel_dispatch_stats.cpp
+    ${NEO_SHARED_DIRECTORY}/utilities/kernel_dispatch_stats.h
     ${NEO_SHARED_DIRECTORY}/utilities/logger.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/logger.h
     ${OCLOC_DIRECTORY}/source/default_cache_config.cpp

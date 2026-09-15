@@ -30,6 +30,7 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/cpuintrinsics.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
@@ -561,6 +562,10 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
     this->containsAnyKernel = false;
     this->handlePostSubmissionState();
+
+    if (NEO::debugManager.flags.LogKernelDispatchStats.get()) {
+        NEO::collectKernelDispatchStats(NEO::fileLoggerInstance().getKernelDispatchStats(), this->commandContainer.peekKernelDispatchStats(), true);
+    }
 
     if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
         this->device->getNEODevice()->debugExecutionCounter++;

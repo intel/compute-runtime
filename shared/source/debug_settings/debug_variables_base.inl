@@ -406,6 +406,7 @@ DECLARE_DEBUG_VARIABLE(bool, LogAllocationSummaryReport, false, "Log allocation 
 DECLARE_DEBUG_VARIABLE(bool, LogMemoryObject, false, "Logs memory object ptrs, sizes and operations")
 DECLARE_DEBUG_VARIABLE(bool, LogWaitingForCompletion, false, "Logs waiting for completion")
 DECLARE_DEBUG_VARIABLE(bool, LogUsmReuse, false, "Logs operations of usm reuse to csv file")
+DECLARE_DEBUG_VARIABLE(bool, LogKernelDispatchStats, false, "Logs dispatch parameters of every Level Zero kernel to csv file, aggregated per unique dispatch shape and counted per command list execution; a mutable command list reports the shape recorded at append time")
 DECLARE_DEBUG_VARIABLE(bool, ResidencyDebugEnable, false, "enables debug messages and checks for Residency Model")
 DECLARE_DEBUG_VARIABLE(bool, EventsDebugEnable, false, "enables debug messages for events, virtual events, blocked enqueues, events trees etc.")
 DECLARE_DEBUG_VARIABLE(bool, PrintLWSSizes, false, "prints driver chosen local workgroup sizes")

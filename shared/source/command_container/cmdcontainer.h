@@ -26,6 +26,7 @@ class Device;
 class GraphicsAllocation;
 class HeapHelper;
 class IndirectHeap;
+class KernelDispatchStatsTracker;
 class LinearStream;
 class ReservedIndirectHeap;
 class ThreadDataMap;
@@ -234,6 +235,9 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     void makeThreadDataMapResident();
     IndirectHeap *getThreadDataMapStorage() const;
 
+    KernelDispatchStatsTracker &obtainKernelDispatchStats();
+    KernelDispatchStatsTracker *peekKernelDispatchStats() const { return kernelDispatchStats.get(); }
+
   protected:
     size_t getAlignedCmdBufferSize() const;
     size_t getMaxUsableSpace() const {
@@ -263,6 +267,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     std::unique_ptr<LinearStream> secondaryCommandStreamForImmediateCmdList;
     std::unique_ptr<AllocationsList> immediateReusableAllocationList;
     std::unique_ptr<ThreadDataTracker> threadDataTracker;
+    std::unique_ptr<KernelDispatchStatsTracker> kernelDispatchStats;
     std::unique_ptr<ThreadDataMap> threadDataMap;
 
     uint64_t instructionHeapBaseAddress = 0u;

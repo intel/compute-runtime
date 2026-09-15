@@ -39,6 +39,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
 #include "shared/source/utilities/thread_data_hash.h"
 
 #include "encode_dispatch_kernel_args_ext.h"
@@ -451,6 +452,28 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  walkerCmd.getThreadGroupIdYDimension(),
                  walkerCmd.getThreadGroupIdZDimension(),
                  idd.getThreadGroupDispatchSize());
+
+    if (debugManager.flags.LogKernelDispatchStats.get() && !args.makeCommandView) {
+        const auto groupSize = args.dispatchInterface->getGroupSize();
+        container.obtainKernelDispatchStats().trackDispatch({
+            .kernelName = kernelDescriptor.kernelMetadata.kernelName,
+            .globalWorkSize = {static_cast<uint64_t>(groupSize[0]) * walkerCmd.getThreadGroupIdXDimension(),
+                               static_cast<uint64_t>(groupSize[1]) * walkerCmd.getThreadGroupIdYDimension(),
+                               static_cast<uint64_t>(groupSize[2]) * walkerCmd.getThreadGroupIdZDimension()},
+            .localWorkSize = {groupSize[0], groupSize[1], groupSize[2]},
+            .simdSize = kernelDescriptor.kernelAttributes.simdSize,
+            .numGrfRequired = kernelDescriptor.kernelAttributes.numGrfRequired,
+            .slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize,
+            .slmTotalSizePerThreadGroup = args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
+            .barrierCount = kernelDescriptor.kernelAttributes.barrierCount,
+            .perThreadScratchSize = {kernelDescriptor.kernelAttributes.perThreadScratchSize[0],
+                                     kernelDescriptor.kernelAttributes.perThreadScratchSize[1]},
+            .threadsPerThreadGroup = threadsPerThreadGroup,
+            .threadGroupCount = threadGroupCount,
+            .usesSystolicMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode,
+            .isIndirect = args.isIndirect,
+        });
+    }
 
     EncodeSlmSizePerSubSliceArgs slmArgs{
         .threadsPerThreadGroup = threadsPerThreadGroup,

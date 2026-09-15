@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
 #include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/thread_data_hash.h"
 #include "shared/source/utilities/thread_data_map.h"
@@ -738,6 +739,31 @@ TEST_F(CommandContainerTest, whenResettingCommandContainerThenStoredCmdBuffersAr
 
     EXPECT_EQ(cmdContainer->getCmdBufferAllocations()[0]->getUnderlyingBuffer(), buffer);
     EXPECT_EQ(cmdBufSize, stream->getMaxAvailableSpace());
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenKernelDispatchStatsNotObtainedThenPeekReturnsNullptr) {
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    EXPECT_EQ(nullptr, cmdContainer->peekKernelDispatchStats());
+
+    cmdContainer->obtainKernelDispatchStats();
+
+    EXPECT_NE(nullptr, cmdContainer->peekKernelDispatchStats());
+}
+
+TEST_F(CommandContainerTest, givenTrackedKernelDispatchStatsWhenCmdContainerIsResetThenStatsAreCleared) {
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    KernelDispatchStats stats{};
+    stats.kernelName = "myKernel";
+    cmdContainer->obtainKernelDispatchStats().trackDispatch(stats);
+    ASSERT_FALSE(cmdContainer->peekKernelDispatchStats()->isEmpty());
+
+    cmdContainer->reset();
+
+    EXPECT_TRUE(cmdContainer->peekKernelDispatchStats()->isEmpty());
 }
 
 class CommandContainerHeaps : public DeviceFixture,

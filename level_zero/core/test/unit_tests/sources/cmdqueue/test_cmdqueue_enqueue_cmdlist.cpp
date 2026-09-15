@@ -10,6 +10,8 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -155,6 +157,120 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncach
     internalOptions.performMigration = true;
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    commandQueue->destroy();
+}
+
+struct KernelDispatchStatsQueueTest : public CommandQueueExecuteCommandLists {
+    // the collection target is the process-wide logger, which outlives every test,
+    // so construct it here - SetUpTestSuite runs before the leak listener arms
+    static void SetUpTestSuite() {
+        NEO::fileLoggerInstance();
+    }
+
+    void TearDown() override {
+        NEO::fileLoggerInstance().clearKernelDispatchStats();
+        CommandQueueExecuteCommandLists::TearDown();
+    }
+
+    NEO::KernelDispatchStats createStats(const char *kernelName) {
+        NEO::KernelDispatchStats stats{};
+        stats.kernelName = kernelName;
+        return stats;
+    }
+
+    std::string findRow(const std::string &report, const char *kernelName) {
+        auto rowStart = report.find(std::string("\"") + kernelName + "\"");
+        if (rowStart == std::string::npos) {
+            return {};
+        }
+        return report.substr(rowStart, report.find('\n', rowStart) - rowStart);
+    }
+};
+
+HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenRegularCommandListIsExecutedTwiceThenEachExecutionIsCounted) {
+    debugManager.flags.LogKernelDispatchStats.set(true);
+    NEO::fileLoggerInstance().clearKernelDispatchStats();
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->getCmdContainer().obtainKernelDispatchStats().trackDispatch(createStats("regularListKernel"));
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
+
+    const auto report = NEO::fileLoggerInstance().createKernelDispatchStatsReport();
+    EXPECT_TRUE(findRow(report, "regularListKernel").ends_with(",2"));
+    EXPECT_FALSE(commandList->getCmdContainer().peekKernelDispatchStats()->isEmpty());
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenImmediateCommandListIsExecutedThenItsStatsAreCleared) {
+    debugManager.flags.LogKernelDispatchStats.set(true);
+    NEO::fileLoggerInstance().clearKernelDispatchStats();
+
+    auto commandList = CommandList::whiteboxCast(CommandList::fromHandle(commandLists[0]));
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
+    commandList->getCmdContainer().obtainKernelDispatchStats().trackDispatch(createStats("immediateListKernel"));
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
+
+    const auto report = NEO::fileLoggerInstance().createKernelDispatchStatsReport();
+    EXPECT_TRUE(findRow(report, "immediateListKernel").ends_with(",1"));
+    EXPECT_TRUE(commandList->getCmdContainer().peekKernelDispatchStats()->isEmpty());
+
+    commandList->cmdListType = CommandList::CommandListType::typeRegular;
+    commandQueue->destroy();
+}
+
+HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsDisabledWhenCommandListIsExecutedThenNothingIsCounted) {
+    debugManager.flags.LogKernelDispatchStats.set(false);
+    NEO::fileLoggerInstance().clearKernelDispatchStats();
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->getCmdContainer().obtainKernelDispatchStats().trackDispatch(createStats("notCountedKernel"));
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
+
+    EXPECT_EQ(std::string::npos, NEO::fileLoggerInstance().createKernelDispatchStatsReport().find("notCountedKernel"));
     commandQueue->destroy();
 }
 

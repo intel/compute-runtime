@@ -30,6 +30,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
 #include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/thread_data_map.h"
@@ -66,6 +67,7 @@ CommandContainer::~CommandContainer() {
     this->handleCmdBufferAllocations(0u);
     this->threadDataTracker.reset();
     this->threadDataMap.reset();
+    this->kernelDispatchStats.reset();
     if (heapHelper) {
         for (auto allocationIndirectHeap : allocationIndirectHeaps) {
             heapHelper->storeHeapAllocation(allocationIndirectHeap);
@@ -237,6 +239,9 @@ void CommandContainer::reset() {
     setDirtyStateForAllHeaps(true);
     slmSize = std::numeric_limits<uint32_t>::max();
     clearResidencyContainer();
+    if (this->kernelDispatchStats) {
+        this->kernelDispatchStats->clear();
+    }
     if (getHeapHelper()) {
         for (auto deallocation : deallocationContainer) {
             if ((deallocation->getAllocationType() == AllocationType::internalHeap) || (deallocation->getAllocationType() == AllocationType::linearStream)) {
@@ -773,6 +778,13 @@ void CommandContainer::extractCommonThreadData() {
 
 void CommandContainer::registerThreadData(uint64_t hash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) {
     this->threadDataTracker->registerThreadData(hash, crossThreadData, perThreadData);
+}
+
+KernelDispatchStatsTracker &CommandContainer::obtainKernelDispatchStats() {
+    if (!this->kernelDispatchStats) {
+        this->kernelDispatchStats = std::make_unique<KernelDispatchStatsTracker>();
+    }
+    return *this->kernelDispatchStats;
 }
 
 std::optional<uint64_t> CommandContainer::getCachedIohOffset(uint64_t threadDataHash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const {

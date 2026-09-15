@@ -18,6 +18,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -1132,6 +1133,101 @@ HWTEST2_F(EncodeDispatchKernelTest, givenPrintKernelDispatchParametersWhenEncodi
     EXPECT_NE(std::string::npos, outputString.find("numberOfThreadsInGpgpuThreadGroup"));
     EXPECT_NE(std::string::npos, outputString.find("threadGroupDimensions"));
     EXPECT_NE(std::string::npos, outputString.find("threadGroupDispatchSize enum"));
+}
+
+struct KernelDispatchStatsEncodeTest : public EncodeDispatchKernelTest {
+    std::string createReport() {
+        auto dispatchStats = cmdContainer->peekKernelDispatchStats();
+        return dispatchStats == nullptr ? std::string{} : dispatchStats->createReport();
+    }
+
+    std::unique_ptr<MockDispatchKernelEncoder> createDispatchInterface(const std::string &kernelName) {
+        auto dispatchInterface = std::make_unique<MockDispatchKernelEncoder>();
+        auto &kernelAttributes = dispatchInterface->kernelDescriptor.kernelAttributes;
+
+        dispatchInterface->kernelDescriptor.kernelMetadata.kernelName = kernelName;
+        dispatchInterface->groupSizes[0] = 32;
+        dispatchInterface->groupSizes[1] = 4;
+        dispatchInterface->numThreadsPerThreadGroup = 4;
+        dispatchInterface->getSlmTotalSizePerThreadGroupResult = 2048;
+        kernelAttributes.simdSize = 32;
+        kernelAttributes.numGrfRequired = 256;
+        kernelAttributes.slmInlineSize = 1024;
+        kernelAttributes.barrierCount = 1;
+        kernelAttributes.perThreadScratchSize[0] = 512;
+        kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
+
+        return dispatchInterface;
+    }
+
+    std::string findRow(const std::string &report, const std::string &kernelName) {
+        auto rowStart = report.find("\"" + kernelName + "\",");
+        if (rowStart == std::string::npos) {
+            return {};
+        }
+        return report.substr(rowStart, report.find('\n', rowStart) - rowStart);
+    }
+
+    uint32_t dims[3] = {2, 3, 1};
+    bool requiresUncachedMocs = false;
+};
+
+HWTEST2_F(KernelDispatchStatsEncodeTest, givenLogKernelDispatchStatsWhenEncodingKernelTwiceThenBothDispatchesShareOneRow, IsAtLeastXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto dispatchInterface = createDispatchInterface("trackedKernel");
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.LogKernelDispatchStats.set(true);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    const auto report = createReport();
+    EXPECT_EQ("\"trackedKernel\",64,12,1,32,4,1,32,256,1024,2048,1,512,0,4,6,1,0,2", findRow(report, "trackedKernel"));
+}
+
+HWTEST2_F(KernelDispatchStatsEncodeTest, givenLogKernelDispatchStatsDisabledWhenEncodingKernelThenDispatchIsNotTracked, IsAtLeastXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto dispatchInterface = createDispatchInterface("untrackedKernel");
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    const auto report = createReport();
+    EXPECT_EQ(std::string::npos, report.find("untrackedKernel"));
+}
+
+HWTEST2_F(KernelDispatchStatsEncodeTest, givenLogKernelDispatchStatsWhenRequestingCommandViewThenDispatchIsNotTracked, IsAtLeastXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto dispatchInterface = createDispatchInterface("commandViewKernel");
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    uint8_t payloadView[256] = {};
+    auto walkerView = std::make_unique<DefaultWalkerType>();
+    dispatchArgs.makeCommandView = true;
+    dispatchArgs.cpuPayloadBuffer = payloadView;
+    dispatchArgs.cpuWalkerBuffer = walkerView.get();
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.LogKernelDispatchStats.set(true);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    const auto report = createReport();
+    EXPECT_EQ(std::string::npos, report.find("commandViewKernel"));
+}
+
+HWTEST2_F(KernelDispatchStatsEncodeTest, givenLogKernelDispatchStatsWhenDispatchIsIndirectThenIndirectIsTracked, IsAtLeastXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto dispatchInterface = createDispatchInterface("indirectKernel");
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.isIndirect = true;
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.LogKernelDispatchStats.set(true);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    const auto report = createReport();
+    EXPECT_TRUE(findRow(report, "indirectKernel").ends_with(",1,1,1"));
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {

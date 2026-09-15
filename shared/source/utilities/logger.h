@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
 
 #include <mutex>
 #include <sstream>
@@ -28,6 +29,9 @@ static const int32_t maxErrorDescriptionSize = 1024;
 const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
 const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation);
 std::string getFileLoggerFileName(const DebugVariables &flags);
+
+std::string getKernelDispatchStatsFileName();
+void collectKernelDispatchStats(KernelDispatchStatsTracker &target, KernelDispatchStatsTracker *commandListStats, bool consumeStats);
 
 class AllocationSummaryTracker : NEO::NonCopyableAndNonMovableClass {
   public:
@@ -166,6 +170,11 @@ class FileLogger : NEO::NonCopyableAndNonMovableClass {
     bool shouldLogAllocationMemoryPool() { return logAllocationMemoryPool; }
     bool shouldLogAllocationSummaryReport() { return logAllocationSummaryReport; }
 
+    KernelDispatchStatsTracker &getKernelDispatchStats() { return kernelDispatchStatsTracker; }
+    std::string createKernelDispatchStatsReport() { return kernelDispatchStatsTracker.createReport(); }
+    void clearKernelDispatchStats() { kernelDispatchStatsTracker.clear(); }
+    void writeKernelDispatchStatsReport();
+
     void trackAllocationForSummary(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) { allocationTracker.trackAllocationForSummary(allocTypeName, allocationSize, isLocalMemory); }
     void trackLiveAllocation(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) { allocationTracker.trackLiveAllocation(allocTypeName, allocationSize, isLocalMemory); }
     void untrackLiveAllocation(const char *allocTypeName, size_t allocationSize, bool isLocalMemory) { allocationTracker.untrackLiveAllocation(allocTypeName, allocationSize, isLocalMemory); }
@@ -180,7 +189,9 @@ class FileLogger : NEO::NonCopyableAndNonMovableClass {
     bool logAllocationType = false;
     bool logAllocationStdout = false;
     bool logAllocationSummaryReport = false;
+    bool logKernelDispatchStats = false;
     AllocationSummaryTracker allocationTracker;
+    KernelDispatchStatsTracker kernelDispatchStatsTracker;
 
     // Required for variadic template with 0 args passed
     void printInputs(std::stringstream &ss) {}
