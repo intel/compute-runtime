@@ -63,31 +63,39 @@ HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenContextGroupSizeDebugFlagSetWhenG
 }
 
 HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restorer;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    for (int type = 0; type < static_cast<int>(AllocationType::count); type++) {
-        AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
-        AllocationData allocData{};
-        allocData.flags.useSystemMemory = true;
-        allocData.flags.requiresCpuAccess = false;
+    for (auto duplicatedCounterStorage : {0, 1}) {
+        debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(duplicatedCounterStorage);
 
-        gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
+        for (int type = 0; type < static_cast<int>(AllocationType::count); type++) {
+            AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
+            AllocationData allocData{};
+            allocData.flags.useSystemMemory = true;
+            allocData.flags.requiresCpuAccess = false;
 
-        if (defaultHwInfo->featureTable.flags.ftrLocalMemory) {
-            if (allocProperties.allocationType == AllocationType::commandBuffer ||
-                allocProperties.allocationType == AllocationType::ringBuffer) {
-                EXPECT_FALSE(allocData.flags.useSystemMemory);
-                EXPECT_TRUE(allocData.flags.requiresCpuAccess);
-            } else if (allocProperties.allocationType == AllocationType::semaphoreBuffer) {
-                if (getHelper<ProductHelper>().isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo())) {
+            gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
+
+            if (defaultHwInfo->featureTable.flags.ftrLocalMemory) {
+                if (allocProperties.allocationType == AllocationType::commandBuffer ||
+                    allocProperties.allocationType == AllocationType::ringBuffer) {
                     EXPECT_FALSE(allocData.flags.useSystemMemory);
+                    EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+                } else if (allocProperties.allocationType == AllocationType::semaphoreBuffer) {
+                    if (getHelper<ProductHelper>().isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo())) {
+                        EXPECT_FALSE(allocData.flags.useSystemMemory);
+                    } else {
+                        EXPECT_TRUE(allocData.flags.useSystemMemory);
+                    }
+                    EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+                } else if (allocProperties.allocationType == AllocationType::timestampPacketTagBuffer) {
+                    EXPECT_EQ(duplicatedCounterStorage == 1, !!allocData.flags.useSystemMemory);
+                    EXPECT_FALSE(allocData.flags.requiresCpuAccess);
                 } else {
-                    EXPECT_TRUE(allocData.flags.useSystemMemory);
+                    EXPECT_FALSE(allocData.flags.useSystemMemory);
+                    EXPECT_FALSE(allocData.flags.requiresCpuAccess);
                 }
-                EXPECT_TRUE(allocData.flags.requiresCpuAccess);
-            } else {
-                EXPECT_FALSE(allocData.flags.useSystemMemory);
-                EXPECT_FALSE(allocData.flags.requiresCpuAccess);
             }
         }
     }

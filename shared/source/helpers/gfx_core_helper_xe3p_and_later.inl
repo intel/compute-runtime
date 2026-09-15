@@ -421,7 +421,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (hwInfo.featureTable.flags.ftrLocalMemory) {
         if (properties.allocationType == AllocationType::timestampPacketTagBuffer) {
-            allocationData.flags.useSystemMemory = false;
+            allocationData.flags.useSystemMemory = this->duplicatedInOrderCounterStorageEnabled();
         }
 
         if (properties.allocationType == AllocationType::commandBuffer ||

@@ -563,6 +563,7 @@ HWTEST_F(GetAllocationDataTestHw, givenLinearStreamTypeWhenGetAllocationDataIsCa
 HWTEST_F(GetAllocationDataTestHw, givenTimestampPacketTagBufferTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequestedAndRequireCpuAccess) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ForceLocalMemoryAccessMode.set(0u);
+    NEO::debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::timestampPacketTagBuffer, mockDeviceBitfield};
