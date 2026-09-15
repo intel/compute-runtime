@@ -16,14 +16,8 @@ namespace {
 
 using ze_pfnEventGetCounterBasedFlags_t = ze_result_t(ZE_APICALL *)(ze_event_handle_t hEvent, ze_event_counter_based_flags_t *pFlags);
 
-using ze_pfnKernelGetModuleHandle_t = ze_result_t(ZE_APICALL *)(ze_kernel_handle_t hKernel, ze_module_handle_t *phModule);
-using ze_pfnModuleGetDeviceHandle_t = ze_result_t(ZE_APICALL *)(ze_module_handle_t hModule, ze_device_handle_t *phDevice);
-
 struct QueryApiFunctions {
     ze_pfnEventGetCounterBasedFlags_t eventGetCounterBasedFlags = nullptr;
-
-    ze_pfnKernelGetModuleHandle_t kernelGetModuleHandle = nullptr;
-    ze_pfnModuleGetDeviceHandle_t moduleGetDeviceHandle = nullptr;
 };
 
 template <typename FuncType>
@@ -34,9 +28,6 @@ void loadFunction(ze_driver_handle_t driverHandle, const char *functionName, Fun
 
 void loadQueryFunctions(ze_driver_handle_t driverHandle, QueryApiFunctions &functions) {
     loadFunction(driverHandle, "zeEventGetCounterBasedFlags", functions.eventGetCounterBasedFlags);
-
-    loadFunction(driverHandle, "zeKernelGetModuleHandleExt", functions.kernelGetModuleHandle);
-    loadFunction(driverHandle, "zeModuleGetDeviceHandleExt", functions.moduleGetDeviceHandle);
 }
 
 } // namespace
@@ -202,21 +193,12 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::createKernelWithName(module, "memcpy_bytes", kernel);
 
     ze_module_handle_t queriedModule = nullptr;
-    SUCCESS_OR_TERMINATE(functions.kernelGetModuleHandle(kernel, &queriedModule));
+    SUCCESS_OR_TERMINATE(zeKernelGetModuleHandle(kernel, &queriedModule));
     expect(queriedModule == module, "kernel parent module mismatch");
 
     ze_device_handle_t queriedModuleDevice = nullptr;
-    SUCCESS_OR_TERMINATE(functions.moduleGetDeviceHandle(module, &queriedModuleDevice));
-    expect(queriedModuleDevice == device, "module device mismatch");
-
-    queriedModule = nullptr;
-    queriedModuleDevice = nullptr;
-
-    SUCCESS_OR_TERMINATE(zeKernelGetModuleHandle(kernel, &queriedModule));
-    expect(queriedModule == module, "kernel parent module mismatch (zeKernelGetModuleHandle)");
-
     SUCCESS_OR_TERMINATE(zeModuleGetDeviceHandle(module, &queriedModuleDevice));
-    expect(queriedModuleDevice == device, "module device mismatch (zeModuleGetDeviceHandle)");
+    expect(queriedModuleDevice == device, "module device mismatch");
 
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));

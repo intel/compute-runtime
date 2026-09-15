@@ -4202,25 +4202,16 @@ class KernelProgramBinaryTests : public ModuleFixture, public ::testing::Test {
 
 TEST_F(KernelProgramBinaryTests, givenValidKernelHandleWhenCallingZeKernelGetModuleHandleThenParentModuleHandleReturned) {
     ze_module_handle_t moduleHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeKernelGetModuleHandleExt(kernelHandle, &moduleHandle));
-    EXPECT_EQ(module->toHandle(), moduleHandle);
-
-    moduleHandle = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeKernelGetModuleHandle(kernelHandle, &moduleHandle));
     EXPECT_EQ(module->toHandle(), moduleHandle);
 }
 
 TEST_F(KernelProgramBinaryTests, givenNullKernelHandleWhenCallingZeKernelGetModuleHandleThenInvalidNullHandleReturned) {
     ze_module_handle_t moduleHandle = nullptr;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeKernelGetModuleHandleExt(nullptr, &moduleHandle));
-
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ::zeKernelGetModuleHandle(nullptr, &moduleHandle));
 }
 
 TEST_F(KernelProgramBinaryTests, givenNullModuleHandlePointerWhenCallingZeKernelGetModuleHandleThenInvalidNullPointerReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeKernelGetModuleHandleExt(kernelHandle, nullptr));
-
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, ::zeKernelGetModuleHandle(kernelHandle, nullptr));
 }
 

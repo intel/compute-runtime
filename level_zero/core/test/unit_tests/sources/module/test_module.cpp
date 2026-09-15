@@ -69,24 +69,16 @@ using ModuleTest = Test<ModuleFixture>;
 
 TEST_F(ModuleTest, givenValidModuleHandleWhenCallingZeModuleGetDeviceHandleThenParentDeviceHandleReturned) {
     ze_device_handle_t deviceHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeModuleGetDeviceHandleExt(module->toHandle(), &deviceHandle));
-    EXPECT_EQ(device->toHandle(), deviceHandle);
-
-    deviceHandle = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeModuleGetDeviceHandle(module->toHandle(), &deviceHandle));
     EXPECT_EQ(device->toHandle(), deviceHandle);
 }
 
 TEST_F(ModuleTest, givenNullModuleHandleWhenCallingZeModuleGetDeviceHandleThenInvalidNullHandleReturned) {
     ze_device_handle_t deviceHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeModuleGetDeviceHandleExt(nullptr, &deviceHandle));
-
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ::zeModuleGetDeviceHandle(nullptr, &deviceHandle));
 }
 
 TEST_F(ModuleTest, givenNullDeviceHandlePointerWhenCallingZeModuleGetDeviceHandleThenInvalidNullPointerReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeModuleGetDeviceHandleExt(module->toHandle(), nullptr));
-
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, ::zeModuleGetDeviceHandle(module->toHandle(), nullptr));
 }
 
