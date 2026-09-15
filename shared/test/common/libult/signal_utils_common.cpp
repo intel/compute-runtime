@@ -28,6 +28,10 @@ extern const char *apiName;
 
 void handleTestsTimeout(std::string_view testName, uint32_t elapsedTime) {
     printf("Tests timeout in %s %s, after %u seconds on: %s\n", NEO::apiName, NEO::executionName, elapsedTime, testName.data());
+    if (const ::testing::TestInfo *currentTest = ::testing::UnitTest::GetInstance()->current_test_info()) {
+        auto elapsedMs = ::testing::internal::GetTimeInMillis() - currentTest->result()->start_timestamp();
+        printf("Current test case took: %lld ms\n", static_cast<long long>(elapsedMs));
+    }
     auto xmlGenerator = ::testing::internal::GetUnitTestImpl()->listeners()->default_xml_generator();
     if (xmlGenerator) {
         xmlGenerator->OnTestIterationEnd(*::testing::UnitTest::GetInstance(), ::testing::GTEST_FLAG(repeat));
