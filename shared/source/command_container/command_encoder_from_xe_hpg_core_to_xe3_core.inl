@@ -129,4 +129,9 @@ void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyn
 template <typename Family>
 void EncodeSurfaceState<Family>::setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState) {
 }
+
+template <typename Family>
+bool EncodeDispatchKernel<Family>::isHwLocalIdGenerationWithInactiveDimensionsSupported() {
+    return false;
+}
 } // namespace NEO

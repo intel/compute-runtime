@@ -116,6 +116,11 @@ bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool co
 }
 
 template <typename Family>
+bool EncodeDispatchKernel<Family>::isHwLocalIdGenerationWithInactiveDimensionsSupported() {
+    return true;
+}
+
+template <typename Family>
 template <typename CommandType>
 void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args) {
 

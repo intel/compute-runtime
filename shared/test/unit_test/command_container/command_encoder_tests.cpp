@@ -916,6 +916,70 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenLocalWorkgroupSizeGreater
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
 }
 
+HWTEST2_F(CommandEncoderTests, givenXe3AndEarlierWhenAskingForHwLocalIdGenerationWithInactiveDimensionsSupportThenItIsNotSupported, IsWithinXeCoreAndXe3Core) {
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported());
+}
+
+HWTEST2_F(CommandEncoderTests, givenXe3pAndLaterWhenAskingForHwLocalIdGenerationWithInactiveDimensionsSupportThenItIsSupported, IsAtLeastXe3pCore) {
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported());
+}
+
+namespace {
+
+struct InactiveLocalIdDimensionCase {
+    uint32_t activeChannels;
+    std::array<size_t, 3> lws;
+};
+
+inline constexpr InactiveLocalIdDimensionCase inactiveLocalIdDimensionCases[] = {
+    {1, {16, 7, 1}},
+    {1, {15, 7, 1}},
+    {1, {16, 7, 3}},
+    {2, {8, 4, 3}},
+    {2, {8, 3, 7}},
+};
+
+} // namespace
+
+HWTEST2_F(CommandEncoderTests, givenInactiveDimensionGreaterThanOneWhenHwSupportsItThenHwGeneratesLocalIds, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    constexpr uint32_t simd = 16;
+    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
+
+    for (const auto &testCase : inactiveLocalIdDimensionCases) {
+        uint32_t requiredWalkOrder = 77u;
+        EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(testCase.activeChannels, testCase.lws.data(), walkOrder, false, requiredWalkOrder, simd));
+    }
+}
+
+HWTEST2_F(CommandEncoderTests, givenInactiveDimensionGreaterThanOneWhenPlatformIsBeforeXe3pThenRuntimeMustGenerateLocalIds, IsWithinXeCoreAndXe3Core) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    constexpr uint32_t simd = 16;
+    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
+
+    for (const auto &testCase : inactiveLocalIdDimensionCases) {
+        uint32_t requiredWalkOrder = 77u;
+        EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(testCase.activeChannels, testCase.lws.data(), walkOrder, false, requiredWalkOrder, simd));
+    }
+}
+
+HWTEST2_F(CommandEncoderTests, givenInactiveDimensionsWhenCheckingLocalWorkgroupSizeLimitThenOnlyEmittedDimensionsAreCounted, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    constexpr uint32_t simd = 16;
+    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
+    constexpr std::array<size_t, 3> lws = {1024, 2, 1};
+    uint32_t requiredWalkOrder = 77u;
+
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(1, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(3, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+}
+
 HWTEST_F(CommandEncoderTests, givenNotify) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
@@ -1348,17 +1412,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenEnabledLocalIdsGeneration
         size_t lws[3];
         std::optional<std::array<uint8_t, 3>> inputWalkOrder;
         std::optional<uint32_t> expectedWalkOrder;
-    } testCases[12] = {
+    } testCases[10] = {
         {{15, 16, 1}, {{1, 0, 2}}, 4u}, // WalkOrder: (2, 0, 1)
         {{15, 16, 1}, std::nullopt, 4u},
         {{16, 16, 1}, {{1, 0, 2}}, 2u},  // WalkOrder: (1, 0, 2)
         {{16, 16, 1}, std::nullopt, 0u}, // WalkOrder: (0, 1, 2)
         {{16, 15, 1}, std::nullopt, 1u}, // WalkOrder: (0, 2, 1)
         {{16, 15, 1}, {{0, 1, 2}}, 1u},
-
-        // Inactive channel (Z) is set - runtime generation required
-        {{16, 15, 15}, {{0, 1, 2}}, std::nullopt},
-        {{16, 15, 15}, std::nullopt, std::nullopt},
 
         // Invalid cases - runtime generation required
         {{15, 16, 1}, {{0, 1, 2}}, std::nullopt},

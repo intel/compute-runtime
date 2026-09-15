@@ -634,12 +634,17 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
             return false;
         }
 
-        size_t totalLwsSize = 1u;
-        for (auto dimension = 0u; dimension < 3; dimension++) {
-            totalLwsSize *= lws[dimension];
-            if (lws[dimension] > 1u && dimension >= activeChannels) {
-                return true;
+        if (!isHwLocalIdGenerationWithInactiveDimensionsSupported()) {
+            for (auto dimension = activeChannels; dimension < 3u; dimension++) {
+                if (lws[dimension] > 1u) {
+                    return true;
+                }
             }
+        }
+
+        size_t totalLwsSize = 1u;
+        for (auto dimension = 0u; dimension < activeChannels; dimension++) {
+            totalLwsSize *= lws[dimension];
         }
 
         if (totalLwsSize > 1024u) {
