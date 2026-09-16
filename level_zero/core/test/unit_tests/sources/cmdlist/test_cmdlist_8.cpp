@@ -753,6 +753,33 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenNonHardwareCsrWhenPreferCopyThroughLoc
     ultCsr->setType(originalType);
 }
 
+HWTEST_F(AppendMemoryLockedCopyTest, givenSimulationCsrWhenPerformCpuMemcopyCalledThenDataIsDownloadedAndUploaded) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    CpuMemCopyInfo cpuMemCopyInfo(ptrOffset(devicePtr, 2), sharedPtr, 1000);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(sharedPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
+    ASSERT_TRUE(srcFound);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
+    ASSERT_TRUE(dstFound);
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    auto originalType = ultCsr->getType();
+    ultCsr->setType(NEO::CommandStreamReceiverType::tbx);
+    ultCsr->chunkCopySupported = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.performCpuMemcpy(cpuMemCopyInfo, nullptr, 0, nullptr));
+    EXPECT_EQ(1u, ultCsr->writeMemoryParams.totalCallCount);
+    EXPECT_EQ(2u, ultCsr->writeMemoryParams.latestGpuVaChunkOffset);
+    EXPECT_EQ(1000u, ultCsr->writeMemoryParams.latestChunkSize);
+    EXPECT_TRUE(ultCsr->downloadAllocationCalled);
+    ultCsr->setType(originalType);
+}
+
 HWTEST_F(AppendMemoryLockedCopyTest, givenDeviceUsmAllocationWhenPreferCopyThroughLockPointerCalledThenReturnTrueForUncompressedAndFalseForCompressed) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);

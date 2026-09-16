@@ -323,6 +323,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         BaseClass::writePooledMemory(sharedPoolAllocation, initFullPageTables);
     }
 
+    bool isChunkCopySupportedForSimulation() const override { return chunkCopySupported; }
+
     uint32_t getPreferredTagPoolSize() const override {
         return std::min(BaseClass::getPreferredTagPoolSize(), 128u);
     }
@@ -824,6 +826,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool isAnyDirectSubmissionEnabledResult = true;
     std::atomic_bool captureWaitForTaskCountWithKmdNotifyInputParams = false;
     bool incrementFlushStampOnFlush = false;
+    bool chunkCopySupported = false;
 };
 
 } // namespace NEO

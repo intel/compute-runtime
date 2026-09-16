@@ -1770,6 +1770,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         signalEvent->setGpuStartTimestamp();
     }
 
+    auto *copyCsr = getCsr(false);
+    const bool copyThroughLockSimMode = copyCsr->isTbxMode() || copyCsr->isAubMode();
+
+    if (copyThroughLockSimMode && srcLockPointer != nullptr) {
+        auto *srcGfxAllocation = cpuMemCopyInfo.srcAllocInfo.svmAlloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex());
+        copyCsr->downloadAllocation(*srcGfxAllocation);
+    }
+
     if (NEO::debugManager.flags.EnableCpuStreamMemcpy.get() != 0) {
         NEO::streamCopy<false>(cpuMemcpyDstPtr, cpuMemcpySrcPtr, cpuMemCopyInfo.size);
     } else {
@@ -1779,6 +1787,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     const bool isTransferToLocalMemory = (dstLockPointer != nullptr);
     if (isTransferToLocalMemory) {
         NEO::CpuIntrinsics::sfence();
+    }
+
+    if (copyThroughLockSimMode && dstLockPointer != nullptr) {
+        auto *dstGfxAllocation = cpuMemCopyInfo.dstAllocInfo.svmAlloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex());
+        const auto dstOffset = ptrDiff(cpuMemCopyInfo.dstPtr, dstGfxAllocation->getGpuAddress());
+        copyCsr->writeAllocationChunkToSimulation(*dstGfxAllocation, dstOffset, cpuMemCopyInfo.size);
     }
 
     if (signalEvent) {
