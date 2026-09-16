@@ -98,7 +98,8 @@ struct Mock<Event> : public Event {
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(hostSignal, ze_result_t, ZE_RESULT_SUCCESS, (bool allowCounterBased));
     ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
-    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, (int64_t timeDiff));
+    using ::L0::Event::queryStatus;
+    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, (int64_t timeDiff, bool blockOnMiss));
     ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(queryKernelTimestamp, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_timestamp_result_t * dstptr));
     ADDMETHOD_NOBASE(queryTimestampsExp, ze_result_t, ZE_RESULT_SUCCESS, (::L0::Device * device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps));
@@ -112,7 +113,7 @@ struct Mock<Event> : public Event {
     ADDMETHOD_NOBASE(hostEventSetValue, ze_result_t, ZE_RESULT_SUCCESS, (State eventState));
     ADDMETHOD_NOBASE(getPacketAddress, uint64_t, 0, (L0::Device * device));
     ADDMETHOD_NOBASE_VOIDRETURN(clearTimestampTagData, (uint32_t partitionCount, NEO::TagNodeBase *newNode));
-    ADDMETHOD_NOBASE(isPatchPreambleCounterCompleted, bool, true, (int64_t timeSinceWait));
+    ADDMETHOD_NOBASE(isPatchPreambleCounterCompleted, bool, true, (int64_t timeSinceWait, bool blockOnMiss));
     ADDMETHOD_CONST(getRecordedSignalFrom, L0::CommandList *, true, nullptr, (), ());
 
     // Fake an allocation for event memory
@@ -181,7 +182,8 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostSynchronize(uint64_t timeout) override {
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t queryStatus(int64_t timeDiff) override {
+    using ::L0::Event::queryStatus;
+    ze_result_t queryStatus(int64_t timeDiff, bool blockOnMiss) override {
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t reset() override {
@@ -208,7 +210,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(State eventState) override {
         return ZE_RESULT_SUCCESS;
     }
-    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait) override {
+    bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) override {
         return true;
     }
     ::L0::Event *toBase() { return this; }

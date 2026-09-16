@@ -66,6 +66,7 @@ using namespace std::chrono_literals;
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
+extern std::atomic<uint32_t> yieldCounter;
 extern volatile TagAddressType *pauseAddress;
 extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
@@ -2848,6 +2849,40 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndSt
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
+TEST_F(EventSynchronizeTest, GivenNotReadyEventWhenHostSynchronizeWithZeroTimeoutThenCoreIsNotYielded) {
+    const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->hostSynchronize(0));
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter);
+}
+
+TEST_F(EventSynchronizeTest, GivenNotReadyEventWhenHostSynchronizeWithTimeoutThenCoreIsYieldedBetweenPolls) {
+    const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->hostSynchronize(10));
+    EXPECT_GT(CpuIntrinsicsTests::yieldCounter.load(), yieldCountBefore);
+}
+
+TEST_F(EventSynchronizeTest, GivenNotReadyCounterBasedEventWhenHostSynchronizeWithTimeoutThenCoreIsYieldedBetweenPolls) {
+    event->enableCounterBasedMode(true, 0u);
+    uint64_t counterValue = 0;
+    event->inOrderExecHelper.initializeLocalTempStorage();
+    event->inOrderExecHelper.assignData(1, 0, 1, 1, event->getAllocation(device), event->getAllocation(device), 0, 0, &counterValue, 0, 0, false, false);
+
+    const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->hostSynchronize(10));
+    EXPECT_GT(CpuIntrinsicsTests::yieldCounter.load(), yieldCountBefore);
+}
+
+TEST_F(EventSynchronizeTest, GivenNotReadyCounterBasedEventWhenHostSynchronizeWithZeroTimeoutThenCoreIsNotYielded) {
+    event->enableCounterBasedMode(true, 0u);
+    uint64_t counterValue = 0;
+    event->inOrderExecHelper.initializeLocalTempStorage();
+    event->inOrderExecHelper.assignData(1, 0, 1, 1, event->getAllocation(device), event->getAllocation(device), 0, 0, &counterValue, 0, 0, false, false);
+
+    const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->hostSynchronize(0));
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter);
+}
+
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAndStateInitialHostSynchronizeReturnsNotReady) {
     ze_result_t result = event->hostSynchronize(10);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
@@ -4458,7 +4493,8 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
     struct MockEventQuery : public L0::EventImp<uint32_t> {
         MockEventQuery(int index, L0::Device *device) : EventImp(index, device, false) {}
 
-        ze_result_t queryStatus(int64_t timeSinceWait) override {
+        using EventImp<uint32_t>::queryStatus;
+        ze_result_t queryStatus(int64_t timeSinceWait, bool blockOnMiss) override {
             return ZE_RESULT_NOT_READY;
         }
     };
@@ -5952,6 +5988,61 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeUsesWaitFenceThenPre
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(EventTests, givenExternalCbEventWithIncompletePreambleWhenHostSynchronizeUsesWaitFenceThenCoreIsYieldedOnlyWhenWaiting) {
+    NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
+
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress, nullptr);
+    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
+    VariableBackup<std::function<void()>> backupControlTpause(&CpuIntrinsicsTests::controlTpause);
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, neoDevice->getMemoryManager());
+    ze_result_t result;
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+    ASSERT_NE(event, nullptr);
+
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
+    *eventAddress = Event::STATE_SIGNALED;
+
+    EXPECT_TRUE(event->isKmdWaitModeEnabled());
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    event->csrs[0] = ultCsr;
+    ultCsr->initializeResources(device->getDevicePreemptionMode());
+    ultCsr->isGpuHangDetectedReturnValue = false;
+    ultCsr->isUserFenceWaitSupported = true;
+    ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
+    ultCsr->waitUserFenceParams.forceRetStatusValue = true;
+
+    auto mockNode = tagAllocator.getTag();
+
+    uint64_t counterValue = 1;
+    uint64_t patchPreambleData = 0;
+    uint64_t *patchPreambleHostAddress = &patchPreambleData;
+    MockGraphicsAllocation preambleAllocation(patchPreambleHostAddress, reinterpret_cast<uint64_t>(patchPreambleHostAddress), sizeof(patchPreambleData));
+    uint64_t preambleDevAddress = 0x1000;
+    MockGraphicsAllocation preambleDevAllocation(nullptr, preambleDevAddress, sizeof(patchPreambleData));
+
+    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, nullptr, *neoDevice, 1, false);
+    *inOrderExecInfo->getBaseHostAddress() = 1;
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->externalEvent = true;
+
+    event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
+
+    auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->hostSynchronize(0));
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter);
+
+    yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->hostSynchronize(1));
+    EXPECT_GT(CpuIntrinsicsTests::yieldCounter.load(), yieldCountBefore);
+}
+
 HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandleCorrectly) {
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
@@ -6244,13 +6335,14 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
         return BaseClass::hostSynchronize(timeout);
     }
 
-    ze_result_t queryStatus(int64_t timeSinceWait) override {
+    using BaseClass::queryStatus;
+    ze_result_t queryStatus(int64_t timeSinceWait, bool blockOnMiss) override {
         if (failOnNextQueryStatus) {
             failOnNextQueryStatus = false;
             return ZE_RESULT_NOT_READY;
         }
 
-        return BaseClass::queryStatus(timeSinceWait);
+        return BaseClass::queryStatus(timeSinceWait, blockOnMiss);
     }
 
     bool shouldHostEventSetValueFail = false;
@@ -6450,6 +6542,17 @@ TEST_F(EventTests, GivenNotReadyPacketsWhenQueryingStatusThenNotReadyReturnedAnd
     EXPECT_FALSE(event->statusQueryAssignedCompletionData);
     EXPECT_EQ(event->queryStatus(0), ZE_RESULT_NOT_READY);
     EXPECT_FALSE(event->statusQueryAssignedCompletionData);
+}
+
+TEST_F(EventTests, GivenNotReadyPacketsWhenQueryingStatusThenCoreIsNotYielded) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getEventMaxPackets(), 1u, device);
+    const uint32_t clearedPacket[4] = {static_cast<uint32_t>(Event::STATE_CLEARED), static_cast<uint32_t>(Event::STATE_CLEARED),
+                                       static_cast<uint32_t>(Event::STATE_CLEARED), static_cast<uint32_t>(Event::STATE_CLEARED)};
+    event->kernelEventCompletionData.assignDataToAllTimestamps(0u, clearedPacket);
+
+    const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_NOT_READY);
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter);
 }
 
 TEST_F(EventTests, GivenNotReadyPacketsWhenQueryingKernelTimestampThenNotReadyReturnedAndCompletionDataAssignmentNotRecorded) {

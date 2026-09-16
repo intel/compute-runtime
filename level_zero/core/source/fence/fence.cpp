@@ -25,13 +25,13 @@ Fence *Fence::create(CommandQueue *cmdQueue, const ze_fence_desc_t *desc) {
     return fence;
 }
 
-ze_result_t Fence::queryStatus() {
+ze_result_t Fence::queryStatus(bool blockOnMiss) {
     auto csr = cmdQueue->getCsr();
     csr->downloadAllocations(true);
 
     auto *hostAddr = csr->getTagAddress();
 
-    return csr->testTaskCountReady(hostAddr, taskCount) ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
+    return csr->testTaskCountReady(hostAddr, taskCount, blockOnMiss) ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
 }
 
 ze_result_t Fence::assignTaskCountFromCsr() {
@@ -66,7 +66,7 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
     do {
-        ret = queryStatus();
+        ret = queryStatus(timeout != 0);
         if (ret == ZE_RESULT_SUCCESS) {
             cmdQueue->printKernelsPrintfOutput(false);
             cmdQueue->checkAssert();

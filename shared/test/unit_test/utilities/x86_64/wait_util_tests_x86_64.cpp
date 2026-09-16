@@ -408,6 +408,18 @@ TEST_F(WaitPkgEnabledTest, givenMonitoredAddressNotChangesWhenMonitorTimeoutsThe
     EXPECT_EQ(1u, CpuIntrinsicsTests::umwaitCounter);
 }
 
+TEST_F(WaitPkgEnabledTest, givenNotReadyPollAddressWhenPollFunctionCalledWithoutBlockOnMissThenDoNotMonitorOrUmwait) {
+    volatile TagAddressType pollValue = 0u;
+    TaskCountType expectedValue = 1;
+
+    CpuIntrinsicsTests::umwaitRetValue = 1;
+
+    EXPECT_FALSE(WaitUtils::pollFunction(&pollValue, expectedValue, 0, false));
+
+    EXPECT_EQ(0u, CpuIntrinsicsTests::umonitorCounter);
+    EXPECT_EQ(0u, CpuIntrinsicsTests::umwaitCounter);
+}
+
 TEST_F(WaitPkgEnabledTest, givenMonitoredAddressChangedWhenAddressNotMatchesPredicateValueThenWaitReturnsFalse) {
     volatile TagAddressType pollValue = 0u;
     TaskCountType expectedValue = 1;

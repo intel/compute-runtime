@@ -2120,10 +2120,39 @@ TEST(CommandStreamReceiverSimpleTest, givenGpuNotIdleImplicitFlushCheckEnabledWh
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
+extern std::atomic<uint32_t> yieldCounter;
 extern volatile TagAddressType *pauseAddress;
 extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
 } // namespace CpuIntrinsicsTests
+
+HWTEST_F(CommandStreamReceiverTest, givenNotReadyTaskCountWhenTestingTaskCountReadyThenDoNotYieldTheCore) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+    *csr.tagAddress = 1u;
+
+    auto oldYieldCount = CpuIntrinsicsTests::yieldCounter.load();
+
+    EXPECT_FALSE(csr.testTaskCountReady(csr.tagAddress, 2u));
+    EXPECT_EQ(oldYieldCount, CpuIntrinsicsTests::yieldCounter);
+
+    EXPECT_TRUE(csr.testTaskCountReady(csr.tagAddress, 1u));
+    EXPECT_EQ(oldYieldCount, CpuIntrinsicsTests::yieldCounter);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenNotReadyTaskCountWhenTestingTaskCountReadyWithWaitOnMissThenYieldTheCore) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+    *csr.tagAddress = 1u;
+
+    auto oldYieldCount = CpuIntrinsicsTests::yieldCounter.load();
+
+    EXPECT_FALSE(csr.testTaskCountReady(csr.tagAddress, 2u, true));
+    EXPECT_EQ(oldYieldCount + 1, CpuIntrinsicsTests::yieldCounter);
+
+    EXPECT_TRUE(csr.testTaskCountReady(csr.tagAddress, 1u, true));
+    EXPECT_EQ(oldYieldCount + 1, CpuIntrinsicsTests::yieldCounter);
+}
 
 TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingForTaskCountForCleaningTemporaryAllocationsThenExpectAllPartitionTaskCountsAreChecked) {
     DebugManagerStateRestore restorer;

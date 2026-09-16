@@ -113,11 +113,12 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         }
     }
 
-    bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) override {
+    using CommandStreamReceiver::testTaskCountReady;
+    bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss) override {
         if (testTaskCountReadyReturnValue.has_value()) {
             return *testTaskCountReadyReturnValue;
         } else {
-            return CommandStreamReceiver::testTaskCountReady(pollAddress, taskCountToWait);
+            return CommandStreamReceiver::testTaskCountReady(pollAddress, taskCountToWait, blockOnMiss);
         }
     }
 
