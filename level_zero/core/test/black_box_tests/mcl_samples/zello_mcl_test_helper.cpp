@@ -977,9 +977,10 @@ void printFailedCases() {
     for (size_t i = 0; i < failedCount; i++) {
         std::cerr << failedCases[i] << std::endl;
         if (i + 1 != failedCount) {
-            std::cerr << "===================================" << std::endl;
+            std::cerr << "-----------------------------------" << std::endl;
         }
     }
+    std::cerr << "===================================" << std::endl;
 }
 
 } // namespace MclTests
