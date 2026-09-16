@@ -3564,6 +3564,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
     mockKernel.privateState.surfaceStateHeapData.clear();
     mockKernel.privateState.surfaceStateHeapData.resize(surfaceStateSize);
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+    mockKernel.descriptor.initBindlessSamplerSlots();
     mockKernel.privateState.argumentsResidencyContainer.resize(1);
     mockKernel.privateState.isBindlessOffsetSet.resize(1, 0);
     mockKernel.privateState.usingSurfaceStateHeap.resize(1, false);
@@ -4924,6 +4925,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
     mockKernel.privateState.usingSurfaceStateHeap.resize(4, 0);
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+    mockKernel.descriptor.initBindlessSamplerSlots();
 
     constexpr size_t ctdQwords = 5U;
     mockKernel.privateState.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
@@ -4987,6 +4989,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatc
     mockKernel.privateState.isBindlessOffsetSet[1] = false;
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+    mockKernel.descriptor.initBindlessSamplerSlots();
 
     constexpr size_t ctdQwords = 4U;
     mockKernel.privateState.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
@@ -5087,6 +5090,7 @@ TEST_F(BindlessKernelTest, givenGlobalBindlessAllocatorAndBindlessKernelWithImpl
     mockKernel.privateState.isBindlessOffsetSet[0] = true;
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+    mockKernel.descriptor.initBindlessSamplerSlots();
 
     constexpr size_t ctdQwords = 4U;
     mockKernel.privateState.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
@@ -5185,6 +5189,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossT
     mockKernel.privateState.usingSurfaceStateHeap.resize(2, 0);
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+    mockKernel.descriptor.initBindlessSamplerSlots();
 
     constexpr size_t ctdQwords = 5U;
     mockKernel.privateState.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
@@ -5193,7 +5198,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossT
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
     auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
 
-    auto patchValue1 = (static_cast<uint32_t>(baseAddress + 1 * samplerStateSize));
+    auto patchValue1 = (static_cast<uint32_t>(baseAddress + 0 * samplerStateSize));
     auto patchValue2 = 0u;
 
     mockKernel.patchSamplerBindlessOffsetsInCrossThreadData(baseAddress);
@@ -5250,6 +5255,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithInlineSamplersWhenPatchingSamp
     mockKernel.privateState.usingSurfaceStateHeap.resize(2, 0);
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+    mockKernel.descriptor.initBindlessSamplerSlots();
 
     constexpr size_t ctdQwords = 7U;
     mockKernel.privateState.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
@@ -5270,6 +5276,93 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithInlineSamplersWhenPatchingSamp
 
     EXPECT_EQ(patchValue1, crossThreadData[5]);
     EXPECT_EQ(patchValue2, crossThreadData[6]);
+}
+
+TEST_F(BindlessKernelTest, givenBindlessKernelWithInlineSamplerAtNonZeroSamplerIndexWhenPatchingSamplerOffsetsInCrossThreadDataThenFirstSlotOffsetIsWritten) {
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<KernelImp> mockKernel;
+    mockKernel.setModule(&mockModule);
+
+    mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    constexpr uint32_t samplerIndex = 2u;
+
+    NEO::KernelDescriptor::InlineSampler inlineSampler = {};
+    inlineSampler.samplerIndex = samplerIndex;
+    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::clampBorder;
+    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::linear;
+    inlineSampler.isNormalized = true;
+    inlineSampler.bindless = 1 * sizeof(uint64_t);
+    inlineSampler.size = sizeof(uint64_t);
+    mockKernel.descriptor.inlineSamplers.push_back(inlineSampler);
+
+    mockKernel.descriptor.payloadMappings.samplerTable.numSamplers = static_cast<uint8_t>(samplerIndex + 1);
+
+    mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+    mockKernel.descriptor.initBindlessSamplerSlots();
+
+    constexpr size_t ctdQwords = 2U;
+    mockKernel.privateState.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
+
+    const uint64_t baseAddress = 0x1000;
+
+    mockKernel.patchSamplerBindlessOffsetsInCrossThreadData(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
+    auto *src = mockKernel.getCrossThreadData();
+    ASSERT_NE(nullptr, src);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), src, mockKernel.getCrossThreadDataSize());
+
+    EXPECT_EQ(baseAddress, crossThreadData[1]);
+}
+
+TEST_F(BindlessKernelTest, givenBindlessKernelWithExplicitSamplerArgAndInlineSamplerWhenPatchingSamplerOffsetsInCrossThreadDataThenDistinctSlotsAreWritten) {
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<KernelImp> mockKernel;
+    mockKernel.setModule(&mockModule);
+
+    mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto argDescriptorSampler = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorSampler.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
+    argDescriptorSampler.as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorSampler.as<NEO::ArgDescSampler>().bindless = 0 * sizeof(uint64_t);
+    argDescriptorSampler.as<NEO::ArgDescSampler>().size = sizeof(uint64_t);
+    argDescriptorSampler.as<NEO::ArgDescSampler>().index = 0;
+    mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptorSampler);
+
+    NEO::KernelDescriptor::InlineSampler inlineSampler = {};
+    inlineSampler.samplerIndex = 1;
+    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::clampBorder;
+    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::linear;
+    inlineSampler.isNormalized = true;
+    inlineSampler.bindless = 1 * sizeof(uint64_t);
+    inlineSampler.size = sizeof(uint64_t);
+    mockKernel.descriptor.inlineSamplers.push_back(inlineSampler);
+
+    mockKernel.descriptor.payloadMappings.samplerTable.numSamplers = 2;
+
+    mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+    mockKernel.descriptor.initBindlessSamplerSlots();
+
+    constexpr size_t ctdQwords = 2U;
+    mockKernel.privateState.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
+
+    const uint64_t baseAddress = 0x1000;
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+    auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+
+    mockKernel.patchSamplerBindlessOffsetsInCrossThreadData(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
+    auto *src = mockKernel.getCrossThreadData();
+    ASSERT_NE(nullptr, src);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), src, mockKernel.getCrossThreadDataSize());
+
+    EXPECT_EQ(baseAddress, crossThreadData[0]);
+    EXPECT_EQ(baseAddress + samplerStateSize, crossThreadData[1]);
 }
 
 using KernelSyncBufferTest = Test<ModuleFixture>;

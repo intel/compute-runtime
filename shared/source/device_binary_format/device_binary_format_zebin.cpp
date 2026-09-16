@@ -158,6 +158,10 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
         if (KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
             kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
         }
+
+        if (kernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
+            kernelInfo->kernelDescriptor.initBindlessSamplerSlots();
+        }
     }
 
     prepareLinkerInputForZebin<numBits>(dst, elf);

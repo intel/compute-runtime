@@ -44,6 +44,60 @@ bool KernelDescriptor::hasMsaaImageArg(const KernelDescriptor &desc) {
     return false;
 }
 
+void KernelDescriptor::initBindlessSamplerSlots() {
+    std::call_once(initBindlessSamplerSlotsOnce, [this]() {
+        StackVec<uint32_t, 8> usedIndices;
+        auto collect = [&usedIndices](uint32_t samplerIndex) {
+            for (auto used : usedIndices) {
+                if (used == samplerIndex) {
+                    return;
+                }
+            }
+            usedIndices.push_back(samplerIndex);
+        };
+
+        for (auto &arg : payloadMappings.explicitArgs) {
+            if (arg.type != ArgDescriptor::ArgType::argTSampler) {
+                continue;
+            }
+            auto &argSampler = arg.as<ArgDescSampler>();
+            if (isValidOffset(argSampler.bindless) && isDefined(argSampler.index)) {
+                collect(argSampler.index);
+            }
+        }
+        for (auto &inlineSampler : inlineSamplers) {
+            if (isValidOffset(inlineSampler.bindless)) {
+                collect(inlineSampler.samplerIndex);
+            }
+        }
+
+        auto slotOf = [&usedIndices](uint32_t samplerIndex) {
+            uint32_t slot = 0;
+            for (auto used : usedIndices) {
+                if (used < samplerIndex) {
+                    slot++;
+                }
+            }
+            return static_cast<uint8_t>(slot);
+        };
+
+        for (auto &arg : payloadMappings.explicitArgs) {
+            if (arg.type != ArgDescriptor::ArgType::argTSampler) {
+                continue;
+            }
+            auto &argSampler = arg.as<ArgDescSampler>();
+            if (isValidOffset(argSampler.bindless) && isDefined(argSampler.index)) {
+                argSampler.bindlessSlot = slotOf(argSampler.index);
+            }
+        }
+        for (auto &inlineSampler : inlineSamplers) {
+            if (isValidOffset(inlineSampler.bindless)) {
+                inlineSampler.bindlessSlot = slotOf(inlineSampler.samplerIndex);
+            }
+        }
+    });
+}
+
 void KernelDescriptor::initBindlessOffsetToSurfaceState() {
     std::call_once(initBindlessArgsMapOnce, [this]() {
         uint32_t index = 0;

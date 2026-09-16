@@ -793,6 +793,9 @@ HWTEST2_F(KernelTest, givenTwoInlineSamplersWithBindlessAddressingWhenSettingInl
 
     ASSERT_TRUE(NEO::isValidOffset(inlineSampler.bindless));
 
+    descriptor.payloadMappings.samplerTable.numSamplers = 2;
+    descriptor.initBindlessSamplerSlots();
+
     Mock<Module> module(device, nullptr);
     Mock<KernelImp> kernel;
     kernel.module = &module;
@@ -817,6 +820,47 @@ HWTEST2_F(KernelTest, givenTwoInlineSamplersWithBindlessAddressingWhenSettingInl
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_CLAMP_BORDER, samplerState2->getTczAddressControlMode());
     EXPECT_EQ(SamplerState::MIN_MODE_FILTER_LINEAR, samplerState2->getMinModeFilter());
     EXPECT_EQ(SamplerState::MAG_MODE_FILTER_LINEAR, samplerState2->getMagModeFilter());
+}
+
+HWTEST2_F(KernelTest, givenBindlessInlineSamplerWithNonZeroSamplerIndexWhenSettingInlineSamplerThenFirstDshSlotIsPatched, SupportsSampler) {
+    using SamplerState = typename FamilyType::SAMPLER_STATE;
+    constexpr auto borderColorStateSize = 64u;
+    constexpr uint32_t samplerIndex = 2u;
+
+    WhiteBox<::L0::KernelImmutableData> kernelImmData = {};
+    NEO::KernelDescriptor descriptor;
+    kernelImmData.kernelDescriptor = &descriptor;
+
+    auto &inlineSampler = descriptor.inlineSamplers.emplace_back();
+    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::clampBorder;
+    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::linear;
+    inlineSampler.isNormalized = false;
+    inlineSampler.bindless = 0x98u;
+    inlineSampler.samplerIndex = samplerIndex;
+
+    descriptor.payloadMappings.samplerTable.numSamplers = static_cast<uint8_t>(samplerIndex + 1);
+    descriptor.initBindlessSamplerSlots();
+
+    Mock<Module> module(device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    kernel.sharedState->kernelImmData = &kernelImmData;
+    kernel.privateState.dynamicStateHeapData.resize(borderColorStateSize + (samplerIndex + 1) * sizeof(SamplerState), 0);
+
+    kernel.setInlineSamplers();
+
+    auto dsh = kernel.getDynamicStateHeapDataSpan();
+    const SamplerState *firstSlot = reinterpret_cast<const SamplerState *>(&dsh[borderColorStateSize]);
+
+    EXPECT_TRUE(firstSlot->getNonNormalizedCoordinateEnable());
+    EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_CLAMP_BORDER, firstSlot->getTcxAddressControlMode());
+    EXPECT_EQ(SamplerState::MIN_MODE_FILTER_LINEAR, firstSlot->getMinModeFilter());
+    EXPECT_EQ(SamplerState::MAG_MODE_FILTER_LINEAR, firstSlot->getMagModeFilter());
+
+    const auto slotAtSamplerIndex = borderColorStateSize + samplerIndex * sizeof(SamplerState);
+    for (size_t i = slotAtSamplerIndex; i < slotAtSamplerIndex + sizeof(SamplerState); i++) {
+        EXPECT_EQ(0u, dsh[i]);
+    }
 }
 
 using KernelImmutableDataBindlessTest = Test<DeviceFixture>;

@@ -58,6 +58,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     KernelDescriptorExt *kernelDescriptorExt = nullptr;
 
     void initBindlessOffsetToSurfaceState();
+    void initBindlessSamplerSlots();
     const BindlessToSurfaceStateMap &getBindlessOffsetToSurfaceState() const {
         return bindlessArgsMap;
     }
@@ -276,6 +277,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         FilterMode filterMode;
         CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>;
         uint8_t size = undefined<uint8_t>;
+        uint8_t bindlessSlot = undefined<uint8_t>;
 
         constexpr uint32_t getSamplerBindfulOffset() const {
             return borderColorStateSize + samplerStateSize * samplerIndex;
@@ -305,6 +307,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
 
     BindlessToSurfaceStateMap bindlessArgsMap;
     std::once_flag initBindlessArgsMapOnce;
+    std::once_flag initBindlessSamplerSlotsOnce;
 };
 
 static_assert(NonCopyableAndNonMovable<KernelDescriptor>);
