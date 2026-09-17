@@ -42,6 +42,18 @@ class MockLinuxEventsUtilWithUnrequestedTracefsSource : public PublicLinuxEvents
     bool cperRegisteredAfterUpdate = false;
 };
 
+class MockUdevLibRegisteringDriverEventsDuringListen : public EventsUdevLibMock {
+  public:
+    int registerEventsFromSubsystemAndGetFd(std::vector<std::string> &subsystemList) override {
+        if (pEventsUtilToRegister != nullptr) {
+            pEventsUtilToRegister->driverEventRegister(ZES_INTEL_CPER_DATA_AVAILABLE);
+        }
+        return EventsUdevLibMock::registerEventsFromSubsystemAndGetFd(subsystemList);
+    }
+
+    static inline L0::Sysman::LinuxEventsUtil *pEventsUtilToRegister = nullptr;
+};
+
 class SysmanEventsInfoLogFixture : public SysmanDeviceFixture {
   protected:
     void SetUp() override {
@@ -704,6 +716,41 @@ TEST_F(SysmanEventsInfoLogFixture, GivenDeviceScopedAndDriverScopedEventsOccurIn
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
     pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
+}
+
+TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredBeforeTheListenPipeExistsWhenListeningThenTracefsSourceIsAddedOnTheFirstPollAndEventIsReported) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, mockSysCallsPipe);
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        recordPollCall(pollFd, numberOfFds);
+        return markFdReady(pollFd, numberOfFds, MockTraceFsApiWithData::mockTracePipeFd);
+    });
+
+    auto hInfoLog = getInfoLogHandle();
+    ASSERT_NE(nullptr, hInfoLog);
+    auto hInstance = createInfoLogInstance(hInfoLog);
+    EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
+
+    MockUdevLibRegisteringDriverEventsDuringListen udevLibRegisteringCper;
+    VariableBackup<decltype(MockUdevLibRegisteringDriverEventsDuringListen::pEventsUtilToRegister)> eventsUtilToRegisterBackup(&MockUdevLibRegisteringDriverEventsDuringListen::pEventsUtilToRegister, pEventsUtil.get());
+    pLinuxSysmanDriverImp->pUdevLib = &udevLibRegisteringCper;
+    ASSERT_EQ(0u, getDriverRegisteredEvents());
+    ASSERT_EQ(-1, pEventsUtil->pipeFd[1]);
+
+    constexpr uint32_t count = 0u;
+    zes_device_handle_t *phDevices = nullptr;
+    zes_event_type_flags_t pDeviceEvents[1] = {0};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t driverEvents = 0;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEventListenExp(driverHandle->toHandle(), 1000u, count, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_CPER_DATA_AVAILABLE), driverEvents);
+
+    EXPECT_EQ(1u, pollCallCount);
+    EXPECT_TRUE(wasFdPolled(0, MockTraceFsApiWithData::mockTracePipeFd));
+    EXPECT_EQ(0u, pipeReadCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
 }
 
 TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhileListeningWhenRegistrationPipeIsNotifiedThenTracefsSourceIsAddedAndEventIsReported) {

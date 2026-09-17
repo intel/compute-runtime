@@ -493,6 +493,13 @@ void LinuxEventsUtil::updateCperPollSource(zes_event_type_flags_t driverRegister
     }
 }
 
+void LinuxEventsUtil::refreshDriverEventPollSources(zes_event_type_flags_t *pDriverEvents, zes_event_type_flags_t &driverRegisteredEvents, std::vector<PollDescriptor> &pollSources, bool &cperRegistered) {
+    if (pDriverEvents != nullptr) {
+        driverRegisteredEvents = registeredDriverEvents;
+    }
+    updateCperPollSource(driverRegisteredEvents, pollSources, cperRegistered);
+}
+
 bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout, zes_event_type_flags_t *pDriverEvents) {
     std::call_once(initEventsOnce, [this]() {
         this->init();
@@ -544,7 +551,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             pollSources.push_back({{netlinkGetSocketFd(pDrmNl), POLLIN, 0}, PollSourceType::netlink});
         }
 
-        updateCperPollSource(driverRegisteredEvents, pollSources, cperRegistered);
+        refreshDriverEventPollSources(pDriverEvents, driverRegisteredEvents, pollSources, cperRegistered);
 
         getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
     }
@@ -595,10 +602,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             mapOfDevIndexToDevPath.clear();
             pFsAccess = nullptr;
             getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
-            if (pDriverEvents != nullptr) {
-                driverRegisteredEvents = registeredDriverEvents;
-            }
-            updateCperPollSource(driverRegisteredEvents, pollSources, cperRegistered);
+            refreshDriverEventPollSources(pDriverEvents, driverRegisteredEvents, pollSources, cperRegistered);
             syncPfds();
         }
 
