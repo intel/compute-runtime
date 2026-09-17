@@ -457,6 +457,16 @@ NEO::UsmPoolLookupResult DriverHandle::getHostUsmPoolOwningPtr(const void *ptr) 
     return usmHostMemAllocPoolFacade.getPoolContainingAlloc(ptr);
 }
 
+NEO::UsmPoolLookupResult DriverHandle::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData) {
+    if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType) {
+        return this->getHostUsmPoolOwningPtr(ptr);
+    } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
+        return svmData->device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr);
+    }
+
+    return {};
+}
+
 void DriverHandle::setupDevicesToExpose() {
 
     // If the user has requested FLAT or COMBINED device hierarchy model, then report all the sub devices as devices.

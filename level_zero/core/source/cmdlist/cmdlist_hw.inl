@@ -1621,17 +1621,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
         }
     }
 
-    NEO::MemAdviseFlags flags{};
-    Device *adviceDevice = L0::Device::fromHandle(hDevice);
-
-    {
-        std::unique_lock<NEO::SpinLock> lock(adviceDevice->memAdviseAllocationsMutex);
-        auto it = adviceDevice->memAdviseSharedAllocations.find(allocData);
-        if (it != adviceDevice->memAdviseSharedAllocations.end()) {
-            flags = it->second;
-        }
+    if (driverHandle->getUsmPoolOwningPtr(ptr, allocData).pool) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                     "Mem advise ignored, pooled allocations share state with the whole pool\n");
+        return ZE_RESULT_SUCCESS;
     }
 
+    Device *adviceDevice = L0::Device::fromHandle(hDevice);
+
+    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(adviceDevice->getRootDeviceIndex());
+    if (!alloc) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                     "Mem advise ignored, allocation is not present on the advised device\n");
+        return ZE_RESULT_SUCCESS;
+    }
+
+    NEO::MemAdviseFlags flags = alloc->getMemAdviseFlags();
     const auto currentFlags = flags;
 
     switch (advice) {
@@ -1684,13 +1689,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
         return ZE_RESULT_SUCCESS;
     }
 
-    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(adviceDevice->getRootDeviceIndex());
     memoryManager->setMemAdvise(alloc, flags, adviceDevice->getRootDeviceIndex());
-
-    {
-        std::unique_lock<NEO::SpinLock> lock(adviceDevice->memAdviseAllocationsMutex);
-        adviceDevice->memAdviseSharedAllocations[allocData] = flags;
-    }
 
     return ZE_RESULT_SUCCESS;
 }

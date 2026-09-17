@@ -34,6 +34,17 @@ TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewHasCorrectOffsetAndSi
     EXPECT_EQ(viewOffset, view->getOffsetInParent());
 }
 
+TEST_F(GraphicsAllocationViewTest, givenParentWithMemAdviseFlagsWhenCreatingViewThenFlagsAreInherited) {
+    MemAdviseFlags parentFlags{};
+    parentFlags.devicePreferredLocation = 1;
+    parentFlags.cachedMemory = 0;
+    parentAllocation->setMemAdviseFlags(parentFlags);
+
+    std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
+
+    EXPECT_EQ(parentFlags.allFlags, view->getMemAdviseFlags().allFlags);
+}
+
 TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenIsViewReturnsTrue) {
     std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
 

@@ -6854,7 +6854,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCa
 
         EXPECT_EQ(cached ? CachePolicy::writeBack : CachePolicy::uncached, bo.peekCachePolicy());
 
-        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
     }
 }
 

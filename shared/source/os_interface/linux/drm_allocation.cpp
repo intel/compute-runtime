@@ -56,7 +56,6 @@ DrmAllocation::DrmAllocation(DrmAllocation *parent, size_t offsetInParentAllocat
     : GraphicsAllocation(parent, offsetInParentAllocation, viewSize),
       bufferObjects(parent->bufferObjects),
       numHandles(parent->numHandles),
-      enabledMemAdviseFlags(parent->enabledMemAdviseFlags),
       usmHostAllocation(parent->usmHostAllocation) {
     this->osContext = parent->osContext;
 }
@@ -470,14 +469,15 @@ bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
 
 bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     bool success = true;
+    auto currentFlags = this->getMemAdviseFlags();
 
-    if (flags.cachedMemory != enabledMemAdviseFlags.cachedMemory) {
+    if (flags.cachedMemory != currentFlags.cachedMemory) {
         CachePolicy memType = flags.cachedMemory ? CachePolicy::writeBack : CachePolicy::uncached;
         setCachePolicy(memType);
     }
 
     auto ioctlHelper = drm->getIoctlHelper();
-    if (flags.nonAtomic != enabledMemAdviseFlags.nonAtomic) {
+    if (flags.nonAtomic != currentFlags.nonAtomic) {
         for (auto bo : bufferObjects) {
             if (bo != nullptr) {
                 success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getAtomicAdvise(flags.nonAtomic), nullptr);
@@ -485,16 +485,16 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
         }
     }
 
-    if (flags.devicePreferredLocation != enabledMemAdviseFlags.devicePreferredLocation) {
+    if (flags.devicePreferredLocation != currentFlags.devicePreferredLocation) {
         success &= setPreferredLocation(drm, flags.devicePreferredLocation ? PreferredLocation::device : PreferredLocation::clear);
     }
 
-    if (flags.systemPreferredLocation != enabledMemAdviseFlags.systemPreferredLocation) {
+    if (flags.systemPreferredLocation != currentFlags.systemPreferredLocation) {
         success &= setPreferredLocation(drm, flags.systemPreferredLocation ? PreferredLocation::system : PreferredLocation::defaultLocation);
     }
 
     if (success) {
-        enabledMemAdviseFlags = flags;
+        this->setMemAdviseFlags(flags);
     }
 
     return success;

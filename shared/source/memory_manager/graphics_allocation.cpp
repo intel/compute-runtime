@@ -71,7 +71,8 @@ GraphicsAllocation::GraphicsAllocation(GraphicsAllocation *parent, size_t offset
       sharingInfo(parent->sharingInfo),
       residency(parent->residency.resident.size()),
       parentAllocation(parent),
-      offsetInParent(offsetInParentAllocation) {
+      offsetInParent(offsetInParentAllocation),
+      enabledMemAdviseFlags(parent->getMemAdviseFlags()) {
     allocationInfo.flags.shareableHostMemory = false;
     allocationInfo.flags.cantBeReadOnly = false;
     this->storageInfo = parent->storageInfo;

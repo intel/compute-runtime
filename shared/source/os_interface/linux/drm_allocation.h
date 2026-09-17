@@ -153,7 +153,6 @@ class DrmAllocation : public GraphicsAllocation {
     void *importedMmapPtr = nullptr;
     size_t mmapSize = 0u;
     uint32_t numHandles = 0u;
-    MemAdviseFlags enabledMemAdviseFlags{};
 
     bool usmHostAllocation = false;
 };

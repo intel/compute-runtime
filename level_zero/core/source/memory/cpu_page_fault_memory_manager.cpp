@@ -63,14 +63,13 @@ void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHand
         L0::Device *l0Device = static_cast<L0::Device *>(pageFaultData.cmdQ);
         NEO::SvmAllocationData *allocData = l0Device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(allocPtr);
 
-        {
-            std::unique_lock<NEO::SpinLock> lock(l0Device->memAdviseAllocationsMutex);
-            auto it = l0Device->memAdviseSharedAllocations.find(allocData);
-            if (it != l0Device->memAdviseSharedAllocations.end()) {
-                if (it->second.readOnly && it->second.devicePreferredLocation) {
-                    migration = false;
-                    it->second.cpuMigrationBlocked = 1;
-                }
+        auto alloc = allocData ? allocData->gpuAllocations.getGraphicsAllocation(l0Device->getRootDeviceIndex()) : nullptr;
+        if (alloc) {
+            auto flags = alloc->getMemAdviseFlags();
+            if (flags.readOnly && flags.devicePreferredLocation) {
+                migration = false;
+                flags.cpuMigrationBlocked = 1;
+                alloc->setMemAdviseFlags(flags);
             }
         }
         if (migration) {

@@ -62,6 +62,19 @@ TEST(MemoryManagerTest, WhenCallingSetSharedSystemAtomicAccessThenReturnTrue) {
     EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, AtomicAccessMode::none, subDeviceId, 0u));
 }
 
+TEST(MemoryManagerTest, givenMemAdviseFlagsWhenCallingSetMemAdviseThenFlagsAreStoredOnAllocation) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    MockGraphicsAllocation allocation{nullptr, MemoryConstants::pageSize};
+
+    MemAdviseFlags flags{};
+    flags.devicePreferredLocation = 1;
+    flags.cachedMemory = 0;
+
+    EXPECT_TRUE(memoryManager.setMemAdvise(&allocation, flags, 0u));
+    EXPECT_EQ(flags.allFlags, allocation.getMemAdviseFlags().allFlags);
+}
+
 TEST(MemoryManagerTest, WhenCallingGetSharedSystemAtomicAccessThenReturnTrue) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);

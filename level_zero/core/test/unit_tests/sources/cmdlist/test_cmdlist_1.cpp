@@ -53,6 +53,16 @@ using ContextCommandListCreate = Test<DeviceFixture>;
 using CommandListCreateTests = Test<CommandListCreateFixture>;
 using CommandListCallbacksTests = Test<CommandListCreateFixture>;
 
+struct CommandListMemAdviseNoPooling : public CommandListCreateTests {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        CommandListCreateTests::SetUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
 TEST_F(CommandListCallbacksTests, givenCallbacksWhenResetOrDestroyCalledThenExecute) {
     uint32_t callback0Called = 0;
     uint32_t callback1Called = 0;
@@ -416,7 +426,7 @@ TEST_F(CommandListCreateTests, givenNonExistingPtrThenAppendMemoryPrefetchReturn
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
-TEST_F(CommandListCreateTests, givenValidDeviceMemPtrWhenExecuteMemAdviseFailsThenReturnSuccess) {
+TEST_F(CommandListMemAdviseNoPooling, givenValidDeviceMemPtrWhenExecuteMemAdviseFailsThenReturnSuccess) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -503,12 +513,12 @@ TEST_F(CommandListCreateTests, givenValidSystemAlloctedPtrAndSharedSystemAllocat
     size_t size = 10;
     void *ptr = nullptr;
 
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
-
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
+
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
@@ -535,12 +545,12 @@ TEST_P(SupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhenEx
     size_t size = 10;
     void *ptr = nullptr;
 
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
-
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
+
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     memoryManager->failSetSharedSystemMemAdvise = true;
@@ -577,12 +587,12 @@ TEST_P(UnSupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhen
     size_t size = 10;
     void *ptr = nullptr;
 
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
-
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
+
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     memoryManager->failSetSharedSystemMemAdvise = true;
@@ -611,7 +621,7 @@ INSTANTIATE_TEST_SUITE_P(
         ZE_MEMORY_ADVICE_BIAS_UNCACHED,
         ZE_MEMORY_ADVICE_FORCE_UINT32}));
 
-TEST_F(CommandListCreateTests, givenValidDeviceMemPtrWhenExecuteMemAdviseSucceedsThenReturnSuccess) {
+TEST_F(CommandListMemAdviseNoPooling, givenValidDeviceMemPtrWhenExecuteMemAdviseSucceedsThenReturnSuccess) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -634,7 +644,7 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrWhenExecuteMemAdviseSucceed
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetWithMaxHintThenSuccessReturned) {
+TEST_F(CommandListMemAdviseNoPooling, givenValidDeviceMemPtrThenExecuteMemAdviseSetWithMaxHintThenSuccessReturned) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -657,7 +667,7 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetWith
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndClearReadMostlyThenMemAdviseReadOnlySet) {
+TEST_F(CommandListMemAdviseNoPooling, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndClearReadMostlyThenMemAdviseReadOnlySet) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -677,19 +687,19 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndC
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    L0::Device *l0Device = L0::Device::fromHandle(device);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.readOnly);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseWhenSameAdviceIsSetMoreThanOnceThenDontExecuteAgain) {
+TEST_F(CommandListMemAdviseNoPooling, givenValidDeviceMemPtrThenExecuteMemAdviseWhenSameAdviceIsSetMoreThanOnceThenDontExecuteAgain) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -709,19 +719,19 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseWhenSam
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    L0::Device *l0Device = L0::Device::fromHandle(device);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndClearPreferredLocationThenMemAdvisePreferredDeviceSet) {
+TEST_F(CommandListMemAdviseNoPooling, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndClearPreferredLocationThenMemAdvisePreferredDeviceSet) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -741,12 +751,12 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndC
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    L0::Device *l0Device = L0::Device::fromHandle(device);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.devicePreferredLocation);
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.devicePreferredLocation);
 
     res = context->freeMem(ptr);
@@ -775,19 +785,19 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrWhenExecuteMemAdviseIsCalle
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    L0::Device *l0Device = L0::Device::fromHandle(device);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.systemPreferredLocation);
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_SYSTEM_MEMORY_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.systemPreferredLocation);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreateTests, givenValidDeviceMemPtrWhenExecuteMemAdviseSetAndClearNonAtomicMostlyThenMemAdviseNonAtomicIgnored) {
+TEST_F(CommandListMemAdviseNoPooling, givenValidDeviceMemPtrWhenExecuteMemAdviseSetAndClearNonAtomicMostlyThenMemAdviseNonAtomicIgnored) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -807,19 +817,19 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrWhenExecuteMemAdviseSetAndC
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_NON_ATOMIC_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    L0::Device *l0Device = L0::Device::fromHandle(device);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.nonAtomic);
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_NON_ATOMIC_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.nonAtomic);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndClearCachingThenMemAdviseCachingSet) {
+TEST_F(CommandListMemAdviseNoPooling, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndClearCachingThenMemAdviseCachingSet) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -839,14 +849,14 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndC
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_CACHED);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    L0::Device *l0Device = L0::Device::fromHandle(device);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.cachedMemory);
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     EXPECT_EQ(1, memoryManager->memAdviseFlags.cachedMemory);
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_UNCACHED);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.cachedMemory);
     EXPECT_EQ(0, memoryManager->memAdviseFlags.cachedMemory);
 
@@ -854,104 +864,15 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrThenExecuteMemAdviseSetAndC
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreateTests, givenMemAdvisedAllocationWhenFreeMemIsCalledThenMemAdviseStateIsCleared) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
+struct CommandListMemAdvisePageFault : public Test<PageFaultDeviceFixture> {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        Test<PageFaultDeviceFixture>::SetUp();
+    }
 
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    auto res = context->allocSharedMem(device->toHandle(),
-                                       &deviceDesc,
-                                       &hostDesc,
-                                       size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_NE(nullptr, ptr);
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
-    ASSERT_NE(nullptr, commandList);
-
-    res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    EXPECT_EQ(1u, device->memAdviseSharedAllocations.count(allocData));
-
-    res = context->freeMem(ptr);
-    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
-
-    EXPECT_EQ(0u, device->memAdviseSharedAllocations.count(allocData));
-}
-
-TEST_F(CommandListCreateTests, givenMemAdvisedAllocationWhenFreeMemExtWithDeferFreeIsCalledThenMemAdviseStateIsCleared) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    auto res = context->allocSharedMem(device->toHandle(),
-                                       &deviceDesc,
-                                       &hostDesc,
-                                       size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_NE(nullptr, ptr);
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
-    ASSERT_NE(nullptr, commandList);
-
-    res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    EXPECT_EQ(1u, device->memAdviseSharedAllocations.count(allocData));
-
-    ze_memory_free_ext_desc_t memFreeDesc = {};
-    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
-    res = context->freeMemExt(&memFreeDesc, ptr);
-    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
-
-    EXPECT_EQ(0u, device->memAdviseSharedAllocations.count(allocData));
-}
-
-using CommandListMemAdviseSubDevice = Test<SingleRootMultiSubDeviceFixture>;
-
-TEST_F(CommandListMemAdviseSubDevice, givenMemAdvisedAllocationOnSubDeviceWhenFreeMemIsCalledThenSubDeviceMemAdviseStateIsCleared) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ASSERT_FALSE(device->subDevices.empty());
-    auto subDevice = device->subDevices[0];
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    auto res = context->allocSharedMem(subDevice->toHandle(),
-                                       &deviceDesc,
-                                       &hostDesc,
-                                       size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_NE(nullptr, ptr);
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, subDevice, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
-    ASSERT_NE(nullptr, commandList);
-
-    res = commandList->executeMemAdvise(subDevice->toHandle(), ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    EXPECT_EQ(1u, subDevice->memAdviseSharedAllocations.count(allocData));
-
-    res = context->freeMem(ptr);
-    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
-
-    EXPECT_EQ(0u, subDevice->memAdviseSharedAllocations.count(allocData));
-}
-
-using CommandListMemAdvisePageFault = Test<PageFaultDeviceFixture>;
+    DebugManagerStateRestore restorer;
+};
 
 TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerThenExecuteMemAdviseWithReadOnlyAndDevicePreferredClearsMigrationBlocked) {
     size_t size = 10;
@@ -970,21 +891,20 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerT
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
-    L0::Device *l0Device = L0::Device::fromHandle(device);
-
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    flags = gfxAlloc->getMemAdviseFlags();
     flags.cpuMigrationBlocked = 1;
-    l0Device->memAdviseSharedAllocations[allocData] = flags;
+    gfxAlloc->setMemAdviseFlags(flags);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.devicePreferredLocation);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
@@ -992,7 +912,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerT
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.readOnly);
     EXPECT_EQ(0, flags.devicePreferredLocation);
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
@@ -1018,20 +938,19 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerT
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
-    L0::Device *l0Device = L0::Device::fromHandle(device);
-
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
-    l0Device->memAdviseSharedAllocations[allocData] = flags;
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    flags = gfxAlloc->getMemAdviseFlags();
+    gfxAlloc->setMemAdviseFlags(flags);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.devicePreferredLocation);
 
     auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
@@ -1062,15 +981,16 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     L0::Device *l0Device = L0::Device::fromHandle(device);
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.devicePreferredLocation);
 
     auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
@@ -1081,7 +1001,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     pageData.cmdQ = l0Device;
     pageData.domain = NEO::CpuPageFaultManager::AllocationDomain::gpu;
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
@@ -1108,10 +1028,11 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     L0::Device *l0Device = L0::Device::fromHandle(device);
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
 
     auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
@@ -1126,30 +1047,30 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     EXPECT_EQ(1u, device->getDriverHandle()->getSvmAllocsManager()->nonGpuDomainAllocs.size());
 
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.readOnly);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.devicePreferredLocation);
 
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.devicePreferredLocation);
 
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
@@ -1181,10 +1102,11 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     L0::Device *l0Device = L0::Device::fromHandle(device);
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
 
     auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
@@ -1199,7 +1121,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     pageData.domain = NEO::CpuPageFaultManager::AllocationDomain::gpu;
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     std::string output = capture.getCapturedStdout(); // stop capturing
@@ -1238,10 +1160,11 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     L0::Device *l0Device = L0::Device::fromHandle(device);
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_CACHED);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.cachedMemory);
 
     auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
@@ -1253,7 +1176,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     pageData.domain = NEO::CpuPageFaultManager::AllocationDomain::gpu;
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
@@ -1280,15 +1203,16 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     L0::Device *l0Device = L0::Device::fromHandle(device);
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.devicePreferredLocation);
 
     auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
@@ -1300,7 +1224,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     pageData.domain = NEO::CpuPageFaultManager::AllocationDomain::cpu;
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
@@ -1327,15 +1251,16 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidDeviceMemPtrAndPageFaultHandle
     L0::Device *l0Device = L0::Device::fromHandle(device);
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(1, flags.devicePreferredLocation);
 
     auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
@@ -1348,7 +1273,7 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidDeviceMemPtrAndPageFaultHandle
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     void *alloc = reinterpret_cast<void *>(0x1);
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, alloc, pageData);
-    flags = l0Device->memAdviseSharedAllocations[allocData];
+    flags = gfxAlloc->getMemAdviseFlags();
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);

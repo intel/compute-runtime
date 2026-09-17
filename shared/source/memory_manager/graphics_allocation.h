@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
+#include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/utilities/idlist.h"
@@ -597,6 +598,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         return allocationInfo.flags.isImported;
     }
 
+    MemAdviseFlags getMemAdviseFlags() const {
+        return enabledMemAdviseFlags.load(std::memory_order_relaxed);
+    }
+    void setMemAdviseFlags(MemAdviseFlags flags) {
+        enabledMemAdviseFlags.store(flags, std::memory_order_relaxed);
+    }
+
   protected:
     std::vector<uint32_t> inspectionIds;
     std::vector<Gmm *> gmms;
@@ -611,6 +619,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     size_t offsetInParent = 0u;
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
     std::atomic<uint64_t> residencyContainerStamp{0};
+    // Not {}: value-initializing the atomic zeroes the byte, but default MemAdviseFlags sets cachedMemory.
+    std::atomic<MemAdviseFlags> enabledMemAdviseFlags{MemAdviseFlags{}};
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<GraphicsAllocation>);

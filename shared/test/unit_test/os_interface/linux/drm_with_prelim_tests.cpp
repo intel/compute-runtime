@@ -356,7 +356,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
     allocation.setMemAdvise(drm.get(), memAdviseFlags);
 
     EXPECT_EQ(1u, drm->ioctlCallsCount);
-    EXPECT_NE(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+    EXPECT_NE(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseForChunkingFailsThenDontUpdateMemAdviceFlags) {
@@ -378,7 +378,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseForChunkingFa
     allocation.setMemAdvise(drm.get(), memAdviseFlags);
 
     EXPECT_EQ(1u, drm->ioctlCallsCount);
-    EXPECT_NE(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+    EXPECT_NE(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
@@ -393,7 +393,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomic
         memAdviseFlags.nonAtomic = nonAtomic;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
@@ -412,7 +412,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
         memAdviseFlags.devicePreferredLocation = devicePreferredLocation;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
@@ -431,7 +431,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithSystemPre
         memAdviseFlags.systemPreferredLocation = systemPreferredLocation;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
@@ -463,7 +463,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingP
         memAdviseFlags.devicePreferredLocation = devicePreferredLocation;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
     }
     EXPECT_EQ(allocation.storageInfo.numOfChunks * 2, drm->ioctlCallsCount);
 }
@@ -495,7 +495,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingB
         memAdviseFlags.devicePreferredLocation = devicePreferredLocation;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }

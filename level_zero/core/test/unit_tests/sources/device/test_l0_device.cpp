@@ -6409,6 +6409,35 @@ TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmT
     free(ptr);
 }
 
+TEST_F(MultipleDeviceMemAdviseTests, givenAllocationNotPresentOnAdvisedDeviceThenExecuteMemAdviseIsIgnored) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    constexpr size_t size = MemoryConstants::pageSize;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto res = context->allocDeviceMem(device0->toHandle(), &deviceDesc, size, 0u, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    ASSERT_EQ(nullptr, allocData->gpuAllocations.getGraphicsAllocation(device1->getRootDeviceIndex()));
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device0->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gfxAlloc);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    res = commandList->executeMemAdvise(device1, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(NEO::MemAdviseFlags{}.allFlags, gfxAlloc->getMemAdviseFlags().allFlags);
+
+    res = context->freeMem(ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 TEST(L0DeviceTest, givenXeLinkModelWhenFabricEdgeModelSupportsBandwidthAndLatencyThenReturnTrue) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0);
     MockDeviceImp mockDevice(neoMockDevice);
