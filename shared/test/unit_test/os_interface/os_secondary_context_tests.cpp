@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_context.h"
@@ -234,8 +235,11 @@ TEST_F(SecondaryContextsTest, givenNoMatchingPriorityInHighPriorityPoolWhenReque
 }
 
 TEST(SecondaryContextsTests, givenOsContextWithNoPriorityLevelWhenRequestingEngineWithASpecificPriorityLevelThenSetPriorityLevelForOsContext) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    ASSERT_NE(nullptr, device);
+
     SecondaryContexts secondaryContexts;
-    EngineControl engineControl{nullptr, nullptr};
+    EngineControl engineControl{device->getDefaultEngine().commandStreamReceiver, nullptr};
 
     // Prepare a mock OsContext with no specific priority level
     EngineDescriptor engineDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, 1, PreemptionMode::Disabled, false);
@@ -252,4 +256,6 @@ TEST(SecondaryContextsTests, givenOsContextWithNoPriorityLevelWhenRequestingEngi
     auto result = secondaryContexts.getEngine(EngineUsage::regular, requestedPriority);
     EXPECT_EQ(result, &secondaryContexts.engines[0]);
     EXPECT_EQ(1u, osContext->getPriorityLevel());
+    EXPECT_EQ(1u, engineControl.commandStreamReceiver->getOwningQueueCount());
+    engineControl.commandStreamReceiver->releaseQueueOwnership();
 }

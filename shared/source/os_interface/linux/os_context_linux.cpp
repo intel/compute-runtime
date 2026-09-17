@@ -119,6 +119,7 @@ bool OsContextLinux::isDirectSubmissionLightActive() const {
 
 void OsContextLinux::overridePriority(uint32_t newPriority) {
     if (!priorityLevel.has_value()) {
+        defaultPriorityLevel = newPriority;
         priorityLevel = newPriority;
     }
     // change of priority level of an already initialized context

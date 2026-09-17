@@ -69,6 +69,11 @@ CommandQueue::CommandQueue(Device *device, NEO::CommandStreamReceiver *csr, cons
 ze_result_t CommandQueue::destroy() {
     unregisterCsrClient();
 
+    if (csrQueueOwnershipTaken) {
+        csrQueueOwnershipTaken = false;
+        csr->releaseQueueOwnership();
+    }
+
     if (commandStream.getCpuBase() != nullptr) {
         commandStream.replaceGraphicsAllocation(nullptr);
         commandStream.replaceBuffer(nullptr, 0);

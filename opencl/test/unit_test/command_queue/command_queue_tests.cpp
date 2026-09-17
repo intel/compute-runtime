@@ -3799,3 +3799,128 @@ HWTEST2_F(PrefetchTests, givenKernelWhenWalkerIsProgrammedThenPrefetchIsaBeforeW
     EXPECT_EQ(gmmHelper->decanonize(mockKernel->kernelInfo.getIsaGraphicsAllocation()->getGpuAddress()), statePrefetchCmd->getAddress());
     EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
 }
+
+struct CommandQueueSecondaryContextOwnershipTest : public ::testing::Test {
+    void SetUp() override {
+
+        HardwareInfo hwInfo = *defaultHwInfo;
+
+        if (!EngineHelpers::isCcs(hwInfo.capabilityTable.defaultEngineType)) {
+            GTEST_SKIP();
+        }
+        debugManager.flags.ContextGroupSize.set(4);
+
+        hwInfo.featureTable.flags.ftrCCSNode = true;
+        hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+        hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+        clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        if (!clDevice->getGfxCoreHelper().areSecondaryContextsSupported()) {
+            GTEST_SKIP();
+        }
+        context = std::make_unique<MockContext>(clDevice.get());
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<MockClDevice> clDevice;
+    std::unique_ptr<MockContext> context;
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+};
+
+TEST_F(CommandQueueSecondaryContextOwnershipTest, givenSecondaryContextAssignedWhenCommandQueueIsDestroyedThenQueueOwnershipIsReleased) {
+    NEO::CommandStreamReceiver *csr = nullptr;
+    {
+        MockCommandQueue queue(context.get(), clDevice.get(), props, false);
+        csr = &queue.getGpgpuCommandStreamReceiver();
+        ASSERT_TRUE(queue.gpgpuQueueOwnershipTaken);
+        EXPECT_EQ(1u, csr->getOwningQueueCount());
+    }
+    EXPECT_EQ(0u, csr->getOwningQueueCount());
+}
+
+TEST_F(CommandQueueSecondaryContextOwnershipTest, givenTwoCommandQueuesWhenDestroyedThenEachReleasesOnlyItsOwnEngine) {
+    auto firstQueue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), props, false);
+    auto secondQueue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), props, false);
+
+    auto firstCsr = &firstQueue->getGpgpuCommandStreamReceiver();
+    auto secondCsr = &secondQueue->getGpgpuCommandStreamReceiver();
+    ASSERT_NE(firstCsr, secondCsr);
+    EXPECT_EQ(1u, firstCsr->getOwningQueueCount());
+    EXPECT_EQ(1u, secondCsr->getOwningQueueCount());
+
+    firstQueue.reset();
+    EXPECT_EQ(0u, firstCsr->getOwningQueueCount());
+    EXPECT_EQ(1u, secondCsr->getOwningQueueCount());
+
+    secondQueue.reset();
+    EXPECT_EQ(0u, secondCsr->getOwningQueueCount());
+}
+
+TEST_F(CommandQueueSecondaryContextOwnershipTest, givenReleasedSecondaryContextWhenNewCommandQueueIsCreatedThenSameEngineIsReused) {
+    NEO::CommandStreamReceiver *firstCsr = nullptr;
+    {
+        MockCommandQueue queue(context.get(), clDevice.get(), props, false);
+        firstCsr = &queue.getGpgpuCommandStreamReceiver();
+    }
+    ASSERT_EQ(0u, firstCsr->getOwningQueueCount());
+
+    MockCommandQueue reusingQueue(context.get(), clDevice.get(), props, false);
+    EXPECT_EQ(firstCsr, &reusingQueue.getGpgpuCommandStreamReceiver());
+    EXPECT_EQ(1u, firstCsr->getOwningQueueCount());
+}
+
+TEST(CommandQueueSecondaryContextOwnershipDisabledTest, givenNoSecondaryContextAssignedWhenCommandQueueIsDestroyedThenOwnershipIsNotReleased) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(0);
+
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(clDevice.get());
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    {
+        MockCommandQueue queue(&context, clDevice.get(), props, false);
+        csr = &queue.getGpgpuCommandStreamReceiver();
+        EXPECT_FALSE(queue.gpgpuQueueOwnershipTaken);
+        EXPECT_EQ(0u, csr->getOwningQueueCount());
+    }
+    EXPECT_EQ(0u, csr->getOwningQueueCount());
+}
+
+HWTEST_F(CommandQueueSecondaryContextOwnershipTest, givenLowPriorityQueueWhenEngineIsOverwrittenThenPreviousOwnershipIsReleased) {
+    cl_queue_properties lowPriorityProps[] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0,
+                                              CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+
+    auto &secondaryEngines = static_cast<MockDevice &>(clDevice->getDevice()).secondaryEngines[aub_stream::ENGINE_CCS];
+    {
+        MockCommandQueueHw<FamilyType> queue(context.get(), clDevice.get(), lowPriorityProps);
+        auto csr = &queue.getGpgpuCommandStreamReceiver();
+        EXPECT_TRUE(csr->getOsContext().isLowPriority());
+
+        for (auto &engine : secondaryEngines.engines) {
+            EXPECT_EQ(0u, engine.commandStreamReceiver->getOwningQueueCount());
+        }
+    }
+
+    for (auto &engine : secondaryEngines.engines) {
+        EXPECT_EQ(0u, engine.commandStreamReceiver->getOwningQueueCount());
+    }
+}
+
+HWTEST_F(CommandQueueSecondaryContextOwnershipTest, givenInternalQueueWhenEngineIsOverwrittenThenPreviousOwnershipIsReleased) {
+    cl_queue_properties internalProps[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    auto &secondaryEngines = static_cast<MockDevice &>(clDevice->getDevice()).secondaryEngines[aub_stream::ENGINE_CCS];
+    {
+        MockCommandQueueHw<FamilyType> queue(context.get(), clDevice.get(), internalProps, true);
+        auto csr = &queue.getGpgpuCommandStreamReceiver();
+        EXPECT_EQ(clDevice->getDevice().getInternalEngine().commandStreamReceiver, csr);
+
+        for (auto &engine : secondaryEngines.engines) {
+            EXPECT_EQ(0u, engine.commandStreamReceiver->getOwningQueueCount());
+        }
+    }
+
+    for (auto &engine : secondaryEngines.engines) {
+        EXPECT_EQ(0u, engine.commandStreamReceiver->getOwningQueueCount());
+    }
+}

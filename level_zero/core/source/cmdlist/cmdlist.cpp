@@ -540,6 +540,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &productHelper = device->getProductHelper();
 
+    bool queueOwnershipTaken = false;
     if (!csr) {
         if (internalUsage) {
             if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && device->getActiveDevice()->getInternalCopyEngine()) {
@@ -550,7 +551,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineGroupType = device->getInternalEngineGroupType();
             }
         } else {
-            returnValue = device->getCsrForOrdinalAndIndex(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.priorityLevel, powerHint);
+            returnValue = device->getCsrForOrdinalAndIndex(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.priorityLevel, powerHint, &queueOwnershipTaken);
             if (returnValue != ZE_RESULT_SUCCESS) {
                 return commandList;
             }
@@ -576,6 +577,13 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     csr->initializeResourcesAndDirectSubmission(device->getDevicePreemptionMode());
 
     auto commandQueue = CommandQueue::create(productFamily, device, csr, &cmdQdesc, NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType), internalUsage, true, returnValue);
+    if (queueOwnershipTaken) {
+        if (commandQueue != nullptr) {
+            commandQueue->takeCsrQueueOwnership();
+        } else {
+            csr->releaseQueueOwnership();
+        }
+    }
     if (!commandQueue) {
         commandList->destroy();
         commandList = nullptr;
@@ -663,16 +671,23 @@ void CommandList::enableCopyOperationOffload() {
     NEO::CommandStreamReceiver *copyCsr = nullptr;
     uint32_t ordinal = device->getCopyEngineOrdinal();
 
-    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, this->powerHint);
+    bool queueOwnershipTaken = false;
+    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, this->powerHint, &queueOwnershipTaken);
     UNRECOVERABLE_IF(!copyCsr);
 
     if (immediateQueuePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !copyCsr->getOsContext().isLowPriority()) {
         this->copyOffloadMode = CopyOffloadModes::disabled;
+        if (queueOwnershipTaken) {
+            copyCsr->releaseQueueOwnership();
+        }
         return;
     }
 
     if (this->powerHint == NEO::OsContext::getUmdPowerHintMax() && !copyCsr->getOsContext().isPowerHint()) {
         this->copyOffloadMode = CopyOffloadModes::disabled;
+        if (queueOwnershipTaken) {
+            copyCsr->releaseQueueOwnership();
+        }
         return;
     }
 
@@ -684,6 +699,9 @@ void CommandList::enableCopyOperationOffload() {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto offloadCommandQueue = CommandQueue::create(device->getHwInfo().platform.eProductFamily, device, copyCsr, &copyQueueDesc, true, false, true, returnValue);
     UNRECOVERABLE_IF(!offloadCommandQueue);
+    if (queueOwnershipTaken) {
+        offloadCommandQueue->takeCsrQueueOwnership();
+    }
 
     this->cmdQImmediateCopyOffload = offloadCommandQueue;
 }

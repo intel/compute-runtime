@@ -40,6 +40,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     void overrideEngineUsage(EngineUsage usage) { engineUsage = usage; }
     virtual void overridePriority(uint32_t newPriority) {
         if (!priorityLevel.has_value()) {
+            defaultPriorityLevel = newPriority;
             priorityLevel = newPriority;
         }
     }
@@ -49,6 +50,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
         UNRECOVERABLE_IF(!priorityLevel.has_value());
         return priorityLevel.value();
     }
+    std::optional<uint32_t> getDefaultPriorityLevel() const { return defaultPriorityLevel; }
     bool isRegular() const { return engineUsage == EngineUsage::regular; }
     bool isLowPriority() const { return engineUsage == EngineUsage::lowPriority; }
     bool isHighPriority() const { return engineUsage == EngineUsage::highPriority; }
@@ -149,6 +151,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     aub_stream::EngineType engineType = aub_stream::ENGINE_RCS;
     EngineUsage engineUsage;
     std::optional<uint32_t> priorityLevel = std::nullopt;
+    std::optional<uint32_t> defaultPriorityLevel = std::nullopt;
     const bool rootDevice = false;
     bool defaultContext = false;
     bool directSubmissionSupported = false;
