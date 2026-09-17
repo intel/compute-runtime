@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_wait_event_parameters.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include <level_zero/ze_api.h>
 

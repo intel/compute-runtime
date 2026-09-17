@@ -1529,7 +1529,10 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithSyncModeAndAppendSignal
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendSignalEvent(event, false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    commandList->appendSignalEvent(event, signalEventParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1665,7 +1668,10 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     verifyFlags(commandList->appendEventReset(event), true, true);
 
-    verifyFlags(commandList->appendSignalEvent(event, false), true, true);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    verifyFlags(commandList->appendSignalEvent(event, signalEventParameters), true, true);
 
     verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false, false);
     CmdListWaitEventParameters waitEventsParameters{
@@ -2096,8 +2102,10 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
                     hasEventDependencies, hasEventDependencies);
 
         verifyFlags(commandList->appendEventReset(event), false, false);
-
-        verifyFlags(commandList->appendSignalEvent(event, false), false, false);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        verifyFlags(commandList->appendSignalEvent(event, signalEventParameters), false, false);
 
         verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0),
                     false, false);
@@ -2549,8 +2557,10 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     verifyWalkerWithProfilingEnqueued(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
 
     verifyWalkerWithProfilingEnqueued(commandList->appendEventReset(event), false);
-
-    verifyWalkerWithProfilingEnqueued(commandList->appendSignalEvent(event, false), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    verifyWalkerWithProfilingEnqueued(commandList->appendSignalEvent(event, signalEventParameters), false);
 
     verifyWalkerWithProfilingEnqueued(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false);
 
@@ -2682,7 +2692,10 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
 
     verifyFlag(commandList->appendEventReset(event), false);
 
-    verifyFlag(commandList->appendSignalEvent(event, false), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    verifyFlag(commandList->appendSignalEvent(event, signalEventParameters), false);
 
     verifyFlag(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false, 0), false);
 
@@ -2861,7 +2874,10 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
     const auto oldCsr = queue->csr;
     queue->csr = &mockCommandStreamReceiver;
 
-    returnValue = commandList->appendSignalEvent(event, false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    returnValue = commandList->appendSignalEvent(event, signalEventParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     queue->csr = oldCsr;
@@ -2975,8 +2991,10 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    returnValue = commandList->appendSignalEvent(event, false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    returnValue = commandList->appendSignalEvent(event, signalEventParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = eventObject->hostSignal(false);
@@ -3150,7 +3168,10 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendSigna
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendSignalEvent(event, false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    commandList->appendSignalEvent(event, signalEventParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

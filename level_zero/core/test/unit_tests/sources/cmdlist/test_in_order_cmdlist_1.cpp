@@ -430,7 +430,12 @@ HWTEST2_F(InOrderCmdListTests, GivenCounterBasedEventWithSignalWithUserInterrupt
 
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams); }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters); }));
-    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendSignalEvent(event->toHandle(), false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() {
+                  CmdListSignalEventParameters signalEventParameters = {
+                      .relaxedOrderingDispatch = false,
+                  };
+                  cmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
+              }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryFill(deviceAlloc, &hostData, sizeof(hostData), sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryCopy(deviceAlloc, &hostData, sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
 
@@ -471,7 +476,12 @@ HWTEST2_F(InOrderCmdListTests, GivenTimestampCounterBasedEventWithSignalWithUser
 
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams); }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters); }));
-    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendSignalEvent(event->toHandle(), false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() {
+                  CmdListSignalEventParameters signalEventParameters = {
+                      .relaxedOrderingDispatch = false,
+                  };
+                  cmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
+              }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryFill(deviceAlloc, &hostData, sizeof(hostData), sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryCopy(deviceAlloc, &hostData, sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
 
@@ -514,7 +524,12 @@ HWTEST2_F(InOrderCmdListTests, GivenCompactedCounterBasedEventWithSignalWithUser
 
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams); }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters); }));
-    EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendSignalEvent(event->toHandle(), false); }));
+    EXPECT_EQ(1u, countInterrupts([&]() {
+                  CmdListSignalEventParameters signalEventParameters = {
+                      .relaxedOrderingDispatch = false,
+                  };
+                  cmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
+              }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryFill(deviceAlloc, &hostData, sizeof(hostData), sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
     EXPECT_EQ(1u, countInterrupts([&]() { cmdList->appendMemoryCopy(deviceAlloc, &hostData, sizeof(hostData), event->toHandle(), 0, nullptr, copyParams); }));
 
@@ -2410,7 +2425,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
     }
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
-    immCmdList->appendSignalEvent(eventHandle, false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    immCmdList->appendSignalEvent(eventHandle, signalEventParameters);
     if (dcFlushRequired) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
@@ -2561,7 +2579,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenNonInOrderCmdListWhenPass
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, copyOnlyCmdList->appendBlitFill(alloc, &copyData, 1, 16, events[0].get(), 0, nullptr, copyParams));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendSignalEvent(eventHandle, false));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendSignalEvent(eventHandle, signalEventParameters));
     CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
         .outWaitCmds = nullptr,
         .relaxedOrderingAllowed = false,
@@ -2942,22 +2963,29 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledT
     events[1]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     auto nonCbEvent = events[1]->toHandle();
 
-    immCmdList1->appendSignalEvent(events[0]->toHandle(), true);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = true,
+    };
+    immCmdList1->appendSignalEvent(events[0]->toHandle(), signalEventParameters);
     verifyFlags(false, false); // no dependencies
 
-    immCmdList2->appendSignalEvent(events[0]->toHandle(), false);
+    signalEventParameters.relaxedOrderingDispatch = false,
+    immCmdList2->appendSignalEvent(events[0]->toHandle(), signalEventParameters);
     verifyFlags(false, false); // no dependencies
 
-    immCmdList1->appendSignalEvent(events[0]->toHandle(), true);
+    signalEventParameters.relaxedOrderingDispatch = true;
+    immCmdList1->appendSignalEvent(events[0]->toHandle(), signalEventParameters);
     verifyFlags(true, false); // relaxed ordering with implicit dependency
 
-    immCmdList1->appendSignalEvent(nonCbEvent, true);
+    signalEventParameters.relaxedOrderingDispatch = true;
+    immCmdList1->appendSignalEvent(nonCbEvent, signalEventParameters);
     verifyFlags(true, true); // relaxed ordering with implicit dependency
 
     immCmdList1->cmdQImmediate->unregisterCsrClient();
     immCmdList2->cmdQImmediate->unregisterCsrClient();
 
-    immCmdList1->appendSignalEvent(events[0]->toHandle(), false);
+    signalEventParameters.relaxedOrderingDispatch = false,
+    immCmdList1->appendSignalEvent(events[0]->toHandle(), signalEventParameters);
     verifyFlags(false, true); // relaxed ordering disabled == stalling semaphore
 }
 
@@ -3551,12 +3579,16 @@ HWTEST_F(InOrderCmdListTests, givenCbEventWhenAppendSignalEventCalledThenFallbac
     auto eventPool = createEvents<FamilyType>(2, true);
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
 
-    immCmdList->appendSignalEvent(events[0]->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    immCmdList->appendSignalEvent(events[0]->toHandle(), signalEventParameters);
     EXPECT_EQ(0u, immCmdList->appendBarrierCalled);
 
     auto initialTaskCount = immCmdList->cmdQImmediate->getTaskCount();
 
-    immCmdList->appendSignalEvent(events[1]->toHandle(), false);
+    signalEventParameters.relaxedOrderingDispatch = false;
+    immCmdList->appendSignalEvent(events[1]->toHandle(), signalEventParameters);
     EXPECT_EQ(1u, immCmdList->appendBarrierCalled);
     EXPECT_EQ(initialTaskCount + 1, immCmdList->cmdQImmediate->getTaskCount());
 }
@@ -3578,7 +3610,10 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalThenDoNotSkipI
     EXPECT_EQ(eventData->counterValue, incValue * 2);
     EXPECT_FALSE(cmdList->isSkippingInOrderBarrierAllowed(event->toHandle(), 0, nullptr));
 
-    cmdList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    cmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
 
     EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
     EXPECT_EQ(eventData->counterValue, incValue * 2);
@@ -3602,8 +3637,10 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalOnImmediateCmd
     EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
     EXPECT_EQ(eventData->counterValue, incValue * 2);
     EXPECT_FALSE(immCmdList->isSkippingInOrderBarrierAllowed(event->toHandle(), 0, nullptr));
-
-    immCmdList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    immCmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
 
     EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
     EXPECT_EQ(eventData->counterValue, incValue * 2);
@@ -4050,8 +4087,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     const bool counterSignalPending = immCmdList->isInOrderCounterSignalPending();
 
     auto offset = cmdStream->getUsed();
-
-    immCmdList->appendSignalEvent(events[0]->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    immCmdList->appendSignalEvent(events[0]->toHandle(), signalEventParameters);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
     auto inOrderSyncVa = inOrderExecInfo->getBaseDeviceAddress();
