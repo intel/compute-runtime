@@ -35,11 +35,14 @@ static void expectDebugVariableRestored(const char *variableName, T &snapshot, c
 
 void BaseUltConfigListener::OnTestIterationStart(const ::testing::UnitTest &, int) {
     lastTest.reserve(maxTestNameLength);
-    if (enableAlarm) {
-        resetAlarm();
-    }
     debugVarSnapshot = debugManager.flags;
     injectFcnSnapshot = debugManager.injectFcn;
+    markIterationStart();
+    resetAlarm(enableAlarm);
+}
+
+void BaseUltConfigListener::OnTestIterationEnd(const ::testing::UnitTest &, int) {
+    pauseAlarm(enableAlarm);
 }
 
 void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {

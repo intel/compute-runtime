@@ -115,7 +115,10 @@ int setAlarm(bool enableAlarm) {
     return 0;
 }
 
-void resetAlarm() {
+void resetAlarm(bool enableAlarm) {
+    if (!enableAlarm) {
+        return;
+    }
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &startTimeSpec)) {
         startTimeSpec.tv_sec = 0;
     }
@@ -138,4 +141,13 @@ int setSegv(bool enableSegv) {
     return 0;
 }
 
-void cleanupSignals() {}
+void pauseAlarm(bool enableAlarm) {
+    if (!enableAlarm) {
+        return;
+    }
+    alarm(0);
+}
+
+void cleanupSignals() {
+    alarm(0);
+}

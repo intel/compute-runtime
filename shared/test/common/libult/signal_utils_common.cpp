@@ -26,15 +26,42 @@ extern const char *executionName;
 extern const char *apiName;
 } // namespace NEO
 
+static int64_t iterationStartTimeMs = 0;
+
+void markIterationStart() {
+    iterationStartTimeMs = ::testing::internal::GetTimeInMillis();
+}
+
 void handleTestsTimeout(std::string_view testName, uint32_t elapsedTime) {
     printf("Tests timeout in %s %s, after %u seconds on: %s\n", NEO::apiName, NEO::executionName, elapsedTime, testName.data());
-    if (const ::testing::TestInfo *currentTest = ::testing::UnitTest::GetInstance()->current_test_info()) {
+
+    auto *unitTest = ::testing::UnitTest::GetInstance();
+    const ::testing::TestInfo *currentTest = unitTest->current_test_info();
+    if (currentTest != nullptr) {
         auto elapsedMs = ::testing::internal::GetTimeInMillis() - currentTest->result()->start_timestamp();
         printf("Current test case took: %lld ms\n", static_cast<long long>(elapsedMs));
     }
-    auto xmlGenerator = ::testing::internal::GetUnitTestImpl()->listeners()->default_xml_generator();
+
+    int totalTests = 0;
+    int completedTests = 0;
+    for (int suiteIdx = 0; suiteIdx < unitTest->total_test_suite_count(); ++suiteIdx) {
+        const ::testing::TestSuite *suite = unitTest->GetTestSuite(suiteIdx);
+        for (int testIdx = 0; testIdx < suite->total_test_count(); ++testIdx) {
+            const ::testing::TestInfo *testInfo = suite->GetTestInfo(testIdx);
+            if (!testInfo->should_run()) {
+                continue;
+            }
+            ++totalTests;
+            if (testInfo != currentTest && testInfo->result()->start_timestamp() >= iterationStartTimeMs) {
+                ++completedTests;
+            }
+        }
+    }
+    printf("Completed test cases: %d / %d\n", completedTests, totalTests);
+
+    auto xmlGenerator = unitTest->listeners().default_xml_generator();
     if (xmlGenerator) {
-        xmlGenerator->OnTestIterationEnd(*::testing::UnitTest::GetInstance(), ::testing::GTEST_FLAG(repeat));
+        xmlGenerator->OnTestIterationEnd(*unitTest, ::testing::GTEST_FLAG(repeat));
     }
     fflush(stdout);
     abort();
