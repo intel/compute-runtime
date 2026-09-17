@@ -177,5 +177,96 @@ TEST(zeCommandListAppendSignalEvent, WhenAppendingSignalEventThenSuccessIsReturn
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+struct MockCommandListCaptureSignalWaitEventParams : public MockCommandList {
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) override {
+        capturedSignalEventParameters = signalEventParameters;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) override {
+        capturedWaitEventParameters = waitEventParams;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    CmdListSignalEventParameters capturedSignalEventParameters;
+    CmdListWaitEventParameters capturedWaitEventParameters;
+};
+
+TEST(zeCommandListAppendSignalEventWithParameters, WhenAppendingSignalEventWithFlagsExtensionThenParamIsCorrectlySet) {
+    MockCommandListCaptureSignalWaitEventParams commandList;
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
+
+    ze_event_flags_exp_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+
+    auto result = zeCommandListAppendSignalEventWithParameters(commandList.toHandle(), &eventFlagsDesc, event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(commandList.capturedSignalEventParameters.apiRequestForGraphExternal);
+
+    eventFlagsDesc.flags = 0;
+    result = zeCommandListAppendSignalEventWithParameters(commandList.toHandle(), &eventFlagsDesc, event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(commandList.capturedSignalEventParameters.apiRequestForGraphExternal);
+}
+
+TEST(zeCommandListAppendSignalEventWithParameters, WhenAppendingSignalEventWithInvalidExtensionThenErrorIsReturned) {
+    MockCommandListCaptureSignalWaitEventParams commandList;
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
+
+    ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32, nullptr};
+
+    auto result = zeCommandListAppendSignalEventWithParameters(commandList.toHandle(), &unknownDesc, event);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST(zeCommandListAppendSignalEventWithParameters, WhenAppendingSignalEventWithNullptrExtensionThenNoParamIsSet) {
+    MockCommandListCaptureSignalWaitEventParams commandList;
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
+
+    auto result = zeCommandListAppendSignalEventWithParameters(commandList.toHandle(), nullptr, event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(commandList.capturedSignalEventParameters.apiRequestForGraphExternal);
+}
+
+TEST(zeCommandListAppendWaitOnEventsWithParameters, WhenAppendingWaitOnEventsWithFlagsExtensionThenParamIsCorrectlySet) {
+    MockCommandListCaptureSignalWaitEventParams commandList;
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
+
+    ze_event_flags_exp_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+
+    auto result = zeCommandListAppendWaitOnEventsWithParameters(commandList.toHandle(), &eventFlagsDesc, 1, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(commandList.capturedWaitEventParameters.apiRequestForGraphExternal);
+
+    eventFlagsDesc.flags = 0;
+    result = zeCommandListAppendWaitOnEventsWithParameters(commandList.toHandle(), &eventFlagsDesc, 1, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(commandList.capturedWaitEventParameters.apiRequestForGraphExternal);
+}
+
+TEST(zeCommandListAppendWaitOnEventsWithParameters, WhenAppendingWaitOnEventsWithInvalidExtensionThenErrorIsReturned) {
+    MockCommandListCaptureSignalWaitEventParams commandList;
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
+
+    ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32, nullptr};
+
+    auto result = zeCommandListAppendWaitOnEventsWithParameters(commandList.toHandle(), &unknownDesc, 1, &event);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST(zeCommandListAppendWaitOnEventsWithParameters, WhenAppendingWaitOnEventsWithNullptrExtensionThenNoParamIsSet) {
+    MockCommandListCaptureSignalWaitEventParams commandList;
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
+
+    auto result = zeCommandListAppendWaitOnEventsWithParameters(commandList.toHandle(), nullptr, 1, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(commandList.capturedWaitEventParameters.apiRequestForGraphExternal);
+}
+
 } // namespace ult
 } // namespace L0

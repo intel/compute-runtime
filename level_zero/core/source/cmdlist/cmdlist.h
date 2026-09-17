@@ -570,6 +570,8 @@ struct CommandList : _ze_command_list_handle_t {
     ze_result_t obtainLaunchParamsFromExtensions(const ze_base_desc_t *desc, CmdListKernelLaunchParams &launchParams, ze_kernel_handle_t kernelHandle) const;
     ze_result_t obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams, bool writesOnly) const;
     ze_result_t obtainCustomOperationParamsFromExtensions(const ze_base_desc_t *desc, CmdListCustomOperationParams &customOperationParams) const;
+    static ze_result_t obtainWaitEventParamsFromExtensions(const ze_base_desc_t *desc, CmdListWaitEventParameters &waitEventParams);
+    static ze_result_t obtainSignalEventParamsFromExtensions(const ze_base_desc_t *desc, CmdListSignalEventParameters &signalEventParams);
 
     void setGraphCaptureTarget(Graph *graph) {
         this->graphCapture = graph;

@@ -697,7 +697,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
 
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
-            this->setupEventParamsForInOrderBarrierSkip(hSignalEvent, false);
+            this->setupEventParamsForInOrderBarrierSkip(hSignalEvent, signalEventParameters.apiRequestForGraphExternal);
             return ZE_RESULT_SUCCESS;
         }
 

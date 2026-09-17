@@ -1028,4 +1028,34 @@ void CommandList::freeClonedAppendEventExtensions(void *pNext) {
     }
 }
 
+ze_result_t CommandList::obtainWaitEventParamsFromExtensions(const ze_base_desc_t *desc, CmdListWaitEventParameters &waitEventParams) {
+    while (desc) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
+            auto eventFlagsDesc = reinterpret_cast<const ze_event_flags_exp_desc_t *>(desc);
+            if (eventFlagsDesc->flags & ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL) {
+                waitEventParams.apiRequestForGraphExternal = true;
+            }
+            desc = static_cast<const ze_base_desc_t *>(desc->pNext);
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandList::obtainSignalEventParamsFromExtensions(const ze_base_desc_t *desc, CmdListSignalEventParameters &signalEventParams) {
+    while (desc) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
+            auto eventFlagsDesc = reinterpret_cast<const ze_event_flags_exp_desc_t *>(desc);
+            if (eventFlagsDesc->flags & ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL) {
+                signalEventParams.apiRequestForGraphExternal = true;
+            }
+            desc = static_cast<const ze_base_desc_t *>(desc->pNext);
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0

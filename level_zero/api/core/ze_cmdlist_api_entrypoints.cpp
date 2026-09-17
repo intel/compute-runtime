@@ -28,10 +28,12 @@ const static CmdListWaitEventParameters defaultWaitEventsParameters{
     .skipAddingWaitEventsToResidency = false,
     .dualStreamCopyOffloadOperation = false,
     .apiRequest = true,
-    .skipFlush = false};
+    .skipFlush = false,
+    .apiRequestForGraphExternal = false};
 
 const static CmdListSignalEventParameters defaultSignalEventParameters{
-    .relaxedOrderingDispatch = false};
+    .relaxedOrderingDispatch = false,
+    .apiRequestForGraphExternal = false};
 
 } // namespace ApiTemplateValues
 
@@ -383,6 +385,10 @@ ze_result_t ZE_APICALL zeCommandListAppendSignalEventWithParameters(
         return ret;
     }
     CmdListSignalEventParameters signalEventParameters = ApiTemplateValues::defaultSignalEventParameters;
+    ret = L0::CommandList::obtainSignalEventParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), signalEventParameters);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
     return cmdList->appendSignalEvent(hEvent, signalEventParameters);
 }
 
@@ -398,6 +404,10 @@ ze_result_t ZE_APICALL zeCommandListAppendWaitOnEventsWithParameters(
     }
 
     CmdListWaitEventParameters waitEventsParameters = ApiTemplateValues::defaultWaitEventsParameters;
+    ret = L0::CommandList::obtainWaitEventParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), waitEventsParameters);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
     return cmdList->appendWaitOnEvents(numEvents, phEvents, waitEventsParameters);
 }
 

@@ -20,6 +20,7 @@ struct CmdListWaitEventParameters {
     bool dualStreamCopyOffloadOperation = false;
     bool apiRequest = false;
     bool skipFlush = false;
+    bool apiRequestForGraphExternal = false;
 };
 
 } // namespace L0
