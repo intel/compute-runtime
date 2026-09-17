@@ -812,6 +812,9 @@ void testSysmanPci(ze_device_handle_t &device, std::vector<std::string> &buf, ui
     zes_pci_properties_t properties = {};
     zes_pci_link_speed_downgrade_ext_properties_t extProps = {};
     extProps.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
+    zes_intel_pci_config_exp_properties_t configProps = {};
+    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    extProps.pNext = &configProps;
     properties.pNext = &extProps;
     VALIDATECALL(zesDevicePciGetProperties(device, &properties));
     if (verbose) {
@@ -827,6 +830,12 @@ void testSysmanPci(ze_device_handle_t &device, std::vector<std::string> &buf, ui
         std::cout << "properties.haveReplayCounters = " << static_cast<uint32_t>(properties.haveReplayCounters) << std::endl;
         std::cout << "properties.pciLinkSpeedUpdateCapable = " << static_cast<bool>(extProps.pciLinkSpeedUpdateCapable) << std::endl;
         std::cout << "properties.maxPciGenSupported = " << static_cast<int32_t>(extProps.maxPciGenSupported) << std::endl;
+        std::cout << "configProps.vendorId = " << std::hex << configProps.vendorId << std::endl;
+        std::cout << "configProps.deviceId = " << std::hex << configProps.deviceId << std::endl;
+        std::cout << "configProps.subsystemVendorId = " << std::hex << configProps.subsystemVendorId << std::endl;
+        std::cout << "configProps.subsystemDeviceId = " << std::hex << configProps.subsystemDeviceId << std::endl;
+        std::cout << "configProps.pcieCapabilityVersion = " << std::dec << configProps.pcieCapabilityVersion << std::endl;
+        std::cout << "configProps.supportedLinkSpeeds = " << std::hex << configProps.supportedLinkSpeeds << std::endl;
     }
 
     uint32_t count = 0;

@@ -730,6 +730,16 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermission
     }
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermissionsReturnedBySysfsAccessIsRootUserAreCorrect) {
+    int euid = geteuid();
+    auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    if (euid == 0) {
+        EXPECT_EQ(true, pSysfsAccess->isRootUser());
+    } else {
+        EXPECT_EQ(false, pSysfsAccess->isRootUser());
+    }
+}
+
 TEST(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysmanOnLinuxThenErrorIsReturned) {
     auto execEnv = new NEO::ExecutionEnvironment();
     execEnv->prepareRootDeviceEnvironments(1);

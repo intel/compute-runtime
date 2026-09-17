@@ -22,6 +22,13 @@ namespace Sysman {
 #define PCI_STATUS 0x06          // 16 bit status register of PCI device
 #define PCI_STATUS_CAP_LIST 0x10 // Support Capability List
 
+// PCI configuration space header
+#define PCI_VENDOR_ID 0x00
+#define PCI_DEVICE_ID 0x02
+#define PCI_SUBSYSTEM_VENDOR_ID 0x2c
+#define PCI_SUBSYSTEM_DEVICE_ID 0x2e
+#define PCI_INVALID_VENDOR_ID 0xffff // every config read returns all ones once a device stops responding
+
 // Capability lists
 #define PCI_CAPABILITY_LIST 0x34 // Offset of first capability list entry
 #define PCI_CAP_LIST_ID 0        // Capability ID
@@ -34,14 +41,18 @@ namespace Sysman {
 #define PCI_EXP_TYPE_RC_EC 0xa     // Root Complex Event Collector
 #define PCI_EXP_SLTCTL 24          // Slot Control
 #define PCI_EXP_SLTCTL_HPIE 0x0020 // Hot-Plug Interrupt Enable
+#define PCI_EXP_FLAGS_VERS 0x000f  // capability version bits of the PCI Express capabilities register
+#define PCI_EXP_VERS_LNKCAP2 2     // capability version that introduced the Link Capabilities 2 register
 
 // Bridge control
 #define PCI_BRIDGE_CONTROL 0x3e       // Bridge control register
 #define PCI_BRIDGE_CTL_BUS_RESET 0x40 // Secondary bus reset
 
 // Link Capabilities
-#define PCI_EXP_LNKCAP 12     // offset to link capabilities
-#define PCI_EXP_LNK_STATUS 18 // offset to link status
+#define PCI_EXP_LNKCAP 12              // offset to link capabilities
+#define PCI_EXP_LNK_STATUS 18          // offset to link status
+#define PCI_EXP_LNKCAP2 44             // offset to link capabilities 2
+#define PCI_EXP_LNKCAP2_SLS 0x000000fe // supported link speeds vector, bits 1 to 7
 
 // Resizable BARs
 #define PCI_REBAR_CAP 4                // capability register

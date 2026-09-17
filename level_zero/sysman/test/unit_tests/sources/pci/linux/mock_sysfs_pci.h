@@ -21,6 +21,7 @@ namespace ult {
 const std::string deviceDir("device");
 const std::string resourceFile("device/resource");
 const std::string mockBdf = "0000:00:02.0";
+const std::string mockDevicePciPath = "/sys/bus/pci/devices/" + mockBdf;
 const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
 const std::string mockRealPathConfig = mockRealPath + "/config";
 const std::string mockRealPath2LevelsUp = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0";
@@ -117,10 +118,27 @@ struct MockPciSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     MockPciSysfsAccess() = default;
 };
 
+struct MockPciFsAccess : public L0::Sysman::FsAccessInterface {
+
+    ze_result_t mockGetRealPathResult = ZE_RESULT_SUCCESS;
+
+    ze_result_t getRealPath(const std::string &path, std::string &val) override {
+        if (mockGetRealPathResult != ZE_RESULT_SUCCESS) {
+            return mockGetRealPathResult;
+        }
+        if (path.compare(mockDevicePciPath) == 0) {
+            val = mockRealPath;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    MockPciFsAccess() = default;
+};
+
 class PublicLinuxPciImp : public L0::Sysman::LinuxPciImp {
   public:
     PublicLinuxPciImp(L0::Sysman::OsSysman *pOsSysman) : L0::Sysman::LinuxPciImp(pOsSysman) {}
-    using L0::Sysman::LinuxPciImp::preadFunction;
     using L0::Sysman::LinuxPciImp::pSysfsAccess;
 };
 

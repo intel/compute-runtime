@@ -99,9 +99,10 @@ ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
-        // Clear the properties structure first
+        void *pNext = pProperties->pNext;
         memset(pProperties, 0, sizeof(*pProperties));
         pProperties->stype = ZES_STRUCTURE_TYPE_PCI_PROPERTIES;
+        pProperties->pNext = pNext;
 
         // Fill in available PCI address information
         pProperties->address.domain = pPciBdfInfo->pciDomain;
@@ -109,36 +110,57 @@ ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
         pProperties->address.device = pPciBdfInfo->pciDevice;
         pProperties->address.function = pPciBdfInfo->pciFunction;
 
+        while (pNext) {
+            auto pExtProps = reinterpret_cast<zes_base_properties_t *>(pNext);
+            if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES) {
+                if (pOsPci == nullptr) {
+                    pOsPci = OsPci::create(pOsSysman);
+                }
+                ze_result_t result = pOsPci->getPciConfigProperties(reinterpret_cast<zes_intel_pci_config_exp_properties_t *>(pExtProps));
+                if (result != ZE_RESULT_SUCCESS) {
+                    return result;
+                }
+            }
+            pNext = pExtProps->pNext;
+        }
+
         // In survivability mode, other PCI properties are not available
         // maxSpeed, haveBandwidthCounters, havePacketCounters, haveReplayCounters remain 0/false
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
     initPci();
     void *pNext = pProperties->pNext;
     *pProperties = pciProperties;
     pProperties->pNext = pNext;
 
     while (pNext) {
-        result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
         auto pExtProps = reinterpret_cast<zes_base_properties_t *>(const_cast<void *>(pNext));
         if (pExtProps->stype == ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES) {
             auto pDowngradeExpProps = reinterpret_cast<zes_pci_link_speed_downgrade_ext_properties_t *>(pExtProps);
             pDowngradeExpProps->maxPciGenSupported = pciDowngradeProperties.maxPciGenSupported;
             pDowngradeExpProps->pciLinkSpeedUpdateCapable = pciDowngradeProperties.pciLinkSpeedUpdateCapable;
-            result = ZE_RESULT_SUCCESS;
-            break;
         } else if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES) {
             auto pDowngradeProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
             pDowngradeProps->maxPciGenSupported = pciDowngradeProperties.maxPciGenSupported;
             pDowngradeProps->pciLinkSpeedUpdateCapable = pciDowngradeProperties.pciLinkSpeedUpdateCapable;
-            result = ZE_RESULT_SUCCESS;
-            break;
+        } else if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES) {
+            if (pOsPci->pciConfigPropertiesResult != ZE_RESULT_SUCCESS) {
+                return pOsPci->pciConfigPropertiesResult;
+            }
+            auto pConfigProps = reinterpret_cast<zes_intel_pci_config_exp_properties_t *>(pExtProps);
+            pConfigProps->vendorId = pciConfigProperties.vendorId;
+            pConfigProps->deviceId = pciConfigProperties.deviceId;
+            pConfigProps->subsystemVendorId = pciConfigProperties.subsystemVendorId;
+            pConfigProps->subsystemDeviceId = pciConfigProperties.subsystemDeviceId;
+            pConfigProps->pcieCapabilityVersion = pciConfigProperties.pcieCapabilityVersion;
+            pConfigProps->supportedLinkSpeeds = pciConfigProperties.supportedLinkSpeeds;
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         pNext = pExtProps->pNext;
     }
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
@@ -190,9 +212,12 @@ ze_result_t PciImp::pciGetStats(zes_pci_stats_t *pStats) {
 void PciImp::pciGetStaticFields() {
     pciDowngradeProperties.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
     pciDowngradeProperties.maxPciGenSupported = -1;
+    pciConfigProperties.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    pciDowngradeProperties.pNext = &pciConfigProperties;
     pciProperties.pNext = &pciDowngradeProperties;
     pOsPci->getProperties(&pciProperties);
     pciProperties.pNext = nullptr;
+    pciDowngradeProperties.pNext = nullptr;
 
     resizableBarSupported = pOsPci->resizableBarSupported();
     std::string bdf;

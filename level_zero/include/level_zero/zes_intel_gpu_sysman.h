@@ -79,6 +79,52 @@ typedef struct _zes_intel_pci_link_speed_downgrade_exp_properties_t {
 } zes_intel_pci_link_speed_downgrade_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_PCI_CONFIG_EXP_PROPERTY_NAME
+/// @brief PCI configuration space property extension name
+#define ZES_INTEL_PCI_CONFIG_EXP_PROPERTY_NAME "ZES_intel_experimental_pci_config_property"
+#endif // ZES_INTEL_PCI_CONFIG_EXP_PROPERTY_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query pci configuration space extension Version(s)
+typedef enum _zes_intel_pci_config_exp_properties_version_t {
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_pci_config_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported link speeds reported by ::zes_intel_pci_config_exp_properties_t
+typedef uint32_t zes_intel_pci_link_speed_exp_flags_t;
+typedef enum _zes_intel_pci_link_speed_exp_flag_t {
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN1 = ZE_BIT(0), ///< gen 1, 2.5 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN2 = ZE_BIT(1), ///< gen 2, 5 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN3 = ZE_BIT(2), ///< gen 3, 8 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN4 = ZE_BIT(3), ///< gen 4, 16 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN5 = ZE_BIT(4), ///< gen 5, 32 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN6 = ZE_BIT(5), ///< gen 6, 64 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN7 = ZE_BIT(6), ///< gen 7, 128 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
+} zes_intel_pci_link_speed_exp_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query identification and link capability registers from the PCI configuration space.
+/// This structure can be passed in the 'pNext' of zes_pci_properties_t
+typedef struct _zes_intel_pci_config_exp_properties_t {
+    zes_structure_type_ext_t stype;                           ///< [in] type of this structure
+    void *pNext;                                              ///< [in][optional] must be null or a pointer to an extension-specific
+                                                              ///< structure (i.e. contains stype and pNext).
+    uint16_t vendorId;                                        ///< [out] Returns the PCIe vendor id.
+    uint16_t deviceId;                                        ///< [out] Returns the PCIe device id.
+    uint16_t subsystemVendorId;                               ///< [out] Returns the PCIe subsystem vendor id.
+    uint16_t subsystemDeviceId;                               ///< [out] Returns the PCIe subsystem device id.
+    uint32_t pcieCapabilityVersion;                           ///< [out] Returns the PCI Express capability version. Zero if the
+                                                              ///< capability could not be read.
+    zes_intel_pci_link_speed_exp_flags_t supportedLinkSpeeds; ///< [out] Returns the supported link speeds, a
+                                                              ///< combination of ::zes_intel_pci_link_speed_exp_flag_t. Zero if the
+                                                              ///< capability could not be read.
+} zes_intel_pci_config_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME
 /// @brief PCI link speed update extension name
 #define ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME "ZES_intel_experimental_pci_link_speed_update"

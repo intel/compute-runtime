@@ -7,9 +7,9 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/sysman/source/api/pci/sysman_os_pci.h"
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <fcntl.h>
 #include <memory>
@@ -33,6 +33,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     static uint32_t getRebarCapabilityPos(uint8_t *configMemory, bool isVfBar);
     static uint16_t getLinkRegisterPos(uint8_t *configMem, uint16_t linkRegisterOffset);
+    static uint16_t getPcieCapabilityPos(uint8_t *configMem);
     LinuxPciImp() = default;
     LinuxPciImp(OsSysman *pOsSysman);
     ~LinuxPciImp() override = default;
@@ -40,8 +41,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
   protected:
     L0::Sysman::SysFsAccessInterface *pSysfsAccess = nullptr;
     L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    bool getPciConfigMemory(const std::string &pciPath, std::vector<uint8_t> &configMem);
-    decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
+    ze_result_t getPciConfigMemory(const std::string &pciPath, std::vector<uint8_t> &configMem);
 
   private:
     static const std::string deviceDir;
@@ -49,6 +49,8 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     static const std::string maxLinkSpeedFile;
     static const std::string maxLinkWidthFile;
     void getPciLinkSpeed(zes_pci_speed_t &linkSpeed);
+    static void getPcieLinkCapabilities(std::vector<uint8_t> &configMemory, uint32_t &capabilityVersion, uint32_t &supportedLinkSpeeds);
+    ze_result_t getPciConfigProperties(zes_intel_pci_config_exp_properties_t *pConfigProperties) override;
 };
 
 } // namespace Sysman
