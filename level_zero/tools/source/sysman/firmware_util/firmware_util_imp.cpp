@@ -157,7 +157,7 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     struct igsc_oprom_image *opromImg = nullptr;
     uint32_t opromImgType = 0;
-    int retData = 0, retCode = 0;
+    int retData = IGSC_SUCCESS, retCode = IGSC_SUCCESS;
     int ret = imageOpromInit(&opromImg, static_cast<const uint8_t *>(pImage), size);
     if (ret != IGSC_SUCCESS) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
@@ -172,7 +172,7 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     if (opromImgType & IGSC_OPROM_CODE) {
         retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, progressFunc, nullptr);
     }
-    if ((retData != IGSC_SUCCESS) && (retCode != IGSC_SUCCESS)) {
+    if ((retData != IGSC_SUCCESS) || (retCode != IGSC_SUCCESS)) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return ZE_RESULT_SUCCESS;
