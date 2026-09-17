@@ -15,6 +15,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -46,6 +47,7 @@
 #include "clos_matchers.h"
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <fcntl.h>
@@ -5870,6 +5872,236 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
     for (size_t i = 1; i < EngineLimits::maxHandleCount - 1; ++i) {
         EXPECT_TRUE(memoryManager.unreferenceParamsPassed[i].synchronousDestroy);
     }
+}
+
+using DrmMemoryManagerHostIpcTrackingTest = DrmMemoryManagerWithLocalMemoryTest;
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenRegisteredImportedHostAllocationWhenFreedThenAccountingAndEvictionTrackingAreCleared) {
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemMmapOffset = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
+
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+    SVMAllocsManager svmAllocsManager(memoryManager);
+    mock->outputHandle = 100;
+    const auto usedMemoryBefore = memoryManager->getUsedSystemMemorySize();
+    const auto trackedBefore = memoryManager->getSysMemAllocs().size();
+
+    for (bool importedParameter : {false, true}) {
+        SvmAllocationData mappedPeerAllocData(rootDeviceIndex);
+        GraphicsAllocation *allocation = nullptr;
+        auto ptr = memoryManager->importFdHandle(device, &svmAllocsManager, 123, AllocationType::bufferHostMemory,
+                                                 true, nullptr, &allocation, mappedPeerAllocData, false, false, 0u);
+        ASSERT_NE(nullptr, ptr);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_TRUE(allocation->getIsImported());
+        const auto &trackedAllocations = memoryManager->getSysMemAllocs();
+        EXPECT_NE(trackedAllocations.end(), std::find(trackedAllocations.begin(), trackedAllocations.end(), allocation));
+        EXPECT_EQ(trackedBefore + 1, trackedAllocations.size());
+        EXPECT_EQ(usedMemoryBefore + allocation->getUnderlyingBufferSize(), memoryManager->getUsedSystemMemorySize());
+
+        auto svmAllocation = svmAllocsManager.getSVMAlloc(ptr);
+        ASSERT_NE(nullptr, svmAllocation);
+        EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, svmAllocation->memoryType);
+        EXPECT_TRUE(svmAllocation->isImportedAllocation);
+        svmAllocsManager.removeSVMAlloc(*svmAllocation);
+        memoryManager->freeGraphicsMemory(allocation, importedParameter);
+
+        EXPECT_EQ(trackedBefore, memoryManager->getSysMemAllocs().size());
+        EXPECT_EQ(usedMemoryBefore, memoryManager->getUsedSystemMemorySize());
+    }
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenRegisteredHostAllocationWithoutImportedFlagWhenFreedAsImportedThenAccountingAndEvictionTrackingAreCleared) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, 1);
+    properties.useMmapObject = true;
+    mock->outputHandle = 100;
+    const auto usedMemoryBefore = memoryManager->getUsedSystemMemorySize();
+    const auto trackedBefore = memoryManager->getSysMemAllocs().size();
+    const auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(123, properties, nullptr, false, true);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_FALSE(allocation->getIsImported());
+    EXPECT_EQ(trackedBefore + 1, memoryManager->getSysMemAllocs().size());
+    EXPECT_GT(memoryManager->getUsedSystemMemorySize(), usedMemoryBefore);
+
+    memoryManager->freeGraphicsMemory(allocation, true);
+
+    EXPECT_EQ(unregisterBefore + 1, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(trackedBefore, memoryManager->getSysMemAllocs().size());
+    EXPECT_EQ(usedMemoryBefore, memoryManager->getUsedSystemMemorySize());
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenUnregisteredImportedDeviceAllocationWhenFreedThenAccountingIsUnchanged) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    mock->outputHandle = 100;
+    const auto usedMemoryBefore = memoryManager->getUsedSystemMemorySize();
+    const auto trackedBefore = memoryManager->getSysMemAllocs().size();
+    const auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+    MemoryManager::OsHandleData handleData{123u};
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(handleData, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, allocation);
+    allocation->setIsImported();
+    allocation->setSharedHandle(Sharing::nonSharedResource);
+
+    memoryManager->freeGraphicsMemory(allocation, true);
+
+    EXPECT_EQ(trackedBefore, memoryManager->getSysMemAllocs().size());
+    EXPECT_EQ(usedMemoryBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenConsumeFdTrueAndMappedPtrWhenRegisterSysMemAllocFailsThenNullptrReturnedAndBoUnreferenced) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+    void *testMappedPtr = reinterpret_cast<void *>(0x12345000);
+
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unreferenceBefore = memoryManager->unreferenceCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, testMappedPtr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_GT(memoryManager->unreferenceCalled, unreferenceBefore);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenConsumeFdTrueAndNoBooMmapWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = false;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenNewBoCreationWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd = 123;
+
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    installMockedMemoryInfo(*mock);
+
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenConsumeFdTrueAndReuseSharedAllocationWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd1 = 123;
+    int testFd2 = 456;
+
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    installMockedMemoryInfo(*mock);
+
+    auto allocation1 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd1, properties, nullptr, false, false);
+    ASSERT_NE(allocation1, nullptr);
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation2 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd2, properties, nullptr, true, true);
+
+    EXPECT_EQ(allocation2, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd2, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+
+    memoryManager->freeGraphicsMemory(allocation1);
 }
 
 struct DrmMemoryManagerMultipleSharedHandlesFailureInjectionTest : public MemoryManagementFixture, public ::testing::Test {
