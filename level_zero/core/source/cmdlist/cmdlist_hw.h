@@ -529,7 +529,7 @@ struct CommandListCoreFamily : public CommandList {
 
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
 
-    bool latestOperationHasHeapfullCbEventWithProfiling = false;
+    bool latestOperationHasCbEventWithProfiling = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;

@@ -73,7 +73,7 @@ bool CommandListCoreFamily<IGFX_XE_HPC_CORE>::isResolveIoqDependencyWithBarrier(
     if (!sameEngineImplicitDependency) {
         return false;
     }
-    const auto isBarrierRequired = this->latestOperationHasHeapfullCbEventWithProfiling;
+    const auto isBarrierRequired = this->latestOperationHasCbEventWithProfiling;
     if (!isBarrierRequired && NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1) {
         return true;
     }

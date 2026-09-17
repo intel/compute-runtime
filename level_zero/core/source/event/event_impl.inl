@@ -315,10 +315,10 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
     if (!inOrderExecHelper.isCounterAlreadyDone(waitValue, this->getInOrderAllocationOffset())) {
         bool signaled = true;
 
-        if (this->heapfullCbEventWithProfiling) {
+        if (this->cbEventWithProfiling) {
             this->synchronizeTimestampCompletionWithTimeout();
             signaled = this->isTimestampPopulated();
-            this->heapfullCbEventWithProfiling = !signaled;
+            this->cbEventWithProfiling = !signaled;
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset);
             for (uint32_t i = 0; i < inOrderExecHelper.getEventData()->hostPartitions; i++) {
@@ -443,7 +443,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
                                   packetWaitTimeout, false, this->externalInterruptId, getAllocation(this->device), nullptr);
     };
 
-    if (this->heapfullCbEventWithProfiling && inOrderExecHelper.hasTimestampNodes()) {
+    if (this->cbEventWithProfiling && inOrderExecHelper.hasTimestampNodes()) {
         if (!packetUserFenceWaitSupported) {
             return NEO::WaitStatus::notReady;
         }
@@ -976,20 +976,20 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
 
-    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
+    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && !this->cbEventWithProfiling && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
     EventHostSynchronize::WaitController waitController(*csrs[0]);
 
     auto *assertHndlr = neoDevice->getRootDeviceEnvironment().assertHandler.get();
 
     do {
-        if (this->heapfullCbEventWithProfiling) {
+        if (this->cbEventWithProfiling) {
             assignKernelEventCompletionData(getHostAddress());
             calculateProfilingData();
             if (this->isTimestampPopulated()) {
                 inOrderExecHelper.setLastWaitedCounterValue(getInOrderExecBaseSignalValue(), this->getInOrderAllocationOffset());
                 handleSuccessfulHostSynchronization();
                 ret = ZE_RESULT_SUCCESS;
-                this->heapfullCbEventWithProfiling = false;
+                this->cbEventWithProfiling = false;
             } else {
                 ret = ZE_RESULT_NOT_READY;
             }

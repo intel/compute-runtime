@@ -261,6 +261,13 @@ bool CommandList::setupTimestampEventForMultiTile(Event *signalEvent) {
     return false;
 }
 
+bool CommandList::isInOrderCounterWaitRequired(const Event *event) const {
+    if (event == nullptr || !event->hasInOrderTimestampNode()) {
+        return true;
+    }
+    return heaplessModeEnabled && !event->isCbEventWithProfiling();
+}
+
 void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList) {
     for (uint32_t i = 0; i < numWaitEvents; i++) {
         Event *event = Event::fromHandle(waitEventList[i]);

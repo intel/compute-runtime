@@ -407,8 +407,12 @@ struct Event : _ze_event_handle_t {
         this->recordedSignalFrom = cmdlist;
     }
 
-    void setHeapfullCbEventWithProfiling(bool value) {
-        this->heapfullCbEventWithProfiling = value;
+    void setCbEventWithProfiling(bool value) {
+        this->cbEventWithProfiling = value;
+    }
+
+    bool isCbEventWithProfiling() const {
+        return this->cbEventWithProfiling;
     }
 
     bool isExternalEvent() const {
@@ -542,7 +546,7 @@ struct Event : _ze_event_handle_t {
     bool linuxUserFenceKmdWaitEnabled = false;
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
-    bool heapfullCbEventWithProfiling = false;
+    bool cbEventWithProfiling = false;
     bool externalEvent = false;
     bool isDualCopyOffloadEvent = false;
     bool isSignalledAsGraphInternalEvent = false;

@@ -445,37 +445,17 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
         auto &postSyncData = walkerCmd->getPostSync();
 
         if (compactEvent1) {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
+            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData.getOperation());
         } else {
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSyncData.getDestinationAddress());
-            EXPECT_FALSE(postSyncData.getInterruptSignalEnable());
+            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
+            EXPECT_EQ(events[1]->getPacketAddress(device), postSyncData.getDestinationAddress());
+            EXPECT_TRUE(postSyncData.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData.getSerializePostsyncOps());
             EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
         }
 
-        auto &postSyncData1 = walkerCmd->getPostSyncOpn1();
-
-        if (compactEvent1) {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData1.getOperation());
-        } else {
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
-            EXPECT_TRUE(postSyncData1.getInterruptSignalEnable());
-            EXPECT_FALSE(postSyncData1.getSerializePostsyncOps());
-            EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
-        }
-
-        auto &postSyncData2 = walkerCmd->getPostSyncOpn2();
-
-        if (compactEvent1) {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData2.getOperation());
-        } else {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_TIMESTAMP, postSyncData2.getOperation());
-            EXPECT_EQ(events[1]->getPacketAddress(device), postSyncData2.getDestinationAddress());
-            EXPECT_FALSE(postSyncData2.getInterruptSignalEnable());
-            EXPECT_FALSE(postSyncData2.getSerializePostsyncOps());
-            EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
-        }
-
+        EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn1().getOperation());
+        EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn2().getOperation());
         EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn3().getOperation());
     }
 }

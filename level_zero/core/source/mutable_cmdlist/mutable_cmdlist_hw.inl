@@ -1157,7 +1157,7 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::processWaitEventVariabl
         }
 
         for (uint32_t packet = 0; packet < mutableWaitEvent.waitEventPackets; packet++) {
-            if (CommandList::isInOrderExecutionEnabled() && mutableWaitEvent.event->isCounterBased() && (this->heaplessModeEnabled || !mutableWaitEvent.event->hasInOrderTimestampNode())) {
+            if (CommandList::isInOrderExecutionEnabled() && mutableWaitEvent.event->isCounterBased() && this->isInOrderCounterWaitRequired(mutableWaitEvent.event)) {
                 captureCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList);
             } else {
                 captureRegularWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList);

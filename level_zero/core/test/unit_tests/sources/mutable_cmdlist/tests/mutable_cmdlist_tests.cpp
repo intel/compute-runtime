@@ -2970,12 +2970,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto mutableSemWait = waitEventVar->getSemWaitList()[0];
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
-    uint64_t waitAddress = 0;
-    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
-        waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
-    } else {
-        waitAddress = event->getCompletionFieldGpuAddress(this->device);
-    }
+    uint64_t waitAddress = event->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
     result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
@@ -2984,11 +2979,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
-        waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
-    } else {
-        waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
-    }
+    waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 }
 
