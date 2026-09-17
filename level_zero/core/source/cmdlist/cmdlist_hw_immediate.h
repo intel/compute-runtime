@@ -252,6 +252,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     TransferType getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo);
     size_t getCpuCopyThreshold(TransferType transferType);
     bool isBarrierRequired();
+    bool hasPendingInOrderWork() const;
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override;
     void handlePostSyncPrintfAndAssert(bool hangDetected) final;
 

@@ -16,9 +16,11 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
@@ -42,7 +44,8 @@
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
-}
+extern std::atomic<uint32_t> yieldCounter;
+} // namespace CpuIntrinsicsTests
 
 namespace L0 {
 namespace ult {
@@ -580,6 +583,33 @@ HWTEST_F(InOrderCmdListTests, givenTbxModeWhenHostSynchronizeIsCalledThenPublish
     EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset()));
 
     ultCsr->onDownloadAllocations = nullptr;
+}
+
+HWTEST_F(InOrderCmdListTests, givenInOrderImmediateCommandListWhenHostSynchronizeCalledWithZeroTimeoutThenStillBlockOnCounterMiss) {
+    VariableBackup<NEO::WaitUtils::WaitpkgUse> waitpkgUseBackup(&NEO::WaitUtils::waitpkgUse, NEO::WaitUtils::WaitpkgUse::noUse);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    immCmdList->latestFlushIsHostVisible = true;
+
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
+    *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = 0;
+
+    ASSERT_FALSE(inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset()));
+
+    auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, false));
+    EXPECT_LT(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
+
+    yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(1, false));
+    EXPECT_LT(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
+
+    inOrderExecInfo->setLastWaitedCounterValue(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence) {

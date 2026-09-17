@@ -7,6 +7,8 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
+#include "shared/source/utilities/wait_util.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -20,6 +22,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -32,7 +35,9 @@ extern bool getNumThreadsCalled;
 } // namespace NEO
 
 namespace CpuIntrinsicsTests {
+extern std::atomic<uint32_t> pauseCounter;
 extern std::atomic<uint32_t> sfenceCounter;
+extern std::atomic<uint32_t> yieldCounter;
 } // namespace CpuIntrinsicsTests
 
 namespace L0 {
@@ -293,6 +298,182 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenP
     eventObject->setIsCompleted();
     cmdList.dependenciesPresent = false;
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenFollowInOrderCounterState) {
+    VariableBackup<NEO::WaitUtils::WaitpkgUse> waitpkgUseBackup(&NEO::WaitUtils::waitpkgUse, NEO::WaitUtils::WaitpkgUse::noUse);
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.enableInOrderExecution();
+
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, hostPtr, 1024);
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc));
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc));
+
+    auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
+    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+
+    inOrderExecInfo->addCounterValue(1);
+    *hostCounter = 0;
+
+    auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+
+    EXPECT_TRUE(cmdList.hasPendingInOrderWork());
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
+
+    *hostCounter = inOrderExecInfo->getCounterValue();
+    EXPECT_FALSE(cmdList.hasPendingInOrderWork());
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+
+    *hostCounter = 0;
+    inOrderExecInfo->setLastWaitedCounterValue(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
+    EXPECT_FALSE(cmdList.hasPendingInOrderWork());
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HThenFollowInOrderCounterState) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.enableInOrderExecution();
+
+    constexpr size_t copySize = 128;
+    CpuMemCopyInfo cpuMemCopyInfo(hostPtr, devicePtr, copySize);
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, copySize, cpuMemCopyInfo.srcAllocInfo.svmAlloc));
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, copySize, cpuMemCopyInfo.dstAllocInfo.svmAlloc));
+    ASSERT_GE(device->getProductHelper().getCpuCopyThreshold(TransferType::deviceUsmToHostUsm), copySize);
+
+    auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
+    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+
+    inOrderExecInfo->addCounterValue(1);
+    *hostCounter = 0;
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+
+    *hostCounter = inOrderExecInfo->getCounterValue();
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenSyncModeInOrderImmediateCommandListWhenPreferCopyThroughLockedPtrCalledWithPendingCounterThenReturnTrue) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.enableInOrderExecution();
+    cmdList.isSyncModeQueue = true;
+
+    constexpr size_t copySize = 128;
+    CpuMemCopyInfo cpuMemCopyInfo(hostPtr, devicePtr, copySize);
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, copySize, cpuMemCopyInfo.srcAllocInfo.svmAlloc));
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, copySize, cpuMemCopyInfo.dstAllocInfo.svmAlloc));
+    ASSERT_GE(device->getProductHelper().getCpuCopyThreshold(TransferType::deviceUsmToHostUsm), copySize);
+
+    auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
+    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+
+    inOrderExecInfo->addCounterValue(1);
+    *hostCounter = 0;
+
+    EXPECT_TRUE(cmdList.hasPendingInOrderWork());
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenNotInOrderImmediateCommandListWhenHasPendingInOrderWorkCalledThenReturnFalse) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    EXPECT_FALSE(cmdList.isInOrderExecutionEnabled());
+    EXPECT_FALSE(cmdList.hasPendingInOrderWork());
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenMultiPartitionInOrderImmediateCommandListWhenHasPendingInOrderWorkCalledThenCheckAllPartitions) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.partitionCount = 2;
+    cmdList.enableInOrderExecution();
+
+    auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
+    ASSERT_EQ(2u, inOrderExecInfo->getNumHostPartitionsToWait());
+
+    auto firstPartition = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    auto secondPartition = ptrOffset(firstPartition, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+
+    inOrderExecInfo->addCounterValue(1);
+    *firstPartition = 0;
+    *secondPartition = 0;
+    EXPECT_TRUE(cmdList.hasPendingInOrderWork());
+
+    *firstPartition = inOrderExecInfo->getCounterValue();
+    EXPECT_TRUE(cmdList.hasPendingInOrderWork());
+
+    *secondPartition = inOrderExecInfo->getCounterValue();
+    EXPECT_FALSE(cmdList.hasPendingInOrderWork());
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListWhenCopySizeAboveThresholdThenDoNotReadInOrderCounter) {
+    VariableBackup<NEO::WaitUtils::WaitpkgUse> waitpkgUseBackup(&NEO::WaitUtils::waitpkgUse, NEO::WaitUtils::WaitpkgUse::noUse);
+    VariableBackup<uint32_t> waitCountBackup(&NEO::WaitUtils::waitCount, 5u);
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.enableInOrderExecution();
+
+    const size_t copySize = device->getProductHelper().getCpuCopyThreshold(TransferType::deviceUsmToHostUsm) + 1;
+    ASSERT_GE(sz, copySize);
+
+    CpuMemCopyInfo cpuMemCopyInfo(hostPtr, devicePtr, copySize);
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, copySize, cpuMemCopyInfo.srcAllocInfo.svmAlloc));
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, copySize, cpuMemCopyInfo.dstAllocInfo.svmAlloc));
+
+    auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
+    inOrderExecInfo->addCounterValue(1);
+    *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = 0;
+
+    auto pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
+
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_EQ(pauseCountBefore, CpuIntrinsicsTests::pauseCounter.load());
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndNonUsmHostPtrWhenPreferCopyThroughLockedPtrCalledWithPendingCounterThenReturnTrue) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.enableInOrderExecution();
+
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
+    ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc));
+
+    auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
+    inOrderExecInfo->addCounterValue(1);
+    *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = 0;
+
+    EXPECT_TRUE(cmdList.hasPendingInOrderWork());
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HWhenCopyCantBePerformedImmediatelyThenReturnFalse) {

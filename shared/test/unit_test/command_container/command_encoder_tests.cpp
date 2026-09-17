@@ -21,9 +21,11 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -36,6 +38,11 @@
 
 using namespace NEO;
 using CommandEncoderTests = ::testing::Test;
+
+namespace CpuIntrinsicsTests {
+extern std::atomic<uint32_t> pauseCounter;
+extern std::atomic<uint32_t> yieldCounter;
+} // namespace CpuIntrinsicsTests
 
 #include "shared/test/common/test_macros/heapless_matchers.h"
 
@@ -563,6 +570,95 @@ HWTEST_F(CommandEncoderTests, givenLastWaitedCounterValueSetWhenInitializeAlloca
 
     EXPECT_FALSE(inOrderExecInfo.isCounterAlreadyDone(initialValue + 10, 0));
     EXPECT_FALSE(inOrderExecInfo.isCounterAlreadyDone(initialValue + 20, 1));
+}
+
+HWTEST_F(CommandEncoderTests, givenMultiPartitionInOrderExecInfoWhenPollCounterCompletionCalledThenCheckAllPartitionsAndYieldOnlyOnBlockingMiss) {
+    class ExposedInOrderExecInfo : public InOrderExecInfo {
+      public:
+        using InOrderExecInfo::immWritePostSyncWriteOffset;
+        using InOrderExecInfo::InOrderExecInfo;
+    };
+
+    VariableBackup<WaitUtils::WaitpkgUse> waitpkgUseBackup(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
+    VariableBackup<uint32_t> waitCountBackup(&WaitUtils::waitCount, 5u);
+
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    ExposedInOrderExecInfo inOrderExecInfo(deviceNode, nullptr, mockDevice, 2, false);
+
+    const uint64_t waitValue = inOrderExecInfo.getInitialCounterValue() + 1;
+    auto secondPartitionAddress = ptrOffset(inOrderExecInfo.getBaseHostAddress(), inOrderExecInfo.immWritePostSyncWriteOffset);
+
+    auto pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
+    auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+
+    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, false));
+    EXPECT_EQ(pauseCountBefore + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter.load());
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
+
+    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, true));
+    EXPECT_EQ(yieldCountBefore + 1, CpuIntrinsicsTests::yieldCounter.load());
+
+    *inOrderExecInfo.getBaseHostAddress() = waitValue;
+    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, false));
+
+    *secondPartitionAddress = waitValue;
+
+    pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
+    yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+
+    EXPECT_TRUE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, false));
+    EXPECT_EQ(pauseCountBefore + (2 * WaitUtils::waitCount), CpuIntrinsicsTests::pauseCounter.load());
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
+}
+
+HWTEST_F(CommandEncoderTests, givenMultiPartitionInOrderExecInfoWhenIsCounterDoneCalledThenUseCachedValueBeforePollingPartitions) {
+    class ExposedInOrderExecInfo : public InOrderExecInfo {
+      public:
+        using InOrderExecInfo::immWritePostSyncWriteOffset;
+        using InOrderExecInfo::InOrderExecInfo;
+    };
+
+    VariableBackup<WaitUtils::WaitpkgUse> waitpkgUseBackup(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
+    VariableBackup<uint32_t> waitCountBackup(&WaitUtils::waitCount, 5u);
+
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    ExposedInOrderExecInfo inOrderExecInfo(deviceNode, nullptr, mockDevice, 2, false);
+
+    const uint64_t initialValue = inOrderExecInfo.getInitialCounterValue();
+    const uint64_t waitValue = initialValue + 1;
+    auto secondPartitionAddress = ptrOffset(inOrderExecInfo.getBaseHostAddress(), inOrderExecInfo.immWritePostSyncWriteOffset);
+
+    auto pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
+    auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
+
+    EXPECT_FALSE(inOrderExecInfo.isCounterDone(waitValue, 0));
+    EXPECT_EQ(pauseCountBefore + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter.load());
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
+
+    *inOrderExecInfo.getBaseHostAddress() = waitValue;
+    EXPECT_FALSE(inOrderExecInfo.isCounterDone(waitValue, 0));
+
+    *secondPartitionAddress = waitValue;
+
+    EXPECT_TRUE(inOrderExecInfo.isCounterDone(waitValue, 0));
+    EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
+
+    *inOrderExecInfo.getBaseHostAddress() = initialValue;
+    *secondPartitionAddress = initialValue;
+    inOrderExecInfo.setLastWaitedCounterValue(waitValue, 0);
+
+    pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
+
+    EXPECT_TRUE(inOrderExecInfo.isCounterDone(waitValue, 0));
+    EXPECT_EQ(pauseCountBefore, CpuIntrinsicsTests::pauseCounter.load());
 }
 
 HWTEST_F(CommandEncoderTests, givenNullSimulationUploadCsrWhenSetThenUseDefaultCsrForSimulationParams) {

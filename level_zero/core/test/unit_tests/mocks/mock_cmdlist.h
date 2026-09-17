@@ -831,6 +831,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;
     using BaseClass::dummyBlitWa;
+    using BaseClass::hasPendingInOrderWork;
     using BaseClass::internalUsage;
     using BaseClass::isSmallBarConfigPresent;
     using BaseClass::isSyncModeQueue;

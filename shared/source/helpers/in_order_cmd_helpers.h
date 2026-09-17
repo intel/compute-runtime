@@ -120,6 +120,9 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
         return lastWaitedCounterValue[allocationOffset != 0] >= waitValue;
     }
 
+    bool isCounterDone(uint64_t waitValue, uint32_t allocationOffset) const;
+    bool pollCounterCompletion(uint64_t waitValue, uint32_t allocationOffset, int64_t timeSinceWaitStartedInMicroSeconds, bool blockOnMiss) const;
+
     void pushTempTimestampNode(TagNodeBase *node, uint64_t value, uint32_t allocationOffset);
     void releaseNotUsedTempTimestampNodes(bool forceReturn);
     void setupInterruptFence();

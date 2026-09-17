@@ -1574,6 +1574,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasPendingInOrderWork() const {
+    if (!isInOrderExecutionEnabled()) {
+        return false;
+    }
+
+    return !this->inOrderExecInfo->isCounterDone(this->inOrderExecInfo->getCounterValue(), this->inOrderExecInfo->getAllocationOffset());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     if (NEO::debugManager.flags.ExperimentalForceCopyThroughLock.get() == 1) {
         return true;
@@ -1617,13 +1626,16 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
 
     const TransferType transferType = getTransferType(cpuMemCopyInfo);
     const size_t transferThreshold = getCpuCopyThreshold(transferType);
+    if (cpuMemCopyInfo.size > transferThreshold) {
+        return false;
+    }
 
     bool cpuMemCopyEnabled = false;
 
     switch (transferType) {
     case TransferType::hostUsmToDeviceUsm:
     case TransferType::deviceUsmToHostUsm: {
-        if (this->dependenciesPresent) {
+        if (this->dependenciesPresent || (!this->isSyncModeQueue && hasPendingInOrderWork())) {
             cpuMemCopyEnabled = false;
             break;
         }
@@ -1648,7 +1660,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         break;
     }
 
-    return cpuMemCopyEnabled && cpuMemCopyInfo.size <= transferThreshold;
+    return cpuMemCopyEnabled;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1945,16 +1957,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
         bool signaled = true;
 
         if (csr->getType() != NEO::CommandStreamReceiverType::aub) {
-            const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
-
-            for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
-                if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), timeDiff / 1000)) {
-                    signaled = false;
-                    break;
-                }
-
-                hostAddress = ptrOffset(hostAddress, this->device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
-            }
+            signaled = inOrderExecInfo->pollCounterCompletion(waitValue, inOrderExecInfo->getAllocationOffset(), timeDiff / 1000, true);
         }
 
         if (signaled) {
