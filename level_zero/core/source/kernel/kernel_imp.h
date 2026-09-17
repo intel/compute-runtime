@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 namespace NEO {
@@ -107,6 +108,8 @@ struct KernelImp : Kernel {
     ze_result_t setArgSampler(uint32_t argIndex, size_t argSize, const void *argVal);
 
     virtual void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) = 0;
+
+    MOCKABLE_VIRTUAL std::optional<size_t> getPooledAllocationEndOffsetForSurfaceState(const void *address, const NEO::GraphicsAllocation *alloc) const;
 
     void setInlineSamplers();
 

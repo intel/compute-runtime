@@ -58,12 +58,27 @@ struct KernelHw : public KernelImp {
         const auto bindlessSurfaceStateSize = surfaceStateSize;
 
         auto argInfo = sharedState->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+
         bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(),
                                                                          argInfo.bufferOffset, static_cast<uint32_t>(offset));
         bool offsetAddress = false;
         if (false == offsetWasPatched) {
-            // fallback to handling offset in surface state
             offsetAddress = baseAddress != reinterpret_cast<uintptr_t>(address);
+        }
+
+        const bool usesAllocationOwnedSurfaceStateSlot = NEO::isUndefinedOffset(argInfo.bindful) &&
+                                                         NEO::isValidOffset(argInfo.bindless) &&
+                                                         nullptr != device->getNEODevice()->getBindlessHeapsHelper() &&
+                                                         false == offsetAddress;
+
+        if (false == usesAllocationOwnedSurfaceStateSlot) {
+            if (auto pooledEndOffset = getPooledAllocationEndOffsetForSurfaceState(address, alloc); pooledEndOffset.has_value()) {
+                bufferSizeForSsh = pooledEndOffset.value();
+            }
+        }
+
+        if (false == offsetWasPatched) {
+            // fallback to handling offset in surface state
             baseAddress = reinterpret_cast<uintptr_t>(address);
             bufferSizeForSsh -= offset;
             DEBUG_BREAK_IF(baseAddress != (baseAddress & this->sharedState->surfaceStateAlignmentMask));
@@ -78,7 +93,7 @@ struct KernelHw : public KernelImp {
         } else if (NEO::isValidOffset(argInfo.bindless)) {
             privateState.isBindlessOffsetSet[argIndex] = false;
             privateState.usingSurfaceStateHeap[argIndex] = false;
-            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetAddress) {
+            if (usesAllocationOwnedSurfaceStateSlot) {
                 surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
                 privateState.isBindlessOffsetSet[argIndex] = true;
             } else {

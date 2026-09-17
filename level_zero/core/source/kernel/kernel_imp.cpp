@@ -33,6 +33,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/work_size_info.h"
@@ -774,6 +775,31 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
     privateState.argumentsResidencyContainer[argIndex] = image->getAllocation();
 
     return ZE_RESULT_SUCCESS;
+}
+
+std::optional<size_t> KernelImp::getPooledAllocationEndOffsetForSurfaceState(const void *address, const NEO::GraphicsAllocation *alloc) const {
+    auto neoDevice = this->module->getDevice()->getNEODevice();
+
+    auto poolLookup = this->module->getDevice()->getDriverHandle()->getHostUsmPoolOwningPtr(address);
+    if (false == poolLookup.isAllocatedInPool()) {
+        poolLookup = neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(address);
+    }
+    if (false == poolLookup.isAllocatedInPool()) {
+        return std::nullopt;
+    }
+
+    const auto pooledBaseAddress = reinterpret_cast<uint64_t>(poolLookup.pooledAllocationBasePtr);
+    const auto allocationBaseAddress = alloc->getGpuAddressToPatch();
+    if (pooledBaseAddress < allocationBaseAddress) {
+        return std::nullopt;
+    }
+
+    const auto pooledAllocationEnd = static_cast<size_t>(pooledBaseAddress - allocationBaseAddress) + poolLookup.pooledAllocationSize;
+    if (pooledAllocationEnd > alloc->getUnderlyingBufferSize()) {
+        return std::nullopt;
+    }
+
+    return pooledAllocationEnd;
 }
 
 ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *allocData) {
