@@ -8,7 +8,8 @@
 #include "shared/test/common/libult/global_environment.h"
 
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_inc_base.h"
+
+void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
 
 TestEnvironment *gEnvironment;
 TestEnvironment::TestEnvironment() {
@@ -21,21 +22,13 @@ void TestEnvironment::SetUp() {
 
     fclPushDebugVars(fclDefaultDebugVars);
     igcPushDebugVars(igcDefaultDebugVars);
-    if (libraryOS == nullptr) {
-        setupExternalDependencies();
-        libraryOS = setAdapterInfo(&hwInfoDefaultDebugVars.platform,
-                                   &hwInfoDefaultDebugVars.gtSystemInfo,
-                                   hwInfoDefaultDebugVars.capabilityTable.gpuAddressSpace);
-    }
+    setupExternalDependencies();
+    setAdapterInfo(&hwInfoDefaultDebugVars.platform,
+                   &hwInfoDefaultDebugVars.gtSystemInfo,
+                   hwInfoDefaultDebugVars.capabilityTable.gpuAddressSpace);
 }
 
 void TestEnvironment::TearDown() {
-    delete libraryFrontEnd;
-    delete libraryIGC;
-    if (libraryOS != nullptr) {
-        delete libraryOS;
-        libraryOS = nullptr;
-    }
     mockCompilerGuard.Disable();
 }
 

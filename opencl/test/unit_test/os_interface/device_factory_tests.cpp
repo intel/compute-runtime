@@ -13,7 +13,6 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -34,22 +33,17 @@
 
 using namespace NEO;
 
-OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
+void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
 
 struct DeviceFactoryTest : public ::testing::Test {
   public:
     void SetUp() override {
         const HardwareInfo *hwInfo = defaultHwInfo.get();
         executionEnvironment = platform()->peekExecutionEnvironment();
-        mockGdiDll = setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace);
-    }
-
-    void TearDown() override {
-        delete mockGdiDll;
+        setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace);
     }
 
   protected:
-    OsLibrary *mockGdiDll;
     ExecutionEnvironment *executionEnvironment;
 };
 

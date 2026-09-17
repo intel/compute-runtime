@@ -288,9 +288,9 @@ TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenE
         hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[0].SubSlice[1].Enabled = true;
         hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[0].SubSlice[1].EuEnabledCount = 4;
 
-        std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
-                                                             &hwInfo.gtSystemInfo,
-                                                             hwInfo.capabilityTable.gpuAddressSpace));
+        setAdapterInfo(&hwInfo.platform,
+                       &hwInfo.gtSystemInfo,
+                       hwInfo.capabilityTable.gpuAddressSpace);
     }
 
     EXPECT_TRUE(wddm->init());
@@ -298,9 +298,9 @@ TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenE
     EXPECT_EQ(topologyMap.size(), 1u);
     {
         auto hwInfo = *defaultHwInfo;
-        std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
-                                                             &hwInfo.gtSystemInfo,
-                                                             hwInfo.capabilityTable.gpuAddressSpace));
+        setAdapterInfo(&hwInfo.platform,
+                       &hwInfo.gtSystemInfo,
+                       hwInfo.capabilityTable.gpuAddressSpace);
     }
 }
 
@@ -319,18 +319,18 @@ TEST_F(WddmTests, GivenProperTopologyDataWhenInitializingWddmThenExpectTopologyM
         hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].Enabled = true;
         hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].EuEnabledCount = 4;
 
-        std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
-                                                             &hwInfo.gtSystemInfo,
-                                                             hwInfo.capabilityTable.gpuAddressSpace));
+        setAdapterInfo(&hwInfo.platform,
+                       &hwInfo.gtSystemInfo,
+                       hwInfo.capabilityTable.gpuAddressSpace);
     }
     EXPECT_TRUE(wddm->init());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_EQ(topologyMap.size(), 1u);
     {
         auto hwInfo = *defaultHwInfo;
-        std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
-                                                             &hwInfo.gtSystemInfo,
-                                                             hwInfo.capabilityTable.gpuAddressSpace));
+        setAdapterInfo(&hwInfo.platform,
+                       &hwInfo.gtSystemInfo,
+                       hwInfo.capabilityTable.gpuAddressSpace);
     }
 }
 
@@ -348,18 +348,18 @@ TEST_F(WddmTests, GivenNoSubsliceEnabledWhenInitializingWddmThenExpectIntializat
             hwInfo.gtSystemInfo.SliceInfo[slice].DSSInfo[0].SubSlice[1].Enabled = false;
             hwInfo.gtSystemInfo.SliceInfo[slice].SubSliceInfo[0].Enabled = false;
         }
-        std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
-                                                             &hwInfo.gtSystemInfo,
-                                                             hwInfo.capabilityTable.gpuAddressSpace));
+        setAdapterInfo(&hwInfo.platform,
+                       &hwInfo.gtSystemInfo,
+                       hwInfo.capabilityTable.gpuAddressSpace);
     }
     EXPECT_FALSE(wddm->init());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_TRUE(topologyMap.empty());
     {
         auto hwInfo = *defaultHwInfo;
-        std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
-                                                             &hwInfo.gtSystemInfo,
-                                                             hwInfo.capabilityTable.gpuAddressSpace));
+        setAdapterInfo(&hwInfo.platform,
+                       &hwInfo.gtSystemInfo,
+                       hwInfo.capabilityTable.gpuAddressSpace);
     }
 }
 

@@ -7,14 +7,13 @@
 
 #pragma once
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 
-OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
+void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
 void setupExternalDependencies();
 
 class TestEnvironment : public ::testing::Environment {
@@ -41,10 +40,6 @@ class TestEnvironment : public ::testing::Environment {
         HardwareInfo &hwInfo);
 
   protected:
-    OsLibrary *libraryFrontEnd = nullptr;
-    OsLibrary *libraryIGC = nullptr;
-    OsLibrary *libraryOS = nullptr;
-
     std::vector<MockCompilerDebugVars> igcDebugVarStack;
     std::vector<MockCompilerDebugVars> fclDebugVarStack;
 

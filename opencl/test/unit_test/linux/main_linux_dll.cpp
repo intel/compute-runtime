@@ -53,14 +53,12 @@ extern const char *dxcoreDllName;
 }
 
 namespace NEO {
-class OsLibrary;
 void __attribute__((destructor)) platformsDestructor();
 extern const DeviceDescriptor deviceDescriptorTable[];
 const char *apiName = "OCL";
 } // namespace NEO
 
-NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
-    return nullptr;
+void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
 }
 void setupExternalDependencies() {}
 
