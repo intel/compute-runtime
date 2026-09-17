@@ -473,17 +473,28 @@ void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, 
 
             // Test Power Usage API
             {
-                std::cout << std::endl
-                          << " --- Testing Power Usage API --- " << std::endl;
-
                 uint32_t instantPower = 0;
                 uint32_t averagePower = 0;
                 VALIDATECALL(zesPowerGetUsage(handle, &instantPower, &averagePower));
 
+                // Either output is optional, a null pointer means that value is not requested
+                uint32_t instantPowerOnly = 0;
+                VALIDATECALL(zesPowerGetUsage(handle, &instantPowerOnly, nullptr));
+
+                uint32_t averagePowerOnly = 0;
+                VALIDATECALL(zesPowerGetUsage(handle, nullptr, &averagePowerOnly));
+
                 if (verbose) {
-                    std::cout << " --- Power Usage for " << getPowerDomainType(extProperties.domain) << " --- " << std::endl;
-                    std::cout << "Instantaneous Power = " << instantPower << " mW" << std::endl;
-                    std::cout << "Average Power = " << averagePower << " mW" << std::endl;
+                    std::cout << std::endl
+                              << " --- Power Usage for " << getPowerDomainType(extProperties.domain) << " --- " << std::endl;
+                    std::cout << " - Requesting both values - " << std::endl;
+                    std::cout << "powerUsage.instantPower = " << instantPower << " mW" << std::endl;
+                    std::cout << "powerUsage.averagePower = " << averagePower << " mW" << std::endl;
+                    std::cout << " - Requesting instantaneous power only, pAveragePower = nullptr - " << std::endl;
+                    std::cout << "powerUsage.instantPower = " << instantPowerOnly << " mW" << std::endl;
+                    std::cout << " - Requesting average power only, pInstantPower = nullptr - " << std::endl;
+                    std::cout << "powerUsage.averagePower = " << averagePowerOnly << " mW" << std::endl;
+                    std::cout << std::endl;
                 }
             }
         }

@@ -1489,6 +1489,92 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     }
 }
 
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageWithNullOutputPointerThenOnlyRequestedPowerValueIsRetrieved, IsBmgOrCri) {
+    static int energyReadCount = 0;
+    static int instantPowerContainerReadCount = 0;
+    static int averagePowerContainerReadCount = 0;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telemOffset = 0;
+        std::string_view validPunitGuid = "";
+        constexpr uint64_t instantPowerContainerOffset = 128;
+        constexpr uint64_t averagePowerContainerOffset = 136;
+        constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
+        constexpr uint64_t averagePowerContainerValue = 0x8765DCBA43211234;
+        constexpr uint64_t bmgAccumPsysEnergyOffset = 52; // BMG: ACCUM_PSYS_ENERGY for CARD domain
+        constexpr uint32_t mockEnergyCounterE1 = 0x10000;
+        constexpr uint32_t mockEnergyCounterE2 = 0x18000;
+
+        if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+            validPunitGuid = "0x1e2f8201";
+        } else {
+            validPunitGuid = "0x1e2fa030";
+        }
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 6) {
+            memcpy(buf, validPunitGuid.data(), count);
+        } else if (fd == 8) {
+            if (offset == instantPowerContainerOffset) {
+                memcpy(buf, &instantPowerContainerValue, count);
+                instantPowerContainerReadCount++;
+            } else if (offset == averagePowerContainerOffset) {
+                // CRI reads AVERAGE_POWER_CONTAINER for average power
+                memcpy(buf, &averagePowerContainerValue, count);
+                averagePowerContainerReadCount++;
+            } else if (offset == bmgAccumPsysEnergyOffset) {
+                // BMG energy counter reads: first read returns e1, second returns e2
+                if (energyReadCount % 2 == 0) {
+                    memcpy(buf, &mockEnergyCounterE1, count);
+                } else {
+                    memcpy(buf, &mockEnergyCounterE2, count);
+                }
+                energyReadCount++;
+            }
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+
+    constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
+    constexpr uint64_t averagePowerContainerValue = 0x8765DCBA43211234;
+    constexpr uint32_t mockEnergyCounterE1 = 0x10000;
+    constexpr uint32_t mockEnergyCounterE2 = 0x18000;
+    constexpr uint32_t unsetPowerValue = 0xFFFFFFFFu;
+
+    const bool isBmg = (defaultHwInfo->platform.eProductFamily == IGFX_BMG);
+    // instantaneous card power: bits [32:47]
+    const uint32_t expectedInstantPower = static_cast<uint32_t>(convertU13p3((instantPowerContainerValue >> 32) & 0xFFFF) * milliFactor);
+    // BMG: average power from energy counter delta, CRI: average card power from bits [32:47]
+    const uint32_t expectedAveragePower = isBmg ? static_cast<uint32_t>(((convertU18p14(mockEnergyCounterE2) - convertU18p14(mockEnergyCounterE1)) / 0.1) * milliFactor)
+                                                : static_cast<uint32_t>(convertU13p3((averagePowerContainerValue >> 32) & 0xFFFF) * milliFactor);
+
+    // Null instantaneous power pointer: only average power is retrieved
+    energyReadCount = 0;
+    instantPowerContainerReadCount = 0;
+    averagePowerContainerReadCount = 0;
+    uint32_t averagePower = unsetPowerValue;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, nullptr, &averagePower));
+    EXPECT_EQ(expectedAveragePower, averagePower);
+    EXPECT_EQ(0, instantPowerContainerReadCount);
+
+    // Null average power pointer: only instantaneous power is retrieved
+    energyReadCount = 0;
+    instantPowerContainerReadCount = 0;
+    averagePowerContainerReadCount = 0;
+    uint32_t instantPower = unsetPowerValue;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, &instantPower, nullptr));
+    EXPECT_EQ(expectedInstantPower, instantPower);
+    EXPECT_EQ(0, energyReadCount);
+    EXPECT_EQ(0, averagePowerContainerReadCount);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

@@ -460,6 +460,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t *pInstantPower, uint32_t *pAveragePower) {
+    if (powerDomain != ZES_POWER_DOMAIN_CARD && powerDomain != ZES_POWER_DOMAIN_PACKAGE && powerDomain != ZES_POWER_DOMAIN_MEMORY) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     std::map<std::string, uint64_t> keyOffsetMap;
     std::unordered_map<std::string, std::string> keyTelemInfoMap;
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
@@ -468,51 +473,55 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
         return result;
     }
 
-    uint64_t instantaneousPowerValue = 0;
-    std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
-
-    uint64_t averagePowerValue = 0;
-    key = "AVERAGE_POWER_CONTAINER"; // 64-bit container with Average power values at different bit offsets
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, averagePowerValue);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Average Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
-
     // Power Values read from PMT are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
-    switch (powerDomain) {
-    case ZES_POWER_DOMAIN_CARD:
-        // bits [32:47] - INSTANTANEOUS_PSYSGPU_POWER
-        *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 32) & 0xFFFF) * milliFactor);
-        // bits [32:47] - SUSTAINED_CARD_POWER
-        *pAveragePower = static_cast<uint32_t>(convertU13p3((averagePowerValue >> 32) & 0xFFFF) * milliFactor);
-        break;
-    case ZES_POWER_DOMAIN_PACKAGE:
-        // bits [0:15] - INSTANTANEOUS_PACKAGE_POWER
-        *pInstantPower = static_cast<uint32_t>(convertU13p3(instantaneousPowerValue & 0xFFFF) * milliFactor);
-        // bits [0:15] - SUSTAINED_PACKAGE_POWER
-        *pAveragePower = static_cast<uint32_t>(convertU13p3(averagePowerValue & 0xFFFF) * milliFactor);
-        break;
-    case ZES_POWER_DOMAIN_MEMORY: {
-        // bits [16:31] INSTANTANEOUS_VRAM_VCCDDRQX_POWER + bits [48:63] INSTANTANEOUS_VRAM_VCCDDRQ_POWER
-        double instVccdrqx = convertU13p3((instantaneousPowerValue >> 16) & 0xFFFF);
-        double instVccddrq = convertU13p3((instantaneousPowerValue >> 48) & 0xFFFF);
-        double instTotalWatts = instVccdrqx + instVccddrq;
-        double instMilliWatts = instTotalWatts * milliFactor;
-        *pInstantPower = static_cast<uint32_t>(instMilliWatts);
-        // VRAM average power offsets are not available, setting to 0
-        *pAveragePower = 0u;
+    if (pInstantPower != nullptr) {
+        uint64_t instantaneousPowerValue = 0;
+        std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+            return result;
+        }
 
-        break;
+        if (powerDomain == ZES_POWER_DOMAIN_CARD) {
+            // bits [32:47] - INSTANTANEOUS_PSYSGPU_POWER
+            *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 32) & 0xFFFF) * milliFactor);
+        } else if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+            // bits [0:15] - INSTANTANEOUS_PACKAGE_POWER
+            *pInstantPower = static_cast<uint32_t>(convertU13p3(instantaneousPowerValue & 0xFFFF) * milliFactor);
+        } else {
+            // ZES_POWER_DOMAIN_MEMORY
+            // bits [16:31] INSTANTANEOUS_VRAM_VCCDDRQX_POWER + bits [48:63] INSTANTANEOUS_VRAM_VCCDDRQ_POWER
+            double instVccdrqx = convertU13p3((instantaneousPowerValue >> 16) & 0xFFFF);
+            double instVccddrq = convertU13p3((instantaneousPowerValue >> 48) & 0xFFFF);
+            double instTotalWatts = instVccdrqx + instVccddrq;
+            double instMilliWatts = instTotalWatts * milliFactor;
+            *pInstantPower = static_cast<uint32_t>(instMilliWatts);
+        }
     }
-    default:
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unsupported power domain, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    if (pAveragePower != nullptr) {
+        if (powerDomain == ZES_POWER_DOMAIN_MEMORY) {
+            // VRAM average power offsets are not available, setting to 0
+            *pAveragePower = 0u;
+        } else {
+            uint64_t averagePowerValue = 0;
+            std::string key = "AVERAGE_POWER_CONTAINER"; // 64-bit container with Average power values at different bit offsets
+            result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, averagePowerValue);
+            if (result != ZE_RESULT_SUCCESS) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Average Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+                return result;
+            }
+
+            if (powerDomain == ZES_POWER_DOMAIN_CARD) {
+                // bits [32:47] - SUSTAINED_CARD_POWER
+                *pAveragePower = static_cast<uint32_t>(convertU13p3((averagePowerValue >> 32) & 0xFFFF) * milliFactor);
+            } else {
+                // ZES_POWER_DOMAIN_PACKAGE
+                // bits [0:15] - SUSTAINED_PACKAGE_POWER
+                *pAveragePower = static_cast<uint32_t>(convertU13p3(averagePowerValue & 0xFFFF) * milliFactor);
+            }
+        }
     }
 
     return ZE_RESULT_SUCCESS;

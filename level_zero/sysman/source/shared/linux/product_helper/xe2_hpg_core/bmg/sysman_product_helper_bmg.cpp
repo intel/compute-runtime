@@ -1850,51 +1850,54 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
     // Average power calculation based on energy counter samples with 100ms sampling interval
     // averagePower (W) = convertU18p14(energyCounterSample2 - energyCounterSample1) / sampleIntervalSeconds
     // averagePower (mW) = averagePower (W) * milliFactor
+    if (pAveragePower != nullptr) {
+        // Read first energy counter sample
+        uint32_t energyCounterSample1 = 0;
+        ze_result_t energyResult = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounterSample1);
+        if (energyResult != ZE_RESULT_SUCCESS) {
+            return energyResult;
+        }
 
-    // Read first energy counter sample
-    uint32_t energyCounterSample1 = 0;
-    ze_result_t energyResult = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounterSample1);
-    if (energyResult != ZE_RESULT_SUCCESS) {
-        return energyResult;
+        // Sampling interval (100ms)
+        constexpr uint32_t sampleIntervalMilliSeconds = 100;
+        constexpr double sampleIntervalSeconds = sampleIntervalMilliSeconds / 1000.0;
+        NEO::sleep(std::chrono::milliseconds(sampleIntervalMilliSeconds));
+
+        // Read second energy counter sample
+        uint32_t energyCounterSample2 = 0;
+        energyResult = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounterSample2);
+        if (energyResult != ZE_RESULT_SUCCESS) {
+            return energyResult;
+        }
+
+        // Unsigned subtraction handles counter rollover correctly for a single wrap of the uint32_t counter.
+        *pAveragePower = static_cast<uint32_t>((convertU18p14(energyCounterSample2 - energyCounterSample1) / sampleIntervalSeconds) * milliFactor);
     }
-
-    // Sampling interval (100ms)
-    constexpr uint32_t sampleIntervalMilliSeconds = 100;
-    constexpr double sampleIntervalSeconds = sampleIntervalMilliSeconds / 1000.0;
-    NEO::sleep(std::chrono::milliseconds(sampleIntervalMilliSeconds));
-
-    // Read second energy counter sample
-    uint32_t energyCounterSample2 = 0;
-    energyResult = readEnergyCounter(keyOffsetMap, keyTelemInfoMap, powerDomain, energyCounterSample2);
-    if (energyResult != ZE_RESULT_SUCCESS) {
-        return energyResult;
-    }
-
-    // Unsigned subtraction handles counter rollover correctly for a single wrap of the uint32_t counter.
-    *pAveragePower = static_cast<uint32_t>((convertU18p14(energyCounterSample2 - energyCounterSample1) / sampleIntervalSeconds) * milliFactor);
 
     // Instantaneous power calculation
-    uint64_t instantaneousPowerValue = 0;
-    std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
+    if (pInstantPower != nullptr) {
+        uint64_t instantaneousPowerValue = 0;
+        std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+            return result;
+        }
 
-    // Instantaneous power values are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
-    if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
-        // bits [0:15] - PACKAGE_POWER (instantaneous)
-        *pInstantPower = static_cast<uint32_t>(convertU13p3(instantaneousPowerValue & 0xFFFF) * milliFactor);
-    } else if (powerDomain == ZES_POWER_DOMAIN_CARD) {
-        // bits [32:47] - PSYSGPU_POWER (instantaneous)
-        *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 32) & 0xFFFF) * milliFactor);
-    } else if (powerDomain == ZES_POWER_DOMAIN_MEMORY) {
-        // bits [16:31] - VRAM_POWER (instantaneous)
-        *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 16) & 0xFFFF) * milliFactor);
-    } else {
-        // ZES_POWER_DOMAIN_GPU: instantaneous power is not available in INSTANTANEOUS_POWER_CONTAINER
-        *pInstantPower = 0;
+        // Instantaneous power values are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
+        if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+            // bits [0:15] - PACKAGE_POWER (instantaneous)
+            *pInstantPower = static_cast<uint32_t>(convertU13p3(instantaneousPowerValue & 0xFFFF) * milliFactor);
+        } else if (powerDomain == ZES_POWER_DOMAIN_CARD) {
+            // bits [32:47] - PSYSGPU_POWER (instantaneous)
+            *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 32) & 0xFFFF) * milliFactor);
+        } else if (powerDomain == ZES_POWER_DOMAIN_MEMORY) {
+            // bits [16:31] - VRAM_POWER (instantaneous)
+            *pInstantPower = static_cast<uint32_t>(convertU13p3((instantaneousPowerValue >> 16) & 0xFFFF) * milliFactor);
+        } else {
+            // ZES_POWER_DOMAIN_GPU: instantaneous power is not available in INSTANTANEOUS_POWER_CONTAINER
+            *pInstantPower = 0;
+        }
     }
 
     return ZE_RESULT_SUCCESS;
