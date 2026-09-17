@@ -4,5 +4,5 @@ components:
   xe_kmd:
     version: dev-1900
   ipldt:
-    revision: 9ab09ac30d463c27d81feca70eeb587ced70040f
+    revision: 1dcb94cbcdc9ad4da6c8c83519594cd0d5e96817
 version: '1'
