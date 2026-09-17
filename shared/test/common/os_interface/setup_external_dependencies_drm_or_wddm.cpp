@@ -5,10 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
-
-#include "common/gtsysinfo.h"
-#include "neo_igfxfmid.h"
 
 namespace NEO {
 extern const char *wslComputeHelperLibNameToLoad;
@@ -18,6 +16,6 @@ void setupExternalDependencies() {
     NEO::wslComputeHelperLibNameToLoad = "";
 }
 
-void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
-    mockSetAdapterInfo(platform, gtSystemInfo, gpuAddressSpace);
+void setAdapterInfo(const NEO::HardwareInfo *hwInfo) {
+    mockSetAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace);
 }

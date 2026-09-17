@@ -58,10 +58,6 @@ extern const DeviceDescriptor deviceDescriptorTable[];
 const char *apiName = "OCL";
 } // namespace NEO
 
-void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
-}
-void setupExternalDependencies() {}
-
 using namespace NEO;
 
 class DrmTestsFixture {

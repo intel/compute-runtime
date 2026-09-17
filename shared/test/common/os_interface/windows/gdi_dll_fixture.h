@@ -12,12 +12,12 @@
 
 using namespace NEO;
 
-void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
+void setAdapterInfo(const HardwareInfo *hwInfo);
 
 struct GdiDllFixture {
     void setUp() {
         const HardwareInfo *hwInfo = defaultHwInfo.get();
-        setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace);
+        setAdapterInfo(hwInfo);
 
         setSizesFcn = &setMockSizes;
         getSizesFcn = &getMockSizes;

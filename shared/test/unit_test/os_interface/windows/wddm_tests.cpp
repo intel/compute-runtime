@@ -288,9 +288,7 @@ TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenE
         hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[0].SubSlice[1].Enabled = true;
         hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[0].SubSlice[1].EuEnabledCount = 4;
 
-        setAdapterInfo(&hwInfo.platform,
-                       &hwInfo.gtSystemInfo,
-                       hwInfo.capabilityTable.gpuAddressSpace);
+        setAdapterInfo(&hwInfo);
     }
 
     EXPECT_TRUE(wddm->init());
@@ -298,9 +296,7 @@ TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenE
     EXPECT_EQ(topologyMap.size(), 1u);
     {
         auto hwInfo = *defaultHwInfo;
-        setAdapterInfo(&hwInfo.platform,
-                       &hwInfo.gtSystemInfo,
-                       hwInfo.capabilityTable.gpuAddressSpace);
+        setAdapterInfo(&hwInfo);
     }
 }
 
@@ -319,18 +315,14 @@ TEST_F(WddmTests, GivenProperTopologyDataWhenInitializingWddmThenExpectTopologyM
         hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].Enabled = true;
         hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].EuEnabledCount = 4;
 
-        setAdapterInfo(&hwInfo.platform,
-                       &hwInfo.gtSystemInfo,
-                       hwInfo.capabilityTable.gpuAddressSpace);
+        setAdapterInfo(&hwInfo);
     }
     EXPECT_TRUE(wddm->init());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_EQ(topologyMap.size(), 1u);
     {
         auto hwInfo = *defaultHwInfo;
-        setAdapterInfo(&hwInfo.platform,
-                       &hwInfo.gtSystemInfo,
-                       hwInfo.capabilityTable.gpuAddressSpace);
+        setAdapterInfo(&hwInfo);
     }
 }
 
@@ -348,18 +340,14 @@ TEST_F(WddmTests, GivenNoSubsliceEnabledWhenInitializingWddmThenExpectIntializat
             hwInfo.gtSystemInfo.SliceInfo[slice].DSSInfo[0].SubSlice[1].Enabled = false;
             hwInfo.gtSystemInfo.SliceInfo[slice].SubSliceInfo[0].Enabled = false;
         }
-        setAdapterInfo(&hwInfo.platform,
-                       &hwInfo.gtSystemInfo,
-                       hwInfo.capabilityTable.gpuAddressSpace);
+        setAdapterInfo(&hwInfo);
     }
     EXPECT_FALSE(wddm->init());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_TRUE(topologyMap.empty());
     {
         auto hwInfo = *defaultHwInfo;
-        setAdapterInfo(&hwInfo.platform,
-                       &hwInfo.gtSystemInfo,
-                       hwInfo.capabilityTable.gpuAddressSpace);
+        setAdapterInfo(&hwInfo);
     }
 }
 

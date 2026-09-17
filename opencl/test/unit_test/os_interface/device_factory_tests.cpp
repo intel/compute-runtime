@@ -33,14 +33,14 @@
 
 using namespace NEO;
 
-void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
+void setAdapterInfo(const HardwareInfo *hwInfo);
 
 struct DeviceFactoryTest : public ::testing::Test {
   public:
     void SetUp() override {
         const HardwareInfo *hwInfo = defaultHwInfo.get();
         executionEnvironment = platform()->peekExecutionEnvironment();
-        setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace);
+        setAdapterInfo(hwInfo);
     }
 
   protected:

@@ -150,9 +150,7 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapter
 TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenHardwareInfoIsCorrectlyPopulated) {
 
     const HardwareInfo *hwInfo = defaultHwInfo.get();
-    setAdapterInfo(&hwInfo->platform,
-                   &hwInfo->gtSystemInfo,
-                   hwInfo->capabilityTable.gpuAddressSpace);
+    setAdapterInfo(hwInfo);
 
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
@@ -167,9 +165,7 @@ TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenHardwareInfoIsCorrectlyPopu
 TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenCompilerReleaseHelperIsCreated) {
 
     const HardwareInfo *hwInfo = defaultHwInfo.get();
-    setAdapterInfo(&hwInfo->platform,
-                   &hwInfo->gtSystemInfo,
-                   hwInfo->capabilityTable.gpuAddressSpace);
+    setAdapterInfo(hwInfo);
 
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
@@ -181,9 +177,7 @@ TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenCompilerReleaseHelperIsCrea
 TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFalseIsReturnedAndOutputIsEmpty) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.platform.eProductFamily = IGFX_UNKNOWN;
-    setAdapterInfo(&hwInfo.platform,
-                   &hwInfo.gtSystemInfo,
-                   hwInfo.capabilityTable.gpuAddressSpace);
+    setAdapterInfo(&hwInfo);
 
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
@@ -193,9 +187,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
 
     // reset mock gdi
     hwInfo = *defaultHwInfo;
-    setAdapterInfo(&hwInfo.platform,
-                   &hwInfo.gtSystemInfo,
-                   hwInfo.capabilityTable.gpuAddressSpace);
+    setAdapterInfo(&hwInfo);
 }
 
 TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
@@ -2163,7 +2155,7 @@ TEST_F(WddmTestWithMockGdiDll, givenNoMaxDualSubSlicesSupportedWhenQueryAdapterI
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = maxSS;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 0u;
 
-    setAdapterInfo(&hwInfo.platform, &hwInfo.gtSystemInfo, hwInfo.capabilityTable.gpuAddressSpace);
+    setAdapterInfo(&hwInfo);
     EXPECT_TRUE(wddm->queryAdapterInfo());
     EXPECT_EQ(0u, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
 }
@@ -2175,7 +2167,7 @@ TEST_F(WddmTestWithMockGdiDll, givenNonZeroMaxDualSubSlicesSupportedWhenQueryAda
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = maxSS;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = expectedMaxDSS;
 
-    setAdapterInfo(&hwInfo.platform, &hwInfo.gtSystemInfo, hwInfo.capabilityTable.gpuAddressSpace);
+    setAdapterInfo(&hwInfo);
     EXPECT_TRUE(wddm->queryAdapterInfo());
     EXPECT_EQ(expectedMaxDSS, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
     EXPECT_NE(maxSS / 2, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);

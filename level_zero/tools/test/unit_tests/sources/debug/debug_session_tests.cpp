@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
-#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_product_helper.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
-#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
@@ -179,9 +179,9 @@ TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     std::string receivedInput;
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.receivedInput = &receivedInput;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
     progDst->link(progDst->getDevices(), "", 3, inputPrograms);
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 
     std::string elfDecodeError;
     std::string elfDecoceWarnings;

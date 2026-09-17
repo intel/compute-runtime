@@ -5,9 +5,8 @@
  *
  */
 
-#include "common/gtsysinfo.h"
-#include "neo_igfxfmid.h"
+#include "shared/source/helpers/hw_info.h"
 
-void setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
+void setAdapterInfo(const NEO::HardwareInfo *hwInfo) {
 }
 void setupExternalDependencies() {}

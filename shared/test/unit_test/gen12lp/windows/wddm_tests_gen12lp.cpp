@@ -56,9 +56,7 @@ GEN12LPTEST_F(Gen12LpWddmHwInfoTest, givenIncorrectProductFamiliyWhenInitCalledT
     localHwInfo.platform.eRenderCoreFamily = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE;
     localHwInfo.platform.eDisplayCoreFamily = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE;
 
-    setAdapterInfo(&localHwInfo.platform,
-                   &localHwInfo.gtSystemInfo,
-                   localHwInfo.capabilityTable.gpuAddressSpace);
+    setAdapterInfo(&localHwInfo);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
@@ -74,7 +72,5 @@ GEN12LPTEST_F(Gen12LpWddmHwInfoTest, givenIncorrectProductFamiliyWhenInitCalledT
 
     // reset mock gdi globals
     localHwInfo = *defaultHwInfo;
-    setAdapterInfo(&localHwInfo.platform,
-                   &localHwInfo.gtSystemInfo,
-                   localHwInfo.capabilityTable.gpuAddressSpace);
+    setAdapterInfo(&localHwInfo);
 }

@@ -17,7 +17,6 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
@@ -489,8 +488,8 @@ TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderVersion4WhenGetSipKernelIsC
     MockCompilerDebugVars debugVars = {};
     debugVars.stateSaveAreaHeaderToReturn = stateSaveAreaHeader.data();
     debugVars.stateSaveAreaHeaderToReturnSize = stateSaveAreaHeader.size();
-    gEnvironment->igcPushDebugVars(debugVars);
-    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) -> void { gEnvironment->igcPopDebugVars(); }};
+    NEO::igcPushDebugVars(debugVars);
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{this, [](void *) -> void { NEO::igcPopDebugVars(); }};
 
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.requiredPreemptionSurfaceSize = static_cast<size_t>(MockSipData::totalWmtpDataSize * 4);
@@ -952,7 +951,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenSipIsInitializedThenBinaryIs
     binary[6] = 0xcafebead;
     igcDebugVars.binaryToReturnSize = sizeof(binary);
     igcDebugVars.binaryToReturn = binary;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
@@ -979,7 +978,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenSipIsInitializedThenBinaryIs
     EXPECT_EQ(6u, sipKernel->getPidOffset());
     EXPECT_EQ(sizeof(binary), sipKernel->getBinary().size());
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitializedThenContextIdOffsetsAreZero) {
@@ -988,7 +987,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitialize
     binary[19] = 0xcafebead;
     igcDebugVars.binaryToReturnSize = sizeof(binary);
     igcDebugVars.binaryToReturn = binary;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
@@ -1015,7 +1014,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitialize
     EXPECT_EQ(0u, sipKernel->getPidOffset());
     EXPECT_EQ(sizeof(binary), sipKernel->getBinary().size());
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedThenContextIdIsPatched) {
@@ -1025,7 +1024,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
     binary[6] = 0xcafebead;
     igcDebugVars.binaryToReturnSize = sizeof(binary);
     igcDebugVars.binaryToReturn = binary;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
@@ -1066,7 +1065,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
     EXPECT_EQ(low, patchedBinary[2]);
     EXPECT_EQ(high, patchedBinary[6]);
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 using DebugBuiltinSipTest = Test<DeviceFixture>;

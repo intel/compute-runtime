@@ -87,9 +87,7 @@ struct Wddm20WithMockGdiDllTests : public Wddm20WithMockGdiDllTestsWithoutWddmIn
 
 TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapabilityTableIsSet) {
     const HardwareInfo *hwInfo = defaultHwInfo.get();
-    setAdapterInfo(&hwInfo->platform,
-                   &hwInfo->gtSystemInfo,
-                   hwInfo->capabilityTable.gpuAddressSpace);
+    setAdapterInfo(hwInfo);
 
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);

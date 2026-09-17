@@ -645,8 +645,8 @@ kernels:
     MockCompilerDebugVars debugVars;
     debugVars.binaryToReturn = const_cast<unsigned char *>(zebin.storage.data());
     debugVars.binaryToReturnSize = zebin.storage.size();
-    gEnvironment->igcPushDebugVars(debugVars);
-    gEnvironment->fclPushDebugVars(debugVars);
+    NEO::igcPushDebugVars(debugVars);
+    NEO::fclPushDebugVars(debugVars);
 
     cl_int retVal = CL_INVALID_PROGRAM;
     pProgram = clCreateProgramWithSource(
@@ -685,8 +685,8 @@ kernels:
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    gEnvironment->igcPopDebugVars();
-    gEnvironment->fclPopDebugVars();
+    NEO::igcPopDebugVars();
+    NEO::fclPopDebugVars();
 }
 
 TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWithCreatedKernelWhenBuildingProgramForSecondDeviceThenInvalidOperationReturned) {

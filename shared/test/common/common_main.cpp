@@ -22,8 +22,8 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/virtual_file_system_listener.h"
-#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/signal_utils.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_os_thread.h"
 #include "shared/test/common/mocks/mock_sip.h"
@@ -98,6 +98,8 @@ bool isChangeDirectoryRequired();
 void addUltListener(::testing::TestEventListeners &listener);
 void cleanTestHelpers();
 void populateApiSpecificVirtualFileList(const NEO::HardwareInfo &hwInfo);
+void setAdapterInfo(const NEO::HardwareInfo *hwInfo);
+void setupExternalDependencies();
 
 bool generateRandomInput = false;
 extern std::optional<uint32_t> blitterMaskOverride;
@@ -353,6 +355,8 @@ int main(int argc, char **argv) {
     bool ultListenersInitialized = false;
     bool gmmInitialized = false;
     bool sipInitialized = false;
+    bool debugVarsPushed = false;
+    NEO::MockCompilerEnableGuard mockCompilerGuard(true);
 
     adjustCsrType(testMode);
     for (auto &selectedProduct : selectedTestProducts) {
@@ -432,19 +436,22 @@ int main(int argc, char **argv) {
             ultListenersInitialized = true;
         }
 
-        if (!gEnvironment) {
-            gEnvironment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));
+        setupExternalDependencies();
+        setAdapterInfo(defaultHwInfo.get());
+
+        if (!debugVarsPushed) {
+            MockCompilerDebugVars fclDebugVars;
+            MockCompilerDebugVars igcDebugVars;
+
+            static uint8_t mockBuiltInIrPlaceholder[64] = {};
+            memcpy_s(mockBuiltInIrPlaceholder, sizeof(mockBuiltInIrPlaceholder), NEO::spirvMagic.data(), NEO::spirvMagic.size());
+            fclDebugVars.binaryToReturn = mockBuiltInIrPlaceholder;
+            fclDebugVars.binaryToReturnSize = sizeof(mockBuiltInIrPlaceholder);
+
+            NEO::fclPushDebugVars(fclDebugVars);
+            NEO::igcPushDebugVars(igcDebugVars);
+            debugVarsPushed = true;
         }
-
-        MockCompilerDebugVars fclDebugVars;
-        MockCompilerDebugVars igcDebugVars;
-
-        static uint8_t mockBuiltInIrPlaceholder[64] = {};
-        memcpy_s(mockBuiltInIrPlaceholder, sizeof(mockBuiltInIrPlaceholder), NEO::spirvMagic.data(), NEO::spirvMagic.size());
-        fclDebugVars.binaryToReturn = mockBuiltInIrPlaceholder;
-        fclDebugVars.binaryToReturnSize = sizeof(mockBuiltInIrPlaceholder);
-
-        gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
         int sigOut = setSegv(enableSegv);
         if (sigOut != 0) {
