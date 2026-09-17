@@ -12,7 +12,7 @@ namespace NEO {
 struct EuDebugConnect {
     uint64_t extensions;
     uint64_t pid;
-    uint32_t flags;
+    uint64_t flags;
     uint32_t version;
 };
 
@@ -211,8 +211,8 @@ struct VmBindOpExtDebugData {
     uint64_t addr;
     uint64_t range;
     uint64_t flags;
-    uint32_t offset;
-    uint32_t reserved;
+    uint64_t offset;
+    uint64_t reserved;
     union {
         uint64_t pseudopath;
         char pathname[PATH_MAX];

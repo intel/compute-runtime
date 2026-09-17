@@ -461,7 +461,7 @@ TEST_F(IoctlHelperXeDebugDataTest, givenUpstreamDebuggerWhenAddDebugDataAndCreat
     xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
 
     uint32_t vmId = 1;
-    auto isAdd = false;
+    auto isAdd = true;
     {
         MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
         bo.gpuAddress = 0x1234;
@@ -521,6 +521,76 @@ TEST_F(IoctlHelperXeDebugDataTest, givenUpstreamDebuggerWhenAddDebugDataAndCreat
         EXPECT_EQ(debugData.base.nextExtension, 0u);
         EXPECT_EQ(debugData.flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
         EXPECT_EQ(debugData.pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea));
+        EXPECT_EQ(debugData.addr, 0x3456u);
+        EXPECT_EQ(debugData.range, 0x1002u);
+        EXPECT_EQ(debugData.offset, 0u);
+    }
+}
+
+TEST_F(IoctlHelperXeDebugDataTest, givenUpstreamDebuggerWhenAddDebugDataAndCreateBindOpVecCalledWithNotAddThenVectorWithDebugDataReturned) {
+    xeIoctlHelper->euDebugInterface = std::make_unique<EuDebugInterfaceUpstream>();
+
+    uint32_t vmId = 1;
+    auto isAdd = false;
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        bo.gpuAddress = 0x1234;
+        bo.size = 0x1000;
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        auto result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+        EXPECT_NE(std::nullopt, result);
+        auto debugData = result.value()[0];
+
+        EXPECT_EQ(debugData.base.name, 0u);
+        EXPECT_EQ(debugData.base.nextExtension, 0u);
+        EXPECT_EQ(debugData.flags, 0u);
+        EXPECT_EQ(debugData.pseudopath, 0u);
+        EXPECT_EQ(debugData.addr, 0x1234u);
+        EXPECT_EQ(debugData.range, 0x1000u);
+        EXPECT_EQ(debugData.offset, 0u);
+    }
+
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        bo.gpuAddress = 0x2345;
+        bo.size = 0x1001;
+
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        auto result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+        EXPECT_NE(std::nullopt, result);
+        auto debugData = result.value()[0];
+
+        EXPECT_EQ(debugData.base.name, 0u);
+        EXPECT_EQ(debugData.base.nextExtension, 0u);
+        EXPECT_EQ(debugData.flags, 0u);
+        EXPECT_EQ(debugData.pseudopath, 0u);
+        EXPECT_EQ(debugData.addr, 0x2345u);
+        EXPECT_EQ(debugData.range, 0x1001u);
+        EXPECT_EQ(debugData.offset, 0u);
+    }
+
+    {
+        MockBufferObject bo(rootDeviceIndex, drm.get(), 3, 0, 0, 1);
+        bo.gpuAddress = 0x3456;
+        bo.size = 0x1002;
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugModuleArea, MemoryPool::localMemory);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(drm.get());
+
+        auto result = drm->ioctlHelper->addDebugDataAndCreateBindOpVec(&bo, vmId, isAdd);
+        EXPECT_NE(std::nullopt, result);
+        auto debugData = result.value()[0];
+
+        EXPECT_EQ(debugData.base.name, 0u);
+        EXPECT_EQ(debugData.base.nextExtension, 0u);
+        EXPECT_EQ(debugData.flags, 0u);
+        EXPECT_EQ(debugData.pseudopath, 0u);
         EXPECT_EQ(debugData.addr, 0x3456u);
         EXPECT_EQ(debugData.range, 0x1002u);
         EXPECT_EQ(debugData.offset, 0u);
@@ -634,7 +704,7 @@ TEST_F(IoctlHelperXeDebugDataTest, givenSingleIsaWhenAddDebugDataAndCreateBindOp
     EXPECT_EQ(data1.base.name, 0u);
     EXPECT_EQ(data1.base.nextExtension, 0u);
     EXPECT_EQ(data1.flags, 0u);
-    EXPECT_STREQ(data1.pathname, "mockElfPath");
+    EXPECT_STREQ(data1.pathname, "");
     EXPECT_EQ(data1.addr, bo.gpuAddress);
     EXPECT_EQ(data1.range, bo.size);
     EXPECT_EQ(data1.offset, 0u);
@@ -642,7 +712,7 @@ TEST_F(IoctlHelperXeDebugDataTest, givenSingleIsaWhenAddDebugDataAndCreateBindOp
     EXPECT_EQ(data2.base.name, 0u);
     EXPECT_EQ(data2.base.nextExtension, 0u);
     EXPECT_EQ(data2.flags, 0u);
-    EXPECT_STREQ(data2.pathname, "mockElfPath");
+    EXPECT_STREQ(data2.pathname, "");
     EXPECT_EQ(data2.addr, bo2.gpuAddress);
     EXPECT_EQ(data2.range, bo2.size);
     EXPECT_EQ(data2.offset, 0u);
@@ -650,7 +720,7 @@ TEST_F(IoctlHelperXeDebugDataTest, givenSingleIsaWhenAddDebugDataAndCreateBindOp
     EXPECT_EQ(data3.base.name, 0u);
     EXPECT_EQ(data3.base.nextExtension, 0u);
     EXPECT_EQ(data3.flags, 0u);
-    EXPECT_STREQ(data3.pathname, "mockElfPath");
+    EXPECT_STREQ(data3.pathname, "");
     EXPECT_EQ(data3.addr, bo3.gpuAddress);
     EXPECT_EQ(data3.range, bo3.size);
     EXPECT_EQ(data3.offset, 0u);
@@ -840,6 +910,8 @@ TEST_F(IoctlHelperXeDebugDataTest, givenPseudoDebugDataWhenCallbindAddDebugDataW
     EXPECT_EQ(bindDebugData->addr, 0x1234u);
     EXPECT_EQ(bindDebugData->range, 0x1000u);
     EXPECT_EQ(bindDebugData->flags, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag));
+    EXPECT_EQ(bindDebugData->offset, 0u);
+    EXPECT_EQ(bindDebugData->reserved, 0u);
     EXPECT_EQ(bindDebugData->pseudopath, xeIoctlHelper->euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea));
 
     EXPECT_EQ(drm->waitUserFenceInputs.size(), 0u);

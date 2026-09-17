@@ -3,6 +3,12 @@
  * Copyright © 2023 Intel Corporation
  */
 
+/*
+ * NOTE: Local deviation from the kernel copy, which uses _UAPI_XE_DRM_H_.
+ * This snapshot must share an include guard with the other xe_drm.h snapshots
+ * under third_party/, because some translation units reach more than one of
+ * them and the shared guard is what keeps only a single definition active.
+ */
 #ifndef _XE_DRM_H_
 #define _XE_DRM_H_
 
@@ -85,6 +91,8 @@ extern "C" {
  *  - &DRM_IOCTL_XE_OBSERVATION
  *  - &DRM_IOCTL_XE_MADVISE
  *  - &DRM_IOCTL_XE_VM_QUERY_MEM_RANGE_ATTRS
+ *  - &DRM_IOCTL_XE_EXEC_QUEUE_SET_PROPERTY
+ *  - &DRM_IOCTL_XE_VM_GET_PROPERTY
  */
 
 /*
@@ -108,7 +116,9 @@ extern "C" {
 #define DRM_XE_OBSERVATION		0x0b
 #define DRM_XE_MADVISE			0x0c
 #define DRM_XE_VM_QUERY_MEM_RANGE_ATTRS	0x0d
-#define DRM_XE_EUDEBUG_CONNECT		0x0e
+#define DRM_XE_EXEC_QUEUE_SET_PROPERTY	0x0e
+#define DRM_XE_VM_GET_PROPERTY		0x0f
+#define DRM_XE_EUDEBUG_CONNECT		0x10
 
 /* Must be kept compact -- no holes */
 
@@ -126,7 +136,9 @@ extern "C" {
 #define DRM_IOCTL_XE_OBSERVATION		DRM_IOW(DRM_COMMAND_BASE + DRM_XE_OBSERVATION, struct drm_xe_observation_param)
 #define DRM_IOCTL_XE_MADVISE			DRM_IOW(DRM_COMMAND_BASE + DRM_XE_MADVISE, struct drm_xe_madvise)
 #define DRM_IOCTL_XE_VM_QUERY_MEM_RANGE_ATTRS	DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_VM_QUERY_MEM_RANGE_ATTRS, struct drm_xe_vm_query_mem_range_attr)
-#define DRM_IOCTL_XE_EUDEBUG_CONNECT		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_EUDEBUG_CONNECT, struct drm_xe_eudebug_connect)
+#define DRM_IOCTL_XE_EXEC_QUEUE_SET_PROPERTY	DRM_IOW(DRM_COMMAND_BASE + DRM_XE_EXEC_QUEUE_SET_PROPERTY, struct drm_xe_exec_queue_set_property)
+#define DRM_IOCTL_XE_VM_GET_PROPERTY		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_VM_GET_PROPERTY, struct drm_xe_vm_get_property)
+#define DRM_IOCTL_XE_EUDEBUG_CONNECT		DRM_IOW(DRM_COMMAND_BASE + DRM_XE_EUDEBUG_CONNECT, struct drm_xe_eudebug_connect)
 
 /**
  * DOC: Xe IOCTL Extensions
@@ -144,7 +156,7 @@ extern "C" {
  * redefine the interface more easily than an ever growing struct of
  * increasing complexity, and for large parts of that interface to be
  * entirely optional. The downside is more pointer chasing; chasing across
- * the boundary with pointers encapsulated inside u64.
+ * the __user boundary with pointers encapsulated inside u64.
  *
  * Example chaining:
  *
@@ -166,7 +178,7 @@ extern "C" {
  * Typically the struct drm_xe_user_extension would be embedded in some uAPI
  * struct, and in this case we would feed it the head of the chain(i.e ext1),
  * which would then apply all of the above extensions.
-*/
+ */
 
 /**
  * struct drm_xe_user_extension - Base class for defining a chain of extensions
@@ -214,8 +226,12 @@ struct drm_xe_ext_set_property {
 	/** @pad: MBZ */
 	__u32 pad;
 
-	/** @value: property value */
-	__u64 value;
+	union {
+		/** @value: property value */
+		__u64 value;
+		/** @ptr: pointer to user value */
+		__u64 ptr;
+	};
 
 	/** @reserved: Reserved */
 	__u64 reserved[2];
@@ -224,9 +240,9 @@ struct drm_xe_ext_set_property {
 /**
  * struct drm_xe_engine_class_instance - instance of an engine class
  *
- * It is returned as part of the @drm_xe_engine, but it also is used as
- * the input of engine selection for both @drm_xe_exec_queue_create and
- * @drm_xe_query_engine_cycles
+ * It is returned as part of the &struct drm_xe_engine, but it also is used as
+ * the input of engine selection for both &struct drm_xe_exec_queue_create and
+ * &struct drm_xe_query_engine_cycles
  *
  * The @engine_class can be:
  *  - %DRM_XE_ENGINE_CLASS_RENDER
@@ -259,7 +275,7 @@ struct drm_xe_engine_class_instance {
  * struct drm_xe_engine - describe hardware engine
  */
 struct drm_xe_engine {
-	/** @instance: The @drm_xe_engine_class_instance */
+	/** @instance: The &struct drm_xe_engine_class_instance */
 	struct drm_xe_engine_class_instance instance;
 
 	/** @reserved: Reserved */
@@ -269,9 +285,9 @@ struct drm_xe_engine {
 /**
  * struct drm_xe_query_engines - describe engines
  *
- * If a query is made with a struct @drm_xe_device_query where .query
+ * If a query is made with a &struct drm_xe_device_query where .query
  * is equal to %DRM_XE_DEVICE_QUERY_ENGINES, then the reply uses an array of
- * struct @drm_xe_query_engines in .data.
+ * &struct drm_xe_query_engines in .data.
  */
 struct drm_xe_query_engines {
 	/** @num_engines: number of engines returned in @engines */
@@ -333,10 +349,6 @@ struct drm_xe_mem_region {
 	__u64 total_size;
 	/**
 	 * @used: Estimate of the memory used in bytes for this region.
-	 *
-	 * Requires CAP_PERFMON or CAP_SYS_ADMIN to get reliable
-	 * accounting.  Without this the value here will always equal
-	 * zero.
 	 */
 	__u64 used;
 	/**
@@ -348,7 +360,7 @@ struct drm_xe_mem_region {
 	 * is smaller than @total_size then this is referred to as a
 	 * small BAR system.
 	 *
-	 * On systems without small BAR (full BAR), the probed_size will
+	 * On systems without small BAR (full BAR), the @cpu_visible_size will
 	 * always equal the @total_size, since all of it will be CPU
 	 * accessible.
 	 *
@@ -361,9 +373,7 @@ struct drm_xe_mem_region {
 	 * @cpu_visible_used: Estimate of CPU visible memory used, in
 	 * bytes.
 	 *
-	 * Requires CAP_PERFMON or CAP_SYS_ADMIN to get reliable
-	 * accounting. Without this the value here will always equal
-	 * zero.  Note this is only currently tracked for
+	 * Note this is only currently tracked for
 	 * DRM_XE_MEM_REGION_CLASS_VRAM regions (for other types the value
 	 * here will always be zero).
 	 */
@@ -407,6 +417,12 @@ struct drm_xe_query_mem_regions {
  *      has low latency hint support
  *    - %DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR - Flag is set if the
  *      device has CPU address mirroring support
+ *    - %DRM_XE_QUERY_CONFIG_FLAG_HAS_NO_COMPRESSION_HINT - Flag is set if the
+ *      device supports the userspace hint %DRM_XE_GEM_CREATE_FLAG_NO_COMPRESSION.
+ *      This is exposed only on Xe2+.
+ *    - %DRM_XE_QUERY_CONFIG_FLAG_HAS_DISABLE_STATE_CACHE_PERF_FIX - Flag is set
+ *      if a queue can be created with
+ *      %DRM_XE_EXEC_QUEUE_SET_DISABLE_STATE_CACHE_PERF_FIX
  *  - %DRM_XE_QUERY_CONFIG_MIN_ALIGNMENT - Minimal memory alignment
  *    required by this device, typically SZ_4K or SZ_64K
  *  - %DRM_XE_QUERY_CONFIG_VA_BITS - Maximum bits of a virtual address
@@ -425,6 +441,9 @@ struct drm_xe_query_config {
 	#define DRM_XE_QUERY_CONFIG_FLAG_HAS_VRAM	(1 << 0)
 	#define DRM_XE_QUERY_CONFIG_FLAG_HAS_LOW_LATENCY	(1 << 1)
 	#define DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR	(1 << 2)
+	#define DRM_XE_QUERY_CONFIG_FLAG_HAS_NO_COMPRESSION_HINT (1 << 3)
+	#define DRM_XE_QUERY_CONFIG_FLAG_HAS_DISABLE_STATE_CACHE_PERF_FIX	(1 << 4)
+	#define DRM_XE_QUERY_CONFIG_FLAG_HAS_PURGING_SUPPORT    (1 << 5)
 #define DRM_XE_QUERY_CONFIG_MIN_ALIGNMENT		2
 #define DRM_XE_QUERY_CONFIG_VA_BITS			3
 #define DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY	4
@@ -697,7 +716,10 @@ struct drm_xe_query_pxp_status {
  *    attributes.
  *  - %DRM_XE_DEVICE_QUERY_GT_TOPOLOGY
  *  - %DRM_XE_DEVICE_QUERY_ENGINE_CYCLES
+ *  - %DRM_XE_DEVICE_QUERY_UC_FW_VERSION
+ *  - %DRM_XE_DEVICE_QUERY_OA_UNITS
  *  - %DRM_XE_DEVICE_QUERY_PXP_STATUS
+ *  - %DRM_XE_DEVICE_QUERY_EU_STALL
  *
  * If size is set to 0, the driver fills it with the required size for
  * the requested type of data to query. If size is equal to the required
@@ -775,7 +797,11 @@ struct drm_xe_device_query {
  *    until the object is either bound to a virtual memory region via
  *    VM_BIND or accessed by the CPU. As a result, no backing memory is
  *    reserved at the time of GEM object creation.
- *  - %DRM_XE_GEM_CREATE_FLAG_SCANOUT
+ *  - %DRM_XE_GEM_CREATE_FLAG_SCANOUT - Indicates that the GEM object is
+ *    intended for scanout via the display engine. When set, kernel ensures
+ *    that the allocation is placed in a memory region compatible with the
+ *    display engine requirements. This may impose restrictions on tiling,
+ *    alignment, and memory placement to guarantee proper display functionality.
  *  - %DRM_XE_GEM_CREATE_FLAG_NEEDS_VISIBLE_VRAM - When using VRAM as a
  *    possible placement, ensure that the corresponding VRAM allocation
  *    will always use the CPU accessible part of VRAM. This is important
@@ -791,6 +817,17 @@ struct drm_xe_device_query {
  *    need to use VRAM for display surfaces, therefore the kernel requires
  *    setting this flag for such objects, otherwise an error is thrown on
  *    small-bar systems.
+ *  - %DRM_XE_GEM_CREATE_FLAG_NO_COMPRESSION - Allows userspace to
+ *    hint that compression (CCS) should be disabled for the buffer being
+ *    created. This can avoid unnecessary memory operations and CCS state
+ *    management.
+ *    On pre-Xe2 platforms, this flag is currently rejected as compression
+ *    control is not supported via PAT index. On Xe2+ platforms, compression
+ *    is controlled via PAT entries. If this flag is set, the driver will reject
+ *    any VM bind that requests a PAT index enabling compression for this BO.
+ *    Note: On dGPU platforms, there is currently no change in behavior with
+ *    this flag, but future improvements may leverage it. The current benefit is
+ *    primarily applicable to iGPU platforms.
  *
  * @cpu_caching supports the following values:
  *  - %DRM_XE_GEM_CPU_CACHING_WB - Allocate the pages with write-back
@@ -802,7 +839,7 @@ struct drm_xe_device_query {
  *
  * This ioctl supports setting the following properties via the
  * %DRM_XE_GEM_CREATE_EXTENSION_SET_PROPERTY extension, which uses the
- * generic @drm_xe_ext_set_property struct:
+ * generic &struct drm_xe_ext_set_property:
  *
  *  - %DRM_XE_GEM_CREATE_SET_PROPERTY_PXP_TYPE - set the type of PXP session
  *    this object will be used with. Valid values are listed in enum
@@ -837,9 +874,9 @@ struct drm_xe_gem_create {
 #define DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING		(1 << 0)
 #define DRM_XE_GEM_CREATE_FLAG_SCANOUT			(1 << 1)
 #define DRM_XE_GEM_CREATE_FLAG_NEEDS_VISIBLE_VRAM	(1 << 2)
+#define DRM_XE_GEM_CREATE_FLAG_NO_COMPRESSION		(1 << 3)
 	/**
-	 * @flags: Flags, currently a mask of memory instances of where BO can
-	 * be placed
+	 * @flags: Flags for the GEM object, see DRM_XE_GEM_CREATE_FLAG_*
 	 */
 	__u32 flags;
 
@@ -864,7 +901,7 @@ struct drm_xe_gem_create {
 #define DRM_XE_GEM_CPU_CACHING_WC                      2
 	/**
 	 * @cpu_caching: The CPU caching mode to select for this object. If
-	 * mmaping the object the mode selected here will also be used. The
+	 * mmapping the object the mode selected here will also be used. The
 	 * exception is when mapping system memory (including data evicted
 	 * to system) on discrete GPUs. The caching mode selected will
 	 * then be overridden to DRM_XE_GEM_CPU_CACHING_WB, and coherency
@@ -907,7 +944,7 @@ struct drm_xe_gem_create {
  *
  *     err = ioctl(fd, DRM_IOCTL_XE_GEM_MMAP_OFFSET, &mmo);
  *     map = mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, mmo.offset);
- *     map[i] = 0xdeadbeaf; // issue barrier
+ *     map[i] = 0xdeadbeef; // issue barrier
  */
 struct drm_xe_gem_mmap_offset {
 	/** @extensions: Pointer to the first extension struct, if any */
@@ -934,8 +971,8 @@ struct drm_xe_gem_mmap_offset {
  *  - %DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE - Map the whole virtual address
  *    space of the VM to scratch page. A vm_bind would overwrite the scratch
  *    page mapping. This flag is mutually exclusive with the
- *    %DRM_XE_VM_CREATE_FLAG_FAULT_MODE flag, with an exception of on x2 and
- *    xe3 platform.
+ *    %DRM_XE_VM_CREATE_FLAG_FAULT_MODE flag, with an exception on Xe2 and
+ *    Xe3 platforms.
  *  - %DRM_XE_VM_CREATE_FLAG_LR_MODE - An LR, or Long Running VM accepts
  *    exec submissions to its exec_queues that don't have an upper time
  *    limit on the job execution time. But exec submissions to these
@@ -953,6 +990,11 @@ struct drm_xe_gem_mmap_offset {
  *    demand when accessed, and also allows per-VM overcommit of memory.
  *    The xe driver internally uses recoverable pagefaults to implement
  *    this.
+ *  - %DRM_XE_VM_CREATE_FLAG_NO_VM_OVERCOMMIT - Requires also
+ *    DRM_XE_VM_CREATE_FLAG_FAULT_MODE. This disallows per-VM overcommit
+ *    but only during a &DRM_IOCTL_XE_VM_BIND operation with the
+ *    %DRM_XE_VM_BIND_FLAG_IMMEDIATE flag set. This may be useful for
+ *    user-space naively probing the amount of available memory.
  */
 struct drm_xe_vm_create {
 	/** @extensions: Pointer to the first extension struct, if any */
@@ -961,6 +1003,7 @@ struct drm_xe_vm_create {
 #define DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE	(1 << 0)
 #define DRM_XE_VM_CREATE_FLAG_LR_MODE	        (1 << 1)
 #define DRM_XE_VM_CREATE_FLAG_FAULT_MODE	(1 << 2)
+#define DRM_XE_VM_CREATE_FLAG_NO_VM_OVERCOMMIT  (1 << 3)
 	/** @flags: Flags */
 	__u32 flags;
 
@@ -985,31 +1028,59 @@ struct drm_xe_vm_destroy {
 	__u64 reserved[2];
 };
 
+/**
+ * struct drm_xe_vm_bind_op_ext_debug_data - debug data extension struct for
+ * :c:type:`drm_xe_vm_bind_op`
+ *
+ * The GPU VM can be annotated by issuing a bind operation with the
+ * :c:member:`drm_xe_vm_bind_op.op` set to %DRM_XE_VM_BIND_OP_ADD_DEBUG_DATA or
+ * %DRM_XE_VM_BIND_OP_REMOVE_DEBUG_DATA. Each such operation has to provide a
+ * :c:type:`drm_xe_vm_bind_op_ext_debug_data` extension, which describes the
+ * debug data to add or remove.
+ *
+ * This extension can either point to a file that contains relevant debug data
+ * or annotate the VM range with a pseudopath by setting the
+ * %DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO flag and providing one of the supported
+ * pseudopath values:
+ *  - %DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_MODULE_AREA
+ *  - %DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SBA_AREA
+ *  - %DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA
+ *
+ */
 struct drm_xe_vm_bind_op_ext_debug_data {
-	/** @base: base user extension */
+	/** @base: Base user extension */
 	struct drm_xe_user_extension base;
 
-	/** @addr: Address of the metadata mapping */
+	/** @addr: Address of the debug data mapping */
 	__u64 addr;
 
-	/** @range: Range of the metadata mapping */
+	/** @range: Range of the debug data mapping */
 	__u64 range;
 
 #define DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO (1 << 0)
-	/** @flags: Debug metadata flags */
+	/** @flags: Debug data flags */
 	__u64 flags;
 
-	/** @offset: Offset into the debug data file, MBZ for DEBUG_PSEUDO */
-	__u32 offset;
+	/**
+	 * @offset: Offset into the debug data file, MBZ when
+	 * %DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO is set
+	 */
+	__u64 offset;
 
 	/** @reserved: Reserved */
-	__u32 reserved;
+	__u64 reserved;
 
 	union {
 #define DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_MODULE_AREA	0x1
 #define DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SBA_AREA	0x2
 #define DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA	0x3
+		/**
+		 * @pseudopath: Pseudopath used when
+		 * %DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO is set
+		 */
 		__u64 pseudopath;
+
+		/** @pathname: Path to the debug data file */
 		char pathname[PATH_MAX];
 	};
 };
@@ -1046,8 +1117,30 @@ struct drm_xe_vm_bind_op_ext_debug_data {
  *    set, no mappings are created rather the range is reserved for CPU address
  *    mirroring which will be populated on GPU page faults or prefetches. Only
  *    valid on VMs with DRM_XE_VM_CREATE_FLAG_FAULT_MODE set. The CPU address
- *    mirror flag are only valid for DRM_XE_VM_BIND_OP_MAP operations, the BO
+ *    mirror flag is only valid for DRM_XE_VM_BIND_OP_MAP operations, the BO
  *    handle MBZ, and the BO offset MBZ.
+ *  - %DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET - Can be used in combination with
+ *    %DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR to reset madvises when the underlying
+ *    CPU address space range is unmapped (typically with munmap(2) or brk(2)).
+ *    The madvise values set with &DRM_IOCTL_XE_MADVISE are reset to the values
+ *    that were present immediately after the &DRM_IOCTL_XE_VM_BIND.
+ *    The reset GPU virtual address range is the intersection of the range bound
+ *    using &DRM_IOCTL_XE_VM_BIND and the virtual CPU address space range
+ *    unmapped.
+ *    This functionality is present to mimic the behaviour of CPU address space
+ *    madvises set using madvise(2), which are typically reset on unmap.
+ *    Note: free(3) may or may not call munmap(2) and/or brk(2), and may thus
+ *    not invoke autoreset. Neither will stack variables going out of scope.
+ *    Therefore it's recommended to always explicitly reset the madvises when
+ *    freeing the memory backing a region used in a &DRM_IOCTL_XE_MADVISE call.
+ *
+ *  - %DRM_XE_VM_BIND_FLAG_DECOMPRESS - Request on-device decompression for a MAP.
+ *    When set on a MAP bind operation, request the driver schedule an on-device
+ *    in-place decompression (via the migrate/resolve path) for the GPU mapping
+ *    created by this bind. Only valid for DRM_XE_VM_BIND_OP_MAP; usage on
+ *    other ops is rejected. The bind's pat_index must select the device's
+ *    "no-compression" PAT. Only meaningful for VRAM-backed BOs on devices that
+ *    support Flat CCS and the required HW generation XE2+.
  *
  * The @prefetch_mem_region_instance for %DRM_XE_VM_BIND_OP_PREFETCH can also be:
  *  - %DRM_XE_CONSULT_MEM_ADVISE_PREF_LOC, which ensures prefetching occurs in
@@ -1090,7 +1183,7 @@ struct drm_xe_vm_bind_op {
 	 *	ppGTT WT -> COH_NONE
 	 *	ppGTT WB -> COH_AT_LEAST_1WAY
 	 *
-	 * In practice UC/WC/WT should only ever used for scanout surfaces on
+	 * In practice UC/WC/WT should only ever be used for scanout surfaces on
 	 * such platforms (or perhaps in general for dma-buf if shared with
 	 * another device) since it is only the display engine that is actually
 	 * incoherent.  Everything else should typically use WB given that we
@@ -1099,7 +1192,9 @@ struct drm_xe_vm_bind_op {
 	 * incoherent GT access is possible.
 	 *
 	 * Note: For userptr and externally imported dma-buf the kernel expects
-	 * either 1WAY or 2WAY for the @pat_index.
+	 * either 1WAY or 2WAY for the @pat_index. Starting from NVL-P, for
+	 * userptr, svm, madvise and externally imported dma-buf the kernel expects
+	 * either 2WAY or 1WAY and XA @pat_index.
 	 *
 	 * For DRM_XE_VM_BIND_FLAG_NULL bindings there are no KMD restrictions
 	 * on the @pat_index. For such mappings there is no actual memory being
@@ -1157,6 +1252,8 @@ struct drm_xe_vm_bind_op {
 #define DRM_XE_VM_BIND_FLAG_DUMPABLE	(1 << 3)
 #define DRM_XE_VM_BIND_FLAG_CHECK_PXP	(1 << 4)
 #define DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR	(1 << 5)
+#define DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET	(1 << 6)
+#define DRM_XE_VM_BIND_FLAG_DECOMPRESS (1 << 7)
 	/** @flags: Bind flags */
 	__u32 flags;
 
@@ -1178,10 +1275,10 @@ struct drm_xe_vm_bind_op {
 /**
  * struct drm_xe_vm_bind - Input of &DRM_IOCTL_XE_VM_BIND
  *
- * Below is an example of a minimal use of @drm_xe_vm_bind to
+ * Below is an example of a minimal use of &struct drm_xe_vm_bind to
  * asynchronously bind the buffer `data` at address `BIND_ADDRESS` to
  * illustrate `userptr`. It can be synchronized by using the example
- * provided for @drm_xe_sync.
+ * provided for &struct drm_xe_sync.
  *
  * .. code-block:: C
  *
@@ -1246,12 +1343,95 @@ struct drm_xe_vm_bind {
 	__u64 reserved[2];
 };
 
+/** struct xe_vm_fault - Describes faults for %DRM_XE_VM_GET_PROPERTY_FAULTS */
+struct xe_vm_fault {
+	/** @address: Canonical address of the fault */
+	__u64 address;
+	/** @address_precision: Precision of faulted address */
+	__u32 address_precision;
+	/** @access_type: Type of address access that resulted in fault */
+#define FAULT_ACCESS_TYPE_READ		0
+#define FAULT_ACCESS_TYPE_WRITE		1
+#define FAULT_ACCESS_TYPE_ATOMIC	2
+	__u8 access_type;
+	/** @fault_type: Type of fault reported */
+#define FAULT_TYPE_NOT_PRESENT		0
+#define FAULT_TYPE_WRITE_ACCESS		1
+#define FAULT_TYPE_ATOMIC_ACCESS	2
+	__u8 fault_type;
+	/** @fault_level: fault level of the fault */
+#define FAULT_LEVEL_PTE		0
+#define FAULT_LEVEL_PDE		1
+#define FAULT_LEVEL_PDP		2
+#define FAULT_LEVEL_PML4	3
+#define FAULT_LEVEL_PML5	4
+	__u8 fault_level;
+	/** @pad: MBZ */
+	__u8 pad;
+	/** @reserved: MBZ */
+	__u64 reserved[4];
+};
+
+/**
+ * struct drm_xe_vm_get_property - Input of &DRM_IOCTL_XE_VM_GET_PROPERTY
+ *
+ * The user provides a VM and a property to query among DRM_XE_VM_GET_PROPERTY_*,
+ * and sets the values in the vm_id and property members, respectively.  This
+ * determines both the VM to get the property of, as well as the property to
+ * report.
+ *
+ * If size is set to 0, the driver fills it with the required size for the
+ * requested property.  The user is expected here to allocate memory for the
+ * property structure and to provide a pointer to the allocated memory using the
+ * data member.  For some properties, this may be zero, in which case, the
+ * value of the property will be saved to the value member and size will remain
+ * zero on return.
+ *
+ * If size is not zero, then the IOCTL will attempt to copy the requested
+ * property into the data member.
+ *
+ * The IOCTL will return -ENOENT if the VM could not be identified from the
+ * provided VM ID, or -EINVAL if the IOCTL fails for any other reason, such as
+ * providing an invalid size for the given property or if the property data
+ * could not be copied to the memory allocated to the data member.
+ *
+ * The property member can be:
+ *  - %DRM_XE_VM_GET_PROPERTY_FAULTS
+ */
+struct drm_xe_vm_get_property {
+	/** @extensions: Pointer to the first extension struct, if any */
+	__u64 extensions;
+
+	/** @vm_id: The ID of the VM to query the properties of */
+	__u32 vm_id;
+
+#define DRM_XE_VM_GET_PROPERTY_FAULTS		0
+	/** @property: property to get */
+	__u32 property;
+
+	/** @size: Size to allocate for @data */
+	__u32 size;
+
+	/** @pad: MBZ */
+	__u32 pad;
+
+	union {
+		/** @data: Pointer to user-defined array of flexible size and type */
+		__u64 data;
+		/** @value: Return value for scalar queries */
+		__u64 value;
+	};
+
+	/** @reserved: MBZ */
+	__u64 reserved[3];
+};
+
 /**
  * struct drm_xe_exec_queue_create - Input of &DRM_IOCTL_XE_EXEC_QUEUE_CREATE
  *
  * This ioctl supports setting the following properties via the
  * %DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY extension, which uses the
- * generic @drm_xe_ext_set_property struct:
+ * generic &struct drm_xe_ext_set_property:
  *
  *  - %DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY - set the queue priority.
  *    CAP_SYS_NICE is required to set a value above normal.
@@ -1262,7 +1442,7 @@ struct drm_xe_vm_bind {
  *    drm_xe_pxp_session_type. %DRM_XE_PXP_TYPE_NONE is the default behavior, so
  *    there is no need to explicitly set that. When a queue of type
  *    %DRM_XE_PXP_TYPE_HWDRM is created, the PXP default HWDRM session
- *    (%XE_PXP_HWDRM_DEFAULT_SESSION) will be started, if isn't already running.
+ *    (%DRM_XE_PXP_HWDRM_DEFAULT_SESSION) will be started, if it isn't already running.
  *    The user is expected to query the PXP status via the query ioctl (see
  *    %DRM_XE_DEVICE_QUERY_PXP_STATUS) and to wait for PXP to be ready before
  *    attempting to create a queue with this property. When a queue is created
@@ -1271,10 +1451,24 @@ struct drm_xe_vm_bind {
  *    Given that going into a power-saving state kills PXP HWDRM sessions,
  *    runtime PM will be blocked while queues of this type are alive.
  *    All PXP queues will be killed if a PXP invalidation event occurs.
+ *  - %DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP - Create a multi-queue group
+ *    or add secondary queues to a multi-queue group.
+ *    If the extension's 'value' field has %DRM_XE_MULTI_GROUP_CREATE flag set,
+ *    then a new multi-queue group is created with this queue as the primary queue
+ *    (Q0). Otherwise, the queue gets added to the multi-queue group whose primary
+ *    queue's exec_queue_id is specified in the lower 32 bits of the 'value' field.
+ *    All the other non-relevant bits of extension's 'value' field while adding the
+ *    primary or the secondary queues of the group must be set to 0.
+ *  - %DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY - Set the queue
+ *    priority within the multi-queue group. Current valid priority values are 0–2
+ *    (default is 1), with higher values indicating higher priority.
+ *  - %DRM_XE_EXEC_QUEUE_SET_DISABLE_STATE_CACHE_PERF_FIX - Set the queue to
+ *    enable render color cache keying on BTP+BTI instead of just BTI
+ *    (only valid for render queues).
  *
- * The example below shows how to use @drm_xe_exec_queue_create to create
+ * The example below shows how to use &struct drm_xe_exec_queue_create to create
  * a simple exec_queue (no parallel submission) of class
- * &DRM_XE_ENGINE_CLASS_RENDER.
+ * %DRM_XE_ENGINE_CLASS_RENDER.
  *
  * .. code-block:: C
  *
@@ -1284,23 +1478,25 @@ struct drm_xe_vm_bind {
  *     struct drm_xe_exec_queue_create exec_queue_create = {
  *          .extensions = 0,
  *          .vm_id = vm,
- *          .num_bb_per_exec = 1,
- *          .num_eng_per_bb = 1,
+ *          .width = 1,
+ *          .num_placements = 1,
  *          .instances = to_user_pointer(&instance),
  *     };
  *     ioctl(fd, DRM_IOCTL_XE_EXEC_QUEUE_CREATE, &exec_queue_create);
  *
- *     Allow users to provide a hint to kernel for cases demanding low latency
- *     profile. Please note it will have impact on power consumption. User can
- *     indicate low latency hint with flag while creating exec queue as
- *     mentioned below,
+ * Allow users to provide a hint to kernel for cases demanding low latency
+ * profile. Please note it will have impact on power consumption. User can
+ * indicate low latency hint with flag while creating exec queue as
+ * mentioned below:
+ *
+ * .. code-block:: C
  *
  *     struct drm_xe_exec_queue_create exec_queue_create = {
  *          .flags = DRM_XE_EXEC_QUEUE_LOW_LATENCY_HINT,
  *          .extensions = 0,
  *          .vm_id = vm,
- *          .num_bb_per_exec = 1,
- *          .num_eng_per_bb = 1,
+ *          .width = 1,
+ *          .num_placements = 1,
  *          .instances = to_user_pointer(&instance),
  *     };
  *     ioctl(fd, DRM_IOCTL_XE_EXEC_QUEUE_CREATE, &exec_queue_create);
@@ -1311,7 +1507,12 @@ struct drm_xe_exec_queue_create {
 #define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY		0
 #define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_TIMESLICE		1
 #define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_PXP_TYPE		2
-#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_EUDEBUG		3
+#define   DRM_XE_EXEC_QUEUE_SET_HANG_REPLAY_STATE		3
+#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP		4
+#define     DRM_XE_MULTI_GROUP_CREATE				(1ull << 63)
+#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY	5
+#define   DRM_XE_EXEC_QUEUE_SET_DISABLE_STATE_CACHE_PERF_FIX	6
+#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_EUDEBUG		7
 #define     DRM_XE_EXEC_QUEUE_EUDEBUG_FLAG_ENABLE		(1 << 0)
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
@@ -1394,7 +1595,7 @@ struct drm_xe_exec_queue_get_property {
  * and the @flags can be:
  *  - %DRM_XE_SYNC_FLAG_SIGNAL
  *
- * A minimal use of @drm_xe_sync looks like this:
+ * A minimal use of &struct drm_xe_sync looks like this:
  *
  * .. code-block:: C
  *
@@ -1425,7 +1626,7 @@ struct drm_xe_sync {
 #define DRM_XE_SYNC_TYPE_SYNCOBJ		0x0
 #define DRM_XE_SYNC_TYPE_TIMELINE_SYNCOBJ	0x1
 #define DRM_XE_SYNC_TYPE_USER_FENCE		0x2
-	/** @type: Type of the this sync object */
+	/** @type: Type of this sync object */
 	__u32 type;
 
 #define DRM_XE_SYNC_FLAG_SIGNAL	(1 << 0)
@@ -1438,9 +1639,9 @@ struct drm_xe_sync {
 
 		/**
 		 * @addr: Address of user fence. When sync is passed in via exec
-		 * IOCTL this is a GPU address in the VM. When sync passed in via
+		 * IOCTL this is a GPU address in the VM. When sync is passed in via
 		 * VM bind IOCTL this is a user pointer. In either case, it is
-		 * the users responsibility that this address is present and
+		 * the user's responsibility that this address is present and
 		 * mapped when the user fence is signalled. Must be qword
 		 * aligned.
 		 */
@@ -1460,10 +1661,10 @@ struct drm_xe_sync {
 /**
  * struct drm_xe_exec - Input of &DRM_IOCTL_XE_EXEC
  *
- * This is an example to use @drm_xe_exec for execution of the object
- * at BIND_ADDRESS (see example in @drm_xe_vm_bind) by an exec_queue
- * (see example in @drm_xe_exec_queue_create). It can be synchronized
- * by using the example provided for @drm_xe_sync.
+ * This is an example to use &struct drm_xe_exec for execution of the object
+ * at BIND_ADDRESS (see example in &struct drm_xe_vm_bind) by an exec_queue
+ * (see example in &struct drm_xe_exec_queue_create). It can be synchronized
+ * by using the example provided for &struct drm_xe_sync.
  *
  * .. code-block:: C
  *
@@ -1484,6 +1685,7 @@ struct drm_xe_exec {
 	/** @exec_queue_id: Exec queue ID for the batch buffer */
 	__u32 exec_queue_id;
 
+#define DRM_XE_MAX_SYNCS 1024
 	/** @num_syncs: Amount of struct drm_xe_sync in array. */
 	__u32 num_syncs;
 
@@ -1529,7 +1731,6 @@ struct drm_xe_exec {
  *
  * and the @flags can be:
  *  - %DRM_XE_UFENCE_WAIT_FLAG_ABSTIME
- *  - %DRM_XE_UFENCE_WAIT_FLAG_SOFT_OP
  *
  * The @mask values can be for example:
  *  - 0xffu for u8
@@ -1542,7 +1743,7 @@ struct drm_xe_wait_user_fence {
 	__u64 extensions;
 
 	/**
-	 * @addr: user pointer address to wait on, must qword aligned
+	 * @addr: user pointer address to wait on, must be qword aligned
 	 */
 	__u64 addr;
 
@@ -1573,9 +1774,9 @@ struct drm_xe_wait_user_fence {
 	 * Without DRM_XE_UFENCE_WAIT_FLAG_ABSTIME flag set (relative timeout)
 	 * it contains timeout expressed in nanoseconds to wait (fence will
 	 * expire at now() + timeout).
-	 * When DRM_XE_UFENCE_WAIT_FLAG_ABSTIME flat is set (absolute timeout) wait
-	 * will end at timeout (uses system MONOTONIC_CLOCK).
-	 * Passing negative timeout leads to neverending wait.
+	 * When DRM_XE_UFENCE_WAIT_FLAG_ABSTIME flag is set (absolute timeout) wait
+	 * will end at timeout (uses system CLOCK_MONOTONIC).
+	 * Passing negative timeout leads to never ending wait.
 	 *
 	 * On relative timeout this value is updated with timeout left
 	 * (for restarting the call in case of signal delivery).
@@ -1619,7 +1820,7 @@ enum drm_xe_observation_op {
 };
 
 /**
- * struct drm_xe_observation_param - Input of &DRM_XE_OBSERVATION
+ * struct drm_xe_observation_param - Input of &DRM_IOCTL_XE_OBSERVATION
  *
  * The observation layer enables multiplexing observation streams of
  * multiple types. The actual params for a particular stream operation are
@@ -1629,25 +1830,25 @@ enum drm_xe_observation_op {
 struct drm_xe_observation_param {
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
-	/** @observation_type: observation stream type, of enum @drm_xe_observation_type */
+	/** @observation_type: observation stream type, of &enum drm_xe_observation_type */
 	__u64 observation_type;
-	/** @observation_op: observation stream op, of enum @drm_xe_observation_op */
+	/** @observation_op: observation stream op, of &enum drm_xe_observation_op */
 	__u64 observation_op;
 	/** @param: Pointer to actual stream params */
 	__u64 param;
 };
 
 /**
- * enum drm_xe_observation_ioctls - Observation stream fd ioctl's
+ * enum drm_xe_observation_ioctls - Observation stream fd ioctls
  *
  * Information exchanged between userspace and kernel for observation fd
- * ioctl's is stream type specific
+ * ioctls is stream type specific
  */
 enum drm_xe_observation_ioctls {
 	/** @DRM_XE_OBSERVATION_IOCTL_ENABLE: Enable data capture for an observation stream */
 	DRM_XE_OBSERVATION_IOCTL_ENABLE = _IO('i', 0x0),
 
-	/** @DRM_XE_OBSERVATION_IOCTL_DISABLE: Disable data capture for a observation stream */
+	/** @DRM_XE_OBSERVATION_IOCTL_DISABLE: Disable data capture for an observation stream */
 	DRM_XE_OBSERVATION_IOCTL_DISABLE = _IO('i', 0x1),
 
 	/** @DRM_XE_OBSERVATION_IOCTL_CONFIG: Change observation stream configuration */
@@ -1675,6 +1876,9 @@ enum drm_xe_oa_unit_type {
 
 	/** @DRM_XE_OA_UNIT_TYPE_OAM_SAG: OAM_SAG OA unit */
 	DRM_XE_OA_UNIT_TYPE_OAM_SAG,
+
+	/** @DRM_XE_OA_UNIT_TYPE_MERT: MERT OA unit */
+	DRM_XE_OA_UNIT_TYPE_MERT,
 };
 
 /**
@@ -1687,7 +1891,7 @@ struct drm_xe_oa_unit {
 	/** @oa_unit_id: OA unit ID */
 	__u32 oa_unit_id;
 
-	/** @oa_unit_type: OA unit type of @drm_xe_oa_unit_type */
+	/** @oa_unit_type: OA unit type of &enum drm_xe_oa_unit_type */
 	__u32 oa_unit_type;
 
 	/** @capabilities: OA capabilities bit-mask */
@@ -1697,12 +1901,19 @@ struct drm_xe_oa_unit {
 #define DRM_XE_OA_CAPS_OA_BUFFER_SIZE	(1 << 2)
 #define DRM_XE_OA_CAPS_WAIT_NUM_REPORTS	(1 << 3)
 #define DRM_XE_OA_CAPS_OAM		(1 << 4)
+#define DRM_XE_OA_CAPS_OA_UNIT_GT_ID	(1 << 5)
 
 	/** @oa_timestamp_freq: OA timestamp freq */
 	__u64 oa_timestamp_freq;
 
+	/** @gt_id: gt id for this OA unit */
+	__u16 gt_id;
+
+	/** @reserved1: MBZ */
+	__u16 reserved1[3];
+
 	/** @reserved: MBZ */
-	__u64 reserved[4];
+	__u64 reserved[3];
 
 	/** @num_engines: number of engines in @eci array */
 	__u64 num_engines;
@@ -1743,7 +1954,7 @@ struct drm_xe_query_oa_units {
 	/** @pad: MBZ */
 	__u32 pad;
 	/**
-	 * @oa_units: struct @drm_xe_oa_unit array returned for this device.
+	 * @oa_units: &struct drm_xe_oa_unit array returned for this device.
 	 * Written below as a u64 array to avoid problems with nested flexible
 	 * arrays with some compilers
 	 */
@@ -1770,24 +1981,24 @@ enum drm_xe_oa_format_type {
 };
 
 /**
- * enum drm_xe_oa_property_id - OA stream property id's
+ * enum drm_xe_oa_property_id - OA stream property IDs
  *
- * Stream params are specified as a chain of @drm_xe_ext_set_property
- * struct's, with @property values from enum @drm_xe_oa_property_id and
- * @drm_xe_user_extension base.name set to @DRM_XE_OA_EXTENSION_SET_PROPERTY.
- * @param field in struct @drm_xe_observation_param points to the first
- * @drm_xe_ext_set_property struct.
+ * Stream params are specified as a chain of &struct drm_xe_ext_set_property
+ * structs, with property values from &enum drm_xe_oa_property_id and
+ * &struct drm_xe_user_extension base.name set to %DRM_XE_OA_EXTENSION_SET_PROPERTY.
+ * The param field in &struct drm_xe_observation_param points to the first
+ * &struct drm_xe_ext_set_property struct.
  *
  * Exactly the same mechanism is also used for stream reconfiguration using the
- * @DRM_XE_OBSERVATION_IOCTL_CONFIG observation stream fd ioctl, though only a
+ * %DRM_XE_OBSERVATION_IOCTL_CONFIG observation stream fd ioctl, though only a
  * subset of properties below can be specified for stream reconfiguration.
  */
 enum drm_xe_oa_property_id {
 #define DRM_XE_OA_EXTENSION_SET_PROPERTY	0
 	/**
 	 * @DRM_XE_OA_PROPERTY_OA_UNIT_ID: ID of the OA unit on which to open
-	 * the OA stream, see @oa_unit_id in 'struct
-	 * drm_xe_query_oa_units'. Defaults to 0 if not provided.
+	 * the OA stream, see oa_unit_id in &struct drm_xe_oa_unit.
+	 * Defaults to 0 if not provided.
 	 */
 	DRM_XE_OA_PROPERTY_OA_UNIT_ID = 1,
 
@@ -1800,7 +2011,7 @@ enum drm_xe_oa_property_id {
 
 	/**
 	 * @DRM_XE_OA_PROPERTY_OA_METRIC_SET: OA metrics defining contents of OA
-	 * reports, previously added via @DRM_XE_OBSERVATION_OP_ADD_CONFIG.
+	 * reports, previously added via %DRM_XE_OBSERVATION_OP_ADD_CONFIG.
 	 */
 	DRM_XE_OA_PROPERTY_OA_METRIC_SET,
 
@@ -1808,7 +2019,7 @@ enum drm_xe_oa_property_id {
 	DRM_XE_OA_PROPERTY_OA_FORMAT,
 	/*
 	 * OA_FORMAT's are specified the same way as in PRM/Bspec 52198/60942,
-	 * in terms of the following quantities: a. enum @drm_xe_oa_format_type
+	 * in terms of the following quantities: a. &enum drm_xe_oa_format_type
 	 * b. Counter select c. Counter size and d. BC report. Also refer to the
 	 * oa_formats array in drivers/gpu/drm/xe/xe_oa.c.
 	 */
@@ -1825,19 +2036,19 @@ enum drm_xe_oa_property_id {
 
 	/**
 	 * @DRM_XE_OA_PROPERTY_OA_DISABLED: A value of 1 will open the OA
-	 * stream in a DISABLED state (see @DRM_XE_OBSERVATION_IOCTL_ENABLE).
+	 * stream in a DISABLED state (see %DRM_XE_OBSERVATION_IOCTL_ENABLE).
 	 */
 	DRM_XE_OA_PROPERTY_OA_DISABLED,
 
 	/**
 	 * @DRM_XE_OA_PROPERTY_EXEC_QUEUE_ID: Open the stream for a specific
-	 * @exec_queue_id. OA queries can be executed on this exec queue.
+	 * exec_queue_id. OA queries can be executed on this exec queue.
 	 */
 	DRM_XE_OA_PROPERTY_EXEC_QUEUE_ID,
 
 	/**
 	 * @DRM_XE_OA_PROPERTY_OA_ENGINE_INSTANCE: Optional engine instance to
-	 * pass along with @DRM_XE_OA_PROPERTY_EXEC_QUEUE_ID or will default to 0.
+	 * pass along with %DRM_XE_OA_PROPERTY_EXEC_QUEUE_ID or will default to 0.
 	 */
 	DRM_XE_OA_PROPERTY_OA_ENGINE_INSTANCE,
 
@@ -1849,16 +2060,16 @@ enum drm_xe_oa_property_id {
 
 	/**
 	 * @DRM_XE_OA_PROPERTY_NUM_SYNCS: Number of syncs in the sync array
-	 * specified in @DRM_XE_OA_PROPERTY_SYNCS
+	 * specified in %DRM_XE_OA_PROPERTY_SYNCS
 	 */
 	DRM_XE_OA_PROPERTY_NUM_SYNCS,
 
 	/**
-	 * @DRM_XE_OA_PROPERTY_SYNCS: Pointer to struct @drm_xe_sync array
-	 * with array size specified via @DRM_XE_OA_PROPERTY_NUM_SYNCS. OA
+	 * @DRM_XE_OA_PROPERTY_SYNCS: Pointer to &struct drm_xe_sync array
+	 * with array size specified via %DRM_XE_OA_PROPERTY_NUM_SYNCS. OA
 	 * configuration will wait till input fences signal. Output fences
 	 * will signal after the new OA configuration takes effect. For
-	 * @DRM_XE_SYNC_TYPE_USER_FENCE, @addr is a user pointer, similar
+	 * %DRM_XE_SYNC_TYPE_USER_FENCE, addr is a user pointer, similar
 	 * to the VM bind case.
 	 */
 	DRM_XE_OA_PROPERTY_SYNCS,
@@ -1881,15 +2092,15 @@ enum drm_xe_oa_property_id {
 /**
  * struct drm_xe_oa_config - OA metric configuration
  *
- * Multiple OA configs can be added using @DRM_XE_OBSERVATION_OP_ADD_CONFIG. A
+ * Multiple OA configs can be added using %DRM_XE_OBSERVATION_OP_ADD_CONFIG. A
  * particular config can be specified when opening an OA stream using
- * @DRM_XE_OA_PROPERTY_OA_METRIC_SET property.
+ * %DRM_XE_OA_PROPERTY_OA_METRIC_SET property.
  */
 struct drm_xe_oa_config {
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
 
-	/** @uuid: String formatted like "%\08x-%\04x-%\04x-%\04x-%\012x" */
+	/** @uuid: String formatted like "%08x-%04x-%04x-%04x-%012x" */
 	char uuid[36];
 
 	/** @n_regs: Number of regs in @regs_ptr */
@@ -1904,7 +2115,7 @@ struct drm_xe_oa_config {
 
 /**
  * struct drm_xe_oa_stream_status - OA stream status returned from
- * @DRM_XE_OBSERVATION_IOCTL_STATUS observation stream fd ioctl. Userspace can
+ * %DRM_XE_OBSERVATION_IOCTL_STATUS observation stream fd ioctl. Userspace can
  * call the ioctl to query stream status in response to EIO errno from
  * observation fd read().
  */
@@ -1925,7 +2136,7 @@ struct drm_xe_oa_stream_status {
 
 /**
  * struct drm_xe_oa_stream_info - OA stream info returned from
- * @DRM_XE_OBSERVATION_IOCTL_INFO observation stream fd ioctl
+ * %DRM_XE_OBSERVATION_IOCTL_INFO observation stream fd ioctl
  */
 struct drm_xe_oa_stream_info {
 	/** @extensions: Pointer to the first extension struct, if any */
@@ -1962,27 +2173,27 @@ enum drm_xe_pxp_session_type {
  * enum drm_xe_eu_stall_property_id - EU stall sampling input property ids.
  *
  * These properties are passed to the driver at open as a chain of
- * @drm_xe_ext_set_property structures with @property set to these
- * properties' enums and @value set to the corresponding values of these
- * properties. @drm_xe_user_extension base.name should be set to
- * @DRM_XE_EU_STALL_EXTENSION_SET_PROPERTY.
+ * &struct drm_xe_ext_set_property structures with property set to these
+ * properties' enums and value set to the corresponding values of these
+ * properties. &struct drm_xe_user_extension base.name should be set to
+ * %DRM_XE_EU_STALL_EXTENSION_SET_PROPERTY.
  *
  * With the file descriptor obtained from open, user space must enable
- * the EU stall stream fd with @DRM_XE_OBSERVATION_IOCTL_ENABLE before
+ * the EU stall stream fd with %DRM_XE_OBSERVATION_IOCTL_ENABLE before
  * calling read(). EIO errno from read() indicates HW dropped data
  * due to full buffer.
  */
 enum drm_xe_eu_stall_property_id {
 #define DRM_XE_EU_STALL_EXTENSION_SET_PROPERTY		0
 	/**
-	 * @DRM_XE_EU_STALL_PROP_GT_ID: @gt_id of the GT on which
+	 * @DRM_XE_EU_STALL_PROP_GT_ID: gt_id of the GT on which
 	 * EU stall data will be captured.
 	 */
 	DRM_XE_EU_STALL_PROP_GT_ID = 1,
 
 	/**
 	 * @DRM_XE_EU_STALL_PROP_SAMPLE_RATE: Sampling rate in
-	 * GPU cycles from @sampling_rates in struct @drm_xe_query_eu_stall
+	 * GPU cycles from sampling_rates in &struct drm_xe_query_eu_stall
 	 */
 	DRM_XE_EU_STALL_PROP_SAMPLE_RATE,
 
@@ -1997,9 +2208,9 @@ enum drm_xe_eu_stall_property_id {
 /**
  * struct drm_xe_query_eu_stall - Information about EU stall sampling.
  *
- * If a query is made with a struct @drm_xe_device_query where .query
- * is equal to @DRM_XE_DEVICE_QUERY_EU_STALL, then the reply uses
- * struct @drm_xe_query_eu_stall in .data.
+ * If a query is made with a &struct drm_xe_device_query where .query
+ * is equal to %DRM_XE_DEVICE_QUERY_EU_STALL, then the reply uses
+ * &struct drm_xe_query_eu_stall in .data.
  */
 struct drm_xe_query_eu_stall {
 	/** @extensions: Pointer to the first extension struct, if any */
@@ -2040,6 +2251,7 @@ struct drm_xe_query_eu_stall {
  *  - DRM_XE_MEM_RANGE_ATTR_PREFERRED_LOC: Set preferred memory location.
  *  - DRM_XE_MEM_RANGE_ATTR_ATOMIC: Set atomic access policy.
  *  - DRM_XE_MEM_RANGE_ATTR_PAT: Set page attribute table index.
+ *  - DRM_XE_VMA_ATTR_PURGEABLE_STATE: Set purgeable state for BOs.
  *
  * Example:
  *
@@ -2050,7 +2262,7 @@ struct drm_xe_query_eu_stall {
  *         .start = 0x100000,
  *         .range = 0x2000,
  *         .type = DRM_XE_MEM_RANGE_ATTR_ATOMIC,
- *         .atomic_val = DRM_XE_ATOMIC_DEVICE,
+ *         .atomic.val = DRM_XE_ATOMIC_DEVICE,
  *    };
  *
  *    ioctl(fd, DRM_IOCTL_XE_MADVISE, &madvise);
@@ -2072,6 +2284,7 @@ struct drm_xe_madvise {
 #define DRM_XE_MEM_RANGE_ATTR_PREFERRED_LOC	0
 #define DRM_XE_MEM_RANGE_ATTR_ATOMIC		1
 #define DRM_XE_MEM_RANGE_ATTR_PAT		2
+#define DRM_XE_VMA_ATTR_PURGEABLE_STATE		3
 	/** @type: type of attribute */
 	__u32 type;
 
@@ -2092,7 +2305,13 @@ struct drm_xe_madvise {
 		struct {
 #define DRM_XE_PREFERRED_LOC_DEFAULT_DEVICE	0
 #define DRM_XE_PREFERRED_LOC_DEFAULT_SYSTEM	-1
-			/** @preferred_mem_loc.devmem_fd: fd for preferred loc */
+			/**
+			 * @preferred_mem_loc.devmem_fd:
+			 * Device file-descriptor of the device where the
+			 * preferred memory is located, or one of the
+			 * above special values. Please also see
+			 * @preferred_mem_loc.region_instance below.
+			 */
 			__u32 devmem_fd;
 
 #define DRM_XE_MIGRATE_ALL_PAGES		0
@@ -2100,8 +2319,14 @@ struct drm_xe_madvise {
 			/** @preferred_mem_loc.migration_policy: Page migration policy */
 			__u16 migration_policy;
 
-			/** @preferred_mem_loc.pad : MBZ */
-			__u16 pad;
+			/**
+			 * @preferred_mem_loc.region_instance : Region instance.
+			 * MBZ if @devmem_fd <= %DRM_XE_PREFERRED_LOC_DEFAULT_DEVICE.
+			 * Otherwise should point to the desired device
+			 * VRAM instance of the device indicated by
+			 * @preferred_mem_loc.devmem_fd.
+			 */
+			__u16 region_instance;
 
 			/** @preferred_mem_loc.reserved : Reserved */
 			__u64 reserved;
@@ -2150,6 +2375,72 @@ struct drm_xe_madvise {
 			/** @pat_index.reserved: Reserved */
 			__u64 reserved;
 		} pat_index;
+
+		/**
+		 * @purge_state_val: Purgeable state configuration
+		 *
+		 * Used when @type == DRM_XE_VMA_ATTR_PURGEABLE_STATE.
+		 *
+		 * Configures the purgeable state of buffer objects in the specified
+		 * virtual address range. This allows applications to hint to the kernel
+		 * about bo's usage patterns for better memory management.
+		 *
+		 * By default all VMAs are in WILLNEED state.
+		 *
+		 * Supported values for @purge_state_val.val:
+		 *  - DRM_XE_VMA_PURGEABLE_STATE_WILLNEED (0): Marks BO as needed.
+		 *    If the BO was previously purged, the kernel sets the __u32 at
+		 *    @retained_ptr to 0 (backing store lost) so the application knows
+		 *    it must recreate the BO.
+		 *
+		 *  - DRM_XE_VMA_PURGEABLE_STATE_DONTNEED (1): Marks BO as not currently
+		 *    needed. Kernel may purge it under memory pressure to reclaim memory.
+		 *    Only applies to non-shared BOs. The kernel sets the __u32 at
+		 *    @retained_ptr to 1 if the backing store still exists (not yet purged),
+		 *    or 0 if it was already purged.
+		 *
+		 *    Important: Once marked as DONTNEED, touching the BO's memory
+		 *    is undefined behavior. It may succeed temporarily (before the
+		 *    kernel purges the backing store) but will suddenly fail once
+		 *    the BO transitions to PURGED state.
+		 *
+		 *    To transition back: use WILLNEED and check @retained_ptr —
+		 *    if 0, backing store was lost and the BO must be recreated.
+		 *
+		 *    The following operations are blocked in DONTNEED state to
+		 *    prevent the BO from being re-mapped after madvise:
+		 *    - New mmap() calls: Fail with -EBUSY
+		 *    - VM_BIND operations: Fail with -EBUSY
+		 *    - New dma-buf exports: Fail with -EBUSY
+		 *    - CPU page faults (existing mmap): Fail with SIGBUS
+		 *    - GPU page faults (fault-mode VMs): Fail with -EACCES
+		 */
+		struct {
+#define DRM_XE_VMA_PURGEABLE_STATE_WILLNEED	0
+#define DRM_XE_VMA_PURGEABLE_STATE_DONTNEED	1
+			/** @purge_state_val.val: value for DRM_XE_VMA_ATTR_PURGEABLE_STATE */
+			__u32 val;
+
+			/** @purge_state_val.pad: MBZ */
+			__u32 pad;
+			/**
+			 * @purge_state_val.retained_ptr: Pointer to a __u32 output
+			 * field for backing store status.
+			 *
+			 * Userspace must initialize the __u32 value at this address
+			 * to 0 before the ioctl. Kernel writes a __u32 after the
+			 * operation:
+			 * - 1 if backing store exists (not purged)
+			 * - 0 if backing store was purged
+			 *
+			 * If userspace fails to initialize to 0, ioctl returns -EINVAL.
+			 * This ensures a safe default (0 = assume purged) if kernel
+			 * cannot write the result.
+			 *
+			 * Similar to i915's drm_i915_gem_madvise.retained field.
+			 */
+			__u64 retained_ptr;
+		} purge_state_val;
 	};
 
 	/** @reserved: Reserved */
@@ -2157,24 +2448,19 @@ struct drm_xe_madvise {
 };
 
 /**
- * struct drm_xe_mem_range_attr - Output of &DRM_IOCTL_XE_VM_QUERY_MEM_RANGES_ATTRS
+ * struct drm_xe_mem_range_attr - Output of &DRM_IOCTL_XE_VM_QUERY_MEM_RANGE_ATTRS
  *
  * This structure is provided by userspace and filled by KMD in response to the
- * DRM_IOCTL_XE_VM_QUERY_MEM_RANGES_ATTRS ioctl. It describes memory attributes of
- * a memory ranges within a user specified address range in a VM.
+ * DRM_IOCTL_XE_VM_QUERY_MEM_RANGE_ATTRS ioctl. It describes memory attributes of
+ * memory ranges within a user specified address range in a VM.
  *
  * The structure includes information such as atomic access policy,
  * page attribute table (PAT) index, and preferred memory location.
  * Userspace allocates an array of these structures and passes a pointer to the
- * ioctl to retrieve attributes for each memory ranges
- *
- * @extensions: Pointer to the first extension struct, if any
- * @start: Start address of the memory range
- * @end: End address of the virtual memory range
- *
+ * ioctl to retrieve attributes for each memory range.
  */
 struct drm_xe_mem_range_attr {
-	 /** @extensions: Pointer to the first extension struct, if any */
+	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
 
 	/** @start: start of the memory range */
@@ -2201,7 +2487,7 @@ struct drm_xe_mem_range_attr {
 		__u32 reserved;
 	} atomic;
 
-	 /** @pat_index: Page attribute table index */
+	/** @pat_index: Page attribute table index */
 	struct {
 		/** @pat_index.val: PAT index */
 		__u32 val;
@@ -2215,7 +2501,7 @@ struct drm_xe_mem_range_attr {
 };
 
 /**
- * struct drm_xe_vm_query_mem_range_attr - Input of &DRM_IOCTL_XE_VM_QUERY_MEM_ATTRIBUTES
+ * struct drm_xe_vm_query_mem_range_attr - Input of &DRM_IOCTL_XE_VM_QUERY_MEM_RANGE_ATTRS
  *
  * This structure is used to query memory attributes of memory regions
  * within a user specified address range in a VM. It provides detailed
@@ -2223,15 +2509,15 @@ struct drm_xe_mem_range_attr {
  * page attribute table (PAT) index, and preferred memory location.
  *
  * Userspace first calls the ioctl with @num_mem_ranges = 0,
- * @sizeof_mem_ranges_attr = 0 and @vector_of_vma_mem_attr = NULL to retrieve
+ * @sizeof_mem_range_attr = 0 and @vector_of_mem_attr = NULL to retrieve
  * the number of memory regions and size of each memory range attribute.
  * Then, it allocates a buffer of that size and calls the ioctl again to fill
  * the buffer with memory range attributes.
  *
  * If second call fails with -ENOSPC, it means memory ranges changed between
  * first call and now, retry IOCTL again with @num_mem_ranges = 0,
- * @sizeof_mem_ranges_attr = 0 and @vector_of_vma_mem_attr = NULL followed by
- * Second ioctl call.
+ * @sizeof_mem_range_attr = 0 and @vector_of_mem_attr = NULL followed by
+ * second ioctl call.
  *
  * Example:
  *
@@ -2294,21 +2580,135 @@ struct drm_xe_vm_query_mem_range_attr {
 
 };
 
-/*
- * Debugger ABI (ioctl and events) Version History:
- * 0 - No debugger available
- * 1 - Initial version
+/**
+ * struct drm_xe_exec_queue_set_property - exec queue set property
+ *
+ * Sets execution queue properties dynamically.
+ * Currently only %DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY
+ * property can be dynamically set.
  */
-#define DRM_XE_EUDEBUG_VERSION 1
+struct drm_xe_exec_queue_set_property {
+	/** @extensions: Pointer to the first extension struct, if any */
+	__u64 extensions;
 
+	/** @exec_queue_id: Exec queue ID */
+	__u32 exec_queue_id;
+
+	/** @property: property to set */
+	__u32 property;
+
+	/** @value: property value */
+	__u64 value;
+
+	/** @reserved: Reserved */
+	__u64 reserved[2];
+};
+
+/**
+ * DOC: Xe DRM RAS
+ *
+ * The enums and strings defined below map to the attributes of the DRM RAS Netlink Interface.
+ * Refer to Documentation/netlink/specs/drm_ras.yaml for complete interface specification.
+ *
+ * Node Registration
+ * -----------------
+ *
+ * The driver registers DRM RAS nodes for each error severity level.
+ * enum drm_xe_ras_error_severity defines the node-id, while DRM_XE_RAS_ERROR_SEVERITY_NAMES maps
+ * node-id to node-name.
+ *
+ * Error Classification
+ * --------------------
+ *
+ * Each node contains a list of error counters. Each error is identified by a error-id and
+ * an error-name. enum drm_xe_ras_error_component defines the error-id, while
+ * DRM_XE_RAS_ERROR_COMPONENT_NAMES maps error-id to error-name.
+ *
+ * User Interface
+ * --------------
+ *
+ * To retrieve error values of a error counter, userspace applications should
+ * follow the below steps:
+ *
+ * 1. Use command LIST_NODES to enumerate all available nodes
+ * 2. Select node by node-id or node-name
+ * 3. Use command GET_ERROR_COUNTERS to list errors of specific node
+ * 4. Query specific error values using either error-id or error-name
+ *
+ * .. code-block:: C
+ *
+ *	// Lookup tables for ID-to-name resolution
+ *	static const char *nodes[] = DRM_XE_RAS_ERROR_SEVERITY_NAMES;
+ *	static const char *errors[] = DRM_XE_RAS_ERROR_COMPONENT_NAMES;
+ *
+ */
+
+/**
+ * enum drm_xe_ras_error_severity - DRM RAS error severity.
+ */
+enum drm_xe_ras_error_severity {
+	/** @DRM_XE_RAS_ERR_SEV_CORRECTABLE: Correctable Error */
+	DRM_XE_RAS_ERR_SEV_CORRECTABLE = 0,
+	/** @DRM_XE_RAS_ERR_SEV_UNCORRECTABLE: Uncorrectable Error */
+	DRM_XE_RAS_ERR_SEV_UNCORRECTABLE,
+	/** @DRM_XE_RAS_ERR_SEV_MAX: Max severity */
+	DRM_XE_RAS_ERR_SEV_MAX /* non-ABI */
+};
+
+/**
+ * enum drm_xe_ras_error_component - DRM RAS error component.
+ */
+enum drm_xe_ras_error_component {
+	/** @DRM_XE_RAS_ERR_COMP_CORE_COMPUTE: Core Compute Error */
+	DRM_XE_RAS_ERR_COMP_CORE_COMPUTE = 1,
+	/** @DRM_XE_RAS_ERR_COMP_SOC_INTERNAL: SoC Internal Error */
+	DRM_XE_RAS_ERR_COMP_SOC_INTERNAL,
+	/** @DRM_XE_RAS_ERR_COMP_DEVICE_MEMORY: Device Memory Error */
+	DRM_XE_RAS_ERR_COMP_DEVICE_MEMORY,
+	/** @DRM_XE_RAS_ERR_COMP_PCIE: PCIe Subsystem Error */
+	DRM_XE_RAS_ERR_COMP_PCIE,
+	/** @DRM_XE_RAS_ERR_COMP_FABRIC: Fabric Subsystem Error */
+	DRM_XE_RAS_ERR_COMP_FABRIC,
+	/** @DRM_XE_RAS_ERR_COMP_MAX: Max Error */
+	DRM_XE_RAS_ERR_COMP_MAX	/* non-ABI */
+};
+
+/*
+ * Error severity to name mapping.
+ */
+#define DRM_XE_RAS_ERROR_SEVERITY_NAMES {				\
+	[DRM_XE_RAS_ERR_SEV_CORRECTABLE] = "correctable-errors",	\
+	[DRM_XE_RAS_ERR_SEV_UNCORRECTABLE] = "uncorrectable-errors",	\
+}
+
+/*
+ * Error component to name mapping.
+ */
+#define DRM_XE_RAS_ERROR_COMPONENT_NAMES {				\
+	[DRM_XE_RAS_ERR_COMP_CORE_COMPUTE] = "core-compute",		\
+	[DRM_XE_RAS_ERR_COMP_SOC_INTERNAL] = "soc-internal",		\
+	[DRM_XE_RAS_ERR_COMP_DEVICE_MEMORY] = "device-memory",		\
+	[DRM_XE_RAS_ERR_COMP_PCIE] = "pcie",				\
+	[DRM_XE_RAS_ERR_COMP_FABRIC] = "fabric",			\
+}
+
+/**
+ * struct drm_xe_eudebug_connect - Input of &DRM_IOCTL_XE_EUDEBUG_CONNECT
+ *
+ * This structure is used to connect to an eudebug interface of target drm file.
+ */
 struct drm_xe_eudebug_connect {
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
 
-	__u64 fd; /* Target drm client fd */
-	__u32 flags; /* MBZ */
+	/** @fd: Debug target DRM client fd */
+	__u64 fd;
 
-	__u32 version; /* output: current ABI (ioctl / events) version */
+	/** @flags: Flags, MBZ */
+	__u64 flags;
+
+	/** @reserved: MBZ */
+	__u64 reserved;
 };
 
 #include "xe_drm_eudebug.h"
@@ -2317,4 +2717,4 @@ struct drm_xe_eudebug_connect {
 }
 #endif
 
-#endif /* _XE_DRM_H_ */
+#endif /* _UAPI_XE_DRM_H_ */
