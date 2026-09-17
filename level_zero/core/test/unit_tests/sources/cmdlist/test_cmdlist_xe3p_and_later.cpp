@@ -36,7 +36,7 @@ struct InOrderCmdListTestsXe3pCoreAndLater : public InOrderCmdListFixture {
     }
 };
 
-HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCallingAppendThenSetCorrectGpuVa, IsAtLeastXe3pCore) {
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenAggregatedEventWhenCallingAppendThenSetCorrectGpuVa, IsAtLeastXe3pCore) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
@@ -45,7 +45,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCalli
     constexpr uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
     eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
 
@@ -763,7 +763,7 @@ HWTEST2_F(MultiTileInOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWh
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t) * 2));
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     auto handle = eventObj->toHandle();
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -839,7 +839,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWhenAppendC
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t) * 2));
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     auto handle = eventObj->toHandle();
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();

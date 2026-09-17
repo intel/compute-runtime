@@ -3601,7 +3601,7 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalThenDoNotSkipI
     EXPECT_GT(incValue, 0u);
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto event = createExternalSyncStorageEvent(incValue * 2, incValue, devAddress);
+    auto event = createAggregatedEvent(incValue * 2, incValue, devAddress);
     auto &inOrderExecHelper = event->getInOrderExecEventHelper();
     auto *eventData = inOrderExecHelper.getEventData();
 
@@ -3629,7 +3629,7 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalOnImmediateCmd
     EXPECT_GT(incValue, 0u);
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto event = createExternalSyncStorageEvent(incValue * 2, incValue, devAddress);
+    auto event = createAggregatedEvent(incValue * 2, incValue, devAddress);
     auto &inOrderExecHelper = event->getInOrderExecEventHelper();
     auto *eventData = inOrderExecHelper.getEventData();
 
@@ -6431,7 +6431,7 @@ HWTEST_F(InOrderCmdListTests, givenUsmDeviceAllocationWhenCreatingCbEventFromExt
     context->freeMem(deviceAddress);
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEventThenSetAllParams) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCreatingCounterBasedEventThenSetAllParams) {
     uint64_t counterValue = 4;
     uint64_t incValue = 2;
 
@@ -6477,12 +6477,12 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
     context->freeMem(devAddress);
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEventAndAdditionalTimestampNodeThenSetAdditionalParamsVectorCorrectly) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCreatingCounterBasedEventAndAdditionalTimestampNodeThenSetAdditionalParamsVectorCorrectly) {
     uint64_t counterValue = 4;
     uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto event = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto event = createAggregatedEvent(counterValue, incValue, devAddress);
     EXPECT_EQ(Event::State::HOST_CACHING_DISABLED_PERMANENT, event->isCompleted.load());
     event->isTimestampEvent = true;
     ASSERT_TRUE(event->getInOrderExecEventHelper().isDataAssigned());
@@ -6501,13 +6501,13 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
     context->freeMem(devAddress);
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDontResetInOrderExecInfo) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendThenDontResetInOrderExecInfo) {
     uint64_t counterValue = 4;
     uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t) * 2));
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     auto handle = eventObj->toHandle();
 
     ASSERT_TRUE(eventObj->getInOrderExecEventHelper().isDataAssigned());
@@ -6523,14 +6523,14 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDontR
     context->freeMem(devAddress);
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenAggregateTimestampNodes) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendThenAggregateTimestampNodes) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
 
     uint64_t counterValue = 4;
     uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
     eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
     eventObj->setPacketsInUse(2);
@@ -6583,7 +6583,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenAggre
     context->freeMem(devAddress);
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenHandleResidency) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendThenHandleResidency) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
@@ -6595,7 +6595,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenHandl
     constexpr uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
     eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
 
@@ -6624,14 +6624,14 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenHandl
     context->freeMem(devAddress);
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendMoreThanCounterValueThenDontResetNodes) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendMoreThanCounterValueThenDontResetNodes) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
 
     constexpr uint64_t counterValue = 4;
     constexpr uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
     eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
 
@@ -6646,7 +6646,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendMoreThanC
     context->freeMem(devAddress);
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingSplitAppendThenSetCorrectGpuVa) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingSplitAppendThenSetCorrectGpuVa) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
@@ -6654,7 +6654,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingSplitAppendThen
     constexpr uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
     eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
 
@@ -6706,7 +6706,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingSplitAppendThen
     alignedFree(alignedPtr);
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
@@ -6718,7 +6718,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInO
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     immCmdList->inOrderAtomicSignalingEnabled = false;
@@ -6784,7 +6784,7 @@ HWTEST_F(InOrderCmdListTests, givenCopyOnlyCmdListAndDebugFlagWhenCounterSignale
     }
 }
 
-HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdListWhenCallingAppendMemoryCopyWithDisabledInOrderSignalingThenSignalAtomicStorage) {
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventAndCopyOnlyCmdListWhenCallingAppendMemoryCopyWithDisabledInOrderSignalingThenSignalAtomicStorage) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
@@ -6796,7 +6796,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdListWhenCall
 
     auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -7499,7 +7499,7 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventBoundToCmdListWhenCheckingCanS
     uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto aggregatedEvent = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto aggregatedEvent = createAggregatedEvent(counterValue, incValue, devAddress);
 
     EXPECT_TRUE(Event::isAggregatedEvent(aggregatedEvent.get()));
     EXPECT_TRUE(aggregatedEvent->isCounterBased());

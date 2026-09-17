@@ -125,16 +125,16 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         ::Test<ModuleFixture>::TearDown();
     }
 
-    DestroyableZeUniquePtr<InOrderFixtureMockEvent> createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
+    DestroyableZeUniquePtr<InOrderFixtureMockEvent> createAggregatedEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
         ze_event_handle_t outEvent = nullptr;
-        ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
-        externalStorageAllocProperties.completionValue = counterValue;
-        externalStorageAllocProperties.deviceAddress = deviceAddress;
-        externalStorageAllocProperties.incrementValue = incrementValue;
+        ze_event_counter_based_external_aggregate_storage_desc_t aggregateStorageProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
+        aggregateStorageProperties.completionValue = counterValue;
+        aggregateStorageProperties.deviceAddress = deviceAddress;
+        aggregateStorageProperties.incrementValue = incrementValue;
 
         ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
         counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
-        counterBasedDesc.pNext = &externalStorageAllocProperties;
+        counterBasedDesc.pNext = &aggregateStorageProperties;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &outEvent));
 
@@ -537,16 +537,16 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         return alloc;
     }
 
-    DestroyableZeUniquePtr<MockEvent> createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
+    DestroyableZeUniquePtr<MockEvent> createAggregatedEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
         ze_event_handle_t outEvent = nullptr;
-        ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
-        externalStorageAllocProperties.completionValue = counterValue;
-        externalStorageAllocProperties.deviceAddress = deviceAddress;
-        externalStorageAllocProperties.incrementValue = incrementValue;
+        ze_event_counter_based_external_aggregate_storage_desc_t aggregateStorageProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
+        aggregateStorageProperties.completionValue = counterValue;
+        aggregateStorageProperties.deviceAddress = deviceAddress;
+        aggregateStorageProperties.incrementValue = incrementValue;
 
         ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
         counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
-        counterBasedDesc.pNext = &externalStorageAllocProperties;
+        counterBasedDesc.pNext = &aggregateStorageProperties;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &outEvent));
 

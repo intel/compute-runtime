@@ -1031,7 +1031,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedEventWithMatchingCounterValueW
     uint64_t incValue = 5 * bcsSplit->cmdLists.size();
     uint64_t finalValue = 9 * incValue;
 
-    auto event = createExternalSyncStorageEvent(finalValue, incValue, reinterpret_cast<uint64_t *>(devAddress));
+    auto event = createAggregatedEvent(finalValue, incValue, reinterpret_cast<uint64_t *>(devAddress));
 
     auto mainCmdStream = cmdListHw->getCmdContainer().getCommandStream();
     auto mainOffset = mainCmdStream->getUsed();
@@ -1072,7 +1072,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedEventWithMatchingCounterValueW
 
     EXPECT_NE(cmdListHw->isUsingAdditionalBlitProperties(), found);
 
-    auto event2 = createExternalSyncStorageEvent((incValue + 1) * 9, incValue + 1, reinterpret_cast<uint64_t *>(devAddress));
+    auto event2 = createAggregatedEvent((incValue + 1) * 9, incValue + 1, reinterpret_cast<uint64_t *>(devAddress));
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, event2->toHandle(), 0, nullptr, copyParams);
 
@@ -1423,7 +1423,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnab
 
     auto expectedIncValue = mockCmdList->isDualStreamCopyOffloadOperation(true) ? incValue : incValue / mockCmdList->partitionCount;
 
-    auto event = createExternalSyncStorageEvent(incValue * 2, incValue, reinterpret_cast<uint64_t *>(devAddress));
+    auto event = createAggregatedEvent(incValue * 2, incValue, reinterpret_cast<uint64_t *>(devAddress));
 
     auto cmdStream = mockCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();

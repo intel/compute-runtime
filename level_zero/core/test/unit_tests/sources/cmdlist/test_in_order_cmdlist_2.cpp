@@ -3992,14 +3992,14 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendi
 
 using MultiTileInOrderCmdListTests = MultiTileInOrderCmdListFixture;
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenClearAllTsPackets, IsAtLeastXeHpcCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventWhenCallingAppendThenClearAllTsPackets, IsAtLeastXeHpcCore) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
 
     uint64_t counterValue = 4;
     uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
     eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
 
@@ -4185,7 +4185,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWh
     context->freeMem(hostAddress);
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation, IsAtLeastXeHpcCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation, IsAtLeastXeHpcCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
@@ -4198,7 +4198,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageWhenCallingAppen
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     immCmdList->inOrderAtomicSignalingEnabled = false;
@@ -4221,7 +4221,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageWhenCallingAppen
     context->freeMem(devAddress);
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdListWhenCallingAppendMemoryCopyWithDisabledInOrderSignalingThenSignalAtomicStorage, IsAtLeastXeHpcCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventAndCopyOnlyCmdListWhenCallingAppendMemoryCopyWithDisabledInOrderSignalingThenSignalAtomicStorage, IsAtLeastXeHpcCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
@@ -4233,7 +4233,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdLi
 
     auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
