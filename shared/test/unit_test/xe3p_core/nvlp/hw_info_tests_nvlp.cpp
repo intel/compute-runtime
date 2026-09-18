@@ -66,6 +66,7 @@ NVLPTEST_F(NvlHwInfoTest, givenBoolWhenCallNvlHardwareInfoSetupThenFeatureTableA
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTile64Optimization);
             EXPECT_EQ(false, featureTable.flags.ftrTileY);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrAppTransientCaching);
             EXPECT_EQ(false, featureTable.flags.ftrSelectiveWmtp);
             EXPECT_TRUE(featureTable.flags.ftrHeaplessMode);
 

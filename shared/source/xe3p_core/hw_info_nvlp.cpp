@@ -79,6 +79,7 @@ void NVLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrWalkerMTP = true;
     featureTable->flags.ftrXe2PlusTiling = true;
     featureTable->flags.ftrL3TransientDataFlush = true;
+    featureTable->flags.ftrAppTransientCaching = true;
     featureTable->flags.ftrPml5Support = true;
 
     featureTable->ftrBcsInfo = 1;
