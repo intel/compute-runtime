@@ -44,14 +44,10 @@ TEST(CapsXeHpgTest, givenDg2G12IpVersionWhenResolvingCapsThenReleaseCapsAreRetur
 
 TEST(CapsXeHpgTest, givenDg2G10ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsDg2G10 = materializeCaps<CapsDg2G10>();
-    EXPECT_EQ(0u, capsDg2G10.implicitArgsVersion);
     EXPECT_EQ(0u, capsDg2G10.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsDg2G10.kernelFp16AtomicCapabilities);
-    EXPECT_EQ(128u, capsDg2G10.minimalGrfSize);
-    EXPECT_EQ(8u, capsDg2G10.minimalSimdSize);
     EXPECT_EQ(0u, capsDg2G10.stackSizePerRay);
     EXPECT_EQ(1u, capsDg2G10.rtasFormat);
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, capsDg2G10.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsDg2G10.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsDg2G10.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsDg2G10.availableSemaphore64);
@@ -86,14 +82,10 @@ TEST(CapsXeHpgTest, givenDg2G10ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
 
 TEST(CapsXeHpgTest, givenDg2G11ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsDg2G11 = materializeCaps<CapsDg2G11>();
-    EXPECT_EQ(0u, capsDg2G11.implicitArgsVersion);
     EXPECT_EQ(0u, capsDg2G11.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsDg2G11.kernelFp16AtomicCapabilities);
-    EXPECT_EQ(128u, capsDg2G11.minimalGrfSize);
-    EXPECT_EQ(8u, capsDg2G11.minimalSimdSize);
     EXPECT_EQ(0u, capsDg2G11.stackSizePerRay);
     EXPECT_EQ(1u, capsDg2G11.rtasFormat);
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, capsDg2G11.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsDg2G11.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsDg2G11.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsDg2G11.availableSemaphore64);
@@ -128,14 +120,10 @@ TEST(CapsXeHpgTest, givenDg2G11ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
 
 TEST(CapsXeHpgTest, givenDg2G12ReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsDg2G12 = materializeCaps<CapsDg2G12>();
-    EXPECT_EQ(0u, capsDg2G12.implicitArgsVersion);
     EXPECT_EQ(0u, capsDg2G12.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsDg2G12.kernelFp16AtomicCapabilities);
-    EXPECT_EQ(128u, capsDg2G12.minimalGrfSize);
-    EXPECT_EQ(8u, capsDg2G12.minimalSimdSize);
     EXPECT_EQ(0u, capsDg2G12.stackSizePerRay);
     EXPECT_EQ(1u, capsDg2G12.rtasFormat);
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, capsDg2G12.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsDg2G12.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsDg2G12.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsDg2G12.availableSemaphore64);

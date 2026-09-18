@@ -69,12 +69,12 @@ struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
         kernelInfos[1] = pKernelInfosStorage[0].get();
         kernelInfos[2] = pKernelInfosStorage[1].get();
 
-        const auto &hwInfo = pContext->getDevice(0)->getHardwareInfo();
+        auto &gfxCoreHelper = pContext->getDevice(0)->getGfxCoreHelper();
 
         for (auto i = 0u; i < 2; i++) {
             pKernelInfosStorage[i]->heapInfo.pSsh = pSshLocal[i];
             pKernelInfosStorage[i]->heapInfo.surfaceStateHeapSize = sizeof(pSshLocal[i]);
-            pKernelInfosStorage[i]->kernelDescriptor.kernelAttributes.simdSize = hwInfo.caps.minimalSimdSize;
+            pKernelInfosStorage[i]->kernelDescriptor.kernelAttributes.simdSize = gfxCoreHelper.getMinimalSIMDSize();
 
             auto crossThreadDataPointer = &pCrossThreadData[i];
             memcpy_s(ptrOffset(&pCrossThreadData[i], i * sizeof(void *)), sizeof(void *), &crossThreadDataPointer, sizeof(void *));

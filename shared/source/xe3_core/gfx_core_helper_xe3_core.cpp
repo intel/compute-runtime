@@ -58,6 +58,11 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
+uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
+    return 16u;
+}
+
+template <>
 uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getL3EnabledMOCS() >> 1;
@@ -205,6 +210,11 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
 }
 
 template <>
+int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+    return ThreadArbitrationPolicy::RoundRobinAfterDependency;
+}
+
+template <>
 size_t GfxCoreHelperHw<Family>::getTimestampPacketAllocatorAlignment() const {
     return MemoryConstants::cacheLineSize;
 }
@@ -213,6 +223,11 @@ template <>
 size_t GfxCoreHelperHw<Family>::getPreemptionAllocationAlignment() const {
     using STATE_CONTEXT_DATA_BASE_ADDRESS = Family::STATE_CONTEXT_DATA_BASE_ADDRESS;
     return STATE_CONTEXT_DATA_BASE_ADDRESS::CONTEXTDATABASEADDRESS::CONTEXTDATABASEADDRESS_ALIGN_SIZE;
+}
+
+template <>
+uint32_t GfxCoreHelperHw<Family>::getMinimalGrfSize() const {
+    return 32u;
 }
 
 template <>

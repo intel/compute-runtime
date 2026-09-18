@@ -575,8 +575,8 @@ TEST(StreamPropertiesTests, givenForceDebugDefaultThreadArbitrationStateComputeM
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
-    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto defaultThreadArbitrationPolicy = hwInfo.caps.defaultThreadArbitrationPolicy;
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
     MockStateComputeModeProperties scmProperties{};
     scmProperties.defaultThreadArbitrationPolicy = defaultThreadArbitrationPolicy;

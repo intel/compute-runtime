@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/caps/materialize_caps.h"
@@ -18,10 +17,6 @@ namespace NEO {
 
 struct CapsGen12Lp {
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
-    static constexpr uint32_t minimalGrfSize = 128u;
-    static constexpr uint32_t minimalSimdSize = 8u;
-
-    static constexpr int32_t defaultThreadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;

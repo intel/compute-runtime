@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -42,9 +41,9 @@ struct ComputeModeRequirements : public ::testing::Test {
                                     uint32_t numGrfRequired = 128u) {
         overrideComputeModeRequest<FamilyType>(reqestChanged, requireCoherency, hasSharedHandles, numGrfRequiredChanged, numGrfRequired);
         if (modifyThreadArbitrationPolicy) {
-            const auto &hwInfo = device->getHardwareInfo();
+            auto &gfxCoreHelper = device->getGfxCoreHelper();
             auto csrHw = getCsrHw<FamilyType>();
-            csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.value = hwInfo.caps.defaultThreadArbitrationPolicy;
+            csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.value = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
             csrHw->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
         }
     }

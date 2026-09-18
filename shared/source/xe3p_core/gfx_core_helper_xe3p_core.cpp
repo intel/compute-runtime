@@ -24,6 +24,11 @@ template <>
 const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::none;
 
 template <>
+uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
+    return 16u;
+}
+
+template <>
 uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe3P);
 }

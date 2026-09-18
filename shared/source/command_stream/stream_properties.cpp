@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -173,8 +173,8 @@ void StateComputeModeProperties::initSupport(const RootDeviceEnvironment &rootDe
     productHelper.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
     productHelper.fillScmPropertiesSupportStructureExtra(this->scmPropertiesSupport, rootDeviceEnvironment);
 
-    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    this->defaultThreadArbitrationPolicy = hwInfo.caps.defaultThreadArbitrationPolicy;
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    this->defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
     this->propertiesSupportLoaded = true;
 }

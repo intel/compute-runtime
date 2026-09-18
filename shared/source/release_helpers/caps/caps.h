@@ -12,15 +12,10 @@
 namespace NEO {
 
 struct Caps {
-    uint32_t implicitArgsVersion = 0u;
     uint32_t kernelBFloat16AtomicCapabilities = 0u;
     uint32_t kernelFp16AtomicCapabilities = 0u;
-    uint32_t minimalGrfSize = 0u;
-    uint32_t minimalSimdSize = 0u;
     uint32_t stackSizePerRay = 0u;
     uint32_t rtasFormat = 0u;
-
-    int32_t defaultThreadArbitrationPolicy = 0;
 
     bool adjustWalkOrderAvailable = false;
     bool auxSurfaceModeOverrideRequired = false;

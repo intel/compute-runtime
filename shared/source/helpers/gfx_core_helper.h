@@ -105,6 +105,8 @@ class GfxCoreHelper {
     virtual uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize, const ReleaseHelper &releaseHelper) const = 0;
 
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
+    virtual uint32_t getMinimalSIMDSize() const = 0;
+    virtual uint32_t getMinimalGrfSize() const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const = 0;
     static uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double resolution);
@@ -112,6 +114,7 @@ class GfxCoreHelper {
     virtual void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
+    virtual int32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const;
     virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
@@ -198,6 +201,7 @@ class GfxCoreHelper {
 
     virtual void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const = 0;
     virtual bool getSipBinaryFromExternalLib() const = 0;
+    virtual uint32_t getImplicitArgsVersion() const = 0;
 
     virtual bool isCacheFlushPriorImageReadRequired() const = 0;
 
@@ -346,11 +350,17 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool isWaDisableRccRhwoOptimizationRequired() const override;
 
+    uint32_t getMinimalSIMDSize() const override;
+
+    uint32_t getMinimalGrfSize() const override;
+
     uint32_t getGlobalTimeStampBits() const override;
 
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     bool isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override;
+
+    int32_t getDefaultThreadArbitrationPolicy() const override;
 
     bool useOnlyGlobalTimestamps() const override;
 
@@ -445,6 +455,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getDefaultSshSize(const ProductHelper &productHelper) const override;
 
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
+
+    uint32_t getImplicitArgsVersion() const override;
 
     bool getSipBinaryFromExternalLib() const override;
 

@@ -83,8 +83,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
         maxKernelWorkGroupSize = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize);
     }
     slmTotalSizePerThreadGroup = kernelInfoArg.kernelDescriptor.kernelAttributes.slmInlineSize;
-    const auto &hwInfo = getDevice().getHardwareInfo();
-    this->implicitArgsVersion = hwInfo.caps.implicitArgsVersion;
+    this->implicitArgsVersion = getDevice().getGfxCoreHelper().getImplicitArgsVersion();
     if (program->getIndirectAccessBufferVersion() > 0) {
         this->implicitArgsVersion = program->getIndirectAccessBufferVersion();
     }
@@ -196,7 +195,7 @@ cl_int Kernel::initialize() {
         return CL_OUT_OF_RESOURCES;
     }
 
-    if (maxSimdSize != 1 && maxSimdSize < hwInfo.caps.minimalSimdSize) {
+    if (maxSimdSize != 1 && maxSimdSize < gfxCoreHelper.getMinimalSIMDSize()) {
         return CL_INVALID_KERNEL;
     }
 
@@ -300,7 +299,7 @@ cl_int Kernel::initialize() {
 
     auto &threadArbitrationPolicy = const_cast<ThreadArbitrationPolicy &>(kernelInfo.kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
     if (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
-        threadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(hwInfo.caps.defaultThreadArbitrationPolicy);
+        threadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(gfxCoreHelper.getDefaultThreadArbitrationPolicy());
     }
     if (kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress == true) {
         threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;

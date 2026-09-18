@@ -88,6 +88,11 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocat
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::localMemory);
 }
 
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSimdThen16IsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
+}
+
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenSetCccsProperly) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();

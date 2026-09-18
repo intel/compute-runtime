@@ -2219,8 +2219,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithInternalRelocationAndUnresolvedExt
 
     uint32_t internalRelocationOffset = 0x10;
     linkerInput->textRelocations.push_back({{std::string(implicitArgsRelocationSymbolName), internalRelocationOffset, LinkerInput::RelocationInfo::Type::address, SegmentType::instructions}});
-    const auto &hwInfo = neoDevice->getHardwareInfo();
-    uint32_t expectedInternalRelocationValue = ImplicitArgsTestHelper::getImplicitArgsSize(hwInfo.caps.implicitArgsVersion);
+    uint32_t expectedInternalRelocationValue = ImplicitArgsTestHelper::getImplicitArgsSize(neoDevice->getGfxCoreHelper().getImplicitArgsVersion());
 
     uint32_t externalRelocationOffset = 0x20;
     constexpr auto externalSymbolName = "unresolved";
@@ -6311,8 +6310,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThe
     auto status = pModule->linkBinary();
     EXPECT_TRUE(status);
 
-    const auto &hwInfo = device->getHwInfo();
-    EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(hwInfo.caps.implicitArgsVersion), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
+    EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(device->getGfxCoreHelper().getImplicitArgsVersion()), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
 
     EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }

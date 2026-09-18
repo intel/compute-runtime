@@ -781,15 +781,15 @@ struct PreambleThreadArbitrationMatcher {
 
 HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenPolicyValueChangedWhenFlushingTaskThenProgramThreadArbitrationPolicy, PreambleThreadArbitrationMatcher) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
 
     flushTask(commandStreamReceiver);
     size_t parsingOffset = commandStreamReceiver.commandStream.getUsed();
-    const auto &hwInfo = pDevice->getHardwareInfo();
     for (auto arbitrationChanged : ::testing::Bool()) {
         commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value =
-            arbitrationChanged ? -1 : hwInfo.caps.defaultThreadArbitrationPolicy;
+            arbitrationChanged ? -1 : gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
         flushTask(commandStreamReceiver);
         HardwareParse csHwParser;

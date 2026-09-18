@@ -159,14 +159,13 @@ HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKerne
     size_t localWorkSize[3] = {64, 1, 1};
     cl_int retVal = CL_INVALID_KERNEL;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
-    const auto &hwInfo = pDevice->getHardwareInfo();
 
     constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-    auto simd = std::max(16u, hwInfo.caps.minimalSimdSize);
+    auto simd = std::max(16u, pDevice->getGfxCoreHelper().getMinimalSIMDSize());
     ZebinTestData::ZebinCopyBufferModule<numBits>::Descriptor desc{};
     desc.execEnv["simd_size"] = std::to_string(simd);
     desc.execEnv["require_iab"] = "true";
-    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(hwInfo, desc);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(pDevice->getHardwareInfo(), desc);
     const auto src = zebinData->storage.data();
     const auto binarySize = zebinData->storage.size();
 

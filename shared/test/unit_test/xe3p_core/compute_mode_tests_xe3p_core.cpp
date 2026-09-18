@@ -18,6 +18,13 @@
 
 using namespace NEO;
 
+using ThreadArbitrationXe3pCore = ::testing::Test;
+XE3P_CORETEST_F(ThreadArbitrationXe3pCore, whenCallingGetDefaultThreadArbitrationPolicyThenRoundRobinIsReturned) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, gfxCoreHelper.getDefaultThreadArbitrationPolicy());
+}
+
 struct ComputeModeRequirementsXe3pCore : public ComputeModeRequirements {
     void SetUp() override {
         ComputeModeRequirements::SetUp();
@@ -36,8 +43,8 @@ XE3P_CORETEST_F(ComputeModeRequirementsXe3pCore, givenNewRequiredThreadArbitrati
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
-    const auto &hwInfo = device->getHardwareInfo();
-    auto newEuThreadSchedulingMode = hwInfo.caps.defaultThreadArbitrationPolicy;
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto newEuThreadSchedulingMode = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
     typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE expectedEuThreadSchedulingMode = static_cast<typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;

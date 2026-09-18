@@ -2145,7 +2145,7 @@ FORCE_NOINLINE void ModuleImp::dumpKernelInfoToAubComments() {
     }
 
     auto implicitArgsVersion = NEO::ImplicitArgsHelper::resolveImplicitArgsVersion(
-        neoDevice->getHardwareInfo().caps.implicitArgsVersion,
+        neoDevice->getGfxCoreHelper().getImplicitArgsVersion(),
         translationUnit->programInfo.indirectAccessBufferMajorVersion);
 
     NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelImmData, symbols, options, refBin, implicitArgsVersion);
