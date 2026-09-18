@@ -7,5 +7,5 @@ components:
     version: v1.34.0
   ze_raytracing:
     dest_dir: ze_raytracing
-    version: 191
+    version: 192
 version: '1'
