@@ -511,6 +511,19 @@ ze_result_t ZE_APICALL zesIntelDeviceGetPowerOffReasonExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Intel experimental extension to the standard ::zes_event_type_flag_t
+///
+/// @details
+///     - This flag extends the standard event flags (bits 0-15 defined by
+///       ::zes_event_type_flag_t). It is a device scoped event, so it is
+///       registered with ::zesDeviceEventRegister and reported in the `pEvents`
+///       argument of the listen calls, like any standard event flag.
+///     - Bit 16 is taken by the driver scoped ::ZES_INTEL_CPER_DATA_AVAILABLE
+///       event, hence bit 17 is used here.
+#define ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING ZE_BIT(17) ///< Event is triggered when the device is about to be powered off (use
+                                                                          ///< ::zesIntelDeviceGetPowerOffReasonExp() to determine the reason).
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME
 /// @brief  Memory Page Offline Property extension name
 #define ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME "ZES_intel_memory_page_offline_property"

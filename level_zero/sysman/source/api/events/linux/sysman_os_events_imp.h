@@ -86,6 +86,7 @@ class LinuxEventsUtil {
     bool handleNetlinkEvents(zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents);
     bool processNetlinkRasEvent(const DrmRasEvent &netlinkEvent, zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents);
     static bool isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess, const std::string &devPath, const std::string &mode);
+    static bool isPowerOffPending(SysmanDeviceImp *pSysmanDeviceImp, FsAccessInterface *pFsAccess, const std::string &devPath);
     std::string action;
 
   private:

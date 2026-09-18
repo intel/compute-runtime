@@ -681,6 +681,71 @@ void testSysmanEcc(ze_device_handle_t &device) {
     }
 }
 
+// Experimental power off reason API function pointer
+typedef ze_result_t(ZE_APICALL *zesIntelDeviceGetPowerOffReasonExp_pfn)(
+    zes_device_handle_t hDevice,
+    zes_intel_device_power_off_reason_exp_t *pReason);
+
+zesIntelDeviceGetPowerOffReasonExp_pfn zesIntelDeviceGetPowerOffReasonExpPtr = nullptr;
+
+std::string getPowerOffReasonsString(zes_intel_device_power_off_reason_exp_flags_t reasons) {
+    static const std::map<zes_intel_device_power_off_reason_exp_flag_t, std::string> powerOffReasonMap{
+        {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FIRMWARE_DOWNLOAD, "FIRMWARE DOWNLOAD"},
+        {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP, "THERMAL TRIP"},
+        {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_ALERT, "OOB ALERT"},
+        {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_RESET, "OOB RESET"},
+        {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_CATASTROPHIC_ERROR, "CATASTROPHIC ERROR"}};
+
+    std::string reasonsString;
+    for (const auto &[flag, name] : powerOffReasonMap) {
+        if (reasons & flag) {
+            if (!reasonsString.empty()) {
+                reasonsString += ", ";
+            }
+            reasonsString += name;
+        }
+    }
+    if (reasonsString.empty()) {
+        return "Unknown power off reason(s): " + std::to_string(reasons);
+    }
+    return reasonsString;
+}
+
+void printDeviceExtStateFlags(ze_device_handle_t &device, zes_device_state_ext_flags_t flags) {
+    if (flags & ZES_DEVICE_STATE_EXT_FLAG_NORMAL) {
+        std::cout << "Device is operating NORMALLY" << std::endl;
+    }
+    if (flags & ZES_DEVICE_STATE_EXT_FLAG_WEDGED) {
+        std::cout << "Device is WEDGED" << std::endl;
+    }
+    if (flags & ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY) {
+        std::cout << "Device is in SURVIVABILITY mode" << std::endl;
+    }
+    if (flags & ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE) {
+        std::cout << "Device has FLASH OVERRIDE enabled" << std::endl;
+    }
+    if (flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST) {
+        std::cout << "Device is LOST (PCI path inaccessible)" << std::endl;
+    }
+    if (flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED) {
+        std::cout << "Device has NO DRIVER loaded" << std::endl;
+    }
+    if (flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING) {
+        std::cout << "Device is about to be POWERED OFF" << std::endl;
+        if (zesIntelDeviceGetPowerOffReasonExpPtr == nullptr) {
+            std::cout << "zesIntelDeviceGetPowerOffReasonExp() is not available, power off reason cannot be retrieved" << std::endl;
+            return;
+        }
+        zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+        ze_result_t reasonResult = zesIntelDeviceGetPowerOffReasonExpPtr(device, &powerOffReason);
+        if (reasonResult != ZE_RESULT_SUCCESS) {
+            std::cout << "zesIntelDeviceGetPowerOffReasonExp() failed with " << getErrorString(reasonResult) << std::endl;
+            return;
+        }
+        std::cout << "Power off reason = " << getPowerOffReasonsString(powerOffReason.reasons) << std::endl;
+    }
+}
+
 void testSysmanSurvivability(ze_device_handle_t &device) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
@@ -713,24 +778,7 @@ void testSysmanSurvivability(ze_device_handle_t &device) {
         std::cout << "Device reset status: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
         std::cout << "Device repaired status: " << deviceState.repaired << std::endl;
 
-        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_NORMAL) {
-            std::cout << "Device is operating NORMALLY" << std::endl;
-        }
-        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_WEDGED) {
-            std::cout << "Device is WEDGED" << std::endl;
-        }
-        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY) {
-            std::cout << "Device is in SURVIVABILITY mode" << std::endl;
-        }
-        if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE) {
-            std::cout << "Device has FLASH OVERRIDE enabled" << std::endl;
-        }
-        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST) {
-            std::cout << "Device is LOST (PCI path inaccessible)" << std::endl;
-        }
-        if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED) {
-            std::cout << "Device has NO DRIVER loaded" << std::endl;
-        }
+        printDeviceExtStateFlags(device, extDeviceState.flags);
         std::cout << std::endl;
     }
 
@@ -1899,6 +1947,20 @@ void testSysmanListenEventsEx(ze_driver_handle_t driver, std::vector<ze_device_h
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED) {
                     std::cout << "Device " << index << " got SURVIVABILITY_MODE_DETECTED event" << std::endl;
                 }
+                if (pEvents[index] & ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING) {
+                    std::cout << "Device " << index << " got DEVICE_POWER_OFF_PENDING event" << std::endl;
+                    if (zesIntelDeviceGetPowerOffReasonExpPtr == nullptr) {
+                        std::cout << "zesIntelDeviceGetPowerOffReasonExp() is not available, power off reason cannot be retrieved" << std::endl;
+                        continue;
+                    }
+                    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, 0};
+                    ze_result_t reasonResult = zesIntelDeviceGetPowerOffReasonExpPtr(devices[index], &powerOffReason);
+                    if (reasonResult != ZE_RESULT_SUCCESS) {
+                        std::cout << "zesIntelDeviceGetPowerOffReasonExp() failed with " << getErrorString(reasonResult) << std::endl;
+                        continue;
+                    }
+                    std::cout << "Power off reason = " << getPowerOffReasonsString(powerOffReason.reasons) << std::endl;
+                }
             }
         }
     }
@@ -2026,6 +2088,7 @@ zesIntelDeviceMemoryGetPageOfflineStateExp_pfn zesIntelDeviceMemoryGetPageOfflin
 
 void getGlobalOperationsExpFunctionPointers(zes_driver_handle_t driverHandle) {
     VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceMemoryGetPageOfflineStateExp", reinterpret_cast<void **>(&zesIntelDeviceMemoryGetPageOfflineStateExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceGetPowerOffReasonExp", reinterpret_cast<void **>(&zesIntelDeviceGetPowerOffReasonExpPtr)));
 }
 
 void testSysmanGlobalOperations(ze_device_handle_t &device) {
@@ -2101,24 +2164,7 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
             std::cout << "Device reset status: 0x" << std::hex << deviceState.reset << std::dec << std::endl;
             std::cout << "Device repaired status: " << deviceState.repaired << std::endl;
 
-            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_NORMAL) {
-                std::cout << "Device is operating NORMALLY" << std::endl;
-            }
-            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_WEDGED) {
-                std::cout << "Device is WEDGED" << std::endl;
-            }
-            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_SURVIVABILITY) {
-                std::cout << "Device is in SURVIVABILITY mode" << std::endl;
-            }
-            if (extDeviceState.flags & ZES_DEVICE_STATE_EXT_FLAG_FLASH_OVERRIDE) {
-                std::cout << "Device has FLASH OVERRIDE enabled" << std::endl;
-            }
-            if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST) {
-                std::cout << "Device is LOST (PCI path inaccessible)" << std::endl;
-            }
-            if (extDeviceState.flags & ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED) {
-                std::cout << "Device has NO DRIVER loaded" << std::endl;
-            }
+            printDeviceExtStateFlags(device, extDeviceState.flags);
         }
         std::cout << std::endl;
     }
@@ -3488,6 +3534,7 @@ int main(int argc, char *argv[]) {
         buf.clear();
     }
     if (isParamEnabled(argc, argv, "-z", "--survive", &optind)) {
+        getGlobalOperationsExpFunctionPointers(driver);
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanSurvivability(device);
         });
@@ -3691,16 +3738,19 @@ int main(int argc, char *argv[]) {
         }
     }
     if (isParamEnabled(argc, argv, "-E", "--event", &optind)) {
+        getGlobalOperationsExpFunctionPointers(driver);
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             VALIDATECALL(zesDeviceEventRegister(device,
                                                 ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                                     ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED |
+                                                    ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
         });
         testSysmanListenEventsEx(driver, devices,
                                  ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                      ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
-                                     ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
+                                     ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED |
+                                     ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING);
     }
     if (isParamEnabled(argc, argv, "-F", "--fabricport", &optind)) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {

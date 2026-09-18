@@ -14,6 +14,7 @@
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
@@ -36,7 +37,8 @@ bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeou
 }
 
 ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
-    if (0xFFFF < events) {
+    constexpr zes_event_type_flags_t validEventMask = 0xFFFF | ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING;
+    if (events & ~validEventMask) {
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
@@ -127,7 +129,8 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
                                                         ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED |
                                                         ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
                                                         ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS |
-                                                        ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
+                                                        ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED |
+                                                        ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING;
             if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
                 registeredEvents = deviceEventsMap[pSysmanDevice];
             }
@@ -282,6 +285,20 @@ bool LinuxEventsUtil::isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess
     }
 
     return survivabilityModeVal == mode;
+}
+
+bool LinuxEventsUtil::isPowerOffPending(SysmanDeviceImp *pSysmanDeviceImp, FsAccessInterface *pFsAccess, const std::string &devPath) {
+    if (pFsAccess == nullptr) {
+        return false;
+    }
+
+    auto *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pSysmanDeviceImp->deviceGetOsInterface());
+    const std::string alertReasonFile = pLinuxSysmanImp->getSysmanKmdInterface()->getNodeFileName(NodeName::amcAlertReason);
+    if (alertReasonFile.empty()) {
+        return false;
+    }
+
+    return pFsAccess->fileExists("/sys" + devPath + "/" + alertReasonFile);
 }
 
 bool LinuxEventsUtil::checkDeviceDetachEvent(zes_event_type_flags_t &pEvent) {
@@ -448,6 +465,15 @@ bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &reg
                 }
                 if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH) {
                     if (checkIfFabricPortStatusChanged(dev, pEvents[it->first])) {
+                        retVal = true;
+                    }
+                }
+                if (registeredEvents[it->first] & ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING) {
+                    zes_event_type_flags_t wedgedEvent = 0;
+                    auto pSysmanDevice = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[it->first]));
+                    if (isPowerOffPending(pSysmanDevice, pFsAccess, it->second) &&
+                        checkDeviceWedgedEvent(dev, wedgedEvent)) {
+                        pEvents[it->first] |= ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING;
                         retVal = true;
                     }
                 }
