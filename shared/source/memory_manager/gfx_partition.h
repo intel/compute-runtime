@@ -151,7 +151,7 @@ class GfxPartition {
     static const std::array<HeapIndex, 8> heapNonSvmNames;
 
   protected:
-    bool initAdditionalRange(uint32_t cpuAddressWidth, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, uint64_t systemMemorySize, size_t numRootDevices);
+    bool initAdditionalRange(uint32_t cpuAddressWidth, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, uint64_t systemMemorySize, size_t numRootDevices, const ProductHelper *productHelper);
 
     class Heap {
       public:
@@ -163,6 +163,7 @@ class GfxPartition {
         uint64_t getBase() const { return base; }
         uint64_t getSize() const { return size; }
         uint64_t getLimit() const { return size ? base + size - 1 : 0; }
+        uint64_t getGranularity() const { return granularity; }
         size_t getAllocAlignment() const;
         uint64_t allocate(size_t &size);
         uint64_t allocateWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size);
@@ -173,6 +174,7 @@ class GfxPartition {
 
       protected:
         uint64_t base = 0, size = 0;
+        uint64_t granularity = GfxPartition::heapGranularity;
         std::unique_ptr<HeapAllocator> alloc;
         bool initialized = false;
     };

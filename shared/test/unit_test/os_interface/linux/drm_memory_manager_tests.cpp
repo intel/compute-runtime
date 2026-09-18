@@ -2840,7 +2840,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWit
     EXPECT_EQ(gpuAddress, bo->peekAddress());
     EXPECT_EQ(size, bo->peekSize());
 
-    const auto expectedUnmapSize = prefer57bitAddressing ? alignUp(size, MemoryConstants::pageSize) : alignUp(size, 2 * MemoryConstants::megaByte);
+    const auto expectedUnmapSize = alignUp(size, memoryManager->getGfxPartition(rootDeviceIndex)->getHeapAllocationAlignment(expectedHeap));
     EXPECT_EQ(expectedUnmapSize, bo->peekUnmapSize());
     EXPECT_EQ(osHandleData.handle, graphicsAllocation->peekSharedHandle());
 
