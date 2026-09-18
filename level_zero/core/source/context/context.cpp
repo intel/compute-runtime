@@ -553,36 +553,20 @@ void Context::invokeMemFreeCallbacks(NEO::SvmAllocationData &svmData) {
     }
 }
 
-ze_result_t Context::freeMem(const void *ptr) {
-    return this->freeMem(ptr, false);
-}
-
-ze_result_t Context::freeMem(const void *ptr, bool blocking) {
-    auto allocation = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    if (allocation == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
-    auto poolLookup = getUsmPoolOwningPtr(ptr, allocation);
-    if (poolLookup.pool) {
-        if (false == poolLookup.isAllocatedInPool()) {
-            // ptr is within usm pool address space but is not allocated
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        } else {
-            addressForIpc = poolLookup.pool->getPoolAddress();
-        }
-    }
-
-    this->invokeMemFreeCallbacks(*allocation);
-
+// call this before the chunk goes back to the pool: freeing the last chunk can trim
+// the pool away, and with it the address
+void Context::releaseIpcHandle(const void *ptr, NEO::UsmMemAllocPool *usmPool) {
+    const bool pooled = nullptr != usmPool;
+    const uint64_t addressForIpc = pooled ? usmPool->getPoolAddress() : reinterpret_cast<uint64_t>(ptr);
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lockIPC = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().begin();
     while (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         if (ipcHandleIterator->second->ptr == addressForIpc) {
             ipcHandleIterator->second->refcnt -= 1;
-            if (ipcHandleIterator->second->refcnt == 0 || nullptr == poolLookup.pool) {
+            // pooled: close when the last export of this pool BO is released
+            // non-pooled: the allocation is going away, so its entry must not outlive it
+            if (ipcHandleIterator->second->refcnt == 0 || false == pooled) {
                 auto *memoryManager = driverHandle->getMemoryManager();
                 void *reservedHandleData = nullptr;
                 if (ipcHandleIterator->second->hasReservedHandleData) {
@@ -603,6 +587,27 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
         }
         ipcHandleIterator++;
     }
+}
+
+ze_result_t Context::freeMem(const void *ptr) {
+    return this->freeMem(ptr, false);
+}
+
+ze_result_t Context::freeMem(const void *ptr, bool blocking) {
+    auto allocation = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    if (allocation == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto poolLookup = getUsmPoolOwningPtr(ptr, allocation);
+    if (poolLookup.pool && false == poolLookup.isAllocatedInPool()) {
+        // ptr is within usm pool address space but is not allocated
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    this->invokeMemFreeCallbacks(*allocation);
+
+    this->releaseIpcHandle(ptr, poolLookup.pool);
 
     if (this->tryFreeViaPooling(ptr, allocation, poolLookup.pool,
                                 blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none)) {
@@ -637,6 +642,8 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
         // SvmAllocationData to the next allocation, so a list left behind here would fire
         // for an unrelated pointer.
         this->invokeMemFreeCallbacks(*allocation);
+
+        this->releaseIpcHandle(ptr, poolLookup.pool);
 
         if (this->tryFreeViaPooling(ptr, allocation, poolLookup.pool, NEO::FreePolicyType::defer)) {
             return ZE_RESULT_SUCCESS;
