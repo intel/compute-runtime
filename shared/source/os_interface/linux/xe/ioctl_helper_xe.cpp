@@ -1862,6 +1862,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             bindOps[0].op = DRM_XE_VM_BIND_OP_UNMAP;
             bindOps[1].op = DRM_XE_VM_BIND_OP_MAP;
             bindOps[1].flags |= DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+            bindOps[1].pat_index = static_cast<uint16_t>(drm.getRootDeviceEnvironment().getProductHelper().getSharedSystemPatIndex());
             // CPU_ADDR_MIRROR maps have no backing object, so obj/obj_offset must be zero
             bindOps[1].obj = 0;
             bindOps[1].obj_offset = 0;

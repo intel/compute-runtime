@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/unit_test/release_helpers/release_helper/release_helper_tests_base.h"
 
@@ -32,6 +34,21 @@ TEST_F(ReleaseHelperPtlHTests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
 
 TEST_F(ReleaseHelperPtlHTests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
+}
+
+TEST_F(ReleaseHelperPtlHTests, givenAppTransientPatOverrideWhenCheckingRequirementThenAlwaysReturnFalse) {
+    DebugManagerStateRestore restore;
+
+    for (const auto revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        for (const auto overrideValue : {-1, 0, 1}) {
+            debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(overrideValue);
+            EXPECT_FALSE(releaseHelper->isAppTransientCoherentPatRequired());
+        }
+    }
 }
 
 TEST_F(ReleaseHelperPtlHTests, whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu) {

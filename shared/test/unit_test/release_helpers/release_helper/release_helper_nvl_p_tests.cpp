@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -162,16 +163,43 @@ TEST_F(ReleaseHelperNvlPTests, whenIsStateCacheInvalidationWaRequiredCalledWithD
     whenIsStateCacheInvalidationWaRequiredCalledWithDebugFlagSetThenCorrectValueReturned();
 }
 
-TEST_F(ReleaseHelperNvlPTests, whenOverrideSystemMemoryPatIndexIsCalledThenPatIndexIsOverriddenForNvlPA0Revision) {
+TEST_F(ReleaseHelperNvlPTests, whenCheckingCoherentPatSupportThenNvlPRevisionsBeforeB0RequireAppTransientCoherentPatAndNvlPB0Supports2WayCoherency) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
     ipVersion.value = static_cast<uint32_t>(AOT::NVL_P_A0);
     releaseHelper = ReleaseHelper::create(ipVersion);
 
-    uint32_t patIndex = 3u;
-    EXPECT_EQ(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+    EXPECT_FALSE(releaseHelper->is2WayCoherentPatSupported());
+    EXPECT_TRUE(releaseHelper->isAppTransientCoherentPatRequired());
+
+    ipVersion.revision = 1u;
+    releaseHelper = ReleaseHelper::create(ipVersion);
+
+    EXPECT_FALSE(releaseHelper->is2WayCoherentPatSupported());
+    EXPECT_TRUE(releaseHelper->isAppTransientCoherentPatRequired());
 
     ipVersion.value = static_cast<uint32_t>(AOT::NVL_P_B0);
     releaseHelper = ReleaseHelper::create(ipVersion);
 
-    EXPECT_NE(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
-    EXPECT_EQ(patIndex, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+    EXPECT_TRUE(releaseHelper->is2WayCoherentPatSupported());
+    EXPECT_FALSE(releaseHelper->isAppTransientCoherentPatRequired());
+}
+
+TEST_F(ReleaseHelperNvlPTests, givenAppTransientPatOverrideWhenCheckingRequirementThenFlagOverridesSteppingDefault) {
+    DebugManagerStateRestore restore;
+
+    for (const auto baseIpVersion : {AOT::NVL_P_A0, AOT::NVL_P_B0}) {
+        ipVersion.value = static_cast<uint32_t>(baseIpVersion);
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(0);
+        EXPECT_FALSE(releaseHelper->isAppTransientCoherentPatRequired());
+
+        debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(1);
+        EXPECT_TRUE(releaseHelper->isAppTransientCoherentPatRequired());
+
+        debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
+        EXPECT_EQ(baseIpVersion == AOT::NVL_P_A0, releaseHelper->isAppTransientCoherentPatRequired());
+    }
 }

@@ -15,6 +15,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -147,9 +148,9 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled
     }
 }
 
-// Set 2-way coherency for allocations which are not aligned to cacheline
-GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper) {
-    if (debugManager.flags.Disable2WayCoherencyOverride.get()) {
+// Select 2-way coherency for cacheline-misaligned allocations only when supported by the release.
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper, const ReleaseHelper &releaseHelper) {
+    if (debugManager.flags.Disable2WayCoherencyOverride.get() || releaseHelper.isAppTransientCoherentPatRequired()) {
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     }
 
@@ -157,6 +158,28 @@ GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCache
         return GMM_RESOURCE_USAGE_HW_CONTEXT;
     } else {
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+    }
+}
+
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForCoherentSystemMemory(GmmResourceUsageType preferredUsageType, const ProductHelper &productHelper, const ReleaseHelper &releaseHelper) {
+
+    if (!productHelper.isL3FlushAfterPostSyncSupported()) {
+        return preferredUsageType;
+    }
+
+    // Use system memory buffer for App-transient coherent PAT if 2-way coherent PAT is not supported
+    if (debugManager.flags.Disable2WayCoherencyOverride.get() || releaseHelper.isAppTransientCoherentPatRequired()) {
+        return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+    }
+
+    // Promote to a 2-way coherent PAT if not App-transient coherent
+    switch (preferredUsageType) {
+    case GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER:
+    case GMM_RESOURCE_USAGE_HW_CONTEXT:
+    case GMM_RESOURCE_USAGE_FINE_GRAINED_COHERENT:
+        return preferredUsageType;
+    default:
+        return GMM_RESOURCE_USAGE_FINE_GRAINED_COHERENT;
     }
 }
 

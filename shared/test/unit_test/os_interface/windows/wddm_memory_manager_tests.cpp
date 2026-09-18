@@ -1154,8 +1154,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
     EXPECT_EQ(1u, allocation->getAllocationOffset());
 
     const auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    const auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
     auto expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-    if (productHelper.isMisalignedUserPtr2WayCoherent()) {
+    if (productHelper.isMisalignedUserPtr2WayCoherent() && !releaseHelper.isAppTransientCoherentPatRequired()) {
         expectedUsage = GMM_RESOURCE_USAGE_HW_CONTEXT;
     }
     EXPECT_EQ(expectedUsage, allocation->getGmm(0)->getResourceUsageType());

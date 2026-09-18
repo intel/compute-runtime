@@ -24,7 +24,8 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(adjustMaxThreadsPerEuCount, uint32_t, 8u, (uint32_t maxThreadsPerEuCount, uint32_t grfCount));
     ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, (bool isImmediateCmdList, bool kernelUsesImageOrSampler));
     ADDMETHOD_CONST_NOBASE(getIpVersionForGmm, uint32_t, 0, ());
-    ADDMETHOD_CONST_NOBASE(overrideSystemMemoryPatIndexBase, uint64_t, 0, (uint64_t patIndex));
+    ADDMETHOD_CONST_NOBASE(is2WayCoherentPatSupported, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(isAppTransientCoherentPatRequired, bool, false, ());
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};

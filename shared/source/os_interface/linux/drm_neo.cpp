@@ -1610,12 +1610,12 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         cacheable = true;
     }
 
+    if ((isSystemMemory && cacheable) || (!gmm && forceCoherent)) {
+        usageType = CacheSettingsHelper::getGmmUsageTypeForCoherentSystemMemory(usageType, productHelper, releaseHelper);
+    }
+
     uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cacheable);
     patIndex = productHelper.overridePatIndex(isUncachedType, patIndex, allocationType);
-
-    if (isSystemMemory && cacheable) {
-        patIndex = releaseHelper.overrideSystemMemoryPatIndex(patIndex);
-    }
 
     UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));
 
@@ -1892,15 +1892,13 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
         drmVmId = ctl.vmId;
 
         if (isSharedSystemAllocEnabled()) {
-            auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-
             VmBindParams vmBind{};
             vmBind.vmId = ctl.vmId;
             vmBind.flags = this->getSharedSystemBindFlags();
             vmBind.length = this->getSharedSystemAllocAddressRange();
             vmBind.sharedSystemUsmEnabled = true;
             vmBind.sharedSystemUsmBind = true;
-            vmBind.patIndex = productHelper.getSharedSystemPatIndex();
+            vmBind.patIndex = rootDeviceEnvironment.getProductHelper().getSharedSystemPatIndex();
             VmBindExtUserFenceT vmBindExtUserFence{};
             ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence,
                                                 castToUint64(ioctlHelper->getPagingFenceAddress(0, nullptr)),

@@ -71,8 +71,13 @@ bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired(bool isImm
 }
 
 template <ReleaseType releaseType>
-uint64_t ReleaseHelperHw<releaseType>::overrideSystemMemoryPatIndexBase(uint64_t patIndex) const {
-    return patIndex;
+bool ReleaseHelperHw<releaseType>::is2WayCoherentPatSupported() const {
+    return true;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isAppTransientCoherentPatRequired() const {
+    return false;
 }
 
 template <ReleaseType releaseType>

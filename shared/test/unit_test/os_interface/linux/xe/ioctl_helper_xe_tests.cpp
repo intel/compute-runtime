@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/options.h"
@@ -19,7 +20,9 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
+#include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/xe/mock_drm_xe.h"
 #include "shared/test/common/os_interface/linux/xe/mock_ioctl_helper_xe.h"
 #include "shared/test/common/os_interface/linux/xe/xe_config_fixture.h"
@@ -2859,8 +2862,33 @@ TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmEnabledThenTwoBin
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_UNMAP), drm->vmBindOpsInputs[0].op);
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_MAP), drm->vmBindOpsInputs[1].op);
     EXPECT_NE(0u, drm->vmBindOpsInputs[1].flags & DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR);
+    EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getProductHelper().getSharedSystemPatIndex(), drm->vmBindOpsInputs[1].pat_index);
     EXPECT_EQ(0u, drm->vmBindOpsInputs[1].obj);
     EXPECT_EQ(0u, drm->vmBindOpsInputs[1].obj_offset);
+}
+
+TEST_F(IoctlHelperXeTest, givenSharedSystemUsmAndNoGmmWhenCreatingVirtualMemoryThenCpuAddressMirrorUsesSharedSystemPatIndex) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isL3FlushAfterPostSyncSupportedResult = true;
+    rootDeviceEnvironment.productHelper = std::move(mockProductHelper);
+
+    auto drm = DrmMockXe::create(rootDeviceEnvironment);
+    drm->setSharedSystemAllocEnable(true);
+    drm->setSharedSystemAllocAddressRange(MemoryConstants::pageSize);
+    rootDeviceEnvironment.gmmHelper.reset();
+    ASSERT_EQ(nullptr, rootDeviceEnvironment.getGmmHelper());
+
+    uint32_t vmId = 0;
+    ASSERT_EQ(0, drm->createDrmVirtualMemory(vmId));
+
+    ASSERT_EQ(1u, drm->vmBindInputs.size());
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_MAP), drm->vmBindInputs[0].bind.op);
+    EXPECT_NE(0u, drm->vmBindInputs[0].bind.flags & DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR);
+    EXPECT_EQ(rootDeviceEnvironment.getProductHelper().getSharedSystemPatIndex(), drm->vmBindInputs[0].bind.pat_index);
+    EXPECT_TRUE(drm->isSharedSystemAllocEnabled());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getGmmHelper());
 }
 
 TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmEnabledWithNonZeroOffsetThenCpuAddrMirrorMapOpHasNoBackingObject) {
