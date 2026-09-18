@@ -6397,16 +6397,10 @@ TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmT
 
     sharedSystemMemCapabilities = 0; // enables return false for Device::areSharedSystemAllocationsAllowed()
 
-    size_t size = 10;
-    void *ptr = nullptr;
+    uint8_t data{};
 
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
-
-    auto res = commandList->executeMemAdvise(device1, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    auto res = commandList->executeMemAdvise(device1, &data, sizeof(data), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
-
-    free(ptr);
 }
 
 TEST_F(MultipleDeviceMemAdviseTests, givenAllocationNotPresentOnAdvisedDeviceThenExecuteMemAdviseIsIgnored) {

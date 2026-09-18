@@ -1805,11 +1805,12 @@ TEST_F(DriverExperimentalApiTest, givenGetVersionStringAPIExistsThenGetCurrentVe
     auto result = L0::zeIntelGetDriverVersionString(driverHandle, nullptr, &sizeOfDriverString);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(sizeOfDriverString, 0u);
-    char *driverVersionString = reinterpret_cast<char *>(malloc(sizeOfDriverString * sizeof(char)));
+    alignas(16) uint8_t stackBuffer[64] = {};
+    ASSERT_LE(sizeOfDriverString * sizeof(char), sizeof(stackBuffer));
+    char *driverVersionString = reinterpret_cast<char *>(stackBuffer);
     result = L0::zeIntelGetDriverVersionString(driverHandle, driverVersionString, &sizeOfDriverString);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE("", driverVersionString);
-    free(driverVersionString);
 }
 
 struct GtPinInitTest : public ::testing::Test {

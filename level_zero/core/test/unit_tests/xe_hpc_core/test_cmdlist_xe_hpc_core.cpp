@@ -260,17 +260,12 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnSuppor
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnSupportedDeviceWhenPrefetchApiIsCalledThenRequestMemoryPrefetchCalledWithNoPrefetchManager, IsXeHpcCore) {
@@ -286,17 +281,12 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnSuppor
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnUnSupportedDeviceWhenPrefetchApiIsCalledThenRequestMemoryPrefetchNotCalled, IsXeHpcCore) {
@@ -307,17 +297,12 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnUnSupp
     DebugManagerStateRestore restore;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     EXPECT_FALSE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsCalled, IsXeHpcCore) {
@@ -515,17 +500,14 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationPrefetch
     mockMemoryManager->prefetchManager.reset(new MockPrefetchManager());
     auto prefetchManager = static_cast<MockPrefetchManager *>(mockMemoryManager->prefetchManager.get());
 
-    size_t size = 10;
-    void *ptr = malloc(size);
-
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
-    commandList->appendMemoryPrefetch(ptr, size);
+    commandList->appendMemoryPrefetch(&data, sizeof(data));
 
     result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -533,7 +515,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationPrefetch
     EXPECT_TRUE(prefetchManager->migrateAllocationsToGpuCalled);
     EXPECT_TRUE(prefetchManager->removeAllocationsCalled);
 
-    context->freeMem(ptr);
+    context->freeMem(&data);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenPrefetchApiIsCalledThenRequestMemoryPrefetch, IsXeHpcCore) {

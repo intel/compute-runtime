@@ -646,7 +646,9 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThe
     size_t size = 4096;
     size_t alignment = 4096;
     void *ptr = nullptr;
-    auto memory = malloc(size);
+    // memory is only ever used as an identity/size token, never dereferenced.
+    uint8_t data{};
+    auto memory = static_cast<void *>(&data);
 
     ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
                                                        nullptr, memory, size};
@@ -673,7 +675,6 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThe
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-    free(memory);
 }
 
 TEST_F(MemoryTest,
@@ -686,7 +687,9 @@ TEST_F(MemoryTest,
 
     size_t size = 4096;
     size_t alignment = 4096;
-    auto memory = malloc(size);
+    // memory is only ever used as an identity/size token, never dereferenced.
+    uint8_t data{};
+    auto memory = static_cast<void *>(&data);
     void *ptr = nullptr;
     ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
                                                        nullptr, memory, size};
@@ -698,8 +701,6 @@ TEST_F(MemoryTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
 
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
-
-    free(memory);
 }
 
 TEST_F(MemoryTest,
@@ -733,7 +734,9 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFail
     size_t size = 4096;
     size_t alignment = 4096;
     void *ptr = nullptr;
-    auto memory = malloc(size);
+    // memory is only ever used as an identity/size token, never dereferenced.
+    uint8_t data{};
+    auto memory = static_cast<void *>(&data);
 
     ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
                                                        nullptr, memory, size};
@@ -743,8 +746,6 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFail
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
-
-    free(memory);
 }
 
 TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsExpectedProperties) {
@@ -1435,16 +1436,11 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, givenSharedSystemAlloctionNotDeviceAtomicCabapleWhenCallingSetAtomicAccessAttributeForDeviceAccessThenFailureIsReturned) {
@@ -1465,16 +1461,11 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionNotDeviceAtomicCabapleWhenCallingSe
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttributeWithZeroInputSuccessIsReturned) {
@@ -1499,16 +1490,11 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = 0;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, givenSharedSystemAlloctionWithoutConcurrentAtomicAccessCapWhenCallingSetAtomicAccessAttributeWithZeroInputFailureIsReturned) {
@@ -1533,16 +1519,11 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWithoutConcurrentAtomicAccessCapWhe
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = 0;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForHostAccessThenSuccessIsReturned) {
@@ -1606,16 +1587,11 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, givenSharedSystemNotHostAtomicCapableAlloctionWhenCallingSetAtomicAccessAttributeForHostAccessThenFailureIsReturned) {
@@ -1636,16 +1612,11 @@ TEST_F(MemoryTest, givenSharedSystemNotHostAtomicCapableAlloctionWhenCallingSetA
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForSystemAccessSharedSingleThenSuccessIsReturned) {
@@ -1705,16 +1676,11 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttributeForSystemAccessSharedSingleWithoutConcurrentAtomicCapThenFailureIsReturned) {
@@ -1739,16 +1705,11 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, givenSharedSystemAlloctionNotSystemAtomicCapableWhenCallingSetAtomicAccessAttributeForSystemAccessSharedSingleTheFailureIsReturned) {
@@ -1769,16 +1730,11 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionNotSystemAtomicCapableWhenCallingSe
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
-    size_t size = 10;
-    void *ptr = nullptr;
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
-    auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
+    auto result = context->setAtomicAccessAttribute(device->toHandle(), &data, sizeof(data), attr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-
-    free(ptr);
 }
 
 TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeThenSuccessIsReturned) {
@@ -4998,10 +4954,9 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeInternalAllocationsRes
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest, whenFreeingNotKnownPointerThenInvalidArgumentIsReturned) {
-    void *ptr = calloc(1, 1u);
-    ze_result_t result = context->freeMem(ptr);
+    uint8_t data{};
+    ze_result_t result = context->freeMem(&data);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
-    free(ptr);
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToAppendBlitFillAndImportFdHandleFailingThenInvalidArgumentIsReturned) {

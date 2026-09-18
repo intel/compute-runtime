@@ -507,16 +507,14 @@ TEST_F(MultiDeviceHostPointerManagerTests, createHostPointerMultiAllocationHandl
     std::vector<L0::Device *> devices;
     devices.push_back(&l0Device);
 
-    size_t bufferSize = 4096;
-    void *buffer = malloc(bufferSize);
+    uint8_t data{};
 
     // Should not abort, should succeed
     auto openHostPointerManager = static_cast<L0::ult::HostPointerManager *>(hostDriverHandle->hostPointerManager.get());
-    auto result = openHostPointerManager->createHostPointerMultiAllocation(devices, buffer, bufferSize);
+    auto result = openHostPointerManager->createHostPointerMultiAllocation(devices, &data, sizeof(data));
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    openHostPointerManager->freeHostPointerAllocation(buffer);
-    free(buffer);
+    openHostPointerManager->freeHostPointerAllocation(&data);
 }
 
 } // namespace ult

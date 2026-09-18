@@ -188,17 +188,15 @@ HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlush
     commandList.cmdQImmediate = &mockCommandQueue;
     commandList.indirectAllocationsAllowed = false;
 
-    size_t size1 = 0x1000;
-    void *ptr1 = malloc(size1); // reinterpret_cast<void *>(0x1234);
-    size_t size2 = 0x2000;
-    void *ptr2 = malloc(size2); // reinterpret_cast<void *>(0x1234);
+    uint8_t data1{};
+    uint8_t data2{};
 
-    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, ptr1, size1, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
+    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, &data1, sizeof(data1), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
     EXPECT_EQ(1u, commandList.getMemAdviseOperations().size());
-    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, ptr2, size2, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
+    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, &data2, sizeof(data2), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
     EXPECT_EQ(2u, commandList.getMemAdviseOperations().size());
-    commandList.appendMemoryPrefetch(ptr1, size1);
-    commandList.appendMemoryPrefetch(ptr2, size2);
+    commandList.appendMemoryPrefetch(&data1, sizeof(data1));
+    commandList.appendMemoryPrefetch(&data2, sizeof(data2));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::none, false, false, nullptr, nullptr));
     EXPECT_EQ(0u, commandList.getMemAdviseOperations().size());
@@ -208,8 +206,6 @@ HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlush
     EXPECT_TRUE(commandList.executeMemAdviseBeforePrefetch);
 
     commandList.cmdQImmediate = oldCommandQueue;
-    free(ptr1);
-    free(ptr2);
 }
 
 HWTEST_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned) {

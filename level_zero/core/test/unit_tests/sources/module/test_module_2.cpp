@@ -167,12 +167,12 @@ TEST(ModuleBuildLog, WhenGettingStringThenLogIsParsedCorrectly) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, buildLogSize);
 
-    buildLog = reinterpret_cast<char *>(malloc(buildLogSize));
+    alignas(16) uint8_t stackBuffer[32] = {};
+    ASSERT_LE(buildLogSize, sizeof(stackBuffer));
+    buildLog = reinterpret_cast<char *>(stackBuffer);
     result = moduleBuildLog->getString(&buildLogSize, buildLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, buildLogSize);
-
-    free(buildLog);
 
     moduleBuildLog->appendString(errorLog, strlen(errorLog));
 
@@ -181,13 +181,11 @@ TEST(ModuleBuildLog, WhenGettingStringThenLogIsParsedCorrectly) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + 1), buildLogSize);
 
-    buildLog = reinterpret_cast<char *>(malloc(buildLogSize));
+    ASSERT_LE(buildLogSize, sizeof(stackBuffer));
     result = moduleBuildLog->getString(&buildLogSize, buildLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + 1), buildLogSize);
     EXPECT_STREQ("Error Log", buildLog);
-
-    free(buildLog);
 
     moduleBuildLog->appendString(warnLog, strlen(warnLog));
 
@@ -196,14 +194,12 @@ TEST(ModuleBuildLog, WhenGettingStringThenLogIsParsedCorrectly) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + strlen("\n") + strlen(warnLog) + 1), buildLogSize);
 
-    buildLog = reinterpret_cast<char *>(malloc(buildLogSize));
+    ASSERT_LE(buildLogSize, sizeof(stackBuffer));
     result = moduleBuildLog->getString(&buildLogSize, buildLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + strlen("\n") + strlen(warnLog) + 1), buildLogSize);
     EXPECT_STREQ("Error Log\nWarn Log", buildLog);
     EXPECT_STREQ(buildLog, moduleBuildLog->getBuildLog());
-
-    free(buildLog);
 
     result = moduleBuildLog->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -362,12 +358,12 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(strlen(attributeString) + 1, strSize);
 
-    char *attributes = reinterpret_cast<char *>(malloc(sizeof(char) * strSize));
+    alignas(16) uint8_t stackBuffer[32] = {};
+    ASSERT_LE(sizeof(char) * strSize, sizeof(stackBuffer));
+    char *attributes = reinterpret_cast<char *>(stackBuffer);
     result = kernel->getSourceAttributes(&strSize, &attributes);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_STREQ(attributeString, attributes);
-
-    free(attributes);
 }
 
 TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {

@@ -164,10 +164,9 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToShar
 
     uint8_t pattern = 1;
     size_t size = 0x1000;
-    void *ptr = malloc(size); // reinterpret_cast<void *>(0x1234);
-    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
+    uint8_t data{};
+    auto ret = cmdList.appendMemoryFill(&data, reinterpret_cast<void *>(&pattern), sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ret, ZE_RESULT_SUCCESS);
-    free(ptr);
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillThenCopyBltIsProgrammed, IsAtMostDg2) {

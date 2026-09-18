@@ -406,15 +406,12 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenPrefetchMemor
 
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
 
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
-    svmManager->prefetchMemory(*device, *csr, ptr, 4096);
+    svmManager->prefetchMemory(*device, *csr, &data, sizeof(data));
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->prefetchSharedSystemAllocCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenPrefetchMemoryIsCalledAndNotEnabledThenNoPrefetchAllocationToSystemMemory) {
@@ -427,15 +424,12 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenPrefetchMemor
     auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     csr->setupContext(*device->getDefaultEngine().osContext);
 
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
-    svmManager->prefetchMemory(*device, *csr, ptr, 4096);
+    svmManager->prefetchMemory(*device, *csr, &data, sizeof(data));
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_FALSE(mockMemoryManager->prefetchSharedSystemAllocCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemMemAdviseIsCalledThenMemoryManagerSetSharedSystemMemAdviseIsCalled) {
@@ -445,15 +439,12 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemM
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
 
     MemAdvise memAdviseOp = MemAdvise::setSystemMemoryPreferredLocation;
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
-    svmManager->sharedSystemMemAdvise(*device, *device, memAdviseOp, ptr, 4096);
+    svmManager->sharedSystemMemAdvise(*device, *device, memAdviseOp, &data, sizeof(data));
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->setSharedSystemMemAdviseCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemAtomicAccessIsCalledThenMemoryManagerSetSharedSystemAtomicAccessIsCalled) {
@@ -463,15 +454,12 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemA
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
 
     AtomicAccessMode mode = AtomicAccessMode::device;
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
-    svmManager->sharedSystemAtomicAccess(*device, mode, ptr, 4096);
+    svmManager->sharedSystemAtomicAccess(*device, mode, &data, sizeof(data));
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->setSharedSystemAtomicAccessCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenGetSharedSystemAtomicAccessIsCalledThenMemoryManagerGetSharedSystemAtomicAccessIsCalledAndFails) {
@@ -482,14 +470,11 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenGetSharedSyst
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     mockMemoryManager->failGetSharedSystemAtomicAccess = true;
 
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
-    auto ret = svmManager->getSharedSystemAtomicAccess(*device, ptr, 4096);
+    uint8_t data{};
+    auto ret = svmManager->getSharedSystemAtomicAccess(*device, &data, sizeof(data));
     EXPECT_EQ(AtomicAccessMode::invalid, ret);
 
     EXPECT_TRUE(mockMemoryManager->getSharedSystemAtomicAccessCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenSVMAllocsIsCalledThenPrefetchSharedUnifiedMemoryInSvmAllocsManager) {

@@ -467,16 +467,10 @@ TEST_F(CommandListCreateTests, givenValidSystemAlloctedPtrAndNotSharedSystemAllo
 
     sharedSystemMemCapabilities = 0; // enables return false for Device::areSharedSystemAllocationsAllowed()
 
-    size_t size = 10;
-    void *ptr = nullptr;
+    uint8_t data{};
 
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
-
-    auto res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    auto res = commandList->executeMemAdvise(device, &data, sizeof(data), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
-
-    free(ptr);
 }
 
 TEST_F(CommandListCreateTests, givenValidDeviceMemPtrWhenAppendMemAdviseSuccedsThenMemAdviseOperationsGrows) {
@@ -510,26 +504,20 @@ TEST_F(CommandListCreateTests, givenValidSystemAlloctedPtrAndSharedSystemAllocat
     debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
     debugManager.flags.EnableRecoverablePageFaults.set(1u);
 
-    size_t size = 10;
-    void *ptr = nullptr;
+    uint8_t data{};
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
-
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
 
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
 
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    auto res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    auto res = commandList->appendMemAdvise(device, &data, sizeof(data), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(1u, commandList->getMemAdviseOperations().size());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    free(ptr);
 }
 
 using ::testing::ValuesIn;
@@ -542,15 +530,11 @@ TEST_P(SupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhenEx
     debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
     debugManager.flags.EnableRecoverablePageFaults.set(1u);
 
-    size_t size = 10;
-    void *ptr = nullptr;
+    uint8_t data{};
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
-
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     memoryManager->failSetSharedSystemMemAdvise = true;
@@ -560,11 +544,9 @@ TEST_P(SupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhenEx
 
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    auto res = commandList->executeMemAdvise(device, ptr, size, GetParam());
+    auto res = commandList->executeMemAdvise(device, &data, sizeof(data), GetParam());
     EXPECT_EQ(1u, memoryManager->setSharedSystemMemAdviseCalledCount);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
-
-    free(ptr);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -584,15 +566,11 @@ TEST_P(UnSupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhen
     debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
     debugManager.flags.EnableRecoverablePageFaults.set(1u);
 
-    size_t size = 10;
-    void *ptr = nullptr;
+    uint8_t data{};
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
-
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     memoryManager->failSetSharedSystemMemAdvise = true;
@@ -602,11 +580,9 @@ TEST_P(UnSupportedMemAdviceSystemAllocatorTests, givenValidSystemAlloctedPtrWhen
 
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    auto res = commandList->executeMemAdvise(device, ptr, size, GetParam());
+    auto res = commandList->executeMemAdvise(device, &data, sizeof(data), GetParam());
     EXPECT_EQ(0u, memoryManager->setSharedSystemMemAdviseCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    free(ptr);
 }
 
 INSTANTIATE_TEST_SUITE_P(

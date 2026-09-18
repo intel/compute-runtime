@@ -1626,11 +1626,12 @@ HWTEST2_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWitho
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
     size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), true));
     size_t dstSize = 2 * sizeof(uint32_t) * (maxBlitWidth * maxBlitHeight) + sizeof(uint32_t);
-    void *dstPtr = malloc(dstSize);
+    // dstPtr is only ever used as a numeric GPU address, never dereferenced.
+    uint8_t dstData{};
 
     uint32_t pattern[4] = {};
     pattern[0] = 0x4567;
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(dstPtr), dstSize, pattern, sizeof(uint32_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(&dstData), dstSize, pattern, sizeof(uint32_t), 0);
     ASSERT_TRUE(blitProperties.isSystemMemoryPoolUsed);
 
     auto nBlitsColorFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
@@ -1657,7 +1658,6 @@ HWTEST2_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWitho
 
     EXPECT_EQ(stream.getUsed(), stream3.getUsed());
     EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream3.getCpuBase(), 0), std::min(stream.getUsed(), stream3.getUsed())));
-    free(dstPtr);
 }
 
 HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlitCommandSizeThenBlockCopySizeIsReturned) {

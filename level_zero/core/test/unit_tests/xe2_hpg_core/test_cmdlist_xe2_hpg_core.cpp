@@ -502,17 +502,12 @@ HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenSharedSystemAllocationOnSuppo
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenSharedSystemAllocationOnSupportedDeviceWhenPrefetchApiIsCalledThenRequestMemoryPrefetchCalledWithNoPrefetchManager, IsXe2HpgCore) {
@@ -528,17 +523,12 @@ HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenSharedSystemAllocationOnSuppo
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenSharedSystemAllocationOnUnSupportedDeviceWhenPrefetchApiIsCalledThenRequestMemoryPrefetchNotCalled, IsXe2HpgCore) {
@@ -551,17 +541,12 @@ HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenSharedSystemAllocationOnUnSup
     DebugManagerStateRestore restore;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     EXPECT_FALSE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 } // namespace ult
