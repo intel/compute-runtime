@@ -255,7 +255,8 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
         EXPECT_EQ(expectedDeviceSubgroups[i], sharedCaps.maxSubGroups[i]);
     }
 
-    auto expectedMaxNumOfSubGroups = sharedCaps.maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize();
+    const auto &hwInfo = device->getHardwareInfo();
+    auto expectedMaxNumOfSubGroups = sharedCaps.maxWorkGroupSize / hwInfo.caps.minimalSimdSize;
     EXPECT_EQ(expectedMaxNumOfSubGroups, caps.maxNumOfSubGroups);
 
     EXPECT_EQ(0u, caps.maxOnDeviceEvents);
@@ -278,7 +279,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
                                                       : CommonConstants::maximalSimdSize;
     EXPECT_EQ(expectedPreferredWorkGroupSizeMultiple, caps.preferredWorkGroupSizeMultiple);
 
-    EXPECT_EQ(static_cast<cl_bool>(device->getHardwareInfo().capabilityTable.supportsImages), sharedCaps.imageSupport);
+    EXPECT_EQ(static_cast<cl_bool>(hwInfo.capabilityTable.supportsImages), sharedCaps.imageSupport);
     EXPECT_EQ(16384u, sharedCaps.image2DMaxWidth);
     EXPECT_EQ(16384u, sharedCaps.image2DMaxHeight);
     EXPECT_EQ(2048u, sharedCaps.imageMaxArraySize);
@@ -1182,8 +1183,7 @@ HWTEST_F(DeviceGetCapsTest, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThe
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
     auto &deviceInfo = device->deviceInfo;
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto simdSizeUsed = gfxCoreHelper.getMinimalSIMDSize();
+    auto simdSizeUsed = myHwInfo.caps.minimalSimdSize;
 
     auto &productHelper = device->getProductHelper();
     auto expectedMaxWGS = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(myHwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice),
@@ -1233,19 +1233,17 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
 HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedThenItIsLimitedTo1024) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
     HardwareInfo myHwInfo = *defaultHwInfo;
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
-    mySysInfo.NumThreadsPerEu = gfxCoreHelper.getMinimalSIMDSize();
+    mySysInfo.NumThreadsPerEu = myHwInfo.caps.minimalSimdSize;
     mySysInfo.ThreadCount = 32 * mySysInfo.NumThreadsPerEu; // 128 threads per subslice, in simd 8 gives 1024
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(1024u, device->getSharedDeviceInfo().maxWorkGroupSize);
-    EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize(), device->getDeviceInfo().maxNumOfSubGroups);
+    EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / myHwInfo.caps.minimalSimdSize, device->getDeviceInfo().maxNumOfSubGroups);
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThenReturnValuesFromDriverInfo) {
@@ -1504,7 +1502,7 @@ HWTEST_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsC
     myPlatform.usRevId = 0x4;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
+    auto minSimd = myHwInfo.caps.minimalSimdSize;
 
     uint32_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.DualSubSliceCount) * minSimd;
     expectedWGSize = gfxCoreHelper.overrideMaxWorkGroupSize(expectedWGSize);

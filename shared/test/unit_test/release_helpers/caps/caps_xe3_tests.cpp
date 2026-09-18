@@ -56,10 +56,14 @@ TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     constexpr auto capsPtlHA0 = materializeCaps<CapsPtlHA0>();
     constexpr auto capsPtlHB0 = materializeCaps<CapsPtlHB0>();
 
+    EXPECT_EQ(0u, capsPtlHA0.implicitArgsVersion);
     EXPECT_EQ(0u, capsPtlHA0.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPtlHA0.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(32u, capsPtlHA0.minimalGrfSize);
+    EXPECT_EQ(16u, capsPtlHA0.minimalSimdSize);
     EXPECT_EQ(64u, capsPtlHA0.stackSizePerRay);
     EXPECT_EQ(2u, capsPtlHA0.rtasFormat);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsPtlHA0.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsPtlHA0.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPtlHA0.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPtlHA0.availableSemaphore64);
@@ -91,10 +95,14 @@ TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsPtlHA0.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsPtlHA0.splitMatrixMultiplyAccumulateSupported);
 
+    EXPECT_EQ(0u, capsPtlHB0.implicitArgsVersion);
     EXPECT_EQ(0u, capsPtlHB0.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPtlHB0.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(32u, capsPtlHB0.minimalGrfSize);
+    EXPECT_EQ(16u, capsPtlHB0.minimalSimdSize);
     EXPECT_EQ(64u, capsPtlHB0.stackSizePerRay);
     EXPECT_EQ(2u, capsPtlHB0.rtasFormat);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsPtlHB0.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsPtlHB0.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPtlHB0.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPtlHB0.availableSemaphore64);
@@ -129,10 +137,14 @@ TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
 
 TEST(CapsXe3Test, givenPtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPtlU = materializeCaps<CapsPtlU>();
+    EXPECT_EQ(0u, capsPtlU.implicitArgsVersion);
     EXPECT_EQ(0u, capsPtlU.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPtlU.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(32u, capsPtlU.minimalGrfSize);
+    EXPECT_EQ(16u, capsPtlU.minimalSimdSize);
     EXPECT_EQ(64u, capsPtlU.stackSizePerRay);
     EXPECT_EQ(2u, capsPtlU.rtasFormat);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsPtlU.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsPtlU.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPtlU.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPtlU.availableSemaphore64);
@@ -167,10 +179,14 @@ TEST(CapsXe3Test, givenPtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
 
 TEST(CapsXe3Test, givenWclReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsWcl = materializeCaps<CapsWcl>();
+    EXPECT_EQ(0u, capsWcl.implicitArgsVersion);
     EXPECT_EQ(0u, capsWcl.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsWcl.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(32u, capsWcl.minimalGrfSize);
+    EXPECT_EQ(16u, capsWcl.minimalSimdSize);
     EXPECT_EQ(64u, capsWcl.stackSizePerRay);
     EXPECT_EQ(2u, capsWcl.rtasFormat);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsWcl.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsWcl.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsWcl.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsWcl.availableSemaphore64);
@@ -205,10 +221,14 @@ TEST(CapsXe3Test, givenWclReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect
 
 TEST(CapsXe3Test, givenNvlSReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsNvlS = materializeCaps<CapsNvlS>();
+    EXPECT_EQ(0u, capsNvlS.implicitArgsVersion);
     EXPECT_EQ(0u, capsNvlS.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsNvlS.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(32u, capsNvlS.minimalGrfSize);
+    EXPECT_EQ(16u, capsNvlS.minimalSimdSize);
     EXPECT_EQ(64u, capsNvlS.stackSizePerRay);
     EXPECT_EQ(2u, capsNvlS.rtasFormat);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsNvlS.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsNvlS.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsNvlS.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsNvlS.availableSemaphore64);
@@ -243,10 +263,14 @@ TEST(CapsXe3Test, givenNvlSReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
 
 TEST(CapsXe3Test, givenNvlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsNvlU = materializeCaps<CapsNvlU>();
+    EXPECT_EQ(0u, capsNvlU.implicitArgsVersion);
     EXPECT_EQ(0u, capsNvlU.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsNvlU.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(32u, capsNvlU.minimalGrfSize);
+    EXPECT_EQ(16u, capsNvlU.minimalSimdSize);
     EXPECT_EQ(64u, capsNvlU.stackSizePerRay);
     EXPECT_EQ(2u, capsNvlU.rtasFormat);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsNvlU.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(capsNvlU.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsNvlU.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsNvlU.availableSemaphore64);

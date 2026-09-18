@@ -2125,8 +2125,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenC
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto expectedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    const auto &hwInfo = device->getHwInfo();
+    auto expectedThreadArbitrationPolicy = hwInfo.caps.defaultThreadArbitrationPolicy;
     int32_t threadArbitrationPolicyValues[] = {
         ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,
         ThreadArbitrationPolicy::RoundRobinAfterDependency};

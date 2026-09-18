@@ -37,10 +37,14 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
 
         auto expectedCaps = resolveCaps(deviceAotInfo.aotConfig);
         ASSERT_TRUE(expectedCaps.has_value());
+        EXPECT_EQ(expectedCaps->implicitArgsVersion, hwInfo.caps.implicitArgsVersion);
         EXPECT_EQ(expectedCaps->kernelBFloat16AtomicCapabilities, hwInfo.caps.kernelBFloat16AtomicCapabilities);
         EXPECT_EQ(expectedCaps->kernelFp16AtomicCapabilities, hwInfo.caps.kernelFp16AtomicCapabilities);
+        EXPECT_EQ(expectedCaps->minimalGrfSize, hwInfo.caps.minimalGrfSize);
+        EXPECT_EQ(expectedCaps->minimalSimdSize, hwInfo.caps.minimalSimdSize);
         EXPECT_EQ(expectedCaps->stackSizePerRay, hwInfo.caps.stackSizePerRay);
         EXPECT_EQ(expectedCaps->rtasFormat, hwInfo.caps.rtasFormat);
+        EXPECT_EQ(expectedCaps->defaultThreadArbitrationPolicy, hwInfo.caps.defaultThreadArbitrationPolicy);
         EXPECT_EQ(expectedCaps->adjustWalkOrderAvailable, hwInfo.caps.adjustWalkOrderAvailable);
         EXPECT_EQ(expectedCaps->auxSurfaceModeOverrideRequired, hwInfo.caps.auxSurfaceModeOverrideRequired);
         EXPECT_EQ(expectedCaps->availableSemaphore64, hwInfo.caps.availableSemaphore64);
@@ -86,10 +90,14 @@ TEST(CapsSetupTest, givenUnknownIpVersionWhenResolvingCapsThenNulloptIsReturned)
 TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     constexpr Caps caps{};
 
+    EXPECT_EQ(0u, caps.implicitArgsVersion);
     EXPECT_EQ(0u, caps.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(0u, caps.kernelFp16AtomicCapabilities);
+    EXPECT_EQ(0u, caps.minimalGrfSize);
+    EXPECT_EQ(0u, caps.minimalSimdSize);
     EXPECT_EQ(0u, caps.stackSizePerRay);
     EXPECT_EQ(0u, caps.rtasFormat);
+    EXPECT_EQ(0, caps.defaultThreadArbitrationPolicy);
     EXPECT_FALSE(caps.adjustWalkOrderAvailable);
     EXPECT_FALSE(caps.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(caps.availableSemaphore64);

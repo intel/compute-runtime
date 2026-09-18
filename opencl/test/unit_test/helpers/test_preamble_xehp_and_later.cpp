@@ -30,13 +30,6 @@
 using namespace NEO;
 #include "shared/test/common/test_macros/heapless_matchers.h"
 
-using ThreadArbitrationXeHPAndLater = PreambleFixture;
-HWTEST2_F(ThreadArbitrationXeHPAndLater, whenGetDefaultThreadArbitrationPolicyIsCalledThenCorrectPolicyIsReturned, IsXeHpgCore) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, gfxCoreHelper.getDefaultThreadArbitrationPolicy());
-}
-
 using ProgramPipelineXeHPAndLater = PreambleFixture;
 HWTEST2_F(ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet, IsXeCore) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;

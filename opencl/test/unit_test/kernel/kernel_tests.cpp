@@ -2833,8 +2833,9 @@ HWTEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroup
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenDataParameterSimdSizeIsCorrect) {
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize = pClDevice->getGfxCoreHelper().getMinimalSIMDSize();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = pClDevice->getGfxCoreHelper().getMinimalSIMDSize();
+    const auto &hwInfo = pClDevice->getHardwareInfo();
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize = hwInfo.caps.minimalSimdSize;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = hwInfo.caps.minimalSimdSize;
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -3227,8 +3228,7 @@ TEST(KernelTest, givenKernelWithPairArgumentWhenItIsInitializedThenPatchImmediat
 
 TEST(KernelTest, givenKernelCompiledWithSimdSizeLowerThanExpectedWhenInitializingThenReturnError) {
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
+    auto minSimd = device->getHardwareInfo().caps.minimalSimdSize;
     MockContext mockCtx(&*device);
     MockKernelWithInternals kernel(mockCtx);
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 8;
@@ -3600,8 +3600,8 @@ TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaul
     MockKernelWithInternals mockKernelWithInternals{mockCtx, MockKernelWithInternalsConfig{}};
 
     auto &mockKernel = *mockKernelWithInternals.mockKernel;
-    auto &gfxCoreHelper = deviceFactory.rootDevices[0]->getGfxCoreHelper();
-    EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(), mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
+    const auto &hwInfo = deviceFactory.rootDevices[0]->getHardwareInfo();
+    EXPECT_EQ(hwInfo.caps.defaultThreadArbitrationPolicy, mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
 }
 
 static ThreadArbitrationPolicy threadArbitrationPolicies[] = {
@@ -3811,7 +3811,7 @@ struct KernelLargeGrfTests : Test<ClDeviceFixture> {
 };
 
 HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned, IsAtLeastXeCore) {
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = pClDevice->getGfxCoreHelper().getMinimalSIMDSize();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = pClDevice->getHardwareInfo().caps.minimalSimdSize;
     pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4;
     pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 0;
     {
@@ -3904,14 +3904,15 @@ TEST_F(KernelImplicitArgsTest, WhenKernelRequiresImplicitArgsThenImplicitArgsStr
 
         ASSERT_NE(nullptr, pImplicitArgs);
 
+        const auto &hwInfo = pClDevice->getHardwareInfo();
         ImplicitArgs expectedImplicitArgs = {};
-        if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 0) {
+        if (hwInfo.caps.implicitArgsVersion == 0) {
             expectedImplicitArgs.v0.header.structVersion = 0;
             expectedImplicitArgs.v0.header.structSize = ImplicitArgsV0::getSize();
-        } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
+        } else if (hwInfo.caps.implicitArgsVersion == 1) {
             expectedImplicitArgs.v1.header.structVersion = 1;
             expectedImplicitArgs.v1.header.structSize = ImplicitArgsV1::getSize();
-        } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 2) {
+        } else if (hwInfo.caps.implicitArgsVersion == 2) {
             expectedImplicitArgs.v2.header.structVersion = 2;
             expectedImplicitArgs.v2.header.structSize = ImplicitArgsV2::getSize();
         }
@@ -3984,14 +3985,15 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenSettingKernelParam
 
     ASSERT_NE(nullptr, pImplicitArgs);
 
+    const auto &hwInfo = pClDevice->getHardwareInfo();
     ImplicitArgs expectedImplicitArgs = {};
-    if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 0) {
+    if (hwInfo.caps.implicitArgsVersion == 0) {
         expectedImplicitArgs.v0.header.structVersion = 0;
         expectedImplicitArgs.v0.header.structSize = ImplicitArgsV0::getSize();
-    } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
+    } else if (hwInfo.caps.implicitArgsVersion == 1) {
         expectedImplicitArgs.v1.header.structVersion = 1;
         expectedImplicitArgs.v1.header.structSize = ImplicitArgsV1::getSize();
-    } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 2) {
+    } else if (hwInfo.caps.implicitArgsVersion == 2) {
         expectedImplicitArgs.v2.header.structVersion = 2;
         expectedImplicitArgs.v2.header.structSize = ImplicitArgsV2::getSize();
     }
@@ -4017,13 +4019,8 @@ HWTEST_F(KernelImplicitArgsTest, givenGfxCoreRequiringImplicitArgsV1WhenSettingK
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
     pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
 
-    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
-        uint32_t getImplicitArgsVersion() const override {
-            return 1;
-        }
-    };
-
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*pClDevice->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &hwInfo = *pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.implicitArgsVersion = 1;
 
     MockContext context(pClDevice);
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
@@ -4072,14 +4069,15 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenCloneKernelThenImp
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
+    const auto &hwInfo = pClDevice->getHardwareInfo();
     ImplicitArgs expectedImplicitArgs = {};
-    if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 0) {
+    if (hwInfo.caps.implicitArgsVersion == 0) {
         expectedImplicitArgs.v0.header.structVersion = 0;
         expectedImplicitArgs.v0.header.structSize = ImplicitArgsV0::getSize();
-    } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
+    } else if (hwInfo.caps.implicitArgsVersion == 1) {
         expectedImplicitArgs.v1.header.structVersion = 1;
         expectedImplicitArgs.v1.header.structSize = ImplicitArgsV1::getSize();
-    } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 2) {
+    } else if (hwInfo.caps.implicitArgsVersion == 2) {
         expectedImplicitArgs.v2.header.structVersion = 2;
         expectedImplicitArgs.v2.header.structSize = ImplicitArgsV2::getSize();
     }

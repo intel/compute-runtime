@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,13 +15,6 @@
 #include "shared/test/unit_test/command_stream/compute_mode_tests.h"
 
 using namespace NEO;
-
-using ThreadArbitrationXe3Core = ::testing::Test;
-XE3_CORETEST_F(ThreadArbitrationXe3Core, givenXe3DeviceWhenCallingGetDefaultThreadArbitrationPolicyThenRoundRobinIsReturned) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, gfxCoreHelper.getDefaultThreadArbitrationPolicy());
-}
 
 struct ComputeModeRequirementsXe3Core : public ComputeModeRequirements {
     void SetUp() override {
@@ -40,8 +33,8 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenNewRequiredThreadArbitration
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto newEuThreadSchedulingMode = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    const auto &hwInfo = device->getHardwareInfo();
+    auto newEuThreadSchedulingMode = hwInfo.caps.defaultThreadArbitrationPolicy;
     typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE expectedEuThreadSchedulingMode = static_cast<typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;

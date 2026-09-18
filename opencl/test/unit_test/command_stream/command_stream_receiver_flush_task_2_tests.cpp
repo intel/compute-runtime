@@ -452,8 +452,8 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiver
 
     flushTask(*pCommandStreamReceiver);
 
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    EXPECT_EQ(gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pCommandStreamReceiver->peekThreadArbitrationPolicy());
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    EXPECT_EQ(hwInfo.caps.defaultThreadArbitrationPolicy, pCommandStreamReceiver->peekThreadArbitrationPolicy());
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, GivenKernelWithSlmWhenPreviousSLML3WasSentThenDontProgramL3) {

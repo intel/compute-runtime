@@ -1387,8 +1387,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    const auto &hwInfo = device->getHwInfo();
+    auto defaultThreadArbitrationPolicy = hwInfo.caps.defaultThreadArbitrationPolicy;
     auto nonDefaultThreadArbitrationPolicy = defaultThreadArbitrationPolicy + 1;
 
     Mock<::L0::KernelImp> kernel;

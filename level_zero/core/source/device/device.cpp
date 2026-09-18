@@ -918,8 +918,8 @@ ze_result_t Device::getVectorWidthPropertiesExt(uint32_t *pCount, ze_device_vect
     if (*pCount > 1) {
         *pCount = 1;
     }
-    auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
-    auto vectorWidthSize = gfxCoreHelper.getMinimalSIMDSize();
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
+    auto vectorWidthSize = hwInfo.caps.minimalSimdSize;
     pVectorWidthProperties[0].vector_width_size = vectorWidthSize;
     pVectorWidthProperties[0].preferred_vector_width_char = DeviceVectorWidthConstants::charWidth;
     pVectorWidthProperties[0].preferred_vector_width_short = DeviceVectorWidthConstants::shortWidth;
@@ -940,7 +940,6 @@ ze_result_t Device::getVectorWidthPropertiesExt(uint32_t *pCount, ze_device_vect
 ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
     const auto &l0GfxCoreHelper = this->getL0GfxCoreHelper();
 
     pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
@@ -969,7 +968,7 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
 
     pDeviceProperties->numThreadsPerEU = deviceInfo.numThreadsPerEU;
 
-    pDeviceProperties->physicalEUSimdWidth = gfxCoreHelper.getMinimalSIMDSize();
+    pDeviceProperties->physicalEUSimdWidth = hardwareInfo.caps.minimalSimdSize;
 
     pDeviceProperties->numEUsPerSubslice = hardwareInfo.gtSystemInfo.MaxEuPerSubSlice;
 

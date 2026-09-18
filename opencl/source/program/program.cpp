@@ -205,7 +205,7 @@ FORCE_NOINLINE void Program::dumpKernelInfoToAubComments() {
 
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
     auto implicitArgsVersion = NEO::ImplicitArgsHelper::resolveImplicitArgsVersion(
-        rootDeviceEnvironment.getHelper<GfxCoreHelper>().getImplicitArgsVersion(),
+        rootDeviceEnvironment.getHardwareInfo()->caps.implicitArgsVersion,
         this->getIndirectAccessBufferVersion());
 
     NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelInfoArray, symbols, options, refBin, implicitArgsVersion);

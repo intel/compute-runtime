@@ -2662,7 +2662,8 @@ TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsOrRequiredImplicitArg
     EXPECT_EQ(0U, relocatedSymbols.size());
 
     auto addressToPatch = reinterpret_cast<uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(deviceFactory.rootDevices[0]->getGfxCoreHelper().getImplicitArgsVersion()), *addressToPatch);
+    const auto &hwInfo = deviceFactory.rootDevices[0]->getHardwareInfo();
+    EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(hwInfo.caps.implicitArgsVersion), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
@@ -2889,11 +2890,6 @@ TEST_F(LinkerTests, givenSurfaceStateSizeRelocationAndReducedSurfaceStateUnsuppo
 
 HWTEST_F(LinkerTests, givenImplicitArgRelocationAndKernelDescriptorWithImplicitArgsV1WhenLinkingThenPatchRelocationWithSizeOfImplicitArgsV1) {
     DebugManagerStateRestore restore;
-    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
-        uint32_t getImplicitArgsVersion() const override {
-            return 0;
-        }
-    };
 
     NEO::LinkerInput linkerInput;
 
@@ -2935,8 +2931,6 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndKernelDescriptorWithImplicitA
     executionEnvironment.incRefInternal();
 
     UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
-    auto rootDeviceIndex = deviceFactory.rootDevices[0]->getRootDeviceIndex();
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*deviceFactory.rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]);
 
     std::vector<char> instructionSegment;
     uint32_t initData = 0x77777777;
@@ -2965,11 +2959,6 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndKernelDescriptorWithImplicitA
 
 HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsV1WhenLinkingThenPatchRelocationWithSizeOfImplicitArgsV1) {
     DebugManagerStateRestore restore;
-    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
-        uint32_t getImplicitArgsVersion() const override {
-            return 1;
-        }
-    };
 
     NEO::LinkerInput linkerInput;
 
@@ -3006,12 +2995,11 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsV1WhenLinkingThen
     kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.implicitArgsVersion = 1;
     MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
     executionEnvironment.incRefInternal();
 
     UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
-    auto rootDeviceIndex = deviceFactory.rootDevices[0]->getRootDeviceIndex();
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*deviceFactory.rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]);
 
     std::vector<char> instructionSegment;
     uint32_t initData = 0x77777777;
@@ -3042,11 +3030,6 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsV1WhenLinkingThen
 
 HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsWithUnknownVersionWhenLinkingThenUnrecoverableIfCalled) {
     DebugManagerStateRestore restore;
-    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
-        uint32_t getImplicitArgsVersion() const override {
-            return 3; // unknown version
-        }
-    };
 
     NEO::LinkerInput linkerInput;
 
@@ -3078,12 +3061,11 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsWithUnknownVersio
     kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.implicitArgsVersion = 3; // unknown version
     MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
     executionEnvironment.incRefInternal();
 
     UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
-    auto rootDeviceIndex = deviceFactory.rootDevices[0]->getRootDeviceIndex();
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*deviceFactory.rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]);
 
     std::vector<char> instructionSegment;
     uint32_t initData = 0x77777777;
@@ -3155,7 +3137,7 @@ TEST_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDebugg
     EXPECT_EQ(0U, relocatedSymbols.size());
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(device->getGfxCoreHelper().getImplicitArgsVersion()), *addressToPatch);
+    EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(hwInfo.caps.implicitArgsVersion), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
@@ -3360,9 +3342,10 @@ TEST_F(LinkerTests, givenMultipleImplicitArgsRelocationsWithinSingleKernelWhenLi
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
 
+    const auto &hwInfo = deviceFactory.rootDevices[0]->getHardwareInfo();
     for (const auto &reloc : relocs) {
         auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-        EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(deviceFactory.rootDevices[0]->getGfxCoreHelper().getImplicitArgsVersion()), *addressToPatch);
+        EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(hwInfo.caps.implicitArgsVersion), *addressToPatch);
         EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
     }
 }

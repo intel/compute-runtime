@@ -46,8 +46,8 @@ struct UltCommandStreamReceiverTest
         ASSERT_NE(nullptr, sshBuffer);
 
         initHeaps();
-        auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-        flushTaskFlags.threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+        const auto &hwInfo = pDevice->getHardwareInfo();
+        flushTaskFlags.threadArbitrationPolicy = hwInfo.caps.defaultThreadArbitrationPolicy;
 
         pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
 
@@ -161,9 +161,10 @@ struct UltCommandStreamReceiverTest
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;
 
+        const auto &hwInfo = pDevice->getHardwareInfo();
         commandStreamReceiver.streamProperties.pipelineSelect.setPropertiesAll(true, false);
         commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(0, GrfConfig::defaultGrfNumber,
-                                                                                 gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), false);
+                                                                                 hwInfo.caps.defaultThreadArbitrationPolicy, pDevice->getPreemptionMode(), false);
         commandStreamReceiver.streamProperties.frontEndState.setPropertiesAll(false, false, false);
     }
 

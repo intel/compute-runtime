@@ -486,11 +486,6 @@ bool GfxCoreHelperHw<GfxFamily>::isWaDisableRccRhwoOptimizationRequired() const 
 }
 
 template <typename GfxFamily>
-inline uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalSIMDSize() const {
-    return 8u;
-}
-
-template <typename GfxFamily>
 std::unique_ptr<TagAllocatorBase> GfxCoreHelperHw<GfxFamily>::createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                                              uint32_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
     bool doNotReleaseNodes = (csrType > CommandStreamReceiverType::hardware) ||
@@ -579,11 +574,6 @@ const StackVec<size_t, 3> GfxCoreHelperHw<GfxFamily>::getDeviceSubGroupSizes() c
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isBankOverrideRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     return false;
-}
-
-template <typename GfxFamily>
-int32_t GfxCoreHelperHw<GfxFamily>::getDefaultThreadArbitrationPolicy() const {
-    return 0;
 }
 
 template <typename GfxFamily>
@@ -729,11 +719,6 @@ uint32_t GfxCoreHelperHw<GfxFamily>::overrideMaxWorkGroupSize(uint32_t maxWG) co
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return defaultMaxGroupSize;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalGrfSize() const {
-    return 128u;
 }
 
 template <typename GfxFamily>
@@ -883,11 +868,6 @@ uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::getSipBinaryFromExternalLib() const {
     return false;
-}
-
-template <typename Family>
-uint32_t GfxCoreHelperHw<Family>::getImplicitArgsVersion() const {
-    return 0;
 }
 
 template <typename Family>

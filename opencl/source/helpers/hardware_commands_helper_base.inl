@@ -183,7 +183,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     }
 
     const auto &hardwareInfo = device.getHardwareInfo();
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
 
     EncodeDispatchKernel<GfxFamily>::encodeSlmSizePerThreadGroup(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmTotalSizePerThreadGroup, heaplessModeEnabled);
 
@@ -192,7 +191,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
 
-    auto defaultPipelinedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    auto defaultPipelinedThreadArbitrationPolicy = hardwareInfo.caps.defaultThreadArbitrationPolicy;
     EncodeDispatchKernel<GfxFamily>::encodeEuSchedulingPolicy(&interfaceDescriptor, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
     const uint32_t threadGroupDimensions[] = {walkerCmd->getThreadGroupIdXDimension(), walkerCmd->getThreadGroupIdYDimension(), walkerCmd->getThreadGroupIdXDimension()};
     EncodeDispatchKernel<GfxFamily>::encodeThreadGroupDispatch(interfaceDescriptor, device, hardwareInfo, threadGroupDimensions, threadGroupCount, kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize,

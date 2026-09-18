@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/caps/materialize_caps.h"
@@ -20,7 +21,11 @@ namespace NEO {
 struct CapsXe3pCore {
     static constexpr uint32_t kernelBFloat16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps;
+    static constexpr uint32_t minimalGrfSize = 32u;
+    static constexpr uint32_t minimalSimdSize = 16u;
     static constexpr uint32_t stackSizePerRay = 64u;
+
+    static constexpr int32_t defaultThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;

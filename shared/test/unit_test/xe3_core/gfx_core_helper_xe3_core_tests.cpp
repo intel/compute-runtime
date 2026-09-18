@@ -88,11 +88,6 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenAskingForTimesta
     EXPECT_EQ(expectedAlignment, gfxCoreHelper.getTimestampPacketAllocatorAlignment());
 }
 
-XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3CoreWhenAskedForMinimialSimdThen16IsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
-}
-
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEnginesAndTwoRegularCopyEngines) {
     const size_t numEngines = 18;
 
@@ -844,11 +839,6 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNumGrfAndSimdSizeWhenAdjustingMax
     for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
         EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, defaultMaxWorkGroupSize, rootDeviceEnvironment));
     }
-}
-
-XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3CoreWhenAskedForMinimialGrfSizeThen32IsReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(32u, gfxCoreHelper.getMinimalGrfSize());
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenParamsWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue) {
