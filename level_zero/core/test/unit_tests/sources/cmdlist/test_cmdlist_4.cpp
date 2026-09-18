@@ -1810,5 +1810,42 @@ HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneAppendMemory
     CommandList::freeClonedAppendMemoryCopyExtensions(&ext);
 }
 
+HWTEST_F(CommandListCreateTests, givenEventFlagsDescriptorWhenCloneAppendEventIsCalledThenClonedValueDesciriptorIsAvailable) {
+    ze_event_flags_exp_desc_t eventFlagsDesc{ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendEventExtensions(reinterpret_cast<ze_base_desc_t *>(&eventFlagsDesc), outExtPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, outExtPtr);
+
+    auto cloneExt = reinterpret_cast<ze_event_flags_exp_desc_t *>(outExtPtr);
+    EXPECT_EQ(eventFlagsDesc.stype, cloneExt->stype);
+    EXPECT_EQ(eventFlagsDesc.flags, cloneExt->flags);
+
+    CommandList::freeClonedAppendEventExtensions(outExtPtr);
+}
+
+HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneAppendEventIsCalledThenErrorIsReturned) {
+    ze_base_desc_t ext = {};
+    ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
+    ext.pNext = nullptr;
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendEventExtensions(&ext, outExtPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, outExtPtr);
+
+    CommandList::freeClonedAppendEventExtensions(&ext);
+}
+
+HWTEST_F(CommandListCreateTests, givenNullptrDescriptorWhenCloneAppendEventIsCalledThenSuccessIsReturned) {
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendEventExtensions(nullptr, outExtPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(nullptr, outExtPtr);
+
+    CommandList::freeClonedAppendEventExtensions(nullptr);
+}
+
 } // namespace ult
 } // namespace L0

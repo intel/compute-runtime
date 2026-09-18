@@ -895,4 +895,33 @@ void CommandList::getPatchPreambleFullData(uint64_t &outCounterValue,
     cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outHostGpuAddress, outHostNodeGraphicsAllocation, outDeviceGpuAddress, outDeviceNodeGraphicsAllocation);
 }
 
+ze_result_t CommandList::cloneAppendEventExtensions(const ze_base_desc_t *desc, void *&outPnext) {
+    while (desc) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
+            auto eventFlagsDesc = reinterpret_cast<const ze_event_flags_exp_desc_t *>(desc);
+            auto cloneEventFlagsDesc = new ze_event_flags_exp_desc_t;
+            *cloneEventFlagsDesc = *eventFlagsDesc;
+            cloneEventFlagsDesc->pNext = nullptr;
+            outPnext = cloneEventFlagsDesc;
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        desc = static_cast<const ze_base_desc_t *>(desc->pNext);
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+void CommandList::freeClonedAppendEventExtensions(void *pNext) {
+    auto desc = static_cast<ze_base_desc_t *>(pNext);
+    while (desc) {
+        // cloned descriptors are not const memory
+        pNext = const_cast<void *>(desc->pNext);
+        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
+            auto eventFlagsDesc = reinterpret_cast<ze_event_flags_exp_desc_t *>(desc);
+            delete eventFlagsDesc;
+        }
+        desc = static_cast<ze_base_desc_t *>(pNext);
+    }
+}
+
 } // namespace L0

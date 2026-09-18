@@ -49,6 +49,10 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030031)
 #define ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030032)
 
+#ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
+#define ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC static_cast<ze_structure_type_ext_t>(0x00030033)
+#endif // ZE_RECORD_REPLAY_GRAPH_EXP_NAME
+
 #if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 16)
 #ifndef ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES
 #define ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00020030)

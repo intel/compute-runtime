@@ -61,6 +61,18 @@ typedef struct _ze_record_replay_graph_exp_dump_desc_t {
 #define ZE_RESULT_QUERY_FALSE_EXP EXTENDED_ENUM(ze_result_t, 0x7fff0001)
 #define ZE_RESULT_ERROR_INVALID_GRAPH_EXP EXTENDED_ENUM(ze_result_t, 0x7fff0002)
 
+typedef uint32_t ze_event_flags_exp_t;
+typedef enum _ze_event_flag_exp_t {
+    ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL = ZE_BIT(0), ///< event created without ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL flag will behave as a ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL event for this particular append operation. Using this flag on event created with flag ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL has no effect.
+    ZE_EVENT_FLAG_EXP_FORCE_UINT32 = 0x7fffffff,
+} ze_event_flag_exp_t;
+
+typedef struct _ze_event_flags_exp_desc_t {
+    ze_structure_type_ext_t stype; ///< [in] type of this structure ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC
+    const void *pNext;             ///< [in,out][optional] must be null or a pointer to an extension-specific
+    ze_event_flags_exp_t flags;
+} ze_event_flags_exp_desc_t;
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

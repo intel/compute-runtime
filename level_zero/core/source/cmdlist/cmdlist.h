@@ -335,6 +335,8 @@ struct CommandList : _ze_command_list_handle_t {
     static void freeClonedAppendKernelExtensions(void *pNext);
     static ze_result_t cloneAppendMemoryCopyExtensions(const ze_base_desc_t *desc, void *&outPnext);
     static void freeClonedAppendMemoryCopyExtensions(void *pNext);
+    static ze_result_t cloneAppendEventExtensions(const ze_base_desc_t *desc, void *&outPnext);
+    static void freeClonedAppendEventExtensions(void *pNext);
 
     inline ze_command_list_handle_t toHandle() { return this; }
 
