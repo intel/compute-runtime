@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -97,7 +98,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
         }
 
         const bool preferHostMemory = memoryProperties.flags.forceHostMemory ||
-                                      pCtx->getClDevice()->getHardwareInfo().capabilityTable.isIntegratedDevice;
+                                      (debugManager.flags.LeoBufferMemory.get() == 1);
 
         auto allocData = pCtx->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(hostPtr);
         if (memoryProperties.flags.useHostPtr && allocData) {
