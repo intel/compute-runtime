@@ -2558,6 +2558,17 @@ HWTEST_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEnab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
+HWTEST_F(InOrderRegularCmdListTests, givenCbEventWhenApiRequiredExternalFlagIsSetAndEventIsUnsetThenApiRequiredExternalFlagIsUnset) {
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto event = events[0].get();
+
+    event->setApiRequiredGraphExternalEvent(true);
+    EXPECT_TRUE(event->getApiRequiredGraphExternalEvent());
+
+    event->unsetInOrderExecInfo();
+    EXPECT_FALSE(event->getApiRequiredGraphExternalEvent());
+}
+
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using WalkerType = typename FamilyType::DefaultWalkerType;

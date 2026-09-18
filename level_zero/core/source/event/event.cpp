@@ -1187,6 +1187,7 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
 void Event::unsetInOrderExecInfo() {
     resetInOrderTimestampNode(nullptr, 0);
     inOrderExecHelper.unsetInOrderExecInfo();
+    apiRequiredGraphExternalEvent = false;
     isSignalledAsGraphInternalEvent = false;
 }
 

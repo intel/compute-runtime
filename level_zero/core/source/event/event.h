@@ -444,6 +444,14 @@ struct Event : _ze_event_handle_t {
         return isSignalledAsGraphInternalEvent;
     }
 
+    bool getApiRequiredGraphExternalEvent() const {
+        return apiRequiredGraphExternalEvent;
+    }
+
+    void setApiRequiredGraphExternalEvent(bool value) {
+        apiRequiredGraphExternalEvent = value;
+    }
+
     void setIsSignalledAsGraphInternalEvent(bool signalledFromGraph) {
         isSignalledAsGraphInternalEvent = signalledFromGraph &&
                                           isCounterBasedExplicitlyEnabled() &&
@@ -538,6 +546,7 @@ struct Event : _ze_event_handle_t {
     bool externalEvent = false;
     bool isDualCopyOffloadEvent = false;
     bool isSignalledAsGraphInternalEvent = false;
+    bool apiRequiredGraphExternalEvent = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {
