@@ -892,3 +892,54 @@ TEST(DebugSettingsManager, givenSettingsFileWithSomeDebugKeysThenDebugKeysMissin
     EXPECT_FALSE(debugManager.flags.LogApiCalls.get());
     EXPECT_FALSE(debugManager.flags.MakeAllBuffersResident.get());
 }
+
+TEST(DebugSettingsManager, givenSettingsFileHasTheKeyWhenRefreshEnvVariablesIsCalledThenFileValueWinsOverLiveEnvironment) {
+    struct MockSettingFileReader : SettingsFileReader {
+        MockSettingFileReader() : SettingsFileReader("") {
+            settingStringMap["ZE_FLAT_DEVICE_HIERARCHY"] = "FLAT";
+        }
+    };
+
+    VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+    VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::L0);
+
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMBINED"}};
+    VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    mockSettingsReader = std::make_unique<MockSettingFileReader>();
+    FullyEnabledTestDebugManager debugManager;
+    EXPECT_EQ("FLAT", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
+
+    mockableEnvs["ZE_FLAT_DEVICE_HIERARCHY"] = "COMPOSITE";
+    debugManager.refreshEnvVariables();
+
+    EXPECT_EQ("FLAT", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
+}
+
+TEST(DebugSettingsManager, givenNoSettingsFileOrKeyMissingFromItWhenRefreshEnvVariablesIsCalledThenLiveEnvironmentWinsOverStaleValue) {
+    struct EmptyMockSettingFileReader : SettingsFileReader {
+        EmptyMockSettingFileReader() : SettingsFileReader("") {}
+    };
+
+    for (bool fileConfigPresent : {true, false}) {
+        VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+        VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::L0);
+
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMBINED"}};
+        VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        if (fileConfigPresent) {
+            mockSettingsReader = std::make_unique<EmptyMockSettingFileReader>();
+        } else {
+            mockSettingsReader = std::make_unique<EnvironmentVariableReader>();
+        }
+
+        FullyEnabledTestDebugManager debugManager;
+        EXPECT_EQ("COMBINED", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
+
+        mockableEnvs["ZE_FLAT_DEVICE_HIERARCHY"] = "COMPOSITE";
+        debugManager.refreshEnvVariables();
+
+        EXPECT_EQ("COMPOSITE", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
+    }
+}

@@ -121,6 +121,16 @@ static void injectEnvSetting(SettingsReader &envOnlyReader, DVarsScopeMask scope
     }
 }
 
+template <typename DataType>
+static void injectBareNameReleaseSetting(SettingsReader &reader, SettingsReader &envOnlyReader, DVarsScopeMask scope, const char *keyName, DebugVarBase<DataType> &variable) {
+    if (0 == (scope & variable.getScopeMask())) {
+        return;
+    }
+    DataType tempData = envOnlyReader.getSetting(keyName, variable.get());
+    tempData = reader.getSetting(keyName, tempData);
+    variable.set(std::move(tempData));
+}
+
 template <DebugFunctionalityLevel debugLevel>
 DebugSettingsManager<debugLevel>::DebugSettingsManager(const char *registryPath) {
     readerImpl = SettingsReaderCreator::create(std::string(registryPath));
@@ -266,7 +276,20 @@ void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
 #include "env_variables.inl"
 #undef DECLARE_RAW_ENV_VARIABLE_OPT
 #undef DECLARE_RAW_ENV_VARIABLE
-} // namespace NEO
+}
+
+template <DebugFunctionalityLevel debugLevel>
+void DebugSettingsManager<debugLevel>::refreshEnvVariables() {
+    EnvironmentVariableReader envOnlyReader;
+    injectBareNameReleaseSetting(*readerImpl, envOnlyReader, this->scope, "ZE_FLAT_DEVICE_HIERARCHY", flags.ZE_FLAT_DEVICE_HIERARCHY);
+    injectBareNameReleaseSetting(*readerImpl, envOnlyReader, this->scope, "ZE_AFFINITY_MASK", flags.ZE_AFFINITY_MASK);
+    injectBareNameReleaseSetting(*readerImpl, envOnlyReader, this->scope, "ZEX_NUMBER_OF_CCS", flags.ZEX_NUMBER_OF_CCS);
+    injectBareNameReleaseSetting(*readerImpl, envOnlyReader, this->scope, "ZE_ENABLE_PCI_ID_DEVICE_ORDER", flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER);
+    injectBareNameReleaseSetting(*readerImpl, envOnlyReader, this->scope, "ZET_ENABLE_PROGRAM_DEBUGGING", flags.ZET_ENABLE_PROGRAM_DEBUGGING);
+    injectBareNameReleaseSetting(*readerImpl, envOnlyReader, this->scope, "ZET_ENABLE_METRICS", flags.ZET_ENABLE_METRICS);
+    injectBareNameReleaseSetting(*readerImpl, envOnlyReader, this->scope, "ZET_ENABLE_PROGRAM_INSTRUMENTATION", flags.ZET_ENABLE_PROGRAM_INSTRUMENTATION);
+    injectBareNameReleaseSetting(*readerImpl, envOnlyReader, this->scope, "ZES_ENABLE_SYSMAN", flags.ZES_ENABLE_SYSMAN);
+}
 
 void logDebugString(std::string_view debugString) {
     NEO::fileLoggerInstance().logDebugString(true, debugString);
