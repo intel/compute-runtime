@@ -50,6 +50,8 @@
 #include "shared/source/utilities/logger_neo_only.h"
 
 #include <iostream>
+#include <set>
+
 namespace NEO {
 uint32_t MemoryManager::maxOsContextCount = 0u;
 
@@ -1007,6 +1009,43 @@ void MemoryManager::unregisterEngineForCsr(CommandStreamReceiver *commandStreamR
             std::swap(registeredEngines[i], registeredEngines[numRegisteredEngines - 1]);
             registeredEngines.pop_back();
             return;
+        }
+    }
+}
+
+void MemoryManager::registerInstructionCacheFlushForAllocation(uint32_t rootDeviceIndex, const GraphicsAllocation &allocation) {
+    const auto &registeredEngines = getRegisteredEngines(rootDeviceIndex);
+    std::set<const OsContext *> affectedComputeGroups;
+
+    auto getPrimaryContext = [](const OsContext *osContext) -> const OsContext * {
+        auto primaryContext = osContext->getPrimaryContext();
+        return primaryContext != nullptr ? primaryContext : osContext;
+    };
+
+    for (const auto &engine : registeredEngines) {
+        auto osContext = engine.osContext;
+        if (!allocation.isUsedByOsContext(osContext->getContextId())) {
+            continue;
+        }
+
+        if (osContext->isPartOfContextGroup() &&
+            EngineHelpers::isCcs(osContext->getEngineType())) {
+            affectedComputeGroups.insert(getPrimaryContext(osContext));
+        } else {
+            engine.commandStreamReceiver->registerInstructionCacheFlush();
+        }
+    }
+
+    if (affectedComputeGroups.empty()) {
+        return;
+    }
+
+    for (const auto &engine : registeredEngines) {
+        auto osContext = engine.osContext;
+        if (osContext->isPartOfContextGroup() &&
+            EngineHelpers::isCcs(osContext->getEngineType()) &&
+            affectedComputeGroups.contains(getPrimaryContext(osContext))) {
+            engine.commandStreamReceiver->registerInstructionCacheFlush();
         }
     }
 }

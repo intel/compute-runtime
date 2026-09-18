@@ -22,6 +22,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/kernel/implicit_args_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
@@ -29,8 +30,10 @@
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/implicit_args_test_helper.h"
+#include "shared/test/common/helpers/instruction_cache_flush_test_engines.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
@@ -61,6 +64,8 @@
 #include "level_zero/driver_experimental/zex_module.h"
 
 #include "neo_aot_platforms.h"
+
+#include <algorithm>
 
 namespace L0 {
 namespace ult {
@@ -6414,6 +6419,102 @@ TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAll
     EXPECT_NE(allocs.end(), iter);
 }
 
+TEST_F(ModuleTests, givenSharedIsaUsedOnlyBySecondaryWhenDestroyingModuleThenComputeGroupRequiresInstructionCacheFlush) {
+    VariableBackup<uint32_t> maxOsContextCountBackup{&NEO::MemoryManager::maxOsContextCount};
+
+    auto neoDevice = this->neoDevice;
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto memoryManager = neoDevice->getMemoryManager();
+
+    NEO::InstructionCacheFlushTestEngines engines(
+        *neoDevice->getExecutionEnvironment(), rootDeviceIndex);
+
+    for (const auto &engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+        NEO::MemoryManager::maxOsContextCount = std::max(
+            NEO::MemoryManager::maxOsContextCount, engine.osContext->getContextId() + 1u);
+    }
+
+    VariableBackup<std::unique_ptr<NEO::ISAPoolAllocator>> isaPoolAllocatorBackup{
+        &neoDevice->isaPoolAllocator,
+        std::make_unique<NEO::ISAPoolAllocator>(neoDevice)};
+
+    auto module = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(new MockModuleTranslationUnit{device});
+
+    const uint8_t kernelHeap[0x40] = {};
+    auto kernelInfo = new NEO::KernelInfo{};
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.kernelHeapSize = sizeof(kernelHeap);
+    module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+
+    ASSERT_EQ(nullptr, device->getL0Debugger());
+
+    const auto requiredIsaSize =
+        NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(
+            *neoDevice, sizeof(kernelHeap), true);
+    module->isaAllocationPageSize = std::max(
+        module->isaAllocationPageSize, requiredIsaSize);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, module->initializeKernelImmutableData());
+    ASSERT_NE(nullptr, module->sharedIsaAllocation);
+
+    auto isaAllocation = module->getKernelsIsaParentAllocation();
+    ASSERT_NE(nullptr, isaAllocation);
+    isaAllocation->updateTaskCount(1u, engines.secondary->getOsContext().getContextId());
+
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.primary->getOsContext().getContextId()));
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.sibling->getOsContext().getContextId()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module.release()->destroy());
+
+    EXPECT_TRUE(engines.primary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.secondary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.sibling->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedPrimary->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedSecondary->isInstructionCacheFlushRequired());
+}
+
+TEST_F(ModuleTests, givenPerKernelIsaUsedOnlyBySecondaryWhenDestroyingModuleThenComputeGroupRequiresInstructionCacheFlush) {
+    VariableBackup<uint32_t> maxOsContextCountBackup{&NEO::MemoryManager::maxOsContextCount};
+
+    auto neoDevice = device->getNEODevice();
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto memoryManager = neoDevice->getMemoryManager();
+
+    NEO::InstructionCacheFlushTestEngines engines(
+        *neoDevice->getExecutionEnvironment(), rootDeviceIndex);
+
+    for (const auto &engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+        NEO::MemoryManager::maxOsContextCount = std::max(
+            NEO::MemoryManager::maxOsContextCount, engine.osContext->getContextId() + 1u);
+    }
+
+    auto module = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
+    auto kernelData = std::make_unique<KernelImmutableData>(device);
+
+    NEO::AllocationProperties properties{
+        rootDeviceIndex, MemoryConstants::pageSize,
+        NEO::AllocationType::kernelIsa, neoDevice->getDeviceBitfield()};
+    auto isaAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(nullptr, isaAllocation);
+
+    kernelData->setIsaPerKernelAllocation(isaAllocation);
+    module->getKernelImmutableDataVectorRef().push_back(std::move(kernelData));
+
+    ASSERT_EQ(nullptr, module->getKernelsIsaParentAllocation());
+    isaAllocation->updateTaskCount(1u, engines.secondary->getOsContext().getContextId());
+
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.primary->getOsContext().getContextId()));
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.sibling->getOsContext().getContextId()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module.release()->destroy());
+
+    EXPECT_TRUE(engines.primary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.secondary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.sibling->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedPrimary->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedSecondary->isInstructionCacheFlushRequired());
+}
 using ModuleIsaCopyTest = Test<ModuleImmutableDataFixture>;
 
 TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {

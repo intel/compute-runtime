@@ -324,6 +324,7 @@ class MemoryManager {
     const MultiDeviceEngineControlContainer &getRegisteredEngines() const { return allRegisteredEngines; }
     const EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     void unregisterEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
+    void registerInstructionCacheFlushForAllocation(uint32_t rootDeviceIndex, const GraphicsAllocation &allocation);
 
     virtual void drainGemCloseWorker() const {};
 

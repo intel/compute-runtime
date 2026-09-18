@@ -20,8 +20,10 @@
 #include "shared/test/common/fixtures/memory_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/instruction_cache_flush_test_engines.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -48,6 +50,9 @@
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "gtest/gtest.h"
+
+#include <algorithm>
+#include <initializer_list>
 
 namespace NEO {
 enum class AtomicAccessMode : uint32_t;
@@ -3914,4 +3919,147 @@ TEST(MemoryManagerTest, givenGpuHangWhenAllocInUseCalledThenReturnFalse) {
     csr->isGpuHangDetectedReturnValue = true;
     csr->gpuHangCheckPeriod = std::chrono::microseconds::zero();
     EXPECT_FALSE(mockMemoryManager->allocInUse(allocation));
+}
+
+class InstructionCacheFlushRegistrationTests : public testing::Test {
+  protected:
+    void SetUp() override {
+        constexpr uint32_t requiredContextCount = 10u;
+        maxOsContextCountBackup = std::max(MemoryManager::maxOsContextCount, requiredContextCount);
+
+        executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        engines = std::make_unique<InstructionCacheFlushTestEngines>(executionEnvironment, 0u);
+    }
+
+    void markUsed(GraphicsAllocation &allocation, MockCommandStreamReceiver *csr) {
+        allocation.updateTaskCount(1u, csr->getOsContext().getContextId());
+    }
+
+    void registerFlush(const GraphicsAllocation &allocation) {
+        executionEnvironment.memoryManager->registerInstructionCacheFlushForAllocation(0u, allocation);
+    }
+
+    void expectPendingFlushes(std::initializer_list<MockCommandStreamReceiver *> expectedCsrs) {
+        for (const auto &csr : engines->csrs) {
+            const bool expected = std::find(expectedCsrs.begin(), expectedCsrs.end(), csr.get()) != expectedCsrs.end();
+            EXPECT_EQ(expected, csr->isInstructionCacheFlushRequired())
+                << "Context ID: " << csr->getOsContext().getContextId();
+        }
+    }
+
+    VariableBackup<uint32_t> maxOsContextCountBackup{&MemoryManager::maxOsContextCount};
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), true, 2u};
+    std::unique_ptr<InstructionCacheFlushTestEngines> engines;
+};
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenUnusedAllocationWhenRegisteringFlushThenNoCsrIsMarked) {
+    MockGraphicsAllocation allocation;
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByPrimaryWhenRegisteringFlushThenAllComputeGroupMembersAreMarked) {
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->primary);
+
+    ASSERT_FALSE(allocation.isUsedByOsContext(engines->secondary->getOsContext().getContextId()));
+    ASSERT_FALSE(allocation.isUsedByOsContext(engines->sibling->getOsContext().getContextId()));
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedOnlyBySecondaryWhenRegisteringFlushThenPrimaryAndUnusedSiblingAreMarked) {
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+
+    ASSERT_FALSE(allocation.isUsedByOsContext(engines->primary->getOsContext().getContextId()));
+    ASSERT_FALSE(allocation.isUsedByOsContext(engines->sibling->getOsContext().getContextId()));
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByTwoGroupsWhenRegisteringFlushThenBothGroupsAreMarked) {
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+    markUsed(allocation, engines->unrelatedSecondary);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling,
+                          engines->unrelatedPrimary, engines->unrelatedSecondary});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByUngroupedCsrWhenRegisteringFlushThenOnlyHistoricalUserIsMarked) {
+    auto ungrouped = engines->createEngine(aub_stream::ENGINE_CCS);
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, ungrouped);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({ungrouped});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByCopyGroupWhenRegisteringFlushThenOnlyHistoricalCopyUserIsMarked) {
+    auto copyPrimary = engines->createEngine(aub_stream::ENGINE_BCS);
+    copyPrimary->getOsContext().setContextGroupCount(2u);
+    auto copySecondary = engines->createEngine(aub_stream::ENGINE_BCS, copyPrimary);
+
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, copySecondary);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({copySecondary});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByComputeAndCopyCsrsWhenRegisteringFlushThenHistoricalCopyUserIsPreserved) {
+    auto copyCsr = engines->createEngine(aub_stream::ENGINE_BCS);
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+    markUsed(allocation, copyCsr);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling, copyCsr});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenCsrsOnAnotherRootDeviceWhenRegisteringFlushThenOtherRootDeviceIsNotMarked) {
+    InstructionCacheFlushTestEngines otherRootEngines(executionEnvironment, 1u);
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
+    for (const auto &csr : otherRootEngines.csrs) {
+        EXPECT_FALSE(csr->isInstructionCacheFlushRequired());
+    }
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenExistingPendingFlushWhenRegisteringUnusedAllocationThenPendingFlushIsPreserved) {
+    engines->unrelatedPrimary->registerInstructionCacheFlush();
+    MockGraphicsAllocation allocation;
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->unrelatedPrimary});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenOneCsrClearsItsFlushWhenRegisteringAgainThenAllAffectedCsrsAreMarked) {
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+    registerFlush(allocation);
+
+    engines->secondary->setInstructionCacheFlushed();
+    expectPendingFlushes({engines->primary, engines->sibling});
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
 }

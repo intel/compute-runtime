@@ -85,6 +85,7 @@ class MockDevice : public RootDevice {
     using Device::initializeCaps;
     using Device::initializePeerAccessForDevices;
     using Device::initUsmReuseLimits;
+    using Device::isaPoolAllocator;
     using Device::maxBufferPoolCount;
     using Device::microsecondResolution;
     using Device::preemptionMode;

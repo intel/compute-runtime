@@ -1942,16 +1942,21 @@ ze_result_t ModuleImp::destroy() {
     auto tempHandle = debugModuleHandle;
     auto tempDevice = device;
 
-    auto rootDeviceIndex = getDevice()->getNEODevice()->getRootDeviceIndex();
-    auto &executionEnvironment = getDevice()->getNEODevice()->getRootDeviceEnvironment().executionEnvironment;
+    auto neoDevice = getDevice()->getNEODevice();
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto memoryManager = neoDevice->getMemoryManager();
 
-    for (const auto &data : this->kernelImmData) {
-        if (data->getIsaGraphicsAllocation()) {
-            for (auto &engine : executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-                auto contextId = engine.osContext->getContextId();
-                if (data->getIsaGraphicsAllocation()->isUsedByOsContext(contextId)) {
-                    engine.commandStreamReceiver->registerInstructionCacheFlush();
-                }
+    // Register before the ISA allocation or pooled ISA region is released.
+    if (auto isaAllocation = getKernelsIsaParentAllocation()) {
+        memoryManager->registerInstructionCacheFlushForAllocation(rootDeviceIndex, *isaAllocation);
+    } else {
+        for (const auto &data : this->kernelImmData) {
+            if (data == nullptr) {
+                continue;
+            }
+
+            if (auto isaAllocation = data->getIsaGraphicsAllocation()) {
+                memoryManager->registerInstructionCacheFlushForAllocation(rootDeviceIndex, *isaAllocation);
             }
         }
     }

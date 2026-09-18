@@ -23,6 +23,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -33,8 +34,10 @@
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/instruction_cache_flush_test_engines.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
@@ -59,6 +62,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
@@ -1599,6 +1603,51 @@ TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied
     EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::finiteMathOnly)) << cip->buildOptions;
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
+}
+
+TEST_F(ProgramTests, givenIsaUsedOnlyBySecondaryWhenCleaningKernelInfoThenComputeGroupRequiresInstructionCacheFlush) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ReuseKernelBinaries.set(0);
+
+    VariableBackup<uint32_t> maxOsContextCountBackup{&MemoryManager::maxOsContextCount};
+
+    auto &neoDevice = pClDevice->getDevice();
+    auto rootDeviceIndex = neoDevice.getRootDeviceIndex();
+    auto memoryManager = neoDevice.getMemoryManager();
+
+    InstructionCacheFlushTestEngines engines(
+        *neoDevice.getExecutionEnvironment(), rootDeviceIndex);
+
+    for (const auto &engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+        MemoryManager::maxOsContextCount = std::max(
+            MemoryManager::maxOsContextCount, engine.osContext->getContextId() + 1u);
+    }
+
+    MockProgram program(toClDeviceVector(*pClDevice));
+
+    AllocationProperties properties{
+        rootDeviceIndex, MemoryConstants::pageSize,
+        AllocationType::kernelIsa, neoDevice.getDeviceBitfield()};
+    auto isaAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(nullptr, isaAllocation);
+
+    auto kernelInfo = new KernelInfo{};
+    kernelInfo->setIsaPerKernelAllocation(isaAllocation);
+    program.addKernelInfo(kernelInfo, rootDeviceIndex);
+
+    isaAllocation->updateTaskCount(1u, engines.secondary->getOsContext().getContextId());
+
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.primary->getOsContext().getContextId()));
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.sibling->getOsContext().getContextId()));
+
+    program.cleanCurrentKernelInfo(rootDeviceIndex);
+
+    EXPECT_TRUE(program.getKernelInfoArray(rootDeviceIndex).empty());
+    EXPECT_TRUE(engines.primary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.secondary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.sibling->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedPrimary->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedSecondary->isInstructionCacheFlushRequired());
 }
 
 TEST_F(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccessIsReturned) {

@@ -576,16 +576,23 @@ const char *Program::getBuildLog(uint32_t rootDeviceIndex) const {
 
 void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
     auto &buildInfo = buildInfos[rootDeviceIndex];
-    for (auto &kernelInfo : buildInfo.kernelInfoArray) {
-        if (kernelInfo->getIsaGraphicsAllocation()) {
-            // register cache flush in all csrs where kernel allocation was used
-            for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-                auto contextId = engine.osContext->getContextId();
-                if (kernelInfo->getIsaGraphicsAllocation()->isUsedByOsContext(contextId)) {
-                    engine.commandStreamReceiver->registerInstructionCacheFlush();
-                }
-            }
 
+    // Register before the ISA allocation or pooled ISA region is released.
+    if (auto isaParentAllocation = this->getKernelsIsaParentAllocation(rootDeviceIndex);
+        isaParentAllocation != nullptr) {
+        this->executionEnvironment.memoryManager->registerInstructionCacheFlushForAllocation(
+            rootDeviceIndex, *isaParentAllocation);
+    } else {
+        for (const auto &kernelInfo : buildInfo.kernelInfoArray) {
+            if (auto isaAllocation = kernelInfo->getIsaGraphicsAllocation()) {
+                this->executionEnvironment.memoryManager->registerInstructionCacheFlushForAllocation(
+                    rootDeviceIndex, *isaAllocation);
+            }
+        }
+    }
+
+    for (auto &kernelInfo : buildInfo.kernelInfoArray) {
+        if (auto isaAllocation = kernelInfo->getIsaGraphicsAllocation()) {
             if (executionEnvironment.memoryManager->isKernelBinaryReuseEnabled()) {
                 auto lock = executionEnvironment.memoryManager->lockKernelAllocationMap();
                 const auto &kernelName = kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
@@ -600,7 +607,7 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
                 }
             } else {
                 if (!buildInfo.sharedIsaAllocation) {
-                    this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->getIsaGraphicsAllocation());
+                    this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(isaAllocation);
                 }
             }
         }
