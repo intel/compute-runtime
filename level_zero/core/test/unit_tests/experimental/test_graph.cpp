@@ -4572,6 +4572,135 @@ TEST_F(GraphTestCaptureRestrictions, GivenSubgraphWithUnjoinedForksWhenEndGraphC
     EXPECT_FALSE(srcGraph.valid());
 }
 
+TEST_F(GraphTestCaptureRestrictions, GivenGrandchildForkJoinedTransitivelyToGrandparentWhenEndGraphCaptureCalledThenGraphIsValid) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext mainCmdlist{&ctx};
+    mainCmdlist.device = this->device;
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    MockGraphCmdListWithContext grandChildCmdlist{&ctx};
+    grandChildCmdlist.device = this->device;
+    Mock<Event> forkToChildEvent;
+    Mock<Event> forkToGrandChildEvent;
+    Mock<Event> joinGrandChildToMainEvent;
+    Mock<Event> joinChildToMainEvent;
+
+    auto mainCmdlistHandle = mainCmdlist.toHandle();
+    auto forkToChildEventHandle = forkToChildEvent.toHandle();
+    auto forkToGrandChildEventHandle = forkToGrandChildEvent.toHandle();
+    auto joinGrandChildToMainEventHandle = joinGrandChildToMainEvent.toHandle();
+    auto joinChildToMainEventHandle = joinChildToMainEvent.toHandle();
+
+    Graph srcGraph(&ctx, true);
+    Graph *mainCaptureTarget = &srcGraph;
+    mainCmdlist.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(mainCmdlist, false);
+
+    // lvl 0 : fork to child
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdlist, mainCaptureTarget, nullptr, mainCmdlistHandle, forkToChildEventHandle, 0U, nullptr);
+
+    // lvl 1 : child forks to grandchild
+    Graph *childCaptureTarget = nullptr;
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childCaptureTarget, nullptr, &childCmdlist, forkToGrandChildEventHandle, 1U, &forkToChildEventHandle);
+    ASSERT_NE(nullptr, childCaptureTarget);
+
+    // lvl 2 : grandchild signals its join event as its last work command
+    Graph *grandChildCaptureTarget = nullptr;
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildCaptureTarget, nullptr, &grandChildCmdlist, joinGrandChildToMainEventHandle, 1U, &forkToGrandChildEventHandle);
+    ASSERT_NE(nullptr, grandChildCaptureTarget);
+
+    // lvl 2 -> lvl 0 : grandchild is joined transitively, directly to the grandparent (main), skipping the child
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdlist, mainCaptureTarget, nullptr, mainCmdlistHandle, nullptr, 1U, &joinGrandChildToMainEventHandle);
+
+    // lvl 1 -> lvl 0 : child is joined back to its direct parent
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childCaptureTarget, nullptr, &childCmdlist, joinChildToMainEventHandle, 0U, nullptr);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdlist, mainCaptureTarget, nullptr, mainCmdlistHandle, nullptr, 1U, &joinChildToMainEventHandle);
+
+    ze_graph_handle_t retGraph = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExt(mainCmdlistHandle, nullptr, &retGraph));
+    EXPECT_EQ(srcGraph.toHandle(), retGraph);
+    EXPECT_TRUE(srcGraph.valid());
+    EXPECT_TRUE(srcGraph.getUnjoinedForks().empty());
+    ASSERT_EQ(1u, srcGraph.getSubgraphs().size());
+    const auto *childGraph = srcGraph.getSubgraphs()[0];
+    EXPECT_TRUE(childGraph->getUnjoinedForks().empty()); // grandchild's fork was resolved on the child even though main performed the join
+    EXPECT_EQ(1u, childGraph->getResolvedJoins().size());
+    ASSERT_EQ(1u, childGraph->getSubgraphs().size());
+    EXPECT_TRUE(childGraph->getSubgraphs()[0]->getUnjoinedForks().empty());
+    EXPECT_FALSE(mainCmdlist.isCapturingGraph());
+    EXPECT_FALSE(childCmdlist.isCapturingGraph());
+    EXPECT_FALSE(grandChildCmdlist.isCapturingGraph());
+}
+
+TEST_F(GraphTestCaptureRestrictions, GivenForkJoinedTransitivelyThroughSiblingWhenEndGraphCaptureCalledThenGraphIsValid) {
+    GraphsCleanupGuard graphCleanup;
+
+    // Reproduces the transitive-join topology where a forked queue is joined through a sibling:
+    //   qcap forks q1 and q2; q1 signals to q2 (neither end is qcap); q2 is joined back to qcap.
+    // q2 is joined directly to qcap and q1 is joined transitively through q2.
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext qcap{&ctx};
+    qcap.device = this->device;
+    MockGraphCmdListWithContext q1{&ctx};
+    q1.device = this->device;
+    MockGraphCmdListWithContext q2{&ctx};
+    q2.device = this->device;
+    Mock<Event> e1; // fork qcap -> q1
+    Mock<Event> e2; // fork qcap -> q2
+    Mock<Event> e3; // join q1 -> q2 (offending edge: neither end is qcap)
+    Mock<Event> e4; // join q2 -> qcap
+
+    auto qcapHandle = qcap.toHandle();
+    auto e1Handle = e1.toHandle();
+    auto e2Handle = e2.toHandle();
+    auto e3Handle = e3.toHandle();
+    auto e4Handle = e4.toHandle();
+
+    Graph srcGraph(&ctx, true);
+    Graph *qcapCaptureTarget = &srcGraph;
+    qcap.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(qcap, false);
+
+    // qcap forks q1
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(qcap, qcapCaptureTarget, nullptr, qcapHandle, e1Handle, 0U, nullptr);
+    Graph *q1CaptureTarget = nullptr;
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(q1, q1CaptureTarget, nullptr, &q1, nullptr, 1U, &e1Handle);
+    ASSERT_NE(nullptr, q1CaptureTarget);
+
+    // qcap forks q2
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(qcap, qcapCaptureTarget, nullptr, qcapHandle, e2Handle, 0U, nullptr);
+    Graph *q2CaptureTarget = nullptr;
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(q2, q2CaptureTarget, nullptr, &q2, nullptr, 1U, &e2Handle);
+    ASSERT_NE(nullptr, q2CaptureTarget);
+
+    // q1 signals its join event as its last work command
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(q1, q1CaptureTarget, nullptr, &q1, e3Handle, 0U, nullptr);
+
+    // q1 -> q2 : q1 is joined onto its sibling q2 (neither end is the primary command list)
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(q2, q2CaptureTarget, nullptr, &q2, nullptr, 1U, &e3Handle);
+
+    // q2 signals its join event as its last work command
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(q2, q2CaptureTarget, nullptr, &q2, e4Handle, 0U, nullptr);
+
+    // q2 -> qcap : q2 is joined directly back to the primary command list
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(qcap, qcapCaptureTarget, nullptr, qcapHandle, nullptr, 1U, &e4Handle);
+
+    ze_graph_handle_t retGraph = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExt(qcapHandle, nullptr, &retGraph));
+    EXPECT_EQ(srcGraph.toHandle(), retGraph);
+    EXPECT_TRUE(srcGraph.valid());
+    EXPECT_TRUE(srcGraph.getUnjoinedForks().empty()); // both sibling forks were resolved on their owner (qcap)
+    EXPECT_EQ(2u, srcGraph.getResolvedJoins().size());
+    ASSERT_EQ(2u, srcGraph.getSubgraphs().size());
+    EXPECT_TRUE(srcGraph.getSubgraphs()[0]->getUnjoinedForks().empty());
+    EXPECT_TRUE(srcGraph.getSubgraphs()[1]->getUnjoinedForks().empty());
+    EXPECT_FALSE(qcap.isCapturingGraph());
+    EXPECT_FALSE(q1.isCapturingGraph());
+    EXPECT_FALSE(q2.isCapturingGraph());
+}
+
 TEST_F(GraphTestCaptureRestrictions, GivenEventFromOtherCaptureSessionWhenCapturingCommandListWaitsOnItThenMergeAttemptErrorIsReturned) {
     GraphsCleanupGuard graphCleanup;
 

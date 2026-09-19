@@ -385,8 +385,19 @@ ze_result_t Graph::resumeCapturing() {
 }
 
 void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent) {
-    auto forkInfo = this->unjoinedForks.find(&childCmdList);
-    if (this->unjoinedForks.end() == forkInfo) {
+    // A fork is always registered in the direct parent graph of the forked (child) command list.
+    // For a direct join, that parent is 'this'. Transitive joins additionally allow the join event
+    // to be awaited by any other command list in the same capture session (an ancestor, or a
+    // sibling that itself joins back towards the primary command list), so the fork is resolved on
+    // its owning parent graph rather than assuming the awaiting graph 'this' is that parent.
+    auto *childGraph = childCmdList.getGraphCaptureTarget();
+    if (nullptr == childGraph) {
+        return; // the signalling command list is no longer capturing, so it cannot be an unjoined fork
+    }
+    auto *forkOwner = (nullptr != childGraph->parentGraph) ? childGraph->parentGraph : this;
+
+    auto forkInfo = forkOwner->unjoinedForks.find(&childCmdList);
+    if (forkOwner->unjoinedForks.end() == forkInfo) {
         return;
     }
 
@@ -395,11 +406,12 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
     forkJoinInfo.forkEvent = forkInfo->second.forkEvent;
     forkJoinInfo.joinWaitCommandId = static_cast<CapturedCommandId>(this->recordedApiCommands.size());
     forkJoinInfo.joinEvent = &joinEvent;
-    forkJoinInfo.forkDestiny = childCmdList.getGraphCaptureTarget();
+    forkJoinInfo.joiningGraph = this;
+    forkJoinInfo.forkDestiny = childGraph;
     auto joinRecordedSignal = forkJoinInfo.forkDestiny->recordedSignals.find(&joinEvent);
     UNRECOVERABLE_IF(forkJoinInfo.forkDestiny->recordedSignals.end() == joinRecordedSignal);
     forkJoinInfo.joinSignalCommandId = joinRecordedSignal->second;
-    this->potentialJoins[forkInfo->second.forkSignalCommandId] = forkJoinInfo;
+    forkOwner->potentialJoins[forkInfo->second.forkSignalCommandId] = forkJoinInfo;
 }
 
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {

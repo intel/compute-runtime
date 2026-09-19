@@ -163,11 +163,17 @@ void GraphDotExporter::writeForkJoinEdges(std::ostringstream &dot, const Graph &
             dot << indent << forkNode << " -> " << subgraphFirstNode << ";\n";
         }
 
-        const auto joinCommandId = findVisibleCommandAtOrAfter(visibleCommands, forkJoinInfo.joinWaitCommandId);
-        if (joinCommandId) {
-            const std::string subgraphLastNode = generateNodeId(level + 1, *subgraphIndex, subgraphVisibleCommands.back());
-            const std::string joinNode = generateNodeId(level, subgraphId, *joinCommandId);
-            dot << indent << subgraphLastNode << " -> " << joinNode << ";\n";
+        // For a transitive join the join-wait command lives in another graph (an ancestor or a
+        // sibling), not the fork owner that holds this fork/join info. That command is indexed
+        // against its own graph, so only draw the join edge here when the join-wait command
+        // belongs to the graph currently being rendered.
+        if ((nullptr == forkJoinInfo.joiningGraph) || (forkJoinInfo.joiningGraph == &graph)) {
+            const auto joinCommandId = findVisibleCommandAtOrAfter(visibleCommands, forkJoinInfo.joinWaitCommandId);
+            if (joinCommandId) {
+                const std::string subgraphLastNode = generateNodeId(level + 1, *subgraphIndex, subgraphVisibleCommands.back());
+                const std::string joinNode = generateNodeId(level, subgraphId, *joinCommandId);
+                dot << indent << subgraphLastNode << " -> " << joinNode << ";\n";
+            }
         }
     }
 }
@@ -308,7 +314,12 @@ GraphDotExporter::InternalCommandsSet GraphDotExporter::collectInternalDependenc
 
     for (const auto &[_, forkJoinInfo] : graph.getJoinedForks()) {
         trackDependencyEvent(forkJoinInfo.forkSignalCommandId, forkJoinInfo.forkEvent);
-        trackDependencyEvent(forkJoinInfo.joinWaitCommandId, forkJoinInfo.joinEvent);
+        // The join-wait command belongs to the joining graph, which for a transitive join is
+        // another graph (ancestor or sibling) rather than this fork owner; only hide it in its
+        // owning graph.
+        if ((nullptr == forkJoinInfo.joiningGraph) || (forkJoinInfo.joiningGraph == &graph)) {
+            trackDependencyEvent(forkJoinInfo.joinWaitCommandId, forkJoinInfo.joinEvent);
+        }
     }
     for (const auto &[_, forkInfo] : graph.getUnjoinedForks()) {
         trackDependencyEvent(forkInfo.forkSignalCommandId, forkInfo.forkEvent);

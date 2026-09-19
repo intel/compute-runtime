@@ -286,6 +286,206 @@ bool testMultiGraphPostJoinTrailingSync(ze_context_handle_t &context, ze_device_
     return validRet;
 }
 
+// Positive transitive-join scenario:
+//
+//      qcap (primary)          q1                    q2
+//        |                     |                     |
+//   begin_capture(qcap)        |                     |
+//   copy src->ze1, sig e1 ---->| wait e1             |
+//   barrier      sig e2 -------------------------->  | wait e2
+//        |                copy ze1->shared           |
+//        |                barrier sig e3 ----------> | wait e3  (offending edge: neither end is qcap)
+//        |                     |                copy shared->dst
+//        |                     |                barrier sig e4
+//   wait e4  <-------------------------------------- +
+//
+// q2 is joined directly to qcap while q1 is joined transitively, through its sibling q2.
+bool testTransitiveForkJoinsGraph(ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+    bool validRet = true;
+    ze_graph_handle_t virtualGraph = nullptr;
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+
+    const size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    void *dstBuffer = nullptr;
+    void *ze1Buffer = nullptr;
+    void *sharedBuffer = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &dstBuffer));
+
+    for (size_t i = 0; i < allocSize; ++i) {
+        static_cast<char *>(srcBuffer)[i] = static_cast<char>(i + 1);
+    }
+    memset(dstBuffer, 0, allocSize);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &ze1Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &sharedBuffer));
+
+    ze_command_list_handle_t cmdListMain;
+    ze_command_list_handle_t cmdListQ1;
+    ze_command_list_handle_t cmdListQ2;
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListMain);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListQ1);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListQ2);
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 4;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t e1 = nullptr; // fork qcap -> q1
+    ze_event_handle_t e2 = nullptr; // fork qcap -> q2
+    ze_event_handle_t e3 = nullptr; // join q1 -> q2 (transitive edge)
+    ze_event_handle_t e4 = nullptr; // join q2 -> qcap
+    eventDesc.index = 0;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &e1));
+    eventDesc.index = 1;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &e2));
+    eventDesc.index = 2;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &e3));
+    eventDesc.index = 3;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &e4));
+
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListMain, virtualGraph, nullptr));
+
+    // qcap forks q1 and q2
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListMain, ze1Buffer, srcBuffer, allocSize, e1, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListMain, e2, 0, nullptr));
+
+    // q1 does its work then signals its join event (as its last work command)
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListQ1, sharedBuffer, ze1Buffer, allocSize, nullptr, 1, &e1));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListQ1, e3, 0, nullptr));
+
+    // q2 is forked, then q1 is joined onto q2 (sibling), then q2 does dependent work and signals its own join event
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListQ2, nullptr, 1, &e2));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListQ2, dstBuffer, sharedBuffer, allocSize, nullptr, 1, &e3));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListQ2, e4, 0, nullptr));
+
+    // q2 joins back to the primary command list
+    SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdListMain, 1, &e4));
+
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListMain, nullptr, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListMain, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListMain, std::numeric_limits<uint64_t>::max()));
+
+    if (aubMode == false) {
+        validRet = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, allocSize);
+        if (!validRet) {
+            std::cerr << "Data mismatches found after transitive fork/join graph execution!" << std::endl;
+        }
+    }
+
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
+
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListQ2));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListQ1));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListMain));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(e4));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(e3));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(e2));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(e1));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, sharedBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, ze1Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    return validRet;
+}
+
+// Negative transitive-join scenario: a fork (q1) is joined onto another forked command list (q2),
+// but q2 is never joined back to the primary command list. Because there is no chain of joins from
+// q1/q2 to the primary command list, the recorded graph is invalid and capture must report it.
+bool testTransitiveForkJoinsGraphNegative(ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
+    bool validRet = true;
+    ze_graph_handle_t virtualGraph = nullptr;
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+
+    ze_command_list_handle_t cmdListMain;
+    ze_command_list_handle_t cmdListQ1;
+    ze_command_list_handle_t cmdListQ2;
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListMain);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListQ1);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListQ2);
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 3;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t e1 = nullptr; // fork qcap -> q1
+    ze_event_handle_t e2 = nullptr; // fork qcap -> q2
+    ze_event_handle_t e3 = nullptr; // join q1 -> q2 (but q2 itself is never joined)
+    eventDesc.index = 0;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &e1));
+    eventDesc.index = 1;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &e2));
+    eventDesc.index = 2;
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &e3));
+
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListMain, virtualGraph, nullptr));
+
+    // qcap forks q1 and q2
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListMain, e1, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListMain, e2, 0, nullptr));
+
+    // q1 is forked and signals its join event
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListQ1, nullptr, 1, &e1));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListQ1, e3, 0, nullptr));
+
+    // q2 is forked and joins q1 onto itself, but q2 is never joined back to qcap
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListQ2, nullptr, 1, &e2));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListQ2, nullptr, 1, &e3));
+
+    ze_graph_handle_t retGraph = nullptr;
+    ze_result_t endResult = zeCommandListEndGraphCaptureExt(cmdListMain, nullptr, &retGraph);
+    if (endResult != ZE_RESULT_ERROR_GRAPH_UNJOINED_FORKS) {
+        std::cerr << "Expected ZE_RESULT_ERROR_GRAPH_UNJOINED_FORKS for a graph whose join chain never "
+                     "reaches the primary command list, got 0x"
+                  << std::hex << static_cast<uint32_t>(endResult) << std::dec << std::endl;
+        validRet = false;
+    }
+
+    // an invalid graph must not be instantiable either
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    ze_result_t instantiateResult = zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph);
+    if (instantiateResult != ZE_RESULT_ERROR_INVALID_GRAPH) {
+        std::cerr << "Expected ZE_RESULT_ERROR_INVALID_GRAPH when instantiating an invalid graph, got 0x"
+                  << std::hex << static_cast<uint32_t>(instantiateResult) << std::dec << std::endl;
+        validRet = false;
+    }
+    if (nullptr != physicalGraph) {
+        SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    }
+
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
+
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListQ2));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListQ1));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListMain));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(e3));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(e2));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(e1));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    return validRet;
+}
+
 inline auto allocateDispatchTraits(ze_context_handle_t context, bool indirect) {
 
     auto dispatchTraitsDeleter = [context, indirect](ze_group_count_t *ptr) noexcept {
@@ -2235,6 +2435,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestCopyEngineSimpleGraph = 11u;
     constexpr uint32_t bitNumberTestVisitGraph = 12u;
     constexpr uint32_t bitNumberTestPauseResume = 13u;
+    constexpr uint32_t bitNumberTestTransitiveForkJoins = 14u;
 
     LevelZeroBlackBoxTests::TestDuration testDuration = LevelZeroBlackBoxTests::TestDuration(argc, argv);
 
@@ -2555,6 +2756,20 @@ int main(int argc, char *argv[]) {
         currentTest = "Pause Resume Graph Capture";
         LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testPauseResumeCapture(context, device0, aubMode, graphDumpSettings);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+    }
+
+    if (testMask.test(bitNumberTestTransitiveForkJoins)) {
+        currentTest = "Transitive Fork Joins Graph";
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
+        casePass = testTransitiveForkJoinsGraph(context, device0, aubMode, graphDumpSettings);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+
+        currentTest = "Transitive Fork Joins Graph - unjoined chain (negative)";
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
+        casePass = testTransitiveForkJoinsGraphNegative(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }

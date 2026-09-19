@@ -71,12 +71,13 @@ struct ForkInfo {
 };
 
 struct ForkJoinInfo {
-    CapturedCommandId forkSignalCommandId = 0; // parent
-    CapturedCommandId joinWaitCommandId = 0;   // parent
+    CapturedCommandId forkSignalCommandId = 0; // parent (fork owner)
+    CapturedCommandId joinWaitCommandId = 0;   // command in the joining graph (== fork owner for direct joins)
     CapturedCommandId joinSignalCommandId = 0; // child
     ze_event_handle_t forkEvent = nullptr;
     ze_event_handle_t joinEvent = nullptr;
-    Graph *forkDestiny = nullptr; // child
+    Graph *forkDestiny = nullptr;  // child
+    Graph *joiningGraph = nullptr; // graph that owns joinWaitCommandId (the command list that joined the fork)
 };
 
 // Contigous commands in the order of recording (i.e. in the order of host API invocations)
@@ -348,7 +349,11 @@ struct Graph : _ze_graph_handle_t {
     }
 
     bool hasUnjoinedForks() const {
-        return false == unjoinedForks.empty();
+        // Reports unjoined forks in this graph and, recursively, in the whole capture subtree below
+        // it. Transitive joins let any command list in the session join a fork (even a sibling's),
+        // so a wait is a potential join whenever any fork anywhere in the session is still unjoined.
+        return (false == unjoinedForks.empty()) ||
+               std::any_of(subGraphs.begin(), subGraphs.end(), [](const auto *subGraph) { return subGraph->hasUnjoinedForks(); });
     }
 
     ze_result_t pauseCapturing();
@@ -508,7 +513,7 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
     }
-    if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation
+    if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->getRootGraph()->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation (against any unjoined fork in the whole capture session)
         recordHandleWaitEventsFromNextCommand(srcCmdList, graphCaptureTarget, eventsWaitList);
     }
 
