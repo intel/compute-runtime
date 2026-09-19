@@ -1837,6 +1837,153 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevic
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+HWTEST_F(CommandListTest, givenPlainDeviceAllocationWhenQueryingPeerReservationBlockEndThenWholeRangeIsReturned) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *ptr = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr));
+
+    // not a virtual reservation, so the copy must not be split
+    EXPECT_EQ(size, commandList->bytesToPeerReservationBlockEnd(ptr, size));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+HWTEST_F(CommandListTest, givenReservedDeviceAllocationOnSameDeviceWhenQueryingPeerReservationBlockEndThenWholeRangeIsReturned) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    void *buffer = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    size_t reservationSize = size * 2;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->reserveVirtualMem(nullptr, reservationSize, &buffer));
+    ze_physical_mem_desc_t desc = {};
+    desc.size = size;
+    ze_physical_mem_handle_t phys0, phys1;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(device->toHandle(), &desc, &phys0));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(device->toHandle(), &desc, &phys1));
+    void *secondBlock = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(buffer) + size);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(buffer, size, phys0, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(secondBlock, size, phys1, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    // the reservation is on the same device, so no peer import is involved and a copy
+    // spanning both blocks must not be split
+    EXPECT_EQ(reservationSize, commandList->bytesToPeerReservationBlockEnd(buffer, reservationSize));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(buffer, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(secondBlock, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeVirtualMem(buffer, reservationSize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(phys0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(phys1));
+}
+
+using MultiDeviceReservationCommandListTest = Test<MultiDeviceFixture>;
+
+HWTEST_F(MultiDeviceReservationCommandListTest, givenReservedAllocationOwnedByAnotherDeviceWhenQueryingPeerReservationBlockEndThenRangeIsClampedToBlockEnd) {
+    auto deviceOwner = driverHandle->devices[0];
+    auto devicePeer = driverHandle->devices[1];
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(devicePeer, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *buffer = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    size_t reservationSize = size * 2;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->reserveVirtualMem(nullptr, reservationSize, &buffer));
+    ze_physical_mem_desc_t desc = {};
+    desc.size = size;
+    ze_physical_mem_handle_t phys0, phys1;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(deviceOwner->toHandle(), &desc, &phys0));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(deviceOwner->toHandle(), &desc, &phys1));
+    void *secondBlock = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(buffer) + size);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(buffer, size, phys0, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(secondBlock, size, phys1, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    // each block is imported on the peer at an address of its own, so a range that
+    // crosses the block end is clamped there and copied in more than one step
+    EXPECT_EQ(size, commandList->bytesToPeerReservationBlockEnd(buffer, reservationSize));
+    // a range that already fits inside one block is left alone
+    EXPECT_EQ(size, commandList->bytesToPeerReservationBlockEnd(buffer, size));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(buffer, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(secondBlock, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeVirtualMem(buffer, reservationSize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(phys0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(phys1));
+}
+
+HWTEST_F(MultiDeviceReservationCommandListTest, givenPeerAccessSpanningReservationBlocksWhenAppendingMemoryCopyThenCopyIsRejectedInsteadOfHanging) {
+    auto deviceOwner = driverHandle->devices[0];
+    auto devicePeer = driverHandle->devices[1];
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(devicePeer, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *buffer = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    size_t reservationSize = size * 2;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->reserveVirtualMem(nullptr, reservationSize, &buffer));
+    ze_physical_mem_desc_t desc = {};
+    desc.size = size;
+    ze_physical_mem_handle_t phys0, phys1;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(deviceOwner->toHandle(), &desc, &phys0));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(deviceOwner->toHandle(), &desc, &phys1));
+    void *secondBlock = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(buffer) + size);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(buffer, size, phys0, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(secondBlock, size, phys1, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    // the peer maps each block separately, so a range crossing the block end is refused
+    auto spanning = commandList->resolveAlignedAllocation(devicePeer, buffer, reservationSize, nullptr, {});
+    EXPECT_EQ(nullptr, spanning.alloc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(buffer, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(secondBlock, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeVirtualMem(buffer, reservationSize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(phys0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(phys1));
+}
+
+HWTEST_F(CommandListTest, givenReservationOnSameDeviceSpanningBlocksWhenResolvingAlignedAllocationThenCopyIsNotRejected) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    void *buffer = nullptr;
+    size_t size = MemoryConstants::pageSize64k;
+    size_t reservationSize = size * 2;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->reserveVirtualMem(nullptr, reservationSize, &buffer));
+    ze_physical_mem_desc_t desc = {};
+    desc.size = size;
+    ze_physical_mem_handle_t phys0, phys1;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(device->toHandle(), &desc, &phys0));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(device->toHandle(), &desc, &phys1));
+    void *secondBlock = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(buffer) + size);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(buffer, size, phys0, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(secondBlock, size, phys1, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    // no peer access is involved, the reservation is contiguous here and stays usable
+    auto spanning = commandList->resolveAlignedAllocation(device, buffer, reservationSize, nullptr, {});
+    EXPECT_NE(nullptr, spanning.alloc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(buffer, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(secondBlock, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeVirtualMem(buffer, reservationSize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(phys0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(phys1));
+}
+
 HWTEST_F(CommandListTest, givenReservedDeviceAllocationWhenResolvingAlignedAllocationThenVirtualMemoryReservationMapLockIsTaken) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
