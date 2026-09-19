@@ -124,7 +124,7 @@ struct CapturingInternalExecCmdList : Mock<CommandList> {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) override {
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override {
         appendSignalEventCalled++;
         signaledEvents.push_back(hEvent);
         return ZE_RESULT_SUCCESS;

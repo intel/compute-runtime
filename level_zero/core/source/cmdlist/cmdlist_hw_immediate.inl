@@ -912,14 +912,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hSignalEvent, CmdListSignalEventParameters &signalEventParameters) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hSignalEvent, bool relaxedOrderingDispatch) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
     if (signalEvent->isCounterBased()) {
         CmdListWaitEventParameters waitEventsParameters = {
             .outWaitCmds = nullptr,
-            .relaxedOrderingAllowed = signalEventParameters.relaxedOrderingDispatch,
+            .relaxedOrderingAllowed = relaxedOrderingDispatch,
             .trackDependencies = true,
             .waitForImplicitInOrderDependency = true,
             .skipAddingWaitEventsToResidency = false,
@@ -928,12 +928,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
         return appendBarrier(hSignalEvent, 0, nullptr, waitEventsParameters);
     }
 
-    signalEventParameters.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(0, false);
-    bool hasStallingCmds = !signalEvent->isCounterBased() || hasStallingCmdsForRelaxedOrdering(0, signalEventParameters.relaxedOrderingDispatch);
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(0, false);
+    bool hasStallingCmds = !signalEvent->isCounterBased() || hasStallingCmdsForRelaxedOrdering(0, relaxedOrderingDispatch);
 
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);
-    ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, signalEventParameters);
-    return flushImmediate(ret, true, hasStallingCmds, signalEventParameters.relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
+    ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
+    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1335,9 +1335,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
-        CmdListSignalEventParameters signalEventParameters{
-            .relaxedOrderingDispatch = false};
-        ret = this->appendSignalEvent(proxySignalEvent, signalEventParameters);
+
+        ret = this->appendSignalEvent(proxySignalEvent, false);
         auto event = Event::fromHandle(proxySignalEvent);
         if (ret != ZE_RESULT_SUCCESS) {
             event->destroy();

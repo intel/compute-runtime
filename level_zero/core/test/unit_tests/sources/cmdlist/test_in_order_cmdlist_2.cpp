@@ -2731,10 +2731,8 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     regularCmdList->appendMemoryCopyRegion(data, &region, 1, 1, data, &region, 1, 1, nullptr, 0, nullptr, copyParams);
 
     regularCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, copyParams);
-    CmdListSignalEventParameters signalEventParameters = {
-        .relaxedOrderingDispatch = false,
-    };
-    regularCmdList->appendSignalEvent(eventHandle, signalEventParameters);
+
+    regularCmdList->appendSignalEvent(eventHandle, false);
     CmdListWaitEventParameters waitEventsParameters = {
         .outWaitCmds = nullptr,
         .relaxedOrderingAllowed = false,
@@ -2870,10 +2868,7 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSig
     size_t offset = cmdStream->getUsed();
 
     {
-        CmdListSignalEventParameters signalEventParameters = {
-            .relaxedOrderingDispatch = false,
-        };
-        cmdList->appendSignalEvent(events[1]->toHandle(), signalEventParameters);
+        cmdList->appendSignalEvent(events[1]->toHandle(), false);
 
         GenCmdList hwCmdList;
         EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -2885,10 +2880,7 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSig
     offset = cmdStream->getUsed();
 
     {
-        CmdListSignalEventParameters signalEventParameters = {
-            .relaxedOrderingDispatch = false,
-        };
-        cmdList->appendSignalEvent(events[0]->toHandle(), signalEventParameters);
+        cmdList->appendSignalEvent(events[0]->toHandle(), false);
 
         GenCmdList hwCmdList;
         EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));

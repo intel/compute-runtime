@@ -594,10 +594,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendSignalE
 
     eventPool->createEvent(&eventDesc, &hEvent);
 
-    CmdListSignalEventParameters signalEventParameters = {
-        .relaxedOrderingDispatch = false,
-    };
-    auto result = commandList->appendSignalEvent(hEvent, signalEventParameters);
+    auto result = commandList->appendSignalEvent(hEvent, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = cmdStream->getUsed();

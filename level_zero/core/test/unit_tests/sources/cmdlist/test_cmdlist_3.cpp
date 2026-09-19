@@ -1202,10 +1202,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendSigna
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    CmdListSignalEventParameters signalEventParameters = {
-        .relaxedOrderingDispatch = false,
-    };
-    commandList->appendSignalEvent(event, signalEventParameters);
+    commandList->appendSignalEvent(event, false);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

@@ -401,10 +401,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     returnValue = commandList->appendBarrier(nullptr, 1, &event, waitEventsParametersForBarrier);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    CmdListSignalEventParameters signalEventParameters = {
-        .relaxedOrderingDispatch = false,
-    };
-    returnValue = commandList->appendSignalEvent(event, signalEventParameters);
+    returnValue = commandList->appendSignalEvent(event, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = eventObject->hostSignal(false);

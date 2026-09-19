@@ -1433,10 +1433,7 @@ void ExecGraphBuilder::finalize(const GraphInstatiateSettings &settings) {
             if (subgraph.second.currCmdList) {
                 if (subgraphsWithPostJoinCommands.count(subgraph.first)) {
                     auto *event = this->createTrailingEvent();
-                    CmdListSignalEventParameters signalEventParameters = {
-                        .relaxedOrderingDispatch = false,
-                    };
-                    subgraph.second.currCmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
+                    subgraph.second.currCmdList->appendSignalEvent(event->toHandle(), false);
                 }
                 subgraph.second.currCmdList->close();
             }
