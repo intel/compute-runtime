@@ -1177,12 +1177,12 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
 
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::pipeControlReason) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }

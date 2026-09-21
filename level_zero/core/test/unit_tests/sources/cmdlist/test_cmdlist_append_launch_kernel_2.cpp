@@ -449,12 +449,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
 
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::kernelName) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -465,12 +465,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -481,12 +481,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -536,12 +536,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendEventRe
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -552,12 +552,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendEventRe
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -613,12 +613,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendSignalE
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -629,12 +629,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendSignalE
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -695,12 +695,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -711,12 +711,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -756,12 +756,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -772,12 +772,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -818,12 +818,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -834,12 +834,12 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }

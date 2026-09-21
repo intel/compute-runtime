@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/software_tags.h"
 
@@ -39,10 +40,15 @@ class SWTagsManager {
     template <typename GfxFamily>
     static size_t estimateSpaceForSWTags();
 
-    static const unsigned int maxTagCount = 200;
-    static const unsigned int maxTagHeapSize = 16384;
-    unsigned int getCurrentHeapOffset() { return currentHeapOffset; }
-    unsigned int incrementAndGetCurrentCallCount() { return ++currentCallCount; }
+    static const uint32_t maxTagCount = 1024;
+    static const uint32_t maxTagHeapSize = 512 * MemoryConstants::kiloByte;
+
+    static_assert(maxTagHeapSize >= maxTagCount * sizeof(SWTags::CallNameBeginTag) + sizeof(SWTags::SWTagHeapInfo),
+                  "SWTag heap too small for maxTagCount tags");
+    static_assert(maxTagHeapSize / sizeof(uint32_t) <= (1u << 20), "SWTag heap exceeds SWTAG_OFFSET addressable range");
+
+    uint32_t getCurrentHeapOffset() { return currentHeapOffset; }
+    uint32_t incrementAndGetCurrentCallCount() { return ++currentCallCount; }
 
   protected:
     void allocateBXMLHeap(Device &device);
@@ -51,9 +57,9 @@ class SWTagsManager {
     MemoryManager *memoryManager{};
     GraphicsAllocation *tagHeap = nullptr;
     GraphicsAllocation *bxmlHeap = nullptr;
-    unsigned int currentHeapOffset = 0;
-    unsigned int currentTagCount = 0;
-    unsigned int currentCallCount = 0;
+    uint32_t currentHeapOffset = 0;
+    uint32_t currentTagCount = 0;
+    uint32_t currentCallCount = 0;
     bool initialized = false;
 };
 
@@ -87,7 +93,7 @@ template <typename GfxFamily, typename Tag, typename... Params>
 void SWTagsManager::insertTag(LinearStream &cmdStream, Device &device, Params... params) {
     using MI_NOOP = typename GfxFamily::MI_NOOP;
 
-    unsigned int tagSize = sizeof(Tag);
+    uint32_t tagSize = sizeof(Tag);
 
     if (currentTagCount >= maxTagCount || getCurrentHeapOffset() + tagSize > maxTagHeapSize) {
         return;
@@ -104,6 +110,7 @@ void SWTagsManager::insertTag(LinearStream &cmdStream, Device &device, Params...
 
     MI_NOOP offset = GfxFamily::cmdInitNoop;
     offset.setIdentificationNumber(tag.getOffsetNoopID(currentHeapOffset));
+    offset.setIdentificationNumberRegisterWriteEnable(true);
     currentHeapOffset += tagSize;
 
     MI_NOOP *pNoop = cmdStream.getSpaceForCmd<MI_NOOP>();

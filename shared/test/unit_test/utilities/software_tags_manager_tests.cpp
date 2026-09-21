@@ -99,6 +99,20 @@ TEST_F(SoftwareTagsManagerTests, whenSWTagsManagerIsInitializedThenHeapAllocatio
     memoryMgr->unlockResource(tagHeap);
 }
 
+TEST_F(SoftwareTagsManagerTests, whenIncrementAndGetCurrentCallCountIsCalledThenMonotonicallyIncreasingIdsAreReturned) {
+    auto first = tagsManager->incrementAndGetCurrentCallCount();
+    auto second = tagsManager->incrementAndGetCurrentCallCount();
+
+    EXPECT_EQ(first + 1, second);
+}
+
+TEST_F(SoftwareTagsManagerTests, whenBXMLIsGeneratedThenSWTagHeaderMagicNumberFieldMatchesSpecification) {
+    SWTagBXML bxml;
+
+    EXPECT_NE(std::string::npos, bxml.str.find("<BitField Name=\"MagicNumber\" HighBit=\"31\" LowBit=\"31\" Format=\"OpCode\">"));
+    EXPECT_NE(std::string::npos, bxml.str.find("<ValidValue Value=\"1h\" IsDefault=\"true\" Name=\"SWTAG_MAGIC_NUMBER\" />"));
+}
+
 HWTEST_F(SoftwareTagsManagerTests, whenHeapsAddressesAreInsertedThenCmdStreamHasCorrectContents) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -140,7 +154,7 @@ HWTEST_F(SoftwareTagsManagerTests, whenTestTagIsInsertedThenItIsSuccessful) {
     uint32_t firstTagOffset = sizeof(SWTagHeapInfo); // SWTagHeapInfo is always on offset 0, first tag is inserted immediately after.
 
     EXPECT_EQ(BaseTag::getOffsetNoopID(firstTagOffset), offsetNoop->getIdentificationNumber());
-    EXPECT_EQ(false, offsetNoop->getIdentificationNumberRegisterWriteEnable());
+    EXPECT_EQ(true, offsetNoop->getIdentificationNumberRegisterWriteEnable());
 
     auto memoryMgr = pDevice->getMemoryManager();
     auto tagHeap = tagsManager->getSWTagHeapAllocation();
@@ -218,6 +232,8 @@ struct SoftwareTagsParametrizedTests : public ::testing::TestWithParam<SWTags::O
         tagMap.emplace(OpCode::kernelName, std::make_unique<KernelNameTag>("", 0u));
         tagMap.emplace(OpCode::pipeControlReason, std::make_unique<PipeControlReasonTag>("", 0u));
         tagMap.emplace(OpCode::arbitraryString, std::make_unique<ArbitraryStringTag>(""));
+        tagMap.emplace(OpCode::callNameBegin, std::make_unique<CallNameBeginTag>("", 0u));
+        tagMap.emplace(OpCode::callNameEnd, std::make_unique<CallNameEndTag>("", 0u));
     }
 
     std::map<OpCode, std::unique_ptr<BaseTag>> tagMap;
@@ -229,7 +245,9 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         OpCode::kernelName,
         OpCode::pipeControlReason,
-        OpCode::arbitraryString));
+        OpCode::arbitraryString,
+        OpCode::callNameBegin,
+        OpCode::callNameEnd));
 
 TEST_P(SoftwareTagsParametrizedTests, whenGetOpCodeIsCalledThenCorrectValueIsReturned) {
     auto opcode = GetParam();
