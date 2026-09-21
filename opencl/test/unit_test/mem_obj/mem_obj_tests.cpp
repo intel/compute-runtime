@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 
 #include "gtest/gtest.h"
 
@@ -637,4 +638,25 @@ TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapAreCreatedThenAllAllocationAreDe
     ASSERT_NE(mapAllocation0, mapAllocation1);
 
     memObj.reset(nullptr);
+}
+
+TEST(MemObj, givenMultiGraphicsAllocationWithEmptySlotsWhenMemObjIsDestroyedThenMapAllocationIsFreedExactlyOnce) {
+    UltClDeviceFactory deviceFactory{3, 0};
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[2]};
+    MockContext context(ClDeviceVector(devices, 2));
+    auto memoryManager = static_cast<MockMemoryManager *>(context.getMemoryManager());
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice());
+
+    MultiGraphicsAllocation multiGraphicsAllocation(2);
+    multiGraphicsAllocation.addAllocation(new MockGraphicsAllocation(0u, nullptr, 1));
+    multiGraphicsAllocation.addAllocation(new MockGraphicsAllocation(2u, nullptr, 1));
+
+    auto initialFreeCount = memoryManager->freeGraphicsMemoryCalled.load();
+    {
+        MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
+                      1, nullptr, nullptr, std::move(multiGraphicsAllocation), true, false, false);
+        memObj.setMapAllocation(new MockGraphicsAllocation(0u, nullptr, 1));
+    }
+
+    EXPECT_EQ(3u, memoryManager->freeGraphicsMemoryCalled.load() - initialFreeCount);
 }

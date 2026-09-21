@@ -79,9 +79,10 @@ MemObj::~MemObj() {
             peekSharingHandler()->releaseReusedGraphicsAllocation();
         }
 
-        needWait |= multiGraphicsAllocation.getGraphicsAllocations().size() > 1u;
-        for (auto graphicsAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
-            auto rootDeviceIndex = graphicsAllocation ? graphicsAllocation->getRootDeviceIndex() : 0;
+        const auto &graphicsAllocations = multiGraphicsAllocation.getGraphicsAllocations();
+        needWait |= graphicsAllocations.size() > 1u;
+        for (auto rootDeviceIndex = 0u; rootDeviceIndex < graphicsAllocations.size(); ++rootDeviceIndex) {
+            auto graphicsAllocation = graphicsAllocations[rootDeviceIndex];
 
             bool doAsyncDestructions = debugManager.flags.EnableAsyncDestroyAllocations.get() && !this->memoryProperties.flags.useHostPtr;
             if (graphicsAllocation && !associatedMemObject && !isHostPtrSVM && graphicsAllocation->peekReuseCount() == 0) {
@@ -93,7 +94,6 @@ MemObj::~MemObj() {
                     memoryManager->waitForEnginesCompletion(*graphicsAllocation);
                 }
                 destroyGraphicsAllocation(graphicsAllocation, doAsyncDestructions);
-                graphicsAllocation = nullptr;
             }
             if (!associatedMemObject) {
                 releaseMapAllocation(rootDeviceIndex, doAsyncDestructions);
