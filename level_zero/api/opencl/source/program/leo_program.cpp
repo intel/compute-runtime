@@ -653,7 +653,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
     const void *pSrc = nullptr;
     size_t srcSize = GetInfo::invalidSourceSize;
     size_t retSize = 0;
-    uint64_t globalVariablesSize = 0;
+    size_t globalVariablesSize = 0;
 
     auto deviceHandle = NEO::LEO::ConvertTo::zeDeviceHandle(device);
     const auto rootDeviceIndex = deviceHandle ? L0::Device::fromHandle(deviceHandle)->getNEODevice()->getRootDeviceIndex() : this->context->getDefaultRootDeviceIndex();
@@ -702,7 +702,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
                 globalVariablesSize += moduleImp->getTranslationUnit()->programInfo.globalVariables.size + moduleImp->getTranslationUnit()->programInfo.globalVariables.zeroInitSize;
             }
         }
-        srcSize = sizeof(globalVariablesSize);
+        srcSize = retSize = sizeof(globalVariablesSize);
         pSrc = &globalVariablesSize;
         break;
     }

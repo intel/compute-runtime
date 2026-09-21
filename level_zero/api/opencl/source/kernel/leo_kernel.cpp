@@ -186,6 +186,8 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device,
 
     size_t requiredWorkgroupSize[3] = {kernelProperties.requiredGroupSizeX, kernelProperties.requiredGroupSizeY, kernelProperties.requiredGroupSizeZ};
     size_t requiredSubgroupSize = kernelProperties.requiredSubgroupSize;
+    size_t maxNumSubGroups = kernelProperties.maxNumSubgroups;
+    size_t compileNumSubGroups = kernelProperties.requiredNumSubGroups;
     std::array<size_t, 3> localSizeForSubGroupCount = {0u, 0u, 0u};
     switch (paramName) {
     case CL_KERNEL_WORK_GROUP_SIZE:
@@ -224,13 +226,13 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device,
         break;
 
     case CL_KERNEL_MAX_NUM_SUB_GROUPS:
-        srcSize = sizeof(kernelProperties.maxNumSubgroups);
-        pSrc = &kernelProperties.maxNumSubgroups;
+        srcSize = sizeof(maxNumSubGroups);
+        pSrc = &maxNumSubGroups;
         break;
 
     case CL_KERNEL_COMPILE_NUM_SUB_GROUPS:
-        srcSize = sizeof(kernelProperties.requiredNumSubGroups);
-        pSrc = &kernelProperties.requiredNumSubGroups;
+        srcSize = sizeof(compileNumSubGroups);
+        pSrc = &compileNumSubGroups;
         break;
 
     case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL:
