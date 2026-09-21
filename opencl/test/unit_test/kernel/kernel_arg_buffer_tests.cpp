@@ -333,3 +333,147 @@ TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryAndKernelIsAlreadySetToUseS
 
     EXPECT_TRUE(pKernel->isAnyKernelArgumentUsingSystemMemory());
 }
+
+TEST_F(KernelArgBufferTest, GivenSetArgumentWhenUnsetArgIsCalledThenStoredValueIsDiscardedAndTypeIsPreserved) {
+    auto buffer = std::make_unique<MockBuffer>();
+    cl_mem val = buffer.get();
+
+    EXPECT_EQ(CL_SUCCESS, this->pKernel->setArg(0, sizeof(cl_mem), &val));
+    EXPECT_TRUE(this->pKernel->getKernelArgInfo(0).isPatched);
+    EXPECT_NE(0u, this->pKernel->getKernelArgInfo(0).size);
+    EXPECT_NE(nullptr, this->pKernel->getKernelArgInfo(0).object);
+
+    this->pKernel->unsetArg(0);
+
+    EXPECT_FALSE(this->pKernel->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(0u, this->pKernel->getKernelArgInfo(0).size);
+    EXPECT_EQ(nullptr, this->pKernel->getKernelArgInfo(0).object);
+    EXPECT_EQ(nullptr, this->pKernel->getKernelArgInfo(0).value);
+    EXPECT_EQ(0u, this->pKernel->getKernelArgInfo(0).allocId);
+    EXPECT_FALSE(this->pKernel->getKernelArgInfo(0).isSetToNullptr);
+    EXPECT_EQ(Kernel::BUFFER_OBJ, this->pKernel->getKernelArgInfo(0).type);
+}
+
+struct MultiDeviceKernelArgSparseBufferTest : MultiDeviceKernelArgBufferTest {
+    void SetUp() override {
+        MultiDeviceKernelArgBufferTest::SetUp();
+        for (auto &kernelInfo : pKernelInfosStorage) {
+            kernelInfo->kernelDescriptor.kernelAttributes.numArgsToPatch = 1;
+        }
+        rootDeviceIndexWithAllocation = pContext->getRootDeviceIndices()[0];
+        rootDeviceIndexWithoutAllocation = pContext->getRootDeviceIndices()[1];
+
+        MultiGraphicsAllocation multiGraphicsAllocation(pContext->getMaxRootDeviceIndex());
+        multiGraphicsAllocation.addAllocation(new MockGraphicsAllocation(rootDeviceIndexWithAllocation, nullptr, MemoryConstants::pageSize));
+        pSparseBuffer = std::unique_ptr<Buffer>(Buffer::createSharedBuffer(pContext.get(), 0, nullptr, std::move(multiGraphicsAllocation)));
+        EXPECT_NE(nullptr, pSparseBuffer);
+    }
+
+    uint32_t rootDeviceIndexWithAllocation = 0u;
+    uint32_t rootDeviceIndexWithoutAllocation = 0u;
+    std::unique_ptr<Buffer> pSparseBuffer;
+};
+
+TEST_F(MultiDeviceKernelArgSparseBufferTest, GivenBufferWithoutAllocationForRootDeviceWhenSettingKernelArgThenOnlyKernelsThatCanBeProgrammedArePatched) {
+    int32_t retVal = CL_INVALID_VALUE;
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_mem val = pSparseBuffer.get();
+    retVal = pMultiDeviceKernel->setArg(0, sizeof(cl_mem), &val);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pMultiDeviceKernel->getKernel(rootDeviceIndexWithAllocation)->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(1u, static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndexWithAllocation))->getPatchedArgumentsNum());
+    EXPECT_FALSE(pMultiDeviceKernel->getKernel(rootDeviceIndexWithoutAllocation)->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(0u, static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndexWithoutAllocation))->getPatchedArgumentsNum());
+
+    EXPECT_EQ(1u, kernelInfos[rootDeviceIndexWithoutAllocation]->kernelDescriptor.kernelAttributes.numArgsToPatch);
+}
+
+TEST_F(MultiDeviceKernelArgSparseBufferTest, GivenPreviouslySetArgWhenSettingBufferWithoutAllocationForRootDeviceThenPreviousValueIsDiscarded) {
+    int32_t retVal = CL_INVALID_VALUE;
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_mem sparseBuffer = pSparseBuffer.get();
+    retVal = pMultiDeviceKernel->setArg(0, sizeof(cl_mem), &sparseBuffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &argInfo = pMultiDeviceKernel->getKernel(rootDeviceIndexWithoutAllocation)->getKernelArgInfo(0);
+    EXPECT_FALSE(argInfo.isPatched);
+    EXPECT_EQ(0u, argInfo.size);
+    EXPECT_EQ(nullptr, argInfo.object);
+}
+
+TEST_F(MultiDeviceKernelArgSparseBufferTest, GivenKernelWithUnpatchedArgWhenCloningThenCloneIsAlsoUnpatchedForThatRootDevice) {
+    int32_t retVal = CL_INVALID_VALUE;
+    auto pSourceMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    auto pClonedMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_mem sparseBuffer = pSparseBuffer.get();
+    EXPECT_EQ(CL_SUCCESS, pSourceMultiDeviceKernel->setArg(0, sizeof(cl_mem), &sparseBuffer));
+
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pClonedMultiDeviceKernel->getKernel(rootDeviceIndexWithAllocation)->getKernelArgInfo(0).isPatched);
+    EXPECT_FALSE(pClonedMultiDeviceKernel->getKernel(rootDeviceIndexWithoutAllocation)->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(nullptr, pClonedMultiDeviceKernel->getKernel(rootDeviceIndexWithoutAllocation)->getKernelArgInfo(0).object);
+}
+
+TEST_F(MultiDeviceKernelArgBufferTest, GivenNullArgValueWhenSettingBufferArgThenSuccessIsReturned) {
+    int32_t retVal = CL_INVALID_VALUE;
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pMultiDeviceKernel->setArg(0, sizeof(cl_mem), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(MultiDeviceKernelArgBufferTest, GivenInvalidBufferWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
+    int32_t retVal = CL_INVALID_VALUE;
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto notAMemObj = std::make_unique<char[]>(sizeof(Buffer));
+    auto val = reinterpret_cast<cl_mem>(notAMemObj.get());
+
+    retVal = pMultiDeviceKernel->setArg(0, sizeof(cl_mem), &val);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+}
+
+TEST_F(MultiDeviceKernelArgBufferTest, GivenOutOfRangeArgIndexWhenSettingBufferArgThenInvalidArgIndexIsReturned) {
+    int32_t retVal = CL_INVALID_VALUE;
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_mem val = pBuffer.get();
+    const auto outOfRangeArgIndex = static_cast<uint32_t>(pMultiDeviceKernel->getKernelArguments().size());
+
+    retVal = pMultiDeviceKernel->setArg(outOfRangeArgIndex, sizeof(cl_mem), &val);
+    EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
+}
+
+struct MultiDeviceKernelArgPipeTest : MultiDeviceKernelArgBufferTest {
+    void SetUp() override {
+        MultiDeviceKernelArgBufferTest::SetUp();
+        for (auto i = 0u; i < 2; i++) {
+            pKernelInfosStorage[i]->argAsPtr(0).accessedUsingStatelessAddressingMode = true;
+            pKernelInfosStorage[i]->kernelDescriptor.payloadMappings.explicitArgs[0].getTraits().typeQualifiers.pipeQual = true;
+        }
+    }
+};
+
+TEST_F(MultiDeviceKernelArgPipeTest, GivenPipeArgWithNonMemObjectValueWhenSettingKernelArgThenInvalidMemObjectIsReturnedWithoutDereferencingIt) {
+    int32_t retVal = CL_INVALID_VALUE;
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(Kernel::PIPE_OBJ, pMultiDeviceKernel->getKernelArguments()[0].type);
+
+    auto val = reinterpret_cast<cl_mem>(0xBADF00D);
+    retVal = pMultiDeviceKernel->setArg(0, sizeof(cl_mem), &val);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+}

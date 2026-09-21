@@ -1859,14 +1859,26 @@ void Kernel::setKernelArgHandler(uint32_t argIndex, KernelArgHandler handler) {
 }
 
 void Kernel::unsetArg(uint32_t argIndex) {
-    if (kernelArguments[argIndex].isPatched) {
+    auto &kernelArgInfo = kernelArguments[argIndex];
+
+    if (kernelArgInfo.isPatched) {
         patchedArgumentsNum--;
-        kernelArguments[argIndex].isPatched = false;
-        if (kernelArguments[argIndex].isStatelessUncacheable) {
-            statelessUncacheableArgsCount--;
-            kernelArguments[argIndex].isStatelessUncacheable = false;
-        }
+        kernelArgInfo.isPatched = false;
     }
+    if (kernelArgInfo.isStatelessUncacheable) {
+        statelessUncacheableArgsCount--;
+        kernelArgInfo.isStatelessUncacheable = false;
+    }
+    if (kernelArgInfo.isImageFromBuffer) {
+        imageFromBufferArgsCount--;
+        kernelArgInfo.isImageFromBuffer = false;
+    }
+
+    auto argType = kernelArgInfo.type;
+    storeKernelArg(argIndex, argType, nullptr, nullptr, 0);
+    kernelArgInfo.allocId = 0;
+    kernelArgInfo.allocIdMemoryManagerCounter = 0;
+    kernelArgInfo.isSetToNullptr = false;
 }
 
 bool Kernel::hasPrintfOutput() const {

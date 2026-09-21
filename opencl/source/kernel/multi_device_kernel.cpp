@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 
+#include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/program/program.h"
 
 namespace NEO {
@@ -52,7 +53,40 @@ bool MultiDeviceKernel::getHasIndirectAccess() const { return defaultKernel->get
 
 cl_int MultiDeviceKernel::checkCorrectImageAccessQualifier(cl_uint argIndex, size_t argSize, const void *argValue) const { return getResultFromEachKernel(&Kernel::checkCorrectImageAccessQualifier, argIndex, argSize, argValue); }
 void MultiDeviceKernel::unsetArg(uint32_t argIndex) { callOnEachKernel(&Kernel::unsetArg, argIndex); }
-cl_int MultiDeviceKernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) { return getResultFromEachKernel(&Kernel::setArgument, argIndex, argSize, argVal); }
+MemObj *MultiDeviceKernel::getMemObjArg(uint32_t argIndex, size_t argSize, const void *argVal) const {
+    if (argVal == nullptr || argSize != sizeof(cl_mem)) {
+        return nullptr;
+    }
+    const auto &kernelArguments = defaultKernel->getKernelArguments();
+    if (argIndex >= kernelArguments.size()) {
+        return nullptr;
+    }
+    const auto argType = kernelArguments[argIndex].type;
+    if (argType != Kernel::BUFFER_OBJ && argType != Kernel::IMAGE_OBJ) {
+        return nullptr;
+    }
+    return castToObject<MemObj>(*static_cast<const cl_mem *>(argVal));
+}
+
+cl_int MultiDeviceKernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
+    auto pMemObj = getMemObjArg(argIndex, argSize, argVal);
+
+    cl_int retVal = CL_INVALID_VALUE;
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernels.size(); rootDeviceIndex++) {
+        auto pKernel = getKernel(rootDeviceIndex);
+        if (pKernel) {
+            if (pMemObj && !pMemObj->getMultiGraphicsAllocation().getGraphicsAllocation(rootDeviceIndex)) {
+                pKernel->unsetArg(argIndex);
+                continue;
+            }
+            retVal = pKernel->setArgument(argIndex, argSize, argVal);
+            if (CL_SUCCESS != retVal) {
+                break;
+            }
+        }
+    }
+    return retVal;
+}
 void MultiDeviceKernel::setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue) { callOnEachKernel(&Kernel::setUnifiedMemoryProperty, infoType, infoValue); }
 void MultiDeviceKernel::clearSvmKernelExecInfo() { callOnEachKernel(&Kernel::clearSvmKernelExecInfo); }
 void MultiDeviceKernel::clearUnifiedMemoryExecInfo() { callOnEachKernel(&Kernel::clearUnifiedMemoryExecInfo); }
@@ -83,6 +117,7 @@ cl_int MultiDeviceKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiG
         auto pKernel = getKernel(rootDeviceIndex);
         if (pKernel) {
             if (svmAllocs && !svmAllocs->getGraphicsAllocation(rootDeviceIndex)) {
+                pKernel->unsetArg(argIndex);
                 continue;
             }
             auto svmAlloc = svmAllocs ? svmAllocs->getGraphicsAllocation(rootDeviceIndex) : nullptr;
