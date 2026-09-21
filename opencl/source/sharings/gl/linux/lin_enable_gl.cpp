@@ -56,8 +56,15 @@ bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
     }
 
     if (contextData->glHGLRCHandle) {
-        context.registerSharing(new GLSharingFunctionsLinux(contextData->glHDCType, contextData->glHGLRCHandle,
-                                                            nullptr, contextData->glHDCHandle));
+        GLSharingFunctionsLinux *sharing_fn = new GLSharingFunctionsLinux(contextData->glHDCType,
+                                                                          contextData->glHGLRCHandle,
+                                                                          nullptr, contextData->glHDCHandle);
+        if (!sharing_fn->isOpenGlSharingSupported()) {
+            delete sharing_fn;
+            errcodeRet = CL_INVALID_PROPERTY;
+            return false;
+        }
+        context.registerSharing(sharing_fn);
     }
 
     contextData.reset(nullptr);
