@@ -686,10 +686,14 @@ struct Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> {
     } apiArgs;
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
-        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage),
-                                                                                                 pNext(apiArgs.pNext) {}
-
-        const void *pNext;
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
+        ~IndirectArgs();
+        void *clonedPNext = nullptr;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -1012,10 +1016,14 @@ struct Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> {
     } apiArgs;
 
     struct IndirectArgs : EmptyIndirectArgs {
-        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : EmptyIndirectArgs(apiArgs, externalStorage),
-                                                                                                 pNext(apiArgs.pNext) {}
-
-        const void *pNext;
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : EmptyIndirectArgs(std::move(static_cast<EmptyIndirectArgs &>(other))),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
+        ~IndirectArgs();
+        void *clonedPNext = nullptr;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -1311,11 +1319,16 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              groupCounts(other.groupCounts),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)),
+              capturedKernel(std::move(other.capturedKernel)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
         ze_group_count_t groupCounts;
-        void *pNext;
+        void *clonedPNext = nullptr;
         std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
@@ -1343,10 +1356,15 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)),
+              argumentsId(other.argumentsId),
+              capturedKernel(std::move(other.capturedKernel)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
-        void *pNext;
+        void *clonedPNext = nullptr;
         ClosureExternalStorage::KernelArgumentsId argumentsId = ClosureExternalStorage::invalidKernelArgumentsId;
         std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
@@ -1468,10 +1486,13 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopyWithParameters> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
-        void *pNext;
+        void *clonedPNext = nullptr;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -1498,12 +1519,16 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              pattern(std::move(other.pattern)),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
 
         StackVec<uint8_t, 16> pattern;
-        void *pNext;
+        void *clonedPNext = nullptr;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}

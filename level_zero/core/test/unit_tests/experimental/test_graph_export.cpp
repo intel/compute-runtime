@@ -1183,7 +1183,7 @@ TEST(GraphDumpHelperTest, GivenGroupSizeWhenFormatGroupSizeIsCalledThenReturnsFo
 
 TEST(GraphDumpHelperTest, GivenNullptrWhenAddLaunchKernelExtensionParametersIsCalledThenParamsContainNullptr) {
     std::vector<std::pair<std::string, std::string>> params;
-    GraphDumpHelper::addLaunchKernelExtensionParameters(params, nullptr);
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, nullptr, nullptr);
 
     EXPECT_EQ(params.size(), 1U);
     EXPECT_EQ(params[0].first, "pNext");
@@ -1195,7 +1195,7 @@ TEST(GraphDumpHelperTest, GivenLaunchKernelExtensionWhenAddLaunchKernelExtension
         ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC, nullptr, static_cast<ze_bool_t>(true)};
 
     std::vector<std::pair<std::string, std::string>> params;
-    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &cooperativeDesc);
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &cooperativeDesc, &cooperativeDesc);
 
     EXPECT_EQ(params.size(), 3U);
     EXPECT_EQ(params[0].first, "pNext");
@@ -1210,7 +1210,45 @@ TEST(GraphDumpHelperTest, GivenUnknownLaunchKernelExtensionWhenAddLaunchKernelEx
     ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32, nullptr};
 
     std::vector<std::pair<std::string, std::string>> params;
-    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &unknownDesc);
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &unknownDesc, &unknownDesc);
+
+    EXPECT_EQ(params.size(), 2U);
+    EXPECT_EQ(params[0].first, "pNext");
+    EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&unknownDesc));
+    EXPECT_EQ(params[1].first, "extension.stype");
+    EXPECT_EQ(params[1].second, std::to_string(static_cast<uint32_t>(unknownDesc.stype)) + " (not recognized)");
+}
+
+TEST(GraphDumpHelperTest, GivenNullptrWhenAddEventExtensionParametersIsCalledThenParamsContainNullptr) {
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addEventExtensionParameters(params, nullptr, nullptr);
+
+    EXPECT_EQ(params.size(), 1U);
+    EXPECT_EQ(params[0].first, "pNext");
+    EXPECT_EQ(params[0].second, "nullptr");
+}
+
+TEST(GraphDumpHelperTest, GivenEventFlagsExtensionWhenAddEventExtensionParametersIsCalledThenParamsAreFilledProperly) {
+    ze_event_flags_exp_desc_t eventFlagsDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addEventExtensionParameters(params, &eventFlagsDesc, &eventFlagsDesc);
+
+    EXPECT_EQ(params.size(), 3U);
+    EXPECT_EQ(params[0].first, "pNext");
+    EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&eventFlagsDesc));
+    EXPECT_EQ(params[1].first, "eventFlagsExp.stype");
+    EXPECT_EQ(params[1].second, std::to_string(static_cast<uint32_t>(eventFlagsDesc.stype)));
+    EXPECT_EQ(params[2].first, "eventFlagsExp.flags");
+    EXPECT_EQ(params[2].second, std::to_string(static_cast<uint32_t>(ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL)));
+}
+
+TEST(GraphDumpHelperTest, GivenUnknownEventExtensionWhenAddEventExtensionParametersIsCalledThenParamsAreFilledProperly) {
+    ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32, nullptr};
+
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addEventExtensionParameters(params, &unknownDesc, &unknownDesc);
 
     EXPECT_EQ(params.size(), 2U);
     EXPECT_EQ(params[0].first, "pNext");
@@ -1668,13 +1706,13 @@ TEST_F(ExtractParametersTest, GivenNoOptionalRegionParametersWhenExtractParamete
     EXPECT_FALSE(hasParam(params, "pDstRegion"));
 }
 
-TEST_F(ExtractParametersTest, GivenNoOptionalOffsetsParameterWhenExtractParametersIsCalledThenNoOffsetsEntryIsPresent) {
+TEST_F(ExtractParametersTest, GivenNoOptionalOffsetsParameterWhenExtractParametersIsCalledThenOffsetsEntryIsPresentAsNullptr) {
     Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>::ApiArgs args{};
     Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps> closure(args, storage);
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendQueryKernelTimestamps>(closure, storage);
 
     EXPECT_TRUE(hasParam(params, "hCommandList"));
-    EXPECT_FALSE(hasParam(params, "pOffsets"));
+    EXPECT_EQ(getParamValue(params, "pOffsets"), "nullptr");
 }
 
 TEST_F(ExtractParametersTest, GivenLaunchKernelWithParametersWhenNoExtensionsProvidedThenReportsNullptr) {
@@ -1706,7 +1744,7 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithParametersWhenCooperativeExte
     Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> closure(args, storage);
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(closure, storage);
 
-    const auto expectedPointer = GraphDumpHelper::formatPointer(closure.indirectArgs.pNext);
+    const auto expectedPointer = GraphDumpHelper::formatPointer(&cooperativeDesc);
     const auto expectedStype = std::to_string(static_cast<uint32_t>(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC));
 
     EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
@@ -1759,7 +1797,7 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithArgumentsWhenCooperativeExten
     Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> closure(args, storage);
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(closure, storage);
 
-    const auto expectedPointer = GraphDumpHelper::formatPointer(closure.indirectArgs.pNext);
+    const auto expectedPointer = GraphDumpHelper::formatPointer(&cooperativeDesc);
     const auto expectedStype = std::to_string(static_cast<uint32_t>(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC));
     EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
     EXPECT_EQ(getParamValue(params, "cooperative.stype"), expectedStype);
@@ -1783,6 +1821,45 @@ TEST_F(ExtractParametersTest, GivenMemoryFillWithParametersWhenNoExtensionsProvi
     args.hSignalEvent = dummyEvents[0];
 
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(args);
+}
+
+TEST_F(ExtractParametersTest, GivenSignalEventWithParametersWhenEventFlagsExtensionProvidedThenExtractsFlagsDetails) {
+    ze_event_flags_exp_desc_t eventFlagsDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+
+    Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters>::ApiArgs args{nullptr};
+    args.hEvent = dummyEvents[0];
+    args.pNext = &eventFlagsDesc;
+
+    Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendSignalEventWithParameters>(closure, storage);
+
+    const auto expectedPointer = GraphDumpHelper::formatPointer(closure.apiArgs.pNext);
+    const auto expectedStype = std::to_string(static_cast<uint32_t>(ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC));
+
+    EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
+    EXPECT_EQ(getParamValue(params, "eventFlagsExp.stype"), expectedStype);
+    EXPECT_EQ(getParamValue(params, "eventFlagsExp.flags"), std::to_string(static_cast<uint32_t>(ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL)));
+}
+
+TEST_F(ExtractParametersTest, GivenWaitEventsWithParametersWhenEventFlagsExtensionProvidedThenExtractsFlagsDetails) {
+    ze_event_flags_exp_desc_t eventFlagsDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+
+    Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>::ApiArgs args{nullptr};
+    args.numEvents = 1;
+    args.phEvents = dummyEvents;
+    args.pNext = &eventFlagsDesc;
+
+    Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(closure, storage);
+
+    const auto expectedPointer = GraphDumpHelper::formatPointer(closure.apiArgs.pNext);
+    const auto expectedStype = std::to_string(static_cast<uint32_t>(ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC));
+
+    EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
+    EXPECT_EQ(getParamValue(params, "eventFlagsExp.stype"), expectedStype);
+    EXPECT_EQ(getParamValue(params, "eventFlagsExp.flags"), std::to_string(static_cast<uint32_t>(ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL)));
 }
 
 class ExtractKernelParametersTestFixture : public ModuleImmutableDataFixture, public ExtractParametersTestFixture {

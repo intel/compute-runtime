@@ -35,6 +35,16 @@ typedef void(ZE_CALLBACK *zex_mem_graph_free_callback_fn_t)(void *pUserData);
 
 namespace L0 {
 
+enum class GraphExportStyle : std::uint8_t {
+    detailed,
+    simple
+};
+
+enum class GraphExportEventNodes : std::uint8_t {
+    hideInternal, // event operations used only for tracking dependencies between graph nodes are not dumped
+    show          // all captured event operations are dumped as graph nodes
+};
+
 inline std::atomic<bool> processUsesGraphs{false};
 inline void enabledGraphs() {
     bool graphsEnabled = false;
@@ -187,7 +197,7 @@ struct RecordedApiCommands {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }
         auto capturedArgs = ApiArgsT{apiArgs...};
-        commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
+        commands.emplace_back(Closure<api>{capturedArgs, externalStorage});
         if (externalStorage.lastResult != ZE_RESULT_SUCCESS) {
             Closure<CaptureApi::NoopedCommandListFailedFunction>::ApiArgs noopedArgs{capturedArgs.hCommandList, CaptureApiStrings::names[static_cast<size_t>(api)]};
             *commands.rbegin() = CapturedCommand{Closure<CaptureApi::NoopedCommandListFailedFunction>(noopedArgs, externalStorage)};
@@ -419,6 +429,10 @@ struct Graph : _ze_graph_handle_t {
     L0::CommandList *getPrimaryCaptureSource() const {
         return primaryCaptureSrc;
     }
+
+    static ze_result_t obtainGraphDumpSettings(const ze_base_desc_t *desc,
+                                               GraphExportStyle &exportStyle,
+                                               GraphExportEventNodes &exportEventNodes);
 
   protected:
     template <typename GraphT>

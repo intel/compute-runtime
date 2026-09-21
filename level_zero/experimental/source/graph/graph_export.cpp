@@ -15,6 +15,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/ze_api.h"
 
@@ -652,10 +653,10 @@ void addKernelInformation(std::vector<std::pair<std::string, std::string>> &para
     }
 }
 
-void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext) {
+void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext, const void *clonedPNext) {
     params.emplace_back("pNext", formatPointer(pNext));
 
-    const auto *baseDesc = reinterpret_cast<const ze_base_desc_t *>(pNext);
+    const auto *baseDesc = static_cast<const ze_base_desc_t *>(clonedPNext);
     while (baseDesc != nullptr) {
         const auto stypeValue = std::to_string(static_cast<uint32_t>(baseDesc->stype));
 
@@ -667,18 +668,37 @@ void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::
             addLaunchKernelAdditionalExtensionParameters(params, baseDesc);
         }
 
-        baseDesc = reinterpret_cast<const ze_base_desc_t *>(baseDesc->pNext);
+        baseDesc = static_cast<const ze_base_desc_t *>(baseDesc->pNext);
     }
 }
 
-void addMemoryTransferExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext) {
+void addMemoryTransferExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext, const void *clonedPNext) {
     params.emplace_back("pNext", formatPointer(pNext));
 
-    const auto *baseDesc = reinterpret_cast<const ze_base_desc_t *>(pNext);
+    const auto *baseDesc = static_cast<const ze_base_desc_t *>(clonedPNext);
     while (baseDesc != nullptr) {
         addMemoryTransferAdditionalExtensionParameters(params, baseDesc);
 
-        baseDesc = reinterpret_cast<const ze_base_desc_t *>(baseDesc->pNext);
+        baseDesc = static_cast<const ze_base_desc_t *>(baseDesc->pNext);
+    }
+}
+
+void addEventExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext, const void *clonedPNext) {
+    params.emplace_back("pNext", formatPointer(pNext));
+    const auto *baseDesc = static_cast<const ze_base_desc_t *>(clonedPNext);
+
+    while (baseDesc != nullptr) {
+        const auto stypeValue = std::to_string(static_cast<uint32_t>(baseDesc->stype));
+
+        if (baseDesc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
+            const auto *eventFlagsDesc = reinterpret_cast<const ze_event_flags_exp_desc_t *>(baseDesc);
+            params.emplace_back("eventFlagsExp.stype", stypeValue);
+            params.emplace_back("eventFlagsExp.flags", std::to_string(eventFlagsDesc->flags));
+        } else {
+            params.emplace_back("extension.stype", stypeValue + " (not recognized)");
+        }
+
+        baseDesc = static_cast<const ze_base_desc_t *>(baseDesc->pNext);
     }
 }
 
@@ -748,9 +768,8 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> &closure, const ClosureExternalStorage &storage) {
 
     auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("pNext", formatPointer(closure.apiArgs.pNext));
+    addEventExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.clonedPNext);
     addCommonEventParameters(params, closure, storage);
-
     return params;
 }
 
@@ -909,7 +928,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
 
     auto params = createBaseParams(closure.apiArgs);
     params.emplace_back("hEvent", formatPointer(closure.apiArgs.hEvent));
-    params.emplace_back("pNext", formatPointer(closure.apiArgs.pNext));
+    addEventExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.clonedPNext);
     return params;
 }
 
@@ -929,10 +948,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
 
     auto params = createBaseParams(closure.apiArgs);
     params.emplace_back("dstptr", formatPointer(closure.apiArgs.dstptr));
-
-    if (closure.apiArgs.pOffsets != nullptr) {
-        params.emplace_back("pOffsets", formatPointer(closure.apiArgs.pOffsets));
-    }
+    params.emplace_back("pOffsets", formatPointer(closure.apiArgs.pOffsets));
 
     addCommonEventParameters(params, closure, storage);
 
@@ -971,7 +987,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     addKernelInformation(params, closure.apiArgs.kernelHandle);
     params.emplace_back("groupCounts", formatGroupCount(closure.indirectArgs.groupCounts));
 
-    addLaunchKernelExtensionParameters(params, closure.indirectArgs.pNext);
+    addLaunchKernelExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.clonedPNext);
 
     addCommonEventParameters(params, closure, storage);
 
@@ -985,14 +1001,9 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     addKernelInformation(params, closure.apiArgs.kernelHandle);
     params.emplace_back("groupCounts", formatGroupCount(closure.apiArgs.groupCounts));
     params.emplace_back("groupSizes", formatGroupSize(closure.apiArgs.groupSizes));
+    params.emplace_back("pArguments", formatPointer(static_cast<const void *>(closure.apiArgs.pArguments)));
 
-    if (closure.apiArgs.pArguments != nullptr) {
-        params.emplace_back("pArguments", formatPointer(static_cast<const void *>(closure.apiArgs.pArguments)));
-    } else {
-        params.emplace_back("pArguments", "nullptr");
-    }
-
-    addLaunchKernelExtensionParameters(params, closure.indirectArgs.pNext);
+    addLaunchKernelExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.clonedPNext);
 
     addCommonEventParameters(params, closure, storage);
 
@@ -1152,7 +1163,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     params.emplace_back("srcptr", formatPointer(closure.apiArgs.srcptr));
     params.emplace_back("size", std::to_string(closure.apiArgs.size));
 
-    addMemoryTransferExtensionParameters(params, closure.indirectArgs.pNext);
+    addMemoryTransferExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.clonedPNext);
 
     addCommonEventParameters(params, closure, storage);
 
@@ -1169,7 +1180,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     params.emplace_back("patternSize", std::to_string(closure.indirectArgs.pattern.size()));
     params.emplace_back("size", std::to_string(closure.apiArgs.size));
 
-    addMemoryTransferExtensionParameters(params, closure.indirectArgs.pNext);
+    addMemoryTransferExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.clonedPNext);
 
     addCommonEventParameters(params, closure, storage);
 
