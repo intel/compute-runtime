@@ -3522,23 +3522,23 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) {
     auto event = Event::fromHandle(hEvent);
 
     if (event->isCounterBased()) {
         CmdListWaitEventParameters waitEventsParameters = {
             .outWaitCmds = nullptr,
-            .relaxedOrderingAllowed = relaxedOrderingDispatch,
+            .relaxedOrderingAllowed = signalEventParameters.relaxedOrderingDispatch,
             .trackDependencies = true,
             .waitForImplicitInOrderDependency = true,
             .skipAddingWaitEventsToResidency = false,
             .dualStreamCopyOffloadOperation = false,
         };
-        return appendBarrier(hEvent, 0, nullptr, waitEventsParameters);
+        return appendBarrier(hEvent, 0, nullptr, waitEventsParameters, signalEventParameters);
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        handleInOrderImplicitDependencies(relaxedOrderingDispatch, false);
+        handleInOrderImplicitDependencies(signalEventParameters.relaxedOrderingDispatch, false);
     }
 
     event->resetPacketsUsedCount();
@@ -4176,7 +4176,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
             ret = addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventsParameters);
         }
         if (ret == ZE_RESULT_SUCCESS && hSignalEvent != nullptr) {
-            ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, false);
+            CmdListSignalEventParameters signalEventParameters = {
+                .relaxedOrderingDispatch = false,
+            };
+            ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, signalEventParameters);
         }
         return ret;
     }
@@ -4710,7 +4713,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent) {
+void CommandListCoreFamily<gfxCoreFamily>::setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent, bool apiRequiredExternalGraphEvent) {
     if (hSignalEvent) {
         auto event = Event::fromHandle(hSignalEvent);
         assignInOrderExecInfoToEvent(event);
@@ -4722,9 +4725,10 @@ void CommandListCoreFamily<gfxCoreFamily>::setupEventParamsForInOrderBarrierSkip
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                                CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters) {
     if (isInOrderExecutionEnabled() && isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
-        setupEventParamsForInOrderBarrierSkip(hSignalEvent);
+        setupEventParamsForInOrderBarrierSkip(hSignalEvent, false);
         return ZE_RESULT_SUCCESS;
     }
 

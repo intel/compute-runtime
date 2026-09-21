@@ -434,7 +434,8 @@ bool MutableCommandListFixtureInit::isAllocationInMutableResidency(MutableComman
 
 void MutableCommandListFixtureInit::mutableWaitEventsOnAppendBarrierCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
     L0::CmdListWaitEventParameters waitEventParams;
-    callbackData->result = this->mutableCommandList->appendBarrier(callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams;
+    callbackData->result = this->mutableCommandList->appendBarrier(callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams, signalEventParams);
     callbackData->outWaitCmds = waitEventParams.outWaitCmds;
     callbackData->skipAddingWaitEventsToResidency = waitEventParams.skipAddingWaitEventsToResidency;
 }

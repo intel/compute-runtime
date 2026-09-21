@@ -100,7 +100,8 @@ struct CommandListCoreFamily : public CommandList {
     ze_result_t close() override;
     ze_result_t appendEventReset(ze_event_handle_t hEvent) override;
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override;
+                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters,
+                              CmdListSignalEventParameters &signalEventParameters) override;
     ze_result_t appendCustomOperation(const void *pNext,
                                       ze_event_handle_t hSignalEvent,
                                       uint32_t numWaitEvents,
@@ -243,7 +244,7 @@ struct CommandListCoreFamily : public CommandList {
                                             CmdListWaitEventParameters &waitEventsParameters) override;
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override;
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) override;
     void appendWaitOnInOrderDependency(NEO::GraphicsAllocation *deviceCounterAlloc, uint64_t deviceBaseCounterGpuVa, uint32_t deviceCounterPartitionCount, CommandToPatchContainer *outListCommands,
                                        uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency,
@@ -292,7 +293,7 @@ struct CommandListCoreFamily : public CommandList {
     bool doParamsRequireCopyOnly(CmdListMemoryCopyParams &memoryCopyParams) const;
 
   protected:
-    void setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent);
+    void setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent, bool apiRequiredExternalGraphEvent);
     void dispatchHostFunction(ze_host_function_callback_t pHostFunction,
                               void *pUserData,
                               bool memorySynchronizationRequired) override;

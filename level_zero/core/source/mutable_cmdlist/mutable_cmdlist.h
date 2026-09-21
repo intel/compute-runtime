@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/cmdlist/cmdlist_signal_event_parameters.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 
@@ -139,7 +140,8 @@ struct MutableCommandList {
     virtual ze_result_t appendMIMath(void *aluArray, size_t aluCount) = 0;
 
     virtual ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) = 0;
+                                      ze_event_handle_t *phWaitEvents,
+                                      CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters) = 0;
     virtual ze_result_t appendMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                                   const void **pRanges,
                                                   ze_event_handle_t hSignalEvent,

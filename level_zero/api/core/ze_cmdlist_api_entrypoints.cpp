@@ -30,6 +30,9 @@ const static CmdListWaitEventParameters defaultWaitEventsParameters{
     .apiRequest = true,
     .skipFlush = false};
 
+const static CmdListSignalEventParameters defaultSignalEventParameters{
+    .relaxedOrderingDispatch = false};
+
 } // namespace ApiTemplateValues
 
 ze_result_t ZE_APICALL zeCommandListAppendHostFunction(
@@ -340,8 +343,8 @@ ze_result_t ZE_APICALL zeCommandListAppendSignalEvent(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-
-    return cmdList->appendSignalEvent(hEvent, false);
+    CmdListSignalEventParameters signalEventParameters = ApiTemplateValues::defaultSignalEventParameters;
+    return cmdList->appendSignalEvent(hEvent, signalEventParameters);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendWaitOnEvents(
@@ -379,7 +382,8 @@ ze_result_t ZE_APICALL zeCommandListAppendSignalEventWithParameters(
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }
-    return cmdList->appendSignalEvent(hEvent, false);
+    CmdListSignalEventParameters signalEventParameters = ApiTemplateValues::defaultSignalEventParameters;
+    return cmdList->appendSignalEvent(hEvent, signalEventParameters);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendWaitOnEventsWithParameters(

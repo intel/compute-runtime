@@ -652,7 +652,10 @@ struct CommandListCompactL3FlushEventPacketFixture : public ModuleFixture {
         ASSERT_NE(nullptr, event.get());
 
         size_t sizeBefore = cmdStream->getUsed();
-        result = commandList->appendSignalEvent(event->toHandle(), false);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        result = commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -2194,7 +2197,10 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
     size_t csrUsedAfter = csrStream.getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

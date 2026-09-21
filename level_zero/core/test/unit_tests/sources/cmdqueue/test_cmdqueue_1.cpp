@@ -787,7 +787,10 @@ HWTEST_F(CommandQueueCreate, givenQueueInAsyncModeAndRugularCmdListWithAppendBar
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
 
     commandQueue->destroy();
 }
@@ -816,7 +819,10 @@ HWTEST_F(CommandQueueCreate, givenQueueInSyncModeAndRugularCmdListWithAppendBarr
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
 
     commandQueue->destroy();
 }

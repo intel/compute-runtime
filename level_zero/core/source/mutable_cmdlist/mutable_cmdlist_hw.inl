@@ -18,7 +18,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
-#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_wait_event_parameters.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -1198,7 +1198,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
                                                                        uint32_t numWaitEvents,
                                                                        ze_event_handle_t *phWaitEvents,
-                                                                       CmdListWaitEventParameters &waitEventsParameters) {
+                                                                       CmdListWaitEventParameters &waitEventsParameters,
+                                                                       CmdListSignalEventParameters &signalEventParameters) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     MutableAppendEvents mutableEventParams = {};
 
@@ -1209,7 +1210,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_
         waitEventsParameters.outWaitCmds = mutableEventParams.mutableCmdPatchlistContainer;
     }
 
-    result = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+    result = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParameters);
     if (result != ZE_RESULT_SUCCESS) {
         clearMutableAppendData();
         return result;

@@ -1433,7 +1433,10 @@ void ExecGraphBuilder::finalize(const GraphInstatiateSettings &settings) {
             if (subgraph.second.currCmdList) {
                 if (subgraphsWithPostJoinCommands.count(subgraph.first)) {
                     auto *event = this->createTrailingEvent();
-                    subgraph.second.currCmdList->appendSignalEvent(event->toHandle(), false);
+                    CmdListSignalEventParameters signalEventParameters = {
+                        .relaxedOrderingDispatch = false,
+                    };
+                    subgraph.second.currCmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
                 }
                 subgraph.second.currCmdList->close();
             }
@@ -1563,7 +1566,10 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
             .skipAddingWaitEventsToResidency = false,
             .dualStreamCopyOffloadOperation = false,
         };
-        return executionTarget->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+        CmdListSignalEventParameters signalEventParams = {
+            .relaxedOrderingDispatch = false,
+        };
+        return executionTarget->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParams);
     } else {
         UNRECOVERABLE_IF(this->orderedCommands->empty());
 

@@ -764,7 +764,8 @@ XE3P_CORETEST_F(MultiTileSynchronizedDispatchTestsXe3p, givenLimitedSyncDispatch
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    immCmdList->appendBarrier(nullptr, 1, &handle, waitEventsParametersForBarrier);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    immCmdList->appendBarrier(nullptr, 1, &handle, waitEventsParametersForBarrier, signalEventParams);
     EXPECT_TRUE(verifyTokenCheck(2, 0));
 
     context->freeMem(alloc);

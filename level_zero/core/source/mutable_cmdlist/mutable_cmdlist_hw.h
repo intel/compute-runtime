@@ -84,7 +84,8 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     ze_result_t appendMIMath(void *aluArray, size_t aluCount) override;
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override;
+                              ze_event_handle_t *phWaitEvents,
+                              CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters) override;
     ze_result_t appendMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                           const void **pRanges,
                                           ze_event_handle_t hSignalEvent,

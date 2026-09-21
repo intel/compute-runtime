@@ -398,10 +398,13 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    returnValue = commandList->appendBarrier(nullptr, 1, &event, waitEventsParametersForBarrier);
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = commandList->appendSignalEvent(event, false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    returnValue = commandList->appendBarrier(nullptr, 1, &event, waitEventsParametersForBarrier, signalEventParameters);
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    returnValue = commandList->appendSignalEvent(event, signalEventParameters);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = eventObject->hostSignal(false);

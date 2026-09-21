@@ -454,7 +454,8 @@ struct Mock<CommandList> : public CommandList {
     ADDMETHOD_NOBASE(appendBarrier, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters));
+                      ze_event_handle_t *phWaitEvents,
+                      CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters));
 
     ADDMETHOD_NOBASE(appendMemoryRangesBarrier, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numRanges,
@@ -590,7 +591,7 @@ struct Mock<CommandList> : public CommandList {
                       CmdListMemoryCopyParams &memoryCopyParams));
 
     ADDMETHOD_NOBASE(appendSignalEvent, ze_result_t, ZE_RESULT_SUCCESS,
-                     (ze_event_handle_t hEvent, bool relaxedOrderingDispatch));
+                     (ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters));
 
     ADDMETHOD_NOBASE(appendWaitOnEvents, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numEvents,
@@ -763,8 +764,8 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
               (numEvents, phEvent, waitEventsParameters));
 
     ADDMETHOD(appendSignalEvent, ze_result_t, true, ZE_RESULT_SUCCESS,
-              (ze_event_handle_t hEvent, bool relaxedOrderingDispatch),
-              (hEvent, relaxedOrderingDispatch));
+              (ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters),
+              (hEvent, signalEventParameters));
 
     AlignedAllocationData resolveAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, const L0::MemAllocInfo *bufferAllocInfo, const L0::ResolveAlignedAllocationFlags &flags) override {
         return L0::CommandListCoreFamily<gfxCoreFamily>::resolveAlignedAllocation(device, buffer, bufferSize, bufferAllocInfo, flags);
@@ -1033,7 +1034,7 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override {
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) override {
         appendSignalEventCalledTimes++;
 
         if (failOnSecondSignalEvent && appendSignalEventCalledTimes == 2) {

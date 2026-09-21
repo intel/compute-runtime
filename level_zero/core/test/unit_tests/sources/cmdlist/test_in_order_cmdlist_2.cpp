@@ -496,10 +496,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenRepea
     immCmdList->cmdQImmediate->setTaskCount(1);
 
     CmdListWaitEventParameters waitEventsParameters{};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     const auto mainTaskCount = immCmdList->cmdQImmediate->getTaskCount();
     const auto copyTaskCount = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(mainTaskCount, immCmdList->cmdQImmediate->getTaskCount());
     EXPECT_EQ(copyTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
 
@@ -509,7 +512,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenRepea
     EXPECT_GT(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), copyTaskCount);
     const auto copyTaskCountAfterCopy = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(immCmdList->cmdQImmediate->getTaskCount(), mainTaskCount);
     EXPECT_GT(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), copyTaskCountAfterCopy);
     context->freeMem(usmDevice);
@@ -544,7 +547,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     ASSERT_GT(copyTaskCount, 0u);
 
     CmdListWaitEventParameters waitEventsParameters{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(events[0]->toHandle(), 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(events[0]->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(mainTaskCount, immCmdList->cmdQImmediate->getTaskCount());
     EXPECT_EQ(copyTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->queryStatus(0));
@@ -554,7 +560,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     const auto copyTaskCountAfterCopy = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
     ASSERT_GT(copyTaskCountAfterCopy, copyTaskCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(events[1]->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(events[1]->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(immCmdList->cmdQImmediate->getTaskCount(), mainTaskCount);
     EXPECT_GT(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), copyTaskCountAfterCopy);
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[1]->queryStatus(0));
@@ -596,7 +602,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     // barrier is dispatched to both engines - compute first, copy offload second
     EXPECT_GT(mainCsr->taskCount.load(), mainTaskCount);
@@ -667,7 +676,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWithoutPr
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     GenCmdList cmds;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmds, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
@@ -714,7 +726,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     EXPECT_GT(immCmdList->cmdQImmediate->getTaskCount(), mainQueueTaskCount);
     EXPECT_GT(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), copyOffloadQueueTaskCount);
@@ -759,7 +774,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     TaskCountType cleanupTaskCount = 0;
     EXPECT_FALSE(event->getCleanupTaskCount(mainCsr, cleanupTaskCount));
@@ -801,7 +819,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 1, &eventHandle, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 1, &eventHandle, waitEventsParameters, signalEventParameters));
 
     // caller parameters are forwarded instead of being replaced by locally created ones
     EXPECT_EQ(1u, outWaitCmds.size());
@@ -2731,8 +2752,10 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     regularCmdList->appendMemoryCopyRegion(data, &region, 1, 1, data, &region, 1, 1, nullptr, 0, nullptr, copyParams);
 
     regularCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, copyParams);
-
-    regularCmdList->appendSignalEvent(eventHandle, false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    regularCmdList->appendSignalEvent(eventHandle, signalEventParameters);
     CmdListWaitEventParameters waitEventsParameters = {
         .outWaitCmds = nullptr,
         .relaxedOrderingAllowed = false,
@@ -2741,7 +2764,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    regularCmdList->appendBarrier(nullptr, 1, &eventHandle, waitEventsParameters);
+    regularCmdList->appendBarrier(nullptr, 1, &eventHandle, waitEventsParameters, signalEventParameters);
 
     {
         GenCmdList cmdList;
@@ -2868,7 +2891,10 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSig
     size_t offset = cmdStream->getUsed();
 
     {
-        cmdList->appendSignalEvent(events[1]->toHandle(), false);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        cmdList->appendSignalEvent(events[1]->toHandle(), signalEventParameters);
 
         GenCmdList hwCmdList;
         EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -2880,7 +2906,10 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSig
     offset = cmdStream->getUsed();
 
     {
-        cmdList->appendSignalEvent(events[0]->toHandle(), false);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        cmdList->appendSignalEvent(events[0]->toHandle(), signalEventParameters);
 
         GenCmdList hwCmdList;
         EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -3455,7 +3484,10 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenOutOfOrderSynchronizedDispatch
         CmdListWaitEventParameters waitEventsParameters{};
         for (uint32_t barrier = 1; barrier <= 2; barrier++) {
             const auto taskCountBefore = immCmdList->cmdQImmediate->getTaskCount();
-            EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+            CmdListSignalEventParameters signalEventParameters{
+                .relaxedOrderingDispatch = false,
+            };
+            EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
             EXPECT_GT(immCmdList->cmdQImmediate->getTaskCount(), taskCountBefore);
             EXPECT_EQ(barrier, immCmdList->initCalled);
             EXPECT_EQ(barrier, immCmdList->cleanupCalled);
@@ -3620,7 +3652,10 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendi
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    immCmdList->appendBarrier(nullptr, 1, &handle, waitEventsParametersForBarrier);
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    immCmdList->appendBarrier(nullptr, 1, &handle, waitEventsParametersForBarrier, signalEventParameters);
     EXPECT_TRUE(verifyTokenCheck(2));
 
     context->freeMem(alloc);

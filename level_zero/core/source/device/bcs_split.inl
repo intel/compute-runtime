@@ -49,7 +49,10 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
     const bool signalSplitBarrier = barrierEvent != nullptr;
 
     if (signalSplitBarrier) {
-        cmdList->appendSignalEvent(barrierEvent->toHandle(), false);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        cmdList->appendSignalEvent(barrierEvent->toHandle(), signalEventParameters);
     }
 
     StackVec<ze_event_handle_t, 16> eventHandles;

@@ -39,7 +39,10 @@ HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerate
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -70,7 +73,10 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -86,7 +92,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
 
     commandList->reset();
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
     usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -272,8 +278,12 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
             .dualStreamCopyOffloadOperation = false,
         };
 
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+
         auto useSizeBefore = cmdListStream->getUsed();
-        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters);
+        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters, signalEventParameters);
         auto useSizeAfter = cmdListStream->getUsed();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, event->getPacketsInUse());
@@ -393,7 +403,10 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
             .skipAddingWaitEventsToResidency = false,
             .dualStreamCopyOffloadOperation = false,
         };
-        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        auto result = commandList->appendBarrier(eventHandle, 0, nullptr, waitEventsParameters, signalEventParameters);
         auto useSizeAfter = cmdListStream->getUsed();
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, eventTimeStamp->getPacketsInUse());
@@ -508,7 +521,10 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -565,7 +581,10 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto secondBatchBufferAllocation = cmdListStream->getGraphicsAllocation();
@@ -664,7 +683,10 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedAfterSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, estimatedSize);
@@ -753,7 +775,10 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedAfterSize = cmdStream->getUsed();
 
@@ -1063,7 +1088,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSuccessfulHostSynchronizationWh
     auto taskCountBefore = getQueue()->getTaskCount();
 
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
 
     EXPECT_EQ(usedBefore, cmdStream->getUsed());
     EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
@@ -1079,16 +1107,19 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEnqueuesAndConsecutiveBarriersW
     auto usedBefore = cmdStream->getUsed();
 
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(cmdStream->getUsed(), usedBefore);
 
     auto usedAfterFirstBarrier = cmdStream->getUsed();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(usedAfterFirstBarrier, cmdStream->getUsed());
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
     usedBefore = cmdStream->getUsed();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(cmdStream->getUsed(), usedBefore);
 }
 
@@ -1102,7 +1133,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenWaitEventsWhenAppendingRedundan
     auto usedBefore = cmdStream->getUsed();
 
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 1, &waitEventHandle, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 1, &waitEventHandle, waitEventsParameters, signalEventParameters));
 
     EXPECT_GT(cmdStream->getUsed(), usedBefore);
 }
@@ -1116,7 +1150,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenTimestampSignalEventWhenAppendi
     auto usedBefore = cmdStream->getUsed();
 
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(timestampEvent->toHandle(), 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(timestampEvent->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
 
     EXPECT_GT(cmdStream->getUsed(), usedBefore);
 }
@@ -1140,7 +1177,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenCopyOnlyListAfterHostSynchroniz
         const auto barrierCountBefore = csr->peekBarrierCount();
         const auto taskCountBefore = getQueue()->getTaskCount();
 
-        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
         EXPECT_EQ(barrierCountBefore + 1, csr->peekBarrierCount());
         EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
 
@@ -1173,7 +1213,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenAggregatedSignalEventWhenAppend
 
     const auto taskCountBefore = getQueue()->getTaskCount();
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
     EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
 }
@@ -1184,10 +1227,13 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenAsynchronousBarrierWhenAppendin
     auto waitEventsParameters = getWaitEventParameters();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     auto usedBefore = cmdStream->getUsed();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(cmdStream->getUsed(), usedBefore);
 }
 
@@ -1198,7 +1244,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenCounterBasedSignalEventWhenAppe
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
 
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
 }
 
 HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEmptyListWhenAppendingBarriersAndHostSynchronizingThenNothingIsSubmittedOrWaitedOn) {
@@ -1210,8 +1259,11 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEmptyListWhenAppendingBarriersA
     const auto clientsBefore = csr->getNumClients();
 
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
     EXPECT_EQ(usedBefore, cmdStream->getUsed());
@@ -1227,8 +1279,11 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEmptyListWhenAppendingBarrierWi
     const auto usedBefore = cmdStream->getUsed();
     const auto taskCountBefore = getQueue()->getTaskCount();
     auto waitEventsParameters = getWaitEventParameters();
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(usedBefore, cmdStream->getUsed());
     EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
@@ -1249,7 +1304,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSuccessfulHostSynchronizeWhenSy
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
     auto usedBefore = cmdStream->getUsed();
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(usedBefore, cmdStream->getUsed());
 }
 
@@ -1258,7 +1316,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSubmittedBarrierWhenHostSynchro
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
 
     auto waitEventsParameters = getWaitEventParameters();
-    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
     auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
@@ -1273,7 +1334,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenUserInterruptSignalEventWhenApp
 
     const auto taskCountBefore = getQueue()->getTaskCount();
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
 }
 
@@ -1317,11 +1381,14 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSubmissionDuringPostWaitOperati
 
     const auto taskCountBefore = getQueue()->getTaskCount();
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
 
     const auto barrierTaskCount = getQueue()->getTaskCount();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(getQueue()->getTaskCount(), barrierTaskCount);
     EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
 }
@@ -1343,7 +1410,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenFailedHostSynchronizeWhenSynchr
 
         const auto taskCountBefore = getQueue()->getTaskCount();
         auto waitEventsParameters = getWaitEventParameters();
-        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
         EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
     }
 }
@@ -1359,7 +1429,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenInternalHostSynchronizeWhenSync
     EXPECT_EQ(clientsBefore, csr->getNumClients());
     const auto taskCountBefore = getQueue()->getTaskCount();
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
 
     const auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
@@ -1379,7 +1452,10 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSynchronousSubmissionWhenAppend
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
     const auto waitsBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
     auto waitEventsParameters = getWaitEventParameters();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
     EXPECT_EQ(waitsBefore, csr->waitForCompletionWithTimeoutTaskCountCalled.load());

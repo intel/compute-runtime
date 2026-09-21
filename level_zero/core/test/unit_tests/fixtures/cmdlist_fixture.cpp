@@ -372,10 +372,16 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
             .skipAddingWaitEventsToResidency = false,
             .dualStreamCopyOffloadOperation = false,
         };
-        result = currentCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        result = currentCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::SignalEvent) {
-        result = currentCmdList->appendSignalEvent(event->toHandle(), false);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        result = currentCmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::ResetEvent) {
         result = currentCmdList->appendEventReset(event->toHandle());

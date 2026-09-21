@@ -3787,8 +3787,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach wait events to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
-    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams, signalEventParams);
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     // assign them counters
@@ -3913,8 +3914,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach wait events to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
-    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams, signalEventParams);
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     // assign them counters
@@ -4090,7 +4092,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach new wait event to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     // mutation point
@@ -4189,7 +4192,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach appending wait event to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     // mutation point
@@ -4355,7 +4359,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach new wait event to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     uint64_t patchPreambleCounter = 4;

@@ -1202,7 +1202,10 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendSigna
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendSignalEvent(event, false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    commandList->appendSignalEvent(event, signalEventParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1250,14 +1253,17 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendBarri
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters, signalEventParameters);
 
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters);
+    commandList->appendBarrier(event, 0, nullptr, waitEventsParameters, signalEventParameters);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -1340,8 +1346,11 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
                 .skipAddingWaitEventsToResidency = false,
                 .dualStreamCopyOffloadOperation = false,
             };
-            commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
-            commandList->appendBarrier(event->toHandle(), 2, events, waitEventsParameters);
+            CmdListSignalEventParameters signalEventParameters = {
+                .relaxedOrderingDispatch = false,
+            };
+            commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
+            commandList->appendBarrier(event->toHandle(), 2, events, waitEventsParameters, signalEventParameters);
 
             auto result = event->hostSignal(false);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);

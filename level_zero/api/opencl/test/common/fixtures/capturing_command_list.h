@@ -112,13 +112,14 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     bool completeSignalEventOnAppendBarrier = false;
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters) override {
-        auto result = BaseClass::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+                              ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters,
+                              L0::CmdListSignalEventParameters &signalEventParameters) override {
+        auto result = BaseClass::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParameters);
         if (this->completeSignalEventOnAppendBarrier && (hSignalEvent != nullptr) && (result == ZE_RESULT_SUCCESS)) {
             result = L0::Event::fromHandle(hSignalEvent)->hostSignal(false);
         }
         return record(this->appendBarrierArgs, ApiId::appendBarrier,
-                      AppendBarrierArgs{hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters}, result);
+                      AppendBarrierArgs{hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParameters}, result);
     }
 
     ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, const void *pNext,

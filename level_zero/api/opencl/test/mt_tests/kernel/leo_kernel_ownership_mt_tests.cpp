@@ -47,10 +47,11 @@ inline bool isLocked(std::recursive_mutex &mtx) {
 
 struct OwnershipProbingCommandList : public CapturingCommandList {
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters) override {
+                              ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters,
+                              L0::CmdListSignalEventParameters &signalEventParameters) override {
         UNRECOVERABLE_IF(nullptr == clKernelMutex);
         clKernelOwnedDuringBarrier = isLocked(*clKernelMutex);
-        return CapturingCommandList::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+        return CapturingCommandList::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParameters);
     }
 
     std::recursive_mutex *clKernelMutex = nullptr;

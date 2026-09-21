@@ -31,7 +31,9 @@ ze_result_t ZE_APICALL zeCommandListAppendBarrier(
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    return cmdList->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false};
+    return cmdList->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParameters);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendMemoryRangesBarrier(

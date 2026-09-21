@@ -124,7 +124,7 @@ struct CapturingInternalExecCmdList : Mock<CommandList> {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override {
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) override {
         appendSignalEventCalled++;
         signaledEvents.push_back(hEvent);
         return ZE_RESULT_SUCCESS;
@@ -1165,7 +1165,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPrese
 
         ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                                   uint32_t numWaitEvents,
-                                  ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override {
+                                  ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters) override {
             sequenceContainer.push_back(CmdInfo{numWaitEvents ? phWaitEvents[0] : nullptr, hSignalEvent});
             return ZE_RESULT_SUCCESS;
         }

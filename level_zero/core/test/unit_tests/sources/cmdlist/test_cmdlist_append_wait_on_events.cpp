@@ -287,12 +287,12 @@ class MockCommandListImmediateHwWithWaitEventFail : public WhiteBox<::L0::Comman
         return BaseClass::appendWaitOnEvents(numEvents, phEvent, waitEventsParameters);
     };
 
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override {
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) override {
         if (forceSignalEventError) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         appendSignalEventCalled++;
-        return BaseClass::appendSignalEvent(hEvent, relaxedOrderingDispatch);
+        return BaseClass::appendSignalEvent(hEvent, signalEventParameters);
     }
 
     ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation,
@@ -907,7 +907,10 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
         .dualStreamCopyOffloadOperation = false,
         .apiRequest = false,
         .skipFlush = false};
-    commandListImmediate->appendBarrier(nullptr, 1, &eventHandle, waitEventsParameters);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    commandListImmediate->appendBarrier(nullptr, 1, &eventHandle, waitEventsParameters, signalEventParameters);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }
