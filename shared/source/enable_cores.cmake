@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -199,16 +199,6 @@ macro(macro_for_each_core_type)
       endif()
 
       set(SRC_FILE "${CORE_COREX_PREFIX}/os_agnostic_product_helper_${CORE_TYPE_LOWER}.inl")
-      if(EXISTS ${SRC_FILE})
-        list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
-      endif()
-
-      set(SRC_FILE "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR}sip_kernels/${CORE_TYPE_LOWER}/sip_kernel_${CORE_TYPE_LOWER}.cpp")
-      if(EXISTS ${SRC_FILE})
-        list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_BASE ${SRC_FILE})
-      endif()
-
-      set(SRC_FILE "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR}sip_kernels/${CORE_TYPE_LOWER}/sip_kernel_${CORE_TYPE_LOWER}.h")
       if(EXISTS ${SRC_FILE})
         list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
       endif()

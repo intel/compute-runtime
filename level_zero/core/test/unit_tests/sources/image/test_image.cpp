@@ -1561,8 +1561,6 @@ class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
 using ImageCreateWithFailMemoryManagerMock = Test<DeviceFixtureWithCustomMemoryManager<FailMemoryManagerMock>>;
 
 HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageDescWhenFailImageAllocationThenProperErrorIsReturned) {
-    VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
-
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -1577,12 +1575,6 @@ HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageDescWhenFailImageAlloca
     desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    auto isHexadecimalArrayPreferred = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred();
-    if (isHexadecimalArrayPreferred) {
-        backupSipInitType = true;
-    }
 
     delete driverHandle->svmAllocsManager;
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
@@ -3848,8 +3840,6 @@ HWTEST_F(ImageCreate, givenNonBindlessImageAndBindlessHeapsHelperPresentWhenImag
 }
 
 HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageWhenAllocateImplicitArgsOnDemandFailsThenOutOfHostMemoryIsReturned) {
-    VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
-
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -3859,11 +3849,6 @@ HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageWhenAllocateImplicitArg
     desc.width = 11;
     desc.height = 13;
     desc.depth = 17;
-
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
-        backupSipInitType = true;
-    }
 
     delete driverHandle->svmAllocsManager;
     driverHandle->setMemoryManager(execEnv->memoryManager.get());

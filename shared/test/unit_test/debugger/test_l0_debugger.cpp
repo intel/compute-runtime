@@ -55,33 +55,18 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
 
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    auto isHexadecimalArrayPreferred = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred();
-    if (!isHexadecimalArrayPreferred) {
-        auto mockBuiltIns = new NEO::MockBuiltins();
-        MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
-    }
+    auto mockBuiltIns = new NEO::MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
 
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
     std::unique_ptr<NEO::MockDevice> neoDevice(NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u));
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
-
-    if (isHexadecimalArrayPreferred) {
-        SipKernel::initSipKernel(sipType, *neoDevice);
-    }
     auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaHeader();
-
-    if (isHexadecimalArrayPreferred) {
-        auto sipKernel = neoDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
-        ASSERT_NE(sipKernel, nullptr);
-        auto &expectedStateSaveAreaHeader = sipKernel->getStateSaveAreaHeader();
-        EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
-    } else {
-        auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
-        EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
-    }
+    auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
+    EXPECT_EQ(SipKernelType::csr, sipType);
+    EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
 
     SipKernel::freeSipKernels(&neoDevice->getRootDeviceEnvironmentRef(), neoDevice->getMemoryManager());
 }

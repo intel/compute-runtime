@@ -45,7 +45,6 @@ struct RawBinarySipFixture : public DeviceWithoutSipFixture {
         debugManager.flags.LoadBinarySipFromFile.set("dummy_file.bin");
 
         backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, false);
-        backupSipClassType = std::make_unique<VariableBackup<SipClassType>>(&SipKernel::classType);
 
         backupFopenReturned = std::make_unique<VariableBackup<FILE *>>(&IoFunctions::mockFopenReturned);
         backupFtellReturned = std::make_unique<VariableBackup<long int>>(&IoFunctions::mockFtellReturn, 128);
@@ -69,7 +68,6 @@ struct RawBinarySipFixture : public DeviceWithoutSipFixture {
     DebugManagerStateRestore dbgRestorer;
 
     std::unique_ptr<VariableBackup<bool>> backupSipInitType;
-    std::unique_ptr<VariableBackup<SipClassType>> backupSipClassType;
 
     std::unique_ptr<VariableBackup<FILE *>> backupFopenReturned;
     std::unique_ptr<VariableBackup<long int>> backupFtellReturned;
@@ -374,55 +372,6 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingDebugSipWithContextThenSip
 
     auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_NE(0u, header.size());
-}
-
-struct HexadecimalHeaderSipKernel : public SipKernel {
-    using SipKernel::getSipKernelImpl;
-    using SipKernel::initHexadecimalArraySipKernel;
-};
-
-using HexadecimalHeaderSipTest = Test<DeviceWithoutSipFixture>;
-
-TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledThenSipKernelIsCorrect) {
-    VariableBackup<SipClassType> backupSipClassType(&SipKernel::classType, SipClassType::hexadecimalHeaderFile);
-
-    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::csr, *pDevice));
-    EXPECT_EQ(SipKernelType::csr, SipKernel::getSipKernelType(*pDevice));
-
-    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::csr);
-    const auto expectedSipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
-    ASSERT_NE(nullptr, expectedSipKernel);
-
-    const auto &sipKernel = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
-    EXPECT_EQ(expectedSipKernel, &sipKernel);
-
-    auto expectedSipAllocation = expectedSipKernel->getSipAllocation();
-    auto sipAllocation = sipKernel.getSipAllocation();
-    EXPECT_EQ(expectedSipAllocation, sipAllocation);
-}
-
-TEST_F(HexadecimalHeaderSipTest, givenFailMemoryManagerWhenInitHexadecimalArraySipKernelIsCalledThenSipKernelIsNullptr) {
-    pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));
-    EXPECT_FALSE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::csr, *pDevice));
-
-    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::csr);
-    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
-    EXPECT_EQ(nullptr, sipKernel);
-}
-
-TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceThenSipKernelIsCreatedOnce) {
-    VariableBackup<SipClassType> backupSipClassType(&SipKernel::classType, SipClassType::hexadecimalHeaderFile);
-    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::csr, *pDevice));
-
-    const auto &sipKernel = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
-    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::csr, *pDevice));
-
-    const auto &sipKernel2 = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
-    EXPECT_EQ(&sipKernel, &sipKernel2);
-
-    auto sipAllocation = sipKernel.getSipAllocation();
-    auto sipAllocation2 = sipKernel2.getSipAllocation();
-    EXPECT_EQ(sipAllocation, sipAllocation2);
 }
 
 struct StateSaveAreaSipTest : Test<RawBinarySipFixture> {
@@ -1092,10 +1041,6 @@ TEST_F(DebugBuiltinSipTest, givenDebugFlagForForceSipClassWhenInitSipKernelThenP
     debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
     EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
     EXPECT_EQ(MockSipKernel::classType, SipClassType::builtins);
-
-    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::hexadecimalHeaderFile));
-    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
-    EXPECT_EQ(MockSipKernel::classType, SipClassType::hexadecimalHeaderFile);
 
     SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }

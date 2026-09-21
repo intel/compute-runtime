@@ -27,10 +27,7 @@ void ProductHelper::setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootD
         hwInfo.gtSystemInfo.CsrSizeInMb = static_cast<uint32_t>(debugManager.flags.OverridePreemptionSurfaceSizeInMb.get());
     }
 
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-
     hwInfo.capabilityTable.requiredPreemptionSurfaceSize = hwInfo.gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
-    gfxCoreHelper.adjustPreemptionSurfaceSize(hwInfo.capabilityTable.requiredPreemptionSurfaceSize, rootDeviceEnvironment);
 }
 
 void ProductHelper::setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyProperties) {

@@ -1122,30 +1122,6 @@ HWTEST_F(GfxCoreHelperTest, givenResourceDenyCompressionEnabledWhenRenderAndMedi
     EXPECT_FALSE(gfxCoreHelper.isCompressionAppliedForImportedResource(mockGmm));
 }
 
-HWTEST_F(GfxCoreHelperTest, whenAdjustPreemptionSurfaceSizeIsCalledThenCsrSizeDoesntChange) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    size_t csrSize = 1024;
-    size_t oldCsrSize = csrSize;
-    gfxCoreHelper.adjustPreemptionSurfaceSize(csrSize, pDevice->getRootDeviceEnvironment());
-    EXPECT_EQ(oldCsrSize, csrSize);
-}
-
-HWTEST_F(GfxCoreHelperTest, whenSetSipKernelDataIsCalledThenSipKernelDataDoesntChange) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    uint32_t *sipKernelBinary = nullptr;
-    uint32_t *oldSipKernelBinary = sipKernelBinary;
-    size_t kernelBinarySize = 1024;
-    size_t oldKernelBinarySize = kernelBinarySize;
-    gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize, pDevice->getRootDeviceEnvironment());
-    EXPECT_EQ(oldKernelBinarySize, kernelBinarySize);
-    EXPECT_EQ(oldSipKernelBinary, sipKernelBinary);
-}
-
-HWTEST_F(GfxCoreHelperTest, whenIsSipKernelAsHexadecimalArrayPreferredIsCalledThenReturnFalse) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred());
-}
-
 using isXeHpCoreOrBelow = IsAtMostProduct<IGFX_XE_HP_SDV>;
 
 HWTEST2_F(GfxCoreHelperTest, givenXeHPAndBelowPlatformPlatformWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnFalse, isXeHpCoreOrBelow) {

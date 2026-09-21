@@ -220,40 +220,6 @@ std::string SipKernel::createHeaderFilename(const std::string &fileName) {
     return headerFilename;
 }
 
-bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device) {
-    uint32_t sipIndex = static_cast<uint32_t>(type);
-    uint32_t rootDeviceIndex = device.getRootDeviceIndex();
-    auto sipKenel = device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get();
-    if (sipKenel != nullptr) {
-        return true;
-    }
-
-    uint32_t *sipKernelBinary = nullptr;
-    size_t kernelBinarySize = 0u;
-    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
-
-    gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize, rootDeviceEnvironment);
-    const auto allocType = AllocationType::kernelIsaInternal;
-    AllocationProperties properties = {rootDeviceIndex, kernelBinarySize, allocType, device.getDeviceBitfield()};
-    properties.flags.use32BitFrontWindow = false;
-
-    auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-    if (sipAllocation == nullptr) {
-        return false;
-    }
-    auto &productHelper = device.getProductHelper();
-    MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
-                                                     device, sipAllocation, 0, sipKernelBinary,
-                                                     kernelBinarySize);
-
-    std::vector<char> emptyStateSaveAreaHeader;
-    device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
-        std::make_unique<SipKernel>(type, sipAllocation, std::move(emptyStateSaveAreaHeader));
-
-    return true;
-}
-
 bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device) {
     uint32_t sipIndex = static_cast<uint32_t>(type);
     uint32_t rootDeviceIndex = device.getRootDeviceIndex();
@@ -307,19 +273,12 @@ void SipKernel::selectSipClassType(std::string &fileName, Device &device) {
     const std::string unknown("unk");
     if (fileName.compare(unknown) == 0) {
         bool debuggingEnabled = device.getDebugger() != nullptr;
-        if (debuggingEnabled) {
-            if (device.getSipExternalLibInterface() != nullptr) {
-                SipKernel::classType = SipClassType::externalLib;
-            } else {
-                SipKernel::classType = SipClassType::builtins;
-            }
-        } else {
-            SipKernel::classType = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()
-                                       ? SipClassType::hexadecimalHeaderFile
-                                       : SipClassType::builtins;
-        }
-        if (gfxCoreHelper.getSipBinaryFromExternalLib() && device.getSipExternalLibInterface() != nullptr) {
+        bool externalLibAvailable = device.getSipExternalLibInterface() != nullptr;
+        bool helperPreference = gfxCoreHelper.getSipBinaryFromExternalLib();
+        if ((debuggingEnabled || helperPreference) && externalLibAvailable) {
             SipKernel::classType = SipClassType::externalLib;
+        } else {
+            SipKernel::classType = SipClassType::builtins;
         }
     } else {
         SipKernel::classType = SipClassType::rawBinaryFromFile;
@@ -337,7 +296,8 @@ bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext 
     case SipClassType::rawBinaryFromFile:
         return SipKernel::initRawBinaryFromFileKernel(type, device, fileName);
     case SipClassType::hexadecimalHeaderFile:
-        return SipKernel::initHexadecimalArraySipKernel(type, device);
+        UNRECOVERABLE_IF(true); // unsupported
+        return false;
     case SipClassType::externalLib:
         return SipKernel::initSipKernelFromExternalLib(type, device);
     default:

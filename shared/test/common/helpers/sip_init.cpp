@@ -245,12 +245,6 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum) {
 
 bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
     if (MockSipData::useMockSip) {
-        auto &gfxCoreHelper = device.getGfxCoreHelper();
-        if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
-            SipKernel::classType = SipClassType::hexadecimalHeaderFile;
-        } else {
-            SipKernel::classType = SipClassType::builtins;
-        }
         MockSipData::calledType = type;
         MockSipData::called = true;
 

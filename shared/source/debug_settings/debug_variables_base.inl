@@ -325,7 +325,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlushWithTaskCountAfterCopy, -1, "-1: de
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdListUpdateCapability, -1, "-1: default, >=0: Use value to report command list update capability")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideRecordReplayGraphCapability, -1, "-1: default, >=0: Use value to report record and replay graph capability")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSynchronizedDispatchMode, -1, "-1: default, 0: disabled, 1: enable full synchronization mode")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile, externalLib)")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile (unsupported), externalLib)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceScratchAndMTPBufferSizeMode, -1, "-1: default, 0: Full, 1: Min. BMG+: Reduce required memory for scratch and MTP buffers on CCS context")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEStackIDControl, -1, "Set Stack ID Control in CFE_STATE on Xe2+, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, ClearStandaloneInOrderTimestampAllocation, -1, "-1: default, 0: disabled, 1: enabled. If clear allocation before sending to GPU")

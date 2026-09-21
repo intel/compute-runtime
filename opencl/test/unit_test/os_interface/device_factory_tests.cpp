@@ -207,10 +207,7 @@ TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSur
     auto &rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0];
     auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
 
-    const auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
     auto expextedSize = static_cast<size_t>(hwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte);
-    gfxCoreHelper.adjustPreemptionSurfaceSize(expextedSize, *rootDeviceEnvironment);
-
     EXPECT_EQ(expextedSize, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 }
 

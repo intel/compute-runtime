@@ -623,19 +623,6 @@ void GfxCoreHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t i
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isSipKernelAsHexadecimalArrayPreferred() const {
-    return false;
-}
-
-template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-}
-
-template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-}
-
-template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const {
 }
 

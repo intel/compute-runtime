@@ -217,10 +217,6 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWhole
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.incRefInternal();
     executionEnvironment.memoryManager.reset(new FailMemoryManager(4, executionEnvironment));
-    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
-    if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
-        useMockSip = true;
-    }
     auto device = Device::create<RootDevice>(&executionEnvironment, 0u);
     EXPECT_EQ(nullptr, device);
 }

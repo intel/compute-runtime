@@ -40,7 +40,6 @@ using namespace NEO;
 struct PlatformTest : public ::testing::Test {
     void SetUp() override {
         MockSipData::clearUseFlags();
-        backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, true);
 
         pPlatform.reset(new MockPlatform());
         compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
@@ -50,7 +49,6 @@ struct PlatformTest : public ::testing::Test {
         MockSipData::clearUseFlags();
     }
     std::unique_ptr<MockPlatform> pPlatform;
-    std::unique_ptr<VariableBackup<bool>> backupSipInitType;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
     std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
 

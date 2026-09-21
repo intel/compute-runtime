@@ -275,9 +275,6 @@ TEST_F(MockProductHelperTestLinux, givenPointerToHwInfoWhenConfigureHwInfoCalled
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     auto expectedSize = static_cast<size_t>(outHwInfo.gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte);
-    auto &rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0];
-    auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
-    gfxCoreHelper.adjustPreemptionSurfaceSize(expectedSize, *rootDeviceEnvironment);
     EXPECT_EQ(expectedSize, outHwInfo.capabilityTable.requiredPreemptionSurfaceSize);
 }
 

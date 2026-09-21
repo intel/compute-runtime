@@ -48,7 +48,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.ContextGroupSize.set(0);
         MockSipData::clearUseFlags();
-        backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, true);
     }
     void TearDown() override {
         MockSipData::clearUseFlags();
@@ -138,7 +137,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<VariableBackup<bool>> backupSipInitType;
 };
 
 TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
