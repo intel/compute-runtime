@@ -13,6 +13,11 @@
 
 namespace NEO {
 template <>
+uint64_t ReleaseHelperHw<release>::overrideSystemMemoryPatIndexBase(uint64_t patIndex) const {
+    return 19u;
+}
+
+template <>
 const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
     if (!(hardwareIpVersion.value == AOT::NVL_P_A0)) {
         return {32u, 64u, 96u, 128u, 160u, 192u, 256u, 320u, 448u, 512u};

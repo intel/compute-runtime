@@ -363,7 +363,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PcQueueDrainMode, -1, "Control QueueDrainMode in
 DECLARE_DEBUG_VARIABLE(int32_t, DrainAllQueuesOnCacheInvalidation, -1, "Set QueueDrainMode to drain all queues in barriers that invalidate caches. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1P5CacheForRenderSurface, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, SkipImplicitInOrderDependencies, -1, "-1: default, 0: disable, 1: enable - skip all implicit in-order semaphores for L0 command lists")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableOverrideToPat19ForSystemMemory, -1, "-1: default, 0: disable, 1: enable - when enabled select the GMM usage resolving to an app-transient coherent PAT for system memory binds")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableOverrideToPat19ForSystemMemory, -1, "-1: release default, 0: disable PAT19 override, 1: force PAT19 for coherent system memory binds")
 DECLARE_DEBUG_VARIABLE(bool, TemporaryEnablePageFaultException, true, "Enable page fault exception bit in StateComputeMode, 0: disabled, 1: enable(default)")
 DECLARE_DEBUG_VARIABLE(bool, TemporaryEnableOutOfBoundariesInTranslationException, true, "Enable Out of Boundaries in Translation Exception,  0: disabled, 1: enable(default)")
 DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers resident after creation")

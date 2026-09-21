@@ -11,12 +11,32 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
+
+using ReleaseHelperPatIndexXe3pTests = ::testing::Test;
+
+HWTEST2_F(ReleaseHelperPatIndexXe3pTests, givenSystemMemoryPatOverrideWhenDebugFlagIsSetThenSelectDefaultDisabledOrForcedPat, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restore;
+    auto releaseHelper = ReleaseHelper::create(defaultHwInfo->ipVersion);
+    ASSERT_NE(nullptr, releaseHelper);
+    constexpr uint64_t patIndex = 5u;
+
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 19u : patIndex, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(0);
+    EXPECT_EQ(patIndex, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(1);
+    EXPECT_EQ(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+}
 
 namespace {
 struct MockProductHelperWithMisalignedUserPtr2WayCoherency : MockProductHelper {

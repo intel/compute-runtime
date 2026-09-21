@@ -81,6 +81,11 @@ bool ReleaseHelperHw<releaseType>::isAppTransientCoherentPatRequired() const {
 }
 
 template <ReleaseType releaseType>
+uint64_t ReleaseHelperHw<releaseType>::overrideSystemMemoryPatIndexBase(uint64_t patIndex) const {
+    return patIndex;
+}
+
+template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::getIpVersionForGmm() const {
     return hardwareIpVersion.value;
 }

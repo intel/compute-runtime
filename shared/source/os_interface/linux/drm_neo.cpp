@@ -1619,6 +1619,10 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
 
     UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));
 
+    if (isSystemMemory && cacheable) {
+        patIndex = releaseHelper.overrideSystemMemoryPatIndex(patIndex);
+    }
+
     if (debugManager.flags.ClosEnabled.get() != -1) {
         closEnabled = !!debugManager.flags.ClosEnabled.get();
     }

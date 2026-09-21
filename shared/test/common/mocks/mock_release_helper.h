@@ -27,6 +27,10 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(is2WayCoherentPatSupported, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isAppTransientCoherentPatRequired, bool, false, ());
 
+    uint64_t overrideSystemMemoryPatIndexBase(uint64_t patIndex) const override {
+        return patIndex;
+    }
+
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue() const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
         return sizeToPreferredSlmValue;
