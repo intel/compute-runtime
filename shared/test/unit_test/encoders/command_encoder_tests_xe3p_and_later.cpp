@@ -431,9 +431,12 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndInterruptFe
     inOrderExecInfo->setupInterruptFence();
 
     auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    postSyncArgs.interruptEvent = true;
     EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<WalkerType>(walkerCmd, postSyncArgs);
 
+    EXPECT_TRUE(walkerCmd.getPostSync().getInterruptSignalEnable());
     auto &postSyncData1 = walkerCmd.getPostSyncOpn1();
+    EXPECT_FALSE(postSyncData1.getInterruptSignalEnable());
     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, postSyncData1.getOperation());
 }
 
@@ -463,6 +466,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2WithVariousAto
                 EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<WalkerType>(walkerCmd, postSyncArgs);
 
                 auto &postSyncData = walkerCmd.getPostSync();
+                EXPECT_EQ(interruptEvent, postSyncData.getInterruptSignalEnable());
                 if (atomicSignalling) {
                     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_ATOMIC_OPN, postSyncData.getOperation());
                     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, postSyncData.getAtomicOpcode());
@@ -471,6 +475,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2WithVariousAto
                 }
                 if (hostStorageDuplicated) {
                     auto &postSyncData1 = walkerCmd.getPostSyncOpn1();
+                    EXPECT_FALSE(postSyncData1.getInterruptSignalEnable());
                     EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, postSyncData1.getOperation());
                 }
             }

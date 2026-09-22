@@ -410,7 +410,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData.getOperation());
         } else {
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSyncData.getDestinationAddress());
-            EXPECT_FALSE(postSyncData.getInterruptSignalEnable());
+            EXPECT_TRUE(postSyncData.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData.getSerializePostsyncOps());
             EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
         }
@@ -421,7 +421,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData1.getOperation());
         } else {
             EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
-            EXPECT_TRUE(postSyncData1.getInterruptSignalEnable());
+            EXPECT_FALSE(postSyncData1.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData1.getSerializePostsyncOps());
             EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
         }
@@ -448,7 +448,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
         } else {
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSyncData.getDestinationAddress());
-            EXPECT_FALSE(postSyncData.getInterruptSignalEnable());
+            EXPECT_TRUE(postSyncData.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData.getSerializePostsyncOps());
             EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
         }
@@ -459,7 +459,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData1.getOperation());
         } else {
             EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
-            EXPECT_TRUE(postSyncData1.getInterruptSignalEnable());
+            EXPECT_FALSE(postSyncData1.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData1.getSerializePostsyncOps());
             EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
         }
