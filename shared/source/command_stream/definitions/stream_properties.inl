@@ -31,6 +31,7 @@ struct StateComputeModePropertiesSupport {
     bool enableMemoryException : 1 = false;
     bool enableBreakpoints : 1 = false;
     bool enableForceExternalHaltAndForceException : 1 = false;
+    bool l1CachePolicy : 1 = false;
 };
 
 struct StateComputeModeProperties {
@@ -51,6 +52,7 @@ struct StateComputeModeProperties {
     StreamProperty enableMemoryException{};
     StreamProperty enableBreakpoints{};
     StreamProperty enableForceExternalHaltAndForceException{};
+    StreamProperty l1CachePolicy{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
@@ -85,7 +87,10 @@ struct StateComputeModeProperties {
     void setThreadArbitrationProperty(int32_t threadArbitrationPolicy);
 
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
+    const RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     int32_t defaultThreadArbitrationPolicy = 0;
+    int32_t defaultL1CachePolicy = StreamProperty::initValue;
+    int32_t defaultL1CachePolicyDebuggerActive = StreamProperty::initValue;
     bool propertiesSupportLoaded = false;
 };
 

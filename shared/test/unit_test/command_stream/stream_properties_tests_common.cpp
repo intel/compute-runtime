@@ -12,8 +12,11 @@
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -24,6 +27,8 @@ using namespace NEO;
 
 struct MockStateComputeModeProperties : public StateComputeModeProperties {
     using StateComputeModeProperties::clearIsDirtyPerContext;
+    using StateComputeModeProperties::defaultL1CachePolicy;
+    using StateComputeModeProperties::defaultL1CachePolicyDebuggerActive;
     using StateComputeModeProperties::defaultThreadArbitrationPolicy;
     using StateComputeModeProperties::propertiesSupportLoaded;
     using StateComputeModeProperties::scmPropertiesSupport;
@@ -410,6 +415,118 @@ TEST(StreamPropertiesTests, givenVariableRegisterSizeAllocationSettingWhenSettin
     scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
+}
+
+TEST(StreamPropertiesTests, givenL1CachePolicySettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    constexpr bool clearDirtyState = false;
+    constexpr bool coherencyRequired = false;
+    constexpr int32_t writeBackPolicy = 2;
+    constexpr PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.defaultL1CachePolicy = writeBackPolicy;
+    scmProperties.scmPropertiesSupport.l1CachePolicy = false;
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(StreamProperty::initValue, scmProperties.l1CachePolicy.value);
+
+    scmProperties.scmPropertiesSupport.l1CachePolicy = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(writeBackPolicy, scmProperties.l1CachePolicy.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(writeBackPolicy, scmProperties.l1CachePolicy.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(writeBackPolicy, scmProperties.l1CachePolicy.value);
+
+    scmProperties.resetState();
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(writeBackPolicy, scmProperties.l1CachePolicy.value);
+}
+
+struct MockL1CachePolicyProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
+    void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) const override {
+        propertiesSupport.l1CachePolicy = l1CachePolicySupported;
+    }
+
+    uint32_t getL1CachePolicy(bool isDebuggerActive) const override {
+        return isDebuggerActive ? debuggerActivePolicy : debuggerInactivePolicy;
+    }
+
+    bool l1CachePolicySupported = true;
+    uint32_t debuggerInactivePolicy = 2;
+    uint32_t debuggerActivePolicy = 0;
+};
+
+TEST(StreamPropertiesTests, givenL1CachePolicyNotSupportedWhenInitializingSupportThenDefaultPolicyIsNotSet) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    RAIIProductHelperFactory<MockL1CachePolicyProductHelper> raiiProductHelper{rootDeviceEnvironment};
+    raiiProductHelper.mockProductHelper->l1CachePolicySupported = false;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.initSupport(rootDeviceEnvironment);
+
+    EXPECT_FALSE(scmProperties.scmPropertiesSupport.l1CachePolicy);
+    EXPECT_EQ(StreamProperty::initValue, scmProperties.defaultL1CachePolicy);
+    EXPECT_EQ(StreamProperty::initValue, scmProperties.defaultL1CachePolicyDebuggerActive);
+}
+
+TEST(StreamPropertiesTests, givenL1CachePolicySupportedWhenInitializingSupportThenBothDefaultPoliciesAreTakenFromProductHelper) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    RAIIProductHelperFactory<MockL1CachePolicyProductHelper> raiiProductHelper{rootDeviceEnvironment};
+    auto mockProductHelper = raiiProductHelper.mockProductHelper;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.initSupport(rootDeviceEnvironment);
+
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.l1CachePolicy);
+    EXPECT_NE(mockProductHelper->debuggerInactivePolicy, mockProductHelper->debuggerActivePolicy);
+    EXPECT_EQ(static_cast<int32_t>(mockProductHelper->debuggerInactivePolicy), scmProperties.defaultL1CachePolicy);
+    EXPECT_EQ(static_cast<int32_t>(mockProductHelper->debuggerActivePolicy), scmProperties.defaultL1CachePolicyDebuggerActive);
+}
+
+TEST(StreamPropertiesTests, givenNoDebuggerWhenSettingL1CachePolicyPerContextThenDebuggerInactivePolicyIsUsed) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    RAIIProductHelperFactory<MockL1CachePolicyProductHelper> raiiProductHelper{rootDeviceEnvironment};
+    auto mockProductHelper = raiiProductHelper.mockProductHelper;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.initSupport(rootDeviceEnvironment);
+    scmProperties.setPropertiesPerContext(false, PreemptionMode::Disabled, false, false);
+
+    EXPECT_EQ(static_cast<int32_t>(mockProductHelper->debuggerInactivePolicy), scmProperties.l1CachePolicy.value);
+}
+
+TEST(StreamPropertiesTests, givenDebuggerCreatedAfterInitSupportWhenSettingL1CachePolicyPerContextThenDebuggerActivePolicyIsUsed) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    RAIIProductHelperFactory<MockL1CachePolicyProductHelper> raiiProductHelper{rootDeviceEnvironment};
+    auto mockProductHelper = raiiProductHelper.mockProductHelper;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.initSupport(rootDeviceEnvironment);
+
+    // sub device command stream receivers are created before RootDeviceEnvironment::initDebuggerL0
+    rootDeviceEnvironment.debugger.reset(new MockDebugger{});
+
+    scmProperties.setPropertiesPerContext(false, PreemptionMode::Disabled, false, false);
+
+    EXPECT_NE(mockProductHelper->debuggerInactivePolicy, mockProductHelper->debuggerActivePolicy);
+    EXPECT_EQ(static_cast<int32_t>(mockProductHelper->debuggerActivePolicy), scmProperties.l1CachePolicy.value);
 }
 
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
