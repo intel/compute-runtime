@@ -22,13 +22,16 @@ struct CapsXe3Core {
     static constexpr uint32_t cacheLineSize = 256u;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
     static constexpr uint32_t maxNumSamplers = 16u;
+    static constexpr uint32_t planarYuvMaxHeight = 16128u;
     static constexpr uint32_t rtasFormat = 2u;
     static constexpr uint32_t stackSizePerRay = 64u;
 
+    static constexpr size_t max3dImageWidthOrHeight = 16384u;
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize64k;
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool blitImageAllowedForDepthFormat = true;
+    static constexpr bool cacheFlushPriorToImageReadRequired = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;

@@ -31,11 +31,6 @@ inline uint32_t GfxCoreHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::hvAlign4Required() const {
-    return true;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
     return false;
 }
@@ -61,13 +56,6 @@ bool GfxCoreHelperHw<GfxFamily>::makeResidentBeforeLockNeeded(bool precondition)
 template <typename GfxFamily>
 inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return std::min(defaultMaxGroupSize, CommonConstants::maxWorkgroupSize);
-}
-
-constexpr uint32_t planarYuvMaxHeight = 16352;
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
-    return planarYuvMaxHeight;
 }
 
 template <typename GfxFamily>
@@ -127,11 +115,6 @@ inline bool GfxCoreHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo
         fusedEuDispatchEnabled = (debugManager.flags.CFEFusedEUDispatch.get() == 0);
     }
     return fusedEuDispatchEnabled;
-}
-
-template <>
-size_t GfxCoreHelperHw<Family>::getMax3dImageWidthOrHeight() const {
-    return 2048;
 }
 
 template <>

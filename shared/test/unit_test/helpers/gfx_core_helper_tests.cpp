@@ -1014,11 +1014,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlm
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSizePerThreadGroup(65536, releaseHelper));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.getPlanarYuvMaxHeight(), 16352u);
-}
-
 TEST_F(GfxCoreHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
@@ -1831,11 +1826,6 @@ HWTEST_F(GfxCoreHelperTest, givenDebugFlagForceUseOnlyGlobalTimestampsSetWhenCal
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_TRUE(gfxCoreHelper.useOnlyGlobalTimestamps());
-}
-
-HWTEST2_F(GfxCoreHelperTest, whenIsCacheFlushPriorImageReadRequiredCalledThenFalseIsReturned, IsAtMostXeCore) {
-    auto &helper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(helper.isCacheFlushPriorImageReadRequired());
 }
 
 HWTEST2_F(GfxCoreHelperTest, whenIsExtendedUsmPoolSizeEnabledRequiredCalledThenFalseIsReturned, IsAtMostXeCore) {

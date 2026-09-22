@@ -67,7 +67,6 @@ class GfxCoreHelper {
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
     virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
-    virtual bool hvAlign4Required() const = 0;
     virtual bool isBufferSizeSuitableForCompression(const size_t size) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const = 0;
     static bool compressedBuffersSupported(const HardwareInfo &hwInfo);
@@ -126,7 +125,6 @@ class GfxCoreHelper {
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
-    virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
     virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                              uint32_t initialTagCount, CommandStreamReceiverType csrType,
@@ -146,7 +144,6 @@ class GfxCoreHelper {
     virtual uint32_t getMaxScratchSize(const NEO::ProductHelper &productHelper) const = 0;
     virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
     virtual void encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const = 0;
     virtual void applyImageSurfaceStateMipAndMediaBlock(void *outMemory,
@@ -200,8 +197,6 @@ class GfxCoreHelper {
     virtual void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const = 0;
     virtual bool getSipBinaryFromExternalLib() const = 0;
     virtual uint32_t getImplicitArgsVersion() const = 0;
-
-    virtual bool isCacheFlushPriorImageReadRequired() const = 0;
 
     virtual uint32_t getQueuePriorityLevels() const = 0;
     virtual uint32_t getDefaultWalkerInlineDataSize() const = 0;
@@ -279,8 +274,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) override;
 
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
-
-    bool hvAlign4Required() const override;
 
     bool isBufferSizeSuitableForCompression(const size_t size) const override;
 
@@ -379,8 +372,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override;
 
-    uint32_t getPlanarYuvMaxHeight() const override;
-
     size_t getPreemptionAllocationAlignment() const override;
 
     std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
@@ -401,7 +392,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isScratchSpaceSurfaceStateAccessible() const override;
     uint32_t getMaxScratchSize(const NEO::ProductHelper &productHelper) const override;
     bool preferInternalBcsEngine() const override;
-    size_t getMax3dImageWidthOrHeight() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
     void encodeImageSurfaceState(void *outMemory, const ImageSurfaceStateInputs &inputs) const override;
     void applyImageSurfaceStateMipAndMediaBlock(void *outMemory,
@@ -454,8 +444,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getImplicitArgsVersion() const override;
 
     bool getSipBinaryFromExternalLib() const override;
-
-    bool isCacheFlushPriorImageReadRequired() const override;
 
     uint32_t getQueuePriorityLevels() const override;
     uint32_t getHwQueuePriority(int32_t apiPriority) const override;

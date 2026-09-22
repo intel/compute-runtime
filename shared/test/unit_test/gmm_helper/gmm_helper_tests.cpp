@@ -213,7 +213,7 @@ TEST_F(GmmHelperTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
     EXPECT_GT(imgInfo.slicePitch, 0u);
     EXPECT_GT(imgInfo.qPitch, 0u);
 
-    auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+    const auto &hwInfo = *this->rootDeviceEnvironment->getHardwareInfo();
 
     auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
     EXPECT_EQ(queryGmmResourceParams->Type, GMM_RESOURCE_TYPE::RESOURCE_3D);
@@ -227,7 +227,7 @@ TEST_F(GmmHelperTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
     EXPECT_EQ(queryGmmResourceParams->BaseHeight, 17u);
     EXPECT_EQ(queryGmmResourceParams->Depth, 17u);
     EXPECT_EQ(queryGmmResourceParams->ArraySize, 1u);
-    EXPECT_EQ(!!queryGmmResourceParams->Flags.Wa.__ForceOtherHVALIGN4, gfxCoreHelper.hvAlign4Required());
+    EXPECT_EQ(!!queryGmmResourceParams->Flags.Wa.__ForceOtherHVALIGN4, hwInfo.caps.hvAlign4Required);
 }
 
 TEST_F(GmmHelperTests, givenWidthWhenCreatingResourceThenSetWidth64Field) {

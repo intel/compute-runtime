@@ -17,10 +17,12 @@ struct Caps {
     uint32_t kernelBFloat16AtomicCapabilities = 0u;
     uint32_t kernelFp16AtomicCapabilities = 0u;
     uint32_t maxNumSamplers = 0u;
+    uint32_t planarYuvMaxHeight = 0u;
     uint32_t preferredWorkgroupCountPerSubslice = 0u;
     uint32_t rtasFormat = 0u;
     uint32_t stackSizePerRay = 0u;
 
+    size_t max3dImageWidthOrHeight = 0u;
     size_t svmCpuAlignment = 0u;
 
     bool adjustWalkOrderAvailable = false;
@@ -29,6 +31,7 @@ struct Caps {
     bool bFloat16ConversionSupported = false;
     bool bindlessAddressingDisabled = false;
     bool blitImageAllowedForDepthFormat = false;
+    bool cacheFlushPriorToImageReadRequired = false;
     bool deviceConfigStringTileCountIncluded = false;
     bool deviceConfigStringXeCuSegmentIncluded = false;
     bool directSubmissionLightSupported = false;
@@ -37,6 +40,7 @@ struct Caps {
     bool forceEmuInt32DivRemSPRequired = false;
     bool ftrXe2Compression = false;
     bool globalBindlessAllocatorEnabled = false;
+    bool hvAlign4Required = false;
     bool latePreemptionStartSupported = false;
     bool localOnlyAllowed = false;
     bool matrixMultiplyAccumulateSupported = false;

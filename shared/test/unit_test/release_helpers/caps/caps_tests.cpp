@@ -41,9 +41,11 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->kernelBFloat16AtomicCapabilities, hwInfo.caps.kernelBFloat16AtomicCapabilities);
         EXPECT_EQ(expectedCaps->kernelFp16AtomicCapabilities, hwInfo.caps.kernelFp16AtomicCapabilities);
         EXPECT_EQ(expectedCaps->maxNumSamplers, hwInfo.caps.maxNumSamplers);
+        EXPECT_EQ(expectedCaps->planarYuvMaxHeight, hwInfo.caps.planarYuvMaxHeight);
         EXPECT_EQ(expectedCaps->preferredWorkgroupCountPerSubslice, hwInfo.caps.preferredWorkgroupCountPerSubslice);
         EXPECT_EQ(expectedCaps->rtasFormat, hwInfo.caps.rtasFormat);
         EXPECT_EQ(expectedCaps->stackSizePerRay, hwInfo.caps.stackSizePerRay);
+        EXPECT_EQ(expectedCaps->max3dImageWidthOrHeight, hwInfo.caps.max3dImageWidthOrHeight);
         EXPECT_EQ(expectedCaps->svmCpuAlignment, hwInfo.caps.svmCpuAlignment);
         EXPECT_EQ(expectedCaps->adjustWalkOrderAvailable, hwInfo.caps.adjustWalkOrderAvailable);
         EXPECT_EQ(expectedCaps->auxSurfaceModeOverrideRequired, hwInfo.caps.auxSurfaceModeOverrideRequired);
@@ -51,6 +53,7 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->bFloat16ConversionSupported, hwInfo.caps.bFloat16ConversionSupported);
         EXPECT_EQ(expectedCaps->bindlessAddressingDisabled, hwInfo.caps.bindlessAddressingDisabled);
         EXPECT_EQ(expectedCaps->blitImageAllowedForDepthFormat, hwInfo.caps.blitImageAllowedForDepthFormat);
+        EXPECT_EQ(expectedCaps->cacheFlushPriorToImageReadRequired, hwInfo.caps.cacheFlushPriorToImageReadRequired);
         EXPECT_EQ(expectedCaps->deviceConfigStringTileCountIncluded, hwInfo.caps.deviceConfigStringTileCountIncluded);
         EXPECT_EQ(expectedCaps->deviceConfigStringXeCuSegmentIncluded, hwInfo.caps.deviceConfigStringXeCuSegmentIncluded);
         EXPECT_EQ(expectedCaps->directSubmissionLightSupported, hwInfo.caps.directSubmissionLightSupported);
@@ -59,6 +62,7 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->forceEmuInt32DivRemSPRequired, hwInfo.caps.forceEmuInt32DivRemSPRequired);
         EXPECT_EQ(expectedCaps->ftrXe2Compression, hwInfo.caps.ftrXe2Compression);
         EXPECT_EQ(expectedCaps->globalBindlessAllocatorEnabled, hwInfo.caps.globalBindlessAllocatorEnabled);
+        EXPECT_EQ(expectedCaps->hvAlign4Required, hwInfo.caps.hvAlign4Required);
         EXPECT_EQ(expectedCaps->latePreemptionStartSupported, hwInfo.caps.latePreemptionStartSupported);
         EXPECT_EQ(expectedCaps->localOnlyAllowed, hwInfo.caps.localOnlyAllowed);
         EXPECT_EQ(expectedCaps->matrixMultiplyAccumulateSupported, hwInfo.caps.matrixMultiplyAccumulateSupported);
@@ -94,9 +98,11 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_EQ(0u, caps.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(0u, caps.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, caps.maxNumSamplers);
+    EXPECT_EQ(0u, caps.planarYuvMaxHeight);
     EXPECT_EQ(0u, caps.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, caps.rtasFormat);
     EXPECT_EQ(0u, caps.stackSizePerRay);
+    EXPECT_EQ(0u, caps.max3dImageWidthOrHeight);
     EXPECT_EQ(0u, caps.svmCpuAlignment);
     EXPECT_FALSE(caps.adjustWalkOrderAvailable);
     EXPECT_FALSE(caps.auxSurfaceModeOverrideRequired);
@@ -104,6 +110,7 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.bFloat16ConversionSupported);
     EXPECT_FALSE(caps.bindlessAddressingDisabled);
     EXPECT_FALSE(caps.blitImageAllowedForDepthFormat);
+    EXPECT_FALSE(caps.cacheFlushPriorToImageReadRequired);
     EXPECT_FALSE(caps.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(caps.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(caps.directSubmissionLightSupported);
@@ -112,6 +119,7 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(caps.ftrXe2Compression);
     EXPECT_FALSE(caps.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(caps.hvAlign4Required);
     EXPECT_FALSE(caps.latePreemptionStartSupported);
     EXPECT_FALSE(caps.localOnlyAllowed);
     EXPECT_FALSE(caps.matrixMultiplyAccumulateSupported);

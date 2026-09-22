@@ -256,8 +256,8 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.localMemType = CL_LOCAL;
 
-    deviceInfo.image3DMaxWidth = gfxCoreHelper.getMax3dImageWidthOrHeight();
-    deviceInfo.image3DMaxHeight = gfxCoreHelper.getMax3dImageWidthOrHeight();
+    deviceInfo.image3DMaxWidth = hwInfo.caps.max3dImageWidthOrHeight;
+    deviceInfo.image3DMaxHeight = hwInfo.caps.max3dImageWidthOrHeight;
 
     // cl_khr_image2d_from_buffer
     deviceInfo.imagePitchAlignment = gfxCoreHelper.getPitchAlignmentForImage(rootDeviceEnvironment);
@@ -309,7 +309,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.globalVariablePreferredTotalSize = static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize);
 
     deviceInfo.planarYuvMaxWidth = 16384;
-    deviceInfo.planarYuvMaxHeight = gfxCoreHelper.getPlanarYuvMaxHeight();
+    deviceInfo.planarYuvMaxHeight = hwInfo.caps.planarYuvMaxHeight;
 
     deviceInfo.platformHostTimerResolution = getPlatformHostTimerResolution();
 

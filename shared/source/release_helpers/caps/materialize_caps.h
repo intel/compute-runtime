@@ -19,10 +19,12 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(kernelBFloat16AtomicCapabilities)                          \
     NEO_COPY_CAP_FUNC(kernelFp16AtomicCapabilities)                              \
     NEO_COPY_CAP_FUNC(maxNumSamplers)                                            \
+    NEO_COPY_CAP_FUNC(planarYuvMaxHeight)                                        \
     NEO_COPY_CAP_FUNC(preferredWorkgroupCountPerSubslice)                        \
     NEO_COPY_CAP_FUNC(rtasFormat)                                                \
     NEO_COPY_CAP_FUNC(stackSizePerRay)                                           \
                                                                                  \
+    NEO_COPY_CAP_FUNC(max3dImageWidthOrHeight)                                   \
     NEO_COPY_CAP_FUNC(svmCpuAlignment)                                           \
                                                                                  \
     NEO_COPY_CAP_FUNC(adjustWalkOrderAvailable)                                  \
@@ -31,6 +33,7 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(bFloat16ConversionSupported)                               \
     NEO_COPY_CAP_FUNC(bindlessAddressingDisabled)                                \
     NEO_COPY_CAP_FUNC(blitImageAllowedForDepthFormat)                            \
+    NEO_COPY_CAP_FUNC(cacheFlushPriorToImageReadRequired)                        \
     NEO_COPY_CAP_FUNC(deviceConfigStringTileCountIncluded)                       \
     NEO_COPY_CAP_FUNC(deviceConfigStringXeCuSegmentIncluded)                     \
     NEO_COPY_CAP_FUNC(directSubmissionLightSupported)                            \
@@ -39,6 +42,7 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(forceEmuInt32DivRemSPRequired)                             \
     NEO_COPY_CAP_FUNC(ftrXe2Compression)                                         \
     NEO_COPY_CAP_FUNC(globalBindlessAllocatorEnabled)                            \
+    NEO_COPY_CAP_FUNC(hvAlign4Required)                                          \
     NEO_COPY_CAP_FUNC(latePreemptionStartSupported)                              \
     NEO_COPY_CAP_FUNC(localOnlyAllowed)                                          \
     NEO_COPY_CAP_FUNC(matrixMultiplyAccumulateSupported)                         \

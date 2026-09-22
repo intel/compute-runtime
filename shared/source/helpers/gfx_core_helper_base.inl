@@ -49,11 +49,6 @@ bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t si
 }
 
 template <typename Family>
-size_t GfxCoreHelperHw<Family>::getMax3dImageWidthOrHeight() const {
-    return 16384;
-}
-
-template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return 4u;
 }
@@ -880,11 +875,6 @@ bool GfxCoreHelperHw<Family>::getSipBinaryFromExternalLib() const {
 template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getImplicitArgsVersion() const {
     return 0;
-}
-
-template <typename Family>
-bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
-    return false;
 }
 
 template <typename GfxFamily>

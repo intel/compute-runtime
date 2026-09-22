@@ -20,11 +20,14 @@ struct CapsGen12Lp {
     static constexpr uint32_t cacheLineSize = 64u;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
     static constexpr uint32_t maxNumSamplers = 16u;
+    static constexpr uint32_t planarYuvMaxHeight = 16352u;
 
+    static constexpr size_t max3dImageWidthOrHeight = 2048u;
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize2M;
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
+    static constexpr bool hvAlign4Required = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
 };

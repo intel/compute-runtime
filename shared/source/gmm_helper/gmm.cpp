@@ -167,11 +167,11 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
         break;
     }
 
-    auto &gfxCoreHelper = gmmHelper->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    const auto &hwInfo = *gmmHelper->getHardwareInfo();
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
     resourceParams->NoGfxMemory = 1; // dont allocate, only query for params
 
-    resourceParams->Usage = static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper, gmmHelper->getHardwareInfo()));
+    resourceParams->Usage = static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper, &hwInfo));
 
     resourceParams->Format = static_cast<GMM_RESOURCE_FORMAT>(imgInfo.surfaceFormat->gmmSurfaceFormat);
     resourceParams->Flags.Gpu.Texture = 1;
@@ -179,7 +179,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
     resourceParams->BaseHeight = imageHeight;
     resourceParams->Depth = imageDepth;
     resourceParams->ArraySize = imageCount;
-    resourceParams->Flags.Wa.__ForceOtherHVALIGN4 = gfxCoreHelper.hvAlign4Required();
+    resourceParams->Flags.Wa.__ForceOtherHVALIGN4 = hwInfo.caps.hvAlign4Required;
     resourceParams->MaxLod = imgInfo.baseMipLevel + imgInfo.mipCount;
 
     applyAuxFlagsForImage(imgInfo, preferCompressed);

@@ -119,11 +119,6 @@ bool GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &h
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
-    return true;
-}
-
-template <>
 bool GfxCoreHelperHw<Family>::isExtendedUsmPoolSizeEnabled() const {
     return true;
 }

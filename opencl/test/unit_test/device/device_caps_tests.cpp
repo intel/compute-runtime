@@ -18,7 +18,6 @@
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -1346,29 +1345,15 @@ TEST_F(DeviceGetCapsTest, givenPciBusInfoThenPciBusInfoExtensionAvailable) {
     EXPECT_EQ(caps.pciBusInfo.pci_function, pciBusInfo.pciFunction);
 }
 
-static bool getPlanarYuvHeightCalled = false;
-
-template <typename GfxFamily>
-class MyMockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
-  public:
-    uint32_t getPlanarYuvMaxHeight() const override {
-        getPlanarYuvHeightCalled = true;
-        return dummyPlanarYuvValue;
-    }
-    uint32_t dummyPlanarYuvValue = 0x12345;
-};
-
-HWTEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIsTakenFromHelper) {
+TEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIsTakenFromCaps) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    RAIIGfxCoreHelperFactory<MyMockGfxCoreHelper<FamilyType>> gfxCoreHelperBackup{*device->executionEnvironment->rootDeviceEnvironments[0]};
+    auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.planarYuvMaxHeight = 0x12345;
 
-    DriverInfoMock *driverInfoMock = new DriverInfoMock();
-    device->driverInfo.reset(driverInfoMock);
+    device->driverInfo = std::make_unique<DriverInfoMock>();
     device->initializeCaps();
-    EXPECT_TRUE(getPlanarYuvHeightCalled);
-    getPlanarYuvHeightCalled = false;
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_EQ(gfxCoreHelperBackup.mockGfxCoreHelper->dummyPlanarYuvValue, caps.planarYuvMaxHeight);
+
+    EXPECT_EQ(hwInfo.caps.planarYuvMaxHeight, device->getDeviceInfo().planarYuvMaxHeight);
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenReturnDefaultValues) {

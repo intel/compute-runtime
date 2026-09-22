@@ -44,11 +44,6 @@ bool GfxCoreHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::hvAlign4Required() const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
     return true;
 }
@@ -102,13 +97,6 @@ inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const Kern
     }
     defaultMaxGroupSize = adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, defaultMaxGroupSize, rootDeviceEnvironment);
     return std::min(defaultMaxGroupSize, CommonConstants::maxWorkgroupSize);
-}
-
-constexpr uint32_t planarYuvMaxHeight = 16128;
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
-    return planarYuvMaxHeight;
 }
 
 template <typename GfxFamily>

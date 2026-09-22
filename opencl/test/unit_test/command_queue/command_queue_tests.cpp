@@ -482,8 +482,8 @@ HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenRe
             commandStreamReceiver.directSubmissionAvailable = true;
 
             if (operation == CL_COMMAND_READ_IMAGE || operation == CL_COMMAND_COPY_IMAGE_TO_BUFFER) {
-                auto isCacheFlushPriorImageReadRequired = mockDevice->getGfxCoreHelper().isCacheFlushPriorImageReadRequired();
-                EXPECT_EQ(isCacheFlushPriorImageReadRequired, cmdQ.isTextureCacheFlushNeeded(operation));
+                const auto &hwInfo = mockDevice->getHardwareInfo();
+                EXPECT_EQ(hwInfo.caps.cacheFlushPriorToImageReadRequired, cmdQ.isTextureCacheFlushNeeded(operation));
             } else {
                 EXPECT_TRUE(cmdQ.isTextureCacheFlushNeeded(operation));
             }

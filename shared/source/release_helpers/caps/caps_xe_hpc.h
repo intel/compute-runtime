@@ -21,8 +21,10 @@ namespace NEO {
 struct CapsXeHpcCore {
     static constexpr uint32_t cacheLineSize = 64u;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
+    static constexpr uint32_t planarYuvMaxHeight = 16128u;
     static constexpr uint32_t rtasFormat = 1u;
 
+    static constexpr size_t max3dImageWidthOrHeight = 16384u;
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize64k;
 
     static constexpr bool bFloat16ConversionSupported = true;

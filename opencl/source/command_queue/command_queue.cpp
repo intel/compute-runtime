@@ -1022,10 +1022,11 @@ bool CommandQueue::isTextureCacheFlushNeeded(uint32_t commandType) const {
     if (this->isImageWriteOperation(commandType)) {
         return isDirectSubmissionEnabled;
     }
+    const auto &hwInfo = getDevice().getHardwareInfo();
     switch (commandType) {
     case CL_COMMAND_READ_IMAGE:
     case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
-        return isDirectSubmissionEnabled && getDevice().getGfxCoreHelper().isCacheFlushPriorImageReadRequired();
+        return isDirectSubmissionEnabled && hwInfo.caps.cacheFlushPriorToImageReadRequired;
     default:
         return false;
     }

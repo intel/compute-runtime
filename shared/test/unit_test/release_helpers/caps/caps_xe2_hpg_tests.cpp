@@ -48,9 +48,11 @@ TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_EQ(0u, capsBmgG21.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsBmgG21.kernelFp16AtomicCapabilities);
     EXPECT_EQ(16u, capsBmgG21.maxNumSamplers);
+    EXPECT_EQ(16128u, capsBmgG21.planarYuvMaxHeight);
     EXPECT_EQ(0u, capsBmgG21.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsBmgG21.rtasFormat);
     EXPECT_EQ(0u, capsBmgG21.stackSizePerRay);
+    EXPECT_EQ(16384u, capsBmgG21.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsBmgG21.svmCpuAlignment);
     EXPECT_FALSE(capsBmgG21.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsBmgG21.auxSurfaceModeOverrideRequired);
@@ -58,6 +60,7 @@ TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_TRUE(capsBmgG21.bFloat16ConversionSupported);
     EXPECT_FALSE(capsBmgG21.bindlessAddressingDisabled);
     EXPECT_TRUE(capsBmgG21.blitImageAllowedForDepthFormat);
+    EXPECT_TRUE(capsBmgG21.cacheFlushPriorToImageReadRequired);
     EXPECT_TRUE(capsBmgG21.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsBmgG21.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsBmgG21.directSubmissionLightSupported);
@@ -66,6 +69,7 @@ TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG21.forceEmuInt32DivRemSPRequired);
     EXPECT_TRUE(capsBmgG21.ftrXe2Compression);
     EXPECT_TRUE(capsBmgG21.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsBmgG21.hvAlign4Required);
     EXPECT_FALSE(capsBmgG21.latePreemptionStartSupported);
     EXPECT_FALSE(capsBmgG21.localOnlyAllowed);
     EXPECT_TRUE(capsBmgG21.matrixMultiplyAccumulateSupported);
@@ -91,9 +95,11 @@ TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_EQ(0u, capsBmgG31.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsBmgG31.kernelFp16AtomicCapabilities);
     EXPECT_EQ(16u, capsBmgG31.maxNumSamplers);
+    EXPECT_EQ(16128u, capsBmgG31.planarYuvMaxHeight);
     EXPECT_EQ(0u, capsBmgG31.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsBmgG31.rtasFormat);
     EXPECT_EQ(0u, capsBmgG31.stackSizePerRay);
+    EXPECT_EQ(16384u, capsBmgG31.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsBmgG31.svmCpuAlignment);
     EXPECT_FALSE(capsBmgG31.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsBmgG31.auxSurfaceModeOverrideRequired);
@@ -101,6 +107,7 @@ TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_TRUE(capsBmgG31.bFloat16ConversionSupported);
     EXPECT_FALSE(capsBmgG31.bindlessAddressingDisabled);
     EXPECT_TRUE(capsBmgG31.blitImageAllowedForDepthFormat);
+    EXPECT_TRUE(capsBmgG31.cacheFlushPriorToImageReadRequired);
     EXPECT_TRUE(capsBmgG31.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsBmgG31.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsBmgG31.directSubmissionLightSupported);
@@ -109,6 +116,7 @@ TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG31.forceEmuInt32DivRemSPRequired);
     EXPECT_TRUE(capsBmgG31.ftrXe2Compression);
     EXPECT_TRUE(capsBmgG31.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsBmgG31.hvAlign4Required);
     EXPECT_FALSE(capsBmgG31.latePreemptionStartSupported);
     EXPECT_FALSE(capsBmgG31.localOnlyAllowed);
     EXPECT_TRUE(capsBmgG31.matrixMultiplyAccumulateSupported);
@@ -134,9 +142,11 @@ TEST(CapsXe2HpgTest, givenLnlReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_EQ(0u, capsLnl.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsLnl.kernelFp16AtomicCapabilities);
     EXPECT_EQ(16u, capsLnl.maxNumSamplers);
+    EXPECT_EQ(16128u, capsLnl.planarYuvMaxHeight);
     EXPECT_EQ(0u, capsLnl.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsLnl.rtasFormat);
     EXPECT_EQ(0u, capsLnl.stackSizePerRay);
+    EXPECT_EQ(16384u, capsLnl.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsLnl.svmCpuAlignment);
     EXPECT_FALSE(capsLnl.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsLnl.auxSurfaceModeOverrideRequired);
@@ -144,6 +154,7 @@ TEST(CapsXe2HpgTest, givenLnlReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_TRUE(capsLnl.bFloat16ConversionSupported);
     EXPECT_FALSE(capsLnl.bindlessAddressingDisabled);
     EXPECT_TRUE(capsLnl.blitImageAllowedForDepthFormat);
+    EXPECT_TRUE(capsLnl.cacheFlushPriorToImageReadRequired);
     EXPECT_TRUE(capsLnl.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsLnl.deviceConfigStringXeCuSegmentIncluded);
     EXPECT_FALSE(capsLnl.directSubmissionLightSupported);
@@ -152,6 +163,7 @@ TEST(CapsXe2HpgTest, givenLnlReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsLnl.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsLnl.ftrXe2Compression);
     EXPECT_TRUE(capsLnl.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsLnl.hvAlign4Required);
     EXPECT_TRUE(capsLnl.latePreemptionStartSupported);
     EXPECT_FALSE(capsLnl.localOnlyAllowed);
     EXPECT_TRUE(capsLnl.matrixMultiplyAccumulateSupported);
