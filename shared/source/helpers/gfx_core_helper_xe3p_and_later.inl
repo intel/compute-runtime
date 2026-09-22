@@ -390,9 +390,10 @@ void MemorySynchronizationCommands<Family>::addStateCacheFlush(LinearStream &com
     cmd.setRenderTargetCacheFlushEnable(true);
     cmd.setStateCacheInvalidationEnable(true);
     cmd.setTextureCacheInvalidationEnable(true);
+    cmd.setQueueDrainMode(QueueDrainMode::drainAllQueues);
 
-    if (debugManager.flags.DrainAllQueuesOnCacheInvalidation.get() != 0) {
-        cmd.setQueueDrainMode(QueueDrainMode::drainAllQueues);
+    if (debugManager.flags.DrainAllQueuesOnCacheInvalidation.get() == 0) {
+        cmd.setQueueDrainMode(QueueDrainMode::drainOnlyCurrentQueue);
     }
     if (debugManager.flags.PcQueueDrainMode.get() != -1) {
         cmd.setQueueDrainMode(!!debugManager.flags.PcQueueDrainMode.get());
