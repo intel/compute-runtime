@@ -22,19 +22,6 @@ using namespace NEO;
 
 using Dg1HwInfo = ::testing::Test;
 
-DG1TEST_F(Dg1HwInfo, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-
-    uint64_t config = 0xdeadbeef;
-    gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr));
-    EXPECT_EQ(0u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
-    EXPECT_EQ(0u, gtSystemInfo.EUCount);
-}
-
 DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
         true, false};

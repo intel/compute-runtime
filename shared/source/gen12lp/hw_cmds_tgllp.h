@@ -7,7 +7,10 @@
 
 #pragma once
 #include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/tgllp/device_ids_configs_tgllp.h"
 #include "shared/source/helpers/hw_info.h"
+
+#include <algorithm>
 
 namespace NEO {
 
@@ -24,18 +27,14 @@ struct TGLLP : public Gen12LpFamily {
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
+
+    static bool isHw1x2x16(const HardwareInfo &hwInfo) {
+        auto it = std::find(tgllpHw1x2x16DeviceIds.begin(), tgllpHw1x2x16DeviceIds.end(), hwInfo.platform.usDeviceID);
+        return it != tgllpHw1x2x16DeviceIds.end();
+    }
 };
 
-class TgllpHw1x6x16 : public TGLLP {
-  public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
-    static const HardwareInfo hwInfo;
-
-  private:
-    static GT_SYSTEM_INFO gtSystemInfo;
-};
-
-class TgllpHw1x2x16 : public TGLLP {
+class TgllpHwConfig : public TGLLP {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
     static const HardwareInfo hwInfo;

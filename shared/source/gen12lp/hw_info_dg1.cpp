@@ -129,8 +129,10 @@ void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->DualSubSliceCount = 6;
+    if (gtSysInfo->SliceCount == 0) {
+        gtSysInfo->SliceCount = 1;
+        gtSysInfo->DualSubSliceCount = 6;
+    }
     gtSysInfo->L3CacheSizeInKb = 16384;
     gtSysInfo->L3BankCount = 8;
 
@@ -142,14 +144,7 @@ void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 const HardwareInfo DG1::hwInfo = Dg1HwConfig::hwInfo;
 
 void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    if (hwInfoConfig == 0x100060010) {
-        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else if (hwInfoConfig == 0x0) {
-        // Default config
-        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else {
-        UNRECOVERABLE_IF(true);
-    }
+    Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
 void (*DG1::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupDG1HardwareInfoImpl;

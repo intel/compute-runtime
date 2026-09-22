@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -26,36 +27,25 @@ using namespace NEO;
 
 using TgllpHwInfo = ::testing::Test;
 
-TGLLPTEST_F(TgllpHwInfo, givenHwInfoErrorneousConfigStringThenThrow) {
+TGLLPTEST_F(TgllpHwInfo, whenSettingDeviceIdThenGeometryIsPickedBasedOnDeviceId) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    uint64_t config = 0xdeadbeef;
-    gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr));
-    EXPECT_EQ(0u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
-    EXPECT_EQ(0u, gtSystemInfo.EUCount);
-}
-
-TGLLPTEST_F(TgllpHwInfo, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-
-    uint64_t config = 0x100060010;
-
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(6u, gtSystemInfo.DualSubSliceCount);
-
-    config = 0x100020010;
-
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(2u, gtSystemInfo.DualSubSliceCount);
+    for (const auto &deviceId : tgllpDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        gtSystemInfo = {0};
+        hardwareInfoSetup[productFamily](&hwInfo, false, 0x0, nullptr);
+        EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+        if (TGLLP::isHw1x2x16(hwInfo)) {
+            EXPECT_EQ(2u, gtSystemInfo.DualSubSliceCount);
+            EXPECT_EQ_VAL(1920u, gtSystemInfo.L3CacheSizeInKb);
+            EXPECT_EQ(4u, gtSystemInfo.L3BankCount);
+        } else {
+            EXPECT_EQ(6u, gtSystemInfo.DualSubSliceCount);
+            EXPECT_EQ_VAL(3840u, gtSystemInfo.L3CacheSizeInKb);
+            EXPECT_EQ(8u, gtSystemInfo.L3BankCount);
+        }
+    }
 }
 
 TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {

@@ -15,7 +15,7 @@
 
 using HwInfoOverrideTest = ::testing::Test;
 
-HWTEST2_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenTrueIsReturned, IsAtLeastXeCore) {
+TEST_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenTrueIsReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.HardwareInfoOverride.set("1x2x3");
 

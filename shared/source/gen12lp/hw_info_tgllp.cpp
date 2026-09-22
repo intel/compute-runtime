@@ -116,63 +116,36 @@ void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAn
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo TgllpHw1x6x16::hwInfo = {
+const HardwareInfo TgllpHwConfig::hwInfo = {
     &TGLLP::platform,
     &TGLLP::featureTable,
     &TGLLP::workaroundTable,
-    &TgllpHw1x6x16::gtSystemInfo,
+    &TgllpHwConfig::gtSystemInfo,
     TGLLP::capabilityTable};
 
-GT_SYSTEM_INFO TgllpHw1x6x16::gtSystemInfo = {0};
-void TgllpHw1x6x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+GT_SYSTEM_INFO TgllpHwConfig::gtSystemInfo = {0};
+void TgllpHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
     TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->DualSubSliceCount = 6;
-    gtSysInfo->L3CacheSizeInKb = 3840;
-    gtSysInfo->L3BankCount = 8;
+
+    const bool isHw1x2x16 = TGLLP::isHw1x2x16(*hwInfo);
+    if (gtSysInfo->SliceCount == 0) {
+        gtSysInfo->SliceCount = 1;
+        gtSysInfo->DualSubSliceCount = isHw1x2x16 ? 2 : 6;
+    }
+    gtSysInfo->L3CacheSizeInKb = isHw1x2x16 ? 1920 : 3840;
+    gtSysInfo->L3BankCount = isHw1x2x16 ? 4 : 8;
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo TgllpHw1x2x16::hwInfo = {
-    &TGLLP::platform,
-    &TGLLP::featureTable,
-    &TGLLP::workaroundTable,
-    &TgllpHw1x2x16::gtSystemInfo,
-    TGLLP::capabilityTable};
-
-GT_SYSTEM_INFO TgllpHw1x2x16::gtSystemInfo = {0};
-void TgllpHw1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->DualSubSliceCount = 2;
-    gtSysInfo->L3CacheSizeInKb = 1920;
-    gtSysInfo->L3BankCount = 4;
-
-    gtSysInfo->CCSInfo.IsValid = true;
-    gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
-    gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
-};
-
-const HardwareInfo TGLLP::hwInfo = TgllpHw1x6x16::hwInfo;
+const HardwareInfo TGLLP::hwInfo = TgllpHwConfig::hwInfo;
 
 void setupTGLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    if (hwInfoConfig == 0x100060010) {
-        TgllpHw1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else if (hwInfoConfig == 0x100020010) {
-        TgllpHw1x2x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else if (hwInfoConfig == 0x0) {
-        // Default config
-        TgllpHw1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else {
-        UNRECOVERABLE_IF(true);
-    }
+    TgllpHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
 }
 
 void (*TGLLP::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupTGLLPHardwareInfoImpl;

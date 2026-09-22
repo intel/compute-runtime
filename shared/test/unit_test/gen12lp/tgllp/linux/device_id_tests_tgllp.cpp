@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,13 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenTgllpSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 7> expectedDescriptors = {{
-        {0x9A49, &TgllpHw1x6x16::hwInfo, &TgllpHw1x6x16::setupHardwareInfo},
-        {0x9A40, &TgllpHw1x6x16::hwInfo, &TgllpHw1x6x16::setupHardwareInfo},
-        {0x9A59, &TgllpHw1x6x16::hwInfo, &TgllpHw1x6x16::setupHardwareInfo},
-        {0x9A60, &TgllpHw1x2x16::hwInfo, &TgllpHw1x2x16::setupHardwareInfo},
-        {0x9A68, &TgllpHw1x2x16::hwInfo, &TgllpHw1x2x16::setupHardwareInfo},
-        {0x9A70, &TgllpHw1x2x16::hwInfo, &TgllpHw1x2x16::setupHardwareInfo},
-        {0x9A78, &TgllpHw1x2x16::hwInfo, &TgllpHw1x2x16::setupHardwareInfo},
+        {0x9A49, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
+        {0x9A40, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
+        {0x9A59, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
+        {0x9A60, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
+        {0x9A68, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
+        {0x9A70, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
+        {0x9A78, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
     }};
 
     testImpl(expectedDescriptors);

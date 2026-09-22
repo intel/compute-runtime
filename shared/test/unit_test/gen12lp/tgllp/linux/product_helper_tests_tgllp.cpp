@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ struct TgllpProductHelperLinux : ProductHelperTestLinux {
 
 template <typename T>
 class TgllpHwInfoLinux : public ::testing::Test {};
-typedef ::testing::Types<TgllpHw1x6x16> tgllpTestTypes;
+typedef ::testing::Types<TgllpHwConfig> tgllpTestTypes;
 TYPED_TEST_SUITE(TgllpHwInfoLinux, tgllpTestTypes);
 TYPED_TEST(TgllpHwInfoLinux, gtSetupIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

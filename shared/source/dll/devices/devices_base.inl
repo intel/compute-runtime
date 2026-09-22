@@ -153,13 +153,13 @@ NAMEDDEVICE(0x7D41, ArlHwConfig, "Intel(R) Graphics")
 #ifdef SUPPORT_GEN12LP
 
 #ifdef SUPPORT_TGLLP
-NAMEDDEVICE(0x9A49, TgllpHw1x6x16, "Intel(R) Iris(R) Xe Graphics")
-NAMEDDEVICE(0x9A40, TgllpHw1x6x16, "Intel(R) Iris(R) Xe Graphics")
-DEVICE(0x9A59, TgllpHw1x6x16)
-NAMEDDEVICE(0x9A60, TgllpHw1x2x16, "Intel(R) UHD Graphics")
-NAMEDDEVICE(0x9A68, TgllpHw1x2x16, "Intel(R) UHD Graphics")
-NAMEDDEVICE(0x9A70, TgllpHw1x2x16, "Intel(R) UHD Graphics")
-NAMEDDEVICE(0x9A78, TgllpHw1x2x16, "Intel(R) UHD Graphics")
+NAMEDDEVICE(0x9A49, TgllpHwConfig, "Intel(R) Iris(R) Xe Graphics")
+NAMEDDEVICE(0x9A40, TgllpHwConfig, "Intel(R) Iris(R) Xe Graphics")
+DEVICE(0x9A59, TgllpHwConfig)
+NAMEDDEVICE(0x9A60, TgllpHwConfig, "Intel(R) UHD Graphics")
+NAMEDDEVICE(0x9A68, TgllpHwConfig, "Intel(R) UHD Graphics")
+NAMEDDEVICE(0x9A70, TgllpHwConfig, "Intel(R) UHD Graphics")
+NAMEDDEVICE(0x9A78, TgllpHwConfig, "Intel(R) UHD Graphics")
 #endif
 
 #ifdef SUPPORT_DG1
