@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
@@ -495,6 +496,7 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
     NEO::CommandContainer &getCmdContainer() {
+        DEBUG_BREAK_IF(isImmediateType() && this->cmdQImmediate == nullptr);
         return this->commandContainer;
     }
 
@@ -503,6 +505,15 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
     NEO::CommandStreamReceiver *getCsr(bool copyOffload) const;
+    NEO::CommandStreamReceiver *getCsr(bool copyOffload, ze_result_t &returnValue);
+
+    ze_result_t ensureImmediateResourcesInitialized() {
+        if (!isImmediateType() || (this->cmdQImmediate != nullptr) || (this->immediateResourcesInitializationResult != ZE_RESULT_SUCCESS)) {
+            return this->immediateResourcesInitializationResult;
+        }
+        this->immediateResourcesInitializationResult = initializeImmediateResources();
+        return this->immediateResourcesInitializationResult;
+    }
 
     bool hasKernelWithAssert() {
         return kernelWithAssertAppended;
@@ -654,7 +665,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool verifyMemory(const void *allocationPtr,
                       const void *expectedData,
                       size_t sizeOfComparison,
-                      uint32_t comparisonMode) const;
+                      uint32_t comparisonMode);
 
     bool isBcsSplitEnabled() const { return (bcsSplitMode != BcsSplitParams::BcsSplitMode::disabled); }
     void setForSubCopyBcsSplit();
@@ -668,6 +679,7 @@ struct CommandList : _ze_command_list_handle_t {
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
     void enableInOrderExecution();
     bool isInOrderExecutionEnabled() const { return inOrderExecInfo.get(); }
+    bool isInOrderExecutionRequested() const { return NEO::isValueSet(flags, ZE_COMMAND_LIST_FLAG_IN_ORDER); }
     void storeReferenceTsToMappedEvents(bool clear);
     void addToMappedEventList(Event *event);
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
@@ -737,6 +749,9 @@ struct CommandList : _ze_command_list_handle_t {
 
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
+
+    ze_result_t initializeImmediateResources();
+    NEO::CommandStreamReceiver *obtainCsrForImmediateCmdList(ze_result_t &returnValue, bool &queueOwnershipTaken);
 
     virtual void dispatchHostFunction(ze_host_function_callback_t pHostFunction,
                                       void *pUserData,
@@ -834,6 +849,7 @@ struct CommandList : _ze_command_list_handle_t {
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
     CommandQueue *cmdQImmediateCopyOffload = nullptr;
+    NEO::CommandStreamReceiver *preassignedImmediateCsr = nullptr;
     Device *device = nullptr;
     NEO::ScratchSpaceController *usedScratchController = nullptr;
     Graph *graphCapture = nullptr;                    // immediate cmdlist graph capturing
@@ -855,6 +871,12 @@ struct CommandList : _ze_command_list_handle_t {
     static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
 
     uint32_t commandListPerThreadScratchSize[2]{};
+
+    ze_command_queue_desc_t immediateCmdListQueueDesc = {};
+    std::optional<int> immediateQueuePriorityLevel = std::nullopt;
+    ze_command_queue_priority_t immediateQueuePriority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    NEO::SynchronizedDispatchMode requestedSynchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
+    ze_result_t immediateResourcesInitializationResult = ZE_RESULT_SUCCESS;
 
     ze_command_list_flags_t flags = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
@@ -920,6 +942,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool swTagsEnabled = false;
     bool patchPreambleEnabled = false;
     bool frontEndControllerEnabled = false;
+    bool copyOffloadHintRequested = false;
+    bool useInternalCopyEngine = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

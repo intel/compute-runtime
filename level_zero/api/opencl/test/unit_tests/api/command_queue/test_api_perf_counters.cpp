@@ -5,9 +5,13 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/metrics_library.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
@@ -17,6 +21,7 @@
 #include "level_zero/api/opencl/source/event/leo_event.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include "CL/cl.h"
 
@@ -56,6 +61,8 @@ class MockPerformanceCounters : public NEO::PerformanceCounters {
 
     bool enableCountersConfiguration() override { return true; }
     void releaseCountersConfiguration() override {}
+
+    using NEO::PerformanceCounters::usingCcsEngine;
 };
 
 struct MockPerfCountersFixture : public Test<OclFixture> {
@@ -261,6 +268,93 @@ TEST_F(MockPerfCountersFixture, givenUserEventWhenGettingEventInfoThenUserComman
     cl_context eventContext = nullptr;
     EXPECT_EQ(CL_SUCCESS, event->getEventInfo(CL_EVENT_CONTEXT, sizeof(eventContext), &eventContext, nullptr));
     EXPECT_EQ(getClContext(), eventContext);
+}
+
+TEST_F(MockPerfCountersFixture, givenDeferredImmediateCmdListInitializationWhenSettingPerfCountersEnabledThenResourcesAreInitializedAndEngineTypeIsDetected) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
+    NEO::debugManager.flags.DeferCmdQBcsInitialization.set(1);
+
+    auto devicePerfCounters = setupDevicePerfCounters();
+
+    cl_int errcode = CL_SUCCESS;
+    auto queue = clCreateCommandQueue(getClContext(), clDevice, 0, &errcode);
+    ASSERT_NE(nullptr, queue);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    auto leoQueue = NEO::LEO::castToObject<CommandQueue>(queue);
+    auto immediateCmdList = leoQueue->getL0Object();
+    ASSERT_NE(nullptr, immediateCmdList);
+
+    ASSERT_TRUE(immediateCmdList->isInOrderExecutionRequested());
+    EXPECT_FALSE(immediateCmdList->isInOrderExecutionEnabled());
+
+    EXPECT_TRUE(leoQueue->setPerfCountersEnabled());
+    EXPECT_TRUE(leoQueue->isPerfCountersEnabled());
+    EXPECT_EQ(1u, devicePerfCounters->getReferenceNumber());
+
+    EXPECT_TRUE(immediateCmdList->isInOrderExecutionEnabled());
+
+    auto csr = immediateCmdList->getCsr(false);
+    ASSERT_NE(nullptr, csr);
+    const bool expectedCcsEngine = NEO::EngineHelpers::isCcs(csr->getOsContext().getEngineType());
+    EXPECT_EQ(expectedCcsEngine, devicePerfCounters->usingCcsEngine);
+
+    clReleaseCommandQueue(queue);
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+}
+
+TEST_F(MockPerfCountersFixture, givenDeferredImmediateCmdListInitializationWhenCreatingPerfCountersCommandQueueThenQueueIsUsable) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
+    NEO::debugManager.flags.DeferCmdQBcsInitialization.set(1);
+
+    setInstrumentationEnabled(true);
+    auto devicePerfCounters = setupDevicePerfCounters();
+
+    cl_int errcode = CL_SUCCESS;
+    auto queue = clCreatePerfCountersCommandQueueINTEL(getClContext(), clDevice, CL_QUEUE_PROFILING_ENABLE, 0, &errcode);
+    ASSERT_NE(nullptr, queue);
+    EXPECT_EQ(CL_SUCCESS, errcode);
+
+    auto leoQueue = NEO::LEO::castToObject<CommandQueue>(queue);
+    EXPECT_TRUE(leoQueue->isPerfCountersEnabled());
+    EXPECT_EQ(1u, devicePerfCounters->getReferenceNumber());
+
+    auto immediateCmdList = leoQueue->getL0Object();
+    ASSERT_NE(nullptr, immediateCmdList);
+    EXPECT_TRUE(immediateCmdList->isInOrderExecutionEnabled());
+
+    auto csr = immediateCmdList->getCsr(false);
+    ASSERT_NE(nullptr, csr);
+    EXPECT_EQ(NEO::EngineHelpers::isCcs(csr->getOsContext().getEngineType()), devicePerfCounters->usingCcsEngine);
+
+    EXPECT_EQ(CL_SUCCESS, clFinish(queue));
+
+    clReleaseCommandQueue(queue);
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+}
+
+TEST_F(MockPerfCountersFixture, givenDeferredImmediateCmdListInitializationAndNoPerformanceCountersWhenSettingPerfCountersEnabledThenResourcesStayUninitialized) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
+    NEO::debugManager.flags.DeferCmdQBcsInitialization.set(1);
+
+    cl_int errcode = CL_SUCCESS;
+    auto queue = clCreateCommandQueue(getClContext(), clDevice, 0, &errcode);
+    ASSERT_NE(nullptr, queue);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    auto leoQueue = NEO::LEO::castToObject<CommandQueue>(queue);
+    auto immediateCmdList = leoQueue->getL0Object();
+    ASSERT_NE(nullptr, immediateCmdList);
+    ASSERT_EQ(nullptr, leoQueue->getPerfCounters());
+
+    EXPECT_FALSE(leoQueue->setPerfCountersEnabled());
+    EXPECT_FALSE(leoQueue->isPerfCountersEnabled());
+    EXPECT_FALSE(immediateCmdList->isInOrderExecutionEnabled());
+
+    clReleaseCommandQueue(queue);
 }
 
 } // namespace ult

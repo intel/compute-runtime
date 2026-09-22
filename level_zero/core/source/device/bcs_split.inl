@@ -67,7 +67,10 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
 
         auto lock = subCmdList->getCsr(false)->obtainUniqueOwnership();
 
-        subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false);
+        auto spaceCheckStatus = subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false);
+        if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
+            return spaceCheckStatus;
+        }
 
         if (signalSplitBarrier) {
             auto barrierEventHandle = barrierEvent->toHandle();

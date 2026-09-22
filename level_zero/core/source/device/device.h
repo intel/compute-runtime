@@ -237,6 +237,9 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void populateSubDeviceCopyEngineGroups();
     const NEO::EngineGroupsT &getSubDeviceCopyEngineGroups() const { return subDeviceCopyEngineGroups; }
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
+    bool isQueueGroupOrdinalAndIndexValid(uint32_t ordinal, uint32_t index);
+    bool adjustOrdinalAndIndexForForcedBcsEngine(uint32_t &ordinal, uint32_t &index);
+    ze_command_queue_priority_t getEffectiveQueuePriority(ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool copyOnly);
     void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
     NEO::HostFunctionAllocator *getHostFunctionAllocator(NEO::CommandStreamReceiver *csr);
 

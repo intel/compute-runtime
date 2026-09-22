@@ -131,7 +131,7 @@ bool CommandQueue::setPerfCountersEnabled() {
     if (!perfCounters) {
         return false;
     }
-
+    getL0Object()->ensureImmediateResourcesInitialized();
     auto csr = getL0Object()->getCsr(false);
     bool isCcsEngine = csr ? NEO::EngineHelpers::isCcs(csr->getOsContext().getEngineType()) : false;
 

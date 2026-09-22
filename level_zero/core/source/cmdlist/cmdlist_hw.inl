@@ -110,6 +110,11 @@ void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
+    auto immediateInitStatus = ensureImmediateResourcesInitialized();
+    if (immediateInitStatus != ZE_RESULT_SUCCESS) {
+        return immediateInitStatus;
+    }
+
     if (flatCapture) {
         flatCapture->reset();
     }
@@ -652,6 +657,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
                                                                                       ze_event_handle_t hEvent,
                                                                                       uint32_t numWaitEvents,
                                                                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    auto immediateInitStatus = ensureImmediateResourcesInitialized();
+    if (immediateInitStatus != ZE_RESULT_SUCCESS) {
+        return immediateInitStatus;
+    }
 
     CmdListWaitEventParameters waitEventsParameters = {
         .outWaitCmds = nullptr,
@@ -4312,6 +4321,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::hostSynchronize(uint64_t timeo
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reserveSpace(size_t size, void **ptr) {
+    DEBUG_BREAK_IF(this->isImmediateType());
+
     auto availableSpace = commandContainer.getCommandStream()->getAvailableSpace();
     if (availableSpace < size) {
         *ptr = nullptr;

@@ -1572,7 +1572,10 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
         return executionTarget->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParams);
     } else {
         UNRECOVERABLE_IF(this->orderedCommands->empty());
-
+        auto result = executionTarget->ensureImmediateResourcesInitialized();
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
         if (this->externalCbEventStorage->externalCbEventsPresent()) {
             this->externalCbEventStorage->updateExecutorContainer(executionTarget);
             this->externalCbEventStorage->attachExternalCbEventsToExecutableGraph();
@@ -1609,6 +1612,10 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
     if (nullptr != this->executionTarget) {
         executionTarget = this->executionTarget;
     }
+    auto res = executionTarget->ensureImmediateResourcesInitialized();
+    if (res != ZE_RESULT_SUCCESS) {
+        return res;
+    }
 
     CommandListExecutionInternalOptions internalOptions = {};
     if (this->externalCbEventStorage->externalCbEventsPresent()) {
@@ -1626,7 +1633,7 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
         CommandList::fromHandle(hCmdList)->close();
     }
     executionTarget->setPatchingPreamble(this->usePatchingPreamble);
-    auto res = executionTarget->appendCommandLists(1, &hCmdList, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
+    res = executionTarget->appendCommandLists(1, &hCmdList, hSignalEvent, numWaitEvents, phWaitEvents, internalOptions);
     executionTarget->setPatchingPreamble(false);
     return res;
 }

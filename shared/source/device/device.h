@@ -309,6 +309,12 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     }
 
     MOCKABLE_VIRTUAL bool initializeSpirvQueriesFromIGC();
+    MOCKABLE_VIRTUAL bool isDeferredImmediateCmdListEnabled() const {
+        return true;
+    }
+    MOCKABLE_VIRTUAL bool areSecondaryEnginesAvailable() const {
+        return secondaryEngines.size() > 0;
+    }
 
   protected:
     Device() = delete;

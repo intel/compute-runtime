@@ -45,6 +45,7 @@ using MultiTileImmediateCommandListTest = Test<MultiTileCommandListFixture<true,
 
 HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImmediateCommandListThenExpectPartitionCountMatchTileCount, IsXeCore) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    commandList->ensureImmediateResourcesInitialized();
     EXPECT_EQ(2u, commandList->partitionCount);
 
     auto returnValue = commandList->reset();
@@ -56,6 +57,7 @@ using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixtu
 
 HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCreatingInternalImmediateCommandListThenExpectPartitionCountEqualOne, IsXeCore) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    commandList->ensureImmediateResourcesInitialized();
     EXPECT_EQ(1u, commandList->partitionCount);
 
     auto returnValue = commandList->reset();

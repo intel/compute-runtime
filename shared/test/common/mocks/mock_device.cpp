@@ -211,11 +211,32 @@ AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     return Device::getAilConfigurationHelper();
 }
 
+bool MockDevice::areSecondaryEnginesAvailable() const {
+    if (disableSecondaryEngines) {
+        return false;
+    }
+    return Device::areSecondaryEnginesAvailable();
+}
+
 EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel) {
     if (disableSecondaryEngines) {
         return nullptr;
     }
     return RootDevice::getSecondaryEngineCsr(engineTypeUsage, priorityLevel);
+}
+
+bool MockDevice::isDeferredImmediateCmdListEnabled() const {
+    if (NEO::debugManager.flags.DeferCmdQGpgpuInitialization.get() != -1 || NEO::debugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
+        return true;
+    }
+    return false;
+}
+
+bool MockSubDevice::isDeferredImmediateCmdListEnabled() const {
+    if (NEO::debugManager.flags.DeferCmdQGpgpuInitialization.get() != -1 || NEO::debugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
+        return true;
+    }
+    return false;
 }
 
 std::unique_ptr<CommandStreamReceiver> MockDevice::createCommandStreamReceiver() const {

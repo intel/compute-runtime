@@ -63,6 +63,8 @@ struct MockSubDevice : public SubDevice {
     bool queryPeerAccess(Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) override {
         return invokeMockQueryPeerAccess(*this, queryPeerAccessFunc, peerDevice, probeAllocPtr, handle);
     }
+    bool isDeferredImmediateCmdListEnabled() const override;
+
     MockQueryPeerAccessFunc queryPeerAccessFunc;
 };
 
@@ -214,6 +216,8 @@ class MockDevice : public RootDevice {
     }
 
     EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel) override;
+    bool isDeferredImmediateCmdListEnabled() const override;
+    bool areSecondaryEnginesAvailable() const override;
 
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;

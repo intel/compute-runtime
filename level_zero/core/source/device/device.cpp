@@ -1869,6 +1869,81 @@ bool Device::isQueueGroupOrdinalValid(uint32_t ordinal) {
     return true;
 }
 
+bool Device::adjustOrdinalAndIndexForForcedBcsEngine(uint32_t &ordinal, uint32_t &index) {
+    if ((NEO::debugManager.flags.ForceBcsEngineIndex.get() == -1) || !NEO::EngineHelper::isCopyOnlyEngineType(getEngineGroupTypeForOrdinal(ordinal))) {
+        return true;
+    }
+
+    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
+    uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
+
+    index = static_cast<uint32_t>(NEO::debugManager.flags.ForceBcsEngineIndex.get());
+
+    constexpr uint32_t invalidOrdinal = std::numeric_limits<uint32_t>::max();
+
+    auto findOrdinal = [&](NEO::EngineGroupType type) -> uint32_t {
+        bool subDeviceCopyEngines = (ordinal >= numEngineGroups);
+        auto &lookupGroup = subDeviceCopyEngines ? this->subDeviceCopyEngineGroups : engineGroups;
+
+        uint32_t foundOrdinal = invalidOrdinal;
+
+        for (uint32_t i = 0; i < lookupGroup.size(); i++) {
+            if (lookupGroup[i].engineGroupType == type) {
+                foundOrdinal = (i + (subDeviceCopyEngines ? numEngineGroups : 0));
+                break;
+            }
+        }
+
+        return foundOrdinal;
+    };
+
+    if (index == 0 && getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::copy) {
+        ordinal = findOrdinal(NEO::EngineGroupType::copy);
+    } else if (index > 0) {
+        if (getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::linkedCopy) {
+            ordinal = findOrdinal(NEO::EngineGroupType::linkedCopy);
+        }
+        index--;
+    }
+
+    return (ordinal != invalidOrdinal);
+}
+
+bool Device::isQueueGroupOrdinalAndIndexValid(uint32_t ordinal, uint32_t index) {
+    if (!isQueueGroupOrdinalValid(ordinal)) {
+        return false;
+    }
+
+    if (!adjustOrdinalAndIndexForForcedBcsEngine(ordinal, index)) {
+        return false;
+    }
+
+    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
+    uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
+
+    if (ordinal < numEngineGroups) {
+        return index < engineGroups[ordinal].engines.size();
+    }
+
+    return index < this->subDeviceCopyEngineGroups[ordinal - numEngineGroups].engines.size();
+}
+
+ze_command_queue_priority_t Device::getEffectiveQueuePriority(ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool copyOnly) {
+    if (priorityLevel.has_value()) {
+        priority = (priorityLevel.value() < 0) ? ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH : ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    }
+
+    if (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
+        return ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
+    }
+
+    if (isSuitableForLowPriority(priority, copyOnly)) {
+        return ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+    }
+
+    return ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+}
+
 ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint, bool *queueOwnershipTaken) {
     *queueOwnershipTaken = false;
     auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
@@ -1878,39 +1953,8 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if ((NEO::debugManager.flags.ForceBcsEngineIndex.get() != -1) && NEO::EngineHelper::isCopyOnlyEngineType(getEngineGroupTypeForOrdinal(ordinal))) {
-        index = static_cast<uint32_t>(NEO::debugManager.flags.ForceBcsEngineIndex.get());
-
-        constexpr uint32_t invalidOrdinal = std::numeric_limits<uint32_t>::max();
-
-        auto findOrdinal = [&](NEO::EngineGroupType type) -> uint32_t {
-            bool subDeviceCopyEngines = (ordinal >= numEngineGroups);
-            auto &lookupGroup = subDeviceCopyEngines ? this->subDeviceCopyEngineGroups : engineGroups;
-
-            uint32_t ordinal = invalidOrdinal;
-
-            for (uint32_t i = 0; i < lookupGroup.size(); i++) {
-                if (lookupGroup[i].engineGroupType == type) {
-                    ordinal = (i + (subDeviceCopyEngines ? numEngineGroups : 0));
-                    break;
-                }
-            }
-
-            return ordinal;
-        };
-
-        if (index == 0 && getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::copy) {
-            ordinal = findOrdinal(NEO::EngineGroupType::copy);
-        } else if (index > 0) {
-            if (getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::linkedCopy) {
-                ordinal = findOrdinal(NEO::EngineGroupType::linkedCopy);
-            }
-            index--;
-        }
-
-        if (ordinal == invalidOrdinal) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+    if (!adjustOrdinalAndIndexForForcedBcsEngine(ordinal, index)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     const NEO::GfxCoreHelper &gfxCoreHelper = neoDevice->getGfxCoreHelper();
@@ -1920,17 +1964,11 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
     auto engineGroupType = getEngineGroupTypeForOrdinal(ordinal);
     bool copyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
-    if (priorityLevel.has_value()) {
-        if (priorityLevel.value() < 0) {
-            priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
-        } else {
-            priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        }
-    }
+    auto effectivePriority = getEffectiveQueuePriority(priority, priorityLevel, copyOnly);
 
-    if (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
+    if (effectivePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
         contextPriority = NEO::EngineUsage::highPriority;
-    } else if (isSuitableForLowPriority(priority, copyOnly)) {
+    } else if (effectivePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW) {
         contextPriority = NEO::EngineUsage::lowPriority;
     }
 
@@ -1978,27 +2016,31 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
 
     auto &osContext = (*csr)->getOsContext();
 
-    if (secondaryContextsEnabled) {
+    if (secondaryContextsEnabled &&
+        neoDevice->areSecondaryEnginesAvailable() &&
+        neoDevice->isSecondaryContextEngineType(osContext.getEngineType())) {
         std::optional<uint32_t> hwPriority = std::nullopt;
         if (priorityLevel.has_value()) {
             hwPriority = gfxCoreHelper.getHwQueuePriority(priorityLevel.value());
         }
-        *queueOwnershipTaken = selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr);
+        if (!selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr)) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+        *queueOwnershipTaken = true;
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
 bool Device::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> hwPriority, NEO::CommandStreamReceiver **csr) {
-    if (neoDevice->isSecondaryContextEngineType(engineType)) {
-        NEO::EngineTypeUsage engineTypeUsage;
-        engineTypeUsage.first = engineType;
-        engineTypeUsage.second = engineUsage;
-        auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority);
-        if (engine) {
-            *csr = engine->commandStreamReceiver;
-            return true;
-        }
+
+    NEO::EngineTypeUsage engineTypeUsage;
+    engineTypeUsage.first = engineType;
+    engineTypeUsage.second = engineUsage;
+    auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority);
+    if (engine) {
+        *csr = engine->commandStreamReceiver;
+        return true;
     }
 
     return false;

@@ -28,8 +28,9 @@ template <>
 bool CommandListCoreFamilyImmediate<IGFX_XE_HPC_CORE>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) {
     const auto copyOffloadModeForOperation = getCopyOffloadModeForOperation(copyOffload);
 
-    auto csr = getCsr(copyOffload);
-    if (!csr->directSubmissionRelaxedOrderingEnabled()) {
+    ze_result_t initializationResult = ZE_RESULT_SUCCESS;
+    auto csr = getCsr(copyOffload, initializationResult);
+    if (!csr || !csr->directSubmissionRelaxedOrderingEnabled()) {
         return false;
     }
 
