@@ -1760,7 +1760,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSignal() {
     ze_result_t ret = ZE_RESULT_SUCCESS;
-    if (this->latestOperationHasCbEventWithProfiling || this->isInOrderCounterSignalPending()) {
+    if ((!this->isHeaplessModeEnabled() && this->latestOperationHasHeapfullCbEventWithProfiling) || this->isInOrderCounterSignalPending()) {
         this->appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
         this->inOrderExecInfo->addCounterValue(this->getInOrderIncrementValue());
         this->handleInOrderCounterOverflow(false);

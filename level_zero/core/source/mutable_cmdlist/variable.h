@@ -94,7 +94,6 @@ struct EventValueProperties {
     bool noopState = false;
     bool isCbEventBoundToCmdList = false;
     bool hasStandaloneProfilingNode = false;
-    bool cbEventWithProfiling = false;
     bool isExternalFlag = false;
     bool patchPreambleNoopState = false;
     bool qwordInUse = false;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -18,8 +19,8 @@ namespace L0 {
 namespace ult {
 
 namespace {
-struct CbProfilingEventAccessor : public ::L0::Event {
-    using ::L0::Event::cbEventWithProfiling;
+struct HeapfullProfilingEventAccessor : public ::L0::Event {
+    using ::L0::Event::heapfullCbEventWithProfiling;
 };
 } // namespace
 
@@ -1696,54 +1697,27 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
-            givenCbSignalTimestampEventWithProfilingWhenMutatingSignalEventThenProfilingFlagIsPropagated) {
+            givenCbSignalTimestampEventWhenMutatingSignalEventThenHeapfullProfilingFlagMatchesPlatform) {
     auto event = this->createTestEvent(true, false, true, false, false);
     ASSERT_NE(nullptr, event);
 
     this->attachCbEvent(event);
-    event->setCbEventWithProfiling(true);
 
     createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
     auto ret = this->variable->setAsSignalEvent(event, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ASSERT_TRUE(this->variable->desc.eventValue.hasStandaloneProfilingNode);
-    EXPECT_TRUE(this->variable->desc.eventValue.cbEventWithProfiling);
 
     auto newEvent = this->createTestEvent(true, false, true, false, false);
     ASSERT_NE(nullptr, newEvent);
-    EXPECT_FALSE(static_cast<CbProfilingEventAccessor *>(newEvent)->cbEventWithProfiling);
+    EXPECT_FALSE(static_cast<HeapfullProfilingEventAccessor *>(newEvent)->heapfullCbEventWithProfiling);
 
     ret = this->variable->setValue(0, 0, newEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
 
-    EXPECT_TRUE(static_cast<CbProfilingEventAccessor *>(newEvent)->cbEventWithProfiling);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE,
-            VariableInOrderTest,
-            givenCbSignalTimestampEventWithoutProfilingSignalingWhenMutatingSignalEventThenProfilingFlagIsCleared) {
-    auto event = this->createTestEvent(true, false, true, false, false);
-    ASSERT_NE(nullptr, event);
-
-    this->attachCbEvent(event);
-    ASSERT_FALSE(event->isCbEventWithProfiling());
-
-    createVariable(L0::MCL::VariableType::signalEvent, true, -1, -1);
-    auto ret = this->variable->setAsSignalEvent(event, nullptr, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    ASSERT_TRUE(this->variable->desc.eventValue.hasStandaloneProfilingNode);
-    EXPECT_FALSE(this->variable->desc.eventValue.cbEventWithProfiling);
-
-    auto newEvent = this->createTestEvent(true, false, true, false, false);
-    ASSERT_NE(nullptr, newEvent);
-    static_cast<CbProfilingEventAccessor *>(newEvent)->cbEventWithProfiling = true;
-
-    ret = this->variable->setValue(0, 0, newEvent);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(this->variable->desc.eventValue.event, newEvent);
-
-    EXPECT_FALSE(static_cast<CbProfilingEventAccessor *>(newEvent)->cbEventWithProfiling);
+    const bool expectedHeapfull = !device->getGfxCoreHelper().duplicatedInOrderCounterStorageEnabled();
+    EXPECT_EQ(expectedHeapfull, static_cast<HeapfullProfilingEventAccessor *>(newEvent)->heapfullCbEventWithProfiling);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
