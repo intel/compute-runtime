@@ -67,6 +67,7 @@ class DirectSubmissionController {
             isActive = other.isActive.load();
             isStopped = other.isStopped.load();
             taskCount = other.taskCount.load();
+            idleSince = other.idleSince;
         }
         DirectSubmissionState &operator=(const DirectSubmissionState &other) {
             if (this == &other) {
@@ -75,6 +76,7 @@ class DirectSubmissionController {
             this->isActive = other.isActive.load();
             this->isStopped = other.isStopped.load();
             this->taskCount = other.taskCount.load();
+            this->idleSince = other.idleSince;
             return *this;
         }
 
@@ -87,6 +89,7 @@ class DirectSubmissionController {
         std::atomic_bool isActive{false};
         std::atomic_bool isStopped{true};
         std::atomic<TaskCountType> taskCount{0};
+        std::optional<SteadyClock::time_point> idleSince{};
     };
 
     static void *controlDirectSubmissionsState(void *self);
