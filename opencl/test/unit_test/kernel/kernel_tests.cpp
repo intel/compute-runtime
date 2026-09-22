@@ -2131,15 +2131,15 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAnd
     MockContext mockCtx(&*this->pClDevice);
     MockKernelWithInternals mockKernel(mockCtx);
 
-    void *systemPtr = malloc(256);
+    // systemPtr is only ever used as an address token, never dereferenced.
+    uint8_t data{};
+    void *systemPtr = &data;
 
     auto svmData = mockKernel.mockContext->getSVMAllocsManager()->getSVMAlloc(systemPtr);
     EXPECT_EQ(nullptr, svmData);
 
     auto status = clSetKernelExecInfo(mockKernel.mockMultiDeviceKernel, CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL, sizeof(systemPtr), &systemPtr);
     EXPECT_EQ(CL_SUCCESS, status);
-
-    free(systemPtr);
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAndSharedSystemNotSupportedThenInvalidValueIsReturned) {
@@ -2153,15 +2153,15 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAnd
     MockContext mockCtx(&*this->pClDevice);
     MockKernelWithInternals mockKernel(mockCtx);
 
-    void *systemPtr = malloc(256);
+    // systemPtr is only ever used as an address token, never dereferenced.
+    uint8_t data{};
+    void *systemPtr = &data;
 
     auto svmData = mockKernel.mockContext->getSVMAllocsManager()->getSVMAlloc(systemPtr);
     EXPECT_EQ(nullptr, svmData);
 
     auto status = clSetKernelExecInfo(mockKernel.mockMultiDeviceKernel, CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL, sizeof(systemPtr), &systemPtr);
     EXPECT_EQ(CL_INVALID_VALUE, status);
-
-    free(systemPtr);
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicAndHasIndirectStatelessAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {

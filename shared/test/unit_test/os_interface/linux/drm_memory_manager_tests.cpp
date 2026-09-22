@@ -8546,11 +8546,10 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetch
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnTrue) {
 
-    void *ptr = malloc(1024);
+    uint8_t data{};
 
     auto subDeviceIds = NEO::SubDeviceIdsVec{0};
-    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, mockRootDeviceIndex));
-    free(ptr);
+    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(&data, sizeof(data), subDeviceIds, mockRootDeviceIndex));
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnFalse) {
@@ -8570,12 +8569,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledT
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
 
-    void *ptr = malloc(1024);
+    uint8_t data{};
 
     auto subDeviceIds = NEO::SubDeviceIdsVec{0};
-    EXPECT_FALSE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, mockRootDeviceIndex));
+    EXPECT_FALSE(memoryManager->prefetchSharedSystemAlloc(&data, sizeof(data), subDeviceIds, mockRootDeviceIndex));
     EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemPrefetchCalled);
-    free(ptr);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBufferAllocationThenAllocationShouldNotPageFaultAndExplicitResidencyIsNotRequired) {

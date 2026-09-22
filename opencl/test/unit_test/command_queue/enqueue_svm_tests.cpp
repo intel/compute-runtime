@@ -2458,16 +2458,15 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerAndSystemPtrWhenEnqueueMemFillThenMo
     auto memoryManager = context->getMemoryManager();
     context->memoryManager = mockMemoryManager.get();
 
-    void *systemPtr = malloc(256);
+    uint8_t data{};
 
     auto pageFaultManagerPtr = static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager());
     EXPECT_EQ(pageFaultManagerPtr->moveAllocationToGpuDomainCalled, 0);
 
-    pCmdQ->enqueueSVMMemFill(systemPtr, &pattern, 256, 256, 0, nullptr, nullptr);
+    pCmdQ->enqueueSVMMemFill(&data, &pattern, 256, 256, 0, nullptr, nullptr);
 
     EXPECT_EQ(pageFaultManagerPtr->moveAllocationToGpuDomainCalled, 0);
 
-    free(systemPtr);
     context->memoryManager = memoryManager;
 }
 

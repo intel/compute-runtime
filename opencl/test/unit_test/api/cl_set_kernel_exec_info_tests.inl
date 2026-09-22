@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -338,9 +338,9 @@ TEST_F(clSetKernelExecInfoTests, GivenSystemPtrWithSharedSystemEnabledWhenSettin
         GTEST_SKIP();
     }
 
-    void *systemPtr = malloc(256);
+    uint8_t data{};
 
-    void *pSvmPtrList[] = {systemPtr};
+    void *pSvmPtrList[] = {&data};
     size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
@@ -350,17 +350,15 @@ TEST_F(clSetKernelExecInfoTests, GivenSystemPtrWithSharedSystemEnabledWhenSettin
         pSvmPtrList                   // const void *param_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    free(systemPtr);
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenSystemPtrWithSharedSystemNotEnabledWhenSettingKernelExecInfoThenInvalidValueErrorIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
-    void *systemPtr = malloc(256);
+    uint8_t data{};
 
-    void *pSvmPtrList[] = {systemPtr};
+    void *pSvmPtrList[] = {&data};
     size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
@@ -370,8 +368,6 @@ TEST_F(clSetKernelExecInfoTests, GivenSystemPtrWithSharedSystemNotEnabledWhenSet
         pSvmPtrList                   // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    free(systemPtr);
 }
 
 } // namespace ULT
