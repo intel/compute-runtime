@@ -24,6 +24,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -785,6 +786,30 @@ KernelDispatchStatsTracker &CommandContainer::obtainKernelDispatchStats() {
         this->kernelDispatchStats = std::make_unique<KernelDispatchStatsTracker>();
     }
     return *this->kernelDispatchStats;
+}
+
+COLD_SECTION void CommandContainer::trackKernelDispatchStats(const KernelDescriptor &kernelDescriptor, const uint32_t *groupSize,
+                                                             uint32_t threadGroupIdXDimension, uint32_t threadGroupIdYDimension, uint32_t threadGroupIdZDimension,
+                                                             uint32_t slmTotalSizePerThreadGroup, uint32_t threadsPerThreadGroup, uint32_t threadGroupCount,
+                                                             bool isIndirect) {
+    this->obtainKernelDispatchStats().trackDispatch({
+        .kernelName = kernelDescriptor.kernelMetadata.kernelName,
+        .globalWorkSize = {static_cast<uint64_t>(groupSize[0]) * threadGroupIdXDimension,
+                           static_cast<uint64_t>(groupSize[1]) * threadGroupIdYDimension,
+                           static_cast<uint64_t>(groupSize[2]) * threadGroupIdZDimension},
+        .localWorkSize = {groupSize[0], groupSize[1], groupSize[2]},
+        .simdSize = kernelDescriptor.kernelAttributes.simdSize,
+        .numGrfRequired = kernelDescriptor.kernelAttributes.numGrfRequired,
+        .slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize,
+        .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+        .barrierCount = kernelDescriptor.kernelAttributes.barrierCount,
+        .perThreadScratchSize = {kernelDescriptor.kernelAttributes.perThreadScratchSize[0],
+                                 kernelDescriptor.kernelAttributes.perThreadScratchSize[1]},
+        .threadsPerThreadGroup = threadsPerThreadGroup,
+        .threadGroupCount = threadGroupCount,
+        .usesSystolicMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode,
+        .isIndirect = isIndirect,
+    });
 }
 
 std::optional<uint64_t> CommandContainer::getCachedIohOffset(uint64_t threadDataHash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const {

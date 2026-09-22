@@ -12,6 +12,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
@@ -764,6 +765,50 @@ TEST_F(CommandContainerTest, givenTrackedKernelDispatchStatsWhenCmdContainerIsRe
     cmdContainer->reset();
 
     EXPECT_TRUE(cmdContainer->peekKernelDispatchStats()->isEmpty());
+}
+
+TEST_F(CommandContainerTest, givenKernelDescriptorWhenTrackingKernelDispatchStatsThenDispatchParametersAreReported) {
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+
+    KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelMetadata.kernelName = "myKernel";
+    kernelDescriptor.kernelAttributes.simdSize = 16;
+    kernelDescriptor.kernelAttributes.numGrfRequired = 256;
+    kernelDescriptor.kernelAttributes.slmInlineSize = 512;
+    kernelDescriptor.kernelAttributes.barrierCount = 2;
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 64;
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[1] = 128;
+    kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
+
+    const uint32_t groupSize[3] = {4, 2, 1};
+    cmdContainer->trackKernelDispatchStats(kernelDescriptor, groupSize, 8, 4, 2, 1024, 3, 64, true);
+
+    KernelDispatchStats expectedStats{};
+    expectedStats.kernelName = "myKernel";
+    expectedStats.globalWorkSize[0] = 32;
+    expectedStats.globalWorkSize[1] = 8;
+    expectedStats.globalWorkSize[2] = 2;
+    expectedStats.localWorkSize[0] = 4;
+    expectedStats.localWorkSize[1] = 2;
+    expectedStats.localWorkSize[2] = 1;
+    expectedStats.simdSize = 16;
+    expectedStats.numGrfRequired = 256;
+    expectedStats.slmInlineSize = 512;
+    expectedStats.slmTotalSizePerThreadGroup = 1024;
+    expectedStats.barrierCount = 2;
+    expectedStats.perThreadScratchSize[0] = 64;
+    expectedStats.perThreadScratchSize[1] = 128;
+    expectedStats.threadsPerThreadGroup = 3;
+    expectedStats.threadGroupCount = 64;
+    expectedStats.usesSystolicMode = true;
+    expectedStats.isIndirect = true;
+
+    KernelDispatchStatsTracker expectedTracker;
+    expectedTracker.trackDispatch(expectedStats);
+
+    ASSERT_NE(nullptr, cmdContainer->peekKernelDispatchStats());
+    EXPECT_EQ(expectedTracker.createReport(), cmdContainer->peekKernelDispatchStats()->createReport());
 }
 
 class CommandContainerHeaps : public DeviceFixture,

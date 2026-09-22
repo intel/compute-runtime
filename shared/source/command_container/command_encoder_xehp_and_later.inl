@@ -454,25 +454,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  idd.getThreadGroupDispatchSize());
 
     if (debugManager.flags.LogKernelDispatchStats.get() && !args.makeCommandView) {
-        const auto groupSize = args.dispatchInterface->getGroupSize();
-        container.obtainKernelDispatchStats().trackDispatch({
-            .kernelName = kernelDescriptor.kernelMetadata.kernelName,
-            .globalWorkSize = {static_cast<uint64_t>(groupSize[0]) * walkerCmd.getThreadGroupIdXDimension(),
-                               static_cast<uint64_t>(groupSize[1]) * walkerCmd.getThreadGroupIdYDimension(),
-                               static_cast<uint64_t>(groupSize[2]) * walkerCmd.getThreadGroupIdZDimension()},
-            .localWorkSize = {groupSize[0], groupSize[1], groupSize[2]},
-            .simdSize = kernelDescriptor.kernelAttributes.simdSize,
-            .numGrfRequired = kernelDescriptor.kernelAttributes.numGrfRequired,
-            .slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize,
-            .slmTotalSizePerThreadGroup = args.dispatchInterface->getSlmTotalSizePerThreadGroup(),
-            .barrierCount = kernelDescriptor.kernelAttributes.barrierCount,
-            .perThreadScratchSize = {kernelDescriptor.kernelAttributes.perThreadScratchSize[0],
-                                     kernelDescriptor.kernelAttributes.perThreadScratchSize[1]},
-            .threadsPerThreadGroup = threadsPerThreadGroup,
-            .threadGroupCount = threadGroupCount,
-            .usesSystolicMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode,
-            .isIndirect = args.isIndirect,
-        });
+        container.trackKernelDispatchStats(kernelDescriptor, args.dispatchInterface->getGroupSize(),
+                                           walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension(),
+                                           args.dispatchInterface->getSlmTotalSizePerThreadGroup(), threadsPerThreadGroup, threadGroupCount,
+                                           args.isIndirect);
     }
 
     EncodeSlmSizePerSubSliceArgs slmArgs{

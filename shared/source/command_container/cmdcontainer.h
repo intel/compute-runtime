@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
@@ -26,6 +27,7 @@ class Device;
 class GraphicsAllocation;
 class HeapHelper;
 class IndirectHeap;
+struct KernelDescriptor;
 class KernelDispatchStatsTracker;
 class LinearStream;
 class ReservedIndirectHeap;
@@ -237,6 +239,10 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
 
     KernelDispatchStatsTracker &obtainKernelDispatchStats();
     KernelDispatchStatsTracker *peekKernelDispatchStats() const { return kernelDispatchStats.get(); }
+    COLD_SECTION void trackKernelDispatchStats(const KernelDescriptor &kernelDescriptor, const uint32_t *groupSize,
+                                               uint32_t threadGroupIdXDimension, uint32_t threadGroupIdYDimension, uint32_t threadGroupIdZDimension,
+                                               uint32_t slmTotalSizePerThreadGroup, uint32_t threadsPerThreadGroup, uint32_t threadGroupCount,
+                                               bool isIndirect);
 
   protected:
     size_t getAlignedCmdBufferSize() const;
