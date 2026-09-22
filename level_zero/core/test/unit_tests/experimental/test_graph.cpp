@@ -4351,6 +4351,257 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     subCmdlist.cmdQImmediate = nullptr;
 }
 
+TEST_F(GraphExecution, GivenExecutableGraphWithSingleSegmentWhenSegmentSubmissionFailsThenExecuteReturnsSameError) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<CommandQueue> cmdQueue;
+    Mock<CommandList> cmdlist;
+    cmdlist.cmdQImmediate = &cmdQueue;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+
+    MockGraph srcGraph(&ctx, true);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 0U, nullptr);
+    srcGraph.stopCapturing();
+    cmdlist.setGraphCaptureTarget(nullptr);
+
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(srcGraph);
+
+    cmdlist.appendCommandListsResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    auto res = execGraph.execute(&cmdlist, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
+    EXPECT_EQ(1U, cmdlist.appendCommandListsCalled);
+    cmdlist.cmdQImmediate = nullptr;
+}
+
+TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenFirstSegmentSubmissionFailsThenExecuteReturnsErrorWithoutSubmittingSubGraphSegment) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningNewCmdList ctx;
+    MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
+    MockGraphCmdListWithContext mainExecCmdlist{&ctx};
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    Mock<CommandQueue> cmdQueue;
+    mainRecordCmdlist.device = this->device;
+    mainExecCmdlist.cmdQImmediate = &cmdQueue;
+    mainExecCmdlist.device = this->device;
+    subCmdlist.cmdQImmediate = &cmdQueue;
+    subCmdlist.device = this->device;
+    auto subCmdlistHandle = subCmdlist.toHandle();
+
+    Mock<Event> signalEventParent; // fork
+    Mock<Event> signalEventChild;  // join
+
+    ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
+    ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
+    auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
+    srcGraph.startCapturingFrom(mainRecordCmdlist, false);
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, signalEventParentHandle, 0U, nullptr);
+
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdlistHandle, signalEventChildHandle, 1U, &signalEventParentHandle);
+
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, nullptr, 1U, &signalEventChildHandle);
+
+    srcGraph.stopCapturing();
+    mainRecordCmdlist.setGraphCaptureTarget(nullptr);
+
+    ExecutableGraph execMultiGraph;
+    GraphInstatiateSettings settings;
+    settings.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
+    execMultiGraph.instantiateFrom(srcGraph, settings);
+
+    mainExecCmdlist.appendCommandListsResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+
+    auto res = execMultiGraph.execute(&mainExecCmdlist, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+    EXPECT_EQ(1U, mainExecCmdlist.appendCommandListsCalled);
+    EXPECT_EQ(0U, subCmdlist.appendCommandListsCalled);
+
+    mainExecCmdlist.cmdQImmediate = nullptr;
+    subCmdlist.cmdQImmediate = nullptr;
+}
+
+TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubGraphSegmentSubmissionFailsThenExecuteReturnsSameError) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningNewCmdList ctx;
+    MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
+    MockGraphCmdListWithContext mainExecCmdlist{&ctx};
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    Mock<CommandQueue> cmdQueue;
+    mainRecordCmdlist.device = this->device;
+    mainExecCmdlist.cmdQImmediate = &cmdQueue;
+    mainExecCmdlist.device = this->device;
+    subCmdlist.cmdQImmediate = &cmdQueue;
+    subCmdlist.device = this->device;
+    auto subCmdlistHandle = subCmdlist.toHandle();
+
+    Mock<Event> signalEventParent; // fork
+    Mock<Event> signalEventChild;  // join
+
+    ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
+    ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
+    auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
+    srcGraph.startCapturingFrom(mainRecordCmdlist, false);
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, signalEventParentHandle, 0U, nullptr);
+
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdlistHandle, signalEventChildHandle, 1U, &signalEventParentHandle);
+
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, nullptr, 1U, &signalEventChildHandle);
+
+    srcGraph.stopCapturing();
+    mainRecordCmdlist.setGraphCaptureTarget(nullptr);
+
+    ExecutableGraph execMultiGraph;
+    GraphInstatiateSettings settings;
+    settings.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
+    execMultiGraph.instantiateFrom(srcGraph, settings);
+
+    subCmdlist.appendCommandListsResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    auto res = execMultiGraph.execute(&mainExecCmdlist, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
+    EXPECT_EQ(1U, mainExecCmdlist.appendCommandListsCalled);
+    EXPECT_EQ(1U, subCmdlist.appendCommandListsCalled);
+
+    mainExecCmdlist.cmdQImmediate = nullptr;
+    subCmdlist.cmdQImmediate = nullptr;
+}
+
+TEST_F(GraphExecution, GivenExecutableGraphSplitIntoThreeSegmentsWhenMiddleSegmentSubmissionFailsThenExecuteReturnsErrorWithoutSubmittingLastSegment) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningNewCmdList ctx;
+    MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
+    MockGraphCmdListWithContext mainExecCmdlist{&ctx};
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    Mock<CommandQueue> cmdQueue;
+    mainRecordCmdlist.device = this->device;
+    mainExecCmdlist.cmdQImmediate = &cmdQueue;
+    mainExecCmdlist.device = this->device;
+    subCmdlist.cmdQImmediate = &cmdQueue;
+    subCmdlist.device = this->device;
+    auto subCmdlistHandle = subCmdlist.toHandle();
+
+    Mock<Event> signalEventParent; // fork
+    Mock<Event> signalEventChild;  // join
+
+    ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
+    ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
+    auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
+    srcGraph.startCapturingFrom(mainRecordCmdlist, false);
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, signalEventParentHandle, 0U, nullptr);
+
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdlistHandle, signalEventChildHandle, 1U, &signalEventParentHandle);
+
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, nullptr, 1U, &signalEventChildHandle);
+
+    srcGraph.stopCapturing();
+    mainRecordCmdlist.setGraphCaptureTarget(nullptr);
+
+    ExecutableGraph execMultiGraph;
+    GraphInstatiateSettings settings;
+    settings.forkPolicy = GraphInstatiateSettings::ForkPolicySplitLevels;
+    execMultiGraph.instantiateFrom(srcGraph, settings);
+
+    subCmdlist.appendCommandListsResult = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+
+    Mock<Event> signalEvent;
+    auto res = execMultiGraph.execute(&mainExecCmdlist, nullptr, &signalEvent, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
+    EXPECT_EQ(1U, mainExecCmdlist.appendCommandListsCalled);
+    EXPECT_EQ(1U, subCmdlist.appendCommandListsCalled);
+
+    mainExecCmdlist.cmdQImmediate = nullptr;
+    subCmdlist.cmdQImmediate = nullptr;
+}
+
+TEST_F(GraphExecution, GivenExecutableGraphSplitIntoThreeSegmentsWhenLastSegmentSubmissionFailsThenExecuteReturnsSameError) {
+    struct MockGraphCmdListFailingAfterNthCall : MockGraphCmdListWithContext {
+        using MockGraphCmdListWithContext::MockGraphCmdListWithContext;
+        ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
+                                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                       CommandListExecutionInternalOptions &internalOptions) override {
+            appendCommandListsCalled++;
+            if (appendCommandListsCalled > callsToSucceed) {
+                return failureResult;
+            }
+            return ZE_RESULT_SUCCESS;
+        }
+        uint32_t callsToSucceed = 0;
+        ze_result_t failureResult = ZE_RESULT_SUCCESS;
+    };
+
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningNewCmdList ctx;
+    MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
+    MockGraphCmdListFailingAfterNthCall mainExecCmdlist{&ctx};
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    Mock<CommandQueue> cmdQueue;
+    mainRecordCmdlist.device = this->device;
+    mainExecCmdlist.cmdQImmediate = &cmdQueue;
+    mainExecCmdlist.device = this->device;
+    subCmdlist.cmdQImmediate = &cmdQueue;
+    subCmdlist.device = this->device;
+    auto subCmdlistHandle = subCmdlist.toHandle();
+
+    Mock<Event> signalEventParent; // fork
+    Mock<Event> signalEventChild;  // join
+
+    ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
+    ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
+    auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
+    srcGraph.startCapturingFrom(mainRecordCmdlist, false);
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, signalEventParentHandle, 0U, nullptr);
+
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdlistHandle, signalEventChildHandle, 1U, &signalEventParentHandle);
+
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, nullptr, 1U, &signalEventChildHandle);
+
+    srcGraph.stopCapturing();
+    mainRecordCmdlist.setGraphCaptureTarget(nullptr);
+
+    ExecutableGraph execMultiGraph;
+    GraphInstatiateSettings settings;
+    settings.forkPolicy = GraphInstatiateSettings::ForkPolicySplitLevels;
+    execMultiGraph.instantiateFrom(srcGraph, settings);
+
+    mainExecCmdlist.callsToSucceed = 1;
+    mainExecCmdlist.failureResult = ZE_RESULT_ERROR_UNKNOWN;
+
+    Mock<Event> signalEvent;
+    auto res = execMultiGraph.execute(&mainExecCmdlist, nullptr, &signalEvent, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+    EXPECT_EQ(2U, mainExecCmdlist.appendCommandListsCalled);
+    EXPECT_EQ(1U, subCmdlist.appendCommandListsCalled);
+
+    mainExecCmdlist.cmdQImmediate = nullptr;
+    subCmdlist.cmdQImmediate = nullptr;
+}
+
 TEST(ClosureExternalStorage, GivenEventWaitListThenRecordsItProperly) {
     MockEvent events[10];
     ze_event_handle_t eventHandles[10];

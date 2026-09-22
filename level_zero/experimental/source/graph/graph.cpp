@@ -1570,42 +1570,49 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
             .relaxedOrderingDispatch = false,
         };
         return executionTarget->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParams);
-    } else {
-        UNRECOVERABLE_IF(this->orderedCommands->empty());
-        auto result = executionTarget->ensureImmediateResourcesInitialized();
+    }
+
+    UNRECOVERABLE_IF(this->orderedCommands->empty());
+
+    auto result = executionTarget->ensureImmediateResourcesInitialized();
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    if (this->externalCbEventStorage->externalCbEventsPresent()) {
+        this->externalCbEventStorage->updateExecutorContainer(executionTarget);
+        this->externalCbEventStorage->attachExternalCbEventsToExecutableGraph();
+    }
+    if (this->externalCbEventStorage->externalCbWaitEventsPresent()) {
+        this->externalCbEventStorage->refreshExternalCbWaitEvents();
+    }
+
+    auto segmentIt = this->getOrderedCommands()->begin();
+    if (this->orderedCommands->size() == 1) {
+        return segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, numWaitEvents, phWaitEvents);
+    }
+
+    bool monolithicMode = myOrderedSegments.size() == 1;
+    bool splitMode = (false == monolithicMode);
+    auto lastSegment = this->getOrderedCommands()->end() - 1;
+    result = segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart,
+                                            monolithicMode ? hSignalEvent : nullptr,
+                                            numWaitEvents, phWaitEvents);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    ++segmentIt;
+    while (segmentIt != lastSegment) {
+        result = segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, nullptr, 0, nullptr);
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
-        if (this->externalCbEventStorage->externalCbEventsPresent()) {
-            this->externalCbEventStorage->updateExecutorContainer(executionTarget);
-            this->externalCbEventStorage->attachExternalCbEventsToExecutableGraph();
-        }
-        if (this->externalCbEventStorage->externalCbWaitEventsPresent()) {
-            this->externalCbEventStorage->refreshExternalCbWaitEvents();
-        }
-
-        auto segmentIt = this->getOrderedCommands()->begin();
-        if (this->orderedCommands->size() == 1) {
-            segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, numWaitEvents, phWaitEvents);
-        } else {
-            bool monolithicMode = myOrderedSegments.size() == 1;
-            bool splitMode = (false == monolithicMode);
-            auto lastSegment = this->getOrderedCommands()->end() - 1;
-            segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart,
-                                           monolithicMode ? hSignalEvent : nullptr,
-                                           numWaitEvents, phWaitEvents);
-            ++segmentIt;
-            while (segmentIt != lastSegment) {
-                segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, nullptr, 0, nullptr);
-                ++segmentIt;
-            }
-            DEBUG_BREAK_IF(segmentIt != lastSegment);
-            segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart,
-                                           splitMode ? hSignalEvent : nullptr,
-                                           0, nullptr);
-        }
+        ++segmentIt;
     }
-    return ZE_RESULT_SUCCESS;
+    DEBUG_BREAK_IF(segmentIt != lastSegment);
+    return segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart,
+                                          splitMode ? hSignalEvent : nullptr,
+                                          0, nullptr);
 }
 
 ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
