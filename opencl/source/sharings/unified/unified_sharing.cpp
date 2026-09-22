@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ void UnifiedSharing::synchronizeObject(UpdateData &updateData) {
 void UnifiedSharing::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
 }
 
-std::unique_ptr<MultiGraphicsAllocation> UnifiedSharing::createMultiGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType, cl_int *errcodeRet) {
+std::unique_ptr<MultiGraphicsAllocation> UnifiedSharing::createMultiGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType, cl_int *errcodeRet, const RootDeviceIndicesContainer &targetRootDeviceIndices) {
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
     auto memoryManager = context->getMemoryManager();
 
@@ -44,7 +44,9 @@ std::unique_ptr<MultiGraphicsAllocation> UnifiedSharing::createMultiGraphicsAllo
         return nullptr;
     }
 
-    auto pRootDeviceIndices = &context->getRootDeviceIndices();
+    auto pRootDeviceIndices = (targetRootDeviceIndices.size() > 0) ? &targetRootDeviceIndices
+                                                                   : &context->getRootDeviceIndices();
+
     auto multiGraphicsAllocation = std::make_unique<MultiGraphicsAllocation>(context->getMaxRootDeviceIndex());
     MemoryManager::OsHandleData osHandleData{description.handle};
 
@@ -57,6 +59,11 @@ std::unique_ptr<MultiGraphicsAllocation> UnifiedSharing::createMultiGraphicsAllo
 
         auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
         if (!graphicsAllocation) {
+            for (auto createdAllocation : multiGraphicsAllocation->getGraphicsAllocations()) {
+                if (createdAllocation != nullptr) {
+                    memoryManager->freeGraphicsMemory(createdAllocation);
+                }
+            }
             errorCode.set(CL_INVALID_MEM_OBJECT);
             return nullptr;
         }

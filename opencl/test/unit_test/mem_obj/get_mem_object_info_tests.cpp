@@ -609,3 +609,36 @@ TEST_F(GetMemObjectInfo, GivenForceExtendedBufferSizeFlagWhenGettingImageSizeThe
     EXPECT_EQ(sizeof(queriedSize), sizeReturned);
     EXPECT_EQ(actualSize, queriedSize);
 }
+
+TEST_F(GetMemObjectInfo, GivenNoAllocationForFirstContextDeviceWhenGettingMemObjectInfoThenRemainingAllocationIsUsed) {
+    auto device1 = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, 1));
+    auto device2 = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, 0));
+
+    ClDeviceVector devices;
+    devices.push_back(device1.get());
+    devices.push_back(device2.get());
+    auto context = MockContext(devices);
+    ASSERT_EQ(1u, context.getDevice(0)->getRootDeviceIndex());
+
+    auto graphicsAllocation = new MockGraphicsAllocation();
+    graphicsAllocation->internalHandle = 0xf00d;
+    graphicsAllocation->peekInternalHandleResult = 0;
+
+    MultiGraphicsAllocation multiGraphicsAllocation(1);
+    multiGraphicsAllocation.addAllocation(graphicsAllocation);
+
+    MemObj buffer(&context, CL_MEM_OBJECT_BUFFER, {}, CL_MEM_COPY_HOST_PTR, 0, 64, nullptr, nullptr, std::move(multiGraphicsAllocation), true, false, false);
+
+    size_t sizeReturned = 0;
+    uint64_t internalHandle = std::numeric_limits<uint64_t>::max();
+
+    auto retVal = buffer.getMemObjectInfo(
+        CL_MEM_ALLOCATION_HANDLE_INTEL,
+        sizeof(internalHandle),
+        &internalHandle,
+        &sizeReturned);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(internalHandle), sizeReturned);
+    EXPECT_EQ(internalHandle, graphicsAllocation->internalHandle);
+}

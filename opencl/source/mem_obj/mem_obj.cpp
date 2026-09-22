@@ -136,8 +136,10 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     cl_mem clAssociatedMemObject = static_cast<cl_mem>(this->associatedMemObject);
     cl_context ctx = nullptr;
     uint64_t internalHandle = 0llu;
-    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
-    auto allocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    auto allocation = multiGraphicsAllocation.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    if (allocation == nullptr) {
+        allocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    }
     cl_bool usesCompression;
     size_t extendedSize = 0;
     size_t extendedTailSize = 0;

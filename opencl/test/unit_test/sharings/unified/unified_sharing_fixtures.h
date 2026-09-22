@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,8 @@
 #include "opencl/source/sharings/unified/unified_sharing_types.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include <limits>
 
 namespace NEO {
 
@@ -61,7 +63,8 @@ template <bool validMemoryManager>
 struct UnifiedSharingMockMemoryManager : MockMemoryManager {
     using MockMemoryManager::MockMemoryManager;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
-        if (!validMemoryManager) {
+        ++createFromSharedHandleCalled;
+        if (!validMemoryManager || createFromSharedHandleCalled > maxSuccessfulImports) {
             return nullptr;
         }
 
@@ -73,6 +76,9 @@ struct UnifiedSharingMockMemoryManager : MockMemoryManager {
         graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper()));
         return graphicsAllocation;
     }
+
+    uint32_t createFromSharedHandleCalled = 0u;
+    uint32_t maxSuccessfulImports = std::numeric_limits<uint32_t>::max();
 };
 
 template <bool validContext, bool validMemoryManager>

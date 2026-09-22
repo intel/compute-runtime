@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,8 @@ class UnifiedImage : public UnifiedSharing {
 
   public:
     static Image *createSharedUnifiedImage(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription description,
-                                           const cl_image_format *imageFormat, const cl_image_desc *imageDesc, cl_int *errcodeRet);
+                                           const cl_image_format *imageFormat, const cl_image_desc *imageDesc, cl_int *errcodeRet,
+                                           const RootDeviceIndicesContainer &targetRootDeviceIndices);
 
     static void *swapGmm(GraphicsAllocation *graphicsAllocation, Context *context, ImageInfo *imgInfo);
 };

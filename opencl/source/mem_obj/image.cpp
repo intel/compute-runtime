@@ -409,8 +409,6 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
                                 cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const ClSurfaceFormatInfo *surfaceFormat,
                                 ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount, bool hasUnifiedMcsSurface,
                                 cl_int *errcodeRet) {
-    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
-
     if (!isMultisampleConfigurationSupported(context->getDevice(0)->getDevice(), imgInfo, mcsAllocation, hasUnifiedMcsSurface)) {
         delete sharingHandler;
         auto memoryManager = context->getMemoryManager();
@@ -424,7 +422,7 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
         return nullptr;
     }
 
-    auto size = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getUnderlyingBufferSize();
+    auto size = multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBufferSize();
     auto sharedImage = createImageHw(
         context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags, flagsIntel, size, nullptr,
@@ -1376,7 +1374,14 @@ cl_mem Image::validateAndCreateImage(cl_context context,
     if (memoryProperties.handle) {
         if (validateHandleType(memoryProperties, extMem)) {
             extMem.handle = reinterpret_cast<void *>(memoryProperties.handle);
-            image = UnifiedImage::createSharedUnifiedImage(pContext, flags, extMem, imageFormat, imageDesc, &errcodeRet);
+
+            RootDeviceIndicesContainer targetRootDeviceIndices{};
+            for (const auto &device : memoryProperties.associatedDevices) {
+                targetRootDeviceIndices.pushUnique(device->getRootDeviceIndex());
+            }
+
+            image = UnifiedImage::createSharedUnifiedImage(pContext, flags, extMem, imageFormat, imageDesc, &errcodeRet,
+                                                           targetRootDeviceIndices);
         } else {
             errcodeRet = CL_INVALID_PROPERTY;
             return nullptr;
