@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
@@ -307,6 +308,10 @@ struct CommandListCoreFamily : public CommandList {
                                                               const NEO::BuiltIn::AddressingMode &builtInMode,
                                                               Event *signalEvent,
                                                               CmdListKernelLaunchParams &launchParams);
+
+    bool isPauseOnBlitCopyEnabled(bool copyOffloadOperation) const;
+    COLD_SECTION void appendBlitPauseCommands(bool beforeBlit, bool copyOffloadOperation);
+    COLD_SECTION void programPauseOnEnqueueCommands(std::list<void *> &additionalCommands, bool beforeWorkload);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
                                                       NEO::GraphicsAllocation *dstPtrAlloc,

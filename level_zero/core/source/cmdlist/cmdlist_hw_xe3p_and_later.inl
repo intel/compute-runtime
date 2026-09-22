@@ -144,7 +144,8 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
         if constexpr (NEO::isAnyOfType<PatchT, PatchPauseOnEnqueueSemaphoreStart,
                                        PatchPauseOnEnqueueSemaphoreEnd,
                                        PatchPauseOnEnqueuePipeControlStart,
-                                       PatchPauseOnEnqueuePipeControlEnd>) {
+                                       PatchPauseOnEnqueuePipeControlEnd,
+                                       PatchPauseOnBlitCopy>) {
             UNRECOVERABLE_IF(patch.pCommand == nullptr);
         } else if constexpr (NEO::isAnyOfType<PatchT,
                                               PatchComputeWalkerInlineDataScratch,

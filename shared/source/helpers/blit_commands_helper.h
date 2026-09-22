@@ -19,7 +19,6 @@ class CsrDependencies;
 class GraphicsAllocation;
 class LinearStream;
 class TagNodeBase;
-enum class DebugPauseState : uint32_t;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
 class ProductHelper;
@@ -92,8 +91,9 @@ struct BlitCommandsHelper {
     static void getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, ImageTilingMode &tileType,
                                             uint32_t &mipTailLod, uint32_t &compressionDetails,
                                             const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane);
-    static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger,
-                                           DebugPauseState waitCondition, RootDeviceEnvironment &rootDeviceEnvironment);
+    static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress,
+                                           bool beforeBlit, RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForSingleDebugPause(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForDebugPauseCommands(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize);
     static bool validatePitchesForCopyRegion(size_t srcRowPitch, size_t dstRowPitch);

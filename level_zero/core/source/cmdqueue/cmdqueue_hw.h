@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
@@ -55,6 +56,9 @@ struct CommandQueueHw : public CommandQueue {
     bool getPreemptionCmdProgramming() override;
     void patchCommands(CommandList &commandList, uint64_t scratchAddress, bool patchNewScratchController,
                        bool patchPreambleEnabled, void **patchPreambleBuffer);
+    COLD_SECTION void patchBlitPauses(CommandList &commandList);
+    static COLD_SECTION void programBlitPause(PatchPauseOnBlitCopy &patchElem, NEO::CommandStreamReceiver &csr,
+                                              NEO::RootDeviceEnvironment &rootDeviceEnvironment);
 
   protected:
     struct EstimateRegularHeapfulPerCmdlistData {
@@ -239,6 +243,7 @@ struct CommandQueueHw : public CommandQueue {
         void operator()(PatchPauseOnEnqueueSemaphoreEnd &patchElem);
         void operator()(PatchPauseOnEnqueuePipeControlStart &patchElem);
         void operator()(PatchPauseOnEnqueuePipeControlEnd &patchElem);
+        COLD_SECTION void operator()(PatchPauseOnBlitCopy &patchElem);
 
         void operator()(PatchFrontEndState &patchElem);
         void operator()(PatchComputeWalkerInlineDataScratch &patchElem);

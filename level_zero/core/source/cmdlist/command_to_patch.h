@@ -36,6 +36,11 @@ struct PatchPauseOnEnqueuePipeControlEnd {
     void *pCommand = nullptr;
 };
 
+struct PatchPauseOnBlitCopy {
+    void *pCommand = nullptr;
+    bool beforeBlit = false;
+};
+
 struct PatchComputeWalkerInlineDataScratch {
     void *pDestination = nullptr;
     uint64_t baseAddress = 0;
@@ -152,6 +157,7 @@ using CommandToPatchOnQueue = std::variant<
     PatchPauseOnEnqueueSemaphoreEnd,
     PatchPauseOnEnqueuePipeControlStart,
     PatchPauseOnEnqueuePipeControlEnd,
+    PatchPauseOnBlitCopy,
     PatchComputeWalkerInlineDataScratch,
     PatchComputeWalkerImplicitArgsScratch,
     PatchNoopSpace,

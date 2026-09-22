@@ -726,6 +726,7 @@ HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseOnEnqueueFlagSetToAl
     EXPECT_EQ(2u, semaphoreAfterWalkerFound);
     EXPECT_EQ(2u, pipeControlBeforeWalkerFound);
     EXPECT_EQ(2u, pipeControlAfterWalkerFound);
+    EXPECT_TRUE(commandList->getCommandsToPatch().empty());
 }
 
 HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsertPauseOnlyBeforeEnqueue) {

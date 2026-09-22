@@ -1071,9 +1071,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     this->initializeResourcesAndDirectSubmission(device.getPreemptionMode());
 
     if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
-                                                                  DebugPauseState::waitingForUserStartConfirmation,
-                                                                  DebugPauseState::hasUserStartConfirmation, *rootDeviceEnvironment.get());
+        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), true, *rootDeviceEnvironment.get());
     }
 
     bool isRelaxedOrderingDispatch = false;
@@ -1184,9 +1182,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
     }
     if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
-                                                                  DebugPauseState::waitingForUserEndConfirmation,
-                                                                  DebugPauseState::hasUserEndConfirmation, *rootDeviceEnvironment.get());
+        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), false, *rootDeviceEnvironment.get());
     }
 
     void *endingCmdPtr = nullptr;

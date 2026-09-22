@@ -43,7 +43,8 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
         if constexpr (NEO::isAnyOfType<PatchT, PatchPauseOnEnqueueSemaphoreStart,
                                        PatchPauseOnEnqueueSemaphoreEnd,
                                        PatchPauseOnEnqueuePipeControlStart,
-                                       PatchPauseOnEnqueuePipeControlEnd>) {
+                                       PatchPauseOnEnqueuePipeControlEnd,
+                                       PatchPauseOnBlitCopy>) {
             UNRECOVERABLE_IF(patch.pCommand == nullptr);
         } else if constexpr (std::is_same_v<PatchT, PatchFrontEndState>) {
             using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;

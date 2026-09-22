@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/timestamp_packet.h"
@@ -362,8 +363,10 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress,
-                                                               DebugPauseState confirmationTrigger, DebugPauseState waitCondition,
+                                                               bool beforeBlit,
                                                                RootDeviceEnvironment &rootDeviceEnvironment) {
+    const auto confirmationTrigger = beforeBlit ? DebugPauseState::waitingForUserStartConfirmation : DebugPauseState::waitingForUserEndConfirmation;
+    const auto waitCondition = beforeBlit ? DebugPauseState::hasUserStartConfirmation : DebugPauseState::hasUserEndConfirmation;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     NEO::EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
@@ -380,9 +383,14 @@ void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &com
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands(const RootDeviceEnvironment &rootDeviceEnvironment) {
+size_t BlitCommandsHelper<GfxFamily>::getSizeForSingleDebugPause(const RootDeviceEnvironment &rootDeviceEnvironment) {
     EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
-    return (EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs) + EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()) * 2;
+    return EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs) + EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return getSizeForSingleDebugPause(rootDeviceEnvironment) * 2;
 }
 
 template <typename GfxFamily>

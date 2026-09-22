@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -20,6 +21,7 @@
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -225,6 +227,42 @@ TEST(BlitCommandsHelperTest, GivenCopySizeYAndZEqual0WhenConstructingPropertiesF
 }
 
 using BlitTests = Test<DeviceFixture>;
+
+HWTEST_F(BlitTests, givenBlitPauseWhenDispatchingBeforeAndAfterPausesThenEachWritesTriggerAndWaitsForMatchingConfirmation) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    constexpr uint64_t pauseAddress = 0x1234000;
+
+    for (const bool beforeBlit : {true, false}) {
+        uint32_t buffer[256] = {};
+        LinearStream stream(buffer, sizeof(buffer));
+
+        BlitCommandsHelper<FamilyType>::dispatchDebugPauseCommands(stream, pauseAddress, beforeBlit, pDevice->getRootDeviceEnvironmentRef());
+
+        GenCmdList commands;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed()));
+        size_t writes = 0;
+        size_t waits = 0;
+        for (auto command : commands) {
+            if (auto flush = genCmdCast<MI_FLUSH_DW *>(command); flush && flush->getDestinationAddress() == pauseAddress) {
+                EXPECT_EQ(0u, waits);
+                EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, flush->getPostSyncOperation());
+                EXPECT_EQ(static_cast<uint32_t>(beforeBlit ? DebugPauseState::waitingForUserStartConfirmation : DebugPauseState::waitingForUserEndConfirmation), flush->getImmediateData());
+                writes++;
+            }
+            if (auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(command)) {
+                EXPECT_EQ(1u, writes);
+                EXPECT_EQ(pauseAddress, UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
+                EXPECT_EQ(static_cast<uint32_t>(beforeBlit ? DebugPauseState::hasUserStartConfirmation : DebugPauseState::hasUserEndConfirmation), UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphore));
+                EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphore->getCompareOperation());
+                EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, semaphore->getWaitMode());
+                waits++;
+            }
+        }
+        EXPECT_EQ(1u, writes);
+        EXPECT_EQ(1u, waits);
+    }
+}
 
 HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvidedValues) {
     DebugManagerStateRestore restore{};

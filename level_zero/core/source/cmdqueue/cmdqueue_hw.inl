@@ -20,6 +20,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -143,7 +144,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence);
     }
 
-    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
+    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1 || NEO::debugManager.flags.PauseOnBlitCopy.get() != -1) [[unlikely]] {
         neoDevice->debugExecutionCounter++;
     }
 
@@ -417,11 +418,17 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
     this->retrivePatchPreambleSpace(ctx, *streamForDispatch);
 
+    const bool blitPausesRequired = NEO::debugManager.flags.PauseOnBlitCopy.get() != -1;
+
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         ctx.childGpuAddressPositionBeforeDynamicPreamble = (*streamForDispatch).getCurrentGpuAddressPosition();
 
         this->dispatchPatchPreambleCommandListWaitSync(ctx, commandList);
+
+        if (blitPausesRequired) [[unlikely]] {
+            this->patchBlitPauses(*commandList);
+        }
 
         this->programOneCmdListBatchBufferStart(commandList, *streamForDispatch, ctx);
         this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
@@ -2140,6 +2147,30 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
         csr->makeResidentHostFunctionAllocation();
         csr->signalHostFunctionWorker(hostFunctionsCounter);
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programBlitPause(PatchPauseOnBlitCopy &patchElem, NEO::CommandStreamReceiver &csr,
+                                                     NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    const auto pauseSize = NEO::BlitCommandsHelper<GfxFamily>::getSizeForSingleDebugPause(rootDeviceEnvironment);
+    NEO::LinearStream pauseStream(patchElem.pCommand, pauseSize);
+    NEO::BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(pauseStream, csr.getDebugPauseStateGPUAddress(), patchElem.beforeBlit, rootDeviceEnvironment);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::patchBlitPauses(CommandList &commandList) {
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironmentRef();
+
+    for (auto &command : commandList.getCommandsToPatch()) {
+        if (auto *patchElem = std::get_if<PatchPauseOnBlitCopy>(&command)) {
+            programBlitPause(*patchElem, *this->csr, rootDeviceEnvironment);
+        }
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnBlitCopy &patchElem) {
+    programBlitPause(patchElem, *queue.csr, queue.device->getNEODevice()->getRootDeviceEnvironmentRef());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

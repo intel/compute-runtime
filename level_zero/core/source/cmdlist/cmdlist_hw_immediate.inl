@@ -87,6 +87,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(u
         }
     }
 
+    if (this->isPauseOnBlitCopyEnabled(true)) [[unlikely]] {
+        const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+        commandSize += NEO::BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands(rootDeviceEnvironment);
+    }
+
     size_t semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * numEvents;
     if (this->commandContainer.getCommandStream()->getAvailableSpace() < commandSize + semaphoreSize) {
         bool requireSystemMemoryCommandBuffer = !hasRelaxedOrderingDependencies && !requestCommandBufferInLocalMem;
@@ -582,7 +587,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         NEO::collectKernelDispatchStats(NEO::fileLoggerInstance().getKernelDispatchStats(), this->commandContainer.peekKernelDispatchStats(), true);
     }
 
-    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
+    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1 || NEO::debugManager.flags.PauseOnBlitCopy.get() != -1) [[unlikely]] {
         this->device->getNEODevice()->debugExecutionCounter++;
     }
 
