@@ -101,13 +101,11 @@ void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAn
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = TGLLP::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = TGLLP::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = TGLLP::maxSubslicesSupported;
     gtSysInfo->MaxDualSubSlicesSupported = TGLLP::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);
@@ -134,11 +132,6 @@ void TgllpHw1x6x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTab
     gtSysInfo->DualSubSliceCount = 6;
     gtSysInfo->L3CacheSizeInKb = 3840;
     gtSysInfo->L3BankCount = 8;
-    gtSysInfo->MaxFillRate = 16;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
@@ -161,11 +154,6 @@ void TgllpHw1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTab
     gtSysInfo->DualSubSliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 1920;
     gtSysInfo->L3BankCount = 4;
-    gtSysInfo->MaxFillRate = 16;
-    gtSysInfo->TotalVsThreads = 224;
-    gtSysInfo->TotalHsThreads = 224;
-    gtSysInfo->TotalDsThreads = 224;
-    gtSysInfo->TotalGsThreads = 224;
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;

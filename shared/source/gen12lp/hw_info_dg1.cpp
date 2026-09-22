@@ -102,17 +102,11 @@ void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalVsThreads = 672;
-    gtSysInfo->TotalHsThreads = 672;
-    gtSysInfo->TotalDsThreads = 672;
-    gtSysInfo->TotalGsThreads = 672;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = DG1::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = DG1::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = DG1::maxSubslicesSupported;
     gtSysInfo->MaxDualSubSlicesSupported = DG1::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);
@@ -139,7 +133,6 @@ void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->DualSubSliceCount = 6;
     gtSysInfo->L3CacheSizeInKb = 16384;
     gtSysInfo->L3BankCount = 8;
-    gtSysInfo->MaxFillRate = 16;
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;

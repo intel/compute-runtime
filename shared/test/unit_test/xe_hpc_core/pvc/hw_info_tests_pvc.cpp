@@ -89,14 +89,7 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupHardwareInfoBaseThenGtSys
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     PVC::setupHardwareInfoBase(&hwInfo, false, compilerReleaseHelper.get());
 
-    EXPECT_EQ(0u, gtSystemInfo.MaxFillRate);
-    EXPECT_EQ(0u, gtSystemInfo.TotalVsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalHsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalGsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalPsThreadsWindowerRange);
     EXPECT_EQ(0u, gtSystemInfo.CsrSizeInMb);
-    EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }
 

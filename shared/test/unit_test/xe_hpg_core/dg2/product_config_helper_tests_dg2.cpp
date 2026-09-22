@@ -163,13 +163,7 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemI
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     Dg2HwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper);
 
-    EXPECT_EQ(0u, gtSystemInfo.TotalVsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalHsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalGsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalPsThreadsWindowerRange);
     EXPECT_EQ(0u, gtSystemInfo.CsrSizeInMb);
-    EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }
 

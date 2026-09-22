@@ -101,13 +101,11 @@ void ADLN::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = ADLN::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = ADLN::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = ADLN::maxSubslicesSupported;
     gtSysInfo->MaxDualSubSlicesSupported = ADLN::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);
@@ -132,7 +130,6 @@ void AdlnHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->L3CacheSizeInKb = 1920;
     gtSysInfo->L3BankCount = 4;
-    gtSysInfo->MaxFillRate = 8;
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;

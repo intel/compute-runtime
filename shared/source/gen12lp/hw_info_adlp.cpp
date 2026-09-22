@@ -101,13 +101,11 @@ void ADLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = ADLP::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = ADLP::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = ADLP::maxSubslicesSupported;
     gtSysInfo->MaxDualSubSlicesSupported = ADLP::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);

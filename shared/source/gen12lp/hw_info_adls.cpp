@@ -101,13 +101,11 @@ void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = ADLS::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = ADLS::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = ADLS::maxSubslicesSupported;
     gtSysInfo->MaxDualSubSlicesSupported = ADLS::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);
@@ -133,11 +131,6 @@ void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
     gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
     gtSysInfo->L3CacheSizeInKb = 1920;
     gtSysInfo->L3BankCount = 4;
-    gtSysInfo->MaxFillRate = 8;
-    gtSysInfo->TotalVsThreads = 0;
-    gtSysInfo->TotalHsThreads = 0;
-    gtSysInfo->TotalDsThreads = 0;
-    gtSysInfo->TotalGsThreads = 0;
     if (gtSysInfo->MaxSubSlicesSupported < 1) {
         gtSysInfo->MaxSubSlicesSupported = 1;
     }

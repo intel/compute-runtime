@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,7 @@ ADLPTEST_F(AdlpHwInfoLinux, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystem
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     ADLP::setupHardwareInfoBase(&hwInfo, false, nullptr);
 
-    EXPECT_EQ(64u, gtSystemInfo.TotalPsThreadsWindowerRange);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
-    EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
 }
 
 ADLPTEST_F(AdlpHwInfoLinux, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {
