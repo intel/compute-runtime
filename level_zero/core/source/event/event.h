@@ -433,7 +433,7 @@ struct Event : _ze_event_handle_t {
     NEO::TagNodeBase *getPerfCounterNode() const { return this->perfCounterNode; }
 
     bool isActiveExternalCbEvent() const {
-        return externalEvent && (inOrderExecHelper.getPatchPreambleCounter() > 0);
+        return inOrderExecHelper.getPatchPreambleCounter() > 0;
     }
 
     bool isCapturedGraphInternalEvent() const {
