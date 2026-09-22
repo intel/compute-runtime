@@ -164,7 +164,8 @@ StackVec<OclCVersion, 5> CompilerProductHelper::getDeviceOpenCLCVersions(OclCVer
         {OclCVersion{1, 0}, true},
         {OclCVersion{1, 1}, true},
         {OclCVersion{1, 2}, true},
-        {OclCVersion{3, 0}, true}};
+        {OclCVersion{3, 0}, true},
+        {OclCVersion{3, 1}, true}};
 
     StackVec<OclCVersion, 5> ret;
     for (const auto &version : supportedVersionsMatrix) {

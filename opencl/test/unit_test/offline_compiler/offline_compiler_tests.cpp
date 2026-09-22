@@ -2127,7 +2127,7 @@ TEST_F(OfflineCompilerTests, givenFclTranslationContextCreationFailureAndErrorMe
 }
 
 TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorrectExtensionsArePassed) {
-    std::string clStdOptionValues[] = {"", "-cl-std=CL1.2", "-cl-std=CL2.0", "-cl-std=CL3.0"};
+    std::string clStdOptionValues[] = {"", "-cl-std=CL1.2", "-cl-std=CL2.0", "-cl-std=CL3.0", "-cl-std=CL3.1"};
 
     for (auto &clStdOptionValue : clStdOptionValues) {
         std::vector<std::string> argv = {
@@ -2147,8 +2147,7 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
         mockOfflineCompiler->initialize(argv.size(), argv);
 
         std::string internalOptions = mockOfflineCompiler->internalOptions;
-        std::string oclVersionOption{oclVersionCompilerInternalOption};
-        EXPECT_TRUE(hasSubstr(internalOptions, oclVersionOption));
+        EXPECT_TRUE(hasSubstr(internalOptions, std::string{oclVersionCompilerInternalOption}));
 
         if (clStdOptionValue == "-cl-std=CL2.0") {
             auto expectedRegex = std::string{"cl_khr_3d_image_writes"};
@@ -2162,7 +2161,7 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
         auto compilerProductHelper = CompilerProductHelper::create(mockOfflineCompiler->hwInfo.platform.eProductFamily);
         getOpenclCFeaturesList(mockOfflineCompiler->hwInfo, openclCFeatures);
         for (auto &feature : openclCFeatures) {
-            if (clStdOptionValue == "-cl-std=CL3.0") {
+            if (clStdOptionValue == "-cl-std=CL3.0" || clStdOptionValue == "-cl-std=CL3.1") {
                 EXPECT_TRUE(hasSubstr(internalOptions, std::string{feature.name}));
             } else {
                 EXPECT_FALSE(hasSubstr(internalOptions, std::string{feature.name}));
@@ -4803,9 +4802,28 @@ TEST_F(OfflineCompilerTests, givenCommandLineWithoutDeviceWhenCompilingToSpirvTh
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300"
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=310"
                                                  " -cl-ext=-all,+cl_khr_3d_image_writes,+__opencl_c_3d_image_writes,+__opencl_c_images"));
     EXPECT_TRUE(hasSubstr(ocloc.internalOptions, " -D__IMAGE_SUPPORT__=1"));
+}
+
+TEST_F(OfflineCompilerTests, givenCommandLineWithoutDeviceAndCl31WhenInitializedThenOcl31VersionIsUsed) {
+    MockOfflineCompiler ocloc;
+    ocloc.uniqueHelper->filesMap = filesMap;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-options",
+        "-cl-std=CL3.1",
+        "-spv_only"};
+
+    int retVal = ocloc.initialize(argv.size(), argv);
+    ASSERT_EQ(0, retVal);
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=310"));
+    EXPECT_FALSE(hasSubstr(ocloc.internalOptions, "-ocl-version=300"));
 }
 
 TEST_F(OfflineCompilerTests, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenInternalOptionsAreSetCorrectly) {
@@ -4827,7 +4845,7 @@ TEST_F(OfflineCompilerTests, givenDeviceAndInternalOptionsOptionWhenCompilingToS
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    std::string regexToMatch = "\\-ocl\\-version=30"
+    std::string regexToMatch = "\\-ocl\\-version=31"
                                "0  \\-cl\\-ext=\\-all.* \\-cl\\-ext=\\+custom_param";
     EXPECT_TRUE(containsRegex(ocloc.internalOptions, regexToMatch));
 }
@@ -4849,7 +4867,7 @@ TEST_F(OfflineCompilerTests, givenNoDeviceAndInternalOptionsOptionWhenCompilingT
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300"
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=310"
                                                  " -cl-ext=-all,+cl_khr_3d_image_writes,+__opencl_c_3d_image_writes,+__opencl_c_images"
                                                  " -cl-ext=+custom_param"));
 }
@@ -5392,10 +5410,12 @@ TEST(OclocQuery, WhenQueryingDeviceOpenCLCAllVersionsThenVersionsStringIsReturne
     argHelper.messagePrinter.setSuppressMessages(true);
 
     std::string query = "CL_DEVICE_OPENCL_C_ALL_VERSIONS";
-    std::string commonVer = "\"OpenCL C\":1.2";
-    ocloc_name_version oclcVersion;
-    strcpy_s(oclcVersion.name, sizeof(oclcVersion.name), "OpenCL C");
-    oclcVersion.version = CL_MAKE_VERSION(1, 2, 0);
+    std::vector<cl_version> expectedVersions = {
+        CL_MAKE_VERSION(1, 0, 0),
+        CL_MAKE_VERSION(1, 1, 0),
+        CL_MAKE_VERSION(1, 2, 0),
+        CL_MAKE_VERSION(3, 0, 0),
+        CL_MAKE_VERSION(3, 1, 0)};
 
     std::vector<std::string> argv = {"ocloc", "query", query};
 
@@ -5404,21 +5424,28 @@ TEST(OclocQuery, WhenQueryingDeviceOpenCLCAllVersionsThenVersionsStringIsReturne
 
     auto log = argHelper.getPrinterRef().getLog().str();
     EXPECT_FALSE(log.empty());
-    EXPECT_TRUE(hasSubstr(log, commonVer)) << commonVer << " e/ " << log;
+    for (auto version : expectedVersions) {
+        std::string expectedVersion = std::string{"\"OpenCL C\":"} + std::to_string(CL_VERSION_MAJOR(version)) + "." +
+                                      std::to_string(CL_VERSION_MINOR(version)) + "." + std::to_string(CL_VERSION_PATCH(version));
+        EXPECT_TRUE(hasSubstr(log, expectedVersion)) << expectedVersion << " e/ " << log;
+    }
 
     ASSERT_EQ(1U, vfs.count(query));
     auto file = vfs[query];
     EXPECT_NE(0U, file.size());
     EXPECT_EQ(0U, file.size() % sizeof(ocloc_name_version));
+    EXPECT_EQ(expectedVersions.size(), file.size() / sizeof(ocloc_name_version));
     auto it = reinterpret_cast<ocloc_name_version *>(file.data());
     auto end = reinterpret_cast<ocloc_name_version *>(file.data() + file.size());
-    decltype(it) found = nullptr;
-    for (; it < end; ++it) {
-        if ((0 == strcmp(oclcVersion.name, it->name)) && (oclcVersion.version == it->version)) {
-            found = it;
+    for (auto expectedVersion : expectedVersions) {
+        auto found = false;
+        for (auto current = it; current < end; ++current) {
+            if ((0 == strcmp("OpenCL C", current->name)) && (expectedVersion == current->version)) {
+                found = true;
+            }
         }
+        EXPECT_TRUE(found) << expectedVersion;
     }
-    EXPECT_NE(nullptr, found);
 }
 
 TEST(OclocQuery, WhenQueryingDeviceOpenCFeaturesThenFeaturesStringWithVersionsIsReturned) {

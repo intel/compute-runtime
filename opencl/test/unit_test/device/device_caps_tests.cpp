@@ -66,6 +66,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_EQ(CL_MAKE_VERSION(1u, 1u, 0u), (++openclCWithVersionIterator)->version);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), (++openclCWithVersionIterator)->version);
         EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
+        EXPECT_EQ(CL_MAKE_VERSION(3u, 1u, 0u), (++openclCWithVersionIterator)->version);
 
         EXPECT_EQ(clDevice.getDeviceInfo().openclCAllVersions.end(), ++openclCWithVersionIterator) << " versions count : " << clDevice.getDeviceInfo().openclCAllVersions.size();
     }
@@ -158,7 +159,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(nullptr, caps.vendor);
     EXPECT_NE(nullptr, caps.driverVersion);
     EXPECT_NE(nullptr, caps.profile);
-    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL 3.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
     EXPECT_NE(0u, caps.numericClVersion);
     EXPECT_GT(caps.openclCAllVersions.size(), 0u);
@@ -310,12 +311,12 @@ TEST_F(DeviceGetCapsTest, GivenPlatformWhenGettingHwInfoThenImage3dDimensionsAre
     EXPECT_EQ(2048u, sharedCaps.image3DMaxDepth);
 }
 
-TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsOpenCL30) {
+TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsOpenCL31) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL 3.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), caps.numericClVersion);
+    EXPECT_EQ(CL_MAKE_VERSION(3u, 1u, 0u), caps.numericClVersion);
     verifyOpenclCAllVersions(*device);
     verifyOpenclCFeatures(*device);
 }

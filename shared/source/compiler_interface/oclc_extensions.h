@@ -20,7 +20,7 @@ namespace NEO {
 struct HardwareInfo;
 class CompilerProductHelper;
 
-constexpr inline std::string_view oclVersionCompilerInternalOption = "-ocl-version=300 ";
+constexpr inline std::string_view oclVersionCompilerInternalOption = "-ocl-version=310 ";
 
 namespace Extensions {
 inline constexpr const char *const sharingFormatQuery = "cl_intel_sharing_format_query ";

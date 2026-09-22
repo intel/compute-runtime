@@ -104,7 +104,7 @@ TEST_F(ClProgramCompileLinkTests, givenSpirvIlProgramWhenBuildProgramThenOclVers
 
     // Build fails (mock emits no binary) but the compiler still captured the options.
     clBuildProgram(program, 1, &clDeviceId, nullptr, nullptr, nullptr);
-    EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-ocl-version=300"));
+    EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-ocl-version=310"));
     EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-cl-ext="));
 
     clReleaseProgram(program);
@@ -127,7 +127,7 @@ TEST_F(ClProgramCompileLinkTests, givenSpirvIlProgramsWhenLinkProgramThenOclVers
     cl_program inputPrograms[] = {program1, program2};
     // Failed link still returns a program object; release it.
     auto linkedProgram = clLinkProgram(clContext, 1, &clDeviceId, nullptr, 2, inputPrograms, nullptr, nullptr, &errcode);
-    EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-ocl-version=300"));
+    EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-ocl-version=310"));
     EXPECT_NE(std::string::npos, mockCompiler->inputInternalOptions.find("-cl-ext="));
 
     if (linkedProgram != nullptr) {
