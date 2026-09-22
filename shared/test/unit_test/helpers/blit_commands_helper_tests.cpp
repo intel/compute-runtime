@@ -642,6 +642,10 @@ HWTEST2_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress
 }
 
 HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBlitThenHeightIsTwo) {
+    if (pDevice->getProductHelper().isMemSetExtendedPayloadSupported()) {
+        GTEST_SKIP();
+    }
+
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -672,6 +676,10 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
 }
 
 HWTEST_F(BlitTests, givenMemorySizeIsLessThanTwicenMaxWidthWhenFillPatternWithBlitThenHeightIsOne) {
+    if (pDevice->getProductHelper().isMemSetExtendedPayloadSupported()) {
+        GTEST_SKIP();
+    }
+
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
