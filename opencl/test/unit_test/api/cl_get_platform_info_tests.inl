@@ -50,7 +50,7 @@ TEST_F(ClGetPlatformInfoTests, GivenClPlatformProfileWhenGettingPlatformInfoStri
 
 TEST_F(ClGetPlatformInfoTests, GivenClPlatformVersionWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_VERSION);
-    EXPECT_STREQ("OpenCL 3.1 ", paramValue);
+    EXPECT_STREQ("OpenCL 3.0 ", paramValue);
 
     cl_version platformNumericVersion = 0;
 
@@ -59,7 +59,7 @@ TEST_F(ClGetPlatformInfoTests, GivenClPlatformVersionWhenGettingPlatformInfoStri
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_version), retSize);
 
-    EXPECT_EQ(static_cast<cl_version>(CL_MAKE_VERSION(3, 1, 0)), platformNumericVersion);
+    EXPECT_EQ(static_cast<cl_version>(CL_MAKE_VERSION(3, 0, 0)), platformNumericVersion);
 }
 
 TEST_F(ClGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {

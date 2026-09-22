@@ -97,10 +97,10 @@ When LEO is enabled, the OpenCL device version is reported differently. `clGetDe
 
 | Path | `CL_DEVICE_VERSION` |
 |------|---------------------|
-| Native NEO (LEO disabled) | `OpenCL 3.1 NEO ` |
-| LEO (LEO enabled) | `OpenCL 3.1 LEO ` |
+| Native NEO (LEO disabled) | `OpenCL 3.0 NEO ` |
+| LEO (LEO enabled) | `OpenCL 3.0 LEO ` |
 
-Querying `CL_DEVICE_VERSION` (for example via `clinfo`) and observing `OpenCL 3.1 LEO ` confirms that the OpenCL calls are being serviced through the Level Zero backend.
+Querying `CL_DEVICE_VERSION` (for example via `clinfo`) and observing `OpenCL 3.0 LEO ` confirms that the OpenCL calls are being serviced through the Level Zero backend.
 
 ## Current Status
 

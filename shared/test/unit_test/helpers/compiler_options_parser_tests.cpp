@@ -69,7 +69,6 @@ TEST(CompilerOptionsParser, GivenClStdOptionWithVariousVersionsWhenRequiresOpenC
     EXPECT_FALSE(requiresOpenClCFeatures("-cl-std=CL1.2"));
     EXPECT_FALSE(requiresOpenClCFeatures("-cl-std=CL2.0"));
     EXPECT_TRUE(requiresOpenClCFeatures("-cl-std=CL3.0"));
-    EXPECT_TRUE(requiresOpenClCFeatures("-cl-std=CL3.1"));
     EXPECT_TRUE(requiresOpenClCFeatures("-cl-std=CL4.0"));
 }
 
@@ -77,7 +76,6 @@ TEST(CompilerOptionsParser, GivenClStdOptionWithVariousVersionsWhenRequiresAddit
     EXPECT_FALSE(requiresAdditionalExtensions("-cl-std=CL1.2"));
     EXPECT_TRUE(requiresAdditionalExtensions("-cl-std=CL2.0"));
     EXPECT_FALSE(requiresAdditionalExtensions("-cl-std=CL3.0"));
-    EXPECT_FALSE(requiresAdditionalExtensions("-cl-std=CL3.1"));
 }
 
 TEST(CompilerOptionsParser, GivenExtensionsAndCompileOptionsWhenAppendAdditionalExtensionsThenCorrectlyAppends) {

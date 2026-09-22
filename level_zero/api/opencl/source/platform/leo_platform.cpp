@@ -57,8 +57,8 @@ Platform::Platform(ze_driver_handle_t driverHandle) : platformInfo(new PlatformI
         this->platformInfo->name.assign(debugManager.flags.OverridePlatformName.get().c_str());
     }
 
-    this->platformInfo->version = "OpenCL 3.1 ";
-    this->platformInfo->numericVersion = CL_MAKE_VERSION(3, 1, 0);
+    this->platformInfo->version = "OpenCL 3.0 ";
+    this->platformInfo->numericVersion = CL_MAKE_VERSION(3, 0, 0);
 
     sharingFactory.fillGlobalDispatchTable();
 }

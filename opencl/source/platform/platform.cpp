@@ -190,8 +190,8 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         this->platformInfo->name.assign(debugManager.flags.OverridePlatformName.get().c_str());
     }
 
-    this->platformInfo->version = "OpenCL 3.1 ";
-    this->platformInfo->numericVersion = CL_MAKE_VERSION(3, 1, 0);
+    this->platformInfo->version = "OpenCL 3.0 ";
+    this->platformInfo->numericVersion = CL_MAKE_VERSION(3, 0, 0);
 
     this->fillGlobalDispatchTable();
     DEBUG_BREAK_IF(debugManager.flags.CreateMultipleSubDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());

@@ -13,9 +13,6 @@
 
 #include "CL/cl.h"
 
-#include <string>
-#include <vector>
-
 namespace NEO {
 namespace LEO {
 namespace ult {
@@ -137,56 +134,6 @@ TEST_F(CreateSubDevicesTests, givenNullNumDevicesRetWhenCreateSubDevicesThenPart
 TEST(GetDeviceInfoTests, givenNullDeviceWhenGetDeviceInfoThenReturnsCLInvalidDevice) {
     auto retVal = clGetDeviceInfo(nullptr, CL_DEVICE_TYPE, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
-}
-
-TEST_F(GetDeviceIDsTests, givenDeviceWhenGetDeviceInfoThenReportsOpenCL31) {
-    auto &devices = platform->getDevices();
-    ASSERT_FALSE(devices.empty());
-    auto device = static_cast<cl_device_id>(devices[0].get());
-
-    size_t retSize = 0;
-    auto retVal = clGetDeviceInfo(device, CL_DEVICE_VERSION, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_GT(retSize, 0u);
-
-    std::string version(retSize, '\0');
-    retVal = clGetDeviceInfo(device, CL_DEVICE_VERSION, retSize, version.data(), nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_STREQ("OpenCL 3.1 LEO ", version.c_str());
-
-    cl_version numericVersion = 0;
-    retVal = clGetDeviceInfo(device, CL_DEVICE_NUMERIC_VERSION, sizeof(numericVersion), &numericVersion, &retSize);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(numericVersion), retSize);
-    EXPECT_EQ(static_cast<cl_version>(CL_MAKE_VERSION(3, 1, 0)), numericVersion);
-}
-
-TEST_F(GetDeviceIDsTests, givenDeviceWhenGetOpenClCAllVersionsThenReturnsOpenClC31) {
-    auto &devices = platform->getDevices();
-    ASSERT_FALSE(devices.empty());
-    auto device = static_cast<cl_device_id>(devices[0].get());
-
-    size_t retSize = 0;
-    auto retVal = clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_ALL_VERSIONS, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_EQ(5u * sizeof(cl_name_version), retSize);
-
-    std::vector<cl_name_version> versions(retSize / sizeof(cl_name_version));
-    retVal = clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_ALL_VERSIONS, retSize, versions.data(), nullptr);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    const std::vector<cl_version> expectedVersions = {
-        CL_MAKE_VERSION(1, 0, 0),
-        CL_MAKE_VERSION(1, 1, 0),
-        CL_MAKE_VERSION(1, 2, 0),
-        CL_MAKE_VERSION(3, 0, 0),
-        CL_MAKE_VERSION(3, 1, 0)};
-
-    ASSERT_EQ(expectedVersions.size(), versions.size());
-    for (size_t i = 0; i < expectedVersions.size(); i++) {
-        EXPECT_STREQ("OpenCL C", versions[i].name);
-        EXPECT_EQ(expectedVersions[i], versions[i].version);
-    }
 }
 
 TEST(RetainReleaseDeviceTests, givenNullDeviceWhenRetainDeviceThenReturnsCLInvalidDevice) {

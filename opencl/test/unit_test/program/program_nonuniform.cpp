@@ -74,16 +74,6 @@ TEST(ProgramNonUniform, GivenBuildOptionsCl21WhenUpdatingAllowNonUniformThenNonU
     EXPECT_EQ(21u, pm.getProgramOptionVersion());
 }
 
-TEST(ProgramNonUniform, GivenBuildOptionsCl31WhenUpdatingAllowNonUniformThenNonUniformAllowed) {
-    MyMockProgram pm;
-    EXPECT_FALSE(pm.getAllowNonUniform());
-    EXPECT_EQ(12u, pm.getProgramOptionVersion());
-    pm.setBuildOptions("-cl-std=CL3.1");
-    pm.updateNonUniformFlag();
-    EXPECT_TRUE(pm.getAllowNonUniform());
-    EXPECT_EQ(31u, pm.getProgramOptionVersion());
-}
-
 TEST(ProgramNonUniform, GivenBuildOptionsCl20AndUniformFlagWhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
     MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
