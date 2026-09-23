@@ -10,6 +10,7 @@
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -393,7 +394,7 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
             auto allocationTaskCount = gfxAllocation->getTaskCount(osContextId);
             if (gfxAllocation->isUsedByOsContext(osContextId) &&
                 engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-                allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+                !TaskCountHelper::isReady(engine.commandStreamReceiver->getTagAddress(), allocationTaskCount, 1u, 0u)) {
                 engine.commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation),
                                                                                               DEFERRED_DEALLOCATION);
                 return;
@@ -1154,7 +1155,7 @@ void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocat
         auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
         if (graphicsAllocation.isUsedByOsContext(osContextId) &&
             engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+            !TaskCountHelper::isReady(engine.commandStreamReceiver->getTagAddress(), allocationTaskCount, 1u, 0u)) {
             engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, false, TimeoutControls::maxTimeout}, allocationTaskCount);
         }
     }
@@ -1175,7 +1176,8 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
             if (engine.commandStreamReceiver->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastGpuHangCheck)) {
                 return false;
             }
-            if (engine.commandStreamReceiver->getTagAddress() && (allocationTaskCount > *engine.commandStreamReceiver->getTagAddress())) {
+            if (engine.commandStreamReceiver->getTagAddress() &&
+                !TaskCountHelper::isReady(engine.commandStreamReceiver->getTagAddress(), allocationTaskCount, 1u, 0u)) {
                 return true;
             }
         }

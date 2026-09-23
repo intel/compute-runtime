@@ -96,6 +96,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(u
     if (this->commandContainer.getCommandStream()->getAvailableSpace() < commandSize + semaphoreSize) {
         bool requireSystemMemoryCommandBuffer = !hasRelaxedOrderingDependencies && !requestCommandBufferInLocalMem;
 
+        if (this->cmdQImmediateCopyOffload) {
+            const auto copyOffloadCsr = this->cmdQImmediateCopyOffload->getCsr();
+            const auto copyOffloadTaskCount = this->commandContainer.getCommandStream()->getGraphicsAllocation()->getTaskCount(copyOffloadCsr->getOsContext().getContextId());
+            this->copyOffloadTagUpdateRequired |= (copyOffloadTaskCount != NEO::GraphicsAllocation::objectNotUsed) && (copyOffloadTaskCount > copyOffloadCsr->peekLatestFlushedTaskCount());
+        }
+
         auto alloc = this->commandContainer.reuseExistingCmdBuffer(requireSystemMemoryCommandBuffer);
         bool newCmdBufferAllocated = false;
 
@@ -166,10 +172,11 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
 template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool requireTaskCountUpdate, NEO::AppendOperations appendOperation, NEO::CommandStreamReceiver *csr) {
     NEO::DispatchBcsFlags dispatchBcsFlags(
-        this->isSyncModeQueue || requireTaskCountUpdate, // flushTaskCount
-        hasStallingCmds,                                 // hasStallingCmds
-        hasRelaxedOrderingDependencies                   // hasRelaxedOrderingDependencies
+        this->isSyncModeQueue || requireTaskCountUpdate || this->copyOffloadTagUpdateRequired, // flushTaskCount
+        hasStallingCmds,                                                                       // hasStallingCmds
+        hasRelaxedOrderingDependencies                                                         // hasRelaxedOrderingDependencies
     );
+    this->copyOffloadTagUpdateRequired = false;
     dispatchBcsFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
     dispatchBcsFlags.dispatchOperation = appendOperation;
 

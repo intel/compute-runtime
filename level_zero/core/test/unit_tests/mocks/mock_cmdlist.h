@@ -237,6 +237,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::compactL3FlushEvent;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::copyOffloadMode;
+    using BaseClass::copyOffloadTagUpdateRequired;
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;

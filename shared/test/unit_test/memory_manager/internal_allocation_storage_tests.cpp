@@ -40,6 +40,37 @@ TEST_F(InternalAllocationStorageTest, givenDebugFlagThatDisablesAllocationReuseW
     EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 }
 
+TEST_F(InternalAllocationStorageTest, givenRequiredSizeWhenDetachingThenOnlyTheFirstMatchingAllocationIsRemoved) {
+    auto first = std::make_unique<MockGraphicsAllocation>(nullptr, MemoryConstants::pageSize);
+    auto second = std::make_unique<MockGraphicsAllocation>(nullptr, MemoryConstants::pageSize64k);
+    auto third = std::make_unique<MockGraphicsAllocation>(nullptr, MemoryConstants::pageSize64k);
+    auto firstPtr = first.get();
+    auto secondPtr = second.get();
+    auto thirdPtr = third.get();
+    const auto allocationType = first->getAllocationType();
+    AllocationsList allocations;
+    allocations.pushTailOne(*first.release());
+    allocations.pushTailOne(*second.release());
+    allocations.pushTailOne(*third.release());
+
+    auto detached = allocations.detachAllocation(MemoryConstants::pageSize64k, nullptr, nullptr, allocationType);
+    ASSERT_EQ(secondPtr, detached.get());
+    EXPECT_EQ(firstPtr, allocations.peekHead());
+    EXPECT_EQ(thirdPtr, allocations.peekTail());
+    EXPECT_EQ(thirdPtr, firstPtr->next);
+    EXPECT_EQ(firstPtr, thirdPtr->prev);
+    EXPECT_EQ(nullptr, detached->next);
+    EXPECT_EQ(nullptr, detached->prev);
+
+    EXPECT_EQ(nullptr, allocations.detachAllocation(MemoryConstants::pageSize64k + 1, nullptr, nullptr, allocationType));
+    EXPECT_EQ(firstPtr, allocations.peekHead());
+    EXPECT_EQ(thirdPtr, allocations.peekTail());
+    EXPECT_EQ(firstPtr, allocations.detachAllocation(0, nullptr, nullptr, allocationType).get());
+    EXPECT_EQ(thirdPtr, allocations.detachAllocation(0, nullptr, nullptr, allocationType).get());
+    EXPECT_TRUE(allocations.peekIsEmpty());
+    EXPECT_EQ(nullptr, allocations.detachAllocation(0, nullptr, nullptr, allocationType));
+}
+
 TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompletedAllocations) {
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});

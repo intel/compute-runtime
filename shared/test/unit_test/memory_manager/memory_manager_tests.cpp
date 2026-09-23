@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -3899,6 +3900,53 @@ TEST(MemoryManagerTest, WhenAddingCustomHeapAllocatorConfigsThenCanRetrieveAndMa
 
     EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, true, mockRootDeviceIndex).has_value());
     EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex).has_value());
+}
+
+TEST(MemoryManagerTest, givenPendingSecondaryPartitionOrMissingContextTagWhenAllocInUseCalledThenExistingCleanupPolicyIsPreserved) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2);
+    executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(false, false, executionEnvironment);
+    auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment.memoryManager.get());
+    memoryManager->callBaseAllocInUse = true;
+    MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
+    const auto osContext = memoryManager->createAndRegisterOsContext(&csr, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    constexpr TaskCountType taskCount = 7;
+    MockGraphicsAllocation allocation;
+    allocation.updateTaskCount(taskCount, osContext->getContextId());
+    TagAddressType tags[] = {taskCount, 0};
+    VariableBackup<volatile TagAddressType *> tagBackup(&csr.tagAddress, tags);
+    csr.setActivePartitions(2);
+    csr.immWritePostSyncWriteOffset = sizeof(TagAddressType);
+
+    EXPECT_FALSE(memoryManager->allocInUse(allocation));
+    tags[0] = taskCount - 1;
+    EXPECT_TRUE(memoryManager->allocInUse(allocation));
+    csr.tagAddress = nullptr;
+    EXPECT_FALSE(memoryManager->allocInUse(allocation));
+    csr.tagAddress = tags;
+    memoryManager->unregisterEngineForCsr(&csr);
+    EXPECT_FALSE(memoryManager->allocInUse(allocation));
+}
+
+TEST(MemoryManagerTest, givenSnapshotWhenCheckingCompletionThenActivePartitionCountAndStrideAreUsedAndMissingTagsAreSkipped) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
+    constexpr TaskCountType taskCount = 7;
+    TagAddressType tags[] = {taskCount, 0, taskCount - 1};
+    VariableBackup<volatile TagAddressType *> tagBackup(&csr.tagAddress, tags);
+    csr.immWritePostSyncWriteOffset = 2 * sizeof(TagAddressType);
+    EngineCompletionSnapshot snapshot;
+    EXPECT_TRUE(isEngineCompletionSnapshotReady(snapshot));
+    snapshot.push_back({&csr, taskCount});
+
+    csr.setActivePartitions(1);
+    EXPECT_TRUE(isEngineCompletionSnapshotReady(snapshot));
+    csr.setActivePartitions(2);
+    EXPECT_FALSE(isEngineCompletionSnapshotReady(snapshot));
+    tags[2] = taskCount;
+    EXPECT_TRUE(isEngineCompletionSnapshotReady(snapshot));
+    csr.tagAddress = nullptr;
+    EXPECT_TRUE(isEngineCompletionSnapshotReady(snapshot));
 }
 
 TEST(MemoryManagerTest, givenGpuHangWhenAllocInUseCalledThenReturnFalse) {

@@ -1536,6 +1536,8 @@ void TbxImmediateCommandListFixture::setUpT() {
 template <typename FamilyType>
 void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperation operation) {
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    VariableBackup<volatile TagAddressType> tagBackup(ultCsr.tagAddress);
+    VariableBackup<volatile TagAddressType> ucTagBackup(ultCsr.ucTagAddress);
 
     // Start with clean tag state for testing deferred free mechanism
     *ultCsr.tagAddress = 0;

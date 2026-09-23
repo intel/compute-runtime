@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -13,7 +14,40 @@
 
 #include "gtest/gtest.h"
 
+#include <limits>
+
 using namespace NEO;
+
+TEST(TaskCountHelperTest, givenPartitionTagsWithPaddingWhenCheckingReadinessThenOnlyRequestedPartitionsAreChecked) {
+    constexpr TaskCountType taskCount = 7;
+    constexpr size_t tagOffset = 2 * sizeof(TagAddressType);
+    TagAddressType tags[] = {taskCount, 0, taskCount - 1};
+
+    EXPECT_TRUE(TaskCountHelper::isReady(tags, taskCount, 1, tagOffset));
+    EXPECT_FALSE(TaskCountHelper::isReady(tags, taskCount, 2, tagOffset));
+
+    tags[2] = taskCount;
+    EXPECT_TRUE(TaskCountHelper::isReady(tags, taskCount, 2, tagOffset));
+    EXPECT_FALSE(TaskCountHelper::isReady(tags, taskCount + 1, 2, tagOffset));
+    EXPECT_TRUE(TaskCountHelper::isReady(tags, taskCount - 1, 2, tagOffset));
+}
+
+TEST(TaskCountHelperTest, givenMissingTagsWhenCheckingReadinessThenReturnFalse) {
+    EXPECT_FALSE(TaskCountHelper::isReady(nullptr, 0, 1, sizeof(TagAddressType)));
+    EXPECT_FALSE(TaskCountHelper::isReady(nullptr, 0, 0, sizeof(TagAddressType)));
+}
+
+TEST(TaskCountHelperTest, givenNoPartitionsOrBoundaryTaskCountsWhenCheckingReadinessThenOnlyNumericCompletionIsChecked) {
+    TagAddressType tag = 0;
+    constexpr auto maximumTaskCount = std::numeric_limits<TaskCountType>::max();
+
+    EXPECT_TRUE(TaskCountHelper::isReady(&tag, maximumTaskCount, 0, 0));
+    EXPECT_TRUE(TaskCountHelper::isReady(&tag, 0, 1, 0));
+    EXPECT_FALSE(TaskCountHelper::isReady(&tag, maximumTaskCount, 1, 0));
+
+    tag = maximumTaskCount;
+    EXPECT_TRUE(TaskCountHelper::isReady(&tag, maximumTaskCount, 1, 0));
+}
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;

@@ -34,6 +34,8 @@
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include <array>
+
 using namespace NEO;
 
 constexpr uint32_t defaultNumIddsPerBlock = 64;
@@ -46,6 +48,7 @@ class MyMockCommandContainer : public CommandContainer {
     using CommandContainer::allocationIndirectHeaps;
     using CommandContainer::cmdBufferAllocations;
     using CommandContainer::defaultSshSize;
+    using CommandContainer::detachReusableCommandBuffer;
     using CommandContainer::dirtyHeaps;
     using CommandContainer::estimatedNumberOfCommands;
     using CommandContainer::getAlignedCmdBufferSize;
@@ -1197,6 +1200,345 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAl
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+struct CommandBufferReuseFixture : DeviceFixture {
+    struct Csr : MockCommandStreamReceiver {
+        Csr(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+            : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
+            this->tagAddress = normalTags.data();
+            this->ucTagAddress = ucTags.data();
+            this->immWritePostSyncWriteOffset = sizeof(TagAddressType);
+        }
+
+        SubmissionStatus flushTagUpdate() override {
+            flushTagUpdateCalls++;
+            this->latestFlushedTaskCount = ++this->taskCount;
+            return SubmissionStatus::success;
+        }
+
+        using CommandStreamReceiver::ucTagAddress;
+        std::array<TagAddressType, 2> normalTags = {};
+        std::array<TagAddressType, 2> ucTags = {};
+        uint32_t flushTagUpdateCalls = 0;
+    };
+
+    void setUp() {
+        debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+        debugManager.flags.SetAmountOfReusableAllocations.set(0);
+        DeviceFixture::setUp();
+        maxContextCount = std::make_unique<VariableBackup<uint32_t>>(&MemoryManager::maxOsContextCount, MemoryManager::maxOsContextCount + 2);
+        mainCsr = createCsr(aub_stream::ENGINE_RCS, pDevice->getDeviceBitfield());
+        copyCsr = createCsr(aub_stream::ENGINE_BCS, DeviceBitfield{3});
+        mainCsr->taskCount = mainTaskCount;
+        copyCsr->taskCount = copyTaskCount;
+    }
+
+    void tearDown() {
+        mainCsr->normalTags.fill(std::numeric_limits<TagAddressType>::max());
+        copyCsr->normalTags.fill(std::numeric_limits<TagAddressType>::max());
+        allocations.freeAllGraphicsAllocations(pDevice);
+        copyCsr.reset();
+        mainCsr.reset();
+        maxContextCount.reset();
+        DeviceFixture::tearDown();
+    }
+
+    std::unique_ptr<Csr> createCsr(aub_stream::EngineType engineType, DeviceBitfield deviceBitfield) {
+        auto csr = std::make_unique<Csr>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), deviceBitfield);
+        auto context = pDevice->getMemoryManager()->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::regular}, deviceBitfield));
+        csr->setupContext(*context);
+        return csr;
+    }
+
+    MockGraphicsAllocation *addAllocation() {
+        auto allocation = std::make_unique<MockGraphicsAllocation>(nullptr, MemoryConstants::pageSize);
+        allocation->setAllocationType(AllocationType::commandBuffer);
+        auto result = allocation.release();
+        allocations.pushTailOne(*result);
+        return result;
+    }
+
+    void recordUsage(GraphicsAllocation &allocation) {
+        allocation.updateTaskCount(mainTaskCount, mainCsr->getOsContext().getContextId());
+        allocation.updateTaskCount(copyTaskCount, copyCsr->getOsContext().getContextId());
+    }
+
+    std::unique_ptr<MyMockCommandContainer> createContainer(bool immediate) {
+        auto container = std::make_unique<MyMockCommandContainer>();
+        if (immediate) {
+            container->setImmediateCmdListCsr(mainCsr.get());
+        }
+        EXPECT_EQ(CommandContainer::ErrorCode::success, container->initialize(pDevice, &allocations, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false));
+        if (immediate) {
+            container->fillReusableAllocationLists();
+        }
+        return container;
+    }
+
+    std::unique_ptr<GraphicsAllocation> detachCommandBuffer(size_t requiredSize, bool forceHostMemory, CommandStreamReceiver *csr) {
+        MyMockCommandContainer container;
+        EXPECT_EQ(CommandContainer::ErrorCode::success, container.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false));
+        container.setImmediateCmdListCsr(csr);
+        return container.detachReusableCommandBuffer(allocations, requiredSize, forceHostMemory);
+    }
+
+    static constexpr TaskCountType mainTaskCount = 2;
+    static constexpr TaskCountType copyTaskCount = 5;
+    DebugManagerStateRestore restore;
+    std::unique_ptr<VariableBackup<uint32_t>> maxContextCount;
+    std::unique_ptr<Csr> mainCsr;
+    std::unique_ptr<Csr> copyCsr;
+    AllocationsList allocations;
+};
+
+using CommandBufferReuseTests = Test<CommandBufferReuseFixture>;
+
+TEST_F(CommandBufferReuseTests, givenOnePendingEngineWhenDetachingCommandBufferThenAllRecordedContextsMustComplete) {
+    auto allocation = addAllocation();
+    recordUsage(*allocation);
+
+    mainCsr->normalTags.fill(mainTaskCount);
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, mainCsr.get()));
+
+    mainCsr->normalTags.fill(0);
+    copyCsr->ucTags.fill(copyTaskCount);
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, mainCsr.get()));
+
+    mainCsr->normalTags.fill(mainTaskCount);
+    EXPECT_EQ(allocation, detachCommandBuffer(0, false, mainCsr.get()).get());
+}
+
+TEST_F(CommandBufferReuseTests, givenCompletedEnginesWhenDetachingCommandBufferThenEachEngineCanUseEitherCompletionTag) {
+    for (const bool mainUc : {false, true}) {
+        for (const bool copyUc : {false, true}) {
+            auto allocation = addAllocation();
+            recordUsage(*allocation);
+            mainCsr->normalTags.fill(mainUc ? 0 : mainTaskCount);
+            mainCsr->ucTags.fill(mainUc ? mainTaskCount : 0);
+            copyCsr->normalTags.fill(copyUc ? 0 : copyTaskCount);
+            copyCsr->ucTags.fill(copyUc ? copyTaskCount : 0);
+
+            EXPECT_EQ(allocation, detachCommandBuffer(0, false, mainCsr.get()).get());
+        }
+    }
+}
+
+TEST_F(CommandBufferReuseTests, givenPendingPartitionWhenDetachingCommandBufferThenOneCompletedPartitionIsInsufficient) {
+    auto allocation = addAllocation();
+    recordUsage(*allocation);
+    mainCsr->normalTags.fill(mainTaskCount);
+
+    copyCsr->normalTags[0] = copyTaskCount;
+    copyCsr->ucTags[1] = copyTaskCount;
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, mainCsr.get()));
+
+    copyCsr->normalTags[1] = copyTaskCount;
+    EXPECT_EQ(allocation, detachCommandBuffer(0, false, mainCsr.get()).get());
+}
+
+TEST_F(CommandBufferReuseTests, givenDifferentEngineTagStridesWhenDetachingCommandBufferThenEachEnginesPartitionTagsAreChecked) {
+    const auto allocation = addAllocation();
+    recordUsage(*allocation);
+    mainCsr->normalTags.fill(mainTaskCount);
+
+    std::array<TagAddressType, 3> normalCopyTags{copyTaskCount, copyTaskCount, 0};
+    std::array<TagAddressType, 3> ucCopyTags{0, copyTaskCount, copyTaskCount};
+    VariableBackup<volatile TagAddressType *> normalTagsBackup(&copyCsr->tagAddress, normalCopyTags.data());
+    VariableBackup<volatile TagAddressType *> ucTagsBackup(&copyCsr->ucTagAddress, ucCopyTags.data());
+    VariableBackup<uint32_t> strideBackup(&copyCsr->immWritePostSyncWriteOffset, 2 * sizeof(TagAddressType));
+
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, mainCsr.get()));
+    normalCopyTags[2] = copyTaskCount;
+    EXPECT_EQ(allocation, detachCommandBuffer(0, false, mainCsr.get()).get());
+}
+
+TEST_F(CommandBufferReuseTests, givenNullOrUnusedRequestingCsrWhenDetachingCommandBufferThenRecordedUsersAreStillChecked) {
+    auto allocation = addAllocation();
+    allocation->updateTaskCount(copyTaskCount, copyCsr->getOsContext().getContextId());
+
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, nullptr));
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, mainCsr.get()));
+
+    copyCsr->normalTags.fill(copyTaskCount);
+    EXPECT_EQ(allocation, detachCommandBuffer(0, false, nullptr).get());
+}
+
+TEST_F(CommandBufferReuseTests, givenUnusedCommandBufferWhenDetachingThenCompletionTagsAreNotRequired) {
+    auto allocation = addAllocation();
+    mainCsr->tagAddress = nullptr;
+    mainCsr->ucTagAddress = nullptr;
+    EXPECT_EQ(allocation, detachCommandBuffer(0, false, mainCsr.get()).get());
+    EXPECT_EQ(0u, mainCsr->flushTagUpdateCalls);
+    EXPECT_EQ(0u, copyCsr->flushTagUpdateCalls);
+}
+
+TEST_F(CommandBufferReuseTests, givenSingleUserWithMissingTagsWhenDetachingThenOnlyAnAvailableCompletedTagAllowsReuse) {
+    auto allocation = addAllocation();
+    allocation->updateTaskCount(mainTaskCount, mainCsr->getOsContext().getContextId());
+    mainCsr->tagAddress = nullptr;
+    mainCsr->ucTagAddress = nullptr;
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, mainCsr.get()));
+
+    mainCsr->ucTagAddress = mainCsr->ucTags.data();
+    mainCsr->ucTags.fill(mainTaskCount);
+    EXPECT_EQ(allocation, detachCommandBuffer(0, false, mainCsr.get()).get());
+
+    allocation = addAllocation();
+    allocation->updateTaskCount(mainTaskCount, mainCsr->getOsContext().getContextId());
+    mainCsr->ucTagAddress = nullptr;
+    mainCsr->tagAddress = mainCsr->normalTags.data();
+    mainCsr->normalTags.fill(mainTaskCount);
+    EXPECT_EQ(allocation, detachCommandBuffer(0, false, mainCsr.get()).get());
+}
+
+TEST_F(CommandBufferReuseTests, givenUnresolvedUsedContextWhenDetachingThenCompletedKnownContextsDoNotAllowReuse) {
+    auto allocation = addAllocation();
+    recordUsage(*allocation);
+    mainCsr->normalTags.fill(mainTaskCount);
+    copyCsr->normalTags.fill(copyTaskCount);
+    pDevice->getMemoryManager()->unregisterEngineForCsr(copyCsr.get());
+
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, mainCsr.get()));
+}
+
+TEST_F(CommandBufferReuseTests, givenNotReadyTaskCountWhenDetachingThenMaximumTagDoesNotAllowReuse) {
+    auto allocation = addAllocation();
+    allocation->updateTaskCount(CompletionStamp::notReady, mainCsr->getOsContext().getContextId());
+    mainCsr->normalTags.fill(std::numeric_limits<TagAddressType>::max());
+    mainCsr->ucTags.fill(std::numeric_limits<TagAddressType>::max());
+
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, mainCsr.get()));
+}
+
+TEST_F(CommandBufferReuseTests, givenReadyCommandBufferWhenDetachingThenSizeTypeAndPlacementMustMatch) {
+    auto allocation = addAllocation();
+    EXPECT_EQ(nullptr, detachCommandBuffer(MemoryConstants::pageSize + 1, false, nullptr));
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, true, nullptr));
+
+    allocation->setAllocationType(AllocationType::internalHeap);
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, nullptr));
+    allocation->setAllocationType(AllocationType::commandBuffer);
+    allocation->storageInfo.subDeviceBitfield = 2;
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, nullptr));
+    allocation->storageInfo.subDeviceBitfield = 0;
+    EXPECT_EQ(allocation, detachCommandBuffer(0, false, nullptr).get());
+}
+
+TEST_F(CommandBufferReuseTests, givenRetiredBufferTransferredToSharedCacheWhenCreatingAnotherContainerThenPendingCopyPreventsReuse) {
+    auto container = createContainer(true);
+    auto allocation = container->getCommandStream()->getGraphicsAllocation();
+    recordUsage(*allocation);
+    container->addCurrentCommandBufferToReusableAllocationList();
+    container.reset();
+
+    mainCsr->normalTags.fill(mainCsr->peekTaskCount());
+    container = createContainer(false);
+    EXPECT_NE(allocation, container->getCommandStream()->getGraphicsAllocation());
+    EXPECT_TRUE(allocations.peekContains(*allocation));
+
+    copyCsr->normalTags.fill(copyTaskCount);
+    container->allocateNextCommandBuffer();
+    EXPECT_EQ(allocation, container->getCommandStream()->getGraphicsAllocation());
+}
+
+TEST_F(CommandBufferReuseTests, givenReadySharedBufferWhenPrivateCacheIsEmptyThenFallbackReturnsAndOwnsAllocation) {
+    auto container = createContainer(true);
+    auto sharedAllocation = container->allocateCommandBuffer(false);
+    recordUsage(*sharedAllocation);
+    allocations.pushTailOne(*sharedAllocation);
+    mainCsr->normalTags.fill(mainTaskCount);
+
+    EXPECT_EQ(nullptr, container->reuseExistingCmdBuffer());
+    EXPECT_TRUE(allocations.peekContains(*sharedAllocation));
+
+    copyCsr->normalTags.fill(copyTaskCount);
+    EXPECT_EQ(sharedAllocation, container->reuseExistingCmdBuffer());
+    EXPECT_TRUE(allocations.peekIsEmpty());
+    EXPECT_EQ(sharedAllocation, container->getCmdBufferAllocations().back());
+}
+
+TEST_F(CommandBufferReuseTests, givenMissingCopyTagUpdateWhenRetiringThenReuseWaitsForExistingCompletionUpdatesWithoutFlushingCopy) {
+    auto container = createContainer(true);
+    auto allocation = container->getCommandStream()->getGraphicsAllocation();
+    recordUsage(*allocation);
+    container->addCurrentCommandBufferToReusableAllocationList();
+
+    EXPECT_EQ(1u, mainCsr->flushTagUpdateCalls);
+    EXPECT_EQ(0u, copyCsr->flushTagUpdateCalls);
+    EXPECT_LT(copyCsr->peekLatestFlushedTaskCount(), copyTaskCount);
+    EXPECT_EQ(copyTaskCount, allocation->getTaskCount(copyCsr->getOsContext().getContextId()));
+    EXPECT_EQ(0u, copyCsr->waitForCompletionWithTimeoutCalled);
+    mainCsr->normalTags.fill(mainCsr->peekTaskCount());
+    EXPECT_EQ(nullptr, container->reuseExistingCmdBuffer());
+
+    copyCsr->flushTagUpdateIfRequired(copyTaskCount);
+    EXPECT_EQ(nullptr, container->reuseExistingCmdBuffer());
+    copyCsr->normalTags.fill(copyCsr->peekTaskCount());
+    EXPECT_EQ(allocation, container->reuseExistingCmdBuffer());
+}
+
+TEST_F(CommandBufferReuseTests, givenCopyTagUpdateAlreadyScheduledWhenRetiringThenNoRedundantCopyFlushIsSubmitted) {
+    auto container = createContainer(true);
+    recordUsage(*container->getCommandStream()->getGraphicsAllocation());
+    copyCsr->latestFlushedTaskCount = copyTaskCount;
+    container->addCurrentCommandBufferToReusableAllocationList();
+
+    EXPECT_EQ(1u, mainCsr->flushTagUpdateCalls);
+    EXPECT_EQ(0u, copyCsr->flushTagUpdateCalls);
+}
+
+TEST_F(CommandBufferReuseTests, givenUnsubmittedCopyTaskCountWhenRetiringThenCopyTagIsNotFlushedAndReuseIsBlocked) {
+    auto container = createContainer(true);
+    auto allocation = container->getCommandStream()->getGraphicsAllocation();
+    allocation->updateTaskCount(CompletionStamp::notReady, copyCsr->getOsContext().getContextId());
+    container->addCurrentCommandBufferToReusableAllocationList();
+    EXPECT_EQ(0u, copyCsr->flushTagUpdateCalls);
+    EXPECT_EQ(nullptr, container->reuseExistingCmdBuffer());
+}
+
+TEST_F(CommandBufferReuseTests, givenOnlyMainEngineUsesBufferWhenRetiringThenCopyEngineIsNotFlushed) {
+    auto container = createContainer(true);
+    container->addCurrentCommandBufferToReusableAllocationList();
+
+    EXPECT_EQ(1u, mainCsr->flushTagUpdateCalls);
+    EXPECT_EQ(0u, copyCsr->flushTagUpdateCalls);
+}
+
+TEST_F(CommandBufferReuseTests, givenActiveBufferWhenContainerIsDestroyedThenUsageIsPreservedWithoutFlushingTags) {
+    auto container = createContainer(true);
+    auto allocation = container->getCommandStream()->getGraphicsAllocation();
+    recordUsage(*allocation);
+    container.reset();
+
+    EXPECT_TRUE(allocations.peekContains(*allocation));
+    EXPECT_EQ(0u, mainCsr->flushTagUpdateCalls);
+    EXPECT_EQ(0u, copyCsr->flushTagUpdateCalls);
+    EXPECT_EQ(mainTaskCount, allocation->getTaskCount(mainCsr->getOsContext().getContextId()));
+    EXPECT_EQ(copyTaskCount, allocation->getTaskCount(copyCsr->getOsContext().getContextId()));
+}
+
+TEST_F(CommandBufferReuseTests, givenNoSharedCacheWhenPrivateCacheIsEmptyThenNoBufferIsReused) {
+    MyMockCommandContainer container;
+    container.setImmediateCmdListCsr(mainCsr.get());
+    ASSERT_EQ(CommandContainer::ErrorCode::success, container.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false));
+    container.fillReusableAllocationLists();
+
+    EXPECT_EQ(nullptr, container.reuseExistingCmdBuffer());
+}
+
+TEST_F(CommandBufferReuseTests, givenUnsubmittedTaskCountWhenSharingActiveBufferThenNoTagUpdateIsRequestedForThatCount) {
+    debugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.set(1);
+    auto container = createContainer(true);
+    auto allocation = container->getCommandStream()->getGraphicsAllocation();
+    recordUsage(*allocation);
+    allocation->updateTaskCount(CompletionStamp::notReady, mainCsr->getOsContext().getContextId());
+    container.reset();
+
+    EXPECT_EQ(0u, mainCsr->flushTagUpdateCalls);
+    EXPECT_EQ(0u, copyCsr->flushTagUpdateCalls);
+    copyCsr->normalTags.fill(copyTaskCount);
+    EXPECT_EQ(nullptr, detachCommandBuffer(0, false, nullptr));
 }
 
 HWTEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurfaceStateIndirectHeapSizeIsCorrect) {

@@ -13,6 +13,8 @@
 
 namespace NEO {
 class CommandStreamReceiver;
+class GraphicsAllocation;
+class MemoryManager;
 
 // Task counts an allocation had on each engine at a chosen point in time. Unlike a
 // live allocInUse() check, it does not grow with work submitted after the snapshot.
@@ -22,5 +24,7 @@ using EngineCompletionSnapshot = StackVec<std::pair<CommandStreamReceiver *, Tas
 // pauses and yields when the work is not done - too costly for a check that runs on the
 // free path. A tag that reads low only delays the answer to the next call.
 bool isEngineCompletionSnapshotReady(const EngineCompletionSnapshot &snapshot);
+
+bool isCommandBufferReady(const GraphicsAllocation &allocation, CommandStreamReceiver *csr, MemoryManager &memoryManager);
 
 } // namespace NEO

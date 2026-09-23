@@ -11,13 +11,14 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace {
 struct ReusableAllocationRequirements {
     ReusableAllocationRequirements() = delete;
     ReusableAllocationRequirements(NEO::CommandStreamReceiver *csr, const void *requiredPtr, size_t requiredMinimalSize, NEO::AllocationType allocationType, bool forceSystemMemoryFlag, bool *nonUsmHostPtrPartialOverlapFound)
-        : requiredPtr(requiredPtr), requiredMinimalSize(requiredMinimalSize), allocationType(allocationType), forceSystemMemoryFlag(forceSystemMemoryFlag), nonUsmHostPtrPartialOverlapFound(nonUsmHostPtrPartialOverlapFound) {
+        : csr(csr), requiredPtr(requiredPtr), requiredMinimalSize(requiredMinimalSize), allocationType(allocationType), forceSystemMemoryFlag(forceSystemMemoryFlag), nonUsmHostPtrPartialOverlapFound(nonUsmHostPtrPartialOverlapFound) {
 
         if (csr) {
             csrTagAddress = csr->getTagAddress();
@@ -29,6 +30,8 @@ struct ReusableAllocationRequirements {
         }
     }
 
+    NEO::CommandStreamReceiver *csr = nullptr;
+    NEO::Device *device = nullptr;
     const void *requiredPtr = nullptr;
     size_t requiredMinimalSize = 0;
     volatile TagAddressType *csrTagAddress = nullptr;
@@ -43,15 +46,8 @@ struct ReusableAllocationRequirements {
 };
 
 bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation, volatile TagAddressType *tagAddress) {
-    auto taskCount = gfxAllocation->getTaskCount(requirements->contextId);
-    for (uint32_t count = 0; count < requirements->deviceBitfield.count(); count++) {
-        if (*tagAddress < taskCount) {
-            return false;
-        }
-        tagAddress = ptrOffset(tagAddress, requirements->tagOffset);
-    }
-
-    return true;
+    return NEO::TaskCountHelper::isReady(tagAddress, gfxAllocation->getTaskCount(requirements->contextId),
+                                         requirements->deviceBitfield.count(), requirements->tagOffset);
 }
 
 bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
@@ -86,53 +82,69 @@ std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t req
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, bool forceSystemMemoryFlag, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType, bool *nonUsmHostPtrPartialOverlapFound) {
     ReusableAllocationRequirements req(commandStreamReceiver, requiredPtr, requiredMinimalSize, allocationType, forceSystemMemoryFlag, nonUsmHostPtrPartialOverlapFound);
 
-    GraphicsAllocation *a = nullptr;
-    GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
-    return std::unique_ptr<GraphicsAllocation>(retAlloc);
+    return std::unique_ptr<GraphicsAllocation>(this->processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(nullptr, &req));
+}
+
+std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, bool forceSystemMemoryFlag, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType, Device &device) {
+    ReusableAllocationRequirements req(commandStreamReceiver, requiredPtr, requiredMinimalSize, allocationType, forceSystemMemoryFlag, nullptr);
+    req.device = &device;
+    if (!commandStreamReceiver) {
+        req.rootDeviceIndex = device.getRootDeviceIndex();
+        req.deviceBitfield = device.getDeviceBitfield();
+    }
+    return std::unique_ptr<GraphicsAllocation>(this->processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(nullptr, &req));
 }
 
 GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, void *data) {
-    ReusableAllocationRequirements *req = static_cast<ReusableAllocationRequirements *>(data);
-
-    auto *curr = head;
-    while (curr != nullptr) {
-        bool typeMatch = (req->allocationType == curr->getAllocationType());
-        bool sizeMatch = (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize);
-        bool memMatch = (curr->storageInfo.systemMemoryForced == req->forceSystemMemoryFlag);
+    auto *req = static_cast<ReusableAllocationRequirements *>(data);
+    for (auto *curr = this->head; curr != nullptr; curr = curr->next) {
+        const bool typeMatch = (req->allocationType == curr->getAllocationType());
+        const bool sizeMatch = (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize);
+        const bool memMatch = (curr->storageInfo.systemMemoryForced == req->forceSystemMemoryFlag);
 
         if (typeMatch && memMatch) {
             if (sizeMatch) {
-                if (req->csrTagAddress == nullptr) {
-                    return removeOneImpl(curr, nullptr);
+                const bool checkCommandBufferCompletion = req->device && req->allocationType == AllocationType::commandBuffer;
+                if (!checkCommandBufferCompletion && req->csrTagAddress == nullptr) {
+                    return this->removeOneImpl(curr, nullptr);
                 }
 
-                bool usageMatch = (this->allocationUsage == TEMPORARY_ALLOCATION || checkTagAddressReady(req, curr));
-                bool ptrMatch = (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer());
-                bool tileMatch = (req->deviceBitfield == curr->storageInfo.subDeviceBitfield) || (curr->storageInfo.subDeviceBitfield == 0);
-                bool placementMatch = (req->rootDeviceIndex == curr->getRootDeviceIndex()) && tileMatch;
+                const bool ptrMatch = (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer());
+                const bool tileMatch = (req->deviceBitfield == curr->storageInfo.subDeviceBitfield) || (curr->storageInfo.subDeviceBitfield == 0);
+                const bool placementMatch = (req->rootDeviceIndex == curr->getRootDeviceIndex()) && tileMatch;
+                if (!ptrMatch || !placementMatch) {
+                    continue;
+                }
 
-                if (usageMatch && ptrMatch && placementMatch) {
+                if (checkCommandBufferCompletion) {
+                    if (isCommandBufferReady(*curr, req->csr, *req->device->getMemoryManager())) {
+                        return this->removeOneImpl(curr, nullptr);
+                    }
+                    continue;
+                }
+
+                const bool usageMatch = (this->allocationUsage == TEMPORARY_ALLOCATION || checkTagAddressReady(req, curr));
+                if (usageMatch) {
                     if (this->allocationUsage == TEMPORARY_ALLOCATION) {
                         // We may not have proper task count yet, so set notReady to avoid releasing in a different thread
                         curr->updateTaskCount(CompletionStamp::notReady, req->contextId);
                     }
-                    return removeOneImpl(curr, nullptr);
+                    return this->removeOneImpl(curr, nullptr);
                 }
             } else {
-                bool detectPartialOverlap = (req->nonUsmHostPtrPartialOverlapFound != nullptr && curr->getAllocationType() == NEO::AllocationType::externalHostPtr && this->allocationUsage == TEMPORARY_ALLOCATION);
+                const bool detectPartialOverlap = (req->nonUsmHostPtrPartialOverlapFound != nullptr && curr->getAllocationType() == NEO::AllocationType::externalHostPtr && this->allocationUsage == TEMPORARY_ALLOCATION);
                 if (detectPartialOverlap) {
-                    auto importedStartPtr = curr->getUnderlyingBuffer();
-                    auto pageAlignedSize = alignSizeWholePage(importedStartPtr, curr->getUnderlyingBufferSize()) - static_cast<size_t>(curr->getAllocationOffset());
-                    auto importedEndPtr = ptrOffset(importedStartPtr, pageAlignedSize);
-                    auto requiredStartPtr = req->requiredPtr;
-                    auto requiredEndPtr = ptrOffset(requiredStartPtr, req->requiredMinimalSize);
+                    const auto importedStartPtr = curr->getUnderlyingBuffer();
+                    const auto pageAlignedSize = alignSizeWholePage(importedStartPtr, curr->getUnderlyingBufferSize()) - static_cast<size_t>(curr->getAllocationOffset());
+                    const auto importedEndPtr = ptrOffset(importedStartPtr, pageAlignedSize);
+                    const auto requiredStartPtr = req->requiredPtr;
+                    const auto requiredEndPtr = ptrOffset(requiredStartPtr, req->requiredMinimalSize);
                     if (importedStartPtr <= requiredEndPtr && importedEndPtr >= requiredStartPtr) {
                         *req->nonUsmHostPtrPartialOverlapFound = true;
                     }
                 }
             }
         }
-        curr = curr->next;
     }
     return nullptr;
 }

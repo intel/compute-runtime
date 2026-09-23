@@ -309,6 +309,168 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenAppendingCopyTh
     context->freeMem(usmDevice);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenPendingCopyOffloadWhenMainCsrCompletesThenCommandBufferIsNotReused, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+    const auto mainContextId = mainCsr->getOsContext().getContextId();
+    const auto copyContextId = copyCsr->getOsContext().getContextId();
+    ASSERT_NE(mainContextId, copyContextId);
+
+    *mainCsr->getTagAddress() = 0;
+    *mainCsr->getUcTagAddress() = 0;
+    *copyCsr->getTagAddress() = 0;
+    *copyCsr->getUcTagAddress() = 0;
+
+    auto &container = immCmdList->commandContainer;
+    auto commandStream = container.getCommandStream();
+    auto originalAllocation = commandStream->getGraphicsAllocation();
+    auto usmDevice = allocDeviceMem(sizeof(copyData2));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(usmDevice, &copyData2, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    ASSERT_TRUE(originalAllocation->isUsedByOsContext(copyContextId));
+    const auto copyTaskCount = originalAllocation->getTaskCount(copyContextId);
+    ASSERT_GT(copyTaskCount, *copyCsr->getTagAddress());
+    ASSERT_GT(copyTaskCount, *copyCsr->getUcTagAddress());
+
+    commandStream->getSpace(commandStream->getAvailableSpace());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(usmDevice, &copyData2, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    ASSERT_NE(originalAllocation, container.getCommandStream()->getGraphicsAllocation());
+    ASSERT_TRUE(originalAllocation->isUsedByOsContext(mainContextId));
+    ASSERT_EQ(copyTaskCount, originalAllocation->getTaskCount(copyContextId));
+    EXPECT_EQ(nullptr, container.reuseExistingCmdBuffer());
+
+    const auto mainTaskCount = originalAllocation->getTaskCount(mainContextId);
+    ASSERT_GT(mainTaskCount, 0u);
+    *mainCsr->getTagAddress() = mainTaskCount;
+    *mainCsr->getUcTagAddress() = mainTaskCount;
+
+    commandStream = container.getCommandStream();
+    commandStream->getSpace(commandStream->getAvailableSpace());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(usmDevice, &copyData2, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    EXPECT_NE(originalAllocation, container.getCommandStream()->getGraphicsAllocation());
+    EXPECT_GT(copyTaskCount, *copyCsr->getTagAddress());
+    EXPECT_GT(copyTaskCount, *copyCsr->getUcTagAddress());
+
+    *mainCsr->getTagAddress() = mainCsr->peekTaskCount();
+    *copyCsr->getTagAddress() = copyCsr->peekTaskCount();
+    commandStream = container.getCommandStream();
+    commandStream->getSpace(commandStream->getAvailableSpace());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(usmDevice, &copyData2, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(originalAllocation, container.getCommandStream()->getGraphicsAllocation());
+
+    *mainCsr->getTagAddress() = mainCsr->peekTaskCount();
+    *mainCsr->getUcTagAddress() = mainCsr->peekTaskCount();
+    *copyCsr->getTagAddress() = copyCsr->peekTaskCount();
+    *copyCsr->getUcTagAddress() = copyCsr->peekTaskCount();
+    context->freeMem(usmDevice);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenAsyncCopyInRetiredCommandBufferWhenNextCopyIsFlushedThenCopyTagIsUpdatedAndBufferIsReused, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+
+    auto immediate = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immediate->getCsr(false));
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immediate->getCsr(true));
+    VariableBackup<volatile TagAddressType> mainTag(mainCsr->getTagAddress(), 0);
+    VariableBackup<volatile TagAddressType> mainUcTag(mainCsr->getUcTagAddress(), 0);
+    VariableBackup<volatile TagAddressType> copyTag(copyCsr->getTagAddress(), 0);
+    VariableBackup<volatile TagAddressType> copyUcTag(copyCsr->getUcTagAddress(), 0);
+
+    const auto src = allocHostMem(sizeof(copyData2));
+    const auto dst = allocDeviceMem(sizeof(copyData2));
+    auto &container = immediate->commandContainer;
+    const auto stream = container.getCommandStream();
+    const auto flushedTaskCount = copyCsr->peekLatestFlushedTaskCount();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    ASSERT_TRUE(stream->getGraphicsAllocation()->isUsedByOsContext(copyCsr->getOsContext().getContextId()));
+    ASSERT_FALSE(copyParams.taskCountUpdateRequired);
+    EXPECT_EQ(flushedTaskCount, copyCsr->peekLatestFlushedTaskCount());
+
+    const auto retired = stream->getGraphicsAllocation();
+    stream->getSpace(stream->getAvailableSpace());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_NE(retired, stream->getGraphicsAllocation());
+    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired);
+    EXPECT_EQ(copyCsr->peekTaskCount(), copyCsr->peekLatestFlushedTaskCount());
+
+    *mainCsr->getTagAddress() = mainCsr->peekTaskCount();
+    EXPECT_EQ(nullptr, container.reuseExistingCmdBuffer());
+    *copyCsr->getTagAddress() = copyCsr->peekTaskCount();
+    EXPECT_EQ(retired, container.reuseExistingCmdBuffer());
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenRetiredCommandBufferNotUsedByCopyEngineWhenNextCopyIsFlushedThenCopyTagIsNotUpdated, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+
+    auto immediate = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immediate->getCsr(true));
+
+    const auto src = allocHostMem(sizeof(copyData2));
+    const auto dst = allocDeviceMem(sizeof(copyData2));
+    const auto stream = immediate->commandContainer.getCommandStream();
+    const auto retired = stream->getGraphicsAllocation();
+    ASSERT_FALSE(retired->isUsedByOsContext(copyCsr->getOsContext().getContextId()));
+    const auto flushedTaskCount = copyCsr->peekLatestFlushedTaskCount();
+
+    stream->getSpace(stream->getAvailableSpace());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    ASSERT_FALSE(copyParams.taskCountUpdateRequired);
+
+    EXPECT_NE(retired, stream->getGraphicsAllocation());
+    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired);
+    EXPECT_EQ(flushedTaskCount, copyCsr->peekLatestFlushedTaskCount());
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyTagAlreadyFlushedForRetiredCommandBufferWhenNextCopyIsFlushedThenCopyTagIsNotUpdated, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+
+    auto immediate = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immediate->getCsr(true));
+
+    const auto src = allocHostMem(sizeof(copyData2));
+    const auto dst = allocDeviceMem(sizeof(copyData2));
+    const auto stream = immediate->commandContainer.getCommandStream();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    ASSERT_FALSE(copyParams.taskCountUpdateRequired);
+    const auto retired = stream->getGraphicsAllocation();
+    ASSERT_TRUE(retired->isUsedByOsContext(copyCsr->getOsContext().getContextId()));
+    copyCsr->setLatestFlushedTaskCount(copyCsr->peekTaskCount());
+    const auto flushedTaskCount = copyCsr->peekLatestFlushedTaskCount();
+
+    stream->getSpace(stream->getAvailableSpace());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_NE(retired, stream->getGraphicsAllocation());
+    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired);
+    EXPECT_EQ(flushedTaskCount, copyCsr->peekLatestFlushedTaskCount());
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenCopyEngineNotReadyThenDoNotWaitOnCompute, IsAtLeastXeCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 

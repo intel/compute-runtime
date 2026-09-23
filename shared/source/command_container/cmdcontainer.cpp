@@ -59,6 +59,10 @@ bool shouldSkipHeapPrefillForPool(HeapType heapType, size_t heapSize, bool linea
 
 } // namespace
 
+std::unique_ptr<GraphicsAllocation> CommandContainer::detachReusableCommandBuffer(AllocationsList &allocations, size_t requiredSize, bool forceHostMemory) {
+    return allocations.detachAllocation(requiredSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer, *this->device);
+}
+
 CommandContainer::~CommandContainer() {
     if (!device) {
         DEBUG_BREAK_IF(device);
@@ -401,7 +405,7 @@ GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation(bool for
     GraphicsAllocation *cmdBufferAllocation = nullptr;
     if (this->reusableAllocationList) {
         const size_t alignedSize = getAlignedCmdBufferSize();
-        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, nullptr, AllocationType::commandBuffer).release();
+        cmdBufferAllocation = this->detachReusableCommandBuffer(*this->reusableAllocationList, alignedSize, forceHostMemory).release();
     }
     if (!cmdBufferAllocation) {
         cmdBufferAllocation = this->allocateCommandBuffer(forceHostMemory);
@@ -538,9 +542,9 @@ GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
 GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer(bool forceHostMemory) {
     forceHostMemory &= this->useSecondaryCommandStream;
     size_t alignedSize = getAlignedCmdBufferSize();
-    auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
-    if (!cmdBufferAllocation) {
-        this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
+    auto cmdBufferAllocation = this->detachReusableCommandBuffer(*this->immediateReusableAllocationList, alignedSize, forceHostMemory).release();
+    if (!cmdBufferAllocation && this->reusableAllocationList) {
+        cmdBufferAllocation = this->detachReusableCommandBuffer(*this->reusableAllocationList, alignedSize, forceHostMemory).release();
     }
 
     if (cmdBufferAllocation) {

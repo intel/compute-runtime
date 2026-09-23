@@ -299,6 +299,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     SynchronizationTaskCounts lastHostSynchronizeTaskCounts;
     bool latestFlushIsHostVisible = false;
     bool keepRelaxedOrderingEnabled = false;
+    bool copyOffloadTagUpdateRequired = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

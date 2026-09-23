@@ -85,7 +85,6 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     static constexpr size_t minCmdBufferPtrAlign = 8;
 
     CommandContainer();
-
     CommandContainer(uint32_t maxNumAggregatedIdds);
 
     CmdBufferContainer &getCmdBufferAllocations() { return cmdBufferAllocations; }
@@ -245,6 +244,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
                                                bool isIndirect);
 
   protected:
+    std::unique_ptr<GraphicsAllocation> detachReusableCommandBuffer(AllocationsList &allocations, size_t requiredSize, bool forceHostMemory);
     size_t getAlignedCmdBufferSize() const;
     size_t getMaxUsableSpace() const {
         return getAlignedCmdBufferSize() - cmdBufferReservedSize;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -230,21 +231,8 @@ bool GenericViewPoolAllocator<Traits>::isChunkReady(const DeferredChunk &chunk, 
         return false;
     }
 
-    auto checkTagAddress = [&chunk, ctx](volatile TagAddressType *tagAddr) -> bool {
-        for (uint32_t i = 0; i < ctx->partitionCount; i++) {
-            if (*tagAddr < chunk.taskCount) {
-                return false;
-            }
-            tagAddr = ptrOffset(tagAddr, ctx->tagOffset);
-        }
-        return true;
-    };
-
-    if (ctx->ucTagAddress && checkTagAddress(ctx->ucTagAddress)) {
-        return true;
-    }
-
-    return checkTagAddress(ctx->tagAddress);
+    return TaskCountHelper::isReady(ctx->ucTagAddress, chunk.taskCount, ctx->partitionCount, ctx->tagOffset) ||
+           TaskCountHelper::isReady(ctx->tagAddress, chunk.taskCount, ctx->partitionCount, ctx->tagOffset);
 }
 
 template <PoolTraits Traits>
