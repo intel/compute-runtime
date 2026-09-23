@@ -37,7 +37,7 @@ struct CommandQueueLinuxTests : public Test<DeviceFixture> {
     }
 };
 
-HWTEST2_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecutingCommandListsThenOutOfHostMemoryIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecutingCommandListsThenOutOfHostMemoryIsReturned, IsXeHpcCore) {
     auto drm = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<DrmMock>();
 
     drm->execBufferResult = -1;

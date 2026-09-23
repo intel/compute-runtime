@@ -14,7 +14,7 @@ namespace ult {
 
 using MetricIpSamplingCalcOpSingleDeviceTest = MetricIpSamplingCalculateOperationFixture;
 
-HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceThenSuccessIsReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceThenSuccessIsReturned, HasIPSamplingSupport) {
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                                              subDevice->toHandle(), &calcDescPerDevice[subDevice],
@@ -115,7 +115,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpCallingMe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpOnSubDeviceCallingMetricCalculateValuesWithZeroRawDataSizeThenOnlyALastCallIsAccepted, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpOnSubDeviceCallingMetricCalculateValuesWithZeroRawDataSizeThenOnlyALastCallIsAccepted, HasIPSamplingSupport) {
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
@@ -170,7 +170,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpOnSubDevi
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpOnSubDeviceCallingMetricCalculateValuesWithZeroRawDataSizeAndNothingCachedThenNoReportIsCalculated, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpOnSubDeviceCallingMetricCalculateValuesWithZeroRawDataSizeAndNothingCachedThenNoReportIsCalculated, HasIPSamplingSupport) {
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
@@ -237,7 +237,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpCallingMe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenSubDeviceCreatingCalcOpWithOnlyOddMetricsHandlesThenExpectToFindOnlyThoseInResults, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenSubDeviceCreatingCalcOpWithOnlyOddMetricsHandlesThenExpectToFindOnlyThoseInResults, HasIPSamplingSupport) {
 
     uint32_t expectedMetricsInGroup = 0;
     ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);
@@ -327,7 +327,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenSubDeviceCreatingCalcOpWi
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCalculateValuesOnSubDeviceCanRequestFewerValuesThanAvailable, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCalculateValuesOnSubDeviceCanRequestFewerValuesThanAvailable, HasIPSamplingSupport) {
 
     uint32_t expectedMetricsInGroup = 0;
     ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);
@@ -403,7 +403,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCa
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCalculateValuesOnSubDeviceCanRequestFewerValuesThanAvailablelastCallTrue, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCalculateValuesOnSubDeviceCanRequestFewerValuesThanAvailablelastCallTrue, HasIPSamplingSupport) {
 
     uint32_t expectedMetricsInGroup = 0;
     ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);
@@ -448,7 +448,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCa
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCalculateValuesOnSubDeviceCanConcatenateData, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCalculateValuesOnSubDeviceCanConcatenateData, HasIPSamplingSupport) {
 
     uint32_t expectedMetricsInGroup = 0;
     ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);
@@ -553,7 +553,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCa
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCalculateValuesOnSubDeviceCachesareFreed, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCalculateValuesOnSubDeviceCachesareFreed, HasIPSamplingSupport) {
 
     uint32_t expectedMetricsInGroup = 0;
     ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);
@@ -594,7 +594,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCa
 
 using MetricIpSamplingCalcAggregationTest = MetricIpSamplingMetricsAggregationMultiDevFixture;
 
-HWTEST2_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDeviceCalculatingOnSingleDataReadExpectSuccess, IsAtLeastXe2HpgCore) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDeviceCalculatingOnSingleDataReadExpectSuccess, IsAtLeastXe2HpgCore) {
 
     uint32_t expectedMetricsInGroup = 0;
     ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);
@@ -742,7 +742,7 @@ HWTEST2_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDevice
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDeviceCalculatingConcatenatedDataExpectSuccess, IsAtLeastXe2HpgCore) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDeviceCalculatingConcatenatedDataExpectSuccess, IsAtLeastXe2HpgCore) {
 
     uint32_t expectedMetricsInGroup = 0;
     ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);
@@ -1015,7 +1015,7 @@ HWTEST2_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDevice
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDeviceCanCalllastCallMidWayAndStartWithNewData, IsAtLeastXe2HpgCore) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDeviceCanCalllastCallMidWayAndStartWithNewData, IsAtLeastXe2HpgCore) {
 
     // Raw data for a single read with different data for sub-device 0 and 1
     size_t rawDataSize = sizeof(IpSamplingMultiDevDataHeader) + rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader) + rawReports2BytesSize;

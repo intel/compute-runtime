@@ -152,7 +152,7 @@ HWTEST_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWithF
 }
 
 using PlatformsSupportingSbaTracking = IsWithinGfxCore<IGFX_GEN12_CORE, IGFX_XE3_CORE>;
-HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSharedHeapsDisbledForImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, PlatformsSupportingSbaTracking) {
+HWTEST2_PRODUCT_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSharedHeapsDisbledForImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, PlatformsSupportingSbaTracking) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
@@ -204,7 +204,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSh
     commandList->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenSipIsInstalledAndDebuggerAllocationsAreResident, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenSipIsInstalledAndDebuggerAllocationsAreResident, IsAtLeastXeCore) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     Mock<Module> module(device, nullptr, ModuleType::user);
@@ -251,7 +251,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     commandList->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelThenSipIsInstalledAndDebuggerAllocationsAreResident, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelThenSipIsInstalledAndDebuggerAllocationsAreResident, IsAtLeastXeCore) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();

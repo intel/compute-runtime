@@ -77,7 +77,7 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
 }
 
 using CommandListExecuteImmediate = Test<DeviceFixture>;
-HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtMostXe3Core) {
+HWTEST2_PRODUCT_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtMostXe3Core) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseImmediateFlushTask.set(0);
 
@@ -3651,9 +3651,9 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(scratchAllocation->getGpuAddress(), scratchSurfaceState->getSurfaceBaseAddress());
 }
 
-HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
-          givenCommandListNotUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDoesNotDispatchStateCacheFlush,
-          IsHeapfulRequiredAndAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListStateBaseAddressGlobalStatelessTest,
+                  givenCommandListNotUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDoesNotDispatchStateCacheFlush,
+                  IsHeapfulRequiredAndAtLeastXeCore) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
@@ -3903,9 +3903,9 @@ struct ContextGroupStateBaseAddressGlobalStatelessFixture : public CommandListGl
 };
 
 using ContextGroupStateBaseAddressGlobalStatelessTest = Test<ContextGroupStateBaseAddressGlobalStatelessFixture>;
-HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
-          givenContextGroupEnabledAndCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromPrimaryCsr,
-          IsHeaplessRequired) {
+HWTEST2_PRODUCT_F(ContextGroupStateBaseAddressGlobalStatelessTest,
+                  givenContextGroupEnabledAndCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromPrimaryCsr,
+                  IsHeaplessRequired) {
 
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
@@ -3949,9 +3949,9 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     otherCommandQueue->destroy();
 }
 
-HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
-          givenHeaplessModeAndContextGroupEnabledWhenExecutingImmCommandListThenScratchControllerAndHeapAllocationFromPrimaryCsrIsUsed,
-          IsHeaplessRequired) {
+HWTEST2_PRODUCT_F(ContextGroupStateBaseAddressGlobalStatelessTest,
+                  givenHeaplessModeAndContextGroupEnabledWhenExecutingImmCommandListThenScratchControllerAndHeapAllocationFromPrimaryCsrIsUsed,
+                  IsHeaplessRequired) {
 
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {

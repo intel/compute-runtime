@@ -1202,7 +1202,7 @@ HWTEST_F(DeviceTest, whenPassingSchedulingHintExpStructToGetPropertiesThenProper
     }
 }
 
-HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned, MatchAny) {
     const uint32_t rootDeviceIndex = 0u;
     auto hwInfo = *NEO::defaultHwInfo;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
@@ -1233,7 +1233,7 @@ HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHint
     EXPECT_EQ(expected, schedulingHintProperties.schedulingHintFlags);
 }
 
-HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned, MatchAny) {
     const uint32_t rootDeviceIndex = 0u;
     auto hwInfo = *NEO::defaultHwInfo;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
@@ -2395,7 +2395,7 @@ TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithNonNullPtrThenPro
     EXPECT_EQ(0u, memProperties.flags);
 }
 
-HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
     const std::array<ze_device_memory_ext_type_t, 11> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
@@ -2443,7 +2443,7 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
     }
 }
 
-HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnextForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnextForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
     const std::array<ze_device_memory_ext_type_t, 11> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
@@ -2872,7 +2872,7 @@ TEST_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledWhe
     EXPECT_EQ((gtSysInfo.SliceCount * numSubDevices), deviceProperties.numSlices);
 }
 
-HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledDeviceWhenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledDeviceWhenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
     const std::array<ze_device_memory_ext_type_t, 10> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,

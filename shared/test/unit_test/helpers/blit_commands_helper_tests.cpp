@@ -1420,7 +1420,7 @@ HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEs
     }
 }
 
-HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForBufferPerRowThenValidateMiFlushBehavior, WithoutGen12Lp) {
+HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForBufferPerRowThenValidateMiFlushBehavior, WithoutGen12Lp) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t dst[] = {4, 3, 2, 1};
@@ -1474,7 +1474,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     EXPECT_LT(streamWithAdditionalProps.getUsed(), streamWithoutAdditionalProps.getUsed());
 }
 
-HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForBufferRegionThenValidateMiFlushBehavior, WithoutGen12Lp) {
+HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForBufferRegionThenValidateMiFlushBehavior, WithoutGen12Lp) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t dst[] = {4, 3, 2, 1};
@@ -1528,7 +1528,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     EXPECT_LT(streamWithAdditionalProps.getUsed(), streamWithoutAdditionalProps.getUsed());
 }
 
-HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForImageRegionThenValidateMiFlushBehavior, WithoutGen12Lp) {
+HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForImageRegionThenValidateMiFlushBehavior, WithoutGen12Lp) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     MockGraphicsAllocation srcAlloc;
     MockGraphicsAllocation dstAlloc;
@@ -1584,7 +1584,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     EXPECT_LT(streamWithAdditionalProps.getUsed(), streamWithoutAdditionalProps.getUsed());
 }
 
-HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryFillThenTheResultsAreTheSame, MatchAny) {
+HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryFillThenTheResultsAreTheSame, MatchAny) {
     DebugManagerStateRestore restore{};
 
     constexpr int32_t setWidth = 50;
@@ -1627,7 +1627,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWith
     EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream3.getCpuBase(), 0), std::min(stream.getUsed(), stream3.getUsed())));
 }
 
-HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
+HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
     size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), true));
     size_t dstSize = 2 * sizeof(uint32_t) * (maxBlitWidth * maxBlitHeight) + sizeof(uint32_t);
@@ -1665,7 +1665,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream3.getCpuBase(), 0), std::min(stream.getUsed(), stream3.getUsed())));
 }
 
-HWTEST2_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
+HWTEST2_PRODUCT_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
     DebugManagerStateRestore restore;
     debugManager.flags.LimitBlitterMaxWidth.set(1024);
     debugManager.flags.LimitBlitterMaxHeight.set(1024);

@@ -216,7 +216,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTime
     EXPECT_FALSE(cmd->getDcFlushEnable());
 }
 
-HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsAndSignalEventThenUseSemaphoreAndPipeControl, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsAndSignalEventThenUseSemaphoreAndPipeControl, IsAtLeastXeHpcCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -285,7 +285,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListAndAppendingRegular
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAndAppendingRegularCommandlistThenCsrMakeNonTesidentSkippedFromCmdQueue, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAndAppendingRegularCommandlistThenCsrMakeNonTesidentSkippedFromCmdQueue, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
@@ -316,7 +316,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAnd
     EXPECT_EQ(heaplessPrologProgrammed ? 2u : 1u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
 }
 
-HWTEST2_F(CommandListAppendSignalEvent, givenCopyOnlyImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsAndSignalEventThenUseSemaphoreAndFlushDw, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenCopyOnlyImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsAndSignalEventThenUseSemaphoreAndFlushDw, IsAtLeastXeHpcCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
@@ -375,7 +375,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenCopyOnlyImmediateCmdListAndAppendin
     EXPECT_EQ(expectedMiFlushCount, static_cast<uint32_t>(itorMiFlush.size()));
 }
 
-HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndAppendingRegularCommandlistThenCsrMakeNonTesidentSkippedFromCmdQueue, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndAppendingRegularCommandlistThenCsrMakeNonTesidentSkippedFromCmdQueue, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 

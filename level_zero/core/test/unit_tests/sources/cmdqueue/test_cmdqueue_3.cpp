@@ -369,7 +369,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWalkerPartition.set(1);
 

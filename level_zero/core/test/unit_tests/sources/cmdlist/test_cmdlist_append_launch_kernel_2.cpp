@@ -1078,7 +1078,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppen
     EXPECT_EQ(indirectHeap->getUsed(), sizeCrossThreadData + sizePerThreadDataForWholeGroup);
 }
 
-HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWithScratchAndPrivateWhenAppendLaunchKernelThenCmdListHasCorrectPrivateAndScratchSizesSet, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CmdlistAppendLaunchKernelTests, givenKernelWithScratchAndPrivateWhenAppendLaunchKernelThenCmdListHasCorrectPrivateAndScratchSizesSet, IsAtLeastXeCore) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
@@ -1120,7 +1120,7 @@ struct CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher {
     }
 };
 
-HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithPrivateScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher) {
+HWTEST2_PRODUCT_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithPrivateScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
 
@@ -1161,7 +1161,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelW
     EXPECT_NE(nullptr, commandList->getCmdContainer().getIndirectHeap(HeapType::surfaceState));
 }
 
-HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher) {
+HWTEST2_PRODUCT_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice, neoDevice->getNumGenericSubDevices() > 1);

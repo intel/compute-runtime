@@ -304,7 +304,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNotProvidedThenStateTypeIsNull, MatchAny) {
+HWTEST2_PRODUCT_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNotProvidedThenStateTypeIsNull, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));

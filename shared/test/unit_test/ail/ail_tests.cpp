@@ -21,7 +21,7 @@ TEST(AILTests, whenAILConfigurationCreateFunctionIsCalledWithUnknownGfxCoreThenN
     EXPECT_EQ(nullptr, AILConfiguration::create(IGFX_UNKNOWN));
 }
 
-HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64SupportIsEnabled, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64SupportIsEnabled, MatchAny) {
     AILWhitebox<productFamily> ail;
     ail.processName = "blender";
 
@@ -34,7 +34,7 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64S
     EXPECT_EQ(rtTable.ftrSupportsFP64, true);
 }
 
-HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalledThenPreferredPlatformNameIsSet, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalledThenPreferredPlatformNameIsSet, MatchAny) {
     DebugManagerStateRestore restorer;
     AILWhitebox<productFamily> ail;
     ail.processName = "Adobe Premiere Pro";
@@ -49,7 +49,7 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalled
     EXPECT_STREQ("Intel(R) OpenCL", rtTable.preferredPlatformName);
 }
 
-HWTEST2_F(AILTests, whenCheckingIfSourcesContainKernelThenCorrectResultIsReturned, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, whenCheckingIfSourcesContainKernelThenCorrectResultIsReturned, MatchAny) {
     AILWhitebox<productFamily> ail;
 
     std::string kernelSources = R"( 
@@ -79,7 +79,7 @@ __kernel void CopyBufferToBufferMiddle(
     EXPECT_FALSE(ail.sourcesContain(kernelSources, "CopyBufferToBufferMiddleStateless"));
 }
 
-HWTEST2_F(AILTests, whenCheckingIsKernelHashCorrectThenCorrectResultIsReturned, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, whenCheckingIsKernelHashCorrectThenCorrectResultIsReturned, MatchAny) {
     AILWhitebox<productFamily> ail;
 
     std::string kernelSources = R"( 
@@ -104,7 +104,7 @@ __kernel void CopyBufferToBufferLeftLeftover(
     EXPECT_FALSE(ail.isKernelHashCorrect(kernelSources, expectedHash));
 }
 
-HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSources, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSources, MatchAny) {
     AILWhitebox<productFamily> ail;
 
     std::string kernelSources = "example_kernel(){}";
@@ -115,30 +115,30 @@ HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSource
     EXPECT_STREQ(copyKernel.c_str(), kernelSources.c_str());
 }
 
-HWTEST2_F(AILTests, givenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, MatchAny) {
     AILWhitebox<productFamily> ail;
     ail.processName = "other";
     EXPECT_FALSE(ail.isContextSyncFlagRequired());
 }
 
-HWTEST2_F(AILTests, givenAilWhenCheckingOverfetchDisableRequiredThenExpectFalse, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenAilWhenCheckingOverfetchDisableRequiredThenExpectFalse, MatchAny) {
     AILWhitebox<productFamily> ail;
     ail.processName = "other";
     EXPECT_FALSE(ail.is256BPrefetchDisableRequired());
 }
 
-HWTEST2_F(AILTests, givenAilWhenCheckingDrainHostptrsRequiredThenExpectTrue, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenAilWhenCheckingDrainHostptrsRequiredThenExpectTrue, MatchAny) {
     AILWhitebox<productFamily> ail;
     ail.processName = "other";
     EXPECT_TRUE(ail.drainHostptrs());
 }
 
-HWTEST2_F(AILTests, givenAilWhenGetMicrosecondResolutionCalledThenCorrectValueReturned, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenAilWhenGetMicrosecondResolutionCalledThenCorrectValueReturned, MatchAny) {
     AILWhitebox<productFamily> ail;
     EXPECT_EQ(ail.getMicrosecondResolution(), microsecondAdjustment);
 }
 
-HWTEST2_F(AILTests, givenAilWhenOldOpenVinoVersionWasNotCheckedThenItIsReportedAsNotDetected, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenAilWhenOldOpenVinoVersionWasNotCheckedThenItIsReportedAsNotDetected, MatchAny) {
     AILWhitebox<productFamily> ail;
 
     EXPECT_FALSE(ail.getOldOpenVinoVersionDetected());

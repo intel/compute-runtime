@@ -112,7 +112,7 @@ TEST_F(KernelHelperMaxWorkGroupsTests, givenMultipleSubdevicesWenCalculatingMaxW
     }
 }
 
-HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount, HasDispatchAllSupport) {
+HWTEST2_PRODUCT_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount, HasDispatchAllSupport) {
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*rootDeviceEnvironment);
     raii.mockProductHelper->isCooperativeEngineSupportedValue = false;
     lws[0] = 1;
@@ -127,7 +127,7 @@ HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGro
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
-HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenUsedSlmSizeWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToUsedSlmSize, HasDispatchAllSupport) {
+HWTEST2_PRODUCT_F(KernelHelperMaxWorkGroupsTests, GivenUsedSlmSizeWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToUsedSlmSize, HasDispatchAllSupport) {
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*rootDeviceEnvironment);
     raii.mockProductHelper->isCooperativeEngineSupportedValue = false;
     usedSlm = 0;

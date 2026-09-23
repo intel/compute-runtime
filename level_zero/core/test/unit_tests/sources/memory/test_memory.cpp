@@ -6757,9 +6757,9 @@ struct MultipleDevicePeerImageTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
-HWTEST2_F(MultipleDevicePeerImageTest,
-          whenisRemoteImageNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned,
-          ImageSupport) {
+HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
+                  whenisRemoteImageNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned,
+                  ImageSupport) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -6806,9 +6806,9 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerImageTest,
-          givenRemoteImageAllocationsPassedToAppendImageCopyCallsUsingDevice0ThenSuccessIsReturned,
-          ImageSupport) {
+HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
+                  givenRemoteImageAllocationsPassedToAppendImageCopyCallsUsingDevice0ThenSuccessIsReturned,
+                  ImageSupport) {
     const ze_command_queue_desc_t queueDesc = {};
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -6873,9 +6873,9 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(MultipleDevicePeerImageTest,
-          givenRemoteImageAllocationsPassedToAppendImageCopyCallsUsingDevice0WithFailingSharedHandleAllocationsThenErrorIsReturned,
-          ImageSupport) {
+HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
+                  givenRemoteImageAllocationsPassedToAppendImageCopyCallsUsingDevice0WithFailingSharedHandleAllocationsThenErrorIsReturned,
+                  ImageSupport) {
     MockSharedHandleMemoryManager *fixtureMemoryManager = static_cast<MockSharedHandleMemoryManager *>(deviceFactoryMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
 
@@ -6945,9 +6945,9 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     static_cast<L0::ult::CommandList *>(commandList0.get())->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device0->getNEODevice());
 }
 
-HWTEST2_F(MultipleDevicePeerImageTest,
-          givenPeekInternalHandleFailsThenGetPeerImageReturnsNullptr,
-          ImageSupport) {
+HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
+                  givenPeekInternalHandleFailsThenGetPeerImageReturnsNullptr,
+                  ImageSupport) {
     MockSharedHandleMemoryManager *fixtureMemoryManager = static_cast<MockSharedHandleMemoryManager *>(deviceFactoryMemoryManager);
     fixtureMemoryManager->failPeekInternalHandle = true;
 

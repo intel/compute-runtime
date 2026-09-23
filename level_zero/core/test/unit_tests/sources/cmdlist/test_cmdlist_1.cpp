@@ -1568,7 +1568,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithSyncModeAndAppendBarrie
     commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters);
 }
 
-HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     ze_command_queue_desc_t desc = {};
@@ -1719,7 +1719,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     driverHandle->releaseImportedPointer(dstPtr);
 }
 
-HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingDisabledRelaxedOrderingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingDisabledRelaxedOrderingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     ze_command_queue_desc_t desc = {};
@@ -1856,7 +1856,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     driverHandle->releaseImportedPointer(dstPtr);
 }
 
-HWTEST2_F(CommandListCreateTests, whenDispatchingThenPassNumCsrClients, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, whenDispatchingThenPassNumCsrClients, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
@@ -1994,7 +1994,7 @@ HWTEST_F(CommandListCreateTests, givenDebugFlagSetWhenCallingSynchronizeThenDont
     zeEventDestroy(event);
 }
 
-HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     DebugManagerStateRestore restore;
@@ -2164,7 +2164,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     driverHandle->releaseImportedPointer(dstPtr);
 }
 
-HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingWithoutInputEventsThenCountPreviousEventAsWaitlist, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingWithoutInputEventsThenCountPreviousEventAsWaitlist, IsXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     DebugManagerStateRestore restore;
@@ -2225,7 +2225,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 }
 
-HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThenAllowForRelaxedOrdering, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThenAllowForRelaxedOrdering, IsXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     DebugManagerStateRestore restore;
@@ -2312,7 +2312,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThe
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 }
 
-HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWithFlushAndWithoutDependenciesThenDontMarkAsStalling, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWithFlushAndWithoutDependenciesThenDontMarkAsStalling, IsAtLeastXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     DebugManagerStateRestore restore;
@@ -2404,7 +2404,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWit
     }
 }
 
-HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingThenProgramConditionalBbStart, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingThenProgramConditionalBbStart, IsXeHpcCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
     DebugManagerStateRestore restore;
@@ -2470,7 +2470,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
                                                                                            NEO::CompareOperation::less, true, FamilyType::isQwordInOrderCounter, false));
 }
 
-HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingWalkerWithProfilingThenSetCsrFlagIsWalkerWithProfilingEnqueued, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingWalkerWithProfilingThenSetCsrFlagIsWalkerWithProfilingEnqueued, IsAtLeastXeCore) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
@@ -2618,7 +2618,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     driverHandle->releaseImportedPointer(dstPtr);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfilingThenSetCmdListFlagIsWalkerWithProfilingEnqueued, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfilingThenSetCmdListFlagIsWalkerWithProfilingEnqueued, IsAtLeastXeCore) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
@@ -3714,7 +3714,7 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenSetBarrierThenPipeControlIs
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedAndHdcFlushIsSet, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedAndHdcFlushIsSet, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -3745,7 +3745,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeCo
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedWithHdcAndUntypedFlushSet, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedWithHdcAndUntypedFlushSet, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));

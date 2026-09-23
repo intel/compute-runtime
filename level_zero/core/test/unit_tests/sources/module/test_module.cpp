@@ -369,7 +369,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
 
 using ModuleTestSupport = IsGen12LP;
 
-HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
+HWTEST2_PRODUCT_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     ze_kernel_handle_t kernelHandle;
 

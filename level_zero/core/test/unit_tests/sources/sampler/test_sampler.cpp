@@ -247,7 +247,7 @@ struct SupportsLowQualityFilterSampler {
     }
 };
 
-HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsFalseThenLowQualityFilterIsDisabled, SupportsLowQualityFilterSampler) {
+HWTEST2_PRODUCT_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsFalseThenLowQualityFilterIsDisabled, SupportsLowQualityFilterSampler) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     EXPECT_FALSE(debugManager.flags.ForceSamplerLowFilteringPrecision.get());
     ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -267,7 +267,7 @@ HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPreci
     sampler->destroy();
 }
 
-HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsTrueThenLowQualityFilterIsEnabled, SupportsLowQualityFilterSampler) {
+HWTEST2_PRODUCT_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsTrueThenLowQualityFilterIsEnabled, SupportsLowQualityFilterSampler) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceSamplerLowFilteringPrecision.set(true);

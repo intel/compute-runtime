@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/hw_mapper.h"
 #include "shared/test/common/test_macros/hw_test_base.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_matcher_registry.h"
@@ -16,6 +17,9 @@
 #include "neo_igfxfmid.h"
 #include "per_product_test_selector.h"
 #include "test_mode.h"
+
+#include <array>
+#include <utility>
 
 // Macros to provide template based testing.
 // Test can use FamilyType in the test -- equivalent to Gen9Family
@@ -72,9 +76,10 @@
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
                  ::testing::internal::GetTypeId<test_fixture>(), emptyFcn, emptyFcn)
 
-// Macros to provide template based testing.
-// Test can use productFamily and FamilyType in the test
-#define HWTEST2_TEST_(test_suite_name, test_name, parent_class, parent_id, test_matcher)                                                    \
+// Macros to provide template based testing, instantiated once per matched product.
+// Test can use productFamily and FamilyType in the test.
+// Use only when the test needs productFamily as a compile-time constant, otherwise use HWTEST2_*.
+#define HWTEST2_PRODUCT_TEST_(test_suite_name, test_name, parent_class, parent_id, test_matcher)                                            \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
                                                                                                                                             \
     bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
@@ -148,8 +153,8 @@
     template <PRODUCT_FAMILY productFamily, typename FamilyType>                                                                            \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
 
-// Compared to HWTEST2_TEST_ allows setup and teardown to be called with the FamilyType template
-#define HWTEST2_TEMPLATED_(test_suite_name, test_name, parent_class, parent_id, test_matcher, SetUpT_name, TearDownT_name)                  \
+// Compared to HWTEST2_PRODUCT_TEST_ allows setup and teardown to be called with the FamilyType template
+#define HWTEST2_PRODUCT_TEMPLATED_(test_suite_name, test_name, parent_class, parent_id, test_matcher, SetUpT_name, TearDownT_name)          \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
                                                                                                                                             \
     bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
@@ -225,9 +230,149 @@
     template <PRODUCT_FAMILY productFamily, typename FamilyType>                                                                            \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
 
+// Macros to provide template based testing, instantiated once per gfx core.
+// Test body is compiled for a gfx core only when at least one tested product of that core matches test_matcher
+// and it runs only on products matching test_matcher. Test can use FamilyType in the test.
+#define HWTEST2_TEST_(test_suite_name, test_name, parent_class, parent_id, test_matcher)                                                    \
+    CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
+                                                                                                                                            \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
+    class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public parent_class {                                                        \
+                                                                                                                                            \
+      public:                                                                                                                               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        () {}                                                                                                                               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        (const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete;                                                              \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        (GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;                                                                   \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete; \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;      \
+                                                                                                                                            \
+      private:                                                                                                                              \
+        using MatcherType = test_matcher;                                                                                                   \
+                                                                                                                                            \
+        template <typename FamilyType>                                                                                                      \
+        void matchBody();                                                                                                                   \
+                                                                                                                                            \
+        template <typename FamilyType>                                                                                                      \
+        void runIfMatched() {                                                                                                               \
+            if constexpr (isAnyProductOfGfxCoreMatched<MatcherType, FamilyType::gfxCoreFamily>()) {                                         \
+                matchBody<FamilyType>();                                                                                                    \
+            }                                                                                                                               \
+        }                                                                                                                                   \
+                                                                                                                                            \
+        void SetUp() override;                                                                                                              \
+        void TearDown() override;                                                                                                           \
+        void TestBody() override;                                                                                                           \
+                                                                                                                                            \
+        static ::testing::TestInfo *const test_info_;                                                                                       \
+    };                                                                                                                                      \
+                                                                                                                                            \
+    ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
+        ::testing::internal::MakeAndRegisterTestInfo(                                                                                       \
+            #test_suite_name, #test_name, nullptr, nullptr,                                                                                 \
+            ::testing::internal::CodeLocation(__FILE__, __LINE__), (parent_id),                                                             \
+            ::testing::internal::SuiteApiResolver<parent_class>::GetSetUpCaseOrSuite(__FILE__, __LINE__),                                   \
+            ::testing::internal::SuiteApiResolver<parent_class>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                                \
+            new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(test_suite_name,                                                \
+                                                                            test_name)>);                                                   \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                     \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                         \
+             #test_suite_name #test_name,                                                                                                   \
+             &checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>),                                                       \
+         true);                                                                                                                             \
+                                                                                                                                            \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
+        parent_class::SetUp();                                                                                                              \
+    }                                                                                                                                       \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TearDown() {                                                                   \
+        parent_class::TearDown();                                                                                                           \
+    }                                                                                                                                       \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody() {                                                                   \
+        if (checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>(::productFamily)) {                                       \
+            FAMILY_SELECTOR(::renderCoreFamily, runIfMatched)                                                                               \
+        }                                                                                                                                   \
+    }                                                                                                                                       \
+                                                                                                                                            \
+    template <typename FamilyType>                                                                                                          \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
+
+// Compared to HWTEST2_TEST_ allows setup and teardown to be called with the FamilyType template
+#define HWTEST2_TEMPLATED_(test_suite_name, test_name, parent_class, parent_id, test_matcher, SetUpT_name, TearDownT_name)                  \
+    CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
+                                                                                                                                            \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
+    class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public parent_class {                                                        \
+                                                                                                                                            \
+      public:                                                                                                                               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        () {}                                                                                                                               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        (const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete;                                                              \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        (GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;                                                                   \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete; \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;      \
+                                                                                                                                            \
+      private:                                                                                                                              \
+        using MatcherType = test_matcher;                                                                                                   \
+                                                                                                                                            \
+        template <typename FamilyType>                                                                                                      \
+        void matchBody();                                                                                                                   \
+                                                                                                                                            \
+        template <typename FamilyType>                                                                                                      \
+        void runIfMatched() {                                                                                                               \
+            if constexpr (isAnyProductOfGfxCoreMatched<MatcherType, FamilyType::gfxCoreFamily>()) {                                         \
+                matchBody<FamilyType>();                                                                                                    \
+            }                                                                                                                               \
+        }                                                                                                                                   \
+                                                                                                                                            \
+        void SetUp() override;                                                                                                              \
+        void TearDown() override;                                                                                                           \
+        void TestBody() override;                                                                                                           \
+                                                                                                                                            \
+        static ::testing::TestInfo *const test_info_;                                                                                       \
+    };                                                                                                                                      \
+                                                                                                                                            \
+    ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
+        ::testing::internal::MakeAndRegisterTestInfo(                                                                                       \
+            #test_suite_name, #test_name, nullptr, nullptr,                                                                                 \
+            ::testing::internal::CodeLocation(__FILE__, __LINE__), (parent_id),                                                             \
+            ::testing::internal::SuiteApiResolver<parent_class>::GetSetUpCaseOrSuite(__FILE__, __LINE__),                                   \
+            ::testing::internal::SuiteApiResolver<parent_class>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                                \
+            new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(test_suite_name,                                                \
+                                                                            test_name)>);                                                   \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                     \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                         \
+             #test_suite_name #test_name,                                                                                                   \
+             &checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>),                                                       \
+         true);                                                                                                                             \
+                                                                                                                                            \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
+        parent_class::SetUp();                                                                                                              \
+        FAMILY_SELECTOR(::renderCoreFamily, SetUpT_name)                                                                                    \
+    }                                                                                                                                       \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TearDown() {                                                                   \
+        FAMILY_SELECTOR(::renderCoreFamily, TearDownT_name)                                                                                 \
+        parent_class::TearDown();                                                                                                           \
+    }                                                                                                                                       \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody() {                                                                   \
+        if (checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>(::productFamily)) {                                       \
+            FAMILY_SELECTOR(::renderCoreFamily, runIfMatched)                                                                               \
+        }                                                                                                                                   \
+    }                                                                                                                                       \
+                                                                                                                                            \
+    template <typename FamilyType>                                                                                                          \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
+
 #define HWTEST2_F(test_fixture, test_name, test_matcher)                  \
     HWTEST2_TEST_(test_fixture, test_name##_##test_matcher, test_fixture, \
                   ::testing::internal::GetTypeId<test_fixture>(), test_matcher)
+
+#define HWTEST2_PRODUCT_F(test_fixture, test_name, test_matcher)                  \
+    HWTEST2_PRODUCT_TEST_(test_fixture, test_name##_##test_matcher, test_fixture, \
+                          ::testing::internal::GetTypeId<test_fixture>(), test_matcher)
 
 #define HWTEST_TEMPLATED_F(test_fixture, test_name)     \
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
@@ -236,6 +381,10 @@
 #define HWTEST2_TEMPLATED_F(test_fixture, test_name, test_matcher)             \
     HWTEST2_TEMPLATED_(test_fixture, test_name##_##test_matcher, test_fixture, \
                        ::testing::internal::GetTypeId<test_fixture>(), test_matcher, setUpT, tearDownT)
+
+#define HWTEST2_PRODUCT_TEMPLATED_F(test_fixture, test_name, test_matcher)             \
+    HWTEST2_PRODUCT_TEMPLATED_(test_fixture, test_name##_##test_matcher, test_fixture, \
+                               ::testing::internal::GetTypeId<test_fixture>(), test_matcher, setUpT, tearDownT)
 
 // Macros to provide template based testing.
 // Test can use FamilyType in the test -- equivalent to Gen9Family
@@ -518,9 +667,10 @@
     template <typename FamilyType>                                                                                                                        \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::testBodyHw()
 
-// Macros to provide template based testing.
-// Test can use productFamily, FamilyType in the test
-#define HWTEST2_P(test_suite_name, test_name, test_matcher)                                                                                 \
+// Macros to provide template based testing, instantiated once per matched product.
+// Test can use productFamily, FamilyType in the test.
+// Use only when the test needs productFamily as a compile-time constant, otherwise use HWTEST2_P.
+#define HWTEST2_PRODUCT_P(test_suite_name, test_name, test_matcher)                                                                         \
     bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                                                     \
                                                                                                                                             \
@@ -596,6 +746,78 @@
              &checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>),                                                       \
          true);                                                                                                                             \
     template <PRODUCT_FAMILY productFamily, typename FamilyType>                                                                            \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
+
+// Macros to provide template based testing, instantiated once per gfx core.
+// Test body is compiled for a gfx core only when at least one tested product of that core matches test_matcher
+// and it runs only on products matching test_matcher. Test can use FamilyType in the test.
+#define HWTEST2_P(test_suite_name, test_name, test_matcher)                                                                                 \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
+    class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                                                     \
+                                                                                                                                            \
+      public:                                                                                                                               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        () {}                                                                                                                               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        (const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete;                                                              \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        (GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;                                                                   \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete; \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;      \
+                                                                                                                                            \
+        template <typename FamilyType>                                                                                                      \
+        void matchBody();                                                                                                                   \
+                                                                                                                                            \
+      private:                                                                                                                              \
+        using MatcherType = test_matcher;                                                                                                   \
+                                                                                                                                            \
+        template <typename FamilyType>                                                                                                      \
+        void runIfMatched() {                                                                                                               \
+            if constexpr (isAnyProductOfGfxCoreMatched<MatcherType, FamilyType::gfxCoreFamily>()) {                                         \
+                matchBody<FamilyType>();                                                                                                    \
+            }                                                                                                                               \
+        }                                                                                                                                   \
+                                                                                                                                            \
+        void SetUp() override;                                                                                                              \
+        void TearDown() override;                                                                                                           \
+                                                                                                                                            \
+        void TestBody() override;                                                                                                           \
+                                                                                                                                            \
+        static int AddToRegistry() {                                                                                                        \
+            ::testing::UnitTest::GetInstance()                                                                                              \
+                ->parameterized_test_registry()                                                                                             \
+                .GetTestCasePatternHolder<test_suite_name>(#test_suite_name,                                                                \
+                                                           ::testing::internal::CodeLocation(__FILE__, __LINE__))                           \
+                ->AddTestPattern(#test_suite_name, #test_name,                                                                              \
+                                 new ::testing::internal::TestMetaFactory<GTEST_TEST_CLASS_NAME_(                                           \
+                                     test_suite_name, test_name)>(),                                                                        \
+                                 ::testing::internal::CodeLocation(__FILE__, __LINE__));                                                    \
+            return 0;                                                                                                                       \
+        }                                                                                                                                   \
+        static int gtest_registering_dummy_;                                                                                                \
+    };                                                                                                                                      \
+                                                                                                                                            \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                                                      \
+        test_suite_name::SetUp();                                                                                                           \
+    }                                                                                                                                       \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TearDown() {                                                                   \
+        test_suite_name::TearDown();                                                                                                        \
+    }                                                                                                                                       \
+                                                                                                                                            \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody() {                                                                   \
+        if (checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>(::productFamily)) {                                       \
+            FAMILY_SELECTOR(::renderCoreFamily, runIfMatched)                                                                               \
+        }                                                                                                                                   \
+    }                                                                                                                                       \
+                                                                                                                                            \
+    int GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::gtest_registering_dummy_ =                                                      \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::AddToRegistry();                                                                \
+    static const bool test_suite_name##test_name##_matcherRegistered_ =                                                                     \
+        (NEO::TestMatcherRegistry::registerMatcher(                                                                                         \
+             #test_suite_name #test_name,                                                                                                   \
+             &checkProductMatch<test_matcher, supportedProductFamilies.size() - 1u>),                                                       \
+         true);                                                                                                                             \
+    template <typename FamilyType>                                                                                                          \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
 
 // Macros for running tests only on the default platform.
@@ -740,6 +962,16 @@ bool checkProductMatch(PRODUCT_FAMILY matchProduct) {
         return checkProductMatch<MatcherType, matcherOrdinal - 1u>(matchProduct);
     }
     return false;
+}
+
+// Shared by HWTEST2_* macros: true when any tested product of gfxCoreFamily matches MatcherType.
+template <typename MatcherType, GFXCORE_FAMILY gfxCoreFamily>
+consteval bool isAnyProductOfGfxCoreMatched() {
+    return []<size_t... productOrdinal>(std::index_sequence<productOrdinal...>) {
+        return ((NEO::ToGfxCoreFamily<supportedProductFamilies[productOrdinal]>::get() == gfxCoreFamily &&
+                 MatcherType::template isMatched<supportedProductFamilies[productOrdinal]>()) ||
+                ...);
+    }(std::make_index_sequence<supportedProductFamilies.size()>{});
 }
 
 #include "common_matchers.h"

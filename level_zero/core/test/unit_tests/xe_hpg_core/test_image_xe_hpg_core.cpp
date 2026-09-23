@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenPropertiesSetCorrectly, IsX
     EXPECT_TRUE(samplerFilterFlagsValid);
 }
 
-HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
+HWTEST2_PRODUCT_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -56,7 +56,7 @@ HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
+HWTEST2_PRODUCT_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -82,7 +82,7 @@ HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenReturnNullPointer, IsXeHpgCo
     ASSERT_EQ(nullptr, image);
 }
 
-HWTEST2_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHpgCore) {
+HWTEST2_PRODUCT_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHpgCore) {
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;

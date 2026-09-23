@@ -152,7 +152,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
     }
 }
 
-HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenMetricGroupWithCorrectPropertiesIsReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenMetricGroupWithCorrectPropertiesIsReturned, HasIPSamplingSupport) {
 
     for (auto device : rootOneSubDev) {
         zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
@@ -189,7 +189,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZET_METRIC_GROUP_MARKER_EXP_NAME, ZET_METRIC_GROUP_MARKER_EXP_VERSION_CURRENT);
 }
 
-HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenCorrectMetricsAreReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenCorrectMetricsAreReturned, HasIPSamplingSupport) {
 
     std::vector<IpSamplingTestProductHelper::MetricProperties> expectedMetricsProperties = {};
     ipSamplingTestProductHelper->getExpectedMetricsProperties(productFamily, expectedMetricsProperties);
@@ -443,7 +443,7 @@ HWTEST2_F(MetricIpSamplingTimestampTest, GivenGetGpuCpuTimeIsFalseWhenReadingMet
 
 using MetricIpSamplingCalculateMetricGroupTest = MetricIpSamplingCalculateMetricGroupFixture;
 
-HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenValidDataWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalculateMetricGroupTest, GivenValidDataWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
     for (auto device : rootOneSubDev) {
         bool isRootdevice = true;
@@ -523,7 +523,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidHeaderWhenCalcul
               ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataFromSingleDeviceWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataFromSingleDeviceWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
     for (auto device : rootOneSubDev) {
         ze_device_properties_t props = {};
@@ -585,7 +585,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidDataFromSingleDe
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenRootDeviceDataAndLessThanRequiredMetricCountWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalculateMetricGroupTest, GivenRootDeviceDataAndLessThanRequiredMetricCountWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
     // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
     zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(rootDevice);
@@ -763,7 +763,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenInvalidRawDataSizeInHea
               ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenSubDeviceDataWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalculateMetricGroupTest, GivenSubDeviceDataWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
     for (auto device : rootOneSubDev) {
         bool isRootdevice = false;
@@ -821,7 +821,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenRootDeviceDataWhenCalcu
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenSmallValueCountWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalculateMetricGroupTest, GivenSmallValueCountWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, HasIPSamplingSupport) {
 
     for (auto device : rootOneSubDev) {
         ze_device_properties_t props = {};
@@ -901,7 +901,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenBadRawDataSizeDuringCal
 
 // Only PVC has the overflow bit in raw data, so this test is only for PVC. This test verifies that when overflow happens and streamer read data is called,
 // calculate will return valid metrics values with overflow warning.
-HWTEST2_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataOverflowOccurredWhenStreamerReadDataIscalledThenCalculateMultipleMetricsValuesExpReturnsOverflowWarning, IsPVC) {
+HWTEST2_PRODUCT_F(MetricIpSamplingCalculateMetricGroupTest, GivenDataOverflowOccurredWhenStreamerReadDataIscalledThenCalculateMultipleMetricsValuesExpReturnsOverflowWarning, IsPVC) {
     for (auto device : rootOneSubDev) {
         uint32_t expectedSetCount = 1u;
         bool isRootdevice = false;
@@ -1003,7 +1003,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, WhenQueryPoolCreateIsCalledThenUnsupp
     }
 }
 
-HWTEST2_F(MetricIpSamplingEnumerationTest, WhenAppendMetricMemoryBarrierIsCalledThenUnsupportedFeatureIsReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingEnumerationTest, WhenAppendMetricMemoryBarrierIsCalledThenUnsupportedFeatureIsReturned, HasIPSamplingSupport) {
 
     auto &device = testDevices[0];
     ze_result_t returnValue;

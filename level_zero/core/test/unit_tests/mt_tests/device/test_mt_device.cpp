@@ -243,7 +243,7 @@ HWTEST2_F(BcsSplitPoolModeMtTests, givenPoolModeBcsSplitWhenMultipleThreadsAppen
     }
 }
 
-HWTEST2_F(AggregatedBcsSplitMtTests, givenAggregatedModeOutOfOrderCopyWithPendingBarrierWhenLargeCopyAppendedConcurrentlyThenNoCrash, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(AggregatedBcsSplitMtTests, givenAggregatedModeOutOfOrderCopyWithPendingBarrierWhenLargeCopyAppendedConcurrentlyThenNoCrash, IsAtLeastXeHpcCore) {
     ASSERT_TRUE(bcsSplit->events.isAggregatedEventMode());
 
     constexpr uint32_t numThreads = 4;

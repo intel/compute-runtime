@@ -827,7 +827,7 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventsT
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToDeviceThenSinglePipeControlIsAddedWithDcFlush, IsTGLLP) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToDeviceThenSinglePipeControlIsAddedWithDcFlush, IsTGLLP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
@@ -869,7 +869,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventS
     EXPECT_EQ(1u, postSyncFound);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, IsTGLLP) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, IsTGLLP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
@@ -977,7 +977,7 @@ HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullDestinationRegionWhenIma
     EXPECT_TRUE(cmdList.useEvents);
 }
 
-HWTEST2_F(CommandListAppend, givenImmediateCommandListWhenImageCopyFromOrToMemoryWithExternalHostPtrThenRequireTaskCountUpdate, ImageSupport) {
+HWTEST2_PRODUCT_F(CommandListAppend, givenImmediateCommandListWhenImageCopyFromOrToMemoryWithExternalHostPtrThenRequireTaskCountUpdate, ImageSupport) {
     ze_command_queue_desc_t desc = {};
     ze_result_t ret = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::ult::CommandList> cmdList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, ret)));
@@ -2553,7 +2553,7 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenRegularCmdListWhenNoPreambleExpecte
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStartCmd->getSecondLevelBatchBuffer());
 }
 
-HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRelaxedOrderingAndRegularCmdListAndSubmittedToImmediateWhenFlushingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(PrimaryBatchBufferCmdListTest, givenRelaxedOrderingAndRegularCmdListAndSubmittedToImmediateWhenFlushingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 
@@ -3168,7 +3168,7 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtThen
     context->freeMem(data);
 }
 
-HWTEST2_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingImageCopyBlitSizeThenDepthIsAccountedFor, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingImageCopyBlitSizeThenDepthIsAccountedFor, IsAtLeastXeCore) {
     const ze_command_queue_desc_t queueDesc = {};
 
     neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;

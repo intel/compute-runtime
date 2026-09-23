@@ -85,7 +85,7 @@ HWTEST2_F(XeLpgHwInfoTests, WhenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiT
     EXPECT_TRUE(0b1u == gtSystemInfo.CCSInfo.Instances.CCSEnableMask);
 }
 
-HWTEST2_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect, IsXeLpg) {
+HWTEST2_PRODUCT_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect, IsXeLpg) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
@@ -130,7 +130,7 @@ HWTEST2_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAn
     }
 }
 
-HWTEST2_F(XeLpgHwInfoTests, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned, IsXeLpg) {
+HWTEST2_PRODUCT_F(XeLpgHwInfoTests, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned, IsXeLpg) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
@@ -143,7 +143,7 @@ HWTEST2_F(XeLpgHwInfoTests, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturn
     EXPECT_EQ(8u, gtSystemInfo.DualSubSliceCount);
 }
 
-HWTEST2_F(XeLpgHwInfoTests, GivenEmptyHwInfoForUnitTestsWhenSetupHardwareInfoIsCalledThenNonZeroValuesAreSet, IsXeLpg) {
+HWTEST2_PRODUCT_F(XeLpgHwInfoTests, GivenEmptyHwInfoForUnitTestsWhenSetupHardwareInfoIsCalledThenNonZeroValuesAreSet, IsXeLpg) {
     HardwareInfo hwInfoToSet = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfoToSet.platform.eProductFamily);
     auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfoToSet.ipVersion);

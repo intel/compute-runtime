@@ -1477,7 +1477,7 @@ HWTEST_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenM
 }
 
 using CommandQueueExecuteSupport = IsGen12LP;
-HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSIsProgrammedOnlyOnce, CommandQueueExecuteSupport) {
+HWTEST2_PRODUCT_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSIsProgrammedOnlyOnce, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
@@ -1521,7 +1521,7 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
     commandQueue->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsWithPTSSsetForFirstCmdListThenMVSAndGSBAAreProgrammedOnlyOnce, CommandQueueExecuteSupport) {
+HWTEST2_PRODUCT_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsWithPTSSsetForFirstCmdListThenMVSAndGSBAAreProgrammedOnlyOnce, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
@@ -1599,7 +1599,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSsetForSecondCmdListThenMVSandGSBAAreProgrammedTwice, CommandQueueExecuteSupport) {
+HWTEST2_PRODUCT_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSsetForSecondCmdListThenMVSandGSBAAreProgrammedTwice, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
@@ -1677,7 +1677,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSGrowingThenMVSAndGSBAAreProgrammedTwice, CommandQueueExecuteSupport) {
+HWTEST2_PRODUCT_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSGrowingThenMVSAndGSBAAreProgrammedTwice, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
@@ -1755,7 +1755,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSUniquePerCmdListThenMVSAndGSBAAreProgrammedOncePerSubmission, CommandQueueExecuteSupport) {
+HWTEST2_PRODUCT_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSUniquePerCmdListThenMVSAndGSBAAreProgrammedOncePerSubmission, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
@@ -1833,7 +1833,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPrivateScratchUniquePerCmdListThenCFEIsProgrammedOncePerSubmission, IsHeapfulRequiredAndAtLeastXeCore) {
+HWTEST2_PRODUCT_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPrivateScratchUniquePerCmdListThenCFEIsProgrammedOncePerSubmission, IsHeapfulRequiredAndAtLeastXeCore) {
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);

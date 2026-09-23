@@ -1502,7 +1502,7 @@ HWTEST_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenCh
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
 }
 
-HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdListWhenLocalIsRequiredAtCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdListWhenLocalIsRequiredAtCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastXeHpcCore) {
     auto mutableHwInfo = device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
     VariableBackup<NEO::HardwareInfo> backupHwInfo(mutableHwInfo);
     mutableHwInfo->featureTable.flags.ftrLocalMemory = true;
@@ -1557,7 +1557,7 @@ HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdList
     EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
 }
 
-HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdListWhenSystemIsRequiredAtCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdListWhenSystemIsRequiredAtCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastXeHpcCore) {
     auto mutableHwInfo = device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
     VariableBackup<NEO::HardwareInfo> backupHwInfo(mutableHwInfo);
     mutableHwInfo->featureTable.flags.ftrLocalMemory = true;
@@ -3908,9 +3908,9 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     ASSERT_EQ(0u, sbaCmds.size());
 }
 
-HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
-          givenCommandListUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDispatchesStateCacheFlush,
-          HeapfulSupportedMatch) {
+HWTEST2_PRODUCT_F(CommandListStateBaseAddressPrivateHeapTest,
+                  givenCommandListUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDispatchesStateCacheFlush,
+                  HeapfulSupportedMatch) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
@@ -3936,9 +3936,9 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(csr, csrStream));
 }
 
-HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
-          givenCommandListUsingPrivateSurfaceHeapWhenOsContextNotInitializedAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
-          HeapfulSupportedMatch) {
+HWTEST2_PRODUCT_F(CommandListStateBaseAddressPrivateHeapTest,
+                  givenCommandListUsingPrivateSurfaceHeapWhenOsContextNotInitializedAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
+                  HeapfulSupportedMatch) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     EngineControl &engine = neoDevice->getDefaultEngine();
     static_cast<NEO::MockOsContext *>(engine.osContext)->contextInitialized = false;
@@ -3962,9 +3962,9 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(sizeBeforeDestroy, csrStream.getUsed());
 }
 
-HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
-          givenCommandListUsingPrivateSurfaceHeapWhenTaskCountZeroAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
-          HeapfulSupportedMatch) {
+HWTEST2_PRODUCT_F(CommandListStateBaseAddressPrivateHeapTest,
+                  givenCommandListUsingPrivateSurfaceHeapWhenTaskCountZeroAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
+                  HeapfulSupportedMatch) {
 
     DebugManagerStateRestore restorer;
     debugManager.flags.ContextGroupSize.set(0);

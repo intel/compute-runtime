@@ -116,7 +116,7 @@ HEAPFUL_HWTEST_F(CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAdd
     EXPECT_EQ(gmmHelper->getL1EnabledMOCS(), cmdSba->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandIsEnabledThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed, IsSbaRequiredAndAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandIsEnabledThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed, IsSbaRequiredAndAtLeastXeCore) {
 
     auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
     auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
@@ -2398,7 +2398,7 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
 }
 
 using CommandListCreate = Test<DeviceFixture>;
-HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppendWriteGlobalTimestampThenExpectNoCacheFlushInPostSyncCommand, IsSbaRequiredAndAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppendWriteGlobalTimestampThenExpectNoCacheFlushInPostSyncCommand, IsSbaRequiredAndAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;

@@ -149,7 +149,7 @@ HWTEST_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrM
     context->devices.pop_back();
 }
 
-HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenSupportsOclBufferPoolCapabilityWhenCheckIfEnabledThenReturnCorrectValue, MatchAny) {
+HWTEST2_PRODUCT_F(AggregatedSmallBuffersDefaultTest, givenSupportsOclBufferPoolCapabilityWhenCheckIfEnabledThenReturnCorrectValue, MatchAny) {
     auto &rootDeviceEnvironment = *device->getExecutionEnvironment()->rootDeviceEnvironments[1];
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(rootDeviceEnvironment);
 

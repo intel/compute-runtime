@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -233,7 +233,7 @@ TEST(EngineInfoTest, whenEmptyEngineInfoCreatedThen0TileReturned) {
 
 using DisabledBCSEngineInfoTest = ::testing::Test;
 
-HWTEST2_F(DisabledBCSEngineInfoTest, whenBCS0IsNotEnabledThenSkipMappingItAndSetProperBcsInfoMask, MatchAny) {
+HWTEST2_PRODUCT_F(DisabledBCSEngineInfoTest, whenBCS0IsNotEnabledThenSkipMappingItAndSetProperBcsInfoMask, MatchAny) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
     auto drm = std::make_unique<DrmMockEngine>(rootDeviceEnvironment);

@@ -13,7 +13,7 @@ namespace NEO {
 
 using AILTestsMTL = ::testing::Test;
 
-HWTEST2_F(AILTestsMTL, givenApplicationNameRequiringCrossTargetCompabilityWhenCallingUseValidationLogicThenReturnProperValue, IsMTL) {
+HWTEST2_PRODUCT_F(AILTestsMTL, givenApplicationNameRequiringCrossTargetCompabilityWhenCallingUseValidationLogicThenReturnProperValue, IsMTL) {
     AILWhitebox<productFamily> ail;
     ail.processName = "unknown";
     EXPECT_FALSE(ail.useLegacyValidationLogic());

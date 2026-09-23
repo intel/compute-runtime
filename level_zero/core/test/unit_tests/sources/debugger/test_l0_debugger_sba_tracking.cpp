@@ -129,7 +129,7 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContext
     }
 }
 
-HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer, PlatformsSupportingSbaTracking) {
+HWTEST2_PRODUCT_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer, PlatformsSupportingSbaTracking) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -193,7 +193,7 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequired
 using L0DebuggerPerContextAddressSpaceGlobalBindlessTest = Test<L0DebuggerPerContextAddressSpaceGlobalBindlessFixture>;
 using PlatformsSupportingGlobalBindless = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE2_HPG_CORE>;
 
-HWTEST2_F(L0DebuggerPerContextAddressSpaceGlobalBindlessTest, givenDebuggingEnabledAndRequiredSshWhenCommandListIsExecutedThenProgramSsbaWritesToSbaTrackingBuffer, PlatformsSupportingGlobalBindless) {
+HWTEST2_PRODUCT_F(L0DebuggerPerContextAddressSpaceGlobalBindlessTest, givenDebuggingEnabledAndRequiredSshWhenCommandListIsExecutedThenProgramSsbaWritesToSbaTrackingBuffer, PlatformsSupportingGlobalBindless) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -275,7 +275,7 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceGlobalBindlessTest, givenDebuggingEnab
     commandQueue->destroy();
 }
 
-HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesArePrinted, PlatformsSupportingSbaTracking) {
+HWTEST2_PRODUCT_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesArePrinted, PlatformsSupportingSbaTracking) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
@@ -320,7 +320,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIs
 
 using L0DebuggerSimpleTest = Test<DeviceFixture>;
 
-HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, PlatformsSupportingSbaTracking) {
+HWTEST2_PRODUCT_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, PlatformsSupportingSbaTracking) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
@@ -354,7 +354,7 @@ HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQue
     commandQueue->destroy();
 }
 
-HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, PlatformsSupportingSbaTracking) {
+HWTEST2_PRODUCT_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, PlatformsSupportingSbaTracking) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerLogBitmask.set(0);
 
@@ -388,7 +388,7 @@ HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueue
     commandQueue->destroy();
 }
 
-HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, PlatformsSupportingSbaTracking) {
+HWTEST2_PRODUCT_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, PlatformsSupportingSbaTracking) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
@@ -458,7 +458,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, PlatformsSupportingSbaTracking) {
+HWTEST2_PRODUCT_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, PlatformsSupportingSbaTracking) {
     ze_command_queue_desc_t queueDesc = {};
 
     std::unique_ptr<MockCommandQueueHw<FamilyType::gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));

@@ -609,7 +609,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLa
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, HasDispatchAllSupport) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, HasDispatchAllSupport) {
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -759,7 +759,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSyncBufferKernelThenNoopSpaceIsEncodedInPatchPreamble, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSyncBufferKernelThenNoopSpaceIsEncodedInPatchPreamble, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     DebugManagerStateRestore restore;
@@ -880,7 +880,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQueryKernelTimestampsToTheSameCmdlistThenFronEndStateIsNotChanged, HasDispatchAllSupport) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQueryKernelTimestampsToTheSameCmdlistThenFronEndStateIsNotChanged, HasDispatchAllSupport) {
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -1385,7 +1385,7 @@ class MockPerformanceCounters : public NEO::PerformanceCounters {
 };
 } // namespace
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenEventWithPerfCounterNodeWhenAppendLaunchKernelThenCommandStreamGrows, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenEventWithPerfCounterNodeWhenAppendLaunchKernelThenCommandStreamGrows, IsAtLeastXeCore) {
     neoDevice->setPerfCounters(std::make_unique<MockPerformanceCounters>());
 
     createKernel();

@@ -38,7 +38,7 @@ struct CommandQueueCommandsXeHpc : Test<DeviceFixture> {
     CmdListMemoryCopyParams copyParams = {};
 };
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsThenGlobalFenceAllocationIsResident, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsThenGlobalFenceAllocationIsResident, IsXeHpcCore) {
     ze_command_queue_desc_t desc = {};
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
@@ -68,7 +68,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsThenStateSystemMemFenceAddressCmdIsGenerated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsThenStateSystemMemFenceAddressCmdIsGenerated, IsXeHpcCore) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -99,7 +99,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsForTheSecondTimeThenStateSystemMemFenceAddressCmdIsNotGenerated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsForTheSecondTimeThenStateSystemMemFenceAddressCmdIsNotGenerated, IsXeHpcCore) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -343,7 +343,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenLinkedCopyEngineOrdinalWhenCreatingThe
     L0::Context::fromHandle(hContext)->destroy();
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenSplitCmdQAreCreated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenSplitCmdQAreCreated, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -374,7 +374,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenSpl
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableWhenCreateImmediateThenSplitCmdQAreNotCreated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableWhenCreateImmediateThenSplitCmdQAreNotCreated, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -397,7 +397,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableWhenCreateImmed
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableAndSplitBcsMaskSetWhenCreateImmediateThenSplitCmdQAreCreated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableAndSplitBcsMaskSetWhenCreateImmediateThenSplitCmdQAreCreated, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.SplitBcsMask.set(0b010001000);
@@ -422,7 +422,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableAndSplitBcsMask
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhenCreateImmediateThenGivenCountOfSplitCmdQAreCreated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhenCreateImmediateThenGivenCountOfSplitCmdQAreCreated, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.SplitBcsMask.set(0b11001);
@@ -443,7 +443,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhenCreateI
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 3u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenInitializeCmdQsOnce, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenInitializeCmdQsOnce, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -475,7 +475,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenIni
     commandList2.release();
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateInternalThenSplitCmdQArenotCreated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateInternalThenSplitCmdQArenotCreated, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -494,7 +494,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateInterna
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateLinkedThenSplitCmdQAreNotCreated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateLinkedThenSplitCmdQAreNotCreated, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -513,7 +513,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateLinkedT
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateImmediateThenSplitCmdQAreNotCreated, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateImmediateThenSplitCmdQAreNotCreated, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(0);
 
@@ -532,7 +532,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateImmediate
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithSizeLessThanFourMBThenDoNotSplit, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithSizeLessThanFourMBThenDoNotSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -581,7 +581,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromHostToHostThenDoNotSplit, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromHostToHostThenDoNotSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -628,7 +628,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediateCommandListWhenAppendingMemoryCopyFromNonUsmHostToHostThenDoNotSplit, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediateCommandListWhenAppendingMemoryCopyFromNonUsmHostToHostThenDoNotSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.SplitBcsCopyHostptr.set(0);
@@ -673,7 +673,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediateCommandListWhenAppendingMemoryCopyFromHostToNonUsmHostThenDoNotSplit, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediateCommandListWhenAppendingMemoryCopyFromHostToNonUsmHostThenDoNotSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.SplitBcsCopyHostptr.set(0);
@@ -718,7 +718,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
     context->freeMem(srcPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromNonUsmHostToHostThenDoSplit, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromNonUsmHostToHostThenDoSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -762,7 +762,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromHostToNonUsmHostThenDoSplit, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromHostToNonUsmHostThenDoSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -806,7 +806,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(srcPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromDeviceToDeviceThenDoNotSplit, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromDeviceToDeviceThenDoNotSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -856,7 +856,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -916,7 +916,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenUpdateTaskCount, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenUpdateTaskCount, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1012,7 +1012,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1074,7 +1074,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediate
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWithRelaxedOrderingWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWithRelaxedOrderingWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
@@ -1152,7 +1152,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchSplitThenUseSemaphores, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchSplitThenUseSemaphores, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1221,7 +1221,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyD2HThenSuccessIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyD2HThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1270,7 +1270,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyH2DThenSuccessIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyH2DThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1319,7 +1319,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyRegionThenSuccessIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyRegionThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1369,7 +1369,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithEventThenSuccessIsReturnedAndMiFlushProgrammed, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithEventThenSuccessIsReturnedAndMiFlushProgrammed, IsXeHpcCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     DebugManagerStateRestore restorer;
@@ -1438,7 +1438,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyAfterBarrierThenSuccessIsReturnedAndMiSemaphoresProgrammed, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyAfterBarrierThenSuccessIsReturnedAndMiSemaphoresProgrammed, IsXeHpcCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restorer;
@@ -1502,7 +1502,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithProfilingEventThenSuccessIsReturnedAndMiSemaphoresProgrammedBeforeProfiling, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithProfilingEventThenSuccessIsReturnedAndMiSemaphoresProgrammedBeforeProfiling, IsXeHpcCore) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
@@ -1575,7 +1575,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAllocateNewEventsForSplitThenEventsAreManagedProperly, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAllocateNewEventsForSplitThenEventsAreManagedProperly, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1632,7 +1632,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(eventResources.createdFromLatestPool, 6u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenObtainEventsForSplitThenReuseEventsIfMarkerIsSignaled, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenObtainEventsForSplitThenReuseEventsIfMarkerIsSignaled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1705,7 +1705,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(eventResources.createdFromLatestPool, 12u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenOOMAndObtainEventsForSplitThenNullptrIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenOOMAndObtainEventsForSplitThenNullptrIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1755,7 +1755,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(eventResources.createdFromLatestPool, 0u);
 }
 
-HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingPageFaultCopyThenSuccessIsReturned, IsXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingPageFaultCopyThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 

@@ -339,7 +339,7 @@ HWTEST_F(ImageSetArgTest, givenOffsetBufferWhenSetKernelArgImageIscalledThenFull
     EXPECT_EQ(0u, surfaces.size());
 }
 
-HWTEST2_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorrectly, MatchAny) {
+HWTEST2_PRODUCT_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorrectly, MatchAny) {
     auto gmmHelper = pDevice->getGmmHelper();
     auto imageMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;

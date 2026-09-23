@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
     auto policy = [&]() -> uint32_t {
         if constexpr (GfxFamily::isHeaplessRequired()) {
@@ -26,7 +26,7 @@ HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThe
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getUncachedL1CachePolicy(), policy);
 }
 
-HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenDebugFlagSetAndGetL1CachePolicyThenReturnCorrectValue, MatchAny) {
+HWTEST2_PRODUCT_F(ProductHelperTest, givenL1CachePolicyHelperWhenDebugFlagSetAndGetL1CachePolicyThenReturnCorrectValue, MatchAny) {
     DebugManagerStateRestore restorer;
 
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(0);

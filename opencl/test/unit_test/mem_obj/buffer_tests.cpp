@@ -2077,7 +2077,7 @@ HWTEST2_F(BufferSetSurfaceTests, givenAlignedCacheableNonReadOnlyBufferThenChoos
     alignedFree(ptr);
 }
 
-HWTEST2_F(BufferSetSurfaceTests, givenCompressedGmmResourceWhenSurfaceStateIsProgrammedThenSetAuxParams, MatchAny) {
+HWTEST2_PRODUCT_F(BufferSetSurfaceTests, givenCompressedGmmResourceWhenSurfaceStateIsProgrammedThenSetAuxParams, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     RENDER_SURFACE_STATE surfaceState = {};
@@ -2103,7 +2103,7 @@ HWTEST2_F(BufferSetSurfaceTests, givenCompressedGmmResourceWhenSurfaceStateIsPro
     }
 }
 
-HWTEST2_F(BufferSetSurfaceTests, givenNonCompressedGmmResourceWhenSurfaceStateIsProgrammedThenDontSetAuxParams, MatchAny) {
+HWTEST2_PRODUCT_F(BufferSetSurfaceTests, givenNonCompressedGmmResourceWhenSurfaceStateIsProgrammedThenDontSetAuxParams, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 

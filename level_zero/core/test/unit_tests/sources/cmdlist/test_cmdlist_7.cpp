@@ -678,8 +678,8 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyWith
 
 using CmdlistAppendLaunchKernelTests = Test<ModuleImmutableDataFixture>;
 
-HWTEST2_F(CmdlistAppendLaunchKernelTests,
-          givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillScratchSpaceThenExpectCsrHasCorrectValuesSet, IsGen12LP) {
+HWTEST2_PRODUCT_F(CmdlistAppendLaunchKernelTests,
+                  givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillScratchSpaceThenExpectCsrHasCorrectValuesSet, IsGen12LP) {
     constexpr uint32_t scratchPerThreadSize = 0x200;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
@@ -720,8 +720,8 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSlot0Size);
 }
 
-HWTEST2_F(CmdlistAppendLaunchKernelTests,
-          givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillAndPrivateScratchSpaceThenExpectCsrHasCorrectValuesSet, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CmdlistAppendLaunchKernelTests,
+                  givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillAndPrivateScratchSpaceThenExpectCsrHasCorrectValuesSet, IsAtLeastXeCore) {
     constexpr uint32_t scratch0PerThreadSize = 0x200;
     constexpr uint32_t scratch1PerThreadSize = 0x100;
 

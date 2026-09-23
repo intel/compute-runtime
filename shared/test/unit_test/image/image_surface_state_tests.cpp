@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-HWTEST2_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProperFieldsAreSet, MatchAny) {
+HWTEST2_PRODUCT_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProperFieldsAreSet, MatchAny) {
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());

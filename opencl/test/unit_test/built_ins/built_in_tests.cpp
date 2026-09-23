@@ -121,7 +121,7 @@ struct AuxBuiltinsMatcher {
     }
 };
 
-HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinThenResourceSizeIsNonZero, MatchAny) {
+HWTEST2_PRODUCT_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinThenResourceSizeIsNonZero, MatchAny) {
     auto mockBuiltInLibrary = std::unique_ptr<MockBuiltInResourceLoader>(new MockBuiltInResourceLoader());
 
     EXPECT_EQ(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported,

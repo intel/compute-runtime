@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,7 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsRcsAvailableIsCalledThenCorrectVal
     }
 }
 
-HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
         bool isRcsAvailable(const HardwareInfo &hwInfo) const override {
             return isRcsAvailableValue;

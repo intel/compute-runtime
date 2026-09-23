@@ -449,7 +449,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPip
 }
 
 using CommandQueueExecuteSupport = IsGen12LP;
-HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsThenMVSIsProgrammedWithMaxPTSS, CommandQueueExecuteSupport) {
+HWTEST2_PRODUCT_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsThenMVSIsProgrammedWithMaxPTSS, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using Parse = typename FamilyType::Parse;
@@ -1267,7 +1267,7 @@ void findPartitionRegister(GenCmdList &cmdList, bool expectToFind) {
     }
 }
 
-HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCountWhenExecutingCmdListThenExpectMmioProgrammingAndCorrectEstimation, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCountWhenExecutingCmdListThenExpectMmioProgrammingAndCorrectEstimation, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
     using Parse = typename FamilyType::Parse;

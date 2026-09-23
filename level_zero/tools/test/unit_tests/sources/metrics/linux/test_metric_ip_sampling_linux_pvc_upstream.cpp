@@ -46,7 +46,7 @@ class MetricIpSamplingLinuxTestUpstream : public MetricContextFixture,
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = nullptr;
 };
 
-HWTEST2_F(MetricIpSamplingLinuxTestUpstream, GivenSupportedProductFamilyAndSupportedDeviceIdIsUsedForUpstreamWhenIsDependencyAvailableIsCalledThenReturnFailure, IsPVC) {
+HWTEST2_PRODUCT_F(MetricIpSamplingLinuxTestUpstream, GivenSupportedProductFamilyAndSupportedDeviceIdIsUsedForUpstreamWhenIsDependencyAvailableIsCalledThenReturnFailure, IsPVC) {
 
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;

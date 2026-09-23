@@ -139,7 +139,7 @@ SBA_HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSb
     }
 }
 
-HWTEST2_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenInternalCommandQueueThenProgramGsbaDoesNotWritesToSbaTrackingBuffer, IsGen12LP) {
+HWTEST2_PRODUCT_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenInternalCommandQueueThenProgramGsbaDoesNotWritesToSbaTrackingBuffer, IsGen12LP) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

@@ -515,7 +515,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListA
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThenDebugSurfaceHasCachePolicyWBP, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThenDebugSurfaceHasCachePolicyWBP, IsAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore restore;
@@ -637,7 +637,7 @@ HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppend
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeapThenDebugSurfaceIsProgrammedOnce, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeapThenDebugSurfaceIsProgrammedOnce, IsAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore restorer;
@@ -834,9 +834,9 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingToI
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerGlobalStatelessTest,
-          givenGlobalStatelessWhenCmdListExecutedOnQueueThenQueueDispatchesSurfaceStateOnceToGlobalStatelessHeap,
-          IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(L0DebuggerGlobalStatelessTest,
+                  givenGlobalStatelessWhenCmdListExecutedOnQueueThenQueueDispatchesSurfaceStateOnceToGlobalStatelessHeap,
+                  IsAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;

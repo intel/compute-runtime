@@ -961,7 +961,7 @@ HWTEST2_F(AppendMemoryCopyTests,
                                            true);
 }
 
-HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeCore) {
 
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
@@ -1026,7 +1026,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
     context->freeMem(buffer);
 }
 
-HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(AppendMemoryCopyTests, givenCopyCommandListWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeCore) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
@@ -1409,7 +1409,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
     context->freeMem(deviceBuffer);
 }
 
-HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeCore) {
 
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;

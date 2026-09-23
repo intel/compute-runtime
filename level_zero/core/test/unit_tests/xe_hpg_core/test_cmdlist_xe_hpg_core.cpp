@@ -36,7 +36,7 @@ namespace ult {
 
 using CommandListCreate = Test<DeviceFixture>;
 
-HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAddedToBatchBuffer, IsXeHpgCore) {
+HWTEST2_PRODUCT_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAddedToBatchBuffer, IsXeHpgCore) {
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     DebugManagerStateRestore dbgRestorer;

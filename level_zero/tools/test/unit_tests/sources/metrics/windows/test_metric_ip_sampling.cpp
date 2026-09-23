@@ -250,7 +250,7 @@ HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, WhenisNReportsAvailableIsCalledAndP
     EXPECT_FALSE(metricIpSamplingOsInterface->isNReportsAvailable());
 }
 
-HWTEST2_F(MetricIpSamplingWindowsFixtureXe2, GivenSupportedProductFamilyIsUsedWhenIsDependencyAvailableIsCalledThenReturnSuccess, IsXe2HpgCore) {
+HWTEST2_PRODUCT_F(MetricIpSamplingWindowsFixtureXe2, GivenSupportedProductFamilyIsUsedWhenIsDependencyAvailableIsCalledThenReturnSuccess, IsXe2HpgCore) {
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
 

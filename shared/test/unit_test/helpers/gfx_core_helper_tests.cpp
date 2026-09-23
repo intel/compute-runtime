@@ -532,7 +532,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -576,7 +576,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvide
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompressionEnabledAnNonAuxDisabledThenSetCoherencyToGpuAndAuxModeToCompression, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompressionEnabledAnNonAuxDisabledThenSetCoherencyToGpuAndAuxModeToCompression, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
@@ -612,7 +612,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationC
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledAndAllocationEnabledAnNonAuxDisabledThenSetCoherencyToIaAndAuxModeToNone, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledAndAllocationEnabledAnNonAuxDisabledThenSetCoherencyToIaAndAuxModeToNone, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -685,7 +685,7 @@ HWTEST_F(GfxCoreHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceStat
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompressionEnabledAnNonAuxEnabledThenSetCoherencyToIaAndAuxModeToNone, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompressionEnabledAnNonAuxEnabledThenSetCoherencyToIaAndAuxModeToNone, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;

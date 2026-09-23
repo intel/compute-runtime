@@ -76,7 +76,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWait
     }
 }
 
-HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingWaitOnEventsThenUseConditionalStartInsteadOfSemaphore, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingWaitOnEventsThenUseConditionalStartInsteadOfSemaphore, IsAtLeastXeHpcCore) {
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_SET_PREDICATE = typename FamilyType::MI_SET_PREDICATE;
@@ -186,7 +186,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     EXPECT_EQ(static_cast<typename MI_SET_PREDICATE::PREDICATE_ENABLE>(MiPredicateType::disable), predicateCmd->getPredicateEnable());
 }
 
-HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingApiWaitOnEventsThenUseSemaphore, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingApiWaitOnEventsThenUseSemaphore, IsAtLeastXeHpcCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restorer;
@@ -220,7 +220,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ASSERT_NE(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsThenUseSemaphore, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsThenUseSemaphore, IsAtLeastXeHpcCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
@@ -383,7 +383,7 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     cmdList->destroy();
 }
 
-HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndAppendRegularCommandlistWhenSubOperationsSucceedThenFinalCallSucceeds, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndAppendRegularCommandlistWhenSubOperationsSucceedThenFinalCallSucceeds, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t queueDesc = {};
     auto tagMemory = std::make_unique<TagAddressType[]>(MemoryConstants::pageSize / sizeof(TagAddressType));
     memset(tagMemory.get(), 0xFF, MemoryConstants::pageSize);
@@ -440,7 +440,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendingRegular
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingBarrierThenUseSemaphore, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingBarrierThenUseSemaphore, IsAtLeastXeHpcCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restorer;
@@ -474,7 +474,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ASSERT_NE(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingMemoryBarriersThenUseSemaphore, IsAtLeastXeHpcCore) {
+HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingMemoryBarriersThenUseSemaphore, IsAtLeastXeHpcCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restorer;

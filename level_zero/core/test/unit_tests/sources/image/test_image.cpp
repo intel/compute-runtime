@@ -2258,7 +2258,7 @@ HWTEST_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingLinearImageThenD
     EXPECT_FALSE(image->getAllocation()->isCompressionEnabled());
 }
 
-HWTEST2_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMostXeHpgCore) {
+HWTEST2_PRODUCT_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMostXeHpgCore) {
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -2314,7 +2314,7 @@ HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenFilterFlagsAreValid, IsAtMo
     EXPECT_TRUE(samplerFilterFlagsValid);
 }
 
-HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMostDg2) {
+HWTEST2_PRODUCT_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMostDg2) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -2329,7 +2329,7 @@ HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMostDg2) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, IsAtMostDg2) {
+HWTEST2_PRODUCT_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, IsAtMostDg2) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -2355,7 +2355,7 @@ HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenNullIsReturned, IsAtMostDg2)
     ASSERT_EQ(nullptr, image);
 }
 
-HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesAllocation, IsAtMostDg2) {
+HWTEST2_PRODUCT_F(ImageCreate, WhenImageIsCreatedThenDescMatchesAllocation, IsAtMostDg2) {
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;

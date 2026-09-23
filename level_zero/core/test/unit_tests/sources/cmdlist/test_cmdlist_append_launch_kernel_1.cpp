@@ -173,7 +173,7 @@ HWTEST_F(CommandListAppendLaunchKernel, GivenLinuxUserFenceKmdWaitAndSignalWithU
 }
 
 using IsSbaRequiredAndAtLeastXe3Core = IsSbaRequiredAnd<IsAtLeastXe3Core>;
-HWTEST2_F(CommandListAppendLaunchKernel, GivenModuleWithL1CachePolicyOverrideWhenAppendingKernelThenStateBaseAddressIsProgrammedWithModulePolicy, IsSbaRequiredAndAtLeastXe3Core) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, GivenModuleWithL1CachePolicyOverrideWhenAppendingKernelThenStateBaseAddressIsProgrammedWithModulePolicy, IsSbaRequiredAndAtLeastXe3Core) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
@@ -273,7 +273,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL1CachePolicy, GivenModuleL1CachePolicyOv
     EXPECT_EQ(stateBaseAddressCountAfterDefault, getStateBaseAddressCount());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenNonTrackingCommandListWhenModuleL1CachePolicyOverrideChangesBetweenKernelsThenStateBaseAddressIsReprogrammedWithNewPolicy, IsSbaRequiredAndAtLeastXe3Core) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, GivenNonTrackingCommandListWhenModuleL1CachePolicyOverrideChangesBetweenKernelsThenStateBaseAddressIsReprogrammedWithNewPolicy, IsSbaRequiredAndAtLeastXe3Core) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
@@ -391,7 +391,7 @@ struct CommandListAppendLaunchKernelNonHeapless {
     }
 };
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionAndOverrideThreadArbitrationPolicyThenTheLatterIsUsedToSetCmdListThreadArbitrationPolicy, CommandListAppendLaunchKernelNonHeapless) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionAndOverrideThreadArbitrationPolicyThenTheLatterIsUsedToSetCmdListThreadArbitrationPolicy, CommandListAppendLaunchKernelNonHeapless) {
     createKernel();
     ze_scheduling_hint_exp_desc_t *pHint = new ze_scheduling_hint_exp_desc_t;
     pHint->pNext = nullptr;
@@ -895,7 +895,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDepletedButReallocated, IsHeapfulRequired) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDepletedButReallocated, IsHeapfulRequired) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(0);
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
@@ -965,7 +965,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenDshIsNotDe
 }
 
 using TimestampEventSupport = IsGen12LP;
-HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernelThenSRMAndPCEncoded, TimestampEventSupport) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernelThenSRMAndPCEncoded, TimestampEventSupport) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
@@ -1059,7 +1059,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFlagHostThenPCWithDCFlushEncoded, TimestampEventSupport) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFlagHostThenPCWithDCFlushEncoded, TimestampEventSupport) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
@@ -1104,7 +1104,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
     EXPECT_TRUE(cmd->getDcFlushEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyThenAdditionalPCIsAdded, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyThenAdditionalPCIsAdded, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
@@ -1155,7 +1155,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
     EXPECT_EQ(numberOfPCsWithDebugKey, numberOfPCsBase + 1);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAndNoSpaceThenNewBatchBufferAllocationIsUsed, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAndNoSpaceThenNewBatchBufferAllocationIsUsed, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePipeControlPriorToWalker.set(1);
 
@@ -1184,7 +1184,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAn
     EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelSeveralTimesThenAlwaysFirstEventPacketIsUsed, IsGen12LP) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelSeveralTimesThenAlwaysFirstEventPacketIsUsed, IsGen12LP) {
     createKernel();
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -1653,7 +1653,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteA
     EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExecutionWhenKernelWithImageWriteIsAppendedThenBarrierContainsTextureCacheFlush, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExecutionWhenKernelWithImageWriteIsAppendedThenBarrierContainsTextureCacheFlush, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto kernel = std::make_unique<Mock<KernelImp>>();
@@ -1708,7 +1708,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendingTwiceThenPipeControlWithTextureCacheInvalidationIsProgrammedBetweenWalkers, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendingTwiceThenPipeControlWithTextureCacheInvalidationIsProgrammedBetweenWalkers, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
@@ -1770,7 +1770,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendi
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenTextureCacheFlushPendingStateIsCleared, IsXeHpgCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenTextureCacheFlushPendingStateIsCleared, IsXeHpgCore) {
     auto kernel = std::make_unique<Mock<KernelImp>>();
     kernel->setModule(module.get());
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
@@ -1789,7 +1789,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenText
     EXPECT_FALSE(commandList->isTextureCacheFlushPending());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithWriteOnlyImageThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithWriteOnlyImageThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto testKernel = std::make_unique<Mock<KernelImp>>();
@@ -1824,7 +1824,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKer
     EXPECT_FALSE(textureCacheInvBeforeWalker);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithReadableImageThenTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithReadableImageThenTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto testKernel = std::make_unique<Mock<KernelImp>>();
@@ -1861,7 +1861,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKer
     EXPECT_TRUE(textureCacheInvBeforeWalker);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithBindlessImageReadThenTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithBindlessImageReadThenTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto testKernel = std::make_unique<Mock<KernelImp>>();
@@ -1898,7 +1898,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKer
     EXPECT_TRUE(textureCacheInvBeforeWalker);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithReadableImageButPreFlushNotRequiredThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithReadableImageButPreFlushNotRequiredThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto testKernel = std::make_unique<Mock<KernelImp>>();
@@ -1935,7 +1935,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKer
     EXPECT_FALSE(textureCacheInvBeforeWalker);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithBindlessImageReadButPreFlushNotRequiredThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKernelWithBindlessImageReadButPreFlushNotRequiredThenNoTextureCacheFlushBeforeWalker, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto testKernel = std::make_unique<Mock<KernelImp>>();
@@ -1972,7 +1972,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenRegularCommandListWhenLaunchingKer
     EXPECT_FALSE(textureCacheInvBeforeWalker);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenCreatedThenPreImageReadFlushRequiredMatchesCaps, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, givenCommandListWhenCreatedThenPreImageReadFlushRequiredMatchesCaps, IsAtLeastXeCore) {
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
 
     ze_result_t returnValue;
@@ -2023,7 +2023,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenHeapfulSupportWhenAppendVfeStateCm
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCommandListWithFrontEndCmdInPatchListThenExpectPatchPreambleEncoding, IsAtLeastXeCore) {
+HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCommandListWithFrontEndCmdInPatchListThenExpectPatchPreambleEncoding, IsAtLeastXeCore) {
     if constexpr (FamilyType::isHeaplessRequired() == true) {
         GTEST_SKIP();
     } else {
