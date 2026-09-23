@@ -2841,6 +2841,172 @@ HWTEST2_F(ContextTest, whenCallingVirtualMemReserveWithPStartInSvmRangeWithSucce
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+struct MisalignedBaseReservationMemoryManagerMock : public NEO::MockMemoryManager {
+    using NEO::MockMemoryManager::MockMemoryManager;
+
+    size_t selectAlignmentAndHeap(size_t size, NEO::HeapIndex *heap) override {
+        return selectAlignmentAndHeap(0ull, size, heap);
+    }
+
+    size_t selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, NEO::HeapIndex *heap) override {
+        *heap = NEO::HeapIndex::heapStandard64KB;
+        return MemoryConstants::pageSize2M;
+    }
+
+    NEO::AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, NEO::HeapIndex heap, size_t alignment) override {
+        *reservedOnRootDeviceIndex = 0;
+        requestedSize = size;
+        const bool honourStartAddressHint = (requiredStartAddress != 0ull) && !ignoreStartAddressHint;
+        return NEO::AddressRange{honourStartAddressHint ? requiredStartAddress : misalignedBase, size};
+    }
+
+    void freeGpuAddress(NEO::AddressRange addressRange, uint32_t rootDeviceIndex) override {
+        freedAddress = addressRange.address;
+        freedSize = addressRange.size;
+    }
+
+    uint64_t misalignedBase = MemoryConstants::pageSize2M + MemoryConstants::pageSize64k;
+    size_t requestedSize = 0;
+    uint64_t freedAddress = 0;
+    size_t freedSize = 0;
+    bool ignoreStartAddressHint = false;
+};
+
+TEST_F(ContextTest, givenReservationPageSizeLargerThanHeapGranularityWhenReservingVirtualMemThenReportedBaseIsAlignedToPageSize) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableReservingInSvmRange.set(false);
+
+    ze_context_handle_t hContext{};
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto memoryManagerMock = std::make_unique<MisalignedBaseReservationMemoryManagerMock>(*neoDevice->executionEnvironment);
+    auto *savedMemoryManager = driverHandle->getMemoryManager();
+    driverHandle->setMemoryManager(memoryManagerMock.get());
+
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(nullptr, MemoryConstants::pageSize2M, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(ptr) % MemoryConstants::pageSize2M);
+    EXPECT_EQ(MemoryConstants::pageSize2M * 2, memoryManagerMock->requestedSize);
+
+    res = contextImp->freeVirtualMem(ptr, MemoryConstants::pageSize2M);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(memoryManagerMock->misalignedBase, memoryManagerMock->freedAddress);
+    EXPECT_EQ(MemoryConstants::pageSize2M * 2, memoryManagerMock->freedSize);
+
+    driverHandle->setMemoryManager(savedMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenStartAddressHintHonouredByOsWhenReservingVirtualMemThenHintedBaseIsReported) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableReservingInSvmRange.set(false);
+
+    ze_context_handle_t hContext{};
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto memoryManagerMock = std::make_unique<MisalignedBaseReservationMemoryManagerMock>(*neoDevice->executionEnvironment);
+    auto *savedMemoryManager = driverHandle->getMemoryManager();
+    driverHandle->setMemoryManager(memoryManagerMock.get());
+
+    void *pStart = reinterpret_cast<void *>(MemoryConstants::pageSize2M * 4);
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(pStart, MemoryConstants::pageSize2M, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(pStart, ptr);
+    EXPECT_EQ(MemoryConstants::pageSize2M * 2, memoryManagerMock->requestedSize);
+
+    res = contextImp->freeVirtualMem(ptr, MemoryConstants::pageSize2M);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(savedMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenStartAddressHintNotHonouredByOsWhenReservingVirtualMemThenReportedBaseIsAlignedToPageSize) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableReservingInSvmRange.set(false);
+
+    ze_context_handle_t hContext{};
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto memoryManagerMock = std::make_unique<MisalignedBaseReservationMemoryManagerMock>(*neoDevice->executionEnvironment);
+    memoryManagerMock->ignoreStartAddressHint = true;
+    auto *savedMemoryManager = driverHandle->getMemoryManager();
+    driverHandle->setMemoryManager(memoryManagerMock.get());
+
+    void *pStart = reinterpret_cast<void *>(MemoryConstants::pageSize2M * 4);
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(pStart, MemoryConstants::pageSize2M, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(ptr) % MemoryConstants::pageSize2M);
+    EXPECT_EQ(MemoryConstants::pageSize2M * 2, memoryManagerMock->requestedSize);
+
+    res = contextImp->freeVirtualMem(ptr, MemoryConstants::pageSize2M);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(memoryManagerMock->misalignedBase, memoryManagerMock->freedAddress);
+    EXPECT_EQ(MemoryConstants::pageSize2M * 2, memoryManagerMock->freedSize);
+
+    driverHandle->setMemoryManager(savedMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenSizeThatWouldOverflowWhenAddingReservationPageSizeWhenReservingVirtualMemThenUnsupportedSizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableReservingInSvmRange.set(false);
+
+    ze_context_handle_t hContext{};
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
+
+    auto memoryManagerMock = std::make_unique<MisalignedBaseReservationMemoryManagerMock>(*neoDevice->executionEnvironment);
+    auto *savedMemoryManager = driverHandle->getMemoryManager();
+    driverHandle->setMemoryManager(memoryManagerMock.get());
+
+    const size_t size = std::numeric_limits<size_t>::max() - MemoryConstants::pageSize2M + 1;
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(nullptr, size, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
+
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(0u, memoryManagerMock->requestedSize);
+
+    driverHandle->setMemoryManager(savedMemoryManager);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartAboveSvmRangeWithSuccessfulAllocationThenSuccessReturned) {
     ze_context_handle_t hContext{};
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};

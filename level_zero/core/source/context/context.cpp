@@ -2176,17 +2176,24 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
             return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
         }
 
+        if (alignedSize > std::numeric_limits<size_t>::max() - pageSize) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+        }
+
         if (useStartAddressHint) {
             requiredStartAddress = alignUp(requiredStartAddress, pageSize);
         }
 
-        addressRange = this->driverHandle->getMemoryManager()->reserveGpuAddressOnHeap(requiredStartAddress, alignedSize, this->driverHandle->rootDeviceIndices, &reservedOnRootDeviceIndex, heap, pageSize);
+        addressRange = this->driverHandle->getMemoryManager()->reserveGpuAddressOnHeap(requiredStartAddress, alignedSize + pageSize, this->driverHandle->rootDeviceIndices, &reservedOnRootDeviceIndex, heap, pageSize);
 
         if (addressRange.address == 0) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
         reservationBase = addressRange.address;
         reservationTotalSize = addressRange.size;
+
+        addressRange.address = alignUp(addressRange.address, pageSize);
+        addressRange.size = alignedSize;
     }
 
     NEO::VirtualMemoryReservation *virtualMemoryReservation = new NEO::VirtualMemoryReservation;
