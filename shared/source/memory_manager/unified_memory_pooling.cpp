@@ -161,17 +161,22 @@ bool UsmMemAllocPool::isInPoolRange(const void *ptr) const {
 
 bool UsmMemAllocPool::isEmpty() const {
     std::unique_lock<std::mutex> lock(mtx);
+    return this->isEmptyImpl();
+}
+
+bool UsmMemAllocPool::isEmptyImpl() const {
     return 0u == this->allocations.getNumAllocs() && this->deferredFreeChunks.empty();
 }
 
-bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
+UsmPoolFreeResult UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
+    UsmPoolFreeResult result{};
     if (false == isInitialized() || false == isInPoolRange(ptr)) {
-        return false;
+        return result;
     }
     std::unique_lock<std::mutex> lock(mtx);
     auto allocationInfo = allocations.extract(ptr);
     if (!allocationInfo) {
-        return false;
+        return result;
     }
     DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
     if (FreePolicyType::blocking == policy) {
@@ -186,7 +191,9 @@ bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType policy) {
         this->releaseChunk(*allocationInfo);
     }
     this->drainDeferredFreeChunks();
-    return true;
+    result.freeSucceeded = true;
+    result.poolNowEmpty = this->isEmptyImpl();
+    return result;
 }
 
 void UsmMemAllocPool::releaseChunk(const AllocationInfo &allocationInfo) {
@@ -223,8 +230,8 @@ bool UsmMemAllocPool::freeIfOwned(UsmMemAllocPool *pool, const void *ptr, FreePo
     if (nullptr == pool || false == pool->isInPoolRange(ptr)) {
         return false;
     }
-    [[maybe_unused]] const auto freed = pool->freeSVMAlloc(ptr, policy);
-    DEBUG_BREAK_IF(false == freed);
+    [[maybe_unused]] const auto freeResult = pool->freeSVMAlloc(ptr, policy);
+    DEBUG_BREAK_IF(false == freeResult.freeSucceeded);
     return true;
 }
 
@@ -381,11 +388,11 @@ bool UsmMemAllocPoolsManager::freeSVMAlloc(const void *ptr, FreePolicyType polic
     if (false == lookupResult.isAllocatedInPool()) {
         return false;
     }
-    const auto allocFreed = lookupResult.pool->freeSVMAlloc(ptr, policy);
-    if (allocFreed && lookupResult.pool->isEmpty()) {
+    const auto freeResult = lookupResult.pool->freeSVMAlloc(ptr, policy);
+    if (freeResult.poolNowEmpty) {
         trimEmptyPools(lookupResult.poolInfo);
     }
-    return allocFreed;
+    return freeResult.freeSucceeded;
 }
 
 UsmPoolLookupResult UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr) {
@@ -488,7 +495,7 @@ bool UsmMemAllocPoolsFacade::freeSVMAlloc(const void *ptr, FreePolicyType policy
     if (this->poolManager) {
         return this->poolManager->freeSVMAlloc(ptr, policy);
     } else if (this->pool) {
-        return this->pool->freeSVMAlloc(ptr, policy);
+        return this->pool->freeSVMAlloc(ptr, policy).freeSucceeded;
     }
     return false;
 }

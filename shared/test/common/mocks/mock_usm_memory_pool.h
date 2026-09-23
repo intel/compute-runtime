@@ -52,7 +52,7 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     uint32_t cleanupCalled = 0u;
     bool callBaseCleanup = true;
 
-    bool freeSVMAlloc(const void *ptr, FreePolicyType policy) override {
+    UsmPoolFreeResult freeSVMAlloc(const void *ptr, FreePolicyType policy) override {
         ++freeSVMAllocCalled;
         return UsmMemAllocPool::freeSVMAlloc(ptr, policy);
     };

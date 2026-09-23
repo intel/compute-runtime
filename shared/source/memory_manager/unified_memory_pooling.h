@@ -39,6 +39,11 @@ struct UsmPoolLookupResult {
     bool isAllocatedInPool() const { return nullptr != pooledAllocationBasePtr; }
 };
 
+struct UsmPoolFreeResult {
+    bool freeSucceeded{false};
+    bool poolNowEmpty{false};
+};
+
 class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   public:
     struct AllocationInfo {
@@ -78,7 +83,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
     bool isInPoolRange(const void *ptr) const;
     bool isEmpty() const;
-    MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
+    MOCKABLE_VIRTUAL UsmPoolFreeResult freeSVMAlloc(const void *ptr, FreePolicyType policy);
     void reclaimDeferredFreeChunks();
     UsmPoolLookupResult lookupAlloc(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
@@ -123,6 +128,8 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   protected:
     MemoryOperationsStatus evictPool(Device *targetDevice);
     MemoryOperationsStatus makePoolResident(Device *targetDevice);
+    // Caller must hold mtx.
+    bool isEmptyImpl() const;
     // Caller must hold mtx.
     void drainDeferredFreeChunks();
     // Gives the chunk space back and drops the residency it held. Caller must hold mtx.
