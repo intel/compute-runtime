@@ -308,7 +308,8 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         peerDevice->crossAccessEnabledDevices[this->getRootDeviceIndex()] = value;
     }
 
-    MOCKABLE_VIRTUAL bool initializeSpirvQueriesFromIGC();
+    std::vector<uint32_t> getSpirvBaseCapabilities() const;
+    void initializeSpirvQueries();
     MOCKABLE_VIRTUAL bool isDeferredImmediateCmdListEnabled() const {
         return true;
     }
@@ -358,6 +359,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     void allocateDebugSurface(size_t debugSurfaceSize);
 
     DeviceInfo deviceInfo = {};
+    std::once_flag initializeSpirvQueriesOnce;
 
     std::unique_ptr<PerformanceCounters> performanceCounters;
     CsrContainer commandStreamReceivers;

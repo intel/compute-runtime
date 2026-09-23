@@ -767,6 +767,50 @@ ze_result_t Device::getMemoryAccessProperties(ze_device_memory_access_properties
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t Device::getCompilerInfo(ze_device_compiler_info_t paramName, const void *pNext, size_t *pSize, void *pData) {
+    if (paramName < ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES || paramName > ZE_DEVICE_COMPILER_INFO_DRIVER_OPTIONS) {
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    }
+    if (paramName != ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES && paramName != ZE_DEVICE_COMPILER_INFO_SPIRV_EXTENSIONS) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+    }
+    if (pNext != nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    if (pSize == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    this->neoDevice->initializeSpirvQueries();
+    const auto &deviceInfo = this->neoDevice->getDeviceInfo();
+    const bool queryCapabilities = paramName == ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES;
+    const size_t requiredSize = queryCapabilities ? deviceInfo.spirvCapabilities.size() * sizeof(uint32_t)
+                                                  : deviceInfo.spirvExtensions.size() * ZE_MAX_EXTENSION_NAME;
+
+    const size_t providedSize = *pSize;
+    *pSize = requiredSize;
+    if (pData == nullptr || providedSize < requiredSize || requiredSize == 0) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    if (queryCapabilities) {
+        memcpy_s(pData, providedSize, deviceInfo.spirvCapabilities.data(), requiredSize);
+    } else {
+        for (const auto &extension : deviceInfo.spirvExtensions) {
+            if (extension.size() >= ZE_MAX_EXTENSION_NAME) {
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+        }
+        memset(pData, 0, requiredSize);
+        auto *names = static_cast<char *>(pData);
+        for (const auto &extension : deviceInfo.spirvExtensions) {
+            memcpy_s(names, ZE_MAX_EXTENSION_NAME, extension.data(), extension.size());
+            names += ZE_MAX_EXTENSION_NAME;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 static constexpr ze_device_fp_flags_t defaultFpFlags = static_cast<ze_device_fp_flags_t>(ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST |
                                                                                          ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO |
                                                                                          ZE_DEVICE_FP_FLAG_ROUND_TO_INF |

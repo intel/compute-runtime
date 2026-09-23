@@ -403,34 +403,7 @@ void ClDevice::initializeSpirvQueries() {
     std::vector<std::string> extVector{
         std::istream_iterator<std::string>{extStringStream}, std::istream_iterator<std::string>{}};
 
-    std::stringstream ilsStringStream{device.getDeviceInfo().ilVersion};
-    std::vector<std::string> ilsVector{
-        std::istream_iterator<std::string>{ilsStringStream}, std::istream_iterator<std::string>{}};
-
-    deviceInfo.spirvCapabilities.reserve(64);
-
-    deviceInfo.spirvCapabilities.push_back(spv::CapabilityAddresses);
-    deviceInfo.spirvCapabilities.push_back(spv::CapabilityFloat16Buffer);
-    deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt16);
-    deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt8);
-    deviceInfo.spirvCapabilities.push_back(spv::CapabilityKernel);
-    deviceInfo.spirvCapabilities.push_back(spv::CapabilityLinkage);
-    deviceInfo.spirvCapabilities.push_back(spv::CapabilityVector16);
-
-    deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt64);
-
-    if (getSharedDeviceInfo().imageSupport) {
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityImage1D);
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityImageBasic);
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityImageBuffer);
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityLiteralSampler);
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySampled1D);
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySampledBuffer);
-    }
-
-    if (std::find(ilsVector.begin(), ilsVector.end(), "SPIR-V_1.6") != ilsVector.end()) {
-        deviceInfo.spirvCapabilities.push_back(spv::CapabilityUniformDecoration);
-    }
+    deviceInfo.spirvCapabilities = device.getSpirvBaseCapabilities();
 
     if (deviceInfo.maxReadWriteImageArgs != 0) {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilityImageReadWrite);
@@ -615,18 +588,17 @@ void ClDevice::initializeSpirvQueries() {
         deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupBufferPrefetchINTEL);
     }
 
-    if (device.initializeSpirvQueriesFromIGC()) {
-        const auto &sharedDeviceInfo = device.getDeviceInfo();
-        for (const auto &ext : sharedDeviceInfo.spirvExtensions) {
-            if (std::find_if(deviceInfo.spirvExtensions.begin(), deviceInfo.spirvExtensions.end(),
-                             [&ext](const char *existing) { return ext == existing; }) == deviceInfo.spirvExtensions.end()) {
-                deviceInfo.spirvExtensions.push_back(ext.c_str());
-            }
+    device.initializeSpirvQueries();
+    const auto &sharedDeviceInfo = device.getDeviceInfo();
+    for (const auto &ext : sharedDeviceInfo.spirvExtensions) {
+        if (std::find_if(deviceInfo.spirvExtensions.begin(), deviceInfo.spirvExtensions.end(),
+                         [&ext](const char *existing) { return ext == existing; }) == deviceInfo.spirvExtensions.end()) {
+            deviceInfo.spirvExtensions.push_back(ext.c_str());
         }
-        for (const auto cap : sharedDeviceInfo.spirvCapabilities) {
-            if (std::find(deviceInfo.spirvCapabilities.begin(), deviceInfo.spirvCapabilities.end(), cap) == deviceInfo.spirvCapabilities.end()) {
-                deviceInfo.spirvCapabilities.push_back(cap);
-            }
+    }
+    for (const auto cap : sharedDeviceInfo.spirvCapabilities) {
+        if (std::find(deviceInfo.spirvCapabilities.begin(), deviceInfo.spirvCapabilities.end(), cap) == deviceInfo.spirvCapabilities.end()) {
+            deviceInfo.spirvCapabilities.push_back(cap);
         }
     }
 }

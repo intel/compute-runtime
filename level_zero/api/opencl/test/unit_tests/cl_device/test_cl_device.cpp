@@ -126,12 +126,65 @@ TEST_F(ClDeviceTests, GivenIgcProvidesSpirvYamlWhenQueryingSpirvInfoThenInteropD
     EXPECT_GE(capabilities.size(), spirvExtensionsYamlIgcSampleCapabilityCount);
 }
 
+struct ClDeviceSpirvInteropTests : ClDeviceTests, ::testing::WithParamInterface<bool> {};
+
+TEST_P(ClDeviceSpirvInteropTests, givenSharedDeviceWhenQueryingSpirvInfoThroughBothApisThenSharedSetsAgreeRegardlessOfQueryOrder) {
+    auto *clDevice = platform->getDevices()[0].get();
+    auto compiler = std::make_unique<MockCompilerInterface>();
+    auto *compilerPtr = compiler.get();
+    compiler->spirvExtensionsYAMLOverride = spirvExtensionsYamlIgcSample;
+    clDevice->getDevice().getRootDeviceEnvironmentRef().compilerInterface = std::move(compiler);
+    std::vector<cl_uint> clCapabilities;
+    std::vector<const char *> clExtensions;
+    std::vector<uint32_t> zeCapabilities;
+    std::vector<char> zeExtensions;
+
+    auto queryOpenCl = [&]() {
+        size_t size = 0;
+        ASSERT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, 0, nullptr, &size));
+        clCapabilities.resize(size / sizeof(cl_uint));
+        ASSERT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, size, clCapabilities.data(), nullptr));
+        ASSERT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, 0, nullptr, &size));
+        clExtensions.resize(size / sizeof(const char *));
+        ASSERT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, size, clExtensions.data(), nullptr));
+    };
+    auto queryLevelZero = [&]() {
+        size_t size = 0;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetCompilerInfo(clDevice->getL0Handle(), ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES, nullptr, &size, nullptr));
+        zeCapabilities.resize(size / sizeof(uint32_t));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetCompilerInfo(clDevice->getL0Handle(), ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES, nullptr, &size, zeCapabilities.data()));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetCompilerInfo(clDevice->getL0Handle(), ZE_DEVICE_COMPILER_INFO_SPIRV_EXTENSIONS, nullptr, &size, nullptr));
+        zeExtensions.resize(size);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetCompilerInfo(clDevice->getL0Handle(), ZE_DEVICE_COMPILER_INFO_SPIRV_EXTENSIONS, nullptr, &size, zeExtensions.data()));
+    };
+    if (GetParam()) {
+        queryLevelZero();
+        queryOpenCl();
+    } else {
+        queryOpenCl();
+        queryLevelZero();
+    }
+    ASSERT_FALSE(zeCapabilities.empty());
+    ASSERT_FALSE(zeExtensions.empty());
+    for (auto capability : zeCapabilities) {
+        EXPECT_EQ(1, std::count(clCapabilities.begin(), clCapabilities.end(), capability));
+    }
+    for (size_t offset = 0; offset < zeExtensions.size(); offset += ZE_MAX_EXTENSION_NAME) {
+        const std::string extension = zeExtensions.data() + offset;
+        EXPECT_EQ(1, std::count_if(clExtensions.begin(), clExtensions.end(), [&](const char *name) { return extension == name; }));
+    }
+    EXPECT_EQ(1u, compilerPtr->getSpirvExtensionsYAMLCalled);
+}
+
+INSTANTIATE_TEST_SUITE_P(QueryOrder, ClDeviceSpirvInteropTests, ::testing::Bool());
+
 TEST_F(ClDeviceTests, GivenDeviceDependentSpirvCapabilitiesThenIgcPathReportsThemLikeLegacyPath) {
     DebugManagerStateRestore restorer;
-    auto readSpirvInfo = [this](bool useIgc) {
+    auto readSpirvInfo = [](bool useIgc) {
         debugManager.flags.EnableSpirvQueriesFromIgc.set(useIgc ? 1 : 0);
-        Platform localPlatform(driverHandle->toHandle());
-        auto *clDevice = localPlatform.getDevices()[0].get();
+        OclFixture fixture;
+        fixture.setUp();
+        auto *clDevice = fixture.platform->getDevices()[0].get();
         if (useIgc) {
             auto &neoDevice = clDevice->getDevice();
             auto *mockCompilerInterface = new MockCompilerInterface();
@@ -153,6 +206,7 @@ TEST_F(ClDeviceTests, GivenDeviceDependentSpirvCapabilitiesThenIgcPathReportsThe
         for (const auto *e : extensions) {
             extensionSet.emplace(e);
         }
+        fixture.tearDown();
         return std::pair<std::unordered_set<cl_uint>, std::unordered_set<std::string>>{
             std::unordered_set<cl_uint>(capabilities.begin(), capabilities.end()), std::move(extensionSet)};
     };

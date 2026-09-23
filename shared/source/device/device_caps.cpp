@@ -25,6 +25,12 @@
 #include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
+#include "spirv/unified1/spirv.hpp"
+
+#include <algorithm>
+#include <iterator>
+#include <sstream>
+
 namespace NEO {
 
 static const char *spirvWithVersion = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ";
@@ -171,45 +177,77 @@ void Device::initializeCaps() {
     deviceInfo.semaphore64bCmdSupport = this->getRootDeviceEnvironment().getCompilerReleaseHelper().isAvailableSemaphore64(hwInfo);
 }
 
-bool Device::initializeSpirvQueriesFromIGC() {
-    if (debugManager.flags.EnableSpirvQueriesFromIgc.get() != 1) {
-        return false;
+std::vector<uint32_t> Device::getSpirvBaseCapabilities() const {
+    std::stringstream ilsStringStream{this->deviceInfo.ilVersion};
+    std::vector<std::string> ilsVector{
+        std::istream_iterator<std::string>{ilsStringStream}, std::istream_iterator<std::string>{}};
+
+    std::vector<uint32_t> capabilities;
+    capabilities.reserve(64);
+
+    capabilities.push_back(spv::CapabilityAddresses);
+    capabilities.push_back(spv::CapabilityFloat16Buffer);
+    capabilities.push_back(spv::CapabilityInt16);
+    capabilities.push_back(spv::CapabilityInt8);
+    capabilities.push_back(spv::CapabilityKernel);
+    capabilities.push_back(spv::CapabilityLinkage);
+    capabilities.push_back(spv::CapabilityVector16);
+
+    capabilities.push_back(spv::CapabilityInt64);
+
+    if (this->deviceInfo.imageSupport) {
+        capabilities.push_back(spv::CapabilityImage1D);
+        capabilities.push_back(spv::CapabilityImageBasic);
+        capabilities.push_back(spv::CapabilityImageBuffer);
+        capabilities.push_back(spv::CapabilityLiteralSampler);
+        capabilities.push_back(spv::CapabilitySampled1D);
+        capabilities.push_back(spv::CapabilitySampledBuffer);
     }
 
-    if (!deviceInfo.spirvExtensions.empty() || !deviceInfo.spirvCapabilities.empty()) {
-        return true;
+    if (std::find(ilsVector.begin(), ilsVector.end(), "SPIR-V_1.6") != ilsVector.end()) {
+        capabilities.push_back(spv::CapabilityUniformDecoration);
     }
 
-    auto *compilerInterface = getCompilerInterface();
-    if (!compilerInterface) {
-        return false;
-    }
+    return capabilities;
+}
 
-    auto yamlStr = compilerInterface->getSpirvExtensionsYAML(*this);
-    if (yamlStr.empty()) {
-        return false;
-    }
+void Device::initializeSpirvQueries() {
+    std::call_once(this->initializeSpirvQueriesOnce, [this]() {
+        this->deviceInfo.spirvCapabilities = this->getSpirvBaseCapabilities();
+        if (debugManager.flags.EnableSpirvQueriesFromIgc.get() != 1) {
+            return;
+        }
 
-    std::vector<NEO::SpirvExtensionInfo> extensions;
-    std::string errReason, warning;
-    if (!NEO::SpirvCapabilitiesParser::parseSpirvExtensionsYAML(yamlStr, extensions, errReason, warning)) {
-        return false;
-    }
+        auto *compilerInterface = this->getCompilerInterface();
+        if (!compilerInterface) {
+            return;
+        }
 
-    deviceInfo.spirvCapabilities.reserve(64);
-    deviceInfo.spirvExtensions.reserve(extensions.size());
+        const auto yamlStr = compilerInterface->getSpirvExtensionsYAML(*this);
+        if (yamlStr.empty()) {
+            return;
+        }
 
-    for (const auto &ext : extensions) {
-        deviceInfo.spirvExtensions.push_back(ext.name);
+        std::vector<SpirvExtensionInfo> extensions;
+        std::string errReason, warning;
+        if (!SpirvCapabilitiesParser::parseSpirvExtensionsYAML(yamlStr, extensions, errReason, warning)) {
+            return;
+        }
 
-        for (const auto &capInfo : ext.supportedCapabilities) {
-            if (capInfo.id != 0) {
-                deviceInfo.spirvCapabilities.push_back(capInfo.id);
+        auto &spirvExtensions = this->deviceInfo.spirvExtensions;
+        auto &spirvCapabilities = this->deviceInfo.spirvCapabilities;
+        spirvExtensions.reserve(extensions.size());
+        for (const auto &ext : extensions) {
+            if (std::find(spirvExtensions.begin(), spirvExtensions.end(), ext.name) == spirvExtensions.end()) {
+                spirvExtensions.push_back(ext.name);
+            }
+            for (const auto &capInfo : ext.supportedCapabilities) {
+                if (capInfo.id != 0 && std::find(spirvCapabilities.begin(), spirvCapabilities.end(), capInfo.id) == spirvCapabilities.end()) {
+                    spirvCapabilities.push_back(capInfo.id);
+                }
             }
         }
-    }
-
-    return true;
+    });
 }
 
 } // namespace NEO

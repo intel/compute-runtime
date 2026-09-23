@@ -116,6 +116,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t getComputeProperties(ze_device_compute_properties_t *pComputeProperties);
     MOCKABLE_VIRTUAL ze_result_t getP2PProperties(ze_device_handle_t hPeerDevice,
                                                   ze_device_p2p_properties_t *pP2PProperties);
+    ze_result_t getCompilerInfo(ze_device_compiler_info_t paramName, const void *pNext, size_t *pSize, void *pData);
     MOCKABLE_VIRTUAL ze_result_t getKernelProperties(ze_device_module_properties_t *pKernelProperties);
     MOCKABLE_VIRTUAL ze_result_t getPciProperties(ze_pci_ext_properties_t *pPciProperties);
     MOCKABLE_VIRTUAL ze_result_t getRootDevice(ze_device_handle_t *phRootDevice);

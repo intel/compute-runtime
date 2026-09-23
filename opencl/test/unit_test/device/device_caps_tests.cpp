@@ -552,6 +552,35 @@ TEST_F(DeviceGetCapsTest, GivenDeviceDependentSpirvCapabilitiesThenIgcPathReport
     }
 }
 
+TEST_F(DeviceGetCapsTest, givenSharedSpirvCacheInitializedFirstWhenQueryingOpenClThenSharedDataIsPreservedAndCompilerIsNotQueriedAgain) {
+    auto *mockDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
+    auto compiler = std::make_unique<MockCompilerInterface>();
+    auto *compilerPtr = compiler.get();
+    compiler->spirvExtensionsYAMLOverride = spirvExtensionsYamlIgcSample;
+    mockDevice->getRootDeviceEnvironmentRef().compilerInterface = std::move(compiler);
+    auto device = std::make_unique<MockClDevice>(mockDevice);
+    mockDevice->initializeSpirvQueries();
+    const auto sharedCapabilities = mockDevice->getDeviceInfo().spirvCapabilities;
+    const auto sharedExtensions = mockDevice->getDeviceInfo().spirvExtensions;
+
+    size_t size = 0;
+    ASSERT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, 0, nullptr, &size));
+    std::vector<cl_uint> capabilities(size / sizeof(cl_uint));
+    ASSERT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, size, capabilities.data(), nullptr));
+    for (auto capability : sharedCapabilities) {
+        EXPECT_EQ(1, std::count(capabilities.begin(), capabilities.end(), capability));
+    }
+    ASSERT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, 0, nullptr, &size));
+    std::vector<const char *> extensions(size / sizeof(const char *));
+    ASSERT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, size, extensions.data(), nullptr));
+    for (const auto &extension : sharedExtensions) {
+        EXPECT_EQ(1, std::count_if(extensions.begin(), extensions.end(), [&](const char *name) { return extension == name; }));
+    }
+    EXPECT_EQ(sharedCapabilities, mockDevice->getDeviceInfo().spirvCapabilities);
+    EXPECT_EQ(sharedExtensions, mockDevice->getDeviceInfo().spirvExtensions);
+    EXPECT_EQ(1u, compilerPtr->getSpirvExtensionsYAMLCalled);
+}
+
 TEST_F(DeviceGetCapsTest, GivenDefaultDebugFlagWhenQueryingSpirvExtensionsThenIgcPathIsUsedByDefault) {
     EXPECT_EQ(1, debugManager.flags.EnableSpirvQueriesFromIgc.get());
 

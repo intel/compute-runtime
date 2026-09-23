@@ -49,6 +49,8 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "spirv/unified1/spirv.hpp"
+
 using namespace NEO;
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 namespace NEO {
@@ -397,64 +399,132 @@ TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledTh
     EXPECT_EQ(1u, pDevice->getDeviceInfo().maxParameterSize);
 }
 
-TEST_F(DeviceGetCapsTest, givenIgcSpirvYamlWhenInitializeSpirvQueriesFromIgcThenSharedDeviceInfoIsPopulated) {
+TEST_F(DeviceGetCapsTest, givenIgcSpirvYamlWhenInitializingSpirvQueriesThenSharedDeviceInfoIsPopulated) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSpirvQueriesFromIgc.set(1);
     auto pCompilerInterface = new MockCompilerInterface;
     pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
 
     const auto &deviceInfo = pDevice->getDeviceInfo();
     EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, deviceInfo.spirvExtensions.size());
-    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount, deviceInfo.spirvCapabilities.size());
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount + pDevice->getSpirvBaseCapabilities().size() - 1, deviceInfo.spirvCapabilities.size());
     EXPECT_TRUE(std::any_of(deviceInfo.spirvExtensions.begin(), deviceInfo.spirvExtensions.end(),
                             [](const std::string &e) { return e == "SPV_KHR_shader_clock"; }));
 
     // Repeated calls reuse the cached result without appending duplicates.
-    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, pDevice->getDeviceInfo().spirvExtensions.size());
 }
 
-TEST_F(DeviceGetCapsTest, givenEmptyIgcSpirvYamlWhenInitializeSpirvQueriesFromIgcThenReturnsFalseAndLeavesSharedDeviceInfoEmpty) {
+TEST_F(DeviceGetCapsTest, givenEmptyIgcSpirvYamlWhenInitializingSpirvQueriesThenBaseCapabilitiesAreReported) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSpirvQueriesFromIgc.set(1);
     auto pCompilerInterface = new MockCompilerInterface;
     pCompilerInterface->spirvExtensionsYAMLOverride = std::string("");
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-    EXPECT_FALSE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
     EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
-    EXPECT_TRUE(pDevice->getDeviceInfo().spirvCapabilities.empty());
+    EXPECT_EQ(pDevice->getSpirvBaseCapabilities(), pDevice->getDeviceInfo().spirvCapabilities);
 }
 
-TEST_F(DeviceGetCapsTest, givenDefaultDebugFlagWhenInitializeSpirvQueriesFromIgcThenIgcPathIsEnabledByDefault) {
+TEST_F(DeviceGetCapsTest, givenDefaultDebugFlagWhenInitializingSpirvQueriesThenIgcPathIsEnabledByDefault) {
     EXPECT_EQ(1, debugManager.flags.EnableSpirvQueriesFromIgc.get());
 
     auto pCompilerInterface = new MockCompilerInterface;
     pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
     EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, pDevice->getDeviceInfo().spirvExtensions.size());
-    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount, pDevice->getDeviceInfo().spirvCapabilities.size());
+    // Linkage is reported by both the base and the IGC sample.
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount + pDevice->getSpirvBaseCapabilities().size() - 1, pDevice->getDeviceInfo().spirvCapabilities.size());
 }
 
-TEST_F(DeviceGetCapsTest, givenDebugFlagDisabledWhenInitializeSpirvQueriesFromIgcThenIgcPathIsSkipped) {
+TEST_F(DeviceGetCapsTest, givenDebugFlagDisabledWhenInitializingSpirvQueriesThenIgcPathIsSkipped) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSpirvQueriesFromIgc.set(0);
     auto pCompilerInterface = new MockCompilerInterface;
     pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-    EXPECT_FALSE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(0u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
     EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
-    EXPECT_TRUE(pDevice->getDeviceInfo().spirvCapabilities.empty());
+    EXPECT_EQ(pDevice->getSpirvBaseCapabilities(), pDevice->getDeviceInfo().spirvCapabilities);
+}
+
+TEST_F(DeviceGetCapsTest, givenDeviceFeaturesWhenGettingSpirvBaseCapabilitiesThenCoreCapabilitiesAreGatedAndOrdered) {
+    pDevice->deviceInfo.imageSupport = false;
+    pDevice->deviceInfo.ilVersion = "SPIR-V_1.5 ";
+    std::vector<uint32_t> expected = {spv::CapabilityAddresses, spv::CapabilityFloat16Buffer,
+                                      spv::CapabilityInt16, spv::CapabilityInt8, spv::CapabilityKernel,
+                                      spv::CapabilityLinkage, spv::CapabilityVector16, spv::CapabilityInt64};
+    EXPECT_EQ(expected, pDevice->getSpirvBaseCapabilities());
+
+    pDevice->deviceInfo.imageSupport = true;
+    expected.insert(expected.end(), {spv::CapabilityImage1D, spv::CapabilityImageBasic, spv::CapabilityImageBuffer,
+                                     spv::CapabilityLiteralSampler, spv::CapabilitySampled1D, spv::CapabilitySampledBuffer});
+    EXPECT_EQ(expected, pDevice->getSpirvBaseCapabilities());
+
+    pDevice->deviceInfo.ilVersion = "SPIR-V_1.6 SPIR-V_1.5 ";
+    expected.push_back(spv::CapabilityUniformDecoration);
+    EXPECT_EQ(expected, pDevice->getSpirvBaseCapabilities());
+}
+
+TEST_F(DeviceGetCapsTest, givenRepeatedIgcEntriesWhenInitializingSpirvQueriesThenCapabilitiesAndExtensionsAreUnique) {
+    auto compiler = std::make_unique<MockCompilerInterface>();
+    compiler->spirvExtensionsYAMLOverride = R"(---
+- name: SPV_TEST_first
+  supported_capabilities:
+    - id: 4
+      name: Addresses
+    - id: 6220
+      name: SubgroupBufferPrefetchINTEL
+- name: SPV_TEST_first
+  supported_capabilities:
+    - id: 6220
+      name: SubgroupBufferPrefetchINTEL
+- name: SPV_TEST_second
+  supported_capabilities:
+    - id: 6220
+      name: SubgroupBufferPrefetchINTEL
+)";
+    pDevice->getRootDeviceEnvironmentRef().compilerInterface = std::move(compiler);
+    pDevice->initializeSpirvQueries();
+    const auto &info = pDevice->getDeviceInfo();
+    EXPECT_EQ((std::vector<std::string>{"SPV_TEST_first", "SPV_TEST_second"}), info.spirvExtensions);
+    EXPECT_EQ(1, std::count(info.spirvCapabilities.begin(), info.spirvCapabilities.end(), spv::CapabilityAddresses));
+    EXPECT_EQ(1, std::count(info.spirvCapabilities.begin(), info.spirvCapabilities.end(), 6220u));
+}
+
+TEST_F(DeviceGetCapsTest, givenInvalidIgcYamlWhenInitializingSpirvQueriesRepeatedlyThenBaseCapabilitiesAreCached) {
+    auto compiler = std::make_unique<MockCompilerInterface>();
+    auto *compilerPtr = compiler.get();
+    compiler->spirvExtensionsYAMLOverride = "name: [unterminated";
+    pDevice->getRootDeviceEnvironmentRef().compilerInterface = std::move(compiler);
+    pDevice->initializeSpirvQueries();
+    pDevice->initializeSpirvQueries();
+    EXPECT_EQ(1u, compilerPtr->getSpirvExtensionsYAMLCalled);
+    EXPECT_EQ(pDevice->getSpirvBaseCapabilities(), pDevice->getDeviceInfo().spirvCapabilities);
+    EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
+}
+
+TEST_F(DeviceGetCapsTest, givenNoCompilerWhenInitializingSpirvQueriesThenBaseCapabilitiesAreReported) {
+    struct DeviceWithoutCompiler : MockDevice {
+        using MockDevice::MockDevice;
+        CompilerInterface *getCompilerInterface() const override { return nullptr; }
+    };
+    auto device = std::unique_ptr<DeviceWithoutCompiler>(MockDevice::createWithNewExecutionEnvironment<DeviceWithoutCompiler>(defaultHwInfo.get()));
+    device->initializeSpirvQueries();
+    EXPECT_EQ(device->getSpirvBaseCapabilities(), device->getDeviceInfo().spirvCapabilities);
+    EXPECT_TRUE(device->getDeviceInfo().spirvExtensions.empty());
 }
 
 TEST_F(DeviceGetCapsTest,

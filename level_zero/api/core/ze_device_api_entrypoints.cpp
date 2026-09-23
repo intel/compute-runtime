@@ -206,7 +206,7 @@ zeDeviceGetCompilerInfo(
     const void *pNext,
     size_t *pSize,
     void *pData) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return Device::fromHandle(hDevice)->getCompilerInfo(paramName, pNext, pSize, pData);
 }
 
 } // namespace L0
