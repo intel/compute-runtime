@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,31 +11,31 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenAdlpSupportedDeviceIdThenDeviceDescriptorTableExists) {
     std::array<DeviceDescriptor, 25> expectedDescriptors = {{
-        {0x46A0, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46B0, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46A1, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46A3, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46A6, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46A8, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46AA, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x462A, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x4626, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x4628, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46B1, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46B3, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46C0, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46C1, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46C3, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA7A0, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA720, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA7A8, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA7A1, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA721, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA7A9, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA7AA, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA7AB, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA7AC, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0xA7AD, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
+        {0x46A0, IGFX_ALDERLAKE_P},
+        {0x46B0, IGFX_ALDERLAKE_P},
+        {0x46A1, IGFX_ALDERLAKE_P},
+        {0x46A3, IGFX_ALDERLAKE_P},
+        {0x46A6, IGFX_ALDERLAKE_P},
+        {0x46A8, IGFX_ALDERLAKE_P},
+        {0x46AA, IGFX_ALDERLAKE_P},
+        {0x462A, IGFX_ALDERLAKE_P},
+        {0x4626, IGFX_ALDERLAKE_P},
+        {0x4628, IGFX_ALDERLAKE_P},
+        {0x46B1, IGFX_ALDERLAKE_P},
+        {0x46B3, IGFX_ALDERLAKE_P},
+        {0x46C0, IGFX_ALDERLAKE_P},
+        {0x46C1, IGFX_ALDERLAKE_P},
+        {0x46C3, IGFX_ALDERLAKE_P},
+        {0xA7A0, IGFX_ALDERLAKE_P},
+        {0xA720, IGFX_ALDERLAKE_P},
+        {0xA7A8, IGFX_ALDERLAKE_P},
+        {0xA7A1, IGFX_ALDERLAKE_P},
+        {0xA721, IGFX_ALDERLAKE_P},
+        {0xA7A9, IGFX_ALDERLAKE_P},
+        {0xA7AA, IGFX_ALDERLAKE_P},
+        {0xA7AB, IGFX_ALDERLAKE_P},
+        {0xA7AC, IGFX_ALDERLAKE_P},
+        {0xA7AD, IGFX_ALDERLAKE_P},
     }};
 
     testImpl(expectedDescriptors);

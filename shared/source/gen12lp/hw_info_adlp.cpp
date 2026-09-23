@@ -97,7 +97,7 @@ void ADLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void ADLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void ADLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
@@ -116,16 +116,16 @@ void ADLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo AdlpHwConfig::hwInfo = {
+const HardwareInfo ADLP::hwInfo = {
     &ADLP::platform,
     &ADLP::featureTable,
     &ADLP::workaroundTable,
-    &AdlpHwConfig::gtSystemInfo,
+    &ADLP::gtSystemInfo,
     ADLP::capabilityTable};
 
-GT_SYSTEM_INFO AdlpHwConfig::gtSystemInfo = {0};
-void AdlpHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO ADLP::gtSystemInfo = {0};
+void ADLP::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsDynamicallyPopulated = false;
@@ -150,11 +150,6 @@ void AdlpHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
         setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
-const HardwareInfo ADLP::hwInfo = AdlpHwConfig::hwInfo;
 
-void setupADLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    AdlpHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*ADLP::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupADLPHardwareInfoImpl;
+void (*ADLP::setupHardwareInfo)(HardwareInfo *, bool) = ADLP::setupHardwareInfoImpl;
 } // namespace NEO

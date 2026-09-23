@@ -43,7 +43,7 @@ NVLSTEST_F(NvlsHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &NvlsHwConfig::hwInfo, &NvlsHwConfig::setupHardwareInfo};
+    DeviceDescriptor device = {0, IGFX_NVL_XE3G};
     drm.overrideDeviceDescriptor = &device;
 
     int ret = drm.setupHardwareInfo(0, false);

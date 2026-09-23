@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,12 @@
 using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenRklSupportedDeviceIdThenHardwareInfoIsCorrect) {
-    std::array<DeviceDescriptor, 6> expectedDescriptors = {{{0x4C80, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
-                                                            {0x4C8A, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
-                                                            {0x4C8B, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
-                                                            {0x4C8C, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
-                                                            {0x4C90, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
-                                                            {0x4C9A, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo}}};
+    std::array<DeviceDescriptor, 6> expectedDescriptors = {{{0x4C80, IGFX_ROCKETLAKE},
+                                                            {0x4C8A, IGFX_ROCKETLAKE},
+                                                            {0x4C8B, IGFX_ROCKETLAKE},
+                                                            {0x4C8C, IGFX_ROCKETLAKE},
+                                                            {0x4C90, IGFX_ROCKETLAKE},
+                                                            {0x4C9A, IGFX_ROCKETLAKE}}};
 
     testImpl(expectedDescriptors);
 }

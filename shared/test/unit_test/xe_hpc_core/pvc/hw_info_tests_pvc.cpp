@@ -85,9 +85,8 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcDeviceIdsAndRevisionsWhenCheckingConfigs
 PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    PVC::setupHardwareInfoBase(&hwInfo, false, compilerReleaseHelper.get());
+    PVC::setupHardwareInfoBase(&hwInfo, false);
 
     EXPECT_EQ(0u, gtSystemInfo.CsrSizeInMb);
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
@@ -113,9 +112,8 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupMultiTileInfoBaseThenGtSy
 PVCTEST_F(PvcConfigHwInfoTests, givenPvcHwConfigWhenSetupHardwareInfoThenSharedSystemMemCapabilitiesIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     auto &capabilityTable = hwInfo.capabilityTable;
-    PvcHwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper.get());
+    PVC::setupHardwareInfoImpl(&hwInfo, false);
     uint64_t expectedSharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
     EXPECT_EQ(expectedSharedSystemMemCapabilities, capabilityTable.sharedSystemMemCapabilities);
 }

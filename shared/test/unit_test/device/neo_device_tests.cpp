@@ -1543,8 +1543,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebuggableOsContextWhenDeviceCrea
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
     auto hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.memoryManager.reset(new MockMemoryManagerWithDebuggableOsContext(executionEnvironment));
@@ -1562,8 +1561,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsIn
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
     auto hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();
@@ -1586,8 +1584,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.set(true);
 
     auto hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();
@@ -1610,8 +1607,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.set(true);
 
     auto hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();

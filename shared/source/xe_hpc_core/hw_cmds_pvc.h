@@ -38,9 +38,10 @@ struct PVC : public XeHpcCoreFamily {
         static constexpr bool devicePreemptionMode = false;
     };
 
-    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper);
+    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
-    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+    static void setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static void setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo, bool setupMultiTile);
     static void adjustHardwareInfo(HardwareInfo *hwInfo);
 
@@ -64,12 +65,6 @@ struct PVC : public XeHpcCoreFamily {
     static constexpr uint32_t pvcSteppingBits = 0b111;
 
     static constexpr bool isDcFlushAllowed = false;
-};
-
-class PvcHwConfig : public PVC {
-  public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
-    static const HardwareInfo hwInfo;
 
   private:
     static GT_SYSTEM_INFO gtSystemInfo;

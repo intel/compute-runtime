@@ -96,7 +96,7 @@ void RKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
@@ -115,16 +115,16 @@ void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo RklHwConfig::hwInfo = {
+const HardwareInfo RKL::hwInfo = {
     &RKL::platform,
     &RKL::featureTable,
     &RKL::workaroundTable,
-    &RklHwConfig::gtSystemInfo,
+    &RKL::gtSystemInfo,
     RKL::capabilityTable};
 
-GT_SYSTEM_INFO RklHwConfig::gtSystemInfo = {0};
-void RklHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    RKL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO RKL::gtSystemInfo = {0};
+void RKL::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    RKL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
@@ -136,11 +136,5 @@ void RklHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo RKL::hwInfo = RklHwConfig::hwInfo;
-
-void setupRKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    RklHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*RKL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupRKLHardwareInfoImpl;
+void (*RKL::setupHardwareInfo)(HardwareInfo *, bool) = RKL::setupHardwareInfoImpl;
 } // namespace NEO

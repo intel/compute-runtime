@@ -11,11 +11,11 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenCriSupportedDeviceIdThenDeviceDescriptorTableExists) {
     std::array<DeviceDescriptor, 5> expectedDescriptors = {{
-        {0x674C, &CriHwConfig::hwInfo, &CriHwConfig::setupHardwareInfo},
-        {0x674D, &CriHwConfig::hwInfo, &CriHwConfig::setupHardwareInfo},
-        {0x674E, &CriHwConfig::hwInfo, &CriHwConfig::setupHardwareInfo},
-        {0x674F, &CriHwConfig::hwInfo, &CriHwConfig::setupHardwareInfo},
-        {0x6750, &CriHwConfig::hwInfo, &CriHwConfig::setupHardwareInfo},
+        {0x674C, IGFX_CRI},
+        {0x674D, IGFX_CRI},
+        {0x674E, IGFX_CRI},
+        {0x674F, IGFX_CRI},
+        {0x6750, IGFX_CRI},
     }};
 
     testImpl(expectedDescriptors);

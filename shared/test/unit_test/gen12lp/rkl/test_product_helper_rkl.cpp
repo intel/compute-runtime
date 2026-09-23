@@ -22,8 +22,6 @@ using namespace NEO;
 using RklHwInfo = ::testing::Test;
 
 RKLTEST_F(RklHwInfo, givenBoolWhenCallRklHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
-    uint64_t configs[] = {
-        0x100020010};
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -31,35 +29,33 @@ RKLTEST_F(RklHwInfo, givenBoolWhenCallRklHardwareInfoSetupThenFeatureTableAndWor
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    for (auto &config : configs) {
-        for (auto setParamBool : boolValue) {
+    for (auto setParamBool : boolValue) {
 
-            gtSystemInfo = {0};
-            featureTable = {};
-            workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, nullptr);
+        gtSystemInfo = {0};
+        featureTable = {};
+        workaroundTable = {};
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool);
 
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrStandardMipTailFormat);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrStandardMipTailFormat);
 
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
 
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
 
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-            EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+        EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
 
-            EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        }
+        EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
     }
 }
 

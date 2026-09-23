@@ -34,7 +34,7 @@ TGLLPTEST_F(TgllpHwInfo, whenSettingDeviceIdThenGeometryIsPickedBasedOnDeviceId)
     for (const auto &deviceId : tgllpDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         gtSystemInfo = {0};
-        hardwareInfoSetup[productFamily](&hwInfo, false, 0x0, nullptr);
+        hardwareInfoSetup[productFamily](&hwInfo, false);
         EXPECT_EQ(1u, gtSystemInfo.SliceCount);
         if (TGLLP::isHw1x2x16(hwInfo)) {
             EXPECT_EQ(2u, gtSystemInfo.DualSubSliceCount);
@@ -56,37 +56,31 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    uint64_t configs[] = {
-        0x100060010,
-        0x100020010};
+    for (auto setParamBool : boolValue) {
 
-    for (auto &config : configs) {
-        for (auto setParamBool : boolValue) {
+        gtSystemInfo = {0};
+        featureTable = {};
+        workaroundTable = {};
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool);
 
-            gtSystemInfo = {0};
-            featureTable = {};
-            workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, nullptr);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrStandardMipTailFormat);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+        EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
 
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrStandardMipTailFormat);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-            EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
-
-            EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waUntypedBufferCompression);
-        }
+        EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
+        EXPECT_EQ(setParamBool, workaroundTable.flags.waUntypedBufferCompression);
     }
 }
 

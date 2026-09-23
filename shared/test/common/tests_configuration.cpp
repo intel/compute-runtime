@@ -19,14 +19,13 @@ namespace NEO {
 void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, uint32_t sliceCount, uint32_t subSlicePerSliceCount, int dieRecovery) {
     auto compilerProductHelper = CompilerProductHelper::create(hwInfoForTests.platform.eProductFamily);
     hwInfoForTests.ipVersion.value = compilerProductHelper->getHwIpVersion(hwInfoForTests);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfoForTests.ipVersion);
 
     auto hwInfoConfig = compilerProductHelper->getHwInfoConfig(hwInfoForTests);
     setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
     // set Gt and FeatureTable to initial state
     bool setupFeatureTableAndWorkaroundTable = isAubTestMode(testMode);
-    hardwareInfoSetup[hwInfoForTests.platform.eProductFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfoForTests.platform.eProductFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable);
 
     // Reflect the release's semaphore64 availability explicitly so a device derives deviceInfo.semaphore64bCmdSupport
     // per its real default rather than defaulting the whole gen to the legacy command.

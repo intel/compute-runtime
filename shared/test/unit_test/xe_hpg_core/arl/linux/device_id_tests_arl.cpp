@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, givenArlSupportedDeviceIdThenDeviceDescriptorTableExists) {
     std::array<DeviceDescriptor, 1> expectedDescriptors = {{
-        {0x7D67, &ArlHwConfig::hwInfo, &ArlHwConfig::setupHardwareInfo},
+        {0x7D67, IGFX_ARROWLAKE},
     }};
 
     testImpl(expectedDescriptors);

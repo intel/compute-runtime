@@ -11,13 +11,13 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenTgllpSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 7> expectedDescriptors = {{
-        {0x9A49, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
-        {0x9A40, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
-        {0x9A59, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
-        {0x9A60, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
-        {0x9A68, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
-        {0x9A70, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
-        {0x9A78, &TgllpHwConfig::hwInfo, &TgllpHwConfig::setupHardwareInfo},
+        {0x9A49, IGFX_TIGERLAKE_LP},
+        {0x9A40, IGFX_TIGERLAKE_LP},
+        {0x9A59, IGFX_TIGERLAKE_LP},
+        {0x9A60, IGFX_TIGERLAKE_LP},
+        {0x9A68, IGFX_TIGERLAKE_LP},
+        {0x9A70, IGFX_TIGERLAKE_LP},
+        {0x9A78, IGFX_TIGERLAKE_LP},
     }};
 
     testImpl(expectedDescriptors);

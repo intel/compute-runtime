@@ -30,8 +30,6 @@ LNLTEST_F(LnlHwInfoTest, givenBoolWhenCallLnlHardwareInfoSetupThenFeatureTableAn
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -41,7 +39,7 @@ LNLTEST_F(LnlHwInfoTest, givenBoolWhenCallLnlHardwareInfoSetupThenFeatureTableAn
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool);
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrLinearCCS);
@@ -76,11 +74,9 @@ LNLTEST_F(LnlHwInfoTest, givenBoolWhenCallLnlHardwareInfoSetupThenFeatureTableAn
 
 LNLTEST_F(LnlHwInfoTest, whenSetupHardwareInfoBaseThenCorrectValuesOfCCSAndMultiTileInfoAreSet) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    hardwareInfoSetup[productFamily](&hwInfo, false, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
+    hardwareInfoSetup[productFamily](&hwInfo, false);
     EXPECT_FALSE(gtSystemInfo.MultiTileArchInfo.IsValid);
     EXPECT_TRUE(gtSystemInfo.CCSInfo.IsValid);
     EXPECT_TRUE(1u == gtSystemInfo.CCSInfo.NumberOfCCSEnabled);

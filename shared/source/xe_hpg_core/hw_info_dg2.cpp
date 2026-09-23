@@ -86,7 +86,7 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->ftrBcsInfo = 1;
 };
 
-void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
@@ -100,23 +100,17 @@ void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo Dg2HwConfig::hwInfo = {
+const HardwareInfo DG2::hwInfo = {
     &DG2::platform,
     &DG2::featureTable,
     &DG2::workaroundTable,
-    &Dg2HwConfig::gtSystemInfo,
+    &DG2::gtSystemInfo,
     DG2::capabilityTable};
 
-GT_SYSTEM_INFO Dg2HwConfig::gtSystemInfo = {0};
-void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    DG2::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO DG2::gtSystemInfo = {0};
+void DG2::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    DG2::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 };
 
-const HardwareInfo DG2::hwInfo = Dg2HwConfig::hwInfo;
-
-void setupDG2HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    Dg2HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*DG2::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupDG2HardwareInfoImpl;
+void (*DG2::setupHardwareInfo)(HardwareInfo *, bool) = DG2::setupHardwareInfoImpl;
 } // namespace NEO

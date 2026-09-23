@@ -115,7 +115,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         rootDeviceEnvironment.initCompilerReleaseHelper();
 
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
-        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, &rootDeviceEnvironment.getCompilerReleaseHelper());
+        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true);
 
         if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));

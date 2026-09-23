@@ -29,7 +29,6 @@ PTLTEST_F(PtlHwInfoTest, WhenGettingHardwareInfoThenPtlIsReturned) {
 PTLTEST_F(PtlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
@@ -44,7 +43,7 @@ PTLTEST_F(PtlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFal
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
-    PtlHwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper.get());
+    PTL::setupHardwareInfoImpl(&hwInfo, false);
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
@@ -56,7 +55,7 @@ PTLTEST_F(PtlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFal
     EXPECT_FALSE(featureTable.flags.ftrCCSRing);
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
-    PtlHwConfig::setupHardwareInfo(&hwInfo, true, compilerReleaseHelper.get());
+    PTL::setupHardwareInfoImpl(&hwInfo, true);
     EXPECT_TRUE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
     EXPECT_TRUE(featureTable.flags.ftrE2ECompression);

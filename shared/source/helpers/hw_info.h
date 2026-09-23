@@ -18,7 +18,6 @@
 namespace NEO {
 
 enum PreemptionMode : uint32_t;
-class CompilerReleaseHelper;
 
 struct RuntimeCapabilityTable {
     DirectSubmissionPropertiesPerEngine directSubmissionEngines;
@@ -75,8 +74,8 @@ struct HardwareInfo { // NOLINT(clang-analyzer-optin.performance.Padding)
 extern bool familyEnabled[NEO::maxCoreEnumValue];
 extern const char *hardwarePrefix[NEO::maxProductEnumValue];
 extern const HardwareInfo *hardwareInfoTable[NEO::maxProductEnumValue];
-extern void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper);
-extern void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
+extern void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+extern void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 
 template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {

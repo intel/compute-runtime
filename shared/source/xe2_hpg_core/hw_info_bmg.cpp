@@ -89,18 +89,16 @@ void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
 FeatureTable BMG::featureTable{};
 WorkaroundTable BMG::workaroundTable{};
 
-const HardwareInfo BmgHwConfig::hwInfo = {
+const HardwareInfo BMG::hwInfo = {
     &BMG::platform,
     &BMG::featureTable,
     &BMG::workaroundTable,
-    &BmgHwConfig::gtSystemInfo,
+    &BMG::gtSystemInfo,
     BMG::capabilityTable};
 
-GT_SYSTEM_INFO BmgHwConfig::gtSystemInfo = {};
+GT_SYSTEM_INFO BMG::gtSystemInfo = {};
 
-const HardwareInfo BMG::hwInfo = BmgHwConfig::hwInfo;
-
-void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
@@ -115,13 +113,9 @@ void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     applyDebugOverrides(*hwInfo);
 }
 
-void BmgHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    BMG::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+void BMG::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    BMG::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 
-void setupBMGHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    BmgHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*BMG::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupBMGHardwareInfoImpl;
+void (*BMG::setupHardwareInfo)(HardwareInfo *, bool) = BMG::setupHardwareInfoImpl;
 } // namespace NEO

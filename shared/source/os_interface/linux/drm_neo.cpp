@@ -65,12 +65,12 @@
 
 namespace NEO {
 const DeviceDescriptor deviceDescriptorTable[] = {
-#define NAMEDDEVICE(devId, gt, devName) {devId, &gt::hwInfo, &gt::setupHardwareInfo, devName},
-#define DEVICE(devId, gt) {devId, &gt::hwInfo, &gt::setupHardwareInfo, ""},
+#define NAMEDDEVICE(devId, family, devName) {devId, family, devName},
+#define DEVICE(devId, family) {devId, family, ""},
 #include "devices.inl"
 #undef DEVICE
 #undef NAMEDDEVICE
-    {0, nullptr, nullptr, ""}};
+    {0, IGFX_UNKNOWN, ""}};
 
 const DeviceDescriptor *Drm::getDeviceDescriptor(uint32_t usDeviceID) {
     for (auto &deviceDescriptorEntry : deviceDescriptorTable) {
@@ -495,7 +495,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
 
     auto productFamily = IGFX_UNKNOWN;
     if (deviceDescriptor) {
-        productFamily = deviceDescriptor->pHwInfo->platform.eProductFamily;
+        productFamily = deviceDescriptor->productFamily;
     }
 
     setupIoctlHelper(productFamily);
@@ -526,7 +526,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
     }
 
     // reset hwInfo and apply overrides
-    rootDeviceEnvironment.setHwInfo(deviceDescriptor->pHwInfo);
+    rootDeviceEnvironment.setHwInfo(hardwareInfoTable[deviceDescriptor->productFamily]);
     HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = usDeviceIdOverride;
     hwInfo->platform.usRevId = usRevIdOverride;
@@ -549,8 +549,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
     rootDeviceEnvironment.initReleaseHelper();
     rootDeviceEnvironment.initCompilerReleaseHelper();
 
-    const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
-    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, &compilerReleaseHelper);
+    hardwareInfoSetup[deviceDescriptor->productFamily](hwInfo, setupFeatureTableAndWorkaroundTable);
     this->adjustSharedSystemMemCapabilities();
 
     querySystemInfo();

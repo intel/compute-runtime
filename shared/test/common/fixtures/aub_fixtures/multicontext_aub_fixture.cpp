@@ -120,11 +120,9 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 
     bool setupCalled = false;
 
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(localHwInfo.ipVersion);
-
     if (localHwInfo.platform.eRenderCoreFamily >= IGFX_XE_HPG_CORE) {
         setupCalled = true;
-        hardwareInfoSetup[localHwInfo.platform.eProductFamily](&localHwInfo, true, 0u, compilerReleaseHelper.get());
+        hardwareInfoSetup[localHwInfo.platform.eProductFamily](&localHwInfo, true);
 
 #ifdef SUPPORT_DG2
         if (localHwInfo.platform.eProductFamily == IGFX_DG2) {

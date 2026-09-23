@@ -84,7 +84,7 @@ CRITEST_F(CriHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &CriHwConfig::hwInfo, &CriHwConfig::setupHardwareInfo};
+    DeviceDescriptor device = {0, IGFX_CRI};
     drm.overrideDeviceDescriptor = &device;
 
     int ret = drm.setupHardwareInfo(0, false);

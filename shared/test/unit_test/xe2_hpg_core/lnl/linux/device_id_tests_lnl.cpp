@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenLnlSupportedDeviceIdThenDeviceDescriptorTableExists) {
     std::array<DeviceDescriptor, 3> expectedDescriptors = {{
-        {0x6420, &LnlHwConfig::hwInfo, &LnlHwConfig::setupHardwareInfo},
-        {0x64A0, &LnlHwConfig::hwInfo, &LnlHwConfig::setupHardwareInfo},
-        {0x64B0, &LnlHwConfig::hwInfo, &LnlHwConfig::setupHardwareInfo},
+        {0x6420, IGFX_LUNARLAKE},
+        {0x64A0, IGFX_LUNARLAKE},
+        {0x64B0, IGFX_LUNARLAKE},
     }};
 
     testImpl(expectedDescriptors);

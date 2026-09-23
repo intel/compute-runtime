@@ -97,7 +97,7 @@ void TGLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
@@ -116,16 +116,16 @@ void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAn
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo TgllpHwConfig::hwInfo = {
+const HardwareInfo TGLLP::hwInfo = {
     &TGLLP::platform,
     &TGLLP::featureTable,
     &TGLLP::workaroundTable,
-    &TgllpHwConfig::gtSystemInfo,
+    &TGLLP::gtSystemInfo,
     TGLLP::capabilityTable};
 
-GT_SYSTEM_INFO TgllpHwConfig::gtSystemInfo = {0};
-void TgllpHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO TGLLP::gtSystemInfo = {0};
+void TGLLP::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
 
@@ -142,11 +142,5 @@ void TgllpHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTab
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo TGLLP::hwInfo = TgllpHwConfig::hwInfo;
-
-void setupTGLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    TgllpHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*TGLLP::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupTGLLPHardwareInfoImpl;
+void (*TGLLP::setupHardwareInfo)(HardwareInfo *, bool) = TGLLP::setupHardwareInfoImpl;
 } // namespace NEO

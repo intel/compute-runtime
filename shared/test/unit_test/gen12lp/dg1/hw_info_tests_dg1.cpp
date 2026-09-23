@@ -16,7 +16,7 @@ using namespace NEO;
 
 template <typename T>
 class Dg1HwInfoTests : public ::testing::Test {};
-typedef ::testing::Types<Dg1HwConfig> dg1TestTypes;
+typedef ::testing::Types<DG1> dg1TestTypes;
 TYPED_TEST_SUITE(Dg1HwInfoTests, dg1TestTypes);
 
 TYPED_TEST(Dg1HwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValueOfLocalMemoryFeature) {
@@ -24,9 +24,9 @@ TYPED_TEST(Dg1HwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     FeatureTable &featureTable = hwInfo.featureTable;
 
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
-    TypeParam::setupHardwareInfo(&hwInfo, false, nullptr);
+    TypeParam::setupHardwareInfo(&hwInfo, false);
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
-    TypeParam::setupHardwareInfo(&hwInfo, true, nullptr);
+    TypeParam::setupHardwareInfo(&hwInfo, true);
     EXPECT_TRUE(featureTable.flags.ftrLocalMemory);
 }
 
@@ -40,7 +40,7 @@ TYPED_TEST(Dg1HwInfoTests, WhenSetupHardwareInfoThenCapsAreInitializedFromLookup
 
     hwInfo.caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
 
-    TypeParam::setupHardwareInfo(&hwInfo, false, nullptr);
+    TypeParam::setupHardwareInfo(&hwInfo, false);
 
     EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hwInfo.caps.dotProductAccumulateSystolicSupported);
 }

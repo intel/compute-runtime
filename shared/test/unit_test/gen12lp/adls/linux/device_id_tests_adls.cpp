@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,22 +11,22 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenAdlsSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 16> expectedDescriptors = {{
-        {0x4680, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0x4682, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0x4688, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0x468A, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0x468B, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0x4690, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0x4692, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0x4693, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0xA780, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0xA781, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0xA782, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0xA783, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0xA788, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0xA789, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0xA78A, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
-        {0xA78B, &AdlsHwConfig::hwInfo, &AdlsHwConfig::setupHardwareInfo},
+        {0x4680, IGFX_ALDERLAKE_S},
+        {0x4682, IGFX_ALDERLAKE_S},
+        {0x4688, IGFX_ALDERLAKE_S},
+        {0x468A, IGFX_ALDERLAKE_S},
+        {0x468B, IGFX_ALDERLAKE_S},
+        {0x4690, IGFX_ALDERLAKE_S},
+        {0x4692, IGFX_ALDERLAKE_S},
+        {0x4693, IGFX_ALDERLAKE_S},
+        {0xA780, IGFX_ALDERLAKE_S},
+        {0xA781, IGFX_ALDERLAKE_S},
+        {0xA782, IGFX_ALDERLAKE_S},
+        {0xA783, IGFX_ALDERLAKE_S},
+        {0xA788, IGFX_ALDERLAKE_S},
+        {0xA789, IGFX_ALDERLAKE_S},
+        {0xA78A, IGFX_ALDERLAKE_S},
+        {0xA78B, IGFX_ALDERLAKE_S},
     }};
 
     testImpl(expectedDescriptors);

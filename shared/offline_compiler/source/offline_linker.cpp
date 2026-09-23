@@ -207,10 +207,9 @@ int OfflineLinker::initHardwareInfo() {
             auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
             UNRECOVERABLE_IF(compilerProductHelper == nullptr);
             hwInfo.ipVersion = compilerProductHelper->getHwIpVersion(hwInfo);
-            auto compilerReleaseHelper = NEO::CompilerReleaseHelper::create(hwInfo.ipVersion);
             const auto hwInfoConfig = compilerProductHelper->getHwInfoConfig(hwInfo);
             setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
-            hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig, compilerReleaseHelper.get());
+            hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
             return OCLOC_SUCCESS;
         }

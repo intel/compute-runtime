@@ -30,7 +30,7 @@ struct TgllpProductHelperLinux : ProductHelperTestLinux {
 
 template <typename T>
 class TgllpHwInfoLinux : public ::testing::Test {};
-typedef ::testing::Types<TgllpHwConfig> tgllpTestTypes;
+typedef ::testing::Types<TGLLP> tgllpTestTypes;
 TYPED_TEST_SUITE(TgllpHwInfoLinux, tgllpTestTypes);
 TYPED_TEST(TgllpHwInfoLinux, gtSetupIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
@@ -39,7 +39,7 @@ TYPED_TEST(TgllpHwInfoLinux, gtSetupIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &TypeParam::hwInfo, &TypeParam::setupHardwareInfo};
+    DeviceDescriptor device = {0, IGFX_TIGERLAKE_LP};
     drm.overrideDeviceDescriptor = &device;
 
     int ret = drm.setupHardwareInfo(0, false);

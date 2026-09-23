@@ -89,15 +89,13 @@ TEST(HwInfoTest, whenApplyDebugOverrideCalledThenDebugVariablesAreApplied) {
 
 TEST(HwInfoTest, whenSetupHardwareInfoForDefaultProductThenCapsAreInitializedFromLookup) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
 
     auto expectedCaps = resolveCaps(hwInfo.ipVersion);
 
     if (expectedCaps.has_value()) {
         hwInfo.caps = {};
         hwInfo.caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
-        hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, false, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
+        hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, false);
 
         EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hwInfo.caps.dotProductAccumulateSystolicSupported);
     }

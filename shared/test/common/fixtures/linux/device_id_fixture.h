@@ -29,8 +29,7 @@ struct DeviceIdTests : public ::testing::Test {
     }
 
     bool compareStructs(const DeviceDescriptor *first, const DeviceDescriptor *second) {
-        return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupHardwareInfo == second->setupHardwareInfo;
+        return first->deviceId == second->deviceId && first->productFamily == second->productFamily;
     }
 };
 

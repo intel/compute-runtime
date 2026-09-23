@@ -36,8 +36,7 @@ struct XeHPAndLaterAubCommandStreamReceiverTests : DeviceFixture, ::testing::Tes
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        auto compilerReleaseHelper = CompilerReleaseHelper::create(hardwareInfo.ipVersion);
-        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, compilerReleaseHelper.get());
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true);
         hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
         DeviceFixture::setUpImpl(&hardwareInfo);
     }

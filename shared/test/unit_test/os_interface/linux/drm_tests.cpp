@@ -36,6 +36,7 @@
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/os_interface/linux/mock_hardware_info_setup.h"
 
 #include "gtest/gtest.h"
 
@@ -164,10 +165,9 @@ TEST(DrmTest, givenFailedProductHelperSetupHardwareInfoWhenDrmSetupHardwareInfoC
 
     executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(productHelper);
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
+    MockHardwareInfoSetup mock;
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     auto rc = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(-1, rc);
     EXPECT_EQ(1u, productHelper->setupHardwareInfoCalled);
@@ -192,8 +192,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndNotSupportedWhenSetupHardwareI
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setPciPath("0000:ab:cd.e");
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
+    MockHardwareInfoSetup mock;
 
     auto mockIoctlHelper = std::make_unique<MockIoctlHelperForSmallBar>(drm);
     mockIoctlHelper->smallBarAllowed = false;
@@ -203,7 +202,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndNotSupportedWhenSetupHardwareI
     StreamCapture capture;
     capture.captureStderr();
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     EXPECT_EQ(-1, drm.setupHardwareInfo(0, false));
     std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("WARNING: Resizable BAR not detected for device 0000:ab:cd.e\n", output.c_str());
@@ -214,8 +213,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndSupportedWhenSetupHardwareInfo
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setPciPath("0000:ab:cd.e");
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
+    MockHardwareInfoSetup mock;
 
     auto mockIoctlHelper = std::make_unique<MockIoctlHelperForSmallBar>(drm);
     mockIoctlHelper->smallBarAllowed = true;
@@ -224,7 +222,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndSupportedWhenSetupHardwareInfo
 
     StreamCapture capture;
     capture.captureStderr();
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
     std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("WARNING: Resizable BAR not detected for device 0000:ab:cd.e\n", output.c_str());
@@ -1012,11 +1010,11 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     drm.storedSSVal = 6;
     hwInfo->gtSystemInfo.SliceCount = 2;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.ioctlHelper.reset();
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     drm.setupHardwareInfo(0, false);
     EXPECT_NE(nullptr, drm.getIoctlHelper());
     EXPECT_EQ(2u, hwInfo->gtSystemInfo.MaxSlicesSupported);
@@ -1032,9 +1030,9 @@ TEST(DrmQueryTest, GivenForceDeviceIdSetWhenSetupHardwareInfoCalledThenProperlyC
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
-    drm.overrideDeviceDescriptor = &device;
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
+    drm.overrideDeviceDescriptor = &mock.device;
 
     EXPECT_NE(0x4321u, hwInfo->platform.usDeviceID);
     EXPECT_NE(0, drm.setupHardwareInfo(0, false));
@@ -2212,12 +2210,12 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutSystemInfoWhenSettingHwInfoThenCorre
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     drm.setupHardwareInfo(0, false);
     EXPECT_EQ(nullptr, drm.systemInfo.get());
 
@@ -2268,12 +2266,12 @@ TEST(DrmHwInfoTest, givenTopologyDataWithAsymtricTopologyMappingWhenSettingHwInf
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     drm.setupHardwareInfo(0, false);
     EXPECT_EQ(nullptr, drm.systemInfo.get());
     EXPECT_TRUE(hwInfo->gtSystemInfo.IsDynamicallyPopulated);
@@ -2313,12 +2311,12 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceWhenSettingHwInfoThenCorrect
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     drm.setupHardwareInfo(0, false);
     EXPECT_EQ(nullptr, drm.systemInfo.get());
     EXPECT_TRUE(hwInfo->gtSystemInfo.IsDynamicallyPopulated);
@@ -2362,12 +2360,12 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutTopologyMappingWhenSettingHwInfoThen
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     drm.setupHardwareInfo(0, false);
     EXPECT_EQ(nullptr, drm.systemInfo.get());
     EXPECT_FALSE(hwInfo->gtSystemInfo.IsDynamicallyPopulated);
@@ -2400,12 +2398,12 @@ TEST(DrmHwInfoTest, givenTopologyDataWithIncorrectSliceMaskWhenSettingHwInfoThen
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     EXPECT_NE(0, drm.setupHardwareInfo(0, false));
 }
 
@@ -2434,12 +2432,12 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndNoCommonSubSliceMaskWhenS
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
 
     EXPECT_FALSE(hwInfo->gtSystemInfo.SliceInfo[0].Enabled);
@@ -2471,11 +2469,12 @@ TEST(DrmHwInfoTest, givenOverrideMaxSlicesSupportedIsFalseThenMaxSlicesSupported
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
     hwInfo->gtSystemInfo = {};
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
+    mock.setupBackup = +[](HardwareInfo *hwInfo, bool) {
         hwInfo->gtSystemInfo.MaxSlicesSupported = 8;
     };
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
     EXPECT_EQ(8u, hwInfo->gtSystemInfo.MaxSlicesSupported);
 }
@@ -2505,12 +2504,12 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndMoreSubslicesThanMaxSubsl
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
 
     EXPECT_FALSE(hwInfo->gtSystemInfo.SliceInfo[0].Enabled);
@@ -2545,16 +2544,17 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutL3BankCountWhenSettingHwInfoThenL3Ba
 
     hwInfo->gtSystemInfo = {};
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const CompilerReleaseHelper *) {
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
+    mock.setupBackup = +[](HardwareInfo *hwInfo, bool) {
         hwInfo->gtSystemInfo.MaxSubSlicesSupported = 8;
         hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = 8;
     };
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
     EXPECT_EQ(nullptr, drm.systemInfo.get());
 
@@ -2873,11 +2873,11 @@ HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitia
     NEO::RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*executionEnvironment->rootDeviceEnvironments[0]);
 
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo());
 
     drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     drm.setupHardwareInfo(0, false);
 
     EXPECT_TRUE(raii.mockGfxCoreHelper->initFromProductHelperCalled);
@@ -3020,11 +3020,11 @@ TEST(DrmTest, givenSetupHardwareInfoWhenTopologyDataHasRegionCountThenFeatureTab
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(hwInfo);
 
     drm.systemInfoQueried = true;
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     drm.setupHardwareInfo(0, false);
 
     EXPECT_EQ(2u, hwInfo->featureTable.regionCount);

@@ -98,7 +98,7 @@ void DG1::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
@@ -117,16 +117,16 @@ void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo Dg1HwConfig::hwInfo = {
+const HardwareInfo DG1::hwInfo = {
     &DG1::platform,
     &DG1::featureTable,
     &DG1::workaroundTable,
-    &Dg1HwConfig::gtSystemInfo,
+    &DG1::gtSystemInfo,
     DG1::capabilityTable};
 
-GT_SYSTEM_INFO Dg1HwConfig::gtSystemInfo = {0};
-void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO DG1::gtSystemInfo = {0};
+void DG1::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     if (gtSysInfo->SliceCount == 0) {
@@ -141,11 +141,5 @@ void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo DG1::hwInfo = Dg1HwConfig::hwInfo;
-
-void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*DG1::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupDG1HardwareInfoImpl;
+void (*DG1::setupHardwareInfo)(HardwareInfo *, bool) = DG1::setupHardwareInfoImpl;
 } // namespace NEO

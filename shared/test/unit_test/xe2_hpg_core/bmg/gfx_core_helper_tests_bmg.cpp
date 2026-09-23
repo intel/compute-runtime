@@ -22,8 +22,7 @@
 struct GfxCoreHelperTestsBmg : public GfxCoreHelperTest {
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        auto compilerReleaseHelper = CompilerReleaseHelper::create(hardwareInfo.ipVersion);
-        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, compilerReleaseHelper.get());
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true);
         DeviceFixture::setUpImpl(&hardwareInfo);
     }
 

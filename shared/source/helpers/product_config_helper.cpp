@@ -14,7 +14,7 @@
 #include "neo_aot_platforms.h"
 
 ProductConfigHelper::ProductConfigHelper() : deviceAotInfo({
-#define DEVICE_CONFIG(productConfig, hwConfig, deviceIds, family, release) {{AOT::productConfig}, &NEO::hwConfig::hwInfo, &NEO::deviceIds, AOT::family, AOT::release, {}, {}},
+#define DEVICE_CONFIG(productConfig, productFamily, deviceIds, aotFamily, release) {{AOT::productConfig}, NEO::hardwareInfoTable[productFamily], &NEO::deviceIds, AOT::aotFamily, AOT::release, {}, {}},
 #include "product_config.inl"
 #undef DEVICE_CONFIG
                                              }) {

@@ -33,6 +33,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation_view_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_version_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_hardware_info_setup.h
     ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_TYPE}/file_logger_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_server_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_client_tests.cpp

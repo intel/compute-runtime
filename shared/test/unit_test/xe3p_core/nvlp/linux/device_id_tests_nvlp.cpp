@@ -11,17 +11,17 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenNvlpSupportedDeviceIdThenDeviceDescriptorTableExists) {
     std::array<DeviceDescriptor, 11> expectedDescriptors = {{
-        {0xD750, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD751, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD752, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD753, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD754, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD755, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD756, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD757, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD75F, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD74A, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
-        {0xD74B, &NvlHwConfig::hwInfo, &NvlHwConfig::setupHardwareInfo},
+        {0xD750, IGFX_NVL},
+        {0xD751, IGFX_NVL},
+        {0xD752, IGFX_NVL},
+        {0xD753, IGFX_NVL},
+        {0xD754, IGFX_NVL},
+        {0xD755, IGFX_NVL},
+        {0xD756, IGFX_NVL},
+        {0xD757, IGFX_NVL},
+        {0xD75F, IGFX_NVL},
+        {0xD74A, IGFX_NVL},
+        {0xD74B, IGFX_NVL},
     }};
 
     testImpl(expectedDescriptors);

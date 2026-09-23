@@ -1307,23 +1307,21 @@ TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLin
     struct DeviceIdElementDescriptionType {
         unsigned short idVal;
         std::string idStr;
-        std::string configStr;
         std::vector<std::string> acronymsResultants;
     };
     std::vector<DeviceIdElementDescriptionType> deviceIdsVec{
-#define NAMEDDEVICE(devId, hwConf, ignored_brandingStr) {devId, #devId, #hwConf, {}},
-#define DEVICE(devId, hwConf) {devId, #devId, #hwConf, {}},
+#define NAMEDDEVICE(devId, ignored_family, ignored_brandingStr) {devId, #devId, {}},
+#define DEVICE(devId, ignored_family) {devId, #devId, {}},
 #include "devices.inl"
 #undef DEVICE
 #undef NAMEDDEVICE
     };
     struct ConfigRelationElementDescriptionType {
         std::vector<unsigned short> devIdVals;
-        std::string configStr;
         enum AOT::PRODUCT_CONFIG prodIpTypeVal;
     };
     std::vector<ConfigRelationElementDescriptionType> configRelationVec{
-#define DEVICE_CONFIG(prodIpTypeVer, hwConf, devIds, ignored_family, ignored_release) {NEO::devIds, #hwConf, AOT::prodIpTypeVer},
+#define DEVICE_CONFIG(prodIpTypeVer, ignored_hwConf, devIds, ignored_family, ignored_release) {NEO::devIds, AOT::prodIpTypeVer},
 #include "product_config.inl"
 #undef DEVICE_CONFIG
     };
@@ -1336,8 +1334,7 @@ TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLin
     std::transform(deviceIdElement.idStr.begin(), deviceIdElement.idStr.end(), deviceIdElement.idStr.begin(), ::tolower);
 
     for (auto &configRelationElement : configRelationVec) {
-        if (deviceIdElement.configStr != configRelationElement.configStr ||
-            std::find(configRelationElement.devIdVals.begin(), configRelationElement.devIdVals.end(), deviceIdElement.idVal) == configRelationElement.devIdVals.end()) {
+        if (std::find(configRelationElement.devIdVals.begin(), configRelationElement.devIdVals.end(), deviceIdElement.idVal) == configRelationElement.devIdVals.end()) {
             continue;
         }
 

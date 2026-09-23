@@ -29,11 +29,9 @@ CRITEST_F(CriHwInfoTest, WhenGettingHardwareInfoThenCriIsReturned) {
 
 CRITEST_F(CriHwInfoTest, whenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiTileInfoAreSet) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    hardwareInfoSetup[productFamily](&hwInfo, false, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
+    hardwareInfoSetup[productFamily](&hwInfo, false);
     EXPECT_FALSE(gtSystemInfo.MultiTileArchInfo.IsValid);
 
     EXPECT_TRUE(gtSystemInfo.CCSInfo.IsValid);
@@ -42,50 +40,45 @@ CRITEST_F(CriHwInfoTest, whenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiTile
 }
 
 CRITEST_F(CriHwInfoTest, givenBoolWhenCallCriHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
-    uint64_t configs[] = {0x1000080008, 0x1000070008};
-
     bool boolValue[]{true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    for (auto &config : configs) {
-        for (auto setParamBool : boolValue) {
+    for (auto setParamBool : boolValue) {
 
-            gtSystemInfo = {0};
-            featureTable = {};
-            workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, compilerReleaseHelper.get());
+        gtSystemInfo = {0};
+        featureTable = {};
+        workaroundTable = {};
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool);
 
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrLocalMemory);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrLinearCCS);
-            EXPECT_EQ(false, featureTable.flags.ftrFlatPhysCCS);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSNode);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSRing);
-            EXPECT_EQ(false, featureTable.flags.ftrMultiTileArch);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrStandardMipTailFormat);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-            EXPECT_EQ(false, featureTable.flags.ftrTile64Optimization);
-            EXPECT_EQ(false, featureTable.flags.ftrTileY);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
-            EXPECT_EQ(false, featureTable.flags.ftrSelectiveWmtp);
-            EXPECT_TRUE(featureTable.flags.ftrHeaplessMode);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrLocalMemory);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrLinearCCS);
+        EXPECT_EQ(false, featureTable.flags.ftrFlatPhysCCS);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSNode);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSRing);
+        EXPECT_EQ(false, featureTable.flags.ftrMultiTileArch);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrStandardMipTailFormat);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+        EXPECT_EQ(false, featureTable.flags.ftrTile64Optimization);
+        EXPECT_EQ(false, featureTable.flags.ftrTileY);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
+        EXPECT_EQ(false, featureTable.flags.ftrSelectiveWmtp);
+        EXPECT_TRUE(featureTable.flags.ftrHeaplessMode);
 
-            EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        }
+        EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
     }
 }
 
@@ -93,7 +86,6 @@ using CriHwInfoTests = ::testing::Test;
 
 CRITEST_F(CriHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
@@ -110,7 +102,7 @@ CRITEST_F(CriHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_FALSE(featureTable.flags.ftrHwSemaphore64);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
-    CriHwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper.get());
+    CRI::setupHardwareInfoImpl(&hwInfo, false);
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
@@ -124,7 +116,7 @@ CRITEST_F(CriHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_FALSE(featureTable.flags.ftrHwSemaphore64);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
-    CriHwConfig::setupHardwareInfo(&hwInfo, true, compilerReleaseHelper.get());
+    CRI::setupHardwareInfoImpl(&hwInfo, true);
     EXPECT_TRUE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);

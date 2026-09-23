@@ -85,7 +85,7 @@ void PTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     hwInfo->workaroundTable.flags.wa_14018984349 = true;
 }
 
-void PTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void PTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 10u;
@@ -103,23 +103,17 @@ void PTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 FeatureTable PTL::featureTable{};
 WorkaroundTable PTL::workaroundTable{};
 
-const HardwareInfo PtlHwConfig::hwInfo = {
+const HardwareInfo PTL::hwInfo = {
     &PTL::platform,
     &PTL::featureTable,
     &PTL::workaroundTable,
-    &PtlHwConfig::gtSystemInfo,
+    &PTL::gtSystemInfo,
     PTL::capabilityTable};
 
-GT_SYSTEM_INFO PtlHwConfig::gtSystemInfo = {0};
-void PtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    PTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO PTL::gtSystemInfo = {0};
+void PTL::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    PTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 
-const HardwareInfo PTL::hwInfo = PtlHwConfig::hwInfo;
-
-void setupPTLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    PtlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*PTL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupPTLHardwareInfoImpl;
+void (*PTL::setupHardwareInfo)(HardwareInfo *, bool) = PTL::setupHardwareInfoImpl;
 } // namespace NEO

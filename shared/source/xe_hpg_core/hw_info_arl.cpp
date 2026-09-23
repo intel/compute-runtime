@@ -79,7 +79,7 @@ void ARL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void ARL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void ARL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
@@ -93,27 +93,21 @@ void ARL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo ArlHwConfig::hwInfo = {
+const HardwareInfo ARL::hwInfo = {
     &ARL::platform,
     &ARL::featureTable,
     &ARL::workaroundTable,
-    &ArlHwConfig::gtSystemInfo,
+    &ARL::gtSystemInfo,
     ARL::capabilityTable};
 
-GT_SYSTEM_INFO ArlHwConfig::gtSystemInfo = {0};
-void ArlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    ARL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO ARL::gtSystemInfo = {0};
+void ARL::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    ARL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     if (setupFeatureTableAndWorkaroundTable) {
         ARL::setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
 
-const HardwareInfo ARL::hwInfo = ArlHwConfig::hwInfo;
-
-void setupARLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    ArlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*ARL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupARLHardwareInfoImpl;
+void (*ARL::setupHardwareInfo)(HardwareInfo *, bool) = ARL::setupHardwareInfoImpl;
 } // namespace NEO

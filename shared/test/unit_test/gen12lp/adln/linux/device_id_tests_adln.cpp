@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,16 +15,15 @@ using namespace NEO;
 
 TEST(AdlnDeviceIdTest, GivenSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 5> expectedDescriptors = {{
-        {0x46D0, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
-        {0x46D1, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
-        {0x46D2, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
-        {0x46D3, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
-        {0x46D4, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
+        {0x46D0, IGFX_ALDERLAKE_N},
+        {0x46D1, IGFX_ALDERLAKE_N},
+        {0x46D2, IGFX_ALDERLAKE_N},
+        {0x46D3, IGFX_ALDERLAKE_N},
+        {0x46D4, IGFX_ALDERLAKE_N},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
-        return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupHardwareInfo == second->setupHardwareInfo;
+        return first->deviceId == second->deviceId && first->productFamily == second->productFamily;
     };
 
     size_t startIndex = 0;

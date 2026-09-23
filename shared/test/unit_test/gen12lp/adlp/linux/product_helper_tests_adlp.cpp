@@ -20,7 +20,7 @@ using AdlpHwInfoLinux = ::testing::Test;
 ADLPTEST_F(AdlpHwInfoLinux, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    ADLP::setupHardwareInfoBase(&hwInfo, false, nullptr);
+    ADLP::setupHardwareInfoBase(&hwInfo, false);
 
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
 }
@@ -29,7 +29,7 @@ ADLPTEST_F(AdlpHwInfoLinux, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroV
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo = {0};
 
-    AdlpHwConfig::setupHardwareInfo(&hwInfo, false, nullptr);
+    ADLP::setupHardwareInfoImpl(&hwInfo, false);
 
     EXPECT_NE(0u, hwInfo.gtSystemInfo.SliceCount);
     EXPECT_NE(0u, hwInfo.gtSystemInfo.SubSliceCount);

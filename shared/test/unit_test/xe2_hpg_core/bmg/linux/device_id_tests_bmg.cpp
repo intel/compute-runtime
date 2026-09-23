@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,20 +11,20 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenBmgSupportedDeviceIdThenDeviceDescriptorTableExists) {
     std::array<DeviceDescriptor, 14> expectedDescriptors = {{
-        {0xE202, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE209, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE20B, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE20C, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE20D, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE210, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE211, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE212, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE215, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE216, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE220, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE221, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE222, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
-        {0xE223, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
+        {0xE202, IGFX_BMG},
+        {0xE209, IGFX_BMG},
+        {0xE20B, IGFX_BMG},
+        {0xE20C, IGFX_BMG},
+        {0xE20D, IGFX_BMG},
+        {0xE210, IGFX_BMG},
+        {0xE211, IGFX_BMG},
+        {0xE212, IGFX_BMG},
+        {0xE215, IGFX_BMG},
+        {0xE216, IGFX_BMG},
+        {0xE220, IGFX_BMG},
+        {0xE221, IGFX_BMG},
+        {0xE222, IGFX_BMG},
+        {0xE223, IGFX_BMG},
     }};
 
     testImpl(expectedDescriptors);

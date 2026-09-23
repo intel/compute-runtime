@@ -24,20 +24,15 @@ struct TGLLP : public Gen12LpFamily {
     static const uint32_t maxSubslicesSupported = 6;
     static const uint32_t maxDualSubslicesSupported = 6;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper);
+    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
-    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+    static void setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 
     static bool isHw1x2x16(const HardwareInfo &hwInfo) {
         auto it = std::find(tgllpHw1x2x16DeviceIds.begin(), tgllpHw1x2x16DeviceIds.end(), hwInfo.platform.usDeviceID);
         return it != tgllpHw1x2x16DeviceIds.end();
     }
-};
-
-class TgllpHwConfig : public TGLLP {
-  public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
-    static const HardwareInfo hwInfo;
 
   private:
     static GT_SYSTEM_INFO gtSystemInfo;

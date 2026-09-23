@@ -22,8 +22,7 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        compilerReleaseHelper = CompilerReleaseHelper::create(hardwareInfo.ipVersion);
-        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, compilerReleaseHelper.get());
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true);
         hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
         DeviceFixture::setUpImpl(&hardwareInfo);
     }
@@ -34,6 +33,4 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
     void TearDown() override {
         DeviceFixture::tearDown();
     }
-
-    std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
 };

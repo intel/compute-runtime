@@ -32,8 +32,7 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
     void SetUp() override {
         hardwareInfo = *defaultHwInfo;
         hardwareInfo.capabilityTable.blitterOperationsSupported = true;
-        auto compilerReleaseHelper = CompilerReleaseHelper::create(hardwareInfo.ipVersion);
-        hardwareInfoSetup[productFamily](&hardwareInfo, true, 0, compilerReleaseHelper.get());
+        hardwareInfoSetup[productFamily](&hardwareInfo, true);
         setUpImpl(&hardwareInfo);
     }
 

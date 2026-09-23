@@ -26,9 +26,8 @@ using BmgHwInfoTest = ::testing::Test;
 BMGTEST_F(BmgHwInfoTest, givenBmgHwConfigWhenSetupHardwareInfoThenSharedSystemMemCapabilitiesIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     auto &capabilityTable = hwInfo.capabilityTable;
-    BmgHwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper.get());
+    BMG::setupHardwareInfoImpl(&hwInfo, false);
     uint64_t expectedSharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
     EXPECT_EQ(expectedSharedSystemMemCapabilities, capabilityTable.sharedSystemMemCapabilities);
 }

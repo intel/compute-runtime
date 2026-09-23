@@ -87,18 +87,16 @@ void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
 FeatureTable LNL::featureTable{};
 WorkaroundTable LNL::workaroundTable{};
 
-const HardwareInfo LnlHwConfig::hwInfo = {
+const HardwareInfo LNL::hwInfo = {
     &LNL::platform,
     &LNL::featureTable,
     &LNL::workaroundTable,
-    &LnlHwConfig::gtSystemInfo,
+    &LNL::gtSystemInfo,
     LNL::capabilityTable};
 
-GT_SYSTEM_INFO LnlHwConfig::gtSystemInfo = {};
+GT_SYSTEM_INFO LNL::gtSystemInfo = {};
 
-const HardwareInfo LNL::hwInfo = LnlHwConfig::hwInfo;
-
-void LNL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void LNL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
@@ -112,13 +110,9 @@ void LNL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     applyDebugOverrides(*hwInfo);
 }
-void LnlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    LNL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+void LNL::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    LNL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 
-void setupLNLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    LnlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*LNL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupLNLHardwareInfoImpl;
+void (*LNL::setupHardwareInfo)(HardwareInfo *, bool) = LNL::setupHardwareInfoImpl;
 } // namespace NEO

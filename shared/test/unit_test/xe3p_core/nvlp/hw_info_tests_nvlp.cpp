@@ -28,57 +28,50 @@ NVLPTEST_F(NvlHwInfoTest, WhenGettingHardwareInfoThenNvlIsReturned) {
 }
 
 NVLPTEST_F(NvlHwInfoTest, givenBoolWhenCallNvlHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
-    uint64_t configs[] = {0x200060008};
-
     bool boolValue[]{true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    for (auto &config : configs) {
-        for (auto setParamBool : boolValue) {
+    for (auto setParamBool : boolValue) {
 
-            gtSystemInfo = {0};
-            featureTable = {};
-            workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, compilerReleaseHelper.get());
+        gtSystemInfo = {0};
+        featureTable = {};
+        workaroundTable = {};
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool);
 
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrLinearCCS);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFlatPhysCCS);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSNode);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSRing);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrStandardMipTailFormat);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTile64Optimization);
-            EXPECT_EQ(false, featureTable.flags.ftrTileY);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAppTransientCaching);
-            EXPECT_EQ(false, featureTable.flags.ftrSelectiveWmtp);
-            EXPECT_TRUE(featureTable.flags.ftrHeaplessMode);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrLinearCCS);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrFlatPhysCCS);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSNode);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrCCSRing);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrStandardMipTailFormat);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrTile64Optimization);
+        EXPECT_EQ(false, featureTable.flags.ftrTileY);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrAppTransientCaching);
+        EXPECT_EQ(false, featureTable.flags.ftrSelectiveWmtp);
+        EXPECT_TRUE(featureTable.flags.ftrHeaplessMode);
 
-            EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        }
+        EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
     }
 }
 
 NVLPTEST_F(NvlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
@@ -94,7 +87,7 @@ NVLPTEST_F(NvlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_TRUE(featureTable.flags.ftrHwSemaphore64);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
-    NvlHwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper.get());
+    NVLP::setupHardwareInfoImpl(&hwInfo, false);
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
@@ -107,7 +100,7 @@ NVLPTEST_F(NvlHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_TRUE(featureTable.flags.ftrHwSemaphore64);
     EXPECT_FALSE(featureTable.flags.ftrSelectiveWmtp);
-    NvlHwConfig::setupHardwareInfo(&hwInfo, true, compilerReleaseHelper.get());
+    NVLP::setupHardwareInfoImpl(&hwInfo, true);
     EXPECT_TRUE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
     EXPECT_TRUE(featureTable.flags.ftrE2ECompression);

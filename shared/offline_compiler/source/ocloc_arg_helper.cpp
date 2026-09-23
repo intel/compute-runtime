@@ -204,7 +204,7 @@ void OclocArgHelper::setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_
     uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
     setHwInfoValuesFromConfig(config, hwInfo);
     compilerReleaseHelper = NEO::CompilerReleaseHelper::create(hwInfo.ipVersion);
-    NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, compilerReleaseHelper.get());
+    NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 }
 
 void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) {

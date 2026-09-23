@@ -161,7 +161,7 @@ DG2TEST_F(ProductHelperTestDg2, whenGettingAubstreamProductFamilyThenProperEnumV
 DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    Dg2HwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper);
+    DG2::setupHardwareInfoImpl(&hwInfo, false);
 
     EXPECT_EQ(0u, gtSystemInfo.CsrSizeInMb);
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
