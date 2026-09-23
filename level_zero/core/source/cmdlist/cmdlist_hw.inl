@@ -2567,7 +2567,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
 
         if (!isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed) {
-            bool nonWalkerInOrderCmdChaining = !isCopyOnlyEnabled && isInOrderNonWalkerSignalingRequired(signalEvent) && !emitPipeControl && !this->latestOperationHasHeapfullCbEventWithProfiling;
+            bool nonWalkerInOrderCmdChaining = !isCopyOnlyEnabled && isInOrderNonWalkerSignalingRequired(signalEvent) && !emitPipeControl && !this->latestOperationHasCbEventWithProfiling;
             handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining, isCopyOnlyEnabled);
         }
     } else {
@@ -3239,7 +3239,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnly(false));
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
         } else {
-            nonWalkerInOrderCmdChaining = isInOrderNonWalkerSignalingRequired(signalEvent) && !this->latestOperationHasHeapfullCbEventWithProfiling;
+            nonWalkerInOrderCmdChaining = isInOrderNonWalkerSignalingRequired(signalEvent) && !this->latestOperationHasCbEventWithProfiling;
         }
     }
     handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining, false);
@@ -3589,7 +3589,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
 
     if (hasInOrderDependencies()) {
         if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
-            this->latestOperationHasHeapfullCbEventWithProfiling = false;
+            this->latestOperationHasCbEventWithProfiling = false;
             return false;
         }
 
@@ -3600,11 +3600,11 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getBaseDeviceAddress(), inOrderExecInfo->getNumDevicePartitionsToWait(),
                                                                             nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), relaxedOrderingAllowed, true, false, false, dualStreamCopyOffloadOperation);
 
-        this->latestOperationHasHeapfullCbEventWithProfiling = false;
+        this->latestOperationHasCbEventWithProfiling = false;
         return true;
     }
 
-    this->latestOperationHasHeapfullCbEventWithProfiling = false;
+    this->latestOperationHasCbEventWithProfiling = false;
     return false;
 }
 
@@ -3713,8 +3713,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(boo
         return false;
     }
 
-    const bool heapfulProfilingEvent = !this->heaplessModeEnabled && this->latestOperationHasHeapfullCbEventWithProfiling;
-    const auto isBarrierRequired = (this->isInOrderCounterSignalPending() || heapfulProfilingEvent);
+    const bool cbProfilingEvent = this->latestOperationHasCbEventWithProfiling;
+    const auto isBarrierRequired = (this->isInOrderCounterSignalPending() || cbProfilingEvent);
     auto resolveIoqDependencyWithBarrier = !(this->partitionCount > 1);
     if (this->isImmediateType() && !isBarrierRequired) {
         // Use semaphore to avoid serialization if different cmd list submitted workload between previous and current submission.
@@ -3835,7 +3835,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(NEO::Gr
                 } else {
                     args.csStallOnly = true;
                     // Pending counter signal caused by skipped walker post sync means that kernel writes were not flushed yet
-                    if (this->isInOrderCounterSignalPending() && !this->latestOperationHasHeapfullCbEventWithProfiling) {
+                    if (this->isInOrderCounterSignalPending() && !this->latestOperationHasCbEventWithProfiling) {
                         args.isL1FlushRequired = true;
                     }
                 }
@@ -3945,7 +3945,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(event->getInOrderExecEventHelper(), waitEventParams.outWaitCmds, waitEventParams.skipAddingWaitEventsToResidency, dualStreamCopyOffload);
         }
 
-        if (event->isCounterBased() && (this->heaplessModeEnabled || !event->hasInOrderTimestampNode())) {
+        if (event->isCounterBased() && this->isInOrderCounterWaitRequired(event)) {
             auto &inOrderExecHelper = event->getInOrderExecEventHelper();
             // when data is unassigned, device partition should be inferred from the device
             auto devicePartitionCount = inOrderExecHelper.getEventData()->devicePartitions == 0 ? static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().count()) : inOrderExecHelper.getEventData()->devicePartitions;
@@ -4819,7 +4819,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
         return false;
     }
 
-    if (signalEvent && this->latestOperationHasHeapfullCbEventWithProfiling) {
+    if (signalEvent && this->latestOperationHasCbEventWithProfiling) {
         return false;
     }
 
@@ -4836,7 +4836,7 @@ void CommandListCoreFamily<gfxCoreFamily>::setupEventParamsForInOrderBarrierSkip
     if (hSignalEvent) {
         auto event = Event::fromHandle(hSignalEvent);
         assignInOrderExecInfoToEvent(event);
-        event->setHeapfullCbEventWithProfiling(this->latestOperationHasHeapfullCbEventWithProfiling);
+        event->setCbEventWithProfiling(this->latestOperationHasCbEventWithProfiling);
         if (isImmediateType()) {
             event->setLatestUsedCmdQueue(this->cmdQImmediate);
         }
@@ -5415,7 +5415,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         }
     }
 
-    signalEvent->setHeapfullCbEventWithProfiling(false);
+    signalEvent->setCbEventWithProfiling(false);
 
     if (signalEvent->isCounterBased()) {
         if (!isInOrderExecutionEnabled() || (signalEvent->isIpcImported() && !signalEvent->getInOrderExecEventHelper().is2WayIpcSharingEnabled())) {

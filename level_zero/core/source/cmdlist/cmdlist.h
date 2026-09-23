@@ -523,6 +523,8 @@ struct CommandList : _ze_command_list_handle_t {
         return heaplessModeEnabled;
     }
 
+    bool isInOrderCounterWaitRequired(const Event *event) const;
+
     bool getCmdListBatchBufferFlag() const {
         return dispatchCmdListBatchBufferAsPrimary;
     }

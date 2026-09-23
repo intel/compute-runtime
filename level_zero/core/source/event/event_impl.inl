@@ -315,10 +315,9 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
     if (!inOrderExecHelper.isCounterAlreadyDone(waitValue, this->getInOrderAllocationOffset())) {
         bool signaled = true;
 
-        if (this->heapfullCbEventWithProfiling) {
+        if (this->cbEventWithProfiling) {
             this->synchronizeTimestampCompletionWithTimeout();
             signaled = this->isTimestampPopulated();
-            this->heapfullCbEventWithProfiling = !signaled;
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset);
             for (uint32_t i = 0; i < inOrderExecHelper.getEventData()->hostPartitions; i++) {
@@ -443,7 +442,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryUserFenceWaitForHostSynchronize(int64_t t
                                   packetWaitTimeout, false, this->externalInterruptId, getAllocation(this->device), nullptr);
     };
 
-    if (this->heapfullCbEventWithProfiling && inOrderExecHelper.hasTimestampNodes()) {
+    if (this->cbEventWithProfiling && inOrderExecHelper.hasTimestampNodes()) {
         if (!packetUserFenceWaitSupported) {
             return NEO::WaitStatus::notReady;
         }
@@ -671,6 +670,26 @@ void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAlloca
 }
 
 template <typename TagSizeT>
+void EventImp<TagSizeT>::downloadTbxAllocationsForQuery() {
+    if (!this->tbxMode) {
+        return;
+    }
+
+    bool downloadedAllocation = (this->getAllocation(this->device) == nullptr);
+    bool downloadedInOrdedAllocation = (inOrderExecHelper.getDeviceCounterAllocation() == nullptr);
+    bool downloadedPatchPreambleAllocation = (inOrderExecHelper.getPatchPreambleHostAllocation() == nullptr);
+
+    DEBUG_BREAK_IF(inOrderExecHelper.isDataAssigned() && (inOrderExecHelper.getDeviceCounterAllocation() == nullptr)); //  external allocation - not able to download
+
+    tbxDownload(*this->device->getNEODevice(), downloadedAllocation, downloadedInOrdedAllocation, downloadedPatchPreambleAllocation);
+    if (!downloadedAllocation || !downloadedInOrdedAllocation || !downloadedPatchPreambleAllocation) {
+        for (auto &subDevice : this->device->getNEODevice()->getRootDevice()->getSubDevices()) {
+            tbxDownload(*subDevice, downloadedAllocation, downloadedInOrdedAllocation, downloadedPatchPreambleAllocation);
+        }
+    }
+}
+
+template <typename TagSizeT>
 bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     if (inOrderExecHelper.is2WayIpcSharingEnabled()) {
         refreshImported2WayIpcCbData();
@@ -680,20 +699,7 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
         hostEventSetValue(metricNotification->getNotificationState());
     }
 
-    if (this->tbxMode) {
-        bool downloadedAllocation = (eventPoolAllocation == nullptr);
-        bool downloadedInOrdedAllocation = (inOrderExecHelper.getDeviceCounterAllocation() == nullptr);
-        bool downloadedPatchPreambleAllocation = (inOrderExecHelper.getPatchPreambleHostAllocation() == nullptr);
-
-        DEBUG_BREAK_IF(inOrderExecHelper.isDataAssigned() && (inOrderExecHelper.getDeviceCounterAllocation() == nullptr)); //  external allocation - not able to download
-
-        tbxDownload(*this->device->getNEODevice(), downloadedAllocation, downloadedInOrdedAllocation, downloadedPatchPreambleAllocation);
-        if (!downloadedAllocation || !downloadedInOrdedAllocation || !downloadedPatchPreambleAllocation) {
-            for (auto &subDevice : this->device->getNEODevice()->getRootDevice()->getSubDevices()) {
-                tbxDownload(*subDevice, downloadedAllocation, downloadedInOrdedAllocation, downloadedPatchPreambleAllocation);
-            }
-        }
-    }
+    downloadTbxAllocationsForQuery();
 
     if (!this->isFromIpcPool && isAlreadyCompleted()) {
         return true;
@@ -976,20 +982,20 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
 
-    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
+    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && !this->cbEventWithProfiling && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
     EventHostSynchronize::WaitController waitController(*csrs[0]);
 
     auto *assertHndlr = neoDevice->getRootDeviceEnvironment().assertHandler.get();
 
     do {
-        if (this->heapfullCbEventWithProfiling) {
+        if (this->cbEventWithProfiling && !isAlreadyCompleted()) {
+            downloadTbxAllocationsForQuery();
             assignKernelEventCompletionData(getHostAddress());
             calculateProfilingData();
             if (this->isTimestampPopulated()) {
                 inOrderExecHelper.setLastWaitedCounterValue(getInOrderExecBaseSignalValue(), this->getInOrderAllocationOffset());
                 handleSuccessfulHostSynchronization();
                 ret = ZE_RESULT_SUCCESS;
-                this->heapfullCbEventWithProfiling = false;
             } else {
                 ret = ZE_RESULT_NOT_READY;
             }
@@ -1114,6 +1120,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
 
     unsetInOrderExecInfo();
     unsetCmdQueue();
+    this->cbEventWithProfiling = false;
     if (this->counterBasedMode != CounterBasedMode::implicitlyDisabled) {
         this->counterBasedMode = CounterBasedMode::initiallyDisabled;
         this->counterBasedFlags = 0;
@@ -1142,6 +1149,7 @@ void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
     uint64_t timeDiff = 0;
 
     do {
+        downloadTbxAllocationsForQuery();
         assignKernelEventCompletionData(getHostAddress());
         calculateProfilingData();
 
