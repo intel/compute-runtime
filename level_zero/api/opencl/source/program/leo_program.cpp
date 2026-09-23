@@ -178,6 +178,7 @@ cl_int Program::createFromBinaryOrIl(cl_device_id device, size_t length, const u
     if (ZE_RESULT_SUCCESS == ret) {
         this->moduleHandles[rootDeviceIndex] = moduleHandle;
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+        this->setBuildStatus(CL_BUILD_SUCCESS);
     } else {
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     }

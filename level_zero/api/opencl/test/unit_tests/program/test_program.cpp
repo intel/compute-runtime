@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
@@ -27,6 +28,7 @@ void CL_CALLBACK dummyProgramCallback(cl_program, void *) {}
 const uint32_t spirvBlob[] = {0x07230203, 0x00010000, 0x0u, 0x0u};
 // LLVM bitcode magic ("BC\xc0\xde") followed by padding.
 const uint8_t llvmBcBlob[] = {'B', 'C', 0xc0, 0xde, 0x0, 0x0, 0x0, 0x0};
+const uint8_t emptyArArchiveBlob[] = {'!', '<', 'a', 'r', 'c', 'h', '>', '\n'};
 } // namespace
 
 // Minimal L0::Module stub that counts destroy() calls and never deletes itself,
@@ -395,6 +397,149 @@ TEST_F(ClProgramCompileLinkTests, givenBuildSucceededButNoModuleForDeviceWhenQue
     auto result = clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE,
                                         sizeof(globalVariablesSize), &globalVariablesSize, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, result);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenNativeBinaryWhenCreateProgramWithBinaryThenBuildStatusIsSuccess) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    ZebinTestData::ZebinWithL0TestCommonModule zebin(device->getHwInfo());
+    const size_t length = zebin.storage.size();
+    const unsigned char *binary = zebin.storage.data();
+
+    cl_int errcode = CL_INVALID_VALUE;
+    cl_int binaryStatus = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, &binaryStatus, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_EQ(CL_SUCCESS, binaryStatus);
+    ASSERT_NE(nullptr, program);
+
+    cl_build_status buildStatus = CL_BUILD_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr));
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_SUCCESS), buildStatus);
+
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_EXECUTABLE), binaryType);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenProgramCreatedFromNativeBinaryWhenBuildProgramThenBuildStatusStaysSuccess) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    ZebinTestData::ZebinWithL0TestCommonModule zebin(device->getHwInfo());
+    const size_t length = zebin.storage.size();
+    const unsigned char *binary = zebin.storage.data();
+
+    cl_int errcode = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, program);
+
+    EXPECT_EQ(CL_SUCCESS, clBuildProgram(program, 1, &clDeviceId, nullptr, nullptr, nullptr));
+
+    cl_build_status buildStatus = CL_BUILD_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr));
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_SUCCESS), buildStatus);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenSpirvBinaryWhenCreateProgramWithBinaryThenBuildStatusStaysNone) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    const size_t length = sizeof(spirvBlob);
+    const unsigned char *binary = reinterpret_cast<const unsigned char *>(spirvBlob);
+
+    cl_int errcode = CL_INVALID_VALUE;
+    cl_int binaryStatus = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, &binaryStatus, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_EQ(CL_SUCCESS, binaryStatus);
+    ASSERT_NE(nullptr, program);
+
+    cl_build_status buildStatus = CL_BUILD_SUCCESS;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr));
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_NONE), buildStatus);
+
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT), binaryType);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenLlvmBcBinaryWhenCreateProgramWithBinaryThenBuildStatusStaysNone) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    const size_t length = sizeof(llvmBcBlob);
+    const unsigned char *binary = llvmBcBlob;
+
+    cl_int errcode = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, program);
+
+    cl_build_status buildStatus = CL_BUILD_SUCCESS;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr));
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_NONE), buildStatus);
+
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_LIBRARY), binaryType);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenSpirvIlWhenCreateProgramWithIlThenBuildStatusStaysNone) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, program);
+
+    cl_build_status buildStatus = CL_BUILD_SUCCESS;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr));
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_NONE), buildStatus);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenUndecodableDeviceBinaryWhenCreateProgramWithBinaryThenBuildStatusStaysNone) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    const size_t length = sizeof(emptyArArchiveBlob);
+    const unsigned char *binary = emptyArArchiveBlob;
+
+    cl_int errcode = CL_SUCCESS;
+    cl_int binaryStatus = CL_SUCCESS;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, &binaryStatus, &errcode);
+    EXPECT_NE(CL_SUCCESS, errcode);
+    EXPECT_NE(CL_SUCCESS, binaryStatus);
+    ASSERT_NE(nullptr, program);
+
+    cl_build_status buildStatus = CL_BUILD_SUCCESS;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr));
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_NONE), buildStatus);
+
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), binaryType);
 
     clReleaseProgram(program);
     clReleaseContext(clContext);
