@@ -72,14 +72,35 @@ std::wstring ExternalSemaphoreWindows::getNamedObjectDirectoryPath(uint32_t sess
     return std::wstring(buffer);
 }
 
-void *ExternalSemaphoreWindows::openSyncObjectByName(Gdi *gdi, const wchar_t *name, uint32_t desiredAccess, bool forceGlobal) {
+std::wstring ExternalSemaphoreWindows::convertUtf8NameToWide(const char *name) {
+    const int lengthWithTerminator = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, name, -1, nullptr, 0);
+    if ((lengthWithTerminator <= 1) ||
+        (static_cast<size_t>(lengthWithTerminator - 1) > maxNameLengthInWideChars)) {
+        return {};
+    }
+
+    std::wstring wideName(static_cast<size_t>(lengthWithTerminator), L'\0');
+    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, name, -1, wideName.data(), lengthWithTerminator) != lengthWithTerminator) {
+        return {};
+    }
+
+    wideName.pop_back();
+    return wideName;
+}
+
+void *ExternalSemaphoreWindows::openSyncObjectByName(Gdi *gdi, const char *name, uint32_t desiredAccess, bool forceGlobal) {
+    const std::wstring wideName = convertUtf8NameToWide(name);
+    if (wideName.empty()) {
+        return nullptr;
+    }
+
     DWORD sessionId = 0;
     if (!forceGlobal) {
         SysCalls::processIdToSessionId(GetCurrentProcessId(), &sessionId);
     }
 
-    const wchar_t *relativeName = name;
-    std::wstring directoryPath = getNamedObjectDirectoryPath(sessionId, name, &relativeName);
+    const wchar_t *relativeName = nullptr;
+    std::wstring directoryPath = getNamedObjectDirectoryPath(sessionId, wideName.c_str(), &relativeName);
 
     UNICODE_STRING unicodeDirectory;
     SysCalls::rtlInitUnicodeString(&unicodeDirectory, directoryPath.c_str());
@@ -182,13 +203,9 @@ ExternalSemaphore::ImportResult ExternalSemaphoreWindows::importSemaphore(void *
     }
 
     if (name != nullptr && isNameable) {
-        std::wstring wideName;
-        size_t length = strlen(name) + 1;
-        wideName.resize(length);
-        mbstowcs(&wideName[0], name, length);
         bool forceGlobal = (type == ExternalSemaphore::TimelineSemaphoreWin32);
 
-        syncNtHandle = openSyncObjectByName(gdi, wideName.c_str(), D3DDDI_SYNC_OBJECT_ALL_ACCESS, forceGlobal);
+        syncNtHandle = openSyncObjectByName(gdi, name, D3DDDI_SYNC_OBJECT_ALL_ACCESS, forceGlobal);
         if (syncNtHandle == nullptr) {
             return ImportResult::invalidResource;
         }
