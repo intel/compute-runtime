@@ -48,6 +48,10 @@ struct MockSubDevice : public SubDevice {
 
     ~MockSubDevice() override;
 
+    MockSubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice) : SubDevice(executionEnvironment, subDeviceIndex, rootDevice) {
+        this->deferredImmediateCmdListEnabled = false;
+    }
+
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override;
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
@@ -79,6 +83,7 @@ class MockDevice : public RootDevice {
     using Device::createEngine;
     using Device::createSubDevices;
     using Device::debugger;
+    using Device::deferredImmediateCmdListEnabled;
     using Device::deviceBitfield;
     using Device::deviceInfo;
     using Device::executionEnvironment;

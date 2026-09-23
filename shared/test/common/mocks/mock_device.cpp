@@ -57,6 +57,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
         getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
         getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
     }
+    this->deferredImmediateCmdListEnabled = false;
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
     UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
@@ -229,14 +230,14 @@ bool MockDevice::isDeferredImmediateCmdListEnabled() const {
     if (NEO::debugManager.flags.DeferCmdQGpgpuInitialization.get() != -1 || NEO::debugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
         return true;
     }
-    return false;
+    return deferredImmediateCmdListEnabled;
 }
 
 bool MockSubDevice::isDeferredImmediateCmdListEnabled() const {
     if (NEO::debugManager.flags.DeferCmdQGpgpuInitialization.get() != -1 || NEO::debugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
         return true;
     }
-    return false;
+    return deferredImmediateCmdListEnabled;
 }
 
 std::unique_ptr<CommandStreamReceiver> MockDevice::createCommandStreamReceiver() const {

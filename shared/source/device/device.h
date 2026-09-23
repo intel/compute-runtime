@@ -311,7 +311,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     std::vector<uint32_t> getSpirvBaseCapabilities() const;
     void initializeSpirvQueries();
     MOCKABLE_VIRTUAL bool isDeferredImmediateCmdListEnabled() const {
-        return true;
+        return deferredImmediateCmdListEnabled;
     }
     MOCKABLE_VIRTUAL bool areSecondaryEnginesAvailable() const {
         return secondaryEngines.size() > 0;
@@ -411,6 +411,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     uint32_t microsecondResolution = 1000u;
 
     std::optional<bool> hasPeerAccess = std::nullopt;
+    bool deferredImmediateCmdListEnabled = true;
 
     struct {
         bool isValid = false;

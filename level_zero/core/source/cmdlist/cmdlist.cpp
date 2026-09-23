@@ -652,7 +652,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     } else {
         bool initializeCmdListResources = true;
 
-        if (device->getNEODevice()->isDeferredImmediateCmdListEnabled()) {
+        if (device->getFirstImmCmdlistCreated() && device->getNEODevice()->isDeferredImmediateCmdListEnabled()) {
             initializeCmdListResources = false;
             if (!isCopyOnlyEngine && NEO::debugManager.flags.DeferCmdQGpgpuInitialization.get() != -1) {
                 initializeCmdListResources = !NEO::debugManager.flags.DeferCmdQGpgpuInitialization.get();
@@ -674,6 +674,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->destroy();
         return nullptr;
     }
+    device->setFirstImmCmdlistCreated();
     return commandList;
 }
 

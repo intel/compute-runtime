@@ -17,6 +17,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -26,7 +27,7 @@
 namespace L0 {
 namespace ult {
 
-struct ImmediateCmdListDeferredInitializationFixture : public DeviceFixture {
+struct ImmediateCmdListCreationFixture : public DeviceFixture {
     void setUp() {
         NEO::debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
         NEO::debugManager.flags.DeferCmdQBcsInitialization.set(1);
@@ -51,6 +52,47 @@ struct ImmediateCmdListDeferredInitializationFixture : public DeviceFixture {
     }
 
     DebugManagerStateRestore restorer;
+};
+
+using ImmediateCmdListCreationTest = Test<ImmediateCmdListCreationFixture>;
+
+TEST_F(ImmediateCmdListCreationTest, givenNoImmediateCmdListCreatedOnDeviceWhenCreatingFirstImmediateCmdListThenResourcesAreCreatedImmediately) {
+    ASSERT_FALSE(device->getFirstImmCmdlistCreated());
+
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createImmediateCmdList(desc, false, NEO::EngineGroupType::compute);
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+
+    EXPECT_TRUE(device->getFirstImmCmdlistCreated());
+    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
+    EXPECT_NE(nullptr, whiteBoxCmdList->getCmdContainer().getCommandStream());
+}
+
+TEST_F(ImmediateCmdListCreationTest, givenFirstImmediateCmdListCreatedOnDeviceWhenCreatingNextImmediateCmdListThenResourcesAreDeferred) {
+    ze_command_queue_desc_t desc = {};
+    auto firstCommandList = createImmediateCmdList(desc, false, NEO::EngineGroupType::compute);
+    auto nextCommandList = createImmediateCmdList(desc, false, NEO::EngineGroupType::compute);
+
+    EXPECT_NE(nullptr, CommandList::whiteboxCast(firstCommandList.get())->cmdQImmediate);
+    EXPECT_EQ(nullptr, CommandList::whiteboxCast(nextCommandList.get())->cmdQImmediate);
+}
+
+TEST_F(ImmediateCmdListCreationTest, givenInvalidIndexWhenCreatingFirstImmediateCmdListThenFirstImmediateCmdListIsNotMarkedAsCreated) {
+    ze_command_queue_desc_t desc = {};
+    desc.index = std::numeric_limits<uint32_t>::max();
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandList = CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue);
+
+    EXPECT_EQ(nullptr, commandList);
+    EXPECT_FALSE(device->getFirstImmCmdlistCreated());
+}
+
+struct ImmediateCmdListDeferredInitializationFixture : public ImmediateCmdListCreationFixture {
+    void setUp() {
+        ImmediateCmdListCreationFixture::setUp();
+        device->setFirstImmCmdlistCreated();
+    }
 };
 
 using ImmediateCmdListDeferredInitializationTest = Test<ImmediateCmdListDeferredInitializationFixture>;
@@ -114,6 +156,24 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenImmediateCmdListWhenFirs
     ASSERT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
     EXPECT_NE(nullptr, whiteBoxCmdList->getCsr(false));
     EXPECT_NE(nullptr, whiteBoxCmdList->getCmdContainer().getCommandStream());
+}
+
+TEST_F(ImmediateCmdListDeferredInitializationTest, givenNotYetInitializedImmediateCmdListWhenAppendCommandListsCalledFirstThenResourcesAreInitializedWithoutCrash) {
+    ze_command_queue_desc_t desc = {};
+    auto immediateCmdList = createImmediateCmdList(desc, false, NEO::EngineGroupType::compute);
+    auto whiteBoxImmediateCmdList = CommandList::whiteboxCast(immediateCmdList.get());
+    ASSERT_EQ(nullptr, whiteBoxImmediateCmdList->cmdQImmediate);
+
+    ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
+    std::unique_ptr<L0::CommandList> regularCmdList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ze_command_list_handle_t regularCmdListHandle = regularCmdList->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, regularCmdList->close());
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCmdList->appendCommandLists(1, &regularCmdListHandle, nullptr, 0, nullptr, internalOptions));
+
+    EXPECT_NE(nullptr, whiteBoxImmediateCmdList->cmdQImmediate);
 }
 
 TEST_F(ImmediateCmdListDeferredInitializationTest, givenInitializedImmediateCmdListWhenNextAppendCalledThenResourcesAreNotCreatedAgain) {
@@ -612,8 +672,12 @@ HWTEST_F(ImmediateCmdListDeferredInitializationTest, givenInitializedImmediateCm
     memoryManager->failAllocateSystemMemory = false;
 }
 
-TEST_F(ImmediateCmdListDeferredInitializationTest, whenQueryingDeferredImmediateCmdListSupportOnBaseDeviceThenItIsEnabled) {
+TEST_F(ImmediateCmdListDeferredInitializationTest, whenQueryingDeferredImmediateCmdListSupportOnBaseDeviceThenStoredSettingIsReturned) {
+    neoDevice->deferredImmediateCmdListEnabled = true;
     EXPECT_TRUE(neoDevice->NEO::Device::isDeferredImmediateCmdListEnabled());
+
+    neoDevice->deferredImmediateCmdListEnabled = false;
+    EXPECT_FALSE(neoDevice->NEO::Device::isDeferredImmediateCmdListEnabled());
 }
 
 TEST_F(ImmediateCmdListDeferredInitializationTest, whenQueryingSecondaryEnginesAvailabilityOnBaseDeviceThenItMatchesSecondaryEnginesContainer) {

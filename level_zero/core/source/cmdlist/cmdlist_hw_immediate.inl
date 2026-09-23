@@ -2345,7 +2345,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
     size_t additionalSize = 0;
-    if (this->cmdQImmediate->getPatchingPreamble()) {
+    if (this->cmdQImmediate && this->cmdQImmediate->getPatchingPreamble()) {
         constexpr size_t bbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
         size_t singleBbStartEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(bbStartSize);
         additionalSize = singleBbStartEncodeSize * numCommandLists;

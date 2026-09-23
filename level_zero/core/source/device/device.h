@@ -257,7 +257,8 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void releaseResources();
 
     MOCKABLE_VIRTUAL Module *getRequiredLibModule(const std::string &libName, ModuleBuildLog *moduleBuildLog);
-
+    void setFirstImmCmdlistCreated() { firstImmCmdlistCreated = true; }
+    bool getFirstImmCmdlistCreated() { return firstImmCmdlistCreated; }
     ze_command_list_handle_t globalTimestampCommandList = nullptr;
     void *globalTimestampAllocation = nullptr;
 
@@ -333,6 +334,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     int32_t queuePriorityHigh = 0;
     int32_t queuePriorityLow = 1;
     bool implicitScalingCapable = false;
+    std::atomic<bool> firstImmCmdlistCreated = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Device>);
