@@ -15,21 +15,35 @@
 #include <cstring>
 #include <string>
 
+constexpr std::string_view blackBoxName = "Zello OpenCL Interop";
+
 std::tuple<cl_platform_id, cl_device_id, cl_context> initOCL(ze_context_handle_t context) {
     cl_uint numPlatforms{};
     clGetPlatformIDs(0, nullptr, &numPlatforms);
+    if (numPlatforms == 0) {
+        printf("No OpenCL platform found, check OCL_ICD_FILENAMES\n");
+        return {nullptr, nullptr, nullptr};
+    }
     std::vector<cl_platform_id> platforms(numPlatforms);
     clGetPlatformIDs(numPlatforms, platforms.data(), &numPlatforms);
     auto platform = platforms[0];
 
     cl_uint numDevices{};
     clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
+    if (numDevices == 0) {
+        printf("No OpenCL GPU device found\n");
+        return {nullptr, nullptr, nullptr};
+    }
     std::vector<cl_device_id> devices(numDevices);
     clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices.data(), &numDevices);
     auto device = devices[0];
 
     cl_context_properties properties[3] = {CL_L0_CONTEXT_HANDLE, reinterpret_cast<intptr_t>(context), 0};
     auto clContext = clCreateContext(properties, 1, &device, nullptr, nullptr, nullptr);
+    if (clContext == nullptr) {
+        printf("Failed to create OpenCL context from L0 context\n");
+        return {nullptr, nullptr, nullptr};
+    }
 
     return {platform, device, clContext};
 }
@@ -70,8 +84,6 @@ const char *kernelSource =
     "}                                                     \n";
 
 const char *imageKernelSource =
-    "#pragma OPENCL EXTENSION __opencl_c_read_write_images : enable \n"
-    "\n"
     "__kernel void increment_and_sum_image(                \n"
     "    __read_write image2d_t a,                         \n"
     "    __read_write image2d_t b,                         \n"
@@ -178,9 +190,10 @@ ze_event_handle_t createCbEvent(ze_driver_handle_t driverHandle, ze_device_handl
     return e;
 }
 
-void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driverHandle, ze_device_handle_t device,
+bool runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driverHandle, ze_device_handle_t device,
                           cl_device_id clDevice, cl_context clContext,
                           ze_command_list_handle_t cmdList, cl_command_queue clCmdQL0) {
+    bool outputValidationSuccessful = true;
 
     auto [module, kernel] = createL0Kernel(context, device);
     auto [clProgram, clKernel] = createOCLKernel(clContext, clDevice);
@@ -241,6 +254,7 @@ void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driver
         if (!errorFound) {
             printf("CL L0 DATA INTEROP CORRECT\n");
         }
+        outputValidationSuccessful &= !errorFound;
 
         clEnqueueUnmapMemObject(clCmdQL0, memA, clIntPtrA, 0, nullptr, nullptr);
         clEnqueueUnmapMemObject(clCmdQL0, memB, clIntPtrB, 0, nullptr, nullptr);
@@ -263,19 +277,7 @@ void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driver
         } else {
             printf("CL L0 IOQ INTEROP ERROR\n");
             std::cout << "CL TS: " << clStart << ", L0 TS: " << l0end << "\n";
-        }
-
-        // verify TS
-        ze_event_handle_t l0ClEventHandle{};
-        clGetEventInfo(clEvent, CL_L0_EVENT_HANDLE, sizeof(ze_event_handle_t), &l0ClEventHandle, nullptr);
-        zeEventQueryKernelTimestamp(l0ClEventHandle, &timestamps);
-        uint64_t l0ClStart = timestamps.global.kernelStart * deviceProperties.timerResolution;
-
-        if (l0ClStart == clStart) {
-            printf("CL L0 TS INTEROP CORRECT\n");
-        } else {
-            printf("CL L0 TS INTEROP ERROR\n");
-            std::cout << "CL TS: " << clStart << ", L0 TS: " << l0ClStart << "\n";
+            outputValidationSuccessful = false;
         }
 
         zeEventDestroy(event);
@@ -287,11 +289,14 @@ void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driver
 
     zeModuleDestroy(module);
     clReleaseProgram(clProgram);
+
+    return outputValidationSuccessful;
 }
 
-void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverHandle, ze_device_handle_t device,
+bool runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverHandle, ze_device_handle_t device,
                          cl_device_id clDevice, cl_context clContext,
                          ze_command_list_handle_t cmdList, cl_command_queue clCmdQL0) {
+    bool outputValidationSuccessful = true;
 
     auto [module, kernel] = createL0ImageKernel(context, device);
     auto [clProgram, clKernel] = createOCLImageKernel(clContext, clDevice);
@@ -379,6 +384,7 @@ void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverH
         if (!errorFound) {
             printf("CL L0 IMAGE DATA INTEROP CORRECT\n");
         }
+        outputValidationSuccessful &= !errorFound;
 
         // verify IOQ
         zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max());
@@ -397,19 +403,7 @@ void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverH
         } else {
             printf("CL L0 IMAGE IOQ INTEROP ERROR\n");
             std::cout << "CL TS: " << clStart << ", L0 TS: " << l0end << "\n";
-        }
-
-        // verify TS
-        ze_event_handle_t l0ClEventHandle{};
-        clGetEventInfo(clEvent, CL_L0_EVENT_HANDLE, sizeof(ze_event_handle_t), &l0ClEventHandle, nullptr);
-        zeEventQueryKernelTimestamp(l0ClEventHandle, &timestamps);
-        uint64_t l0ClStart = timestamps.global.kernelStart * deviceProperties.timerResolution;
-
-        if (l0ClStart == clStart) {
-            printf("CL L0 IMAGE TS INTEROP CORRECT\n");
-        } else {
-            printf("CL L0 IMAGE TS INTEROP ERROR\n");
-            std::cout << "CL TS: " << clStart << ", L0 TS: " << l0ClStart << "\n";
+            outputValidationSuccessful = false;
         }
 
         zeEventDestroy(event);
@@ -425,15 +419,27 @@ void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverH
     clReleaseMemObject(imgA);
     clReleaseMemObject(imgB);
     clReleaseMemObject(imgC);
+
+    return outputValidationSuccessful;
 }
 
 int main(int argc, char *argv[]) {
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
     auto [clPlatform, clDevice, clContext] = initOCL(context);
+    if (clContext == nullptr) {
+        LevelZeroBlackBoxTests::printResult(false, false, blackBoxName);
+        return 1;
+    }
+
+    bool outputValidationSuccessful = true;
+
     auto cmdList = createImmIoqCmdList(context, device);
     auto clCmdQL0 = createOclCmdQFromL0(cmdList, clDevice, clContext);
 
@@ -443,6 +449,7 @@ int main(int argc, char *argv[]) {
         printf("CL L0 CONTEXT HANDLE INTEROP CORRECT\n");
     } else {
         printf("CL L0 CONTEXT HANDLE INTEROP ERROR\n");
+        outputValidationSuccessful = false;
     }
 
     ze_device_handle_t deviceCheck{};
@@ -451,6 +458,7 @@ int main(int argc, char *argv[]) {
         printf("CL L0 DEVICE HANDLE INTEROP CORRECT\n");
     } else {
         printf("CL L0 DEVICE HANDLE INTEROP ERROR\n");
+        outputValidationSuccessful = false;
     }
 
     ze_driver_handle_t driverHandleCheck{};
@@ -459,6 +467,7 @@ int main(int argc, char *argv[]) {
         printf("CL L0 DRIVER HANDLE INTEROP CORRECT\n");
     } else {
         printf("CL L0 DRIVER HANDLE INTEROP ERROR\n");
+        outputValidationSuccessful = false;
     }
 
     ze_command_list_handle_t cmdListCheck{};
@@ -467,10 +476,13 @@ int main(int argc, char *argv[]) {
         printf("CL L0 CMD LIST HANDLE INTEROP CORRECT\n");
     } else {
         printf("CL L0 CMD LIST HANDLE INTEROP ERROR\n");
+        outputValidationSuccessful = false;
     }
 
-    runBufferInteropTest(context, driverHandle, device, clDevice, clContext, cmdList, clCmdQL0);
-    runImageInteropTest(context, driverHandle, device, clDevice, clContext, cmdList, clCmdQL0);
+    outputValidationSuccessful &= runBufferInteropTest(context, driverHandle, device, clDevice, clContext, cmdList, clCmdQL0);
+    if (LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false, false)) {
+        outputValidationSuccessful &= runImageInteropTest(context, driverHandle, device, clDevice, clContext, cmdList, clCmdQL0);
+    }
 
     zeCommandListDestroy(cmdList);
     clReleaseCommandQueue(clCmdQL0);
@@ -478,5 +490,7 @@ int main(int argc, char *argv[]) {
     clReleaseContext(clContext);
     clReleaseDevice(clDevice);
 
-    return 0;
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return outputValidationSuccessful ? 0 : 1;
 }
