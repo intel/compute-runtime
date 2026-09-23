@@ -428,7 +428,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failInAllocateWithSizeAndAlignment = false;
     bool preferCompressedFlagPassed = false;
     bool allocateForImageCalled = false;
-    bool allocate32BitGraphicsMemoryImplCalled = false;
+    std::atomic<bool> allocate32BitGraphicsMemoryImplCalled{false};
     bool allocateForShareableCalled = false;
     bool failReserveAddress = false;
     bool failReserveGpuAddressOnHeap = false;
