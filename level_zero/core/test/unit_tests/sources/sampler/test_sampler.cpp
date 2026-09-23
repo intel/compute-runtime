@@ -184,7 +184,7 @@ HWTEST2_F(ContextCreateSamplerTest, givenInvalidHardwareFamilyThenSamplerIsNotCr
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    L0::Sampler *sampler = Sampler::create(NEO::maxProductEnumValue, device, &desc);
+    L0::Sampler *sampler = Sampler::create(NEO::maxCoreEnumValue, device, &desc);
 
     EXPECT_EQ(nullptr, sampler);
 }
@@ -259,7 +259,7 @@ HWTEST2_PRODUCT_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilter
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[productFamily])());
+    auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[FamilyType::gfxCoreFamily])());
     sampler->initialize(device, &desc);
 
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, sampler->samplerState.getLowQualityFilter());
@@ -281,7 +281,7 @@ HWTEST2_PRODUCT_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilter
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[productFamily])());
+    auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[FamilyType::gfxCoreFamily])());
     sampler->initialize(device, &desc);
 
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, sampler->samplerState.getLowQualityFilter());

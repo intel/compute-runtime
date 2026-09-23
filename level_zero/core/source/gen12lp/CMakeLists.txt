@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,7 @@ if(SUPPORT_GEN12LP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/definitions/cache_flush_gen12lp.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/enable_family_full_l0_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_gen12lp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_gen12lp.cpp
   )
   add_subdirectories()
 endif()

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024-2025 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,7 +12,6 @@ if(SUPPORT_BMG)
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_bmg.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_bmg.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_bmg.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_bmg.cpp
   )
   add_subdirectories()
 endif()

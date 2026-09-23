@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,5 @@ if(SUPPORT_RKL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_rkl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_rkl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_rkl.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_rkl.cpp
   )
 endif()

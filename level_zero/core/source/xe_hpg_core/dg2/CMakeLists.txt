@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,7 +12,6 @@ if(SUPPORT_DG2)
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_dg2.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_dg2.cpp
   )
   add_subdirectories()
 endif()

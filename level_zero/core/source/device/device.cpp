@@ -453,9 +453,9 @@ ze_result_t Device::createImage(const ze_image_desc_t *desc, ze_image_handle_t *
 
 ze_result_t Device::createSampler(const ze_sampler_desc_t *desc,
                                   ze_sampler_handle_t *sampler) {
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
+    auto gfxCoreFamily = neoDevice->getHardwareInfo().platform.eRenderCoreFamily;
 
-    *sampler = Sampler::create(productFamily, this, desc);
+    *sampler = Sampler::create(gfxCoreFamily, this, desc);
     if (*sampler == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     } else {

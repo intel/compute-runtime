@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024-2025 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,7 +12,6 @@ if(SUPPORT_LNL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_lnl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_lnl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_lnl.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_lnl.cpp
   )
   add_subdirectories()
 endif()

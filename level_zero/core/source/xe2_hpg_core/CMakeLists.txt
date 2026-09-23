@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024-2025 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ if(SUPPORT_XE2_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe2_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_xe2_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_xe2_hpg_core.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_xe2_hpg_core.cpp
   )
 
   add_subdirectories()

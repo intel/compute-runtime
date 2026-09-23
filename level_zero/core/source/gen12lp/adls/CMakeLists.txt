@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,5 @@ if(SUPPORT_ADLS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_adls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_adls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_adls.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_adls.cpp
   )
 endif()

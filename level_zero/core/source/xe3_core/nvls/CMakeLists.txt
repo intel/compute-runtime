@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,5 @@ if(SUPPORT_NVLS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_nvls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_nvls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_nvls.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_nvls.cpp
   )
 endif()

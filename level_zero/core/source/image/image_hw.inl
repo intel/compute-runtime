@@ -392,8 +392,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, false, 0u);
 
         if (this->sampledImage) {
-            auto productFamily = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-            auto sampler = Sampler::create(productFamily, device, &this->samplerDesc);
+            auto sampler = Sampler::create(gfxCoreFamily, device, &this->samplerDesc);
             if (!sampler) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }

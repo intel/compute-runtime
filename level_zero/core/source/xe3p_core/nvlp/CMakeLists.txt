@@ -12,6 +12,5 @@ if(SUPPORT_NVLP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_nvlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_nvlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_nvlp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sampler_nvlp.cpp
   )
 endif()

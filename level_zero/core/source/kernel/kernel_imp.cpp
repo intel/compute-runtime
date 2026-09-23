@@ -1184,14 +1184,14 @@ void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocatio
 
 void KernelImp::setInlineSamplers() {
     auto device = module->getDevice();
-    const auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+    const auto gfxCoreFamily = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
     for (auto &inlineSampler : getKernelDescriptor().inlineSamplers) {
         ze_sampler_desc_t samplerDesc = {};
         samplerDesc.addressMode = static_cast<ze_sampler_address_mode_t>(inlineSampler.addrMode);
         samplerDesc.filterMode = static_cast<ze_sampler_filter_mode_t>(inlineSampler.filterMode);
         samplerDesc.isNormalized = inlineSampler.isNormalized;
 
-        auto sampler = std::unique_ptr<L0::Sampler>(L0::Sampler::create(productFamily, device, &samplerDesc));
+        auto sampler = std::unique_ptr<L0::Sampler>(L0::Sampler::create(gfxCoreFamily, device, &samplerDesc));
         UNRECOVERABLE_IF(sampler.get() == nullptr);
 
         if (NEO::isValidOffset(inlineSampler.bindless)) {

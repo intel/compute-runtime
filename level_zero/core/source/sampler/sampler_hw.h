@@ -37,7 +37,4 @@ struct SamplerCoreFamily : public SamplerImp {
     float lodMax = std::numeric_limits<float>::max();
 };
 
-template <uint32_t gfxProductFamily>
-struct SamplerProductFamily;
-
 } // namespace L0
