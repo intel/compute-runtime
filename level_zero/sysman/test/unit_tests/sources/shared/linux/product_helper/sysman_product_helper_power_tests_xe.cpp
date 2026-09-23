@@ -139,8 +139,16 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenGe
     VariableBackup<int> mockErrno(&errno);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        constexpr std::string_view validOobmsmGuid = "0x5e2f8211";
-        constexpr std::string_view validPunitGuid = "0x1e2f8200";
+        std::string_view validOobmsmGuid = "";
+        std::string_view validPunitGuid = "";
+
+        if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+            validOobmsmGuid = "0x5e2f8211";
+            validPunitGuid = "0x1e2f8200";
+        } else {
+            validOobmsmGuid = "0x5e2fa230";
+            validPunitGuid = "0x1e2fa030";
+        }
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -1327,19 +1335,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         constexpr uint64_t telemOffset = 0;
         std::string_view validPunitGuid = "";
         constexpr uint64_t instantPowerContainerOffset = 128;
-        constexpr uint64_t averagePowerContainerOffset = 136; // CRI: AVERAGE_POWER_CONTAINER
-        constexpr uint64_t bmgAccumPsysEnergyOffset = 52;     // BMG: ACCUM_PSYS_ENERGY for CARD domain
+        constexpr uint64_t accumPsysEnergyOffset = 52; // ACCUM_PSYS_ENERGY for CARD domain
         ssize_t ret = count;
 
-        const bool isBmg = (defaultHwInfo->platform.eProductFamily == IGFX_BMG);
-        if (isBmg) {
+        if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
             validPunitGuid = "0x1e2f8201";
         } else {
             validPunitGuid = "0x1e2fa030";
         }
-
-        // BMG uses energy counter delta for average power; CRI reads AVERAGE_POWER_CONTAINER
-        uint64_t failOffset = isBmg ? bmgAccumPsysEnergyOffset : averagePowerContainerOffset;
 
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -1350,13 +1353,11 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
                 // readFailCount == 1: fail the instantaneous power read.
                 errno = ENOENT;
                 ret = -1;
-            } else if (static_cast<uint64_t>(offset) == failOffset && readFailCount >= 2) {
+            } else if (offset == accumPsysEnergyOffset && readFailCount >= 2) {
                 // readFailCount == 2: fail the 1st energy read; == 3: fail the 2nd energy read.
-                // BMG reads the energy counter twice (before and after the sampling interval), so the
-                // target index selects which read fails. CRI reads its average power container only once,
-                // so both cases target that single read.
-                const int targetEnergyReadIndex = isBmg ? (readFailCount - 2) : 0;
-                if (energyCounterReadCount == targetEnergyReadIndex) {
+                // The energy counter is read twice, before and after the sampling interval, so the
+                // target index selects which of the two reads fails.
+                if (energyCounterReadCount == (readFailCount - 2)) {
                     errno = ENOENT;
                     ret = -1;
                 }
@@ -1376,6 +1377,54 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     }
 }
 
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageForMemoryDomainAndVramEnergyReadValueFailsThenFailureIsReturned, IsCRI) {
+    static int readFailCount = 1;
+    static int energyCounterReadCount = 0;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<int> mockErrno(&errno);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telemOffset = 0;
+        constexpr std::string_view validPunitGuid = "0x1e2fa030";
+        constexpr uint64_t instantPowerContainerOffset = 128;
+        constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
+        constexpr uint64_t vramEnergyAccumContainerOffset = 200; // VRAM_ENERGY_ACCUM_CONTAINER for MEMORY domain
+        ssize_t ret = count;
+
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 6) {
+            memcpy(buf, validPunitGuid.data(), count);
+        } else if (fd == 8) {
+            if (offset == instantPowerContainerOffset) {
+                memcpy(buf, &instantPowerContainerValue, count);
+            } else if (offset == vramEnergyAccumContainerOffset) {
+                // readFailCount == 1: fail the 1st energy read; == 2: fail the 2nd energy read.
+                // The VRAM energy container is read twice, before and after the sampling interval, so
+                // the target index selects which of the two reads fails.
+                if (energyCounterReadCount == (readFailCount - 1)) {
+                    errno = ENOENT;
+                    ret = -1;
+                }
+                energyCounterReadCount++;
+            }
+        }
+        return ret;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t instantPower = 0u;
+    uint32_t averagePower = 0u;
+    for (readFailCount = 1; readFailCount <= 2; readFailCount++) {
+        energyCounterReadCount = 0; // Reset energy read counter before each getPowerUsage call
+        auto result = pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, ZES_POWER_DOMAIN_MEMORY, &instantPower, &averagePower);
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    }
+}
+
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageThenProperValuesAreReturned, IsBmgOrCri) {
     static int energyReadCount = 0;
 
@@ -1387,16 +1436,18 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         constexpr uint64_t telemOffset = 0;
         std::string_view validPunitGuid = "";
         constexpr uint64_t instantPowerContainerOffset = 128;
-        constexpr uint64_t averagePowerContainerOffset = 136;
         constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
-        constexpr uint64_t averagePowerContainerValue = 0x8765DCBA43211234;
-        // BMG energy counter offsets (PUNIT rev2: 0x1e2f8201) and mock values
-        constexpr uint64_t bmgAccumPackageEnergyOffset = 48;
-        constexpr uint64_t bmgAccumPsysEnergyOffset = 52;
+        // Energy counter offsets (BMG PUNIT rev2: 0x1e2f8201, CRI PUNIT rev0: 0x1e2fa030) and mock values
+        constexpr uint64_t accumPackageEnergyOffset = 48;
+        constexpr uint64_t accumPsysEnergyOffset = 52;
         constexpr uint64_t bmgVccgtEnergyOffset = 1628;
         constexpr uint64_t bmgVccddrEnergyOffset = 1640;
+        constexpr uint64_t criVramEnergyAccumContainerOffset = 200;
         constexpr uint32_t mockEnergyCounterE1 = 0x10000;
         constexpr uint32_t mockEnergyCounterE2 = 0x18000;
+        // CRI packs two VRAM energy accumulators into a single 64 bit container, both are mocked with the same value
+        constexpr uint64_t mockVramEnergyContainerE1 = (static_cast<uint64_t>(mockEnergyCounterE1) << 32) | mockEnergyCounterE1;
+        constexpr uint64_t mockVramEnergyContainerE2 = (static_cast<uint64_t>(mockEnergyCounterE2) << 32) | mockEnergyCounterE2;
 
         if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
             validPunitGuid = "0x1e2f8201";
@@ -1411,11 +1462,16 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         } else if (fd == 8) {
             if (offset == instantPowerContainerOffset) {
                 memcpy(buf, &instantPowerContainerValue, count);
-            } else if (offset == averagePowerContainerOffset) {
-                // CRI reads AVERAGE_POWER_CONTAINER for average power
-                memcpy(buf, &averagePowerContainerValue, count);
-            } else if (offset == bmgAccumPackageEnergyOffset || offset == bmgAccumPsysEnergyOffset || offset == bmgVccgtEnergyOffset || offset == bmgVccddrEnergyOffset) {
-                // BMG energy counter reads: first read returns e1, second returns e2
+            } else if (offset == criVramEnergyAccumContainerOffset) {
+                // VRAM energy container reads: first read returns e1, second returns e2
+                if (energyReadCount % 2 == 0) {
+                    memcpy(buf, &mockVramEnergyContainerE1, count);
+                } else {
+                    memcpy(buf, &mockVramEnergyContainerE2, count);
+                }
+                energyReadCount++;
+            } else if (offset == accumPackageEnergyOffset || offset == accumPsysEnergyOffset || offset == bmgVccgtEnergyOffset || offset == bmgVccddrEnergyOffset) {
+                // Energy counter reads: first read returns e1, second returns e2
                 if (energyReadCount % 2 == 0) {
                     memcpy(buf, &mockEnergyCounterE1, count);
                 } else {
@@ -1432,11 +1488,12 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     uint32_t averagePower = 0u;
 
     constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
-    constexpr uint64_t averagePowerContainerValue = 0x8765DCBA43211234;
-    constexpr uint32_t mockEnergyCounterE1 = 0x10000;
-    constexpr uint32_t mockEnergyCounterE2 = 0x18000;
-    // BMG average power = (convertU18p14(e2) - convertU18p14(e1)) / 0.1s * milliFactor
-    const uint32_t expectedBmgAveragePower = static_cast<uint32_t>(((convertU18p14(mockEnergyCounterE2) - convertU18p14(mockEnergyCounterE1)) / 0.1) * milliFactor);
+    // Energy counter samples in U18.14 format: e1 = 0x10000 is 4 J, e2 = 0x18000 is 6 J, so 2 J are
+    // consumed during the 100ms sampling interval: 2 J / 0.1 s = 20 W = 20000 mW
+    constexpr uint32_t expectedAveragePower = 20000u;
+    // CRI memory average power accumulates the deltas of both VRAM energy accumulators, both mocked with
+    // the same samples: (2 J + 2 J) / 0.1 s = 40 W = 40000 mW
+    constexpr uint32_t expectedCriMemoryAveragePower = 40000u;
 
     std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_MEMORY, ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_GPU, ZES_POWER_DOMAIN_UNKNOWN};
 
@@ -1448,36 +1505,28 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         case ZES_POWER_DOMAIN_PACKAGE:
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
             EXPECT_EQ(static_cast<uint32_t>(convertU13p3(instantPowerContainerValue & 0xFFFF) * milliFactor), instantPower); // instantaneous package power: bits [0:15]
-            if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
-                EXPECT_EQ(expectedBmgAveragePower, averagePower); // BMG: average power from energy counter delta
-            } else {
-                EXPECT_EQ(static_cast<uint32_t>(convertU13p3(averagePowerContainerValue & 0xFFFF) * milliFactor), averagePower); // average package power: bits [0:15]
-            }
+            EXPECT_EQ(expectedAveragePower, averagePower);                                                                   // average power from energy counter delta
             break;
         case ZES_POWER_DOMAIN_MEMORY:
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
             if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
                 EXPECT_EQ(static_cast<uint32_t>(convertU13p3((instantPowerContainerValue >> 16) & 0xFFFF) * milliFactor), instantPower); // instantaneous memory power: bits [16:31]
-                EXPECT_EQ(expectedBmgAveragePower, averagePower);                                                                        // BMG: average power from energy counter delta
+                EXPECT_EQ(expectedAveragePower, averagePower);                                                                           // average power from energy counter delta
             } else {
                 EXPECT_EQ(static_cast<uint32_t>((convertU13p3((instantPowerContainerValue >> 16) & 0xFFFF) + convertU13p3((instantPowerContainerValue >> 48) & 0xFFFF)) * milliFactor), instantPower); // instantaneous memory power: bits [16:31] + bits [48:63]
-                EXPECT_EQ(0u, averagePower);                                                                                                                                                           // CRI: no VRAM average power in Container 17
+                EXPECT_EQ(expectedCriMemoryAveragePower, averagePower);                                                                                                                                // average power from both VRAM energy counter deltas
             }
             break;
         case ZES_POWER_DOMAIN_CARD:
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
             EXPECT_EQ(static_cast<uint32_t>(convertU13p3((instantPowerContainerValue >> 32) & 0xFFFF) * milliFactor), instantPower); // instantaneous card power: bits [32:47]
-            if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
-                EXPECT_EQ(expectedBmgAveragePower, averagePower); // BMG: average power from energy counter delta
-            } else {
-                EXPECT_EQ(static_cast<uint32_t>(convertU13p3((averagePowerContainerValue >> 32) & 0xFFFF) * milliFactor), averagePower); // average card power: bits [32:47]
-            }
+            EXPECT_EQ(expectedAveragePower, averagePower);                                                                           // average power from energy counter delta
             break;
         case ZES_POWER_DOMAIN_GPU:
             if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
                 EXPECT_EQ(ZE_RESULT_SUCCESS, result);
                 EXPECT_EQ(0u, instantPower);
-                EXPECT_EQ(expectedBmgAveragePower, averagePower); // BMG: average power from energy counter delta
+                EXPECT_EQ(expectedAveragePower, averagePower); // average power from energy counter delta
             } else {
                 EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
             }
@@ -1492,7 +1541,6 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCallingGetPowerUsageWithNullOutputPointerThenOnlyRequestedPowerValueIsRetrieved, IsBmgOrCri) {
     static int energyReadCount = 0;
     static int instantPowerContainerReadCount = 0;
-    static int averagePowerContainerReadCount = 0;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
@@ -1502,10 +1550,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         constexpr uint64_t telemOffset = 0;
         std::string_view validPunitGuid = "";
         constexpr uint64_t instantPowerContainerOffset = 128;
-        constexpr uint64_t averagePowerContainerOffset = 136;
         constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
-        constexpr uint64_t averagePowerContainerValue = 0x8765DCBA43211234;
-        constexpr uint64_t bmgAccumPsysEnergyOffset = 52; // BMG: ACCUM_PSYS_ENERGY for CARD domain
+        constexpr uint64_t accumPsysEnergyOffset = 52; // ACCUM_PSYS_ENERGY for CARD domain
         constexpr uint32_t mockEnergyCounterE1 = 0x10000;
         constexpr uint32_t mockEnergyCounterE2 = 0x18000;
 
@@ -1523,12 +1569,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
             if (offset == instantPowerContainerOffset) {
                 memcpy(buf, &instantPowerContainerValue, count);
                 instantPowerContainerReadCount++;
-            } else if (offset == averagePowerContainerOffset) {
-                // CRI reads AVERAGE_POWER_CONTAINER for average power
-                memcpy(buf, &averagePowerContainerValue, count);
-                averagePowerContainerReadCount++;
-            } else if (offset == bmgAccumPsysEnergyOffset) {
-                // BMG energy counter reads: first read returns e1, second returns e2
+            } else if (offset == accumPsysEnergyOffset) {
+                // Energy counter reads: first read returns e1, second returns e2
                 if (energyReadCount % 2 == 0) {
                     memcpy(buf, &mockEnergyCounterE1, count);
                 } else {
@@ -1543,22 +1585,17 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
     constexpr uint64_t instantPowerContainerValue = 0x5678ABCD12344321;
-    constexpr uint64_t averagePowerContainerValue = 0x8765DCBA43211234;
-    constexpr uint32_t mockEnergyCounterE1 = 0x10000;
-    constexpr uint32_t mockEnergyCounterE2 = 0x18000;
     constexpr uint32_t unsetPowerValue = 0xFFFFFFFFu;
 
-    const bool isBmg = (defaultHwInfo->platform.eProductFamily == IGFX_BMG);
     // instantaneous card power: bits [32:47]
     const uint32_t expectedInstantPower = static_cast<uint32_t>(convertU13p3((instantPowerContainerValue >> 32) & 0xFFFF) * milliFactor);
-    // BMG: average power from energy counter delta, CRI: average card power from bits [32:47]
-    const uint32_t expectedAveragePower = isBmg ? static_cast<uint32_t>(((convertU18p14(mockEnergyCounterE2) - convertU18p14(mockEnergyCounterE1)) / 0.1) * milliFactor)
-                                                : static_cast<uint32_t>(convertU13p3((averagePowerContainerValue >> 32) & 0xFFFF) * milliFactor);
+    // Average card power from the energy counter delta, samples in U18.14 format: e1 = 0x10000 is 4 J and
+    // e2 = 0x18000 is 6 J, so 2 J are consumed during the 100ms sampling interval: 2 J / 0.1 s = 20 W = 20000 mW
+    constexpr uint32_t expectedAveragePower = 20000u;
 
     // Null instantaneous power pointer: only average power is retrieved
     energyReadCount = 0;
     instantPowerContainerReadCount = 0;
-    averagePowerContainerReadCount = 0;
     uint32_t averagePower = unsetPowerValue;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, nullptr, &averagePower));
     EXPECT_EQ(expectedAveragePower, averagePower);
@@ -1567,12 +1604,10 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     // Null average power pointer: only instantaneous power is retrieved
     energyReadCount = 0;
     instantPowerContainerReadCount = 0;
-    averagePowerContainerReadCount = 0;
     uint32_t instantPower = unsetPowerValue;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, &instantPower, nullptr));
     EXPECT_EQ(expectedInstantPower, instantPower);
     EXPECT_EQ(0, energyReadCount);
-    EXPECT_EQ(0, averagePowerContainerReadCount);
 }
 
 } // namespace ult
