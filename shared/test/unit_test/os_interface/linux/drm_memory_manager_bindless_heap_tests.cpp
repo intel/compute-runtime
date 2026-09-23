@@ -17,7 +17,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 struct GlobalBindlessDrmMemManagerFixture : public DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {

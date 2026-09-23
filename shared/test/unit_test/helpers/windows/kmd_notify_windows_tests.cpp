@@ -5,12 +5,13 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 

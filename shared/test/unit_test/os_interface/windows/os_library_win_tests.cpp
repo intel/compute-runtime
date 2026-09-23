@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/os_library_win.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
