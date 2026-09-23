@@ -636,6 +636,9 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t getActiveScratchPatchElements() const {
         return activeScratchPatchElements;
     }
+    uint32_t getActiveScratchSizePatchElements() const {
+        return activeScratchSizePatchElements;
+    }
     bool isDualStreamCopyOffloadOperation(bool offloadOperation) const { return (getCopyOffloadModeForOperation(offloadOperation) == CopyOffloadModes::dualStream); }
     void saveLatestTagAndTaskCount(NEO::GraphicsAllocation *tagGpuAllocation, TaskCountType submittedTaskCount) {
         this->latesTagGpuAllocation = tagGpuAllocation;
@@ -892,6 +895,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t maxLocalSubRegionSize = 0;
     uint32_t frontEndPatchListCount = 0;
     uint32_t activeScratchPatchElements = 0;
+    uint32_t activeScratchSizePatchElements = 0;
     uint32_t hostFunctionWithMemorySynchronizationCount = 0;
     uint32_t hostFunctionWithoutMemorySynchronizationCount = 0;
     uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();

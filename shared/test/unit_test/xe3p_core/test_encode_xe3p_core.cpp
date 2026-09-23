@@ -35,6 +35,7 @@
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 #include "hw_cmds_xe3p_core.h"
+#include "implicit_args.h"
 #include "per_product_test_definitions.h"
 
 using namespace NEO;
@@ -375,6 +376,42 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchRequiredPatchingDisabledWh
     auto scratchAddressProgrammed = inlineData[1];
 
     EXPECT_EQ(expectedAddress, scratchAddressProgrammed);
+}
+
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenImplicitArgsV2WhenEncodeComputeWalker2ThenAllocatedScratchSizeIsSetAccordingToImmediatePatchingMode) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    for (auto immediateScratchAddressPatching : {true, false}) {
+        uint32_t dims[] = {1, 1, 1};
+        std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+        dispatchInterface->getCrossThreadDataSizeResult = 256u;
+        dispatchInterface->kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 1024u;
+        dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = true;
+        dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = 8u;
+        dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+        NEO::ImplicitArgs implicitArgs{};
+        implicitArgs.initializeHeader(2);
+        implicitArgs.setLocalSize(1, 1, 1);
+        dispatchInterface->implicitArgsPtr = &implicitArgs;
+
+        EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+        dispatchArgs.isHeaplessModeEnabled = true;
+        dispatchArgs.immediateScratchAddressPatching = immediateScratchAddressPatching;
+
+        auto *csr = dispatchArgs.device->getDefaultEngine().commandStreamReceiver;
+        cmdContainer->setImmediateCmdListCsr(csr);
+
+        EncodeDispatchKernel<FamilyType>::template encode<WalkerType>(*cmdContainer.get(), dispatchArgs);
+
+        if (immediateScratchAddressPatching) {
+            auto expectedScratch0SizeAllocated = csr->getPerThreadScratchSizeSlot0Allocated();
+            EXPECT_NE(0u, expectedScratch0SizeAllocated);
+            EXPECT_EQ(expectedScratch0SizeAllocated, implicitArgs.v2.scratch0SizeAllocated);
+        } else {
+            EXPECT_EQ(0u, implicitArgs.v2.scratch0SizeAllocated);
+        }
+    }
 }
 
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndScratchRequiredWhenEncodeComputeWalker2ThenInlineDataContainCorrectScratchAddress) {

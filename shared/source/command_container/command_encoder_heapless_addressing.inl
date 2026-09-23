@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 
 #include "implicit_args.h"
 
@@ -37,9 +38,10 @@ void EncodeDispatchKernel<Family>::programInlineDataHeapless(uint8_t *inlineData
 }
 
 template <typename Family>
-uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args) {
+uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args, uint32_t &scratchSlot0SizeAllocated) {
 
     uint64_t scratchAddress = 0u;
+    scratchSlot0SizeAllocated = 0u;
 
     if (args.immediateScratchAddressPatching) {
         const auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();
@@ -54,6 +56,8 @@ uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(Com
         }
 
         EncodeDispatchKernel<Family>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
+
+        scratchSlot0SizeAllocated = csr->getPerThreadScratchSizeSlot0Allocated();
     }
 
     return scratchAddress;

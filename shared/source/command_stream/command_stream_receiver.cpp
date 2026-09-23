@@ -750,6 +750,11 @@ GraphicsAllocation *CommandStreamReceiver::getScratchAllocation() {
     return scratchSpaceController->getScratchSpaceSlot0Allocation();
 }
 
+uint32_t CommandStreamReceiver::getPerThreadScratchSizeSlot0Allocated() const {
+    auto primaryScratchSpaceController = getPrimaryScratchSpaceController();
+    return primaryScratchSpaceController != nullptr ? primaryScratchSpaceController->getPerThreadScratchSpaceSizeSlot0() : 0u;
+}
+
 void CommandStreamReceiver::overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) {
     flatBatchBufferHelper.reset(newHelper);
 }

@@ -5767,10 +5767,15 @@ void CommandListCoreFamily<gfxCoreFamily>::calculateAsyncPatchlistPatchSize() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::calculateActiveScratchPatchElemsPatchSize() {
     size_t encodeSize = 0;
-    uint32_t elemsCount = this->getActiveScratchPatchElements();
-    if (elemsCount > 0) {
+    uint32_t addressElemsCount = this->getActiveScratchPatchElements();
+    if (addressElemsCount > 0) {
         const size_t qwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint64_t));
-        encodeSize = qwordEncodeSize * elemsCount;
+        encodeSize += qwordEncodeSize * addressElemsCount;
+    }
+    uint32_t sizeElemsCount = this->getActiveScratchSizePatchElements();
+    if (sizeElemsCount > 0) {
+        const size_t dwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint32_t));
+        encodeSize += dwordEncodeSize * sizeElemsCount;
     }
     activeScratchPatchElemsPatchSize = encodeSize;
 }

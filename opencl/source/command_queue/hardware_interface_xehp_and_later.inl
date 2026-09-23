@@ -140,6 +140,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     EncodeDispatchKernel<GfxFamily>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
 
+    auto *implicitArgs = kernel.getImplicitArgs();
+    if (implicitArgs != nullptr) {
+        implicitArgs->setScratch0SizeAllocated(queueCsr.getPerThreadScratchSizeSlot0Allocated());
+    }
+
     auto interfaceDescriptor = &walkerCmd.getInterfaceDescriptor();
 
     HardwareCommandsHelper<GfxFamily>::template sendIndirectState<WalkerType, InterfaceDescriptorType>(

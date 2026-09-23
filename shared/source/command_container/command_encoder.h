@@ -314,7 +314,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static size_t getDefaultIOHAlignment(bool isLocalMemory, const HardwareInfo &hwInfo);
 
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
-    static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args);
+    static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args, uint32_t &scratchSlot0SizeAllocated);
     static void patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);

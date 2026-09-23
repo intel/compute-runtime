@@ -24,11 +24,11 @@ void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddress(CommandsToPatc
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs) {
+void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInCrossThreadData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs) {
+void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInCrossThreadData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -72,6 +72,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
     this->frontEndPatchListCount = 0;
     this->activeScratchPatchElements = 0;
+    this->activeScratchSizePatchElements = 0;
     this->hostFunctionWithMemorySynchronizationCount = 0;
     this->hostFunctionWithoutMemorySynchronizationCount = 0;
 }

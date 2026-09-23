@@ -30,7 +30,7 @@ OffsetMap getImplicitArgsV2ExpectedOffsets() {
         {"groupCountX", offsetof(NEO::ImplicitArgsV2, groupCountX)},
         {"groupCountY", offsetof(NEO::ImplicitArgsV2, groupCountY)},
         {"groupCountZ", offsetof(NEO::ImplicitArgsV2, groupCountZ)},
-        {"padding1", offsetof(NEO::ImplicitArgsV2, padding1)},
+        {"scratch0SizeAllocated", offsetof(NEO::ImplicitArgsV2, scratch0SizeAllocated)},
         {"rtGlobalBufferPtr", offsetof(NEO::ImplicitArgsV2, rtGlobalBufferPtr)},
         {"assertBufferPtr", offsetof(NEO::ImplicitArgsV2, assertBufferPtr)},
         {"syncBufferPtr", offsetof(NEO::ImplicitArgsV2, syncBufferPtr)},

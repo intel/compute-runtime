@@ -620,6 +620,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     uint32_t getRequiredScratchSlot0Size() { return requiredScratchSlot0Size; }
     uint32_t getRequiredScratchSlot1Size() { return requiredScratchSlot1Size; }
+    uint32_t getPerThreadScratchSizeSlot0Allocated() const;
     virtual bool submitDependencyUpdate(TagNodeBase *tag) = 0;
 
     MOCKABLE_VIRTUAL bool isBusy() {

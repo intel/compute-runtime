@@ -254,7 +254,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     const auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
     const bool scratchPointerInCrossThreadData = isValidOffset(scratchPointerAddress.offset) && isDefined(scratchPointerAddress.pointerSize) && (static_cast<uint32_t>(scratchPointerAddress.offset) >= inlineDataProgrammingOffset);
 
-    auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(container, args);
+    uint32_t scratchSlot0SizeAllocated = 0u;
+    auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(container, args, scratchSlot0SizeAllocated);
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
     uint32_t sizeForImplicitArgsStruct = NEO::ImplicitArgsHelper::getSizeForImplicitArgsStruct(pImplicitArgs, kernelDescriptor, true, rootDeviceEnvironment);
@@ -296,6 +297,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     offsetThreadData -= sizeForImplicitArgsStruct;
                     pImplicitArgs->setLocalIdTablePtr(heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize);
                     EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs(*pImplicitArgs, scratchAddressForImmediatePatching, args.immediateScratchAddressPatching);
+                    pImplicitArgs->setScratch0SizeAllocated(scratchSlot0SizeAllocated);
 
                     ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(!localIdsGenerationByRuntime, requiredWorkgroupOrder), rootDeviceEnvironment, &args.outImplicitArgsPtr);
                     args.outImplicitArgsGpuVa = heap->getGraphicsAllocation()->getGpuAddress() + ptrDiff(args.outImplicitArgsPtr, heap->getCpuBase());

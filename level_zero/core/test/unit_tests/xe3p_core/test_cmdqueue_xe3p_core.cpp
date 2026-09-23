@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -77,6 +78,49 @@ XE3P_CORETEST_F(CommandQueueScratchTestsXe3p, givenImplicitArgsScratchWhenPatchC
 
     EXPECT_NE(notExpectedScratchPtr, implicitArgs.v1.scratchPtr);
     EXPECT_EQ(expectedScratchPtr, implicitArgs.v1.scratchPtr);
+    EXPECT_EQ(0u, implicitArgs.v1.padding0);
+    commandList->commandsToPatch.clear();
+}
+
+XE3P_CORETEST_F(CommandQueueScratchTestsXe3p, givenImplicitArgsV2ScratchSizeWhenPatchCommandsIsCalledThenAllocatedScratchSizeIsPatched) {
+
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandQueue->heaplessModeEnabled = true;
+
+    auto scratchController = csr->getPrimaryScratchSpaceController();
+    ASSERT_NE(nullptr, scratchController);
+
+    constexpr uint32_t requiredPerThreadScratchSizeSlot0 = 0x400u;
+    bool stateBaseAddressDirty = false;
+    bool vfeStateDirty = false;
+    auto surfaceStateHeap = std::make_unique<uint8_t[]>(MemoryConstants::pageSize);
+    scratchController->setRequiredScratchSpace(surfaceStateHeap.get(), 0u, requiredPerThreadScratchSizeSlot0, 0u,
+                                               csr->getOsContext(), stateBaseAddressDirty, vfeStateDirty);
+    ASSERT_EQ(requiredPerThreadScratchSizeSlot0, csr->getPerThreadScratchSizeSlot0Allocated());
+
+    NEO::ImplicitArgs implicitArgs{};
+    implicitArgs.initializeHeader(2);
+    auto scratch0SizeAllocatedOffset = implicitArgs.getScratch0SizeAllocatedOffset();
+    ASSERT_TRUE(scratch0SizeAllocatedOffset.has_value());
+
+    PatchComputeWalkerImplicitArgsScratch patch{};
+    patch.pDestination = &implicitArgs;
+    patch.offset = NEO::undefined<size_t>;
+    patch.patchSize = NEO::undefined<size_t>;
+    patch.scratch0SizeAllocatedOffset = scratch0SizeAllocatedOffset.value();
+
+    commandList->commandsToPatch.push_back(patch);
+
+    commandQueue->patchCommands(*commandList, 0x1000, true, false, nullptr);
+
+    EXPECT_EQ(requiredPerThreadScratchSizeSlot0, implicitArgs.v2.scratch0SizeAllocated);
+    EXPECT_EQ(0u, implicitArgs.v2.rtGlobalBufferPtr);
+    EXPECT_EQ(2u, implicitArgs.v2.header.structVersion);
+
     commandList->commandsToPatch.clear();
 }
 

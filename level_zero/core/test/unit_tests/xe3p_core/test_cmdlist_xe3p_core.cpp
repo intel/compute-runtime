@@ -783,6 +783,7 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
     dispatchInterface->implicitArgsPtr = &implicitArgs;
 
     dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+    dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = 8u;
     DebugManagerStateRestore dbgRestorer;
 
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -845,7 +846,48 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
 
         bool kernelNeedsImplicitArgs = true;
         commandList->addPatchScratchAddressInImplicitArgs(commandsToPatch, args, dispatchInterface->kernelDescriptor, kernelNeedsImplicitArgs);
-        ASSERT_EQ(0u, commandsToPatch.size());
+        ASSERT_EQ(1u, commandsToPatch.size());
+        EXPECT_EQ(0u, commandList->getActiveScratchPatchElements());
+        EXPECT_EQ(1u, commandList->getActiveScratchSizePatchElements());
+
+        auto expectedScratch0SizeAllocatedOffset = implicitArgs2.getScratch0SizeAllocatedOffset();
+        ASSERT_TRUE(expectedScratch0SizeAllocatedOffset.has_value());
+
+        auto *patchedCmd = std::get_if<PatchComputeWalkerImplicitArgsScratch>(&commandsToPatch[0]);
+        ASSERT_NE(nullptr, patchedCmd);
+
+        EXPECT_EQ(args.outImplicitArgsPtr, patchedCmd->pDestination);
+        EXPECT_EQ(expectedScratch0SizeAllocatedOffset.value(), patchedCmd->scratch0SizeAllocatedOffset);
+        EXPECT_TRUE(NEO::isUndefinedOffset(patchedCmd->offset));
+        EXPECT_TRUE(NEO::isUndefined(patchedCmd->patchSize));
+
+        commandList->close();
+        auto cmdListHandle = commandList->toHandle();
+
+        auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+        CommandListExecutionInternalOptions internalOptions = {};
+        returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+        ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList,
+            ptrOffset(queueCpuBase, usedSpaceBefore),
+            usedSpaceAfter - usedSpaceBefore));
+        auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+
+        auto expectedGpuVa = args.outImplicitArgsGpuVa + expectedScratch0SizeAllocatedOffset.value();
+        bool scratch0SizeAllocatedPatchFound = false;
+        for (auto &sdiCmdIterator : sdiCmds) {
+            auto sdiCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmdIterator);
+            if (sdiCmd->getAddress() == expectedGpuVa) {
+                scratch0SizeAllocatedPatchFound = true;
+                EXPECT_FALSE(sdiCmd->getStoreQword());
+            }
+        }
+        EXPECT_TRUE(scratch0SizeAllocatedPatchFound);
     }
     {
         debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
@@ -876,6 +918,7 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
         EXPECT_EQ(expectedScratchOffset.value(), patchedCmd->offset);
         EXPECT_EQ(expectedScratchAddress, patchedCmd->baseAddress);
         EXPECT_EQ(expectedScratchAddressAfterPatch, patchedCmd->scratchAddressAfterPatch);
+        EXPECT_TRUE(NEO::isUndefinedOffset(patchedCmd->scratch0SizeAllocatedOffset));
 
         commandList->close();
         auto cmdListHandle = commandList->toHandle();
@@ -934,9 +977,62 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
         EXPECT_EQ(expectedScratchOffset.value(), patchedCmd->offset);
         EXPECT_EQ(expectedBaseAddress, patchedCmd->baseAddress);
         EXPECT_EQ(expectedScratchAddressAfterPatch, patchedCmd->scratchAddressAfterPatch);
+        EXPECT_TRUE(NEO::isUndefinedOffset(patchedCmd->scratch0SizeAllocatedOffset));
     }
 
     commandQueue->destroy();
+}
+
+XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, givenImplicitArgsV2AndUndefinedScratchPointerAddressWhenAddPatchScratchAddressIsCalledThenOnlyScratchSizeIsPatched) {
+    auto dispatchInterface = std::make_unique<NEO::MockDispatchKernelEncoder>();
+
+    NEO::ImplicitArgs implicitArgs{};
+    implicitArgs.initializeHeader(2);
+    dispatchInterface->implicitArgsPtr = &implicitArgs;
+
+    NEO::EncodeDispatchKernelArgs args{};
+    args.isHeaplessModeEnabled = true;
+    args.device = device->getNEODevice();
+    args.dispatchInterface = dispatchInterface.get();
+    args.outImplicitArgsPtr = reinterpret_cast<void *>(0xABCD);
+    args.outImplicitArgsGpuVa = 0xAAFF0000;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    commandList->scratchAddressPatchingEnabled = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    CommandList::CommandsToPatch &commandsToPatch = commandList->commandsToPatch;
+
+    constexpr bool kernelNeedsScratchSpace = true;
+    constexpr bool kernelNeedsImplicitArgs = true;
+    commandList->addPatchScratchAddress(commandsToPatch, args, dispatchInterface->kernelDescriptor, launchParams, kernelNeedsScratchSpace, kernelNeedsImplicitArgs);
+
+    ASSERT_EQ(2u, commandsToPatch.size());
+    EXPECT_EQ(0u, commandList->getActiveScratchPatchElements());
+    EXPECT_EQ(1u, commandList->getActiveScratchSizePatchElements());
+
+    auto *inlineDataPatch = std::get_if<PatchComputeWalkerInlineDataScratch>(&commandsToPatch[launchParams.scratchAddressPatchIndex]);
+    ASSERT_NE(nullptr, inlineDataPatch);
+    EXPECT_TRUE(NEO::isUndefinedOffset(inlineDataPatch->offset));
+
+    auto expectedScratch0SizeAllocatedOffset = implicitArgs.getScratch0SizeAllocatedOffset();
+    ASSERT_TRUE(expectedScratch0SizeAllocatedOffset.has_value());
+
+    auto *implicitArgsPatch = std::get_if<PatchComputeWalkerImplicitArgsScratch>(&commandsToPatch[1]);
+    ASSERT_NE(nullptr, implicitArgsPatch);
+    EXPECT_EQ(args.outImplicitArgsPtr, implicitArgsPatch->pDestination);
+    EXPECT_EQ(expectedScratch0SizeAllocatedOffset.value(), implicitArgsPatch->scratch0SizeAllocatedOffset);
+    EXPECT_TRUE(NEO::isUndefinedOffset(implicitArgsPatch->offset));
+    EXPECT_TRUE(NEO::isUndefined(implicitArgsPatch->patchSize));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->close());
+
+    auto expectedPatchSize = NEO::EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(uint32_t));
+    EXPECT_EQ(expectedPatchSize, commandList->getActiveScratchPatchElemsPatchSize());
+
+    commandList->clearCommandsToPatch();
+    EXPECT_EQ(0u, commandList->getActiveScratchSizePatchElements());
 }
 
 } // namespace ult

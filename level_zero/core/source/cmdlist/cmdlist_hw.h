@@ -481,8 +481,8 @@ struct CommandListCoreFamily : public CommandList {
     void appendFullSynchronizedDispatchInit();
     void addPatchScratchAddressInImplicitArgs(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &args, const NEO::KernelDescriptor &kernelDescriptor, bool kernelNeedsImplicitArgs);
     void addPatchScratchAddress(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsScratchSpace, bool kernelNeedsImplicitArgs);
-    void addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs);
-    void addPatchScratchAddressInCrossThreadData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs);
+    void addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams);
+    void addPatchScratchAddressInCrossThreadData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams);
     void setupFlushL3Flags(bool &isFlushL3ForExternalAllocationRequired, bool &isFlushL3ForHostUsmRequired, bool isFlushL3AfterPostSync, bool isKernelUsingExternalAllocation, bool isKernelUsingSystemAllocation);
     uint64_t getInOrderIncrementValue() const;
     uint64_t getInOrderAtomicSignallingValue(bool executedByEachPartition) const;

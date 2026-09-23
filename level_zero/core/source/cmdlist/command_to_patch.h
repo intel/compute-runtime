@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/kernel/kernel_arg_descriptor.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <variant>
@@ -57,6 +59,7 @@ struct PatchComputeWalkerImplicitArgsScratch {
     mutable uint64_t scratchAddressAfterPatch = 0;
     size_t offset = 0;
     size_t patchSize = 0;
+    size_t scratch0SizeAllocatedOffset = NEO::undefined<size_t>;
 };
 
 struct PatchNoopSpace {

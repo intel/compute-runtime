@@ -3389,6 +3389,31 @@ HWTEST_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerfor
     EXPECT_FALSE(scratchController->setRequiredScratchSpaceCalled);
 }
 
+struct MockAllocatedScratchSizeController : public ScratchSpaceControllerBase {
+    using ScratchSpaceControllerBase::perThreadScratchSpaceSlot0Size;
+    using ScratchSpaceControllerBase::ScratchSpaceControllerBase;
+};
+
+HWTEST_F(CommandStreamReceiverHwTest, givenScratchSpaceControllerWhenGettingAllocatedPerThreadScratchSizeSlot0ThenSizeFromControllerIsReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto scratchController = new MockAllocatedScratchSizeController(pDevice->getRootDeviceIndex(),
+                                                                    *pDevice->getExecutionEnvironment(),
+                                                                    *pDevice->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    constexpr uint32_t expectedPerThreadScratchSizeSlot0 = 0x400u;
+    scratchController->perThreadScratchSpaceSlot0Size = expectedPerThreadScratchSizeSlot0;
+
+    auto originalScratchController = commandStreamReceiver.scratchSpaceController.release();
+    commandStreamReceiver.scratchSpaceController.reset(scratchController);
+
+    EXPECT_EQ(expectedPerThreadScratchSizeSlot0, commandStreamReceiver.getPerThreadScratchSizeSlot0Allocated());
+
+    commandStreamReceiver.scratchSpaceController.reset(nullptr);
+
+    EXPECT_EQ(0u, commandStreamReceiver.getPerThreadScratchSizeSlot0Allocated());
+
+    commandStreamReceiver.scratchSpaceController.reset(originalScratchController);
+}
+
 TEST(CommandStreamReceiverSimpleTest, whenTranslatingSubmissionStatusToTaskCountValueThenProperValueIsReturned) {
     EXPECT_EQ(0u, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::success));
     EXPECT_EQ(CompletionStamp::outOfHostMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::outOfHostMemory));
