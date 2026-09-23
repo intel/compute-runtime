@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -402,6 +403,71 @@ TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTaskCountMetsEx
     storage->cleanAllocationList(expectedTaskCount, TEMPORARY_ALLOCATION);
     EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
     allocation->setHostPtrTaskCountAssignment(0);
+}
+
+struct InternalAllocationStorageTwoCsrsTest : public InternalAllocationStorageTest {
+    void SetUp() override {
+        InternalAllocationStorageTest::SetUp();
+        secondCsr = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, csr->getRootDeviceIndex(), csr->getOsContext().getDeviceBitfield());
+        auto secondContext = memoryManager->createAndRegisterOsContext(secondCsr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+        secondCsr->setupContext(*secondContext);
+        memoryManager->callBaseAllocInUse = true;
+        *csr->getTagAddress() = completedTaskCount;
+        *secondCsr->getTagAddress() = completedTaskCount;
+    }
+
+    void TearDown() override {
+        secondCsr.reset();
+        InternalAllocationStorageTest::TearDown();
+    }
+
+    GraphicsAllocation *storeCompletedAllocationUsedByBothCsrs(AllocationType allocationType) {
+        const auto secondContextId = secondCsr->getOsContext().getContextId();
+        auto allocation = new MockGraphicsAllocation(csr->getRootDeviceIndex(), 1u, allocationType, nullptr, uint64_t{0}, uint64_t{0}, size_t{0}, MemoryPool::memoryNull, static_cast<size_t>(secondContextId) + 1u);
+        allocation->updateTaskCount(completedTaskCount, secondContextId);
+        storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION, completedTaskCount);
+        return allocation;
+    }
+
+    static constexpr TaskCountType completedTaskCount = 1u;
+    std::unique_ptr<MockCommandStreamReceiver> secondCsr;
+};
+
+TEST_F(InternalAllocationStorageTwoCsrsTest, givenCompletedExternalHostPtrAllocationUsedByTwoCsrsWhenOneCsrIsBusyThenAllocationIsKeptUntilBothCsrsAreFree) {
+    auto allocation = storeCompletedAllocationUsedByBothCsrs(AllocationType::externalHostPtr);
+    EXPECT_TRUE(allocation->isUsedByManyOsContexts());
+
+    secondCsr->tryObtainUniqueOwnershipFails = true;
+    storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
+    EXPECT_EQ(1u, secondCsr->tryObtainUniqueOwnershipCalled);
+    EXPECT_EQ(allocation, csr->getTemporaryAllocations().peekHead());
+
+    secondCsr->tryObtainUniqueOwnershipFails = false;
+    storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
+    EXPECT_EQ(2u, secondCsr->tryObtainUniqueOwnershipCalled);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+}
+
+TEST_F(InternalAllocationStorageTwoCsrsTest, givenCompletedHostCopyAllocationUsedByTwoCsrsWhenOneCsrIsBusyThenAllocationIsKeptUntilBothCsrsAreFree) {
+    auto allocation = storeCompletedAllocationUsedByBothCsrs(AllocationType::internalHostMemory);
+
+    secondCsr->tryObtainUniqueOwnershipFails = true;
+    storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
+    EXPECT_EQ(1u, secondCsr->tryObtainUniqueOwnershipCalled);
+    EXPECT_EQ(allocation, csr->getTemporaryAllocations().peekHead());
+
+    secondCsr->tryObtainUniqueOwnershipFails = false;
+    storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+}
+
+TEST_F(InternalAllocationStorageTwoCsrsTest, givenCompletedAllocationNotBackedByHostPtrUsedByTwoCsrsWhenOneCsrIsBusyThenAllocationIsFreedWithoutLockingCsrs) {
+    storeCompletedAllocationUsedByBothCsrs(AllocationType::buffer);
+
+    secondCsr->tryObtainUniqueOwnershipFails = true;
+    storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
+    EXPECT_EQ(0u, secondCsr->tryObtainUniqueOwnershipCalled);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
 
 TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenDetectingOverlapWithExternalHostPtrThenOverlapIsDetected) {

@@ -108,6 +108,35 @@ void MemoryManager::storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>
     temporaryAllocations->pushTailOne(*gfxAllocation.release());
 }
 
+using CsrLocks = StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 8>;
+
+static bool needsCsrLockBeforeFree(const GraphicsAllocation &allocation) {
+    const auto allocationType = allocation.getAllocationType();
+    return allocationType == AllocationType::externalHostPtr ||
+           allocationType == AllocationType::internalHostMemory;
+}
+
+static bool tryLockCsrsForAllocation(const GraphicsAllocation &allocation,
+                                     const EngineControlContainer &engines,
+                                     CsrLocks &csrLocks) {
+    const auto numContextsToCheck = allocation.getNumRegisteredContexts();
+    uint32_t numContextsMatched = 0;
+
+    for (const auto &engine : engines) {
+        if (allocation.isUsedByOsContext(engine.osContext->getContextId())) {
+            csrLocks.push_back(engine.commandStreamReceiver->tryObtainUniqueOwnership());
+            if (!csrLocks.back().owns_lock()) {
+                csrLocks.clear();
+                return false;
+            }
+            if (++numContextsMatched == numContextsToCheck) {
+                break;
+            }
+        }
+    }
+    return true;
+}
+
 void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, TaskCountType waitedTaskCount) {
     auto lock = getHostPtrManager()->obtainOwnership();
 
@@ -119,8 +148,11 @@ void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, 
         const auto waitedOsContextId = csr.getOsContext().getContextId();
         auto *nextAlloc = currentAlloc->next;
         bool freeAllocation = false;
+        CsrLocks csrLocks;
 
-        if (currentAlloc->getHostPtrTaskCountAssignment() == 0) {
+        if (currentAlloc->getHostPtrTaskCountAssignment() == 0 &&
+            (!needsCsrLockBeforeFree(*currentAlloc) ||
+             tryLockCsrsForAllocation(*currentAlloc, getRegisteredEngines(currentAlloc->getRootDeviceIndex()), csrLocks))) {
             if (currentAlloc->isUsedByOsContext(waitedOsContextId)) {
                 if (currentAlloc->getTaskCount(waitedOsContextId) <= waitedTaskCount) {
                     if (!currentAlloc->isUsedByManyOsContexts() || !allocInUse(*currentAlloc)) {
@@ -133,6 +165,7 @@ void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, 
         }
 
         if (freeAllocation) {
+            csrLocks.clear();
             freeGraphicsMemory(currentAlloc);
         } else {
             allocationsLeft.pushTailOne(*currentAlloc);
