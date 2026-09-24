@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/stream_property.h"
 
 #include <optional>
+#include <stream_properties_ext.h>
 
 namespace NEO {
 enum PreemptionMode : uint32_t;
@@ -32,6 +33,7 @@ struct StateComputeModePropertiesSupport {
     bool enableBreakpoints : 1 = false;
     bool enableForceExternalHaltAndForceException : 1 = false;
     bool l1CachePolicy : 1 = false;
+    StateComputeModePropertiesSupportExt ext{};
 };
 
 struct StateComputeModeProperties {
@@ -53,6 +55,7 @@ struct StateComputeModeProperties {
     StreamProperty enableBreakpoints{};
     StreamProperty enableForceExternalHaltAndForceException{};
     StreamProperty l1CachePolicy{};
+    StateComputeModePropertiesExt propertiesExt{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();

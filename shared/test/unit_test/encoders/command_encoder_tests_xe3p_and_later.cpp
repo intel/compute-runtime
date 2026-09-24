@@ -30,6 +30,17 @@ using namespace NEO;
 
 using CommandEncodeStatesTestXe3pAndLater = Test<CommandEncodeStatesFixture>;
 
+struct IsAtLeastXe3pCoreWithLscSamplerBackingThreshold {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (IsAtLeastXe3pCore::isMatched<productFamily>()) {
+            using FamilyType = typename NEO::GfxFamilyMapper<NEO::ToGfxCoreFamily<productFamily>::get()>::GfxFamily;
+            return requires { typename FamilyType::STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD; };
+        }
+        return false;
+    }
+};
+
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenProgrammingSemaphoreSectionThenSetSwitchMode, IsAtLeastXe3pCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using QUEUE_SWITCH_MODE = typename MI_SEMAPHORE_WAIT::QUEUE_SWITCH_MODE;
@@ -239,7 +250,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenComputeWalker2WhenEncodingWa
     EXPECT_EQ(iohDiffAligned, iohDiff);
 }
 
-HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenLSCSamplerBackingThresholdThenCorrectValueIsSet, IsAtLeastXe3pCore) {
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenLSCSamplerBackingThresholdThenCorrectValueIsSet, IsAtLeastXe3pCoreWithLscSamplerBackingThreshold) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using LSC_SAMPLER_BACKING_THRESHOLD = typename STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD;
 
