@@ -376,64 +376,15 @@ TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetAndNotEn
 }
 
 TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {
-    const std::unordered_map<std::string, int32_t> config = {
-        {"UseKmdMigration", 0},
-        {"SplitBcsSize", 256}};
-
-#undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
-    EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_OPT
-#undef DECLARE_RELEASE_VARIABLE
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
-
     DebugManagerStateRestore restorer;
     debugManager.flags.NEO_CAL_ENABLED.set(1);
+    DebugVariables expected = debugManager.flags;
+    expected.UseKmdMigration.set(0);
+    expected.SplitBcsSize.set(256);
+
     ExecutionEnvironment exeEnv;
 
-#undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)      \
-    {                                                                                  \
-        if constexpr (std::is_same_v<bool, dataType>) {                                \
-            if (strcmp(#variableName, "NEO_CAL_ENABLED") == 0) {                       \
-                EXPECT_TRUE(debugManager.flags.variableName.getRef());                 \
-            } else {                                                                   \
-                EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());     \
-            }                                                                          \
-        } else {                                                                       \
-            if constexpr (std::is_same_v<int32_t, dataType>) {                         \
-                auto it = config.find(#variableName);                                  \
-                if (it != config.end()) {                                              \
-                    EXPECT_EQ(it->second, debugManager.flags.variableName.getRef());   \
-                } else {                                                               \
-                    EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef()); \
-                }                                                                      \
-            } else {                                                                   \
-                EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());     \
-            }                                                                          \
-        }                                                                              \
-    }
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_OPT
-#undef DECLARE_RELEASE_VARIABLE
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
+    EXPECT_TRUE(expected == debugManager.flags);
 }
 
 TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecutionEnvironmentThenRespectAppSetting) {

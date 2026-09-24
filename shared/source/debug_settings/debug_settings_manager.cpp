@@ -74,7 +74,7 @@ static std::string toString(const T &arg) {
 }
 
 template <typename DataType>
-static void dumpFlagValue(const char *prefix, const char *keyName, const DataType &variableValue, const DataType &defaultValue,
+static void dumpFlagValue(const char *prefix, const char *keyName, DataType variableValue, DataType defaultValue,
                           std::ostringstream &allFlagsStream, std::ostringstream &changedFlagsStream, bool isEnvOnly) {
     std::string neoKey = prefix;
     neoKey += keyName;

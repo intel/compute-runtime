@@ -19,6 +19,13 @@
 
 namespace NEO {
 
+namespace {
+template <typename ValueT, typename DefaultT>
+FORCE_NOINLINE void expectDumpedValue(MockSettingsFileReader &reader, const char *variableName, const ValueT &value, DefaultT defaultValue) {
+    EXPECT_EQ(value, reader.getSetting(variableName, defaultValue)) << variableName;
+}
+} // namespace
+
 TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreateThenAllVariablesAreRead) {
     constexpr std::string_view data = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
     NEO::writeDataToFile(SettingsReader::settingsFileName, data, false);
@@ -61,7 +68,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisab
     // Validate allSettingsDumpFile
     MockSettingsFileReader allSettingsReader{FullyDisabledTestDebugManager::settingsDumpFileName};
 #define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description) \
-    EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue));
+    expectDumpedValue(allSettingsReader, #varName, debugManager.flags.varName.get(), defaultValue);
 #define DECLARE_DEBUG_SCOPED_V(dataType, varName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)
 #define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
