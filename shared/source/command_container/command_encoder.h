@@ -292,6 +292,8 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
                                                     uint32_t &requiredWalkOrder,
                                                     uint32_t simd);
 
+    static bool isHwLocalIdGenerationWithInactiveDimensionsSupported();
+
     static bool inlineDataProgrammingRequired(const KernelDescriptor &kernelDesc);
 
     template <typename InterfaceDescriptorType>

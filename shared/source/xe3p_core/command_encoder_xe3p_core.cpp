@@ -344,6 +344,11 @@ template <typename CommandType>
 void EncodePostSync<Family>::setCommandLevelInterrupt(CommandType &cmd, bool interrupt) {}
 
 template <>
+bool EncodeDispatchKernel<Family>::isHwLocalIdGenerationWithInactiveDimensionsSupported() {
+    return true;
+}
+
+template <>
 uint32_t ContextTimestampRegister<Family>::getRegisterOffsetLow() {
     return RegisterOffsets::queueTimestampRegAddressOffsetLow;
 }

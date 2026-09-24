@@ -96,7 +96,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         uint32_t requiredWalkOrder = 0u;
 
         auto generationOfLocalIdsByRuntime = EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
-            3,
+            kernelAttributes.numLocalIdChannels,
             localWorkSize,
             std::array<uint8_t, 3>{
                 {kernelAttributes.workgroupWalkOrder[0],

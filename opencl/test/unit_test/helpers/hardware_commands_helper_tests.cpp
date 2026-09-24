@@ -15,6 +15,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -1180,7 +1181,7 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
         pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = workgroupDimOrder[0];
         pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = workgroupDimOrder[1];
         pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = workgroupDimOrder[2];
-        pKernelInfo->kernelDescriptor.kernelAttributes.numLocalIdChannels = 3;
+        pKernelInfo->kernelDescriptor.kernelAttributes.numLocalIdChannels = numLocalIdChannels;
         MockContext context(pClDevice);
         MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
@@ -1223,6 +1224,7 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
     GraphicsAllocation *indirectHeapAllocation = nullptr;
     std::array<uint8_t, 3> workgroupDimOrder{0, 1, 2};
     uint32_t implicitArgsProgrammingSize = 0u;
+    uint8_t numLocalIdChannels = 3u;
 };
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenXeHpAndLaterPlatformWhenSendingIndirectStateForKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithLocalIds) {
@@ -1311,6 +1313,43 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
 
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
     EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsAndSingleLocalIdChannelWithInactiveDimensionGreaterThanOneWhenSendingIndirectStateThenLocalIdsTableFollowsWalkerWalkOrder) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    numLocalIdChannels = 1u;
+
+    std::array<uint16_t, 3> localSize{16, 8, 1};
+    size_t totalLocalSize = localSize[0] * localSize[1] * localSize[2];
+
+    expectedImplicitArgs.localSizeX = localSize[0];
+    expectedImplicitArgs.localSizeY = localSize[1];
+    expectedImplicitArgs.localSizeZ = localSize[2];
+
+    const size_t lws[3] = {localSize[0], localSize[1], localSize[2]};
+    uint32_t walkerWalkOrder = 77u;
+    const bool localIdsGeneratedByRuntime = EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        numLocalIdChannels, lws, workgroupDimOrder, false, walkerWalkOrder, expectedImplicitArgs.simdWidth);
+    if (EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported()) {
+        EXPECT_FALSE(localIdsGeneratedByRuntime);
+        EXPECT_EQ(HwWalkOrderHelper::singleDimWalkIndex, walkerWalkOrder);
+    }
+    const auto expectedDimOrder = localIdsGeneratedByRuntime ? workgroupDimOrder : HwWalkOrderHelper::compatibleDimensionOrders[walkerWalkOrder];
+
+    dispatchKernelWithImplicitArgs<FamilyType>();
+
+    auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
+    auto numGrf = GrfConfig::defaultGrfNumber;
+    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgsV0::getAlignedSize(), MemoryConstants::cacheLineSize);
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, numGrf, rootDeviceEnvironment, 3u);
+
+    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, rootDeviceEnvironment);
+
+    EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
+    alignedFree(expectedLocalIds);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsWhenSendingIndirectStateWithSimd1ThenLocalIdsAreGeneratedCorrectly) {

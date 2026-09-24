@@ -600,6 +600,11 @@ inline uint32_t EncodePostSync<Family>::getPostSyncMocs(const RootDeviceEnvironm
 }
 
 template <typename Family>
+bool EncodeDispatchKernel<Family>::isHwLocalIdGenerationWithInactiveDimensionsSupported() {
+    return false;
+}
+
+template <typename Family>
 bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                                        const size_t *lws,
                                                                        std::array<uint8_t, 3> walkOrder,
@@ -618,31 +623,48 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
             return false;
         }
 
-        size_t totalLwsSize = 1u;
-        for (auto dimension = 0u; dimension < 3; dimension++) {
-            totalLwsSize *= lws[dimension];
-            if (lws[dimension] > 1u && dimension >= activeChannels) {
-                return true;
+        if (!isHwLocalIdGenerationWithInactiveDimensionsSupported()) {
+            for (auto dimension = activeChannels; dimension < 3u; dimension++) {
+                if (lws[dimension] > 1u) {
+                    return true;
+                }
             }
+        }
+
+        size_t totalLwsSize = 1u;
+        for (auto dimension = 0u; dimension < activeChannels; dimension++) {
+            totalLwsSize *= lws[dimension];
         }
 
         if (totalLwsSize > 1024u) {
             return true;
         }
 
+        const bool walkOrderRestricted = isHwLocalIdGenerationWithInactiveDimensionsSupported();
+        const bool yDimIsOne = activeChannels < 2 || lws[1] == 1u;
+        const bool zDimIsOne = activeChannels < 3 || lws[2] == 1u;
+        const bool xOuterRequired = walkOrderRestricted && (activeChannels == 1 || (yDimIsOne && zDimIsOne));
+        const bool zInnerRequired = walkOrderRestricted && !xOuterRequired && (activeChannels == 2 || zDimIsOne);
+
         // check if we need to follow kernel requirements
         if (activeChannels == 1) {
-            if (Math::isPow2<size_t>(lws[0])) {
-                requiredWalkOrder = HwWalkOrderHelper::linearWalkIndex;
+            // If single channel is active and X outer dimension is required or
+            // its size is not power of 2, place that dimension as last in walk order
+            if (xOuterRequired || !Math::isPow2<size_t>(lws[0])) {
+                requiredWalkOrder = HwWalkOrderHelper::singleDimWalkIndex;
                 return false;
             }
-            // If single channel is active but its size is not power of 2,
-            // place that dimension as last in walk order
-            requiredWalkOrder = HwWalkOrderHelper::singleDimWalkIndex;
+            requiredWalkOrder = HwWalkOrderHelper::linearWalkIndex;
             return false;
         }
 
         if (requireInputWalkOrder && activeChannels == 3) {
+            if (xOuterRequired && walkOrder[2] != HwWalkOrderHelper::x) {
+                return true;
+            }
+            if (zInnerRequired && walkOrder[0] != HwWalkOrderHelper::z) {
+                return true;
+            }
             for (uint32_t dimension = 0; dimension < 2u; dimension++) {
                 if (!Math::isPow2<size_t>(lws[walkOrder[dimension]])) {
                     return true;
@@ -665,6 +687,14 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
 
         for (uint32_t walkOrderId = 0; walkOrderId < HwWalkOrderHelper::walkOrderPossibilties; walkOrderId++) {
             auto possibleWalkOrder = HwWalkOrderHelper::compatibleDimensionOrders[walkOrderId];
+
+            if (xOuterRequired && possibleWalkOrder[2] != HwWalkOrderHelper::x) {
+                continue;
+            }
+            if (zInnerRequired && possibleWalkOrder[0] != HwWalkOrderHelper::z) {
+                continue;
+            }
+
             bool allDimensionsCompatible = true;
             for (uint32_t dimension = 0; dimension < 2u; dimension++) {
                 if (walkOrder[2] == possibleWalkOrder[dimension] && activeChannels == 2) {
