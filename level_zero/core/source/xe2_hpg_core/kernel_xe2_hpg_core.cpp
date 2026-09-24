@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,9 @@
 
 namespace L0 {
 
-static KernelPopulateFactory<IGFX_LUNARLAKE, KernelHw<IGFX_XE2_HPG_CORE>> populateLNL;
+static constexpr auto gfxCoreFamily = IGFX_XE2_HPG_CORE;
+
+template struct KernelHw<gfxCoreFamily>;
+static KernelPopulateFactory<gfxCoreFamily, KernelHw<gfxCoreFamily>> populateXe2HpgCore;
 
 } // namespace L0

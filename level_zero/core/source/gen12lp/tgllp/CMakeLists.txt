@@ -9,7 +9,6 @@ if(SUPPORT_TGLLP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_tgllp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_tgllp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tgllp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_tgllp.cpp
   )
 endif()

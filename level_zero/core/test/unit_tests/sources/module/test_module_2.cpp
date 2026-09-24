@@ -282,7 +282,7 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenThreadGroupParametersAreCorrect) {
 
     ze_result_t res = ZE_RESULT_SUCCESS;
     auto kernel = std::unique_ptr<Kernel>(whiteboxCast(Kernel::create(
-        neoDevice->getHardwareInfo().platform.eProductFamily,
+        neoDevice->getHardwareInfo().platform.eRenderCoreFamily,
         module.get(), &kernelDesc, &res)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, kernel);
@@ -300,7 +300,7 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectPropertiesAreReturned) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto kernel = std::unique_ptr<Kernel>(whiteboxCast(Kernel::create(
-        neoDevice->getHardwareInfo().platform.eProductFamily,
+        neoDevice->getHardwareInfo().platform.eRenderCoreFamily,
         module.get(), &kernelDesc, &result)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, kernel);
@@ -341,7 +341,7 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto kernel = std::unique_ptr<Kernel>(whiteboxCast(Kernel::create(
-        neoDevice->getHardwareInfo().platform.eProductFamily,
+        neoDevice->getHardwareInfo().platform.eRenderCoreFamily,
         module.get(), &kernelDesc, &result)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, kernel);

@@ -10,7 +10,6 @@ if(SUPPORT_NVLS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_nvls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_nvls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_nvls.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel_nvls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_nvls.cpp
   )
 endif()

@@ -10,7 +10,6 @@ if(SUPPORT_NVLP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_nvlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_nvlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_nvlp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel_nvlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_nvlp.cpp
   )
 endif()

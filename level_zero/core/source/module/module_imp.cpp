@@ -680,7 +680,7 @@ ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType 
     : device(device), translationUnit(std::make_unique<ModuleTranslationUnit>(device)),
       moduleBuildLog(moduleBuildLog), type(type) {
     auto &hwInfo = device->getHwInfo();
-    this->productFamily = hwInfo.platform.eProductFamily;
+    this->gfxCoreFamily = hwInfo.platform.eRenderCoreFamily;
     this->metadataGeneration = std::make_unique<NEO::MetadataGeneration>();
     this->isaAllocationPageSize = getIsaAllocationPageSize();
 }
@@ -1285,7 +1285,7 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED;
     }
-    auto kernel = Kernel::create(productFamily, this, desc, &res);
+    auto kernel = Kernel::create(gfxCoreFamily, this, desc, &res);
 
     if (res == ZE_RESULT_SUCCESS) {
         *kernelHandle = kernel->toHandle();

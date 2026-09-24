@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,9 @@
 
 namespace L0 {
 
-static KernelPopulateFactory<IGFX_ALDERLAKE_S, KernelHw<IGFX_GEN12LP_CORE>> populateADLS;
+static constexpr auto gfxCoreFamily = IGFX_GEN12LP_CORE;
+
+template struct KernelHw<gfxCoreFamily>;
+static KernelPopulateFactory<gfxCoreFamily, KernelHw<gfxCoreFamily>> populateGen12Lp;
 
 } // namespace L0

@@ -1435,8 +1435,8 @@ std::unique_ptr<KernelImp> KernelImp::makeDependentClone() {
     DEBUG_BREAK_IF(nullptr == this->ownedSharedState.get());
 
     auto *device{this->module->getDevice()};
-    const auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-    KernelAllocatorFn allocator = kernelFactory[productFamily];
+    const auto gfxCoreFamily = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    KernelAllocatorFn allocator = kernelFactory[gfxCoreFamily];
     auto clone = static_cast<KernelImp *>(allocator(nullptr));
     DEBUG_BREAK_IF(nullptr == clone);
     DEBUG_BREAK_IF(clone->ownedSharedState);
@@ -1539,10 +1539,10 @@ void KernelImp::patchGlobalOffset() {
     }
 }
 
-Kernel *Kernel::create(uint32_t productFamily, Module *module,
+Kernel *Kernel::create(uint32_t gfxCoreFamily, Module *module,
                        const ze_kernel_desc_t *desc, ze_result_t *res) {
-    UNRECOVERABLE_IF(productFamily >= NEO::maxProductEnumValue);
-    KernelAllocatorFn allocator = kernelFactory[productFamily];
+    UNRECOVERABLE_IF(gfxCoreFamily >= NEO::maxCoreEnumValue);
+    KernelAllocatorFn allocator = kernelFactory[gfxCoreFamily];
     auto kernel = static_cast<KernelImp *>(allocator(module));
     *res = kernel->initialize(desc);
     if (*res) {

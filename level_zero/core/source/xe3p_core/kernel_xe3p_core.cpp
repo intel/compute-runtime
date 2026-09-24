@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,9 @@
 
 namespace L0 {
 
-static KernelPopulateFactory<IGFX_CRI, KernelHw<IGFX_XE3P_CORE>> populateCRI;
+static constexpr auto gfxCoreFamily = IGFX_XE3P_CORE;
+
+template struct KernelHw<gfxCoreFamily>;
+static KernelPopulateFactory<gfxCoreFamily, KernelHw<gfxCoreFamily>> populateXe3pCore;
 
 } // namespace L0

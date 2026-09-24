@@ -9,7 +9,6 @@ if(SUPPORT_ADLS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_adls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_adls.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel_adls.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_adls.cpp
   )
 endif()

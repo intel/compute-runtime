@@ -117,7 +117,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
         static Kernel *allocate(Module *module) { return new Type(module); }
     };
 
-    static Kernel *create(uint32_t productFamily, Module *module,
+    static Kernel *create(uint32_t gfxCoreFamily, Module *module,
                           const ze_kernel_desc_t *desc, ze_result_t *ret);
 
     ~Kernel() override = default;
@@ -188,10 +188,10 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
 using KernelAllocatorFn = Kernel *(*)(Module * module);
 extern KernelAllocatorFn kernelFactory[];
 
-template <uint32_t productFamily, typename KernelType>
+template <uint32_t gfxCoreFamily, typename KernelType>
 struct KernelPopulateFactory {
     KernelPopulateFactory() {
-        kernelFactory[productFamily] = KernelType::template Allocator<KernelType>::allocate;
+        kernelFactory[gfxCoreFamily] = KernelType::template Allocator<KernelType>::allocate;
     }
 };
 

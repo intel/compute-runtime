@@ -9,7 +9,6 @@ if(SUPPORT_RKL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_rkl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_rkl.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel_rkl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_rkl.cpp
   )
 endif()

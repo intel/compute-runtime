@@ -11,7 +11,6 @@ if(SUPPORT_BMG)
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_bmg.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_bmg.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_bmg.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel_bmg.cpp
   )
   add_subdirectories()
 endif()

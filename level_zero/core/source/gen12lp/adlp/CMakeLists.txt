@@ -9,7 +9,6 @@ if(SUPPORT_ADLP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_adlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_adlp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel_adlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_adlp.cpp
   )
 endif()

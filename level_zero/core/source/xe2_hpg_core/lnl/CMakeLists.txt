@@ -10,7 +10,6 @@ if(SUPPORT_LNL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_lnl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_lnl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_lnl.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel_lnl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_lnl.cpp
   )
   add_subdirectories()
