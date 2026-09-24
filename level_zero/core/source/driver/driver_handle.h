@@ -123,7 +123,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     void createHostPointerManager();
 
     bool isRemoteImageNeeded(Image *image, Device *device);
-    bool isRemoteResourceNeeded(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device);
+    bool isRemoteResourceNeeded(const NEO::SvmAllocationData &allocData, Device *device);
     ze_result_t fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
                                  uint32_t *pCount, ze_fabric_edge_handle_t *phEdges);
     MOCKABLE_VIRTUAL uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const;

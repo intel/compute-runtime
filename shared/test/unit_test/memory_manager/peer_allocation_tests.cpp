@@ -129,7 +129,7 @@ TEST_F(PeerAllocationTest, givenSameRootDeviceWhenIsRemoteResourceNeededThenRetu
     SvmAllocationData allocData(0u);
     allocData.gpuAllocations.addAllocation(&alloc);
 
-    EXPECT_FALSE(memoryManager->isRemoteResourceNeeded(&alloc, &allocData, device0.get()));
+    EXPECT_FALSE(memoryManager->isRemoteResourceNeeded(allocData, device0.get()));
 }
 
 TEST_F(PeerAllocationTest, givenDifferentRootDeviceAndMissingPeerAllocationWhenIsRemoteResourceNeededThenReturnsTrue) {
@@ -137,12 +137,21 @@ TEST_F(PeerAllocationTest, givenDifferentRootDeviceAndMissingPeerAllocationWhenI
     SvmAllocationData allocData(0u);
     allocData.gpuAllocations.addAllocation(&alloc);
 
-    EXPECT_TRUE(memoryManager->isRemoteResourceNeeded(&alloc, &allocData, device1.get()));
+    EXPECT_TRUE(memoryManager->isRemoteResourceNeeded(allocData, device1.get()));
 }
 
-TEST_F(PeerAllocationTest, givenNullAllocationWhenIsRemoteResourceNeededThenReturnsTrue) {
+TEST_F(PeerAllocationTest, givenNoAllocationAddedWhenIsRemoteResourceNeededThenReturnsTrue) {
     SvmAllocationData allocData(0u);
-    EXPECT_TRUE(memoryManager->isRemoteResourceNeeded(nullptr, &allocData, device0.get()));
+    EXPECT_TRUE(memoryManager->isRemoteResourceNeeded(allocData, device0.get()));
+}
+
+TEST_F(PeerAllocationTest, givenMultiRootAllocationDataWhenIsRemoteResourceNeededThenSlotDecides) {
+    MockGraphicsAllocation alloc(1u, nullptr, 0u);
+    SvmAllocationData allocData(1u);
+    allocData.gpuAllocations.addAllocation(&alloc);
+
+    EXPECT_TRUE(memoryManager->isRemoteResourceNeeded(allocData, device0.get()));
+    EXPECT_FALSE(memoryManager->isRemoteResourceNeeded(allocData, device1.get()));
 }
 
 TEST_F(PeerAllocationTest, givenCachedPeerAllocationWhenGettingPeerAllocationThenImportIsSkipped) {

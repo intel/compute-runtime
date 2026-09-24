@@ -1544,8 +1544,8 @@ void MemoryManager::destroyPageFaultManager() {
     pageFaultManager.reset();
 }
 
-bool MemoryManager::isRemoteResourceNeeded(GraphicsAllocation *alloc, SvmAllocationData *allocData, Device *device) {
-    return (alloc == nullptr || (allocData && ((allocData->gpuAllocations.getGraphicsAllocations().size() - 1) < device->getRootDeviceIndex())));
+bool MemoryManager::isRemoteResourceNeeded(const SvmAllocationData &allocData, Device *device) const {
+    return allocData.gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex()) == nullptr;
 }
 
 void *MemoryManager::importFdHandle(Device *neoDevice,

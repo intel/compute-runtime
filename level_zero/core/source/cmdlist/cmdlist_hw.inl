@@ -3285,11 +3285,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
 
         DriverHandle *driverHandle = device->getDriverHandle();
         auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
-        if (driverHandle->isRemoteResourceNeeded(gpuAllocation, allocData, device)) {
-            if (allocData) {
-                uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
-                gpuAllocation = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), nullptr, nullptr, false);
-            }
+        if (gpuAllocation == nullptr && allocData) {
+            uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+            gpuAllocation = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), nullptr, nullptr, false);
         }
 
         uint32_t patternToCommand[4] = {};
@@ -3472,7 +3470,7 @@ AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::alignSvmAllocationDa
     auto alloc = svmAlloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     DriverHandle *driverHandle = device->getDriverHandle();
     uintptr_t alignedPtr = 0u;
-    if (driverHandle->isRemoteResourceNeeded(alloc, svmAlloc, device)) {
+    if (driverHandle->isRemoteResourceNeeded(*svmAlloc, device)) {
         uint64_t pbase = svmAlloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
         uint64_t peerBaseOffset = sourcePtr - pbase;
 
@@ -4696,8 +4694,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isRemoteAlloc(NEO::SvmAllocationData 
     auto driver = this->device->getDriverHandle();
 
     if (allocData) {
-        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        return (driver->isRemoteResourceNeeded(alloc, allocData, this->device) || allocData->isImportedAllocation);
+        return (driver->isRemoteResourceNeeded(*allocData, this->device) || allocData->isImportedAllocation);
     }
 
     return false;

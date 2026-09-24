@@ -37,6 +37,7 @@
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/core/source/mutable_cmdlist/helper.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
@@ -4828,16 +4829,13 @@ HWTEST_F(MultipleDevicePeerAllocationTest, whenisRemoteResourceNeededIsCalledWit
     auto allocationData0 = svmManager->getSVMAlloc(ptr0);
     auto allocationData1 = svmManager->getSVMAlloc(ptr1);
 
-    bool isNeeded = driverHandle->isRemoteResourceNeeded(nullptr, allocationData1, device0);
+    bool isNeeded = driverHandle->isRemoteResourceNeeded(*allocationData1, device0);
     EXPECT_TRUE(isNeeded);
 
-    isNeeded = driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device0);
+    isNeeded = driverHandle->isRemoteResourceNeeded(*allocationData0, device0);
     EXPECT_FALSE(isNeeded);
 
-    isNeeded = driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(1u), nullptr, device0);
-    EXPECT_TRUE(isNeeded);
-
-    isNeeded = driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device1);
+    isNeeded = driverHandle->isRemoteResourceNeeded(*allocationData0, device1);
     EXPECT_TRUE(isNeeded);
 
     ret = context->freeMem(ptr0);
@@ -4861,14 +4859,65 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenAllocDataWhenCheckingIfRemoteCop
     auto commandList0 = std::make_unique<MockCommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList0->initialize(device0, NEO::EngineGroupType::compute, 0u);
 
-    EXPECT_FALSE(driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device0));
+    EXPECT_FALSE(driverHandle->isRemoteResourceNeeded(*allocationData0, device0));
     EXPECT_FALSE(commandList0->isRemoteAlloc(allocationData0));
 
     allocationData0->isImportedAllocation = true;
-    EXPECT_FALSE(driverHandle->isRemoteResourceNeeded(allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device0));
+    EXPECT_FALSE(driverHandle->isRemoteResourceNeeded(*allocationData0, device0));
     EXPECT_TRUE(commandList0->isRemoteAlloc(allocationData0));
 
     context->freeMem(ptr0);
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest, givenBufferOwnedByOtherRootWhenGettingBufferGpuAddressThenPeerAllocationIsImportedAndOffsetApplied) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr0 = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, 1024, 1, &ptr0));
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr0);
+    ASSERT_NE(nullptr, allocData);
+    auto srcBase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+
+    NEO::GraphicsAllocation *bufferAlloc = nullptr;
+    L0::MCL::GpuAddress gpuAddress = 0u;
+    uint32_t allocId = 0u;
+    auto buffer = ptrOffset(ptr0, 0x10);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::MCL::getBufferGpuAddress(buffer, device1, bufferAlloc, gpuAddress, allocId));
+    ASSERT_NE(nullptr, bufferAlloc);
+    EXPECT_EQ(1u, bufferAlloc->getRootDeviceIndex());
+    auto peerBase = bufferAlloc->getGpuAddress();
+    EXPECT_EQ(peerBase + (castToUint64(buffer) - srcBase), gpuAddress);
+
+    NEO::GraphicsAllocation *secondBufferAlloc = nullptr;
+    L0::MCL::GpuAddress secondGpuAddress = 0u;
+    auto secondBuffer = ptrOffset(ptr0, 0x20);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::MCL::getBufferGpuAddress(secondBuffer, device1, secondBufferAlloc, secondGpuAddress, allocId));
+    EXPECT_EQ(bufferAlloc, secondBufferAlloc);
+    EXPECT_EQ(peerBase + (castToUint64(secondBuffer) - srcBase), secondGpuAddress);
+    EXPECT_EQ(1u, device1->peerAllocations.allocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr0));
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest, givenBufferOwnedByOtherRootAndImportFailsWhenGettingBufferGpuAddressThenInvalidArgumentIsReturned) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr0 = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, 1024, 1, &ptr0));
+
+    NEO::GraphicsAllocation *bufferAlloc = nullptr;
+    L0::MCL::GpuAddress gpuAddress = 0u;
+    uint32_t allocId = 0u;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::MCL::getBufferGpuAddress(ptr0, device1, bufferAlloc, gpuAddress, allocId));
+    EXPECT_EQ(0u, device1->peerAllocations.allocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr0));
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsResidentThenOnlyValidAllocationsAreMadeResident) {
@@ -5107,6 +5156,57 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenHostPointerAllocationPassedToApp
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
     delete[] ptr;
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest, givenFillRangeCoveredByImportedHostPointerOverUsmAllocationWhenAppendingBlitFillThenHostPointerAllocationIsUsedWithoutPeerImport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+
+    const size_t allocationSize = MemoryConstants::pageSize;
+    const size_t fillSize = 2 * MemoryConstants::pageSize;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    CmdListMemoryCopyParams copyParams;
+    char pattern = 'a';
+
+    // allocation data holds no slot for root device 1
+    void *ptr0 = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, allocationSize, 1, &ptr0));
+    ASSERT_EQ(1u, svmManager->getSVMAlloc(ptr0)->gpuAllocations.getGraphicsAllocations().size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(ptr0, fillSize));
+    auto hostPtrAllocation1 = driverHandle->findHostPointerAllocation(ptr0, fillSize, 1u);
+    ASSERT_NE(nullptr, hostPtrAllocation1);
+
+    auto commandList1 = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList1->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList1->appendBlitFill(ptr0, &pattern, sizeof(pattern), fillSize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(0u, device1->peerAllocations.allocations.size());
+    auto &residencyContainer1 = commandList1->getCmdContainer().getResidencyContainer();
+    EXPECT_NE(residencyContainer1.end(), std::find(residencyContainer1.begin(), residencyContainer1.end(), hostPtrAllocation1));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->releaseImportedPointer(ptr0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr0));
+
+    // allocation data holds an empty slot for root device 0
+    void *ptr1 = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device1->toHandle(), &deviceDesc, allocationSize, 1, &ptr1));
+    ASSERT_EQ(2u, svmManager->getSVMAlloc(ptr1)->gpuAllocations.getGraphicsAllocations().size());
+    ASSERT_EQ(nullptr, svmManager->getSVMAlloc(ptr1)->gpuAllocations.getGraphicsAllocation(0u));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(ptr1, fillSize));
+    auto hostPtrAllocation0 = driverHandle->findHostPointerAllocation(ptr1, fillSize, 0u);
+    ASSERT_NE(nullptr, hostPtrAllocation0);
+
+    auto commandList0 = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList0->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList0->appendBlitFill(ptr1, &pattern, sizeof(pattern), fillSize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(0u, device0->peerAllocations.allocations.size());
+    auto &residencyContainer0 = commandList0->getCmdContainer().getResidencyContainer();
+    EXPECT_NE(residencyContainer0.end(), std::find(residencyContainer0.begin(), residencyContainer0.end(), hostPtrAllocation0));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->releaseImportedPointer(ptr1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr1));
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToResolveAlignedAllocationAndImportFdHandleFailingThenPeerAllocNotFoundReturnsTrue) {

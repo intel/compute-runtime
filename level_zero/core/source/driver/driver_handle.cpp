@@ -667,8 +667,8 @@ NEO::GraphicsAllocation *DriverHandle::getDriverSystemMemoryAllocation(void *ptr
     return allocation;
 }
 
-bool DriverHandle::isRemoteResourceNeeded(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device) {
-    return this->getMemoryManager()->isRemoteResourceNeeded(alloc, allocData, device->getNEODevice());
+bool DriverHandle::isRemoteResourceNeeded(const NEO::SvmAllocationData &allocData, Device *device) {
+    return this->getMemoryManager()->isRemoteResourceNeeded(allocData, device->getNEODevice());
 }
 
 void *DriverHandle::importFdHandle(NEO::Device *neoDevice,

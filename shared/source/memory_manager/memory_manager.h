@@ -209,7 +209,7 @@ class MemoryManager {
                                            bool uncachedBias,
                                            const std::vector<uint64_t> &physicalOffsets);
 
-    bool isRemoteResourceNeeded(GraphicsAllocation *alloc, SvmAllocationData *allocData, Device *device);
+    bool isRemoteResourceNeeded(const SvmAllocationData &allocData, Device *device) const;
 
     GraphicsAllocation *getOrImportPeerAllocation(Device *device,
                                                   SVMAllocsManager *svmAllocsManager,

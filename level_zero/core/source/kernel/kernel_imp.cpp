@@ -924,7 +924,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     }
 
     NEO::SvmAllocationData *peerAllocData = nullptr;
-    if (allocData && driverHandle->isRemoteResourceNeeded(alloc, allocData, device)) {
+    if (allocData && driverHandle->isRemoteResourceNeeded(*allocData, device)) {
 
         uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
         uint64_t offset = (uint64_t)requestedAddress - pbase;
