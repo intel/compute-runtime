@@ -30,26 +30,63 @@ const std::string LinuxPciImp::deviceDir("device");
 const std::string LinuxPciImp::resourceFile("device/resource");
 
 ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *pProperties) {
-    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    getPciDowngradeProperties(&pciDowngradeProperties);
+    pciConfigPropertiesResult = getPciConfigProperties(&pciConfigProperties);
+    return pLinuxSysmanImp->getSysmanProductHelper()->getPciProperties(pProperties);
+}
 
-    void *pNext = pProperties->pNext;
+void LinuxPciImp::getPciDowngradeProperties(zes_pci_link_speed_downgrade_ext_properties_t *pDowngradeProperties) {
+    pDowngradeProperties->maxPciGenSupported = -1;
+    uint32_t downgradeCapable = 0;
+    if (pLinuxSysmanImp->getSysmanKmdInterface()->readPcieDowngradeAttribute("pcieDowngradeCapable", downgradeCapable) == ZE_RESULT_SUCCESS) {
+        pDowngradeProperties->pciLinkSpeedUpdateCapable = downgradeCapable;
+        pDowngradeProperties->maxPciGenSupported = pLinuxSysmanImp->getSysmanProductHelper()->maxPcieGenSupported();
+        isPciDowngradePropertiesAvailable = true;
+    }
+}
+
+ze_result_t LinuxPciImp::getExtensionProperties(void *pNext) {
+    if (pLinuxSysmanImp->isDeviceInSurvivabilityMode()) {
+        while (pNext) {
+            auto pExtProps = reinterpret_cast<zes_base_properties_t *>(pNext);
+            if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES) {
+                ze_result_t result = getPciConfigProperties(reinterpret_cast<zes_intel_pci_config_exp_properties_t *>(pExtProps));
+                if (result != ZE_RESULT_SUCCESS) {
+                    return result;
+                }
+            }
+            pNext = pExtProps->pNext;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     while (pNext) {
         auto pExtProps = reinterpret_cast<zes_base_properties_t *>(pNext);
         if (pExtProps->stype == ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES) {
             auto pDowngradeExtProps = reinterpret_cast<zes_pci_link_speed_downgrade_ext_properties_t *>(pExtProps);
-            auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-            uint32_t downgradeCapable;
-            if (pSysmanKmdInterface->readPcieDowngradeAttribute("pcieDowngradeCapable", downgradeCapable) == ZE_RESULT_SUCCESS) {
-                pDowngradeExtProps->pciLinkSpeedUpdateCapable = downgradeCapable;
-                pDowngradeExtProps->maxPciGenSupported = pSysmanProductHelper->maxPcieGenSupported();
-                isPciDowngradePropertiesAvailable = true;
-            }
+            pDowngradeExtProps->maxPciGenSupported = pciDowngradeProperties.maxPciGenSupported;
+            pDowngradeExtProps->pciLinkSpeedUpdateCapable = pciDowngradeProperties.pciLinkSpeedUpdateCapable;
+        } else if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES) {
+            auto pDowngradeExpProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
+            pDowngradeExpProps->maxPciGenSupported = pciDowngradeProperties.maxPciGenSupported;
+            pDowngradeExpProps->pciLinkSpeedUpdateCapable = pciDowngradeProperties.pciLinkSpeedUpdateCapable;
         } else if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES) {
-            pciConfigPropertiesResult = getPciConfigProperties(reinterpret_cast<zes_intel_pci_config_exp_properties_t *>(pExtProps));
+            if (pciConfigPropertiesResult != ZE_RESULT_SUCCESS) {
+                return pciConfigPropertiesResult;
+            }
+            auto pConfigProps = reinterpret_cast<zes_intel_pci_config_exp_properties_t *>(pExtProps);
+            pConfigProps->vendorId = pciConfigProperties.vendorId;
+            pConfigProps->deviceId = pciConfigProperties.deviceId;
+            pConfigProps->subsystemVendorId = pciConfigProperties.subsystemVendorId;
+            pConfigProps->subsystemDeviceId = pciConfigProperties.subsystemDeviceId;
+            pConfigProps->pcieCapabilityVersion = pciConfigProperties.pcieCapabilityVersion;
+            pConfigProps->supportedLinkSpeeds = pciConfigProperties.supportedLinkSpeeds;
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         pNext = pExtProps->pNext;
     }
-    return pSysmanProductHelper->getPciProperties(pProperties);
+    return ZE_RESULT_SUCCESS;
 }
 
 void LinuxPciImp::getPcieLinkCapabilities(std::vector<uint8_t> &configMemory, uint32_t &capabilityVersion, uint32_t &supportedLinkSpeeds) {

@@ -29,10 +29,10 @@ class OsPci {
     virtual bool resizableBarEnabled(uint32_t barIndex) = 0;
     virtual ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) = 0;
     virtual ze_result_t getPciConfigProperties(zes_intel_pci_config_exp_properties_t *pConfigProperties) = 0;
+    virtual ze_result_t getExtensionProperties(void *pNext) = 0;
     static OsPci *create(OsSysman *pOsSysman);
     virtual ~OsPci() = default;
     bool isPciDowngradePropertiesAvailable = false;
-    ze_result_t pciConfigPropertiesResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 };
 
 } // namespace Sysman

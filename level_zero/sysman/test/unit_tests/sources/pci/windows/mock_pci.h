@@ -14,15 +14,12 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint16_t mockPciVendorId = 0x8086u;
-constexpr uint16_t mockPciDeviceId = 0x0bd5u;
-constexpr uint32_t mockPcieCapabilityVersion = 2u;
-constexpr uint32_t mockSupportedLinkSpeeds = ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN1 | ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN2;
 constexpr uint64_t mockRxCounter = 24200000u;
 constexpr uint64_t mockTxCounter = 231000000u;
 constexpr uint64_t mockRxPacketCounter = 300000u;
 constexpr uint64_t mockTxPacketCounter = 200000u;
 constexpr uint64_t mockTimestamp = 120000u;
+constexpr int32_t mockUntouchedPciGen = 0x7E;
 
 struct PciKmdSysManager : public MockKmdSysManager {
     // PciCurrentDevice, PciParentDevice, PciRootPort
@@ -160,26 +157,6 @@ class PciWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
         pPciBdfInfo->pciDevice = testPciDevice;
 
         return pPciBdfInfo;
-    }
-};
-
-class MockWddmPciImp : public L0::Sysman::WddmPciImp {
-  public:
-    using WddmPciImp::WddmPciImp;
-
-    ze_result_t mockPciConfigPropertiesResult = ZE_RESULT_SUCCESS;
-
-    ze_result_t getPciConfigProperties(zes_intel_pci_config_exp_properties_t *pConfigProperties) override {
-        if (mockPciConfigPropertiesResult != ZE_RESULT_SUCCESS) {
-            return mockPciConfigPropertiesResult;
-        }
-
-        pConfigProperties->vendorId = mockPciVendorId;
-        pConfigProperties->deviceId = mockPciDeviceId;
-        pConfigProperties->pcieCapabilityVersion = mockPcieCapabilityVersion;
-        pConfigProperties->supportedLinkSpeeds = mockSupportedLinkSpeeds;
-
-        return ZE_RESULT_SUCCESS;
     }
 };
 

@@ -15,6 +15,8 @@
 
 #include "mock_pci.h"
 
+#include <cstdint>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -437,13 +439,13 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciLink
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciLinkSpeedUpdateExt(pSysmanDevice->toHandle(), downgradeUpgrade, &pendingAction));
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithWrongExtensionStructureThenCallFails) {
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithWrongExtensionStructureThenExtensionIsIgnoredAndSuccessIsReturned) {
     zes_pci_properties_t properties = {};
     zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
     extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     properties.pNext = &extProps;
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Repeat the test for zes_pci_link_speed_downgrade_ext_properties_t
     properties = {};
@@ -451,26 +453,37 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
     extProps1.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     properties.pNext = &extProps1;
     result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureThenCallSucceedsWithProperValueReturned) {
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureThenExtensionIsNotFilledAndSuccessIsReturned) {
     zes_pci_properties_t properties = {};
     zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
     extProps.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
+    extProps.maxPciGenSupported = mockUntouchedPciGen;
     properties.pNext = &extProps;
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(extProps.maxPciGenSupported, -1);
+    EXPECT_EQ(extProps.maxPciGenSupported, mockUntouchedPciGen);
 
     // Repeat the test for zes_pci_link_speed_downgrade_ext_properties_t
     properties = {};
     zes_pci_link_speed_downgrade_ext_properties_t extProps1 = {};
     extProps1.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
+    extProps1.maxPciGenSupported = mockUntouchedPciGen;
     properties.pNext = &extProps1;
     result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(extProps1.maxPciGenSupported, -1);
+    EXPECT_EQ(extProps1.maxPciGenSupported, mockUntouchedPciGen);
+}
+
+TEST_F(SysmanDevicePciFixture, GivenUninitializedExtensionChainPointerWhenCallingZesDevicePciGetPropertiesThenChainIsNotDereferencedAndSuccessIsReturned) {
+    zes_pci_properties_t properties = {};
+    auto uninitializedPnext = reinterpret_cast<void *>(static_cast<uintptr_t>(0xDEADBEEFu));
+    properties.pNext = uninitializedPnext;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties));
+    EXPECT_EQ(uninitializedPnext, properties.pNext);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithExtensionStructureAndExtStructureIsSupportedThenCallSucceeds) {
@@ -500,7 +513,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithWrongExtensionStructureAndExtStructureIsSupportedThenCallSucceeds) {
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithWrongExtensionStructureAndExtStructureIsSupportedThenExtensionIsIgnoredAndSuccessIsReturned) {
     delete pSysmanDeviceImp->pPci;
     pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
     PciImp *pPciImp = new PciImp(pOsSysman);
@@ -516,7 +529,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
     extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     properties.pNext = &extProps;
     ze_result_t result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Repeat the test for zes_pci_link_speed_downgrade_ext_properties_t
     properties = {};
@@ -524,26 +537,10 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
     extProps1.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     properties.pNext = &extProps1;
     result = zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithPciConfigExtensionThenUnsupportedFeatureIsReturned) {
-    zes_pci_properties_t properties = {};
-    zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
-    properties.pNext = &configProps;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties));
-    EXPECT_EQ(0, configProps.vendorId);
-    EXPECT_EQ(0, configProps.deviceId);
-    EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
-    EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
-}
-
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithPciConfigExtensionAndConfigPropertiesAreAvailableThenCallSucceeds) {
-    auto pPciImp = static_cast<PciImp *>(pSysmanDeviceImp->pPci);
-    pPciImp->pOsPci->pciConfigPropertiesResult = ZE_RESULT_SUCCESS;
-
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithPciConfigExtensionThenExtensionIsNotFilledAndSuccessIsReturned) {
     zes_pci_properties_t properties = {};
     zes_intel_pci_config_exp_properties_t configProps = {};
     configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
@@ -623,7 +620,7 @@ TEST_F(SysmanDevicePciFixture, GivenProperPciBdfInfoObjectWhenPciGetPropertiesIs
     pMockSysman.reset();
 }
 
-TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciConfigExtensionIsChainedAndConfigPropertiesAreNotAvailableThenFailureIsReported) {
+TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciConfigExtensionIsChainedThenBdfIsReturnedAndExtensionIsNotFilled) {
     pSysmanDevice->isDeviceInSurvivabilityMode = true;
 
     auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
@@ -634,32 +631,6 @@ TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciConfigExtens
     pSysmanDeviceImp->pOsSysman = pMockSysman.get();
 
     auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
-
-    zes_pci_properties_t properties = {};
-    zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
-    properties.pNext = &configProps;
-
-    ze_result_t result = testPciImp->pciStaticProperties(&properties);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-
-    pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
-    testPciImp.reset();
-    pMockSysman.reset();
-}
-
-TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciConfigExtensionIsChainedAndConfigPropertiesAreAvailableThenBdfAndConfigPropertiesAreReturned) {
-    pSysmanDevice->isDeviceInSurvivabilityMode = true;
-
-    auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
-
-    auto pMockSysman = std::make_unique<PciWddmSysmanImp>(pSysmanDeviceImp);
-    pMockSysman->pKmdSysManager = new PciKmdSysManager;
-
-    pSysmanDeviceImp->pOsSysman = pMockSysman.get();
-
-    auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
-    testPciImp->pOsPci = new MockWddmPciImp(pMockSysman.get());
 
     zes_pci_properties_t properties = {};
     zes_intel_pci_config_exp_properties_t configProps = {};
@@ -674,17 +645,17 @@ TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciConfigExtens
     EXPECT_EQ(pMockSysman->testPciFunction, properties.address.function);
     EXPECT_EQ(pMockSysman->testPciDevice, properties.address.device);
 
-    EXPECT_EQ(mockPciVendorId, configProps.vendorId);
-    EXPECT_EQ(mockPciDeviceId, configProps.deviceId);
-    EXPECT_EQ(mockPcieCapabilityVersion, configProps.pcieCapabilityVersion);
-    EXPECT_EQ(mockSupportedLinkSpeeds, configProps.supportedLinkSpeeds);
+    EXPECT_EQ(0, configProps.vendorId);
+    EXPECT_EQ(0, configProps.deviceId);
+    EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
+    EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 
     pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
     testPciImp.reset();
     pMockSysman.reset();
 }
 
-TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenExtensionOtherThanPciConfigIsChainedThenExtensionIsIgnoredAndRemainingChainIsHandled) {
+TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenMultipleExtensionsAreChainedThenNoneOfThemAreFilledAndSuccessIsReturned) {
     pSysmanDevice->isDeviceInSurvivabilityMode = true;
 
     auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
@@ -695,7 +666,6 @@ TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenExtensionOtherT
     pSysmanDeviceImp->pOsSysman = pMockSysman.get();
 
     auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
-    testPciImp->pOsPci = new MockWddmPciImp(pMockSysman.get());
 
     zes_pci_properties_t properties = {};
     zes_pci_link_speed_downgrade_ext_properties_t downgradeProps = {};
@@ -712,10 +682,45 @@ TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenExtensionOtherT
     EXPECT_EQ(0, downgradeProps.maxPciGenSupported);
     EXPECT_FALSE(downgradeProps.pciLinkSpeedUpdateCapable);
 
-    EXPECT_EQ(mockPciVendorId, configProps.vendorId);
-    EXPECT_EQ(mockPciDeviceId, configProps.deviceId);
-    EXPECT_EQ(mockPcieCapabilityVersion, configProps.pcieCapabilityVersion);
-    EXPECT_EQ(mockSupportedLinkSpeeds, configProps.supportedLinkSpeeds);
+    EXPECT_EQ(0, configProps.vendorId);
+    EXPECT_EQ(0, configProps.deviceId);
+    EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
+    EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
+
+    pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
+    testPciImp.reset();
+    pMockSysman.reset();
+}
+
+TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciGetPropertiesWithExtensionIsCalledTwiceThenOsPciIsCreatedOnceAndReused) {
+    pSysmanDevice->isDeviceInSurvivabilityMode = true;
+
+    auto pOriginalOsSysman = pSysmanDeviceImp->pOsSysman;
+
+    auto pMockSysman = std::make_unique<PciWddmSysmanImp>(pSysmanDeviceImp);
+    pMockSysman->pKmdSysManager = new PciKmdSysManager;
+
+    pSysmanDeviceImp->pOsSysman = pMockSysman.get();
+
+    auto testPciImp = std::make_unique<L0::Sysman::PciImp>(pMockSysman.get());
+    EXPECT_EQ(nullptr, testPciImp->pOsPci);
+
+    zes_pci_properties_t properties = {};
+    zes_intel_pci_config_exp_properties_t configProps = {};
+    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    properties.pNext = &configProps;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testPciImp->pciStaticProperties(&properties));
+    auto pOsPciAfterFirstCall = testPciImp->pOsPci;
+    EXPECT_NE(nullptr, pOsPciAfterFirstCall);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testPciImp->pciStaticProperties(&properties));
+    EXPECT_EQ(pOsPciAfterFirstCall, testPciImp->pOsPci);
+
+    EXPECT_EQ(pMockSysman->testPciBus, properties.address.bus);
+    EXPECT_EQ(pMockSysman->testPciDomain, properties.address.domain);
+    EXPECT_EQ(pMockSysman->testPciFunction, properties.address.function);
+    EXPECT_EQ(pMockSysman->testPciDevice, properties.address.device);
 
     pSysmanDeviceImp->pOsSysman = pOriginalOsSysman;
     testPciImp.reset();

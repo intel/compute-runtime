@@ -31,6 +31,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     bool resizableBarSupported() override;
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
+    ze_result_t getExtensionProperties(void *pNext) override;
     static uint32_t getRebarCapabilityPos(uint8_t *configMemory, bool isVfBar);
     static uint16_t getLinkRegisterPos(uint8_t *configMem, uint16_t linkRegisterOffset);
     static uint16_t getPcieCapabilityPos(uint8_t *configMem);
@@ -49,6 +50,10 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     static const std::string maxLinkSpeedFile;
     static const std::string maxLinkWidthFile;
     void getPciLinkSpeed(zes_pci_speed_t &linkSpeed);
+    void getPciDowngradeProperties(zes_pci_link_speed_downgrade_ext_properties_t *pDowngradeProperties);
+    zes_pci_link_speed_downgrade_ext_properties_t pciDowngradeProperties = {};
+    zes_intel_pci_config_exp_properties_t pciConfigProperties = {};
+    ze_result_t pciConfigPropertiesResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     static void getPcieLinkCapabilities(std::vector<uint8_t> &configMemory, uint32_t &capabilityVersion, uint32_t &supportedLinkSpeeds);
     ze_result_t getPciConfigProperties(zes_intel_pci_config_exp_properties_t *pConfigProperties) override;
 };

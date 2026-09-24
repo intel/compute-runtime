@@ -27,6 +27,7 @@ class WddmPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     ze_result_t getPciConfigProperties(zes_intel_pci_config_exp_properties_t *pConfigProperties) override;
+    ze_result_t getExtensionProperties(void *pNext) override;
     WddmPciImp(OsSysman *pOsSysman);
     ~WddmPciImp() override = default;
     bool isLocalMemSupported();
