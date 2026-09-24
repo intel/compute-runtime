@@ -63,17 +63,18 @@ TEST_F(PciBusInfoTest, givenSuccessfulReadingOfBusValuesThenCorrectValuesAreRetu
 }
 
 TEST_P(PciBusOrderingTest, givenMultipleDevicesWithCompositeHierarchyAndZePcieIdOrderingSetThenDevicesAndVerticesAreInCorrectOrder) {
-    constexpr uint32_t numRootDevices = 6u;
+    constexpr uint32_t numRootDevices = 3u;
     constexpr uint32_t numSubDevices = 2u;
-    const NEO::PhysicalDevicePciBusInfo busInfos[numRootDevices] = {{2, 0, 3, 0}, {2, 0, 1, 9}, {0, 0, 0, 1}, {0, 3, 5, 0}, {1, 3, 5, 0}, {0, 4, 1, 0}};
-    const NEO::PhysicalDevicePciBusInfo busInfosSorted[numRootDevices] = {{0, 3, 5, 0}, {0, 4, 1, 0}, {2, 0, 1, 9}, {0, 0, 0, 1}, {1, 3, 5, 0}, {2, 0, 3, 0}};
-    const NEO::PhysicalDevicePciBusInfo busInfosPciSorted[numRootDevices] = {{0, 0, 0, 1}, {0, 3, 5, 0}, {0, 4, 1, 0}, {1, 3, 5, 0}, {2, 0, 1, 9}, {2, 0, 3, 0}};
+    const NEO::PhysicalDevicePciBusInfo busInfos[numRootDevices] = {{1, 0, 3, 0}, {2, 1, 0, 1}, {0, 2, 1, 0}};
+    const NEO::PhysicalDevicePciBusInfo busInfosSorted[numRootDevices] = {{2, 1, 0, 1}, {0, 2, 1, 0}, {1, 0, 3, 0}};
+    const NEO::PhysicalDevicePciBusInfo busInfosPciSorted[numRootDevices] = {{0, 2, 1, 0}, {1, 0, 3, 0}, {2, 1, 0, 1}};
     const bool forcePciBusOrdering = GetParam();
 
     debugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(forcePciBusOrdering ? 1 : 0);
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     debugManager.flags.EnableChipsetUniqueUUID.set(0);
+    debugManager.flags.ContextGroupSize.set(0);
 
     auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDeviceHierarchyMode(DeviceHierarchyMode::composite);
@@ -93,17 +94,10 @@ TEST_P(PciBusOrderingTest, givenMultipleDevicesWithCompositeHierarchyAndZePcieId
     }
     executionEnvironment->sortNeoDevices();
 
-    auto deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
-    EXPECT_EQ(numRootDevices, deviceFactory->rootDevices.size());
-
     auto driverHandle = std::make_unique<DriverHandle>();
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(neoDevices)));
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::vector<std::unique_ptr<L0::Device>> devices;
-    for (auto i = 0u; i < numRootDevices; i++) {
-        devices.emplace_back(L0::Device::create(driverHandle.get(), deviceFactory->rootDevices[i], false, &returnValue));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    }
+    auto &devices = driverHandle->devices;
+    ASSERT_EQ(numRootDevices, devices.size());
     EXPECT_EQ(0u, driverHandle->fabricVertices.size());
     uint32_t vertexCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricVertexGetExp(&vertexCount, nullptr));
