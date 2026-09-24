@@ -26,6 +26,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/state_base_address_helper.h"
@@ -144,10 +145,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence);
     }
 
-    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1 || NEO::debugManager.flags.PauseOnBlitCopy.get() != -1) [[unlikely]] {
-        neoDevice->debugExecutionCounter++;
-    }
-
     if (NEO::debugManager.flags.LogKernelDispatchStats.get() && (ret == ZE_RESULT_SUCCESS)) {
         for (auto i = 0u; i < numCommandLists; i++) {
             auto commandList = CommandList::fromHandle(phCommandLists[i]);
@@ -171,6 +168,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     ze_result_t retVal = this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence);
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
+    }
+
+    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) [[unlikely]] {
+        ctx.debugPauses = this->patchDebugPauses(commandListHandles, numCommandLists);
     }
 
     std::unique_lock<std::mutex> lockForIndirect;
@@ -216,6 +217,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
 
         this->dispatchPatchPreambleCommandListWaitSync(ctx, commandList);
 
+        if (i == 0 && ctx.debugPauses.beforeWorkload) [[unlikely]] {
+            this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, true);
+        }
+
         this->patchCommands(*commandList, ctx);
         this->programOneCmdListBatchBufferStart(commandList, *streamForDispatch, ctx);
 
@@ -231,6 +236,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
 
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
     this->programLastCommandListReturnBbStart(*streamForDispatch, ctx);
+    if (ctx.debugPauses.afterWorkload) [[unlikely]] {
+        this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, false);
+    }
     this->dispatchPatchPreambleEnding(ctx);
 
     if (!ctx.containsParentImmediateStream) {
@@ -254,6 +262,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     ze_result_t retVal = this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence);
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
+    }
+
+    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) [[unlikely]] {
+        ctx.debugPauses = this->patchDebugPauses(commandListHandles, numCommandLists);
     }
 
     std::unique_lock<std::mutex> lockForIndirect;
@@ -352,6 +364,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
         this->dispatchPatchPreambleCommandListWaitSync(ctx, commandList);
 
+        if (i == 0 && ctx.debugPauses.beforeWorkload) [[unlikely]] {
+            this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, true);
+        }
+
         this->patchCommands(*commandList, ctx);
         this->programOneCmdListBatchBufferStart(commandList, *streamForDispatch, ctx);
 
@@ -369,6 +385,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
 
     this->programLastCommandListReturnBbStart(*streamForDispatch, ctx);
+    if (ctx.debugPauses.afterWorkload) [[unlikely]] {
+        this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, false);
+    }
     this->dispatchPatchPreambleEnding(ctx);
 
     this->csr->setPreemptionMode(ctx.statePreemption);
@@ -400,6 +419,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
         return retVal;
     }
 
+    if (NEO::debugManager.flags.PauseOnBlitCopy.get() != -1) [[unlikely]] {
+        ctx.debugPauses = this->patchDebugPauses(phCommandLists, numCommandLists);
+    }
+
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeTotal(ctx, phCommandLists, numCommandLists);
 
     NEO::LinearStream child(nullptr);
@@ -418,16 +441,14 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
     this->retrivePatchPreambleSpace(ctx, *streamForDispatch);
 
-    const bool blitPausesRequired = NEO::debugManager.flags.PauseOnBlitCopy.get() != -1;
-
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         ctx.childGpuAddressPositionBeforeDynamicPreamble = (*streamForDispatch).getCurrentGpuAddressPosition();
 
         this->dispatchPatchPreambleCommandListWaitSync(ctx, commandList);
 
-        if (blitPausesRequired) [[unlikely]] {
-            this->patchBlitPauses(*commandList);
+        if (i == 0 && ctx.debugPauses.beforeWorkload) [[unlikely]] {
+            this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, true);
         }
 
         this->programOneCmdListBatchBufferStart(commandList, *streamForDispatch, ctx);
@@ -439,6 +460,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
 
     this->programLastCommandListReturnBbStart(*streamForDispatch, ctx);
+    if (ctx.debugPauses.afterWorkload) [[unlikely]] {
+        this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, false);
+    }
     this->dispatchPatchPreambleEnding(ctx);
 
     if (!ctx.containsParentImmediateStream) {
@@ -767,6 +791,11 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeTotal(CommandListE
     }
 
     linearStreamSizeEstimate += estimateLinearStreamSizeSharedPostCmdList(ctx, numCommandLists);
+
+    if (ctx.debugPauses.beforeWorkload || ctx.debugPauses.afterWorkload) [[unlikely]] {
+        const size_t pauseCount = static_cast<size_t>(ctx.debugPauses.beforeWorkload) + static_cast<size_t>(ctx.debugPauses.afterWorkload);
+        linearStreamSizeEstimate += pauseCount * NEO::EncodeDebugPause<GfxFamily>::getSize(this->device->getNEODevice()->getRootDeviceEnvironment(), this->isCopyOnlyCommandQueue);
+    }
 
     return linearStreamSizeEstimate;
 }
@@ -1235,7 +1264,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPostCmdList(
         bool firstCmdlistDynamicPreamble = (this->stateChanges.size() > 0 && this->stateChanges[0].cmdListIndex == 0);
         additionalCondition = !firstCmdlistDynamicPreamble;
     }
-    bool bbStartNeeded = additionalCondition && (ctx.pipelineCmdsDispatch || this->forceBbStartJump);
+    bool bbStartNeeded = additionalCondition && (ctx.pipelineCmdsDispatch || this->forceBbStartJump || ctx.debugPauses.beforeWorkload);
     linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(bbStartNeeded);
 
     return linearStreamSizeEstimate;
@@ -1743,6 +1772,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::handleNonParentImmediateStream(ze_fen
     auto retVal = this->handleSubmission(submitResult);
     this->csr->getResidencyAllocations().clear();
     this->heapContainer.clear();
+
+    if ((NEO::debugManager.flags.PauseOnEnqueue.get() != -1 || NEO::debugManager.flags.PauseOnBlitCopy.get() != -1) && retVal == ZE_RESULT_SUCCESS) [[unlikely]] {
+        this->device->getNEODevice()->debugExecutionCounter++;
+    }
     return retVal;
 }
 
@@ -2150,83 +2183,45 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programBlitPause(PatchPauseOnBlitCopy &patchElem, NEO::CommandStreamReceiver &csr,
-                                                     NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    const auto pauseSize = NEO::BlitCommandsHelper<GfxFamily>::getSizeForSingleDebugPause(rootDeviceEnvironment);
-    NEO::LinearStream pauseStream(patchElem.pCommand, pauseSize);
-    NEO::BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(pauseStream, csr.getDebugPauseStateGPUAddress(), patchElem.beforeBlit, rootDeviceEnvironment);
+void CommandQueueHw<gfxCoreFamily>::programDebugPause(NEO::LinearStream &commandStream, bool isBlit, bool beforeWorkload) {
+    const auto neoDevice = this->device->getNEODevice();
+    NEO::EncodeDebugPause<GfxFamily>::encode(commandStream, this->csr->getDebugPauseStateGPUAddress(), beforeWorkload, isBlit, this->csr->getDcFlushSupport(),
+                                             neoDevice->getDeviceInfo().semaphore64bCmdSupport, neoDevice->getRootDeviceEnvironmentRef());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::patchBlitPauses(CommandList &commandList) {
-    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironmentRef();
+NEO::PauseOnGpuProperties::PauseSelection CommandQueueHw<gfxCoreFamily>::patchDebugPauses(ze_command_list_handle_t *phCommandLists, uint32_t numCommandLists) {
+    const auto executionIndex = this->device->getNEODevice()->debugExecutionCounter.load();
+    const auto blitPauses = NEO::PauseOnGpuProperties::selectPauses(NEO::debugManager.flags.PauseOnBlitCopy.get(), executionIndex);
+    const auto enqueuePauses = NEO::PauseOnGpuProperties::selectPauses(NEO::debugManager.flags.PauseOnEnqueue.get(), executionIndex);
+    const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+    NEO::PauseOnGpuProperties::PauseSelection submissionPauses{};
 
-    for (auto &command : commandList.getCommandsToPatch()) {
-        if (auto *patchElem = std::get_if<PatchPauseOnBlitCopy>(&command)) {
-            programBlitPause(*patchElem, *this->csr, rootDeviceEnvironment);
+    for (auto i = 0u; i < numCommandLists; ++i) {
+        for (auto &command : CommandList::fromHandle(phCommandLists[i])->getCommandsToPatch()) {
+            const auto *pause = std::get_if<PatchDebugPause>(&command);
+            if (pause == nullptr) {
+                continue;
+            }
+
+            const auto &allowedPauses = pause->isBlit ? blitPauses : enqueuePauses;
+            if (!(pause->beforeWorkload ? allowedPauses.beforeWorkload : allowedPauses.afterWorkload)) {
+                continue;
+            }
+
+            const auto debugFlagValue = pause->isBlit ? NEO::debugManager.flags.PauseOnBlitCopy.get() : NEO::debugManager.flags.PauseOnEnqueue.get();
+            if (debugFlagValue == NEO::PauseOnGpuProperties::DebugFlagValues::OnEachEnqueue) {
+                NEO::LinearStream pauseStream(pause->pCommand, NEO::EncodeDebugPause<GfxFamily>::getSize(rootDeviceEnvironment, pause->isBlit));
+                programDebugPause(pauseStream, pause->isBlit, pause->beforeWorkload);
+            } else if (pause->beforeWorkload) {
+                submissionPauses.beforeWorkload = true;
+            } else {
+                submissionPauses.afterWorkload = true;
+            }
         }
     }
-}
 
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnBlitCopy &patchElem) {
-    programBlitPause(patchElem, *queue.csr, queue.device->getNEODevice()->getRootDeviceEnvironmentRef());
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnEnqueueSemaphoreStart &patchElem) {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-
-    bool useSemaphore64bCmd = queue.device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(patchElem.pCommand),
-                                                            queue.csr->getDebugPauseStateGPUAddress(),
-                                                            static_cast<uint32_t>(NEO::DebugPauseState::hasUserStartConfirmation),
-                                                            COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                            false, true, false, false, false, useSemaphore64bCmd);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnEnqueueSemaphoreEnd &patchElem) {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-
-    bool useSemaphore64bCmd = queue.device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(patchElem.pCommand),
-                                                            queue.csr->getDebugPauseStateGPUAddress(),
-                                                            static_cast<uint32_t>(NEO::DebugPauseState::hasUserEndConfirmation),
-                                                            COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-                                                            false, true, false, false, false, useSemaphore64bCmd);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnEnqueuePipeControlStart &patchElem) {
-    NEO::PipeControlArgs args;
-    args.dcFlushEnable = queue.csr->getDcFlushSupport();
-
-    auto command = reinterpret_cast<void *>(patchElem.pCommand);
-    NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
-        command,
-        NEO::PostSyncMode::immediateData,
-        queue.csr->getDebugPauseStateGPUAddress(),
-        static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserStartConfirmation),
-        queue.device->getNEODevice()->getRootDeviceEnvironment(),
-        args);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(PatchPauseOnEnqueuePipeControlEnd &patchElem) {
-    NEO::PipeControlArgs args;
-    args.dcFlushEnable = queue.csr->getDcFlushSupport();
-
-    auto command = reinterpret_cast<void *>(patchElem.pCommand);
-    NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
-        command,
-        NEO::PostSyncMode::immediateData,
-        queue.csr->getDebugPauseStateGPUAddress(),
-        static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserEndConfirmation),
-        queue.device->getNEODevice()->getRootDeviceEnvironment(),
-        args);
+    return submissionPauses;
 }
 
 } // namespace L0

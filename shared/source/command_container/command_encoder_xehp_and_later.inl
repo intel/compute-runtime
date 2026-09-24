@@ -387,14 +387,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if (!args.makeCommandView) {
-        if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-            void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData));
-            args.additionalCommands->push_back(commandBuffer);
-
-            NEO::PauseOnGpuProperties::programPauseRegisterWrite<Family>(*listCmdBufferStream, false);
-
-            void *semaphoreCmd = listCmdBufferStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
-            args.additionalCommands->push_back(semaphoreCmd);
+        if (args.pauseOnEnqueue.beforeWorkload) [[unlikely]] {
+            const auto pauseSize = EncodeDebugPause<Family>::getSize(rootDeviceEnvironment, false);
+            void *pauseCommands = listCmdBufferStream->getSpace(pauseSize);
+            memset(pauseCommands, 0, pauseSize);
+            args.additionalCommands->push_back(pauseCommands);
         }
     }
 
@@ -542,14 +539,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     if (!args.makeCommandView) {
 
-        if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-            void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData));
-            args.additionalCommands->push_back(commandBuffer);
-
-            NEO::PauseOnGpuProperties::programPauseRegisterWrite<Family>(*listCmdBufferStream, false);
-
-            void *semaphoreCmd = listCmdBufferStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
-            args.additionalCommands->push_back(semaphoreCmd);
+        if (args.pauseOnEnqueue.afterWorkload) [[unlikely]] {
+            const auto pauseSize = EncodeDebugPause<Family>::getSize(rootDeviceEnvironment, false);
+            void *pauseCommands = listCmdBufferStream->getSpace(pauseSize);
+            memset(pauseCommands, 0, pauseSize);
+            args.additionalCommands->push_back(pauseCommands);
         }
     }
 }

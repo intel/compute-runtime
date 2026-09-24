@@ -40,11 +40,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
     auto clearCommandToPatchLambda = [&](auto &patch) {
         using PatchT = std::decay_t<decltype(patch)>;
-        if constexpr (NEO::isAnyOfType<PatchT, PatchPauseOnEnqueueSemaphoreStart,
-                                       PatchPauseOnEnqueueSemaphoreEnd,
-                                       PatchPauseOnEnqueuePipeControlStart,
-                                       PatchPauseOnEnqueuePipeControlEnd,
-                                       PatchPauseOnBlitCopy>) {
+        if constexpr (std::is_same_v<PatchT, PatchDebugPause>) {
             UNRECOVERABLE_IF(patch.pCommand == nullptr);
         } else if constexpr (std::is_same_v<PatchT, PatchFrontEndState>) {
             using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;

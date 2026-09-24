@@ -87,7 +87,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(u
         }
     }
 
-    if (this->isPauseOnBlitCopyEnabled(true)) [[unlikely]] {
+    if (const auto blitPauses = this->selectBlitPauses(true); blitPauses.beforeWorkload || blitPauses.afterWorkload) [[unlikely]] {
         const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
         commandSize += NEO::BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands(rootDeviceEnvironment);
     }
@@ -574,6 +574,10 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         completionStamp = flushBcsTask(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies, requireTaskCountUpdate, appendOperation, csr);
     } else {
         completionStamp = (this->*computeFlushMethod)(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, requireTaskCountUpdate);
+    }
+
+    if (this->pendingSubmissionPauses.beforeWorkloadProgrammed || this->pendingSubmissionPauses.afterWorkloadCommand) [[unlikely]] {
+        this->pendingSubmissionPauses = {};
     }
 
     if (completionStamp.taskCount > NEO::CompletionStamp::notReady) {
@@ -2366,6 +2370,11 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
             additionalSize += cmdList->getFrontEndPatchSize();
             additionalSize += cmdList->getTotalNoopSpacePatchSize();
         }
+    }
+
+    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1 || NEO::debugManager.flags.PauseOnBlitCopy.get() != -1) [[unlikely]] {
+        const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+        additionalSize += 2 * NEO::EncodeDebugPause<GfxFamily>::getSize(rootDeviceEnvironment, this->isCopyOnly(false)) + NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
     }
     return additionalSize;
 }

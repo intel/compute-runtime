@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_mapper.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
 
@@ -309,9 +310,9 @@ struct CommandListCoreFamily : public CommandList {
                                                               Event *signalEvent,
                                                               CmdListKernelLaunchParams &launchParams);
 
-    bool isPauseOnBlitCopyEnabled(bool copyOffloadOperation) const;
     COLD_SECTION void appendBlitPauseCommands(bool beforeBlit, bool copyOffloadOperation);
-    COLD_SECTION void programPauseOnEnqueueCommands(std::list<void *> &additionalCommands, bool beforeWorkload);
+    NEO::PauseOnGpuProperties::PauseSelection selectBlitPauses(bool copyOffloadOperation) const;
+    COLD_SECTION void programPauseOnEnqueueCommands(std::list<void *> &additionalCommands, const NEO::PauseOnGpuProperties::PauseSelection &pauseSelection);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
                                                       NEO::GraphicsAllocation *dstPtrAlloc,
@@ -535,6 +536,7 @@ struct CommandListCoreFamily : public CommandList {
 
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
 
+    NEO::PauseOnGpuProperties::PendingSubmissionPauses pendingSubmissionPauses{};
     bool latestOperationHasCbEventWithProfiling = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool duplicatedInOrderCounterStorageEnabled = false;

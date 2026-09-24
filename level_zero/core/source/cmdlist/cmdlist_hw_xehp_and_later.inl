@@ -356,6 +356,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     setupFlushL3Flags(isFlushL3ForExternalAllocationRequired, isFlushL3ForHostUsmRequired, isFlushL3AfterPostSync, isKernelUsingExternalAllocation, isKernelUsingSystemAllocation);
 
     NEO::EncodeKernelArgsExt dispatchKernelArgsExt = {};
+    const auto pauseOnEnqueue = launchParams.makeKernelCommandView ? NEO::PauseOnGpuProperties::PauseSelection{} : NEO::PauseOnGpuProperties::selectPauseSpace(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), !this->isImmediateType());
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         .device = neoDevice,
@@ -392,6 +393,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .isTimestampEvent = isTimestampEvent,
             .isUsingSystemAllocation = isKernelUsingSystemAllocation,
         },
+        .pauseOnEnqueue = pauseOnEnqueue,
         .preemptionMode = kernelPreemptionMode,
         .requiredPartitionDim = launchParams.requiredPartitionDim,
         .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,
@@ -565,9 +567,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
 
-    if (NEO::PauseOnGpuProperties::featureEnabled(NEO::debugManager.flags.PauseOnEnqueue.get())) [[unlikely]] {
-        programPauseOnEnqueueCommands(additionalCommands, true);
-        programPauseOnEnqueueCommands(additionalCommands, false);
+    if (pauseOnEnqueue.beforeWorkload || pauseOnEnqueue.afterWorkload) [[unlikely]] {
+        programPauseOnEnqueueCommands(additionalCommands, pauseOnEnqueue);
     }
 
     return ZE_RESULT_SUCCESS;

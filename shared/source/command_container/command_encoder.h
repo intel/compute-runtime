@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
@@ -146,6 +147,7 @@ struct EncodeDispatchKernelArgs {
     std::list<void *> *additionalCommands = nullptr;
     EncodeKernelArgsExt *extendedArgs = nullptr;
     NEO::EncodePostSyncArgs postSyncArgs{};
+    PauseOnGpuProperties::PauseSelection pauseOnEnqueue{};
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
@@ -837,6 +839,13 @@ struct EncodeMemoryFence {
 template <typename GfxFamily>
 struct EncodeUserInterrupt {
     static void encode(LinearStream &commandStream);
+};
+
+template <typename GfxFamily>
+struct EncodeDebugPause {
+    static size_t getSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool isBcs);
+    static void encode(LinearStream &commandStream, uint64_t debugPauseStateAddress, bool beforeWorkload, bool isBcs, bool dcFlushEnable,
+                       bool useSemaphore64bCmd, RootDeviceEnvironment &rootDeviceEnvironment);
 };
 
 template <typename GfxFamily>

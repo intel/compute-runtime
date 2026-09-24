@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include <level_zero/ze_api.h>
@@ -88,6 +89,7 @@ struct CommandListExecutionContext {
     bool isDispatchTaskCountPostSyncRequired{};
     bool hasIndirectAccess{};
     bool rtDispatchRequired = false;
+    NEO::PauseOnGpuProperties::PauseSelection debugPauses{};
     bool pipelineCmdsDispatch = false;
     bool lockScratchController = false;
     bool cmdListScratchAddressPatchingEnabled = false;

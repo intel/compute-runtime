@@ -1778,76 +1778,60 @@ bool CommandListCoreFamily<gfxCoreFamily>::isHighPriorityImmediateCmdList() cons
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isPauseOnBlitCopyEnabled(bool copyOffloadOperation) const {
-    return NEO::PauseOnGpuProperties::featureEnabled(NEO::debugManager.flags.PauseOnBlitCopy.get()) &&
-           this->isCopyOnly(this->isDualStreamCopyOffloadOperation(copyOffloadOperation));
+NEO::PauseOnGpuProperties::PauseSelection CommandListCoreFamily<gfxCoreFamily>::selectBlitPauses(bool copyOffloadOperation) const {
+    const auto debugFlagValue = NEO::debugManager.flags.PauseOnBlitCopy.get();
+    if (!NEO::PauseOnGpuProperties::featureEnabled(debugFlagValue) || !this->isCopyOnly(this->isDualStreamCopyOffloadOperation(copyOffloadOperation))) [[likely]] {
+        return {};
+    }
+    return NEO::PauseOnGpuProperties::selectPauseSpace(debugFlagValue, this->device->getNEODevice()->debugExecutionCounter.load(), !this->isImmediateType());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendBlitPauseCommands(bool beforeBlit, bool copyOffloadOperation) {
-    const auto neoDevice = this->device->getNEODevice();
-    const auto pauseMode = beforeBlit ? NEO::PauseOnGpuProperties::BeforeWorkload : NEO::PauseOnGpuProperties::AfterWorkload;
-    if (!NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnBlitCopy.get(), neoDevice->debugExecutionCounter.load(), pauseMode)) {
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironmentRef();
+    const auto pauseSize = NEO::EncodeDebugPause<GfxFamily>::getSize(rootDeviceEnvironment, true);
+    auto pauseCommands = this->commandContainer.getCommandStream()->getSpace(pauseSize);
+    memset(pauseCommands, 0, pauseSize);
+
+    if (!this->isImmediateType()) {
+        this->commandsToPatch.push_back(PatchDebugPause{.pCommand = pauseCommands, .beforeWorkload = beforeBlit, .isBlit = true});
         return;
     }
 
-    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
-    if (this->isImmediateType()) {
-        const auto debugPauseStateAddress = this->getCsr(copyOffloadOperation)->getDebugPauseStateGPUAddress();
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(*this->commandContainer.getCommandStream(), debugPauseStateAddress, beforeBlit, rootDeviceEnvironment);
-        return;
+    if (NEO::PauseOnGpuProperties::claimSubmissionPause(this->pendingSubmissionPauses, NEO::debugManager.flags.PauseOnBlitCopy.get(), beforeBlit, pauseCommands, pauseSize)) {
+        NEO::LinearStream pauseStream(pauseCommands, pauseSize);
+        NEO::EncodeDebugPause<GfxFamily>::encode(pauseStream, this->getCsr(copyOffloadOperation)->getDebugPauseStateGPUAddress(), beforeBlit, true, false, false, rootDeviceEnvironment);
     }
-
-    const auto pauseSize = NEO::BlitCommandsHelper<GfxFamily>::getSizeForSingleDebugPause(rootDeviceEnvironment);
-    auto commandBuffer = this->commandContainer.getCommandStream()->getSpace(pauseSize);
-    memset(commandBuffer, 0, pauseSize);
-    this->commandsToPatch.push_back(PatchPauseOnBlitCopy{.pCommand = commandBuffer, .beforeBlit = beforeBlit});
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programPauseOnEnqueueCommands(std::list<void *> &additionalCommands, bool beforeWorkload) {
-    const auto neoDevice = this->device->getNEODevice();
-    const auto pauseMode = beforeWorkload ? NEO::PauseOnGpuProperties::BeforeWorkload : NEO::PauseOnGpuProperties::AfterWorkload;
-    if (!NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), pauseMode)) {
-        return;
-    }
+void CommandListCoreFamily<gfxCoreFamily>::programPauseOnEnqueueCommands(std::list<void *> &additionalCommands, const NEO::PauseOnGpuProperties::PauseSelection &pauseSelection) {
+    auto programPause = [&](bool beforeWorkload) {
+        auto pauseCommands = additionalCommands.front();
+        additionalCommands.pop_front();
 
-    auto barrierCommand = additionalCommands.front();
-    additionalCommands.pop_front();
-    auto semaphoreCommand = additionalCommands.front();
-    additionalCommands.pop_front();
-
-    if (!this->isImmediateType()) {
-        if (beforeWorkload) {
-            commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlStart{.pCommand = barrierCommand});
-            commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreStart{.pCommand = semaphoreCommand});
-        } else {
-            commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlEnd{.pCommand = barrierCommand});
-            commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreEnd{.pCommand = semaphoreCommand});
+        if (!this->isImmediateType()) {
+            this->commandsToPatch.push_back(PatchDebugPause{.pCommand = pauseCommands, .beforeWorkload = beforeWorkload, .isBlit = false});
+            return;
         }
-        return;
+
+        const auto neoDevice = this->device->getNEODevice();
+        auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+        const auto pauseSize = NEO::EncodeDebugPause<GfxFamily>::getSize(rootDeviceEnvironment, false);
+        if (NEO::PauseOnGpuProperties::claimSubmissionPause(this->pendingSubmissionPauses, NEO::debugManager.flags.PauseOnEnqueue.get(), beforeWorkload, pauseCommands, pauseSize)) {
+            const auto csr = this->getCsr(false);
+            NEO::LinearStream pauseStream(pauseCommands, pauseSize);
+            NEO::EncodeDebugPause<GfxFamily>::encode(pauseStream, csr->getDebugPauseStateGPUAddress(), beforeWorkload, false, csr->getDcFlushSupport(),
+                                                     neoDevice->getDeviceInfo().semaphore64bCmdSupport, rootDeviceEnvironment);
+        }
+    };
+
+    if (pauseSelection.beforeWorkload) {
+        programPause(true);
     }
-
-    const auto csr = this->getCsr(false);
-    const auto debugPauseStateAddress = csr->getDebugPauseStateGPUAddress();
-
-    NEO::PipeControlArgs args;
-    args.dcFlushEnable = csr->getDcFlushSupport();
-    NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
-        barrierCommand,
-        NEO::PostSyncMode::immediateData,
-        debugPauseStateAddress,
-        static_cast<uint64_t>(beforeWorkload ? NEO::DebugPauseState::waitingForUserStartConfirmation : NEO::DebugPauseState::waitingForUserEndConfirmation),
-        neoDevice->getRootDeviceEnvironment(),
-        args);
-
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(
-        reinterpret_cast<MI_SEMAPHORE_WAIT *>(semaphoreCommand),
-        debugPauseStateAddress,
-        static_cast<uint32_t>(beforeWorkload ? NEO::DebugPauseState::hasUserStartConfirmation : NEO::DebugPauseState::hasUserEndConfirmation),
-        MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-        false, true, false, false, false, neoDevice->getDeviceInfo().semaphore64bCmdSupport);
+    if (pauseSelection.afterWorkload) {
+        programPause(false);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1887,8 +1871,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
         setAdditionalBlitProperties(blitProperties, signalEvent, memoryCopyParams.forceAggregatedEventIncValue, useAdditionalTimestamp);
     }
 
-    const bool pauseOnBlitCopy = this->isPauseOnBlitCopyEnabled(memoryCopyParams.copyOffloadAllowed);
-    if (pauseOnBlitCopy) [[unlikely]] {
+    const auto blitPauses = this->selectBlitPauses(memoryCopyParams.copyOffloadAllowed);
+    if (blitPauses.beforeWorkload) [[unlikely]] {
         this->appendBlitPauseCommands(true, memoryCopyParams.copyOffloadAllowed);
     }
 
@@ -1898,7 +1882,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
         NEO::BlitCommandsHelper<GfxFamily>::dispatchPostBlitWaCommands(*commandContainer.getCommandStream(), *this->dummyBlitWa.rootDeviceEnvironment);
     }
     dummyBlitWa.isWaRequired = true;
-    if (pauseOnBlitCopy) [[unlikely]] {
+    if (blitPauses.afterWorkload) [[unlikely]] {
         this->appendBlitPauseCommands(false, memoryCopyParams.copyOffloadAllowed);
     }
     if (useAdditionalBlitProperties && signalEvent && signalEvent->isSignalWithUserInterrupt()) {
@@ -1970,8 +1954,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
 
-    const bool pauseOnBlitCopy = this->isPauseOnBlitCopyEnabled(memoryCopyParams.copyOffloadAllowed);
-    if (pauseOnBlitCopy) [[unlikely]] {
+    const auto blitPauses = this->selectBlitPauses(memoryCopyParams.copyOffloadAllowed);
+    if (blitPauses.beforeWorkload) [[unlikely]] {
         this->appendBlitPauseCommands(true, memoryCopyParams.copyOffloadAllowed);
     }
 
@@ -1985,7 +1969,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     dummyBlitWa.isWaRequired = true;
 
-    if (pauseOnBlitCopy) [[unlikely]] {
+    if (blitPauses.afterWorkload) [[unlikely]] {
         this->appendBlitPauseCommands(false, memoryCopyParams.copyOffloadAllowed);
     }
 
@@ -2046,8 +2030,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     }
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
 
-    const bool pauseOnBlitCopy = this->isPauseOnBlitCopyEnabled(memoryCopyParams.copyOffloadAllowed);
-    if (pauseOnBlitCopy) [[unlikely]] {
+    const auto blitPauses = this->selectBlitPauses(memoryCopyParams.copyOffloadAllowed);
+    if (blitPauses.beforeWorkload) [[unlikely]] {
         this->appendBlitPauseCommands(true, memoryCopyParams.copyOffloadAllowed);
     }
 
@@ -2061,7 +2045,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     }
     dummyBlitWa.isWaRequired = true;
 
-    if (pauseOnBlitCopy) [[unlikely]] {
+    if (blitPauses.afterWorkload) [[unlikely]] {
         this->appendBlitPauseCommands(false, memoryCopyParams.copyOffloadAllowed);
     }
 
@@ -3349,15 +3333,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         blitProperties.computeStreamPartitionCount = this->partitionCount;
         blitProperties.highPriority = isHighPriorityImmediateCmdList();
 
-        const bool pauseOnBlitCopy = this->isPauseOnBlitCopyEnabled(memoryCopyParams.copyOffloadAllowed);
-        if (pauseOnBlitCopy) [[unlikely]] {
+        const auto blitPauses = this->selectBlitPauses(memoryCopyParams.copyOffloadAllowed);
+        if (blitPauses.beforeWorkload) [[unlikely]] {
             this->appendBlitPauseCommands(true, memoryCopyParams.copyOffloadAllowed);
         }
 
         NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
 
         dummyBlitWa.isWaRequired = true;
-        if (pauseOnBlitCopy) [[unlikely]] {
+        if (blitPauses.afterWorkload) [[unlikely]] {
             this->appendBlitPauseCommands(false, memoryCopyParams.copyOffloadAllowed);
         }
         if (isCopyOnlySignaling) {

@@ -140,7 +140,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     dispatchProfilingPerfStartCommands(walkerArgs.hwTimeStamps, walkerArgs.hwPerfCounter, commandStream, commandQueue);
 
     const auto &hwInfo = device.getHardwareInfo();
-    if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+    const auto enqueuePauses = PauseOnGpuProperties::selectPauses(debugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount());
+    if (enqueuePauses.beforeWorkload) {
         dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation,
                                    DebugPauseState::hasUserStartConfirmation, hwInfo);
     }
@@ -176,7 +177,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         LriHelper<GfxFamily>::program(commandStream, registerOffset, registerData, EncodeSetMMIO<GfxFamily>::isRemapApplicable(registerOffset), commandQueue.isBcs());
     }
 
-    if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+    if (enqueuePauses.afterWorkload) {
         dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserEndConfirmation,
                                    DebugPauseState::hasUserEndConfirmation, hwInfo);
     }

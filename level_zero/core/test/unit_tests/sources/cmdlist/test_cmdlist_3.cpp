@@ -1424,58 +1424,13 @@ HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsTo
         EXPECT_TRUE(pCommandList->commandsToPatch.empty());
     }
     {
-        pCommandList->commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreStart{});
+        pCommandList->commandsToPatch.push_back(PatchDebugPause{});
         EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
         pCommandList->commandsToPatch.clear();
     }
 
     {
-        PatchPauseOnEnqueueSemaphoreStart p{};
-        p.pCommand = reinterpret_cast<void *>(0x1234);
-        pCommandList->commandsToPatch.push_back(p);
-
-        EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
-        EXPECT_TRUE(pCommandList->commandsToPatch.empty());
-    }
-
-    {
-        pCommandList->commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreEnd{});
-        EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
-        pCommandList->commandsToPatch.clear();
-    }
-
-    {
-        PatchPauseOnEnqueueSemaphoreEnd p{};
-        p.pCommand = reinterpret_cast<void *>(0x1234);
-        pCommandList->commandsToPatch.push_back(p);
-
-        EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
-        EXPECT_TRUE(pCommandList->commandsToPatch.empty());
-    }
-
-    {
-        pCommandList->commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlStart{});
-        EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
-        pCommandList->commandsToPatch.clear();
-    }
-
-    {
-        PatchPauseOnEnqueuePipeControlStart p{};
-        p.pCommand = reinterpret_cast<void *>(0x1234);
-        pCommandList->commandsToPatch.push_back(p);
-
-        EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
-        EXPECT_TRUE(pCommandList->commandsToPatch.empty());
-    }
-
-    {
-        pCommandList->commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlEnd{});
-        EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
-        pCommandList->commandsToPatch.clear();
-    }
-
-    {
-        PatchPauseOnEnqueuePipeControlEnd p{};
+        PatchDebugPause p{};
         p.pCommand = reinterpret_cast<void *>(0x1234);
         pCommandList->commandsToPatch.push_back(p);
 

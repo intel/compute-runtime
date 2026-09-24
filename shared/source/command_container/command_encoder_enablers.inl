@@ -56,6 +56,7 @@ template struct NEO::EncodeStoreMemory<Family>;
 template struct NEO::EncodeDataMemory<Family>;
 template struct NEO::EncodeMemoryFence<Family>;
 template struct NEO::EncodeUserInterrupt<Family>;
+template struct NEO::EncodeDebugPause<Family>;
 
 template uint32_t NEO::ContextTimestampRegister<Family>::getRegisterOffsetLow();
 template uint32_t NEO::ContextTimestampRegister<Family>::getRegisterOffsetHigh();

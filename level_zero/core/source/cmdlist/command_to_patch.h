@@ -22,25 +22,10 @@ struct PatchFrontEndState {
     uint64_t gpuAddress = 0;
 };
 
-struct PatchPauseOnEnqueueSemaphoreStart {
+struct PatchDebugPause {
     void *pCommand = nullptr;
-};
-
-struct PatchPauseOnEnqueueSemaphoreEnd {
-    void *pCommand = nullptr;
-};
-
-struct PatchPauseOnEnqueuePipeControlStart {
-    void *pCommand = nullptr;
-};
-
-struct PatchPauseOnEnqueuePipeControlEnd {
-    void *pCommand = nullptr;
-};
-
-struct PatchPauseOnBlitCopy {
-    void *pCommand = nullptr;
-    bool beforeBlit = false;
+    bool beforeWorkload = false;
+    bool isBlit = false;
 };
 
 struct PatchComputeWalkerInlineDataScratch {
@@ -156,11 +141,7 @@ struct PatchInvalidPatchType {};
 using CommandToPatchOnQueue = std::variant<
     PatchInvalidPatchType,
     PatchFrontEndState,
-    PatchPauseOnEnqueueSemaphoreStart,
-    PatchPauseOnEnqueueSemaphoreEnd,
-    PatchPauseOnEnqueuePipeControlStart,
-    PatchPauseOnEnqueuePipeControlEnd,
-    PatchPauseOnBlitCopy,
+    PatchDebugPause,
     PatchComputeWalkerInlineDataScratch,
     PatchComputeWalkerImplicitArgsScratch,
     PatchNoopSpace,

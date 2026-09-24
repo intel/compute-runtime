@@ -135,7 +135,9 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
     using BaseClass::patternTags;
+    using BaseClass::pendingSubmissionPauses;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::programPauseOnEnqueueCommands;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::resetBcsSplitEvents;
@@ -277,7 +279,9 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::partitionCount;
+    using BaseClass::pendingSubmissionPauses;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::programPauseOnEnqueueCommands;
     using BaseClass::relaxedOrderingCounter;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;

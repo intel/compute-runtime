@@ -9,6 +9,8 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -952,7 +954,30 @@ HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToNeverWhenEncodingWalke
     EXPECT_EQ(cmdsToPatch.size(), 0u);
 }
 
-HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToAlwaysWhenEncodingWalkerThenCommandsToPatchAreFilled) {
+HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSelectedInArgsWhenEncodingWalkerThenZeroedPauseSpaceIsReserved) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PauseOnEnqueue.set(-2);
+
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    uint32_t dims[] = {1, 1, 1};
+    bool requiresUncachedMocs = false;
+    std::list<void *> cmdsToPatch;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.additionalCommands = &cmdsToPatch;
+    dispatchArgs.pauseOnEnqueue = {.beforeWorkload = true, .afterWorkload = true};
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    ASSERT_EQ(cmdsToPatch.size(), 2u);
+    const auto pauseSize = EncodeDebugPause<FamilyType>::getSize(pDevice->getRootDeviceEnvironment(), false);
+    for (auto pauseCommands : cmdsToPatch) {
+        auto bytes = static_cast<const uint8_t *>(pauseCommands);
+        EXPECT_TRUE(std::all_of(bytes, bytes + pauseSize, [](uint8_t value) { return value == 0; }));
+    }
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueFlagWithoutSelectionInArgsWhenEncodingWalkerThenPauseSpaceIsNotReserved) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
     debugManager.flags.PauseOnEnqueue.set(-2);
@@ -966,7 +991,66 @@ HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToAlwaysWhenEncodingWalk
     dispatchArgs.additionalCommands = &cmdsToPatch;
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
-    EXPECT_EQ(cmdsToPatch.size(), 4u);
+    EXPECT_EQ(cmdsToPatch.size(), 0u);
+}
+
+template <typename FamilyType>
+void verifyEncodedPauseOnEnqueue(RootDeviceEnvironment &rootDeviceEnvironment, bool beforeWorkload) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    constexpr uint64_t debugPauseStateAddress = 0x12340000;
+    const auto pauseSize = EncodeDebugPause<FamilyType>::getSize(rootDeviceEnvironment, false);
+    auto buffer = std::make_unique<uint8_t[]>(pauseSize);
+    memset(buffer.get(), 0, pauseSize);
+
+    LinearStream pauseStream(buffer.get(), pauseSize);
+    EncodeDebugPause<FamilyType>::encode(pauseStream, debugPauseStateAddress, beforeWorkload, false, false, false, rootDeviceEnvironment);
+    EXPECT_EQ(pauseSize, pauseStream.getUsed());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, buffer.get(), pauseSize));
+
+    const auto expectedTrigger = beforeWorkload ? DebugPauseState::waitingForUserStartConfirmation : DebugPauseState::waitingForUserEndConfirmation;
+    const auto expectedWait = beforeWorkload ? DebugPauseState::hasUserStartConfirmation : DebugPauseState::hasUserEndConfirmation;
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_FALSE(pipeControls.empty());
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControls.back());
+    EXPECT_EQ(debugPauseStateAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(static_cast<uint64_t>(expectedTrigger), pipeControl->getImmediateData());
+
+    auto loadRegisterImm = find<MI_LOAD_REGISTER_IMM *>(pipeControls.back(), cmdList.end());
+    ASSERT_NE(cmdList.end(), loadRegisterImm);
+    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.PauseOnEnqueueRegisterOffset.get()), genCmdCast<MI_LOAD_REGISTER_IMM *>(*loadRegisterImm)->getRegisterOffset());
+    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.PauseOnEnqueueRegisterData.get()), genCmdCast<MI_LOAD_REGISTER_IMM *>(*loadRegisterImm)->getDataDword());
+
+    auto semaphore = find<MI_SEMAPHORE_WAIT *>(loadRegisterImm, cmdList.end());
+    ASSERT_NE(cmdList.end(), semaphore);
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+    EXPECT_EQ(debugPauseStateAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
+    EXPECT_EQ(static_cast<uint32_t>(expectedWait), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphoreCmd));
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenBeforeWorkloadWhenEncodingPauseOnEnqueueThenStartBarrierRegisterWriteAndSemaphoreFillReservedSpace) {
+    verifyEncodedPauseOnEnqueue<FamilyType>(pDevice->getRootDeviceEnvironmentRef(), true);
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenAfterWorkloadWhenEncodingPauseOnEnqueueThenEndBarrierRegisterWriteAndSemaphoreFillReservedSpace) {
+    verifyEncodedPauseOnEnqueue<FamilyType>(pDevice->getRootDeviceEnvironmentRef(), false);
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenBcsWhenEncodingDebugPauseThenBlitPauseCommandsFillReservedSpace) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    const auto pauseSize = EncodeDebugPause<FamilyType>::getSize(rootDeviceEnvironment, true);
+    EXPECT_EQ(BlitCommandsHelper<FamilyType>::getSizeForSingleDebugPause(rootDeviceEnvironment), pauseSize);
+
+    auto buffer = std::make_unique<uint8_t[]>(pauseSize);
+    LinearStream pauseStream(buffer.get(), pauseSize);
+    EncodeDebugPause<FamilyType>::encode(pauseStream, 0x12340000, true, true, false, false, rootDeviceEnvironment);
+
+    EXPECT_EQ(pauseSize, pauseStream.getUsed());
 }
 
 using EncodeDispatchKernelTest = Test<CommandEncodeStatesFixture>;

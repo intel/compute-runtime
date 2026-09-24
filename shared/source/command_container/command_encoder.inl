@@ -16,11 +16,14 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -1378,6 +1381,43 @@ void EncodeMiPredicate<Family>::encode(LinearStream &cmdStream, [[maybe_unused]]
 template <typename Family>
 void EncodeUserInterrupt<Family>::encode(LinearStream &commandStream) {
     *commandStream.getSpaceForCmd<typename Family::MI_USER_INTERRUPT>() = Family::cmdInitUserInterrupt;
+}
+
+template <typename Family>
+size_t EncodeDebugPause<Family>::getSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool isBcs) {
+    if (isBcs) {
+        return BlitCommandsHelper<Family>::getSizeForSingleDebugPause(rootDeviceEnvironment);
+    }
+    return MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, PostSyncMode::immediateData) +
+           sizeof(typename Family::MI_LOAD_REGISTER_IMM) +
+           EncodeSemaphore<Family>::getSizeMiSemaphoreWait();
+}
+
+template <typename Family>
+void EncodeDebugPause<Family>::encode(LinearStream &commandStream, uint64_t debugPauseStateAddress, bool beforeWorkload, bool isBcs, bool dcFlushEnable,
+                                      bool useSemaphore64bCmd, RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (isBcs) {
+        BlitCommandsHelper<Family>::dispatchDebugPauseCommands(commandStream, debugPauseStateAddress, beforeWorkload, rootDeviceEnvironment);
+        return;
+    }
+
+    using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename Family::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    const auto confirmationTrigger = beforeWorkload ? DebugPauseState::waitingForUserStartConfirmation : DebugPauseState::waitingForUserEndConfirmation;
+    const auto waitCondition = beforeWorkload ? DebugPauseState::hasUserStartConfirmation : DebugPauseState::hasUserEndConfirmation;
+
+    PipeControlArgs args;
+    args.dcFlushEnable = dcFlushEnable;
+    MemorySynchronizationCommands<Family>::addBarrierWithPostSyncOperation(commandStream, PostSyncMode::immediateData, debugPauseStateAddress,
+                                                                           static_cast<uint64_t>(confirmationTrigger), rootDeviceEnvironment, args);
+
+    PauseOnGpuProperties::programPauseRegisterWrite<Family>(commandStream, false);
+
+    auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandStream.getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait()));
+    EncodeSemaphore<Family>::programMiSemaphoreWait(semaphoreCommand, debugPauseStateAddress, static_cast<uint32_t>(waitCondition),
+                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, true, false, false, false,
+                                                    useSemaphore64bCmd);
 }
 
 template <typename Family>
