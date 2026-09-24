@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/array_count.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -48,18 +49,18 @@ TEST_F(clIcdGetPlatformIDsKHRTests, WhenGettingPlatformIdThenCorrectIdIsReturned
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(numPlatforms, numPlatformsIcd);
 
-    std::unique_ptr<cl_platform_id, decltype(free) *> platforms(reinterpret_cast<cl_platform_id *>(malloc(sizeof(cl_platform_id) * numPlatforms)), free);
-    ASSERT_NE(nullptr, platforms);
+    cl_platform_id platforms[4] = {};
+    ASSERT_LE(numPlatforms, arrayCount(platforms));
 
-    std::unique_ptr<cl_platform_id, decltype(free) *> platformsIcd(reinterpret_cast<cl_platform_id *>(malloc(sizeof(cl_platform_id) * numPlatforms)), free);
-    ASSERT_NE(nullptr, platforms);
+    cl_platform_id platformsIcd[4] = {};
+    ASSERT_LE(numPlatformsIcd, arrayCount(platformsIcd));
 
-    retVal = clGetPlatformIDs(numPlatforms, platforms.get(), nullptr);
+    retVal = clGetPlatformIDs(numPlatforms, platforms, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clIcdGetPlatformIDsKHR(numPlatformsIcd, platformsIcd.get(), nullptr);
+    retVal = clIcdGetPlatformIDsKHR(numPlatformsIcd, platformsIcd, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
     for (cl_uint i = 0; i < std::min(numPlatforms, numPlatformsIcd); i++) {
-        EXPECT_EQ(platforms.get()[i], platformsIcd.get()[i]);
+        EXPECT_EQ(platforms[i], platformsIcd[i]);
     }
 }
 
