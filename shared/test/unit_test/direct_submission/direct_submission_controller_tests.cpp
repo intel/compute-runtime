@@ -58,6 +58,11 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
 
     controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
+
+    controller.cpuTimestamp += controller.timeout;
+    controller.checkNewSubmissions();
     EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
 
@@ -70,6 +75,175 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 8u);
+
+    controller.unregisterDirectSubmission(&csr);
+}
+
+TEST(DirectSubmissionControllerTests, givenGpuIdleForLessThanTimeoutWhenCheckingNewSubmissionsThenDirectSubmissionIsNotStopped) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+    csr.taskCount.store(5u);
+
+    DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller.registerDirectSubmission(&csr);
+    controller.notifyNewSubmission(&csr);
+    controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&csr].idleSince.has_value());
+
+    controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+    EXPECT_TRUE(controller.directSubmissions[&csr].idleSince.has_value());
+
+    controller.cpuTimestamp += controller.timeout - std::chrono::microseconds(1);
+    controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+
+    controller.unregisterDirectSubmission(&csr);
+}
+
+TEST(DirectSubmissionControllerTests, givenGpuIdleForTimeoutWhenCheckingNewSubmissionsThenDirectSubmissionIsStopped) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+    csr.taskCount.store(5u);
+
+    DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller.registerDirectSubmission(&csr);
+    controller.notifyNewSubmission(&csr);
+    controller.checkNewSubmissions();
+    controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+
+    controller.cpuTimestamp += controller.timeout;
+    controller.checkNewSubmissions();
+    EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
+    EXPECT_FALSE(controller.directSubmissions[&csr].idleSince.has_value());
+
+    controller.unregisterDirectSubmission(&csr);
+}
+
+TEST(DirectSubmissionControllerTests, givenBcsTimeoutDivisorWhenGpuIdleForBcsTimeoutThenOnlyBcsDirectSubmissionIsStopped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionControllerBcsTimeoutDivisor.set(4);
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver bcsCsr(executionEnvironment, 0, deviceBitfield);
+    MockCommandStreamReceiver ccsCsr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> bcsOsContext(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+    std::unique_ptr<OsContext> ccsOsContext(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+    bcsCsr.setupContext(*bcsOsContext.get());
+    ccsCsr.setupContext(*ccsOsContext.get());
+    bcsCsr.taskCount.store(5u);
+    ccsCsr.taskCount.store(5u);
+
+    DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller.registerDirectSubmission(&bcsCsr);
+    controller.registerDirectSubmission(&ccsCsr);
+    controller.notifyNewSubmission(&bcsCsr);
+    controller.notifyNewSubmission(&ccsCsr);
+    controller.checkNewSubmissions();
+    controller.checkNewSubmissions();
+    EXPECT_TRUE(controller.directSubmissions[&bcsCsr].idleSince.has_value());
+    EXPECT_TRUE(controller.directSubmissions[&ccsCsr].idleSince.has_value());
+
+    controller.cpuTimestamp += controller.timeout / controller.bcsTimeoutDivisor;
+    controller.checkNewSubmissions();
+    EXPECT_TRUE(controller.directSubmissions[&bcsCsr].isStopped);
+    EXPECT_FALSE(controller.directSubmissions[&ccsCsr].isStopped);
+
+    controller.unregisterDirectSubmission(&bcsCsr);
+    controller.unregisterDirectSubmission(&ccsCsr);
+}
+
+TEST(DirectSubmissionControllerTests, givenNewSubmissionDuringIdleDwellWhenCheckingNewSubmissionsThenDwellStartsOver) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+    csr.taskCount.store(5u);
+
+    DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller.registerDirectSubmission(&csr);
+    controller.notifyNewSubmission(&csr);
+    controller.checkNewSubmissions();
+    controller.checkNewSubmissions();
+    EXPECT_TRUE(controller.directSubmissions[&csr].idleSince.has_value());
+
+    csr.taskCount.store(6u);
+    controller.notifyNewSubmission(&csr);
+    controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&csr].idleSince.has_value());
+
+    controller.cpuTimestamp += controller.timeout;
+    controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+
+    controller.cpuTimestamp += controller.timeout;
+    controller.checkNewSubmissions();
+    EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
+
+    controller.unregisterDirectSubmission(&csr);
+}
+
+TEST(DirectSubmissionControllerTests, givenTimeSpentDetectingIdleWhenArmingDwellThenIdleSinceIsStampedAfterTheIdleCheck) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+    csr.taskCount.store(5u);
+
+    DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller.registerDirectSubmission(&csr);
+    controller.notifyNewSubmission(&csr);
+    controller.checkNewSubmissions();
+
+    controller.cpuTimestampIncrementPerCall = std::chrono::microseconds(10);
+    const auto beforeIdleCheck = controller.cpuTimestamp;
+    controller.checkNewSubmissions();
+
+    ASSERT_TRUE(controller.directSubmissions[&csr].idleSince.has_value());
+    EXPECT_GT(controller.directSubmissions[&csr].idleSince.value(), beforeIdleCheck);
 
     controller.unregisterDirectSubmission(&csr);
 }
@@ -157,6 +331,10 @@ TEST(DirectSubmissionControllerTests, givenDebugFlagSetWhenCheckingNewSubmission
     EXPECT_EQ(controller.directSubmissions[&ccsCsr].taskCount, 5u);
 
     controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&bcsCsr].isStopped);
+
+    controller.cpuTimestamp += controller.timeout;
+    controller.checkNewSubmissions();
     EXPECT_TRUE(controller.directSubmissions[&bcsCsr].isStopped);
     EXPECT_FALSE(controller.directSubmissions[&ccsCsr].isStopped);
 
@@ -192,6 +370,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
 
+        controller.checkNewSubmissions();
+
         auto previousTimestamp = controller.lastTerminateCpuTimestamp;
         controller.cpuTimestamp += std::chrono::microseconds(5'000);
         controller.checkNewSubmissions();
@@ -208,6 +388,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
 
+        controller.checkNewSubmissions();
+
         auto previousTimestamp = controller.lastTerminateCpuTimestamp;
         controller.cpuTimestamp += std::chrono::microseconds(5'500);
         controller.checkNewSubmissions();
@@ -222,6 +404,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
+
+        controller.checkNewSubmissions();
 
         auto previousTimestamp = controller.lastTerminateCpuTimestamp;
         controller.cpuTimestamp += controller.maxTimeout;
@@ -238,6 +422,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
+
+        controller.checkNewSubmissions();
 
         auto previousTimestamp = controller.lastTerminateCpuTimestamp;
         controller.cpuTimestamp += controller.maxTimeout * 2;
@@ -415,6 +601,8 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskSameAsTaskCount
     csr->isGpuHangDetectedReturnValue = true;
 
     controller->checkNewSubmissions();
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
     EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
     EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
     EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
@@ -425,6 +613,8 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskSameAsTaskCount
     csr->setLatestFlushedTaskCount(10u);
     csr->isBusyReturnValue = false;
 
+    controller->checkNewSubmissions();
+    controller->cpuTimestamp += controller->timeout;
     controller->checkNewSubmissions();
     EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
     EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
@@ -446,6 +636,9 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskLowerThanTaskCo
     csr->isBusyReturnValue = false;
 
     controller->checkNewSubmissions();
+    csr->setLatestFlushedTaskCount(10u);
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
     EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
     EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
     EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
@@ -466,6 +659,8 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     csr->setLatestFlushedTaskCount(10u);
     csr->isBusyReturnValue = true;
 
+    controller->checkNewSubmissions();
+    controller->cpuTimestamp += controller->timeout;
     controller->checkNewSubmissions();
     EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
     EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
@@ -657,6 +852,8 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     controller->notifyNewSubmission(ccsCsr.get());
     controller->notifyNewSubmission(bcsCsr.get());
     controller->checkNewSubmissions();
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
     EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
 
     if (ccsCsr->getProductHelper().checkBcsForDirectSubmissionStop()) {
@@ -677,6 +874,8 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     controller->directSubmissions[bcsCsr.get()].isStopped = false;
     bcsCsr->taskCount.store(20u);
 
+    controller->checkNewSubmissions();
+    controller->cpuTimestamp += controller->timeout;
     controller->checkNewSubmissions();
     EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
 
@@ -707,6 +906,8 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     controller->directSubmissions[bcsCsr.get()].isStopped = false;
     controller->notifyNewSubmission(&secondDeviceCsr);
     controller->checkNewSubmissions();
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
     EXPECT_EQ(controller->directSubmissions[&secondDeviceCsr].taskCount, 10u);
     EXPECT_TRUE(controller->directSubmissions[&secondDeviceCsr].isStopped);
     EXPECT_EQ(1u, secondDeviceCsr.stopDirectSubmissionCalledTimes);
@@ -720,6 +921,8 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     bcsCsr->isBusyReturnValue = true;
     controller->directSubmissions[bcsCsr.get()].isStopped = true;
 
+    controller->checkNewSubmissions();
+    controller->cpuTimestamp += controller->timeout;
     controller->checkNewSubmissions();
     EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
     EXPECT_TRUE(controller->directSubmissions[ccsCsr.get()].isStopped);
@@ -1203,6 +1406,9 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenIdleContextGroup
     controller->cpuTimestamp += controller->contextGroupTimeout;
     controller->checkNewSubmissions();
 
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
+
     EXPECT_TRUE(controller->directSubmissions[csr1.get()].isStopped);
     EXPECT_TRUE(controller->directSubmissions[csr2.get()].isStopped);
     EXPECT_EQ(1u, csr1->stopDirectSubmissionCalledTimes);
@@ -1228,6 +1434,9 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenNonContextGroupC
     controller->timeSinceLastCheck = controller->cpuTimestamp - controller->timeout;
 
     controller->notifyNewSubmission(&csr);
+    controller->checkNewSubmissions();
+
+    controller->cpuTimestamp += controller->timeout;
     controller->checkNewSubmissions();
 
     controller->cpuTimestamp += controller->timeout;

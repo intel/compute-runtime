@@ -145,11 +145,19 @@ void DirectSubmissionController::checkNewSubmissions() {
             }
             auto lock = csr->obtainUniqueOwnership();
             if (!isCsrIdleDetectionEnabled || (isDirectSubmissionIdle(csr, lock) && isCopyEngineIdle)) {
-                csr->stopDirectSubmission(false, false);
-                state.isActive = false;
-                state.isStopped = true;
-                shouldRecalculateTimeout = true;
-                --activeSubmissionsCount;
+                const auto idleTimeout = isBcs ? this->timeout / this->bcsTimeoutDivisor : this->timeout;
+                if (!state.idleSince.has_value()) {
+                    state.idleSince = getCpuTimestamp();
+                } else if (now - state.idleSince.value() >= idleTimeout) {
+                    csr->stopDirectSubmission(false, false);
+                    state.isActive = false;
+                    state.isStopped = true;
+                    state.idleSince.reset();
+                    shouldRecalculateTimeout = true;
+                    --activeSubmissionsCount;
+                }
+            } else {
+                state.idleSince.reset();
             }
             state.taskCount = csr->peekTaskCount();
         } else {
@@ -158,6 +166,7 @@ void DirectSubmissionController::checkNewSubmissions() {
             }
 
             state.isStopped = false;
+            state.idleSince.reset();
             state.taskCount = taskCount;
         }
     }
