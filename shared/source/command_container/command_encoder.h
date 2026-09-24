@@ -88,6 +88,10 @@ struct EncodePostSyncArgs {
     bool isRegularEvent() const {
         return (eventAddress != 0) && (inOrderExecInfo == nullptr);
     }
+
+    bool hasHostWaitablePostSync() const {
+        return (isHostScopeSignalEvent && (eventAddress != 0)) || (inOrderExecInfo != nullptr);
+    }
 };
 
 template <typename GfxFamily>

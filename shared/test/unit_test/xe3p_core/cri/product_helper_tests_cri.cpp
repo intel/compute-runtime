@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/common_types.h"
@@ -131,6 +132,19 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorS
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceTrueReturned) {
     EXPECT_TRUE(productHelper->isDeviceToHostCopySignalingFenceRequired());
+}
+
+CRITEST_F(CriProductHelper, givenMidThreadPreemptionWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenTrueReturnedOnlyForHostWaitablePostSync) {
+    EXPECT_TRUE(productHelper->isWalkerPreemptionFallbackRequired(PreemptionMode::MidThread, true));
+    EXPECT_FALSE(productHelper->isWalkerPreemptionFallbackRequired(PreemptionMode::MidThread, false));
+}
+
+CRITEST_F(CriProductHelper, givenNonMidThreadPreemptionWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenFalseReturned) {
+    for (auto preemptionMode : {PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup}) {
+        for (bool hostWaitablePostSync : {true, false}) {
+            EXPECT_FALSE(productHelper->isWalkerPreemptionFallbackRequired(preemptionMode, hostWaitablePostSync));
+        }
+    }
 }
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenAdjustNumberOfCcsThenOverrideToSingleCcs) {

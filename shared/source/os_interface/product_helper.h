@@ -54,6 +54,7 @@ enum class DriverModelType;
 enum class EngineGroupType : uint32_t;
 enum class GfxMemoryAllocationMethod : uint32_t;
 enum class AllocationType;
+enum PreemptionMode : uint32_t;
 enum class CacheRegion : uint16_t;
 enum class CachePolicy : uint32_t;
 enum class LocalMemAllocationMode : uint32_t;
@@ -261,6 +262,7 @@ class ProductHelper {
     virtual bool useSharedSystemUsm() const = 0;
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
     virtual bool isL3FlushAfterPostSyncSupported() const = 0;
+    virtual bool isWalkerPreemptionFallbackRequired(PreemptionMode preemptionMode, bool hostWaitablePostSync) const = 0;
     virtual void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const = 0;
     virtual bool isMisalignedUserPtr2WayCoherent() const = 0;
     virtual bool isSvmHeapReservationSupported() const = 0;

@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/blit_properties.h"
@@ -1137,6 +1138,14 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForSharingWith3dOrMediaS
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceFalseReturned) {
     EXPECT_FALSE(productHelper->isDeviceToHostCopySignalingFenceRequired());
+}
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenFalseReturned) {
+    for (auto preemptionMode : {PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread}) {
+        for (bool hostWaitablePostSync : {true, false}) {
+            EXPECT_FALSE(productHelper->isWalkerPreemptionFallbackRequired(preemptionMode, hostWaitablePostSync));
+        }
+    }
 }
 
 HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnNullopt, IsAtMostPVC) {

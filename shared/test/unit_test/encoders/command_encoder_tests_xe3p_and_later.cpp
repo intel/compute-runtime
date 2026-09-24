@@ -1236,3 +1236,52 @@ HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenStateCacheFlushWhe
     MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
     EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
 }
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenMidThreadPreemptionAndHostWaitablePostSyncWhenEncodingWalkerThenThreadPreemptionIsSetAccordingToProductHelper, IsXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    auto &productHelper = pDevice->getProductHelper();
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
+    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), nullptr, *pDevice, 1);
+
+    for (bool inOrderExec : {true, false}) {
+        for (bool hostScopeSignalEvent : {true, false}) {
+            uint32_t dims[] = {1, 1, 1};
+            std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+            EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+            dispatchArgs.preemptionMode = PreemptionMode::MidThread;
+            dispatchArgs.postSyncArgs.inOrderExecInfo = inOrderExec ? inOrderExecInfo.get() : nullptr;
+            dispatchArgs.postSyncArgs.isHostScopeSignalEvent = hostScopeSignalEvent;
+            dispatchArgs.postSyncArgs.eventAddress = 0x1000;
+            dispatchArgs.postSyncArgs.eventPacketsCount = 1;
+
+            EncodeDispatchKernel<FamilyType>::template encode<WalkerType>(*cmdContainer.get(), dispatchArgs);
+
+            auto walkerCmd = reinterpret_cast<WalkerType *>(dispatchArgs.outWalkerPtr);
+            ASSERT_NE(nullptr, walkerCmd);
+
+            const bool hostWaitablePostSync = inOrderExec || hostScopeSignalEvent;
+            const bool downgradeRequired = productHelper.isWalkerPreemptionFallbackRequired(PreemptionMode::MidThread, hostWaitablePostSync);
+            EXPECT_EQ(!downgradeRequired, walkerCmd->getInterfaceDescriptor().getThreadPreemption());
+        }
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenThreadGroupPreemptionAndHostWaitablePostSyncWhenEncodingWalkerThenThreadPreemptionIsDisabled, IsXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    dispatchArgs.preemptionMode = PreemptionMode::ThreadGroup;
+    dispatchArgs.postSyncArgs.isHostScopeSignalEvent = true;
+    dispatchArgs.postSyncArgs.eventAddress = 0x1000;
+    dispatchArgs.postSyncArgs.eventPacketsCount = 1;
+
+    EncodeDispatchKernel<FamilyType>::template encode<WalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    auto walkerCmd = reinterpret_cast<WalkerType *>(dispatchArgs.outWalkerPtr);
+    ASSERT_NE(nullptr, walkerCmd);
+    EXPECT_FALSE(walkerCmd->getInterfaceDescriptor().getThreadPreemption());
+}

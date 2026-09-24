@@ -189,6 +189,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     auto preemptionMode = args.device->getDebugger() ? PreemptionMode::ThreadGroup : args.preemptionMode;
+    if (productHelper.isWalkerPreemptionFallbackRequired(preemptionMode, args.postSyncArgs.hasHostWaitablePostSync())) {
+        preemptionMode = PreemptionMode::ThreadGroup;
+    }
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, preemptionMode);
 
     uint32_t samplerCount = 0;
