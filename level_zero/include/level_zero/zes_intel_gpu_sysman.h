@@ -1034,6 +1034,35 @@ ze_result_t ZE_APICALL zesIntelDriverGetPropertiesExp(
     zes_intel_driver_properties_exp_t *pProperties ///< [in,out] pointer to the driver properties
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME
+/// @brief Device compute property extension name
+#define ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME "ZES_intel_experimental_device_compute_property"
+#endif // ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query device compute properties extension Version(s)
+typedef enum _zes_intel_device_compute_exp_properties_version_t {
+    ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_compute_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query the compute topology of a device.
+/// This structure can be passed in the 'pNext' of zes_device_properties_t
+typedef struct _zes_intel_device_compute_exp_properties_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    uint32_t numSlices;             ///< [out] Total number of slices.
+    uint32_t numCores;              ///< [out] Total number of cores.
+    uint32_t numVectorEngines;      ///< [out] Total number of vector engines.
+    uint32_t numMatrixEngines;      ///< [out] Total number of matrix engines.
+    uint32_t numEUs;                ///< [out] Total number of EUs.
+    uint32_t numThreads;            ///< [out] Total number of hardware threads.
+} zes_intel_device_compute_exp_properties_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

@@ -2110,11 +2110,19 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
     zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
     zes_intel_device_index_exp_properties_t deviceIndex = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
     drvName.pNext = &deviceIndex;
+    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
+    deviceIndex.pNext = &computeProperties;
     oemSerialId.pNext = &drvName;
     properties.pNext = &oemSerialId;
     VALIDATECALL(zesDeviceGetProperties(device, &properties));
     if (verbose) {
         std::cout << "deviceIndex.deviceIndex = " << deviceIndex.deviceIndex << std::endl;
+        std::cout << "computeProperties.numSlices = " << computeProperties.numSlices << std::endl;
+        std::cout << "computeProperties.numCores = " << computeProperties.numCores << std::endl;
+        std::cout << "computeProperties.numVectorEngines = " << computeProperties.numVectorEngines << std::endl;
+        std::cout << "computeProperties.numMatrixEngines = " << computeProperties.numMatrixEngines << std::endl;
+        std::cout << "computeProperties.numEUs = " << computeProperties.numEUs << std::endl;
+        std::cout << "computeProperties.numThreads = " << computeProperties.numThreads << std::endl;
         std::cout << "properties.numSubdevices = " << properties.numSubdevices << std::endl;
         std::cout << "properties.serialNumber = " << properties.serialNumber << std::endl;
         std::cout << "oemSerialId.oemSerialId = " << oemSerialId.oemSerialId << std::endl;

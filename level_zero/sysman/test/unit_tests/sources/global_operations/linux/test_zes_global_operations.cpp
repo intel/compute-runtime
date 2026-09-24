@@ -2039,6 +2039,106 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithControlCh
     EXPECT_EQ(0, expectedSerialNumber.compare(oemSerialId.oemSerialId));
 }
 
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForDeviceComputePropertiesThenValidComputePropertiesAreReturned) {
+    auto mockHardwareInfo = device->getHardwareInfo();
+    mockHardwareInfo.gtSystemInfo.SliceCount = 2;
+    mockHardwareInfo.gtSystemInfo.SubSliceCount = 8;
+    mockHardwareInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
+    mockHardwareInfo.gtSystemInfo.EUCount = 64;
+    mockHardwareInfo.gtSystemInfo.ThreadCount = 512;
+    mockHardwareInfo.caps.matrixMultiplyAccumulateSupported = true;
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
+    properties.pNext = &computeProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, computeProperties.numSlices);
+    EXPECT_EQ(8u, computeProperties.numCores);
+    EXPECT_EQ(64u, computeProperties.numVectorEngines);
+    EXPECT_EQ(64u, computeProperties.numMatrixEngines);
+    EXPECT_EQ(64u, computeProperties.numEUs);
+    EXPECT_EQ(512u, computeProperties.numThreads);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenMatrixMultiplyAccumulateNotSupportedWhenCallingZesDeviceGetPropertiesForDeviceComputePropertiesThenNumMatrixEnginesIsZero) {
+    auto mockHardwareInfo = device->getHardwareInfo();
+    mockHardwareInfo.gtSystemInfo.SliceCount = 2;
+    mockHardwareInfo.gtSystemInfo.SubSliceCount = 8;
+    mockHardwareInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
+    mockHardwareInfo.gtSystemInfo.EUCount = 64;
+    mockHardwareInfo.gtSystemInfo.ThreadCount = 512;
+    mockHardwareInfo.caps.matrixMultiplyAccumulateSupported = false;
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
+    properties.pNext = &computeProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, computeProperties.numSlices);
+    EXPECT_EQ(8u, computeProperties.numCores);
+    EXPECT_EQ(64u, computeProperties.numVectorEngines);
+    EXPECT_EQ(0u, computeProperties.numMatrixEngines);
+    EXPECT_EQ(64u, computeProperties.numEUs);
+    EXPECT_EQ(512u, computeProperties.numThreads);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenFusedSubslicesAndEUsWhenCallingZesDeviceGetPropertiesForDeviceComputePropertiesThenEnabledTotalsAreReturned) {
+    auto mockHardwareInfo = device->getHardwareInfo();
+    mockHardwareInfo.gtSystemInfo.SliceCount = 2;
+    mockHardwareInfo.gtSystemInfo.SubSliceCount = 7;
+    mockHardwareInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
+    mockHardwareInfo.gtSystemInfo.EUCount = 52;
+    mockHardwareInfo.gtSystemInfo.ThreadCount = 416;
+    mockHardwareInfo.caps.matrixMultiplyAccumulateSupported = true;
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
+    properties.pNext = &computeProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, computeProperties.numSlices);
+    EXPECT_EQ(7u, computeProperties.numCores);
+    EXPECT_EQ(52u, computeProperties.numVectorEngines);
+    EXPECT_EQ(52u, computeProperties.numMatrixEngines);
+    EXPECT_EQ(52u, computeProperties.numEUs);
+    EXPECT_EQ(416u, computeProperties.numThreads);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenDebugApiUsedWhenCallingZesDeviceGetPropertiesForDeviceComputePropertiesThenEnabledTotalsAreReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DebugApiUsed.set(1);
+    auto mockHardwareInfo = device->getHardwareInfo();
+    mockHardwareInfo.gtSystemInfo.SliceCount = 0;
+    mockHardwareInfo.gtSystemInfo.MaxSlicesSupported = 2;
+    mockHardwareInfo.gtSystemInfo.MaxSubSlicesSupported = 8;
+    mockHardwareInfo.gtSystemInfo.SubSliceCount = 7;
+    mockHardwareInfo.gtSystemInfo.EUCount = 52;
+    mockHardwareInfo.gtSystemInfo.ThreadCount = 416;
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
+    properties.pNext = &computeProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, computeProperties.numSlices);
+    EXPECT_EQ(7u, computeProperties.numCores);
+    EXPECT_EQ(52u, computeProperties.numEUs);
+    EXPECT_EQ(416u, computeProperties.numThreads);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

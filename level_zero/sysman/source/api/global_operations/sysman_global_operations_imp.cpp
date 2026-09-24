@@ -158,6 +158,15 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
             if (result != ZE_RESULT_SUCCESS) {
                 memPageOfflineProperties->maxOfflinePages = 0;
             }
+        } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES) {
+            auto computeProperties = reinterpret_cast<zes_intel_device_compute_exp_properties_t *>(pNext);
+            const uint32_t numEUs = hardwareInfo.gtSystemInfo.EUCount;
+            computeProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount;
+            computeProperties->numCores = hardwareInfo.gtSystemInfo.SubSliceCount;
+            computeProperties->numVectorEngines = numEUs;
+            computeProperties->numMatrixEngines = hardwareInfo.caps.matrixMultiplyAccumulateSupported ? numEUs : 0;
+            computeProperties->numEUs = numEUs;
+            computeProperties->numThreads = hardwareInfo.gtSystemInfo.ThreadCount;
         }
 
         pNext = static_cast<zes_base_properties_t *>(pNext->pNext);
