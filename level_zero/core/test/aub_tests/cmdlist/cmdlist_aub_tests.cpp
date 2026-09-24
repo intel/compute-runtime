@@ -25,6 +25,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
+#include "multitile_matchers.h"
+
 extern std::optional<uint32_t> blitterMaskOverride;
 
 namespace L0 {
@@ -567,12 +569,9 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyOnTwoCmdListsWithEventsThenDataIsCo
     zeEventPoolDestroy(eventPool);
 }
 
-using BcsSplitMultitileAubTests = Test<BcsSplitAubFixture<2>>;
+using BcsSplitMultiTileAubTests = Test<BcsSplitAubFixture<2>>;
 
-HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
-    if (!rootDevice->isImplicitScalingCapable()) {
-        GTEST_SKIP();
-    }
+HWTEST2_F(BcsSplitMultiTileAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, SupportsMultiTile) {
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT};
