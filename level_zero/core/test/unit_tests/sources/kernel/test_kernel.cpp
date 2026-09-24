@@ -217,6 +217,41 @@ TEST_F(KernelInitTest, givenKernelToInitWhenPrivateSurfaceAllocationFailsThenOut
     EXPECT_NE(std::string::npos, output.find(errorMsg));
 }
 
+TEST_F(KernelInitTest, givenKernelWithoutRequiredWorkgroupSizeWhenInitializedThenGroupSizeIsNotMarkedAsSet) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->initialize(&desc));
+    EXPECT_FALSE(kernel->isGroupSizeSet());
+}
+
+TEST_F(KernelInitTest, givenKernelWithRequiredWorkgroupSizeWhenInitializedThenGroupSizeIsMarkedAsSet) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+    for (auto i = 0u; i < 3u; i++) {
+        mockKernelImmData->kernelDescriptor->kernelAttributes.requiredWorkgroupSize[i] = 1;
+    }
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->initialize(&desc));
+    EXPECT_TRUE(kernel->isGroupSizeSet());
+}
+
 using KernelBaseAddressTests = Test<ModuleImmutableDataFixture>;
 TEST_F(KernelBaseAddressTests, whenQueryingKernelBaseAddressThenCorrectAddressIsReturned) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
@@ -478,6 +513,58 @@ TEST_F(KernelImpSetGroupSizeTest, givenZeroGroupSizeWhenSettingGroupSizeThenInva
     uint32_t groupSize[3] = {0, 0, 0};
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+TEST_F(KernelImpSetGroupSizeTest, givenValidGroupSizeWhenSettingGroupSizeThenGroupSizeIsMarkedAsSet) {
+    Mock<KernelImp> mockKernel;
+    Mock<Module> mockModule(this->device, nullptr);
+    mockKernel.setModule(&mockModule);
+    EXPECT_FALSE(mockKernel.isGroupSizeSet());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setGroupSize(2u, 3u, 5u));
+    EXPECT_TRUE(mockKernel.isGroupSizeSet());
+
+    mockKernel.privateState.groupSizeSet = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setGroupSize(2u, 3u, 5u));
+    EXPECT_TRUE(mockKernel.isGroupSizeSet());
+}
+
+TEST_F(KernelImpSetGroupSizeTest, givenInvalidGroupSizeWhenSettingGroupSizeThenGroupSizeIsNotMarkedAsSet) {
+    Mock<KernelImp> mockKernel;
+    Mock<Module> mockModule(this->device, nullptr);
+    for (auto i = 0u; i < 3u; i++) {
+        mockKernel.descriptor.kernelAttributes.requiredWorkgroupSize[i] = 2;
+    }
+    mockKernel.setModule(&mockModule);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, mockKernel.setGroupSize(0u, 0u, 0u));
+    EXPECT_FALSE(mockKernel.isGroupSizeSet());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, mockKernel.setGroupSize(4u, 4u, 4u));
+    EXPECT_FALSE(mockKernel.isGroupSizeSet());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, mockKernel.setGroupSize(4u, 4u, 4u));
+    EXPECT_FALSE(mockKernel.isGroupSizeSet());
+}
+
+TEST_F(KernelImpSetGroupSizeTest, givenGroupSizeSetWhenSettingGroupSizeNotMatchingRequiredWorkgroupSizeThenPreviousGroupSizeIsKept) {
+    Mock<KernelImp> mockKernel;
+    Mock<Module> mockModule(this->device, nullptr);
+    for (auto i = 0u; i < 3u; i++) {
+        mockKernel.descriptor.kernelAttributes.requiredWorkgroupSize[i] = 2;
+    }
+    mockKernel.setModule(&mockModule);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setGroupSize(2u, 2u, 2u));
+    EXPECT_TRUE(mockKernel.isGroupSizeSet());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, mockKernel.setGroupSize(4u, 4u, 4u));
+    EXPECT_TRUE(mockKernel.isGroupSizeSet());
+    EXPECT_EQ(2u, mockKernel.privateState.groupSize[0]);
+    EXPECT_EQ(2u, mockKernel.privateState.groupSize[1]);
+    EXPECT_EQ(2u, mockKernel.privateState.groupSize[2]);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, mockKernel.setGroupSize(4u, 4u, 4u));
 }
 
 TEST_F(KernelImpSetGroupSizeTest, givenValidGroupSizeWhenSetMultipleTimesThenSetGroupSizeIsOnlyExecutedIfNeeded) {
@@ -4440,6 +4527,20 @@ TEST_F(KernelProgramBinaryTests, givenNullKernelHandleWhenCallingZeKernelGetModu
 
 TEST_F(KernelProgramBinaryTests, givenNullModuleHandlePointerWhenCallingZeKernelGetModuleHandleThenInvalidNullPointerReturned) {
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, ::zeKernelGetModuleHandle(kernelHandle, nullptr));
+}
+
+TEST_F(KernelProgramBinaryTests, givenGroupSizeNotSetWhenCallingZeKernelSuggestMaxCooperativeGroupCountThenInvalidGroupSizeDimensionReturned) {
+    uint32_t totalGroupCount = 0xFFu;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, ::zeKernelSuggestMaxCooperativeGroupCount(kernelHandle, &totalGroupCount));
+    EXPECT_EQ(0xFFu, totalGroupCount);
+}
+
+TEST_F(KernelProgramBinaryTests, givenGroupSizeSetWhenCallingZeKernelSuggestMaxCooperativeGroupCountThenSuccessReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeKernelSetGroupSize(kernelHandle, 1u, 1u, 1u));
+
+    uint32_t totalGroupCount = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeKernelSuggestMaxCooperativeGroupCount(kernelHandle, &totalGroupCount));
+    EXPECT_NE(0u, totalGroupCount);
 }
 
 TEST_F(KernelProgramBinaryTests, givenCallTozeKernelGetBinaryExpThenCorrectSizeAndDataReturned) {
