@@ -2816,9 +2816,142 @@ TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadGpuMemoryFailsDuringFif
 TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadGpuMemoryFailsDuringUpdateOfLastHeadThenErrorReturned) {
 
     EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    session->forcereadGpuMemoryFailOnCount = 5;
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
+}
+
+struct DebugSessionTestSwFifoTailRevertFixture : public DebugSessionTestSwFifoFixture {
+    void SetUp() override {
+        DebugSessionTestSwFifoFixture::SetUp();
+        stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        tailGpuVa = reinterpret_cast<uint64_t>(&stateSaveAreaHeaderPtr->regHeaderV3.fifo_tail);
+    }
+
+    uint32_t &memoryFifoTail() {
+        return stateSaveAreaHeaderPtr->regHeaderV3.fifo_tail;
+    }
+
+    uint64_t tailGpuVa = 0;
+    const size_t fifoNodesCount = fifoVecFromTail.size() + fifoVecTillHead.size();
+    const uint32_t nodeWritesPerDrain = 2;
+};
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenSwFifoWhenReadingSwFifoThenTailWriteIsReadBackAndLastWrittenTailIsTracked) {
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    EXPECT_EQ(fifoNodesCount, threadsWithAttention.size());
+    EXPECT_EQ(fifoHead, memoryFifoTail());
+    EXPECT_EQ(nodeWritesPerDrain + 1, session->writeGpuMemoryCallCount);
+
+    ASSERT_EQ(1u, session->fifoTailStates.count(0));
+    EXPECT_EQ(fifoTail, session->fifoTailStates[0].previousTail);
+    EXPECT_EQ(fifoHead, session->fifoTailStates[0].writtenTail);
+}
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenTailWriteNotPersistingOnFirstAttemptWhenReadingSwFifoThenTailWriteIsRetried) {
+    session->dropWriteGpuMemoryGpuVa = tailGpuVa;
+    session->dropWriteGpuMemoryCount = 1;
+
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    EXPECT_EQ(fifoNodesCount, threadsWithAttention.size());
+    EXPECT_EQ(fifoHead, memoryFifoTail());
+    EXPECT_EQ(nodeWritesPerDrain + 2, session->writeGpuMemoryCallCount);
+}
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenTailWriteNeverPersistingWhenReadingSwFifoThenRevertedTailIsRestoredAndNoNodeIsReportedTwice) {
+    session->dropWriteGpuMemoryGpuVa = tailGpuVa;
+    session->dropWriteGpuMemoryCount = MockDebugSession::maxTailWriteAttempts;
+
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    EXPECT_EQ(fifoNodesCount, threadsWithAttention.size());
+    EXPECT_EQ(fifoHead, memoryFifoTail());
+    EXPECT_EQ(nodeWritesPerDrain + MockDebugSession::maxTailWriteAttempts + 1, session->writeGpuMemoryCallCount);
+}
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenTailRevertedAfterFifoReadWhenReadingSwFifoAgainThenTailIsRestoredAndConsumedNodesAreNotReadAgain) {
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+    EXPECT_EQ(fifoNodesCount, threadsWithAttention.size());
+
+    memoryFifoTail() = fifoTail;
+    threadsWithAttention.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    EXPECT_TRUE(threadsWithAttention.empty());
+    EXPECT_EQ(fifoHead, memoryFifoTail());
+}
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenTailDifferentFromLastWrittenAndPreviousTailWhenReadingSwFifoThenTailFromMemoryIsUsed) {
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    const uint32_t newTail = fifoHead + 1;
+    const uint32_t newHead = fifoHead + 2;
+    const SIP::fifo_node newNode = {1, 7, 2, 0, 0};
+    auto nodes = reinterpret_cast<SIP::fifo_node *>(session->stateSaveAreaHeader.data() + offsetFifo);
+    nodes[newTail] = newNode;
+    memoryFifoTail() = newTail;
+    stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = newHead;
+
+    threadsWithAttention.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    ASSERT_EQ(1u, threadsWithAttention.size());
+    EXPECT_EQ(newNode.thread_id, threadsWithAttention[0].thread);
+    EXPECT_EQ(newNode.eu_id, threadsWithAttention[0].eu);
+    EXPECT_EQ(newHead, memoryFifoTail());
+}
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenTailReadBackFailsWhenReadingSwFifoThenErrorReturned) {
     session->forcereadGpuMemoryFailOnCount = 4;
     std::vector<EuThread::ThreadId> threadsWithAttention;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
+}
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenRevertedTailRestoreWriteFailsWhenReadingSwFifoThenErrorReturned) {
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    memoryFifoTail() = fifoTail;
+    session->forceWriteGpuMemoryFailOnCount = session->writeGpuMemoryCallCount + 1;
+    threadsWithAttention.clear();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
+}
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenTailRevertWorkaroundDisabledWhenReadingSwFifoThenTailIsNotReadBackAndNotTracked) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.DebugUmdFifoTailRevertWorkaround.set(0);
+
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    // Two passes each read the indices, and the first pass reads the FIFO in two chunks around the wrap.
+    const uint32_t readsWithoutTailReadBack = 4;
+    EXPECT_EQ(fifoNodesCount, threadsWithAttention.size());
+    EXPECT_EQ(fifoHead, memoryFifoTail());
+    EXPECT_EQ(nodeWritesPerDrain + 1, session->writeGpuMemoryCallCount);
+    EXPECT_EQ(readsWithoutTailReadBack, session->readGpuMemoryCallCount);
+    EXPECT_TRUE(session->fifoTailStates.empty());
+}
+
+TEST_F(DebugSessionTestSwFifoTailRevertFixture, GivenTailRevertWorkaroundDisabledWhenTailRevertedAfterFifoReadThenTailIsNotRestored) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.DebugUmdFifoTailRevertWorkaround.set(0);
+    session->fifoTailStates[0] = {fifoTail, fifoHead};
+    stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = fifoTail;
+
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    EXPECT_TRUE(threadsWithAttention.empty());
+    EXPECT_EQ(fifoTail, memoryFifoTail());
+    EXPECT_EQ(0u, session->writeGpuMemoryCallCount);
 }
 
 TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsLessThanThreeDuringFifoReadThenFifoIsNotReadAndSuccessIsReturned) {
