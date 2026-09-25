@@ -332,6 +332,7 @@ bool Device::initDeviceFully() {
     }
 
     getDefaultEngine().osContext->setDefaultContext(true);
+    getOSTime()->initTimestampPtr(*getDefaultEngine().osContext);
 
     for (auto &engine : allEngines) {
         auto commandStreamReceiver = engine.commandStreamReceiver;

@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/user_fence.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -237,7 +238,7 @@ class IoctlHelper {
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool requiresUserFenceSetup(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
-    virtual void *getTimestampPtr() { return nullptr; };
+    virtual MmioTimestampPtrHelper getMmioTimestampPtrHelper() { return {}; };
     void setupIpVersion();
     virtual bool isImmediateVmBindRequired() const { return false; }
 

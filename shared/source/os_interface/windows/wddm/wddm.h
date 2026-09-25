@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/adapter_bdf.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
@@ -98,7 +99,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds);
 
     MOCKABLE_VIRTUAL NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
-    MOCKABLE_VIRTUAL void *getTimestampPtr() { return nullptr; }
+    MOCKABLE_VIRTUAL MmioTimestampPtrHelper createMmioTimestampPtrHelper(D3DKMT_HANDLE context);
     WddmResidencyController &getResidencyController() { return residencyController; }
     MOCKABLE_VIRTUAL VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback);
     void unregisterTrimCallback() override {

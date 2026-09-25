@@ -20,8 +20,8 @@ DeviceTimeDrm::DeviceTimeDrm(OSInterface &osInterface) {
     pDrm = osInterface.getDriverModel()->as<Drm>();
 }
 
-volatile uint64_t *DeviceTimeDrm::getTimestampPtr() {
-    return static_cast<volatile uint64_t *>(pDrm->getIoctlHelper()->getTimestampPtr());
+MmioTimestampPtrHelper DeviceTimeDrm::getMmioTimestampPtrHelper(OsContext &osContext) {
+    return pDrm->getIoctlHelper()->getMmioTimestampPtrHelper();
 }
 
 TimeQueryStatus DeviceTimeDrm::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {

@@ -15,6 +15,7 @@
 namespace NEO {
 
 class OSInterface;
+class OsContext;
 struct HardwareInfo;
 
 struct TimeStampData {
@@ -30,6 +31,33 @@ enum class TimeQueryStatus : uint32_t {
 
 class OSTime;
 
+class MmioTimestampPtrHelper {
+  public:
+    MmioTimestampPtrHelper() = default;
+    MmioTimestampPtrHelper(const volatile uint32_t *low, const volatile uint32_t *high) : lowDword(low), highDword(high) {}
+
+    bool isAvailable() const { return lowDword != nullptr && highDword != nullptr; }
+
+    uint64_t read() const {
+        uint32_t high = 0u;
+        uint32_t low = 0u;
+
+        // Read again to ensure a consistent high and low 32-bit pair
+        do {
+            high = readHighDword();
+            low = *lowDword;
+        } while (high != readHighDword());
+
+        return (static_cast<uint64_t>(high) << 32) | low;
+    }
+
+  protected:
+    MOCKABLE_VIRTUAL uint32_t readHighDword() const { return *highDword; }
+
+    const volatile uint32_t *lowDword = nullptr;
+    const volatile uint32_t *highDword = nullptr;
+};
+
 class DeviceTime {
   public:
     virtual ~DeviceTime() = default;
@@ -38,10 +66,10 @@ class DeviceTime {
     virtual double getDynamicDeviceTimerResolution() const;
     virtual uint64_t getDynamicDeviceTimerClock() const;
     virtual bool isTimestampsRefreshEnabled() const;
-    virtual volatile uint64_t *getTimestampPtr() { return nullptr; }
+    virtual MmioTimestampPtrHelper getMmioTimestampPtrHelper(OsContext &osContext) { return {}; }
     TimeQueryStatus getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
-    void initTimestampPtr();
-    bool isTimestampPtrAvailable() const { return timestampPtr != nullptr; }
+    void initTimestampPtr(OsContext &osContext);
+    bool isTimestampPtrAvailable() const { return mmioTimestampPtrHelper.isAvailable(); }
     void setDeviceTimerResolution();
     void setRefreshTimestampsFlag() {
         refreshTimestamps = true;
@@ -50,7 +78,8 @@ class DeviceTime {
         return timestampRefreshTimeoutNS;
     };
 
-    volatile uint64_t *timestampPtr = nullptr;
+    MmioTimestampPtrHelper mmioTimestampPtrHelper;
+    bool timestampPtrInitialized = false;
     std::optional<uint64_t> initialGpuTimeStamp{};
     bool waitingForGpuTimeStampOverflow = false;
     uint64_t gpuTimeStampOverflowCounter = 0;
@@ -102,8 +131,8 @@ class OSTime {
         deviceTime->setRefreshTimestampsFlag();
     }
 
-    void initTimestampPtr() const {
-        deviceTime->initTimestampPtr();
+    void initTimestampPtr(OsContext &osContext) const {
+        deviceTime->initTimestampPtr(osContext);
     }
 
     bool isTimestampPtrAvailable() const {

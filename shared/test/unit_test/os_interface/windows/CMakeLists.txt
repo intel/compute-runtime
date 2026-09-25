@@ -40,6 +40,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_windows_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm32_tests_extra.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/wddm_perf_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/wddm_timestamp_page_tests.cpp
   )
 endif()
 
@@ -64,6 +65,7 @@ endif()
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_perf_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_timestamp_page_tests.cpp
   )
 endif()
 

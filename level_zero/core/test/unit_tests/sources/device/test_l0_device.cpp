@@ -2014,10 +2014,10 @@ TEST_F(GetGlobalTimestampTest, whenTbxModeThenSetGlobalTimestampViaSubmission) {
 TEST_F(GetGlobalTimestampTest, givenTbxModeAndTimestampPtrWhenGettingGlobalTimestampThenOsInterfaceIsUsed) {
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
-    uint64_t timestampValue = 0x500001234u;
+    uint32_t timestampDwords[2] = {0x1234u, 0x5u};
 
     auto osTime = std::make_unique<NEO::MockOSTime>();
-    osTime->deviceTime->timestampPtr = &timestampValue;
+    osTime->deviceTime->mmioTimestampPtrHelper = NEO::MmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
 
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.osTime = std::move(osTime);

@@ -40,6 +40,7 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_interface.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
@@ -3735,4 +3736,49 @@ HWTEST2_F(DeviceTestRayTracing, giveSetMaxBVHLevelsWhenAllocateRTDispatchGlobals
     EXPECT_EQ(expectedNumDSSRTStacks, dispatchGlobals.numDSSRTStacks);
     EXPECT_EQ(expectedSyncNumDSSRTStacks, dispatchGlobals.syncNumDSSRTStacks);
     EXPECT_EQ(7u, dispatchGlobals.maxBVHLevels);
+}
+
+TEST(DeviceTimestampPtrTest, givenTimestampMmioReadEnabledWhenCreatingDeviceThenTimestampPtrIsInitializedOnceWithDefaultEngineContext) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableTimestampMmioRead.set(1);
+
+    struct MockDeviceTimeWithTimestampPtr : public MockDeviceTime {
+        MmioTimestampPtrHelper getMmioTimestampPtrHelper(OsContext &osContext) override {
+            getMmioTimestampPtrHelperCalled++;
+            passedOsContext = &osContext;
+            return {&timestampDwords[0], &timestampDwords[1]};
+        }
+        uint32_t timestampDwords[2] = {0x2u, 0x1u};
+        uint32_t getMmioTimestampPtrHelperCalled = 0u;
+        OsContext *passedOsContext = nullptr;
+    };
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    auto osTime = new MockOSTime();
+    auto deviceTime = new MockDeviceTimeWithTimestampPtr();
+    osTime->deviceTime.reset(deviceTime);
+    executionEnvironment->rootDeviceEnvironments[0]->osTime.reset(osTime);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+
+    EXPECT_TRUE(device->getOSTime()->isTimestampPtrAvailable());
+    EXPECT_EQ(1u, deviceTime->getMmioTimestampPtrHelperCalled);
+    EXPECT_EQ(device->getDefaultEngine().osContext, deviceTime->passedOsContext);
+}
+
+TEST(MmioTimestampPtrHelperTest, givenHighDwordChangedDuringReadWhenReadingThenReadIsRepeated) {
+    struct MockMmioTimestampPtrHelper : public MmioTimestampPtrHelper {
+        using MmioTimestampPtrHelper::MmioTimestampPtrHelper;
+        uint32_t readHighDword() const override {
+            return highDwordValues[readHighDwordCalled++];
+        }
+        mutable uint32_t readHighDwordCalled = 0u;
+        uint32_t highDwordValues[4] = {0x1u, 0x2u, 0x2u, 0x2u};
+    };
+
+    uint32_t timestampDwords[2] = {0x100u, 0x0u};
+    MockMmioTimestampPtrHelper mmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
+
+    EXPECT_EQ(0x200000100u, mmioTimestampPtrHelper.read());
+    EXPECT_EQ(4u, mmioTimestampPtrHelper.readHighDwordCalled);
 }

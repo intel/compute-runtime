@@ -11,6 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
@@ -53,12 +54,13 @@ DeviceTimeWddm::DeviceTimeWddm(Wddm *wddm) {
     this->wddm = wddm;
 }
 
-volatile uint64_t *DeviceTimeWddm::getTimestampPtr() {
+MmioTimestampPtrHelper DeviceTimeWddm::getMmioTimestampPtrHelper(OsContext &osContext) {
     if (!wddm) {
-        return nullptr;
+        return {};
     }
 
-    return static_cast<volatile uint64_t *>(wddm->getTimestampPtr());
+    const auto contextHandle = static_cast<OsContextWin &>(osContext).getWddmContextHandle();
+    return wddm->createMmioTimestampPtrHelper(contextHandle);
 }
 
 double DeviceTimeWddm::getDynamicDeviceTimerResolution() const {
