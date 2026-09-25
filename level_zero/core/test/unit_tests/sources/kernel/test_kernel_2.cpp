@@ -110,6 +110,7 @@ void fillKernelMutableStateWithMockData(KernelMutableState &state) {
 
     KernelMutableState::SuggestGroupSizeCacheEntry mockGroupSizeCacheEntry(Vec3<size_t>{52U, 54U, 58U}.values,
                                                                            std::numeric_limits<uint32_t>::max(),
+                                                                           3U,
                                                                            Vec3<size_t>{62U, 64U, 68U}.values);
     state.suggestGroupSizeCache.push_back(mockGroupSizeCacheEntry);
 

@@ -39,6 +39,7 @@
 
 #include "CL/cl.h"
 
+#include <algorithm>
 #include <cstring>
 
 namespace NEO {
@@ -1203,6 +1204,12 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
+    if (0u == workDim || workDim > pCommandQueue->getDevice()->getDeviceInfo().maxWorkItemDimensions) [[unlikely]] {
+        cl_int tracingRetVal = CL_INVALID_WORK_DIMENSION;
+        TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
+        return tracingRetVal;
+    }
+
     auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
@@ -1262,7 +1269,8 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         uint32_t gws[3] = {static_cast<uint32_t>(globalWorkSize[0]),
                            workDim > 1 ? static_cast<uint32_t>(globalWorkSize[1]) : 1u,
                            workDim > 2 ? static_cast<uint32_t>(globalWorkSize[2]) : 1u};
-        ret = zeKernelSuggestGroupSize(kernelHandle, gws[0], gws[1], gws[2], &lws[0], &lws[1], &lws[2]);
+        ret = pKernel->getL0Object(pCommandQueue->getDevice()->getRootDeviceIndex())
+                  ->suggestGroupSize(gws[0], gws[1], gws[2], workDim, &lws[0], &lws[1], &lws[2]);
         if (ret != ZE_RESULT_SUCCESS) {
             cl_int tracingRetVal = L0ToClResultMapper(ret);
             TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);

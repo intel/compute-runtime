@@ -20,6 +20,7 @@ namespace NEO {
 namespace LEO {
 
 class Buffer;
+class ClDevice;
 class Image;
 
 template <>
@@ -53,7 +54,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     cl_int getArgInfo(cl_uint argIndex, cl_kernel_arg_info paramName, size_t paramValueSize,
                       void *paramValue, size_t *paramValueSizeRet) const;
 
-    cl_int getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWorkSize, size_t *suggestedLocalWorkSize);
+    cl_int getSuggestedLocalWorkSize(const ClDevice &clDevice, cl_uint workDim, const size_t *globalWorkSize,
+                                     size_t *suggestedLocalWorkSize);
     cl_int getMaxConcurrentWorkGroupCount(cl_uint workDim, const size_t *localWorkSize, size_t *suggestedWorkGroupCount);
     Context *getContext() const { return this->program->getContext(); }
 

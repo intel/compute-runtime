@@ -36,7 +36,6 @@
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/program/work_size_info.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 
@@ -575,19 +574,28 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
 ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
                                         uint32_t globalSizeZ, uint32_t *groupSizeX,
                                         uint32_t *groupSizeY, uint32_t *groupSizeZ) {
+    uint32_t dim = (globalSizeY > 1U) ? 2 : 1U;
+    dim = (globalSizeZ > 1U) ? 3 : dim;
+
+    return suggestGroupSize(globalSizeX, globalSizeY, globalSizeZ, dim, groupSizeX, groupSizeY, groupSizeZ);
+}
+
+ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
+                                        uint32_t globalSizeZ, uint32_t workDim,
+                                        uint32_t *groupSizeX, uint32_t *groupSizeY,
+                                        uint32_t *groupSizeZ) {
     size_t retGroupSize[3] = {};
     const auto &kernelDescriptor = this->getImmutableData()->getDescriptor();
     auto maxWorkGroupSize = module->getMaxGroupSize(kernelDescriptor);
-    auto simd = kernelDescriptor.kernelAttributes.simdSize;
+    auto slmTotalSizePerThreadGroup = this->getSlmTotalSizePerThreadGroup();
     size_t workItems[3] = {globalSizeX, globalSizeY, globalSizeZ};
-    uint32_t dim = (globalSizeY > 1U) ? 2 : 1U;
-    dim = (globalSizeZ > 1U) ? 3 : dim;
 
     auto cachedGroupSize = std::find_if(this->privateState.suggestGroupSizeCache.begin(),
                                         this->privateState.suggestGroupSizeCache.end(),
                                         [&](const auto &other) {
                                             return other.groupSize == workItems &&
-                                                   other.slmArgsTotalSize == this->getSlmTotalSizePerThreadGroup();
+                                                   other.slmArgsTotalSize == slmTotalSizePerThreadGroup &&
+                                                   other.workDim == workDim;
                                         });
     if (cachedGroupSize != this->privateState.suggestGroupSizeCache.end()) {
         *groupSizeX = static_cast<uint32_t>(cachedGroupSize->suggestedGroupSize.x);
@@ -596,40 +604,26 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         return ZE_RESULT_SUCCESS;
     }
 
-    if (NEO::debugManager.flags.EnableComputeWorkSizeND.get()) {
-        auto usesImages = kernelDescriptor.kernelAttributes.flags.usesImages;
-        auto neoDevice = module->getDevice()->getNEODevice();
-        const auto &deviceInfo = neoDevice->getDeviceInfo();
-        uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
-        uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
+    auto neoDevice = module->getDevice()->getNEODevice();
+    uint32_t localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
 
-        if (this->getSlmTotalSizePerThreadGroup() > 0 && localMemSize < this->getSlmTotalSizePerThreadGroup()) {
-            const auto device = module->getDevice();
-            const auto driverHandle = device->getDriverHandle();
+    if (slmTotalSizePerThreadGroup > 0 && localMemSize < slmTotalSizePerThreadGroup) {
+        const auto device = module->getDevice();
+        const auto driverHandle = device->getDriverHandle();
 
-            CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSizePerThreadGroup(), localMemSize);
-            driverHandle->setErrorDescription(std::string(str.get()));
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSizePerThreadGroup(), localMemSize);
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-        }
-
-        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelDescriptor.kernelAttributes.usesBarriers(), simd, this->getSlmTotalSizePerThreadGroup(),
-                                 neoDevice->getRootDeviceEnvironment(), numThreadsPerSubSlice, localMemSize,
-                                 usesImages, false, kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
-        NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
-    } else {
-        if (1U == dim) {
-            NEO::computeWorkgroupSize1D(maxWorkGroupSize, retGroupSize, workItems, simd);
-        } else if (NEO::debugManager.flags.EnableComputeWorkSizeSquared.get() && (2U == dim)) {
-            NEO::computeWorkgroupSizeSquared(maxWorkGroupSize, retGroupSize, workItems, simd, dim);
-        } else {
-            NEO::computeWorkgroupSize2D(maxWorkGroupSize, retGroupSize, workItems, simd);
-        }
+        CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", slmTotalSizePerThreadGroup, localMemSize);
+        driverHandle->setErrorDescription(std::string(str.get()));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSizePerThreadGroup, localMemSize);
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
+
+    NEO::computeWorkgroupSizeForKernel(kernelDescriptor, maxWorkGroupSize, slmTotalSizePerThreadGroup,
+                                       *neoDevice, workDim, workItems, retGroupSize);
+
     *groupSizeX = static_cast<uint32_t>(retGroupSize[0]);
     *groupSizeY = static_cast<uint32_t>(retGroupSize[1]);
     *groupSizeZ = static_cast<uint32_t>(retGroupSize[2]);
-    this->privateState.suggestGroupSizeCache.emplace_back(workItems, this->getSlmTotalSizePerThreadGroup(), retGroupSize);
+    this->privateState.suggestGroupSizeCache.emplace_back(workItems, slmTotalSizePerThreadGroup, workDim, retGroupSize);
 
     return ZE_RESULT_SUCCESS;
 }

@@ -62,7 +62,8 @@ cl_int getKernelSuggestedLocalWorkSizeImpl(NEO::LEO::CommandQueue *commandQueue,
         }
     }
 
-    return kernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, suggestedLocalWorkSize);
+    return kernel->getSuggestedLocalWorkSize(*commandQueue->getDevice(), workDim, globalWorkSize,
+                                             suggestedLocalWorkSize);
 }
 } // namespace
 

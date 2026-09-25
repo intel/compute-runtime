@@ -12,6 +12,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
 
 #include <cmath>
@@ -32,8 +33,8 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t
     setMinWorkGroupSize(rootDeviceEnvironment, disableEUFusion);
 }
 
-void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
-    for (const auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
+void WorkSizeInfo::setIfUseImg(const KernelDescriptor &kernelDescriptor) {
+    for (const auto &arg : kernelDescriptor.payloadMappings.explicitArgs) {
         if (arg.is<ArgDescriptor::argTImage>()) {
             imgUsed = true;
             yTiledSurfaces = true;

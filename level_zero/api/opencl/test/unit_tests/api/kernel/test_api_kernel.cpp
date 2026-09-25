@@ -28,6 +28,7 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
@@ -134,16 +135,6 @@ struct MockL0KernelForSuggestedLocalWorkSize : public L0::ult::Mock<L0::KernelIm
     MockL0KernelForSuggestedLocalWorkSize() {
         this->privateState.kernelArgHandlers.resize(1);
     }
-
-    ze_result_t suggestGroupSize(uint32_t, uint32_t, uint32_t,
-                                 uint32_t *groupSizeX,
-                                 uint32_t *groupSizeY,
-                                 uint32_t *groupSizeZ) override {
-        *groupSizeX = 1;
-        *groupSizeY = 1;
-        *groupSizeZ = 1;
-        return ZE_RESULT_SUCCESS;
-    }
 };
 
 struct GetKernelSuggestedLocalWorkSizeFixture : public Test<OclFixture> {
@@ -154,6 +145,8 @@ struct GetKernelSuggestedLocalWorkSizeFixture : public Test<OclFixture> {
         context = std::make_unique<Context>(nullptr, nullptr, 1, &clDevice, true);
         commandQueue = std::make_unique<CommandQueue>(context.get(), device, nullptr, nullptr);
         l0Kernel = std::make_unique<MockL0KernelForSuggestedLocalWorkSize>();
+        l0Module = std::make_unique<L0::ult::Mock<L0::ult::Module>>(device->getL0Object(), nullptr);
+        l0Kernel->setModule(l0Module.get());
         program = std::make_unique<Program>(context.get());
         std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
         kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
@@ -163,6 +156,7 @@ struct GetKernelSuggestedLocalWorkSizeFixture : public Test<OclFixture> {
         kernel.reset();
         program.reset();
         l0Kernel.release();
+        l0Module.reset();
         commandQueue.reset();
         context.reset();
         Test<OclFixture>::TearDown();
@@ -172,6 +166,7 @@ struct GetKernelSuggestedLocalWorkSizeFixture : public Test<OclFixture> {
     std::unique_ptr<Context> context;
     std::unique_ptr<CommandQueue> commandQueue;
     std::unique_ptr<MockL0KernelForSuggestedLocalWorkSize> l0Kernel;
+    std::unique_ptr<L0::ult::Mock<L0::ult::Module>> l0Module;
     std::unique_ptr<Program> program;
     std::unique_ptr<Kernel> kernel;
 };
@@ -381,7 +376,38 @@ TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenValidInputWhenGetKernelSugge
     auto retVal = clGetKernelSuggestedLocalWorkSize(commandQueue.get(), kernel.get(), 1, nullptr, globalWorkSize, suggestedLocalWorkSize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, suggestedLocalWorkSize[0]);
+    EXPECT_EQ(8u, suggestedLocalWorkSize[0]);
+}
+
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenTrailingUnitGlobalWorkSizeWhenGetKernelSuggestedLocalWorkSizeThenWorkDimIsUsedAsPassed) {
+    size_t globalWorkSize[3] = {8, 1, 1};
+    size_t suggestedLocalWorkSize[3] = {};
+
+    auto retVal = clGetKernelSuggestedLocalWorkSize(commandQueue.get(), kernel.get(), 2, nullptr, globalWorkSize, suggestedLocalWorkSize);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    uint32_t enqueueGroupSize[3] = {1, 1, 1};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, l0Kernel->suggestGroupSize(8u, 1u, 1u, 2u, &enqueueGroupSize[0], &enqueueGroupSize[1], &enqueueGroupSize[2]));
+
+    EXPECT_EQ(enqueueGroupSize[0], suggestedLocalWorkSize[0]);
+    EXPECT_EQ(enqueueGroupSize[1], suggestedLocalWorkSize[1]);
+}
+
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenRequiredWorkgroupSizeWhenGetKernelSuggestedLocalWorkSizeThenReturnsRequiredSize) {
+    auto &requiredWorkgroupSize = l0Kernel->descriptor.kernelAttributes.requiredWorkgroupSize;
+    requiredWorkgroupSize[0] = 4;
+    requiredWorkgroupSize[1] = 2;
+    requiredWorkgroupSize[2] = 1;
+
+    size_t globalWorkSize[3] = {8, 4, 1};
+    size_t suggestedLocalWorkSize[3] = {};
+
+    auto retVal = clGetKernelSuggestedLocalWorkSize(commandQueue.get(), kernel.get(), 3, nullptr, globalWorkSize, suggestedLocalWorkSize);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(4u, suggestedLocalWorkSize[0]);
+    EXPECT_EQ(2u, suggestedLocalWorkSize[1]);
+    EXPECT_EQ(1u, suggestedLocalWorkSize[2]);
 }
 
 TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenConcurrentTypeWhenSetKernelExecInfoKernelTypeThenExecutionTypeIsStored) {

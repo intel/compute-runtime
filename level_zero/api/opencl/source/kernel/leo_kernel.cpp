@@ -15,6 +15,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/program/kernel_info.h"
 
+#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel_info_cl.h"
@@ -351,7 +352,8 @@ cl_int Kernel::getArgInfo(cl_uint argIndex, cl_kernel_arg_info paramName, size_t
     return retVal;
 }
 
-cl_int Kernel::getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWorkSize, size_t *suggestedLocalWorkSize) {
+cl_int Kernel::getSuggestedLocalWorkSize(const ClDevice &clDevice, cl_uint workDim, const size_t *globalWorkSize,
+                                         size_t *suggestedLocalWorkSize) {
     if (nullptr == suggestedLocalWorkSize) {
         return CL_INVALID_VALUE;
     }
@@ -365,9 +367,8 @@ cl_int Kernel::getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWo
         return CL_INVALID_KERNEL;
     }
     auto lock = this->takeOwnership();
-    auto kernelHandle = this->getL0Handle();
 
-    Vec3<uint32_t> globalSize{1, 1, 1};
+    uint32_t globalSize[3] = {1, 1, 1};
     for (auto dim = 0u; dim < workDim; ++dim) {
         if (0u == globalWorkSize[dim] ||
             globalWorkSize[dim] > std::numeric_limits<uint32_t>::max()) {
@@ -376,24 +377,26 @@ cl_int Kernel::getSuggestedLocalWorkSize(cl_uint workDim, const size_t *globalWo
         globalSize[dim] = static_cast<uint32_t>(globalWorkSize[dim]);
     }
 
-    Vec3<uint32_t> suggestedGroupSize{1, 1, 1};
-    ze_kernel_properties_t kernelProperties{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
-    auto ret = zeKernelGetProperties(kernelHandle, &kernelProperties);
-    if (0u != kernelProperties.requiredGroupSizeX) {
-        suggestedGroupSize.x = kernelProperties.requiredGroupSizeX;
-        suggestedGroupSize.y = kernelProperties.requiredGroupSizeY;
-        suggestedGroupSize.z = kernelProperties.requiredGroupSizeZ;
+    auto l0Kernel = this->getL0Object(clDevice.getRootDeviceIndex());
+    const auto &requiredWorkgroupSize = l0Kernel->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize;
+
+    uint32_t suggestedGroupSize[3] = {1, 1, 1};
+    if (0u != requiredWorkgroupSize[0]) {
+        suggestedGroupSize[0] = requiredWorkgroupSize[0];
+        suggestedGroupSize[1] = requiredWorkgroupSize[1];
+        suggestedGroupSize[2] = requiredWorkgroupSize[2];
     } else {
-        ret = zeKernelSuggestGroupSize(kernelHandle,
-                                       globalSize.x, globalSize.y, globalSize.z,
-                                       &suggestedGroupSize.x, &suggestedGroupSize.y, &suggestedGroupSize.z);
-    }
-    if (ZE_RESULT_SUCCESS == ret) {
-        for (auto dim = 0u; dim < workDim; ++dim) {
-            suggestedLocalWorkSize[dim] = suggestedGroupSize[dim];
+        auto ret = l0Kernel->suggestGroupSize(globalSize[0], globalSize[1], globalSize[2], workDim,
+                                              &suggestedGroupSize[0], &suggestedGroupSize[1], &suggestedGroupSize[2]);
+        if (ZE_RESULT_SUCCESS != ret) {
+            return L0ToClResultMapper(ret);
         }
     }
-    return L0ToClResultMapper(ret);
+
+    for (auto dim = 0u; dim < workDim; ++dim) {
+        suggestedLocalWorkSize[dim] = suggestedGroupSize[dim];
+    }
+    return CL_SUCCESS;
 }
 
 cl_int Kernel::setArgumentValue(uint32_t argIndex, size_t argSize, const void *argValue) {

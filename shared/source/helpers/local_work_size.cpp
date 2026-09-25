@@ -8,9 +8,12 @@
 #include "shared/source/helpers/local_work_size.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
+#include "shared/source/device/device_info.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/work_size_info.h"
 
@@ -428,6 +431,49 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
     }
 
     choosePrefferedWorkgroupSize(wsInfo, workGroupSize, workItems, workDim);
+}
+
+WorkSizeInfo createWorkSizeInfoForKernel(const KernelDescriptor &kernelDescriptor, uint32_t maxWorkGroupSize,
+                                         uint32_t slmTotalSizePerThreadGroup, const Device &device) {
+    const auto &kernelAttributes = kernelDescriptor.kernelAttributes;
+    const auto &deviceInfo = device.getDeviceInfo();
+    auto numThreadsPerSubSlice = static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice) * deviceInfo.numThreadsPerEU;
+
+    WorkSizeInfo wsInfo(maxWorkGroupSize,
+                        kernelAttributes.usesBarriers(),
+                        kernelAttributes.simdSize,
+                        slmTotalSizePerThreadGroup,
+                        device.getRootDeviceEnvironment(),
+                        numThreadsPerSubSlice,
+                        static_cast<uint32_t>(deviceInfo.localMemSize),
+                        false,
+                        false,
+                        kernelAttributes.flags.requiresDisabledEUFusion);
+
+    wsInfo.setIfUseImg(kernelDescriptor);
+
+    auto preferredWorkgroupCount = device.getProductHelper().getPreferredWorkgroupCountPerSubslice();
+    if (debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.get() != -1) {
+        preferredWorkgroupCount = static_cast<uint32_t>(debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.get());
+    }
+    wsInfo.setPreferredWgCountPerSubslice(preferredWorkgroupCount);
+
+    return wsInfo;
+}
+
+void computeWorkgroupSizeForKernel(const KernelDescriptor &kernelDescriptor, uint32_t maxWorkGroupSize,
+                                   uint32_t slmTotalSizePerThreadGroup, const Device &device,
+                                   uint32_t workDim, const size_t workItems[3], size_t workGroupSize[3]) {
+    if (debugManager.flags.EnableComputeWorkSizeND.get()) {
+        auto wsInfo = createWorkSizeInfoForKernel(kernelDescriptor, maxWorkGroupSize, slmTotalSizePerThreadGroup, device);
+        computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, workDim);
+    } else if (workDim == 1) {
+        computeWorkgroupSize1D(maxWorkGroupSize, workGroupSize, workItems, kernelDescriptor.kernelAttributes.simdSize);
+    } else if (debugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2) {
+        computeWorkgroupSizeSquared(maxWorkGroupSize, workGroupSize, workItems, kernelDescriptor.kernelAttributes.simdSize, workDim);
+    } else {
+        computeWorkgroupSize2D(maxWorkGroupSize, workGroupSize, workItems, kernelDescriptor.kernelAttributes.simdSize);
+    }
 }
 
 Vec3<size_t> computeWorkgroupsNumber(const Vec3<size_t> &gws, const Vec3<size_t> &lws) {
