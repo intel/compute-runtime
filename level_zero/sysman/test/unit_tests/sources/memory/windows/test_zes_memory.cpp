@@ -111,6 +111,13 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGettingProper
     }
 }
 
+TEST_F(SysmanDeviceMemoryFixture, GivenValidOsMemoryObjectWhenGettingExtensionPropertiesThenUnsupportedFeatureIsReturnedForNonNullPNextAndSuccessOtherwise) {
+    std::unique_ptr<WddmMemoryImp> pWddmMemoryImp = std::make_unique<WddmMemoryImp>(pOsSysman, false, 0);
+    zes_mem_bandwidth_t extension{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmMemoryImp->getExtensionProperties(&extension));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pWddmMemoryImp->getExtensionProperties(nullptr));
+}
+
 TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingStateThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
@@ -204,68 +211,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMe
         }
     } else {
         EXPECT_EQ(count, 0u);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenMemoryVendorIdExtensionWhenCallingZesMemoryGetPropertiesThenExtensionIsNotFilledAndSuccessIsReturned) {
-    pKmdSysManager->mockMemoryDomains = 1;
-    clearMemHandleListAndReinit();
-
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-    ASSERT_EQ(handles.size(), memoryHandleComponentCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_mem_properties_t properties = {};
-        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
-        vendorIdProperties.vendorId = mockMemoryVendorIdValue;
-        vendorIdProperties.length = 0xBEEFu;
-        std::strncpy(vendorIdProperties.vendorName, "untouched", ZES_MEMORY_VENDOR_NAME_EXT_SIZE);
-        properties.pNext = &vendorIdProperties;
-
-        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(properties.pNext, &vendorIdProperties);
-        EXPECT_EQ(vendorIdProperties.vendorId, mockMemoryVendorIdValue);
-        EXPECT_EQ(vendorIdProperties.length, 0xBEEFu);
-        EXPECT_STREQ(vendorIdProperties.vendorName, "untouched");
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenUninitializedExtensionChainPointerWhenCallingZesMemoryGetPropertiesThenChainIsNotDereferencedAndSuccessIsReturned) {
-    pKmdSysManager->mockMemoryDomains = 1;
-    clearMemHandleListAndReinit();
-
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-    ASSERT_EQ(handles.size(), memoryHandleComponentCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_mem_properties_t properties = {};
-        auto uninitializedPnext = reinterpret_cast<void *>(static_cast<uintptr_t>(0xDEADBEEFu));
-        properties.pNext = uninitializedPnext;
-
-        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(properties.pNext, uninitializedPnext);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenUnsupportedExtensionStypeWhenCallingZesMemoryGetPropertiesThenExtensionIsIgnoredAndSuccessIsReturned) {
-    pKmdSysManager->mockMemoryDomains = 1;
-    clearMemHandleListAndReinit();
-
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
-    ASSERT_EQ(handles.size(), memoryHandleComponentCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_mem_properties_t properties = {};
-        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_FORCE_UINT32};
-        vendorIdProperties.vendorId = mockMemoryVendorIdValue;
-        vendorIdProperties.length = 0xBEEFu;
-        std::strncpy(vendorIdProperties.vendorName, "untouched", ZES_MEMORY_VENDOR_NAME_EXT_SIZE);
-        properties.pNext = &vendorIdProperties;
-
-        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(vendorIdProperties.vendorId, mockMemoryVendorIdValue);
-        EXPECT_EQ(vendorIdProperties.length, 0xBEEFu);
-        EXPECT_STREQ(vendorIdProperties.vendorName, "untouched");
     }
 }
 

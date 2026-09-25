@@ -24,6 +24,9 @@ ze_result_t WddmPciImp::getPciConfigProperties(zes_intel_pci_config_exp_properti
 }
 
 ze_result_t WddmPciImp::getExtensionProperties(void *pNext) {
+    if (pNext != nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     return ZE_RESULT_SUCCESS;
 }
 

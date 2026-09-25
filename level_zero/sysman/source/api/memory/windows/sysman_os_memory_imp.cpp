@@ -192,6 +192,9 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
 }
 
 ze_result_t WddmMemoryImp::getExtensionProperties(void *pNext) {
+    if (pNext != nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
