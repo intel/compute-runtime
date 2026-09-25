@@ -60,7 +60,8 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
     cl_uint refCount = 0;
     uint64_t nonCannonizedGpuAddress = 0llu;
     auto gmmHelper = program->getContext()->getClDevice()->getL0Object()->getNEODevice()->getGmmHelper();
-    const auto &kernelInfo = *getL0Object()->getImmutableData()->getKernelInfo();
+    const auto &kernelImmData = *getL0Object()->getImmutableData();
+    const auto &kernelInfo = *kernelImmData.getKernelInfo();
 
     switch (paramName) {
     case CL_KERNEL_FUNCTION_NAME:
@@ -103,7 +104,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         break;
 
     case CL_KERNEL_BINARY_GPU_ADDRESS_INTEL:
-        nonCannonizedGpuAddress = gmmHelper->decanonize(kernelInfo.getIsaGraphicsAllocation()->getGpuAddress() + kernelInfo.getIsaOffsetInParentAllocation());
+        nonCannonizedGpuAddress = gmmHelper->decanonize(kernelImmData.getIsaGraphicsAllocation()->getGpuAddress() + kernelImmData.getIsaOffsetInParentAllocation());
         pSrc = &nonCannonizedGpuAddress;
         srcSize = sizeof(nonCannonizedGpuAddress);
         break;

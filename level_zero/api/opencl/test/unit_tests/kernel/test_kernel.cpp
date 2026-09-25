@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
@@ -488,6 +489,26 @@ TEST_F(LeoKernelFixture, givenKernelWhenCastFromHandleThenObjectIsRecovered) {
     cl_kernel clKernel = kernel;
     EXPECT_EQ(kernel, castToObject<Kernel>(clKernel));
     EXPECT_EQ(static_cast<cl_ulong>(Kernel::objectMagic), kernel->getMagic() & Kernel::maskMagic);
+}
+
+TEST_F(LeoKernelFixture, givenIsaAllocatedInL0ImmutableDataWhenQueryingBinaryGpuAddressThenDecanonizedIsaAddressWithOffsetIsReturned) {
+    auto kernel = createKernel();
+    auto &immutableData = l0Kernels[0]->immutableData;
+    ASSERT_EQ(nullptr, immutableData.getKernelInfo()->getGraphicsAllocation());
+
+    auto gmmHelper = clDevice->getL0Object()->getNEODevice()->getGmmHelper();
+    const uint64_t isaGpuAddress = gmmHelper->canonize(0x123450000ull);
+    const size_t isaOffset = 0x40u;
+    immutableData.isaGraphicsAllocation->setGpuPtr(isaGpuAddress);
+    immutableData.setIsaSubAllocationOffset(isaOffset);
+
+    uint64_t gpuAddress = 0u;
+    size_t sizeRet = 0u;
+    auto retVal = kernel->getInfo(CL_KERNEL_BINARY_GPU_ADDRESS_INTEL, sizeof(gpuAddress), &gpuAddress, &sizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(gpuAddress), sizeRet);
+    EXPECT_EQ(gmmHelper->decanonize(isaGpuAddress + isaOffset), gpuAddress);
 }
 
 } // namespace ult
