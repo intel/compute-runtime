@@ -182,7 +182,6 @@ class IoctlHelper {
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLockedMemory, bool readOnlyResource, bool resolveResource) = 0;
-    virtual int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
     virtual int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
@@ -348,6 +347,7 @@ class IoctlHelperI915 : public IoctlHelper {
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
     bool overrideMaxSlicesSupported() const override { return true; }
     bool requireBoChunksForLargeHostPtrs() const override { return true; }
+    virtual int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

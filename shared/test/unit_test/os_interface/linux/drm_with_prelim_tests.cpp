@@ -688,7 +688,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
     distances[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 4};
     distances[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2};
     std::vector<QueryItem> queryItems(distances.size());
-    auto ret = ioctlHelper->queryDistances(queryItems, distances);
+    auto ret = static_cast<IoctlHelperI915 *>(ioctlHelper)->queryDistances(queryItems, distances);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0, distances[0].distance);
     EXPECT_EQ(0, distances[1].distance);

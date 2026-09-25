@@ -80,7 +80,6 @@ class IoctlHelperXe : public IoctlHelper {
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource, bool resolveResource) override;
     virtual std::string xeGetBindFlagNames(int bindFlags);
-    int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;

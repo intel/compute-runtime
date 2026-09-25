@@ -619,11 +619,6 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
 
     EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false, false, false, false));
 
-    std::vector<QueryItem> queryItems;
-    std::vector<DistanceInfo> distanceInfos;
-    EXPECT_EQ(0, xeIoctlHelper->queryDistances(queryItems, distanceInfos));
-    EXPECT_EQ(0u, distanceInfos.size());
-
     EXPECT_EQ(0u, xeIoctlHelper->getWaitUserFenceSoftFlag());
 
     EXPECT_EQ(0, xeIoctlHelper->execBuffer(nullptr, 0, 0));

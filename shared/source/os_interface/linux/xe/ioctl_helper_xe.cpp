@@ -1287,11 +1287,6 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
     return flags;
 }
 
-int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
-    XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
-    return 0;
-}
-
 bool IoctlHelperXe::isPageFaultSupported() {
     auto checkVmCreateFlagsSupport = [&](uint32_t flags) -> bool {
         struct drm_xe_vm_create vmCreate = {};
