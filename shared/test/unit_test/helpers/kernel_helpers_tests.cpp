@@ -21,6 +21,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include <algorithm>
+#include <array>
 
 using namespace NEO;
 
@@ -140,6 +141,82 @@ HWTEST2_PRODUCT_F(KernelHelperMaxWorkGroupsTests, GivenUsedSlmSizeWhenCalculatin
 
     auto expected = availableSlm / usedSlm;
     EXPECT_EQ(expected, getMaxWorkGroupCount());
+}
+
+struct KernelHelperMaxWorkGroupsSlmPerDssFixture : public KernelHelperMaxWorkGroupsFixture {
+    static constexpr uint32_t kb = static_cast<uint32_t>(MemoryConstants::kiloByte);
+    static constexpr uint32_t slmPerDss = 128 * kb;
+
+    void setUp() {
+        KernelHelperMaxWorkGroupsFixture::setUp();
+
+        debugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+
+        workDim = 1;
+        lws[0] = 1;
+        lws[1] = 0;
+        lws[2] = 0;
+        numberOfBarriers = 0;
+
+        auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.ThreadCount = 8192;
+        hwInfo->gtSystemInfo.EUCount = 4096;
+    }
+
+    void setSlmLayout(uint32_t dssCountToUse, uint32_t slmPerDssToUse, uint32_t usedSlmToUse) {
+        dssCount = dssCountToUse;
+        availableSlm = dssCountToUse * slmPerDssToUse;
+        usedSlm = usedSlmToUse;
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using KernelHelperMaxWorkGroupsSlmPerDssTests = Test<KernelHelperMaxWorkGroupsSlmPerDssFixture>;
+
+TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenSlmSizeNotDividingPerDssCapacityWhenCalculatingMaxWorkGroupsCountThenLeftoverIsNotPooled) {
+    setSlmLayout(20, slmPerDss, 96 * kb);
+
+    EXPECT_EQ(20u, getMaxWorkGroupCount());
+}
+
+TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenLargePerDssCapacityAndNonDividingSlmSizeWhenCalculatingMaxWorkGroupsCountThenLeftoverIsNotPooled) {
+    setSlmLayout(32, 384 * kb, 256 * kb);
+
+    EXPECT_EQ(32u, getMaxWorkGroupCount());
+}
+
+TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenSlmSizeDividingPerDssCapacityWhenCalculatingMaxWorkGroupsCountThenEveryGroupThatFitsIsReported) {
+    setSlmLayout(20, slmPerDss, 64 * kb);
+
+    EXPECT_EQ(40u, getMaxWorkGroupCount());
+}
+
+TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenSlmSizeEqualToPerDssCapacityWhenCalculatingMaxWorkGroupsCountThenOneGroupPerDssIsReported) {
+    setSlmLayout(20, slmPerDss, slmPerDss);
+
+    EXPECT_EQ(20u, getMaxWorkGroupCount());
+}
+
+TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenSlmSizeExceedingPerDssCapacityWhenCalculatingMaxWorkGroupsCountThenZeroIsReported) {
+    setSlmLayout(20, slmPerDss, 2 * slmPerDss);
+
+    EXPECT_EQ(0u, getMaxWorkGroupCount());
+}
+
+TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenVariousSlmSizesWhenCalculatingMaxWorkGroupsCountThenReportedGroupsAlwaysFitInPerDssCapacity) {
+    constexpr std::array<uint32_t, 12> slmSizes = {8 * kb, 12 * kb, 16 * kb, 20 * kb, 24 * kb, 32 * kb,
+                                                   40 * kb, 48 * kb, 64 * kb, 96 * kb, 100 * kb, 128 * kb};
+
+    for (const auto slmSize : slmSizes) {
+        setSlmLayout(20, slmPerDss, slmSize);
+
+        const auto groupsPerDss = slmPerDss / slmSize;
+        const auto actual = getMaxWorkGroupCount();
+
+        EXPECT_EQ(dssCount * groupsPerDss, actual) << "usedSlm = " << slmSize;
+        EXPECT_LE((actual / dssCount) * slmSize, slmPerDss) << "usedSlm = " << slmSize;
+    }
 }
 
 HWTEST_F(KernelHelperMaxWorkGroupsTests, givenUsedSlmSizeWhenCalculatingMaxWorkGroupsCountThenAlignToDssSizeCalled) {

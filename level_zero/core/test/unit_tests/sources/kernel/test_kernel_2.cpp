@@ -735,8 +735,16 @@ HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenBarriersWhenCalcul
 
 HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize, IsAtLeastXe2HpgCore) {
     usedSlm = 128 * MemoryConstants::kiloByte;
-    auto expected = availableSlm / usedSlm;
+    auto expected = dssCount * (availableSlmPerDss / usedSlm);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
+}
+
+HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeNotDividingPerDssCapacityWhenCalculatingMaxCooperativeGroupCountThenLeftoverSlmIsNotPooledAcrossDss, IsAtLeastXe2HpgCore) {
+    usedSlm = (availableSlmPerDss / 2) + MemoryConstants::kiloByte;
+
+    const auto groupsPerDss = availableSlmPerDss / usedSlm;
+    EXPECT_EQ(1u, groupsPerDss);
+    EXPECT_EQ(dssCount * groupsPerDss, getMaxWorkGroupCount());
 }
 
 using KernelTest = Test<DeviceFixture>;

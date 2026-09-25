@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class KernelImpSuggestMaxCooperativeGroupCountFixture : public DeviceFixture {
     uint32_t availableThreadCount;
     uint32_t dssCount;
     uint32_t availableSlm;
+    uint32_t availableSlmPerDss;
     uint32_t maxBarrierCount;
     WhiteBox<::L0::KernelImmutableData> kernelInfo;
     NEO::KernelDescriptor kernelDescriptor;

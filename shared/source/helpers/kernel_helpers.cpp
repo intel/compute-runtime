@@ -46,7 +46,6 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
     }
 
     auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, numGrfRequired, rootDeviceEnvironment);
-    auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hwInfo.capabilityTable.maxProgrammableSlmSize);
     constexpr auto maxBarrierCount = CommonConstants::maxBarrierRegisterPerSlice;
 
     UNRECOVERABLE_IF((workDim == 0) || (workDim > 3));
@@ -65,7 +64,8 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
         maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToBarrierUsage);
     }
     if (usedSlmSize > 0) {
-        auto maxWorkGroupsCountDueToSlm = availableSlmSize / usedSlmSize;
+        auto slmSizePerDss = static_cast<uint32_t>(MemoryConstants::kiloByte * hwInfo.capabilityTable.maxProgrammableSlmSize);
+        auto maxWorkGroupsCountDueToSlm = dssCount * (slmSizePerDss / usedSlmSize);
         maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToSlm);
     }
 
