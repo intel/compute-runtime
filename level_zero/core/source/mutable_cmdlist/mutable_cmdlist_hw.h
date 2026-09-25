@@ -47,6 +47,7 @@ struct MutableAppendEvents {
     bool eventInsideInOrder = false;
     bool inOrderIncrementEvent = false;
     bool omitWaitEventResidency = false;
+    bool apiRequestGraphExternal = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -190,7 +191,8 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void storeWaitEventsVariables(uint32_t numWaitEvents,
                                   ze_event_handle_t *phWaitEvents,
                                   MutableAppendEvents &mutableEventParams);
-    void processWaitEventVariables(uint32_t numWaitEvents);
+    void processWaitEventVariables(uint32_t numWaitEvents,
+                                   MutableAppendEvents &mutableEventParams);
     void clearMutableAppendData();
 
     void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) override;

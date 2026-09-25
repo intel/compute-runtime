@@ -47,6 +47,7 @@ struct InterfaceVariableDescriptor {
     bool immediateValueChunks = false;
     bool api = false;
     bool asyncMutation = false;
+    bool apiRequestEventGraphExternal = false;
 };
 
 enum VariableType : uint8_t {
@@ -96,6 +97,7 @@ struct EventValueProperties {
     bool hasStandaloneProfilingNode = false;
     bool cbEventWithProfiling = false;
     bool isExternalFlag = false;
+    bool apiRequiredExternal = false;
     bool patchPreambleNoopState = false;
     bool qwordInUse = false;
     bool useSemaphore64bCmd = false;

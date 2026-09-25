@@ -3925,7 +3925,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             continue;
         }
 
-        if (event->isExternalEvent()) {
+        // patch preamble should be used for
+        // 1. external events (created with external flag)
+        // 2. API request for external graph events (passed external flag - used to during recording a graph, so reserved space for OR dispatched commands can be made)
+        // 3. counter is assigned - it means event was set with external flag during graph record/instatiate and now is signalled in a graph at its execution and needs to be waited on in immediate command list
+        if (event->isExternalEvent() || waitEventParams.apiRequestForGraphExternal || event->getInOrderExecEventHelper().getPatchPreambleCounter() != 0) {
             CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(event->getInOrderExecEventHelper(), waitEventParams.outWaitCmds, waitEventParams.skipAddingWaitEventsToResidency, dualStreamCopyOffload);
         }
 
