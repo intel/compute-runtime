@@ -317,7 +317,6 @@ enum class DrmIoctl {
     gemVmBind,
     gemVmUnbind,
     gemWaitUserFence,
-    dg1GemCreateExt,
     gemCreateExt,
     gemVmAdvise,
     gemVmGetMemRangeAttr,

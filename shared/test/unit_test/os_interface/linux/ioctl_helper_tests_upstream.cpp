@@ -206,8 +206,6 @@ TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestStringThenProperStringIsRet
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::perfOpen).c_str(), "DRM_IOCTL_I915_PERF_OPEN");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::perfEnable).c_str(), "I915_PERF_IOCTL_ENABLE");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::perfDisable).c_str(), "I915_PERF_IOCTL_DISABLE");
-
-    EXPECT_THROW(ioctlHelper.getIoctlString(DrmIoctl::dg1GemCreateExt), std::runtime_error);
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestValueThenProperValueIsReturned) {
@@ -244,8 +242,6 @@ TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestValueThenProperValueIsRetur
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::perfOpen), static_cast<unsigned int>(DRM_IOCTL_I915_PERF_OPEN));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::perfEnable), static_cast<unsigned int>(I915_PERF_IOCTL_ENABLE));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::perfDisable), static_cast<unsigned int>(I915_PERF_IOCTL_DISABLE));
-
-    EXPECT_THROW(ioctlHelper.getIoctlRequestValue(DrmIoctl::dg1GemCreateExt), std::runtime_error);
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingDrmParamStringThenProperStringIsReturned) {
