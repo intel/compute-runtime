@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -471,7 +472,7 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpirvAndBuildOptionsThenUnpack
     EXPECT_EQ(spirvPtr, unpackResult.intermediateRepresentation.begin());
 }
 
-TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithL1CachePolicyInZeInfoThenUnpackSurfacesItOnSingleDeviceBinary) {
+TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithZeInfoSectionThenUnpackExposesZeInfoSectionContents) {
     auto zeInfo = std::string{"---\nversion : \'"} + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\'\nl1_cache_policy : wb\n";
     ZebinTestData::ValidEmptyProgram zebin(zeInfo);
 
@@ -485,11 +486,23 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithL1CachePolicyInZeInfoThenUnpac
     std::string unpackWarnings;
     auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
     EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
-    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyWriteBack, unpackResult.l1CachePolicy);
+
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(zebin.storage, unpackErrors, unpackWarnings);
+    ArrayRef<const uint8_t> zeInfoSectionData;
+    for (auto &sectionHeader : elf.sectionHeaders) {
+        if (sectionHeader.header->type == NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO) {
+            zeInfoSectionData = sectionHeader.data;
+        }
+    }
+    ASSERT_FALSE(zeInfoSectionData.empty());
+    EXPECT_EQ(reinterpret_cast<const char *>(zeInfoSectionData.begin()), unpackResult.zeInfo.begin());
+    EXPECT_EQ(zeInfoSectionData.size(), unpackResult.zeInfo.size());
+    EXPECT_TRUE(unpackResult.zeInfo.startsWith(zeInfo.c_str()));
 }
 
-TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithoutL1CachePolicyInZeInfoThenUnpackSurfacesUnknownPolicy) {
+TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithoutZeInfoSectionThenUnpackedZeInfoIsEmpty) {
     ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
 
     zebin.elfHeader->type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
     zebin.elfHeader->machine = IGFX_BMG;
@@ -501,7 +514,7 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithoutL1CachePolicyInZeInfoThenUn
     std::string unpackWarnings;
     auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
     EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
-    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown, unpackResult.l1CachePolicy);
+    EXPECT_TRUE(unpackResult.zeInfo.empty());
 }
 
 TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithPisaAndBuildOptionsThenUnpackThemProperly) {

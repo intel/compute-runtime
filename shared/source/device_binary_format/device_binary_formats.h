@@ -98,7 +98,7 @@ struct SingleDeviceBinary {
     TargetDevice targetDevice;
     GeneratorType generator = GeneratorType::igc;
     GeneratorFeatureVersions generatorFeatureVersions;
-    Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicy l1CachePolicy = Zebin::ZeInfo::Types::L1CachePolicy::Defaults::l1CachePolicy;
+    ConstStringRef zeInfo;
 };
 
 inline specConstValuesMap getSpecConstantsFromBinary(const SingleDeviceBinary &binary) {

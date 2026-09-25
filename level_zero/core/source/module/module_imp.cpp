@@ -24,6 +24,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
@@ -475,15 +476,16 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
         if (productHelper.isL1PolicyMissmatchCheckNeeded()) {
             const bool debuggerActive = device->getNEODevice()->getDebugger() != nullptr;
-            if (singleDeviceBinary.l1CachePolicy != NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown) {
-                if (NEO::checkL1CachePolicyMismatch(singleDeviceBinary.l1CachePolicy, productHelper.getL1CachePolicy(debuggerActive))) {
+            const auto zebinL1CachePolicy = NEO::Zebin::ZeInfo::decodeZeInfoL1CachePolicyValue(singleDeviceBinary.zeInfo);
+            if (zebinL1CachePolicy != NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown) {
+                if (NEO::checkL1CachePolicyMismatch(zebinL1CachePolicy, productHelper.getL1CachePolicy(debuggerActive))) {
                     if (irBinarySize != 0) {
                         rebuild = true;
                         NEO::replaceL1CachePolicyInBuildOptions(
                             this->options,
                             rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(debuggerActive));
                     } else {
-                        this->l1CachePolicyOverride = NEO::getL1CacheControlForZebinPolicy(singleDeviceBinary.l1CachePolicy);
+                        this->l1CachePolicyOverride = NEO::getL1CacheControlForZebinPolicy(zebinL1CachePolicy);
                     }
                 }
             } else {
