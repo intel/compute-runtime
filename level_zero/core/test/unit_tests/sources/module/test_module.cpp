@@ -4401,7 +4401,7 @@ kernels:
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     moduleTu.unpackedDeviceBinarySize = zebin.size();
-    moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+    moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
     memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
              zebin.data(), zebin.size());
     auto retVal = moduleTu.processUnpackedBinary();
@@ -4461,7 +4461,7 @@ kernels:
     {
         L0::ModuleTranslationUnit moduleTu(this->device);
         moduleTu.unpackedDeviceBinarySize = zebin.size();
-        moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+        moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
         memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
                  zebin.data(), zebin.size());
         auto retVal = moduleTu.processUnpackedBinary();
@@ -4482,11 +4482,10 @@ TEST_F(ModuleTranslationUnitTest, GivenGenericPoolsAnd2MBLocalMemAlignmentEnable
     neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
     mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
 
-    constexpr size_t constantDataSize = ConstantSurfacePoolTraits::maxAllocationSize * 3 / 4;
-    constexpr size_t globalDataSize = GlobalSurfacePoolTraits::maxAllocationSize * 3 / 4;
+    constexpr size_t constantDataSize = ConstantSurfacePoolTraits::defaultPoolSize / 2 + MemoryConstants::pageSize;
+    constexpr size_t globalDataSize = GlobalSurfacePoolTraits::defaultPoolSize / 2 + MemoryConstants::pageSize;
 
-    std::string constantData(constantDataSize, 7);
-    std::string globalData(globalDataSize, 8);
+    const std::vector<uint8_t> sectionData(std::max(constantDataSize, globalDataSize), 7);
 
     std::string zeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
@@ -4497,9 +4496,9 @@ kernels:
     MockElfEncoder<> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel", std::string{});
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, constantData);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, ArrayRef<const uint8_t>(sectionData.data(), constantDataSize));
     auto dataConstSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, globalData);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, ArrayRef<const uint8_t>(sectionData.data(), globalDataSize));
     auto dataGlobalSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
     NEO::Elf::ElfSymbolEntry<NEO::Elf::ElfIdentifierClass::EI_CLASS_64> symbolTable[2] = {};
@@ -4526,7 +4525,7 @@ kernels:
     {
         L0::ModuleTranslationUnit moduleTu(this->device);
         moduleTu.unpackedDeviceBinarySize = zebin.size();
-        moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+        moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
         memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
                  zebin.data(), zebin.size());
         auto retVal = moduleTu.processUnpackedBinary();
@@ -4607,7 +4606,7 @@ kernels:
     {
         L0::ModuleTranslationUnit moduleTu(this->device);
         moduleTu.unpackedDeviceBinarySize = zebin.size();
-        moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+        moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
         memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
                  zebin.data(), zebin.size());
         auto retVal = moduleTu.processUnpackedBinary();
@@ -4618,7 +4617,7 @@ kernels:
 
         L0::ModuleTranslationUnit moduleTu2(this->device);
         moduleTu2.unpackedDeviceBinarySize = zebin.size();
-        moduleTu2.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu2.unpackedDeviceBinarySize);
+        moduleTu2.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu2.unpackedDeviceBinarySize);
         memcpy_s(moduleTu2.unpackedDeviceBinary.get(), moduleTu2.unpackedDeviceBinarySize,
                  zebin.data(), zebin.size());
         retVal = moduleTu2.processUnpackedBinary();
@@ -6226,7 +6225,7 @@ TEST_F(ModuleTests, givenSlmSizeExceedingLocalMemorySizeWhenProcessingUnpackedBi
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     moduleTu.unpackedDeviceBinarySize = src.size();
-    moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+    moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
     memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize, src.data(), src.size());
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, moduleTu.processUnpackedBinary());
