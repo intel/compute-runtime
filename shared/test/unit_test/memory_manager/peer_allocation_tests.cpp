@@ -15,6 +15,8 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
+
 using namespace NEO;
 
 namespace {
@@ -59,9 +61,9 @@ class FdTrackingMemoryManager : public MockMemoryManager {
     std::vector<CloseCall> closeCalls;
 };
 
-class ReservedHandleTrackingMemoryManager : public MockMemoryManager {
+class ReservedHandleTrackingMemoryManager : public FdTrackingMemoryManager {
   public:
-    using MockMemoryManager::MockMemoryManager;
+    using FdTrackingMemoryManager::FdTrackingMemoryManager;
 
     int getImportHandleFromReservedHandleData(void *reservedHandleData, uint32_t rootDeviceIndex) override {
         getImportHandleFromReservedCalls++;
@@ -74,16 +76,20 @@ class ReservedHandleTrackingMemoryManager : public MockMemoryManager {
         return reservedHandleReturnValue;
     }
 
-    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override {
-        closedHandles.push_back(handle);
-    }
-
     uint32_t getImportHandleFromReservedCalls = 0u;
     uint32_t lastReservedRootDeviceIndex = 0u;
     int reservedHandleReturnValue = 0x5000;
     std::vector<int> reservedHandleReturnValues;
-    std::vector<uint64_t> closedHandles;
 };
+
+std::vector<FdTrackingMemoryManager::CloseCall> closeCallsSortedByHandle(const std::vector<FdTrackingMemoryManager::CloseCall> &closeCalls) {
+    std::vector<FdTrackingMemoryManager::CloseCall> sortedCloseCalls = closeCalls;
+    std::sort(sortedCloseCalls.begin(), sortedCloseCalls.end(),
+              [](const FdTrackingMemoryManager::CloseCall &lhs, const FdTrackingMemoryManager::CloseCall &rhs) {
+                  return lhs.handle < rhs.handle;
+              });
+    return sortedCloseCalls;
+}
 
 struct PeerAllocationTest : public ::testing::Test {
     void SetUp() override {
@@ -601,7 +607,7 @@ TEST_F(PeerAllocationReservedHandleTest, givenSingleHandleAndReservedDataAvailab
     EXPECT_EQ(0u, memoryManager->getImportHandleFromReservedCalls);
 }
 
-TEST_F(PeerAllocationReservedHandleTest, givenSingleHandleAndReservedDataAvailableWhenFdImportFailsThenReservedHandleIsUsedAsFallback) {
+TEST_F(PeerAllocationReservedHandleTest, givenSingleHandleAndReservedDataAvailableWhenFdImportFailsThenReservedHandleIsUsedAsFallbackAndBothFdsAreClosedAfterImport) {
     SVMAllocsManager::MapBasedAllocationTracker storage;
     MockMultiHandleGraphicsAllocation source;
     source.numHandles = 0u;
@@ -613,6 +619,7 @@ TEST_F(PeerAllocationReservedHandleTest, givenSingleHandleAndReservedDataAvailab
     memoryManager->reservedHandleReturnValue = 0x7000;
 
     uint32_t importFdCalls = 0;
+    bool reservedHandleClosedBeforeRetryImport = false;
     std::vector<uint64_t> importedHandles;
     PeerAllocationDeps deps{};
     deps.reservedHandleDataAvailable = true;
@@ -620,6 +627,13 @@ TEST_F(PeerAllocationReservedHandleTest, givenSingleHandleAndReservedDataAvailab
                         SvmAllocationData &, bool) -> void * {
         ++importFdCalls;
         importedHandles.push_back(handle);
+        if (importFdCalls == 2) {
+            for (const auto &closeCall : memoryManager->closeCalls) {
+                if (closeCall.handle == 0x7000ull) {
+                    reservedHandleClosedBeforeRetryImport = true;
+                }
+            }
+        }
         return (importFdCalls == 1) ? nullptr : reinterpret_cast<void *>(0xBADC0FFEULL);
     };
     deps.importFds = [](Device *, const std::vector<osHandle> &, void *, GraphicsAllocation **,
@@ -641,6 +655,14 @@ TEST_F(PeerAllocationReservedHandleTest, givenSingleHandleAndReservedDataAvailab
     EXPECT_EQ(0x7000ull, importedHandles[1]);
     EXPECT_EQ(1u, memoryManager->getImportHandleFromReservedCalls);
     EXPECT_EQ(device1->getRootDeviceIndex(), memoryManager->lastReservedRootDeviceIndex);
+    EXPECT_FALSE(reservedHandleClosedBeforeRetryImport);
+
+    auto sortedCloseCalls = closeCallsSortedByHandle(memoryManager->closeCalls);
+    ASSERT_EQ(2u, sortedCloseCalls.size());
+    EXPECT_EQ(0x1234ull, sortedCloseCalls[0].handle);
+    EXPECT_EQ(0u, sortedCloseCalls[0].handleId);
+    EXPECT_EQ(&source, sortedCloseCalls[0].alloc);
+    EXPECT_EQ(0x7000ull, sortedCloseCalls[1].handle);
 }
 
 TEST_F(PeerAllocationReservedHandleTest, givenSingleHandleAndReservedDataUnavailableWhenFdImportFailsThenNoFallbackAndReturnsNullptr) {
@@ -749,7 +771,7 @@ TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleAndReservedDataAvailabl
     EXPECT_EQ(0u, memoryManager->getImportHandleFromReservedCalls);
 }
 
-TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleAndReservedDataAvailableWhenFdsImportFailsThenReservedHandlesAreUsedAsFallback) {
+TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleAndReservedDataAvailableWhenFdsImportFailsThenReservedHandlesAreUsedAsFallbackAndAllFdsAreClosedAfterImport) {
     SVMAllocsManager::MapBasedAllocationTracker storage;
     MockMultiHandleGraphicsAllocation source;
     source.numHandles = 3u;
@@ -760,6 +782,7 @@ TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleAndReservedDataAvailabl
     memoryManager->reservedHandleReturnValues = {0x7000, 0x7001, 0x7002};
 
     uint32_t importFdsCalls = 0;
+    bool reservedHandleClosedBeforeRetryImport = false;
     std::vector<std::vector<osHandle>> importFdsHandleSets;
     PeerAllocationDeps deps{};
     deps.reservedHandleDataAvailable = true;
@@ -769,6 +792,13 @@ TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleAndReservedDataAvailabl
                          SvmAllocationData &, bool) -> void * {
         ++importFdsCalls;
         importFdsHandleSets.push_back(handles);
+        if (importFdsCalls == 2) {
+            for (const auto &closeCall : memoryManager->closeCalls) {
+                if (closeCall.handle >= 0x7000ull && closeCall.handle <= 0x7002ull) {
+                    reservedHandleClosedBeforeRetryImport = true;
+                }
+            }
+        }
         return (importFdsCalls == 1) ? nullptr : reinterpret_cast<void *>(0xBADC0FFEULL);
     };
     deps.decompressP2P = [](GraphicsAllocation *) {};
@@ -789,9 +819,21 @@ TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleAndReservedDataAvailabl
     EXPECT_EQ(0x7000u, importFdsHandleSets[1][0]);
     EXPECT_EQ(0x7001u, importFdsHandleSets[1][1]);
     EXPECT_EQ(0x7002u, importFdsHandleSets[1][2]);
+    EXPECT_FALSE(reservedHandleClosedBeforeRetryImport);
+
+    auto sortedCloseCalls = closeCallsSortedByHandle(memoryManager->closeCalls);
+    ASSERT_EQ(6u, sortedCloseCalls.size());
+    for (uint32_t handleId = 0; handleId < 3u; handleId++) {
+        EXPECT_EQ(0x1000ull + handleId, sortedCloseCalls[handleId].handle);
+        EXPECT_EQ(handleId, sortedCloseCalls[handleId].handleId);
+        EXPECT_EQ(&source, sortedCloseCalls[handleId].alloc);
+    }
+    EXPECT_EQ(0x7000ull, sortedCloseCalls[3].handle);
+    EXPECT_EQ(0x7001ull, sortedCloseCalls[4].handle);
+    EXPECT_EQ(0x7002ull, sortedCloseCalls[5].handle);
 }
 
-TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleFallbackWhenAReservedHandleCannotBeResolvedThenImportNotRetriedAndReturnsNullptr) {
+TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleFallbackWhenAReservedHandleCannotBeResolvedThenImportNotRetriedAndReturnsNullptrAndAllOpenedFdsAreClosed) {
     SVMAllocsManager::MapBasedAllocationTracker storage;
     MockMultiHandleGraphicsAllocation source;
     source.numHandles = 3u;
@@ -824,6 +866,92 @@ TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleFallbackWhenAReservedHa
     EXPECT_EQ(nullptr, result);
     EXPECT_EQ(1u, importFdsCalls);
     EXPECT_EQ(2u, memoryManager->getImportHandleFromReservedCalls);
+
+    auto sortedCloseCalls = closeCallsSortedByHandle(memoryManager->closeCalls);
+    ASSERT_EQ(4u, sortedCloseCalls.size());
+    for (uint32_t handleId = 0; handleId < 3u; handleId++) {
+        EXPECT_EQ(0x1000ull + handleId, sortedCloseCalls[handleId].handle);
+        EXPECT_EQ(handleId, sortedCloseCalls[handleId].handleId);
+        EXPECT_EQ(&source, sortedCloseCalls[handleId].alloc);
+    }
+    EXPECT_EQ(0x7000ull, sortedCloseCalls[3].handle);
+}
+
+TEST_F(PeerAllocationReservedHandleTest, givenSingleHandleFdImportFailsWhenReservedFallbackImportReturnsPeerAllocationThenPeerSharedHandleIsCleared) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+    MockMultiHandleGraphicsAllocation source;
+    source.numHandles = 0u;
+    source.internalHandle = 0x1234ull;
+
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+
+    memoryManager->reservedHandleReturnValue = 0x7000;
+
+    MockGraphicsAllocation peerAlloc;
+    peerAlloc.gpuAddress = 0xC0FFEE000ull;
+    peerAlloc.setSharedHandle(0x4321u);
+
+    uint32_t importFdCalls = 0;
+    PeerAllocationDeps deps{};
+    deps.reservedHandleDataAvailable = true;
+    deps.importFd = [&](Device *, uint64_t, AllocationType, void *, GraphicsAllocation **pAlloc,
+                        SvmAllocationData &, bool) -> void * {
+        ++importFdCalls;
+        if (importFdCalls == 1) {
+            return nullptr;
+        }
+        *pAlloc = &peerAlloc;
+        return reinterpret_cast<void *>(peerAlloc.gpuAddress);
+    };
+    deps.importFds = [](Device *, const std::vector<osHandle> &, void *, GraphicsAllocation **,
+                        SvmAllocationData &, bool) -> void * { return nullptr; };
+    deps.decompressP2P = [](GraphicsAllocation *) {};
+
+    void *basePtr = reinterpret_cast<void *>(0x27000);
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, false, deps);
+
+    EXPECT_EQ(&peerAlloc, result);
+    EXPECT_EQ(2u, importFdCalls);
+    EXPECT_EQ(std::numeric_limits<osHandle>::max(), peerAlloc.peekSharedHandle());
+}
+
+TEST_F(PeerAllocationReservedHandleTest, givenMultiHandleAndReservedDataUnavailableWhenFdsImportFailsThenNoFallbackAndReturnsNullptr) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+    MockMultiHandleGraphicsAllocation source;
+    source.numHandles = 3u;
+
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+
+    uint32_t importFdsCalls = 0;
+    PeerAllocationDeps deps{};
+    deps.reservedHandleDataAvailable = false;
+    deps.importFd = [](Device *, uint64_t, AllocationType, void *, GraphicsAllocation **,
+                       SvmAllocationData &, bool) -> void * { return nullptr; };
+    deps.importFds = [&](Device *, const std::vector<osHandle> &, void *, GraphicsAllocation **,
+                         SvmAllocationData &, bool) -> void * {
+        ++importFdsCalls;
+        return nullptr;
+    };
+    deps.decompressP2P = [](GraphicsAllocation *) {};
+
+    void *basePtr = reinterpret_cast<void *>(0x28000);
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, false, deps);
+
+    EXPECT_EQ(nullptr, result);
+    EXPECT_EQ(1u, importFdsCalls);
+    EXPECT_EQ(0u, memoryManager->getImportHandleFromReservedCalls);
 }
 
 TEST_F(PeerAllocationTest, givenCachedPeerAllocationWhenDecompressNotRequestedThenDecompressNotCalled) {
