@@ -80,7 +80,6 @@ class Drm : public DriverModel {
     ~Drm() override;
 
     virtual int ioctl(DrmIoctl request, void *arg);
-    int ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName);
 
     unsigned int getDeviceHandle() const override {
         return 0;
@@ -368,6 +367,7 @@ class Drm : public DriverModel {
     std::once_flag checkSetPairOnce;
     std::once_flag checkChunkingOnce;
     std::once_flag checkCompletionFenceOnce;
+    std::once_flag contextHealthQueryFailedOnce;
 
     RootDeviceEnvironment &rootDeviceEnvironment;
 

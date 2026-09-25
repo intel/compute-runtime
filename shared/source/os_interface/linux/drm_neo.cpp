@@ -112,10 +112,6 @@ void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
 
 int Drm::ioctl(DrmIoctl request, void *arg) {
     auto requestValue = getIoctlRequestValue(request, ioctlHelper.get());
-    return ioctlWithRequestValue(request, arg, requestValue, nullptr);
-}
-
-int Drm::ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName) {
     int ret;
     int returnedErrno = 0;
     SYSTEM_ENTER();
@@ -128,7 +124,7 @@ int Drm::ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int request
         std::string ioctlName;
 
         if (printIoctl) {
-            ioctlName = requestName ? requestName : ioctlHelper->getIoctlString(request);
+            ioctlName = ioctlHelper->getIoctlString(request);
             PRINT_STRING(true, stdout, "IOCTL %s called\n", ioctlName.c_str());
         }
 
@@ -291,7 +287,13 @@ bool Drm::checkResetStatus(OsContext &osContext) {
         ContextHealth contextHealth{};
         contextHealth.contextId = drmContextId;
         const auto retVal{ioctlHelper->getContextHealth(contextHealth)};
-        UNRECOVERABLE_IF(retVal != 0);
+        if (retVal != 0) {
+            std::call_once(contextHealthQueryFailedOnce, [&]() {
+                IoFunctions::fprintf(stderr, "ERROR: Failed to query context health, ctx_id: %u, ret: %d, treating as GPU hang\n", contextHealth.contextId, retVal);
+            });
+            osContextLinux->setHangDetected();
+            return true;
+        }
         auto debuggingEnabled = rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled();
         if (checkToDisableScratchPage() && contextHealth.faultValid) {
             const auto &fault = contextHealth.fault;

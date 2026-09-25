@@ -1553,7 +1553,7 @@ TEST(DrmTest, GivenMinusEbusyIoctlErrorWhenCallingExecbufferThenCallIoctlAgain) 
     EXPECT_EQ(0, drm.Drm::ioctl(DrmIoctl::gemExecbuffer2, nullptr));
 }
 
-TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
+TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenHangIsReportedAndWarningIsPrinted) {
     MockExecutionEnvironment executionEnvironment{};
 
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
@@ -1564,7 +1564,37 @@ TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
+    StreamCapture capture;
+    capture.captureStderr();
+    bool isGpuHangDetected{};
+    EXPECT_NO_THROW(isGpuHangDetected = drm.isGpuHangDetected(mockOsContextLinux));
+    std::string output = capture.getCapturedStderr();
+
+    EXPECT_TRUE(isGpuHangDetected);
+    EXPECT_TRUE(mockOsContextLinux.isHangDetected());
+    EXPECT_EQ(1, drm.ioctlCount.queryContextHealth);
+    EXPECT_STREQ("ERROR: Failed to query context health, ctx_id: 0, ret: -1, treating as GPU hang\n", output.c_str());
+}
+
+TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledRepeatedlyThenHangIsReportedEachTimeAndWarningIsPrintedOnce) {
+    MockExecutionEnvironment executionEnvironment{};
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
+
+    MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
+    mockOsContextLinux.drmContextIds.push_back(0);
+
+    StreamCapture capture;
+    capture.captureStderr();
+    for (int i = 0; i < 3; i++) {
+        EXPECT_TRUE(drm.isGpuHangDetected(mockOsContextLinux));
+    }
+    std::string output = capture.getCapturedStderr();
+
+    EXPECT_EQ(3, drm.ioctlCount.queryContextHealth);
+    EXPECT_STREQ("ERROR: Failed to query context health, ctx_id: 0, ret: -1, treating as GPU hang\n", output.c_str());
 }
 
 TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCalledThenNoHangIsReported) {
