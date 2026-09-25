@@ -20,8 +20,9 @@ constexpr uint32_t invalidReasonValue = 0u;
 constexpr uint32_t validReasonValue = 1u;
 constexpr uint32_t handleComponentCount = 1u;
 
-constexpr uint32_t mockMemoryFrequencyData = 2000u;
-constexpr double expectedMemoryFrequency = 2000.0;
+constexpr uint32_t mockMemoryFrequencyData = 4800u;
+constexpr double expectedMemoryFrequency = 4800.0;
+constexpr double expectedMemoryFrequencyCri = 1200.0;
 
 constexpr uint32_t mockMemoryVoltageData = 0x100u;
 constexpr double expectedMemoryVoltage = 1.0;
@@ -539,7 +540,7 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
             state.stype = ZES_STRUCTURE_TYPE_FREQ_STATE;
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
 
-            EXPECT_DOUBLE_EQ(expectedMemoryFrequency, state.actual);
+            EXPECT_DOUBLE_EQ(expectedMemoryFrequencyCri, state.actual);
             EXPECT_DOUBLE_EQ(expectedMemoryVoltage, state.currentVoltage);
             EXPECT_EQ(-1.0, state.request);
             EXPECT_EQ(-1.0, state.tdp);

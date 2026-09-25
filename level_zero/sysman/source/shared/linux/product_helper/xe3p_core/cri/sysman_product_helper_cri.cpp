@@ -37,6 +37,7 @@ constexpr static uint32_t busWidthPerMsuInBits = 64;
 constexpr static uint32_t channelCountPerMemoryMsu = 4;
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
+constexpr static uint32_t vramFrequencyClockRatio = 4;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
 constexpr static uint32_t maxGpuBoardTemperatureSensorCount = 2;
 constexpr static uint32_t temperatureNotAvailable = 0xFFFFFFFF;
@@ -895,7 +896,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getActualFrequency(LinuxSysmanImp
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
         return result;
     }
-    *pActual = static_cast<double>(memoryActualFreq & 0xFFFF);
+    *pActual = static_cast<double>(memoryActualFreq & 0xFFFF) / vramFrequencyClockRatio;
 
     return result;
 }
@@ -1053,7 +1054,7 @@ static ze_result_t getMemoryMaxBandwidth(const std::map<std::string, uint64_t> &
     }
 
     maxBandwidth = maxBandwidth >> 16;
-    pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * mbpsToBytesPerSec;
+    pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * gigaBytesToBytes;
 
     return ZE_RESULT_SUCCESS;
 }
