@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -447,6 +448,93 @@ TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenMultiDeviceWhenIniti
         EXPECT_NE(nullptr, l0Devices[1]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
     }
     context->destroy();
+}
+
+struct PeerAccessedDevicePoolMemoryTest : public AllocUsmMultiDeviceEnabledSinglePoolMemoryTest {
+    void SetUp() override {
+        AllocUsmMultiDeviceEnabledSinglePoolMemoryTest::SetUp();
+        initDriverImp();
+        mockMemoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+    }
+
+    void TearDown() override {
+        context->destroy();
+        AllocUsmMultiDeviceEnabledSinglePoolMemoryTest::TearDown();
+    }
+
+    void *allocatePooledChunk() {
+        void *ptr = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &ptr));
+        EXPECT_TRUE(getDevicePool()->isInPoolRange(ptr));
+        return ptr;
+    }
+
+    NEO::GraphicsAllocation *accessFromPeer(L0::Device *peerDevice, void *ptr) {
+        auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+        auto poolBase = reinterpret_cast<void *>(allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+        return driverHandle->getPeerAllocation(peerDevice, allocData, poolBase, nullptr, nullptr, false);
+    }
+
+    ze_result_t freeWithPolicy(void *ptr, ze_driver_memory_free_policy_ext_flags_t policy) {
+        ze_memory_free_ext_desc_t memFreeDesc = {};
+        memFreeDesc.freePolicy = policy;
+        return context->freeMemExt(&memFreeDesc, ptr);
+    }
+
+    MockUsmMemAllocPool *getDevicePool() {
+        return reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    }
+
+    MockMemoryManager *mockMemoryManager = nullptr;
+};
+
+TEST_F(PeerAccessedDevicePoolMemoryTest, givenChunkAccessedFromPeerDeviceWhenFreedWithBlockingPolicyThenPeerAllocationIsWaitedFor) {
+    auto ptr = allocatePooledChunk();
+    auto peerAllocation = accessFromPeer(l0Devices[1], ptr);
+    ASSERT_NE(nullptr, peerAllocation);
+
+    mockMemoryManager->waitAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(1u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, freeWithPolicy(ptr, ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE));
+    EXPECT_EQ(peerAllocation, mockMemoryManager->waitAllocations->getGraphicsAllocation(1u));
+    mockMemoryManager->waitAllocations.reset();
+}
+
+TEST_F(PeerAccessedDevicePoolMemoryTest, givenPeerDeviceWorkPendingOnChunkWhenFreedWithDeferPolicyThenChunkIsWithheldUntilPeerEngineCompletes) {
+    auto ptr = allocatePooledChunk();
+    auto peerAllocation = accessFromPeer(l0Devices[1], ptr);
+    ASSERT_NE(nullptr, peerAllocation);
+    auto &peerCsr = *l0Devices[1]->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    const auto peerContextId = peerCsr.getOsContext().getContextId();
+    peerAllocation->updateTaskCount(*peerCsr.getTagAddress() + 1, peerContextId);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, freeWithPolicy(ptr, ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE));
+    auto devicePool = getDevicePool();
+    ASSERT_EQ(1u, devicePool->deferredFreeChunks.size());
+    const auto &snapshot = devicePool->deferredFreeChunks[0].snapshot;
+    EXPECT_NE(snapshot.end(), std::find_if(snapshot.begin(), snapshot.end(), [&peerCsr](const auto &entry) { return entry.first == &peerCsr; }));
+
+    peerAllocation->updateTaskCount(*peerCsr.getTagAddress(), peerContextId);
+}
+
+struct PeerAccessedDevicePoolWithSubDevicesMemoryTest : public PeerAccessedDevicePoolMemoryTest {
+    void SetUp() override {
+        NEO::debugManager.flags.CreateMultipleSubDevices.set(2);
+        VariableBackup<bool> createSingleDeviceBackup(&NEO::MockDevice::createSingleDevice, false);
+        PeerAccessedDevicePoolMemoryTest::SetUp();
+    }
+};
+
+TEST_F(PeerAccessedDevicePoolWithSubDevicesMemoryTest, givenChunkAccessedFromPeerSubDeviceWhenFreedWithBlockingPolicyThenPeerAllocationIsWaitedFor) {
+    ASSERT_FALSE(l0Devices[1]->subDevices.empty());
+    auto ptr = allocatePooledChunk();
+    auto peerAllocation = accessFromPeer(l0Devices[1]->subDevices[0], ptr);
+    ASSERT_NE(nullptr, peerAllocation);
+
+    mockMemoryManager->waitAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(1u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, freeWithPolicy(ptr, ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE));
+    EXPECT_EQ(peerAllocation, mockMemoryManager->waitAllocations->getGraphicsAllocation(1u));
+    mockMemoryManager->waitAllocations.reset();
 }
 
 using AllocUsmDeviceDisabledSinglePoolMemoryTest = AllocUsmPoolMemoryTest<-1, 0, 0>;

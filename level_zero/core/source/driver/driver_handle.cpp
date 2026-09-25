@@ -391,6 +391,27 @@ NEO::UsmMemAllocPool::CustomCleanupFn DriverHandle::getPoolCleanupFn() {
     return [this](const void *ptr) { Context::fromHandle(this->defaultContext)->freePeerAllocationsFromAll(ptr, false); };
 }
 
+namespace {
+void collectPeerAllocations(DriverHandle &driverHandle, Device *device, const void *ptr, StackVec<NEO::GraphicsAllocation *, 4> &peerAllocations) {
+    if (auto peerAllocation = driverHandle.findPeerAllocation(device, ptr)) {
+        peerAllocations.push_back(peerAllocation);
+    }
+    for (auto &subDevice : device->subDevices) {
+        collectPeerAllocations(driverHandle, subDevice, ptr, peerAllocations);
+    }
+}
+} // namespace
+
+NEO::UsmMemAllocPool::PeerAllocationsFn DriverHandle::getPoolPeerAllocationsFn() {
+    return [this](const void *ptr) {
+        StackVec<NEO::GraphicsAllocation *, 4> peerAllocations;
+        for (auto device : this->devices) {
+            collectPeerAllocations(*this, device, ptr, peerAllocations);
+        }
+        return peerAllocations;
+    };
+}
+
 void DriverHandle::initDeviceUsmAllocPoolOnce() {
     std::call_once(this->deviceUsmPoolOnceFlag, [this]() {
         for (auto &device : this->devices) {
@@ -435,7 +456,7 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
     if (enabled) {
         device.getDeviceUsmMemAllocPoolFacade().initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields,
                                                            &device, this->svmAllocsManager,
-                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault});
+                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault, getPoolPeerAllocationsFn()});
     }
 }
 

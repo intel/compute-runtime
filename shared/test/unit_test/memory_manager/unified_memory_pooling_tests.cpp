@@ -13,6 +13,8 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -1057,6 +1059,84 @@ TEST_F(DeferredFreeDeviceUnifiedMemoryPoolingTest, givenDeviceUsmPoolWhenChunkIs
     EXPECT_TRUE(usmMemAllocPool.deferredFreeChunks.empty());
 }
 
+struct PeerAllocationsDeviceUnifiedMemoryPoolingTest : public DeferredFreeDeviceUnifiedMemoryPoolingTest {
+    void SetUp() override {
+        DeferredFreeDeviceUnifiedMemoryPoolingTest::SetUp();
+
+        auto deviceMemoryManager = device->getMemoryManager();
+        MemoryManager::maxOsContextCount++;
+        peerCsr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0u, deviceBitfields.at(0u));
+        auto osContext = deviceMemoryManager->createAndRegisterOsContext(peerCsr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+        peerCsr->setupContext(*osContext);
+        *peerCsr->tagAddress = completedTaskCount;
+
+        peerAllocation = deviceMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize});
+        ASSERT_NE(nullptr, peerAllocation);
+        usmMemAllocPool.setPeerAllocationsFn([this](const void *ptr) {
+            queriedPoolPtrs.push_back(ptr);
+            return StackVec<GraphicsAllocation *, 4>{this->peerAllocation};
+        });
+    }
+
+    void TearDown() override {
+        device->getMemoryManager()->freeGraphicsMemory(peerAllocation);
+        peerCsr.reset();
+        DeferredFreeDeviceUnifiedMemoryPoolingTest::TearDown();
+    }
+
+    void markPeerUsedByGpu(TaskCountType taskCount) {
+        peerAllocation->updateTaskCount(taskCount, peerCsr->getOsContext().getContextId());
+    }
+
+    VariableBackup<uint32_t> maxOsContextCountBackup{&MemoryManager::maxOsContextCount};
+    std::unique_ptr<MockCommandStreamReceiver> peerCsr;
+    GraphicsAllocation *peerAllocation = nullptr;
+    std::vector<const void *> queriedPoolPtrs;
+};
+
+TEST_F(PeerAllocationsDeviceUnifiedMemoryPoolingTest, givenPeerAllocationsFnWhenChunkIsFreedWithoutFreePolicyThenPeerAllocationsAreNotQueried) {
+    auto memoryProperties = makeDeviceProperties();
+    auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties);
+    ASSERT_NE(nullptr, pooledPtr);
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(pooledPtr, FreePolicyType::none).freeSucceeded);
+    EXPECT_TRUE(queriedPoolPtrs.empty());
+}
+
+TEST_F(PeerAllocationsDeviceUnifiedMemoryPoolingTest, givenPeerAllocationWhenChunkIsFreedWithBlockingPolicyThenPeerAllocationIsWaitedFor) {
+    auto memoryProperties = makeDeviceProperties();
+    auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties);
+    ASSERT_NE(nullptr, pooledPtr);
+
+    auto deviceMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    deviceMemoryManager->waitAllocations = std::make_unique<MultiGraphicsAllocation>(0u);
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(pooledPtr, FreePolicyType::blocking).freeSucceeded);
+    EXPECT_EQ(peerAllocation, deviceMemoryManager->waitAllocations->getGraphicsAllocation(0u));
+    ASSERT_EQ(1u, queriedPoolPtrs.size());
+    EXPECT_EQ(usmMemAllocPool.pool, queriedPoolPtrs[0]);
+    deviceMemoryManager->waitAllocations.reset();
+}
+
+TEST_F(PeerAllocationsDeviceUnifiedMemoryPoolingTest, givenPeerAllocationWithPendingWorkWhenChunkIsDeferFreedThenChunkIsWithheldUntilPeerWorkCompletes) {
+    auto memoryProperties = makeDeviceProperties();
+    auto deferFreedPtr = usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties);
+    ASSERT_NE(nullptr, deferFreedPtr);
+    while (auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties)) {
+        EXPECT_NE(deferFreedPtr, pooledPtr);
+    }
+
+    markPeerUsedByGpu(completedTaskCount + 1);
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(deferFreedPtr, FreePolicyType::defer).freeSucceeded);
+    EXPECT_EQ(1u, usmMemAllocPool.deferredFreeChunks.size());
+    EXPECT_EQ(nullptr, usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties));
+    ASSERT_EQ(1u, queriedPoolPtrs.size());
+    EXPECT_EQ(usmMemAllocPool.pool, queriedPoolPtrs[0]);
+
+    *peerCsr->tagAddress = completedTaskCount + 1;
+    EXPECT_EQ(deferFreedPtr, usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties));
+    EXPECT_TRUE(usmMemAllocPool.deferredFreeChunks.empty());
+}
+
 // The indirect residency map is driver wide, so it can hold an engine belonging to a root
 // device the pool allocation does not span - a device usm pool exists on one root device
 // only. Such an engine has no allocation to bound and must be skipped.
@@ -1460,6 +1540,20 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenTrackResidencySetWhenInitializingTh
     usmMemAllocPoolsManager->cleanup();
 }
 
+TEST_P(UnifiedMemoryPoolingManagerTest, givenPeerAllocationsFnWhenPoolsAreAddedThenFnIsSetOnPools) {
+    usmMemAllocPoolsManager->setPeerAllocationsFn([](const void *) { return StackVec<GraphicsAllocation *, 4>{}; });
+    ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
+    ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
+    this->preallocatePools();
+    for (auto &[_, bucket] : usmMemAllocPoolsManager->pools) {
+        for (const auto &pool : bucket) {
+            EXPECT_TRUE(static_cast<bool>(reinterpret_cast<MockUsmMemAllocPool *>(pool.get())->peerAllocationsFn));
+        }
+    }
+
+    usmMemAllocPoolsManager->cleanup();
+}
+
 TEST_P(UnifiedMemoryPoolingManagerTest, givenCustomCleanupFunctionWhenPoolsAreAddedAndCleanedUpThenCustomCleanupIsSetAndCalled) {
     auto customCleanup = [](std::vector<void *> *vec, const void *ptr) {
         std::erase(*vec, ptr);
@@ -1819,6 +1913,18 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenInitParamsWithCustomCleanupWhenIniti
         EXPECT_TRUE(static_cast<bool>(reinterpret_cast<MockUsmMemAllocPoolsManager *>(mockUsmMemAllocPoolsFacade.poolManager.get())->customCleanup));
     } else {
         EXPECT_TRUE(static_cast<bool>(reinterpret_cast<MockUsmMemAllocPool *>(mockUsmMemAllocPoolsFacade.pool.get())->customCleanup));
+    }
+}
+
+TEST_P(UnifiedMemoryPoolingFacadeTest, givenInitParamsWithPeerAllocationsFnWhenInitializingThenFnIsSetOnPool) {
+    mockUsmMemAllocPoolsFacade.cleanup();
+    UsmMemAllocPool::PeerAllocationsFn peerAllocationsFn = [](const void *) { return StackVec<GraphicsAllocation *, 4>{}; };
+    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {nullptr, false, false, peerAllocationsFn});
+
+    if (isPoolManagerEnabled) {
+        EXPECT_TRUE(static_cast<bool>(reinterpret_cast<MockUsmMemAllocPoolsManager *>(mockUsmMemAllocPoolsFacade.poolManager.get())->peerAllocationsFn));
+    } else {
+        EXPECT_TRUE(static_cast<bool>(reinterpret_cast<MockUsmMemAllocPool *>(mockUsmMemAllocPoolsFacade.pool.get())->peerAllocationsFn));
     }
 }
 

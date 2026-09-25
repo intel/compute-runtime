@@ -179,13 +179,23 @@ UsmPoolFreeResult UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType 
         return result;
     }
     DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
+    StackVec<GraphicsAllocation *, 4> peerAllocations;
+    if (this->peerAllocationsFn && FreePolicyType::none != policy) {
+        peerAllocations = this->peerAllocationsFn(this->pool);
+    }
     if (FreePolicyType::blocking == policy) {
         svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
         svmMemoryManager->waitForEnginesCompletion(allocationData);
+        for (auto peerAllocation : peerAllocations) {
+            this->device->getMemoryManager()->waitForEnginesCompletion(*peerAllocation);
+        }
     }
     if (FreePolicyType::defer == policy) {
         DeferredFreeInfo deferredFreeInfo{std::move(*allocationInfo), {}};
         svmMemoryManager->captureEngineCompletionSnapshot(allocationData, deferredFreeInfo.snapshot);
+        for (auto peerAllocation : peerAllocations) {
+            this->device->getMemoryManager()->captureEngineCompletionSnapshot(*peerAllocation, deferredFreeInfo.snapshot);
+        }
         this->deferredFreeChunks.push_back(std::move(deferredFreeInfo));
     } else {
         this->releaseChunk(*allocationInfo);
@@ -338,6 +348,7 @@ UsmMemAllocPool *UsmMemAllocPoolsManager::tryAddPool(PoolInfo poolInfo) {
                 pool->enableResidencyTracking();
             }
             pool->setCustomCleanup(this->customCleanup);
+            pool->setPeerAllocationsFn(this->peerAllocationsFn);
             this->pools[poolInfo].push_back(std::move(pool));
         }
     }
@@ -435,6 +446,9 @@ bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const Roo
         if (initParams.customCleanup) {
             this->poolManager->setCustomCleanup(initParams.customCleanup);
         }
+        if (initParams.peerAllocations) {
+            this->poolManager->setPeerAllocationsFn(initParams.peerAllocations);
+        }
         if (initParams.trackResidency) {
             this->poolManager->enableResidencyTracking();
         }
@@ -455,6 +469,9 @@ bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const Roo
         }
         if (initParams.customCleanup) {
             this->pool->setCustomCleanup(initParams.customCleanup);
+        }
+        if (initParams.peerAllocations) {
+            this->pool->setPeerAllocationsFn(initParams.peerAllocations);
         }
         if (initParams.trackResidency) {
             this->pool->enableResidencyTracking();

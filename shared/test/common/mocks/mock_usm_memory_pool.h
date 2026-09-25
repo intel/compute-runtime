@@ -17,6 +17,7 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     using UsmMemAllocPool::customCleanup;
     using UsmMemAllocPool::deferredFreeChunks;
     using UsmMemAllocPool::device;
+    using UsmMemAllocPool::peerAllocationsFn;
     using UsmMemAllocPool::pool;
     using UsmMemAllocPool::poolEnd;
     using UsmMemAllocPool::poolInfo;
@@ -67,6 +68,7 @@ class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {
     using UsmMemAllocPoolsManager::getPoolContainingAlloc;
     using UsmMemAllocPoolsManager::getPoolInfos;
     using UsmMemAllocPoolsManager::memoryManager;
+    using UsmMemAllocPoolsManager::peerAllocationsFn;
     using UsmMemAllocPoolsManager::pools;
     using UsmMemAllocPoolsManager::totalSize;
     using UsmMemAllocPoolsManager::trackResidency;
