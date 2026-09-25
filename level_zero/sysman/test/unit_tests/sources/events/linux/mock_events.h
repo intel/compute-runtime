@@ -332,6 +332,7 @@ class PublicLinuxEventsUtil : public L0::Sysman::LinuxEventsUtil {
     using LinuxEventsUtil::handleNetlinkEvents;
     using LinuxEventsUtil::init;
     using LinuxEventsUtil::initNetlink;
+    using LinuxEventsUtil::isDrmCardNode;
     using LinuxEventsUtil::isPowerOffPending;
     using LinuxEventsUtil::isSurvivabilityModeAsExpected;
     using LinuxEventsUtil::listenSystemEvents;

@@ -696,6 +696,7 @@ TEST_F(SysmanEventsInfoLogFixture, GivenDeviceScopedAndDriverScopedEventsOccurIn
     pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
 
     pUdevLib->getEventTypeResult = "remove";
+    pUdevLib->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto hInfoLog = getInfoLogHandle();
     ASSERT_NE(nullptr, hInfoLog);

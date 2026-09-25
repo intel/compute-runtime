@@ -20,6 +20,7 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <algorithm>
+#include <regex>
 
 namespace L0 {
 namespace Sysman {
@@ -301,6 +302,17 @@ bool LinuxEventsUtil::isPowerOffPending(SysmanDeviceImp *pSysmanDeviceImp, FsAcc
     return pFsAccess->fileExists("/sys" + devPath + "/" + alertReasonFile);
 }
 
+bool LinuxEventsUtil::isDrmCardNode(const std::string &eventDevPath, const std::string &pciDevPath) {
+    // A single unbind/bind generates add/remove uevents for every child node of the PCI device
+    // (drm card, render node, connectors, auxiliary devices). Only the primary drm card node
+    // (e.g. <pciDevPath>/drm/card0) is used to report the device attach/detach events once.
+    if (eventDevPath.compare(0, pciDevPath.length(), pciDevPath) != 0) {
+        return false;
+    }
+    const std::regex drmCardNodeRegex("/drm/card[0-9]+");
+    return std::regex_match(eventDevPath.substr(pciDevPath.length()), drmCardNodeRegex);
+}
+
 bool LinuxEventsUtil::checkDeviceDetachEvent(zes_event_type_flags_t &pEvent) {
     if (action.compare(remove) == 0) {
         pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
@@ -427,12 +439,13 @@ bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &reg
         std::string devPath(devicePath);
         for (auto it = mapOfDevIndexToDevPath.begin(); it != mapOfDevIndexToDevPath.end(); it++) {
             if (devPath.find(it->second.c_str()) != std::string::npos) {
-                if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
+                const bool isDrmCardNodeEvent = isDrmCardNode(devPath, it->second);
+                if (isDrmCardNodeEvent && (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH)) {
                     if (checkDeviceDetachEvent(pEvents[it->first])) {
                         retVal = true;
                     }
                 }
-                if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
+                if (isDrmCardNodeEvent && (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH)) {
                     if (checkDeviceAttachEvent(pEvents[it->first])) {
                         retVal = true;
                     }

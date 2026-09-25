@@ -1436,6 +1436,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventTypeResult = "remove";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1481,7 +1482,8 @@ TEST_F(SysmanEventsFixture,
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH will be received only if EventType is "remove"
+    pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_DETACH will be received only if EventType is "remove"
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1526,6 +1528,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventTypeResult = "add";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1572,6 +1575,7 @@ TEST_F(SysmanEventsFixture,
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH will be received only if EventType is "add"
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1616,6 +1620,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventTypeResult = "add";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1631,6 +1636,70 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
 
     delete[] phDevices;
     delete[] pDeviceEvents;
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibOriginal;
+    driverHandle->pOsSysmanDriver = pOsSysmanDriverOriginal;
+    delete pPublicLinuxSysmanDriverImp;
+    delete pUdevLibLocal;
+}
+
+TEST_F(SysmanEventsFixture, GivenDevPathsOfChildNodesWhenCheckingForDrmCardNodeThenTrueIsReturnedOnlyForPrimaryDrmCardNode) {
+    const std::string pciDevPath = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+    EXPECT_TRUE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/card0", pciDevPath));
+    EXPECT_TRUE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/card12", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/card", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/card0/card0-DP-1", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/renderD128", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/xe.nvm.768", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath, pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode("/devices/pci0000:00/0000:00:02.0/drm/card0", pciDevPath));
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachAndDetachEventsAndAddOrRemoveEventIsReceivedForNonDrmCardNodeThenNoEventIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    auto pOsSysmanDriverOriginal = driverHandle->pOsSysmanDriver;
+    driverHandle->pOsSysmanDriver = static_cast<L0::Sysman::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    auto pUdevLibLocal = new EventsUdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+
+    auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+
+    const std::string pciDevPath = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+    const std::vector<std::string> childNodeDevPaths = {pciDevPath + "/drm/renderD128",
+                                                        pciDevPath + "/drm/card0/card0-DP-1",
+                                                        pciDevPath + "/xe.nvm.768"};
+    for (const auto &eventType : {"add", "remove"}) {
+        for (const auto &childNodeDevPath : childNodeDevPaths) {
+            pUdevLibLocal->getEventTypeResult = eventType;
+            pUdevLibLocal->eventPropertyValueDevPathResult = childNodeDevPath;
+            uint32_t numDeviceEvents = 0;
+            zes_event_type_flags_t pDeviceEvents[1] = {0};
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+            EXPECT_EQ(0u, numDeviceEvents);
+            EXPECT_EQ(0u, pDeviceEvents[0]);
+        }
+    }
+
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibOriginal;
     driverHandle->pOsSysmanDriver = pOsSysmanDriverOriginal;
     delete pPublicLinuxSysmanDriverImp;
