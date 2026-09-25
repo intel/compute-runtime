@@ -13,7 +13,7 @@
 namespace NEO {
 
 template <bool emitSfenceAfterCopy = true>
-inline void streamCopy(void *dst, const void *src, size_t bytes) noexcept {
+inline void streamCopy(void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) noexcept {
     memcpy_s(dst, bytes, src, bytes);
 }
 

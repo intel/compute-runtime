@@ -67,7 +67,7 @@ class TimestampPackets : public TagTypeBase {
 
     void getGlobalTimestampValues(uint32_t packetIndex, uint64_t &globalStart, uint64_t &globalEnd) const {
         alignas(64) Packet local;
-        streamCopy(&local, &packets[packetIndex], sizeof(Packet));
+        streamCopy(&local, &packets[packetIndex], sizeof(Packet), false);
         globalStart = static_cast<uint64_t>(local.globalStart);
         globalEnd = static_cast<uint64_t>(local.globalEnd);
     }

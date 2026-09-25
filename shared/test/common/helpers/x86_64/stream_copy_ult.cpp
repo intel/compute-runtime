@@ -18,18 +18,42 @@ uint32_t streamLoadCount = 0u;
 uint32_t storeUnalignedCount = 0u;
 uint32_t streamStoreCount = 0u;
 uint32_t misalignedAccessCount = 0u;
+uint32_t outOfSourceRangeLoadCount = 0u;
+
+namespace {
+const uint8_t *sourceRangeBegin = nullptr;
+const uint8_t *sourceRangeEnd = nullptr;
+} // namespace
 
 void reset() {
     streamLoadCount = 0u;
     storeUnalignedCount = 0u;
     streamStoreCount = 0u;
     misalignedAccessCount = 0u;
+    outOfSourceRangeLoadCount = 0u;
+    sourceRangeBegin = nullptr;
+    sourceRangeEnd = nullptr;
+}
+
+void setSourceRange(const void *source, size_t size) {
+    sourceRangeBegin = static_cast<const uint8_t *>(source);
+    sourceRangeEnd = sourceRangeBegin + size;
 }
 
 namespace {
 void countMisalignedAccess(const void *ptr, size_t blockWidth) {
     if ((reinterpret_cast<uintptr_t>(ptr) & (blockWidth - 1u)) != 0u) {
         misalignedAccessCount++;
+    }
+}
+
+void countOutOfSourceRangeLoad(const void *ptr, size_t blockWidth) {
+    if (sourceRangeBegin == nullptr) {
+        return;
+    }
+    const auto *accessBegin = static_cast<const uint8_t *>(ptr);
+    if ((accessBegin < sourceRangeBegin) || ((accessBegin + blockWidth) > sourceRangeEnd)) {
+        outOfSourceRangeLoadCount++;
     }
 }
 } // namespace
@@ -40,6 +64,7 @@ template <typename Block>
 static typename Block::Value streamLoadUlt(const void *alignedSrc) {
     StreamCopyBlocksUlt::streamLoadCount++;
     StreamCopyBlocksUlt::countMisalignedAccess(alignedSrc, Block::width);
+    StreamCopyBlocksUlt::countOutOfSourceRangeLoad(alignedSrc, Block::width);
     typename Block::Value value{};
     std::memcpy(value.bytes, alignedSrc, Block::width);
     return value;
@@ -94,16 +119,16 @@ void StreamBlockAvx512::streamStore(void *alignedDst, Value value) {
     streamStoreUlt<StreamBlockAvx512>(alignedDst, value);
 }
 
-void streamCopyFromWriteCombinedSse(void *dst, const void *src, size_t bytes) noexcept {
-    streamCopyFromWriteCombinedImpl<StreamBlockSse>(dst, src, bytes);
+void streamCopyFromWriteCombinedSse(void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) noexcept {
+    streamCopyFromWriteCombinedImpl<StreamBlockSse>(dst, src, bytes, srcHeadBlockReadable);
 }
 
-void streamCopyFromWriteCombinedAvx2(void *dst, const void *src, size_t bytes) noexcept {
-    streamCopyFromWriteCombinedImpl<StreamBlockAvx2>(dst, src, bytes);
+void streamCopyFromWriteCombinedAvx2(void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) noexcept {
+    streamCopyFromWriteCombinedImpl<StreamBlockAvx2>(dst, src, bytes, srcHeadBlockReadable);
 }
 
-void streamCopyFromWriteCombinedAvx512(void *dst, const void *src, size_t bytes) noexcept {
-    streamCopyFromWriteCombinedImpl<StreamBlockAvx512>(dst, src, bytes);
+void streamCopyFromWriteCombinedAvx512(void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) noexcept {
+    streamCopyFromWriteCombinedImpl<StreamBlockAvx512>(dst, src, bytes, srcHeadBlockReadable);
 }
 
 } // namespace NEO

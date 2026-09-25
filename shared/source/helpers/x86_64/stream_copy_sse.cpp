@@ -11,8 +11,8 @@
 
 namespace NEO {
 
-void streamCopyFromWriteCombinedSse(void *dst, const void *src, size_t bytes) noexcept {
-    streamCopyFromWriteCombinedImpl<StreamBlockSse>(dst, src, bytes);
+void streamCopyFromWriteCombinedSse(void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) noexcept {
+    streamCopyFromWriteCombinedImpl<StreamBlockSse>(dst, src, bytes, srcHeadBlockReadable);
 }
 
 } // namespace NEO

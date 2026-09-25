@@ -18,8 +18,13 @@ extern uint32_t streamLoadCount;
 extern uint32_t storeUnalignedCount;
 extern uint32_t streamStoreCount;
 extern uint32_t misalignedAccessCount;
+extern uint32_t outOfSourceRangeLoadCount;
 
 void reset();
+
+// Marks the bytes the caller owns. Any block load reaching outside them is
+// counted in outOfSourceRangeLoadCount.
+void setSourceRange(const void *source, size_t size);
 } // namespace StreamCopyBlocksUlt
 
 template <size_t blockWidth>

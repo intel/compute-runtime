@@ -39,7 +39,7 @@ inline void copyPartialBlock(uint8_t *dst, const uint8_t *src, size_t count) noe
 }
 
 template <typename Block>
-inline void streamCopyFromWriteCombinedImpl(void *dst, const void *src, size_t bytes) noexcept {
+inline void streamCopyFromWriteCombinedImpl(void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) noexcept {
     constexpr size_t cacheLineSize = MemoryConstants::cacheLineSize;
     constexpr size_t blocksPerCacheLine = cacheLineSize / Block::width;
 
@@ -50,7 +50,11 @@ inline void streamCopyFromWriteCombinedImpl(void *dst, const void *src, size_t b
     const size_t headOffset = static_cast<size_t>(srcBytes - alignDown(srcBytes, Block::width));
     if (headOffset != 0) {
         const size_t headBytes = std::min(Block::width - headOffset, remainingBytes);
-        copyPartialBlock<Block>(dstBytes, srcBytes, headBytes);
+        if (srcHeadBlockReadable) {
+            copyPartialBlock<Block>(dstBytes, srcBytes, headBytes);
+        } else {
+            std::memcpy(dstBytes, srcBytes, headBytes);
+        }
         dstBytes += headBytes;
         srcBytes += headBytes;
         remainingBytes -= headBytes;
