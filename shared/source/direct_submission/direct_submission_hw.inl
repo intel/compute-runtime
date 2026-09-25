@@ -28,7 +28,6 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include "create_direct_submission_hw.inl"
 
@@ -102,7 +101,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     }
 
     currentQueueWorkCount = getInitialSemaphoreValue();
-    this->useSemaphore64bCmd = inputParams.rootDeviceEnvironment.getCompilerReleaseHelper().isAvailableSemaphore64(*inputParams.rootDeviceEnvironment.getHardwareInfo());
+    this->useSemaphore64bCmd = inputParams.rootDeviceEnvironment.getHelper<CompilerProductHelper>().isAvailableSemaphore64(*inputParams.rootDeviceEnvironment.getHardwareInfo());
 }
 
 template <typename GfxFamily, typename Dispatcher>

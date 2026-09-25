@@ -198,13 +198,6 @@ const ReleaseHelper &MockDevice::getReleaseHelper() const {
     return Device::getReleaseHelper();
 }
 
-const CompilerReleaseHelper &MockDevice::getCompilerReleaseHelper() const {
-    if (mockCompilerReleaseHelper) {
-        return *mockCompilerReleaseHelper;
-    }
-    return Device::getCompilerReleaseHelper();
-}
-
 AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     if (mockAilConfigurationHelper) {
         return mockAilConfigurationHelper;

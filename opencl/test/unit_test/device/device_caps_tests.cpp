@@ -14,7 +14,6 @@
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

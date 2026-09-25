@@ -11,7 +11,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/os_inc_base.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 namespace NEO {
 

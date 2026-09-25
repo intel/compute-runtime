@@ -15,7 +15,6 @@
 namespace NEO {
 class ExecutionEnvironment;
 class CompilerProductHelper;
-class CompilerReleaseHelper;
 class ProductHelper;
 class ReleaseHelper;
 } // namespace NEO
@@ -34,6 +33,5 @@ struct ProductHelperTest : public ::testing::Test {
     ProductHelper *productHelper = nullptr;
     CompilerProductHelper *compilerProductHelper = nullptr;
     const ReleaseHelper *releaseHelper = nullptr;
-    const CompilerReleaseHelper *compilerReleaseHelper = nullptr;
     PLATFORM *testPlatform = nullptr;
 };

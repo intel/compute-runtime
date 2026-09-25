@@ -10,7 +10,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -43,14 +42,12 @@ struct PlatformTest : public ::testing::Test {
 
         pPlatform.reset(new MockPlatform());
         compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
-        compilerReleaseHelper = CompilerReleaseHelper::create(defaultHwInfo->ipVersion);
     }
     void TearDown() override {
         MockSipData::clearUseFlags();
     }
     std::unique_ptr<MockPlatform> pPlatform;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
-    std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
 
     cl_int retVal = CL_SUCCESS;
 };

@@ -8,7 +8,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"

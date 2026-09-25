@@ -12,7 +12,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 namespace NEO {
 

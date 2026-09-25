@@ -12,7 +12,6 @@
 #include "shared/source/helpers/cache_policy_option_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 #include <cstdint>
 #include <cstring>
@@ -141,7 +140,6 @@ void removeNotSupportedExtensions(std::string &extensions, const std::string &co
 void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions) {
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     UNRECOVERABLE_IF(!compilerProductHelper);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
 
     if (requiresAdditionalExtensions(options)) {

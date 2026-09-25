@@ -9,10 +9,10 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/timestamp_packet.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/lookup_array.h"
 
@@ -376,8 +376,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &com
     EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(confirmationTrigger),
                                               args);
 
-    const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
-    bool useSemaphore64bCmd = compilerReleaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    bool useSemaphore64bCmd = compilerProductHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
 
     EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
 }

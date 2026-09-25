@@ -13,7 +13,6 @@
 
 namespace NEO {
 
-class CompilerReleaseHelper;
 class MockDevice;
 class ReleaseHelper;
 
@@ -34,7 +33,6 @@ struct DeviceFixture {
     HelperType &getHelper() const;
 
     const ReleaseHelper &getReleaseHelper();
-    const CompilerReleaseHelper &getCompilerReleaseHelper();
 
     NEO::BuiltIn::AddressingMode defaultBuiltInMode;
 };

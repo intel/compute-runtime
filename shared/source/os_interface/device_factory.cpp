@@ -112,7 +112,6 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         }
         hardwareInfo->ipVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
         rootDeviceEnvironment.initReleaseHelper();
-        rootDeviceEnvironment.initCompilerReleaseHelper();
 
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true);

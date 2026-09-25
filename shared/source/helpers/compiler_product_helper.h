@@ -21,7 +21,6 @@
 namespace NEO {
 
 class CompilerProductHelper;
-class CompilerReleaseHelper;
 struct HardwareInfo;
 
 struct OclCVersion {
@@ -82,6 +81,7 @@ class CompilerProductHelper {
 
     virtual ~CompilerProductHelper() = default;
     uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const;
+    bool isAvailableSemaphore64(const HardwareInfo &hwInfo) const;
 
   protected:
     virtual uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const = 0;

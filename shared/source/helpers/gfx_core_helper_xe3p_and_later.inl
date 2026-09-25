@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -18,7 +19,6 @@
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "metrics_library_api_1_0.h"
@@ -309,8 +309,8 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
         *reinterpret_cast<MI_MEM_FENCE *>(commandsBuffer) = miMemFence;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(MI_MEM_FENCE));
     } else if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::semaphore) {
-        const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
-        bool useSemaphore64bCmd = compilerReleaseHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+        const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+        bool useSemaphore64bCmd = compilerProductHelper.isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
         EncodeSemaphore<Family>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandsBuffer),
                                                         gpuAddress,
                                                         EncodeSemaphore<Family>::invalidHardwareTag,

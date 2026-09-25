@@ -28,7 +28,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::binaryOutputFile;
     using OfflineCompiler::cache;
     using OfflineCompiler::compilerProductHelper;
-    using OfflineCompiler::compilerReleaseHelper;
     using OfflineCompiler::dbgHash;
     using OfflineCompiler::debugDataBinary;
     using OfflineCompiler::debugDataBinarySize;

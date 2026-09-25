@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/mocks/mock_sync_buffer_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
