@@ -158,11 +158,15 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
     if (mainCmdList->isInOrderExecutionEnabled()) {
         mainCmdList->appendSignalInOrderDependencyCounter(signalEvent, dualStreamCopyOffload, false, false, useSignalEventForSubCopy);
     }
-    mainCmdList->handleInOrderDependencyCounter(signalEvent, false, dualStreamCopyOffload);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = dualStreamCopyOffload,
+        .apiRequiredExternalGraphEvent = false};
+    mainCmdList->handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     if (events.isAggregatedEventMode() && !useSignalEventForSubCopy) {
         auto lock = events.obtainLock();
-        mainCmdList->assignInOrderExecInfoToEvent(markerEvent);
+        mainCmdList->assignInOrderExecInfoToEvent(markerEvent, false);
     }
 }
 

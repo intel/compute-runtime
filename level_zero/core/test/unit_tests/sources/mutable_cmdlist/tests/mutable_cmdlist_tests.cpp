@@ -4053,11 +4053,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
     EXPECT_TRUE(event->getIsSignalledAsGraphInternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(false);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
     EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 }
 
@@ -4068,7 +4068,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_TRUE(event->isExternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
     EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 }
 

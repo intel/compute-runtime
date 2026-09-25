@@ -188,16 +188,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::assignInOrderExecInfoToEvent(Event *event) {
+void CommandListCoreFamily<gfxCoreFamily>::assignInOrderExecInfoToEvent(Event *event, bool apiRequiredExternalGraphEvent) {
     if (!event->isCounterBasedExplicitlyEnabled() && !event->getInOrderExecEventHelper().getEventData()) {
         event->getInOrderExecEventHelper().initializeLocalTempStorage();
     }
+    event->setApiRequiredGraphExternalEvent(apiRequiredExternalGraphEvent);
     event->setIsSignalledAsGraphInternalEvent(getIsGraphInstantiationTarget());
     event->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining, bool copyOffloadOperation) {
+void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event *signalEvent, CmdListHandleInOrderDependencyParams &params) {
     if (!isInOrderExecutionEnabled()) {
         if (signalEvent && signalEvent->getInOrderExecEventHelper().isDataAssigned()) {
             UNRECOVERABLE_IF(signalEvent->isCounterBased());
@@ -207,7 +208,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
         return;
     }
 
-    this->handleInOrderCounterOverflow(copyOffloadOperation);
+    this->handleInOrderCounterOverflow(params.copyOffloadOperation);
 
     inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
 
@@ -215,8 +216,8 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     if (signalEvent) {
         if (signalEvent->getInOrderIncrementValue(this->partitionCount) == 0) {
-            if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining || (isImmediateType() && this->duplicatedInOrderCounterStorageEnabled)) {
-                assignInOrderExecInfoToEvent(signalEvent);
+            if (signalEvent->isCounterBased() || params.nonWalkerInOrderCmdsChaining || (isImmediateType() && this->duplicatedInOrderCounterStorageEnabled)) {
+                assignInOrderExecInfoToEvent(signalEvent, params.apiRequiredExternalGraphEvent);
             } else {
                 signalEvent->unsetInOrderExecInfo();
             }
@@ -229,10 +230,10 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
             }
             signalEvent->getInOrderExecEventHelper().addAggregatedEventUsageCounter(incrementValue);
         }
-        signalEvent->setDualCopyOffload(getCopyOffloadModeForOperation(copyOffloadOperation) == CopyOffloadModes::dualStream);
+        signalEvent->setDualCopyOffload(getCopyOffloadModeForOperation(params.copyOffloadOperation) == CopyOffloadModes::dualStream);
     }
 
-    this->latestOperationRequiredNonWalkerInOrderCmdsChaining = nonWalkerInOrderCmdsChaining;
+    this->latestOperationRequiredNonWalkerInOrderCmdsChaining = params.nonWalkerInOrderCmdsChaining;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -584,7 +585,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 
     auto res = appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 
-    handleInOrderDependencyCounter(event, launchParams.inOrderNonWalkerSignalingRequired && event && !event->isCounterBased(), false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = launchParams.inOrderNonWalkerSignalingRequired && event && !event->isCounterBased(),
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(event, inOrderDependencyParams);
 
     if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
         appendSynchronizedDispatchCleanupSection();
@@ -643,7 +648,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     addToMappedEventList(event);
     appendSignalEventPostWalker(event, nullptr, nullptr, false, false, false);
 
-    handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event), false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = isInOrderNonWalkerSignalingRequired(event),
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+
+    handleInOrderDependencyCounter(event, inOrderDependencyParams);
 
     appendSynchronizedDispatchCleanupSection();
 
@@ -806,7 +816,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(event, false, false, false, false);
     }
-    handleInOrderDependencyCounter(event, false, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(event, inOrderDependencyParams);
     event->unsetInOrderExecInfo();
 
     appendSynchronizedDispatchCleanupSection();
@@ -846,7 +860,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
-    handleInOrderDependencyCounter(signalEvent, false, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     appendSynchronizedDispatchCleanupSection();
 
@@ -2057,7 +2075,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     } else if (signalEvent && signalEvent->isSignalWithUserInterrupt()) {
         NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
     }
-    handleInOrderDependencyCounter(signalEvent, false, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -2121,7 +2143,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                 dispatchInOrderPostOperationBarrier(nullptr, false, false);
                 appendSignalInOrderDependencyCounter(nullptr, false, false, false, false);
             }
-            handleInOrderDependencyCounter(nullptr, false, false);
+            CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+                .nonWalkerInOrderCmdsChaining = false,
+                .copyOffloadOperation = false,
+                .apiRequiredExternalGraphEvent = false};
+            handleInOrderDependencyCounter(nullptr, inOrderDependencyParams);
         }
     }
     return ret;
@@ -2210,7 +2236,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
     }
 
     const bool nonWalkerInOrderCmdsChaining = false;
-    handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdsChaining, copyOffload);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = nonWalkerInOrderCmdsChaining,
+        .copyOffloadOperation = copyOffload,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     appendSynchronizedDispatchCleanupSection();
 
@@ -2552,10 +2582,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         if (!isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed) {
             bool nonWalkerInOrderCmdChaining = !isCopyOnlyEnabled && isInOrderNonWalkerSignalingRequired(signalEvent) && !emitPipeControl && !this->latestOperationHasCbEventWithProfiling;
-            handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining, isCopyOnlyEnabled);
+            CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+                .nonWalkerInOrderCmdsChaining = nonWalkerInOrderCmdChaining,
+                .copyOffloadOperation = isCopyOnlyEnabled,
+                .apiRequiredExternalGraphEvent = false};
+            handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
         }
     } else {
-        handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
+        CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+            .nonWalkerInOrderCmdsChaining = false,
+            .copyOffloadOperation = isCopyOnlyEnabled,
+            .apiRequiredExternalGraphEvent = false};
+        handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
     }
     appendSynchronizedDispatchCleanupSection();
 
@@ -2678,12 +2716,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
             if (!useAdditionalBlitProperties || srcRegion->width == 0) {
                 appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
             }
-            handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
+            CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+                .nonWalkerInOrderCmdsChaining = false,
+                .copyOffloadOperation = isCopyOnlyEnabled,
+                .apiRequiredExternalGraphEvent = false};
+            handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
         } else if ((!useAdditionalBlitProperties || srcRegion->width == 0) && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
             appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled);
         }
     } else {
-        handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
+        CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+            .nonWalkerInOrderCmdsChaining = false,
+            .copyOffloadOperation = isCopyOnlyEnabled,
+            .apiRequiredExternalGraphEvent = false};
+        handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -3226,7 +3272,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             nonWalkerInOrderCmdChaining = isInOrderNonWalkerSignalingRequired(signalEvent) && !this->latestOperationHasCbEventWithProfiling;
         }
     }
-    handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = nonWalkerInOrderCmdChaining,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     appendSynchronizedDispatchCleanupSection();
 
@@ -3356,7 +3406,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         if (isInOrderExecutionEnabled() && isCopyOnlySignaling) {
             appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
         }
-        handleInOrderDependencyCounter(signalEvent, false, memoryCopyParams.copyOffloadAllowed);
+        CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+            .nonWalkerInOrderCmdsChaining = false,
+            .copyOffloadOperation = memoryCopyParams.copyOffloadAllowed,
+            .apiRequiredExternalGraphEvent = false};
+        handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -3673,7 +3727,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(event, false, false, false, false);
     }
-    handleInOrderDependencyCounter(event, false, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = signalEventParameters.apiRequestForGraphExternal};
+    handleInOrderDependencyCounter(event, inOrderDependencyParams);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -3972,7 +4030,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         if (this->isInOrderExecutionEnabled()) {
             appendSignalInOrderDependencyCounter(nullptr, false, false, false, false);
         }
-        handleInOrderDependencyCounter(nullptr, false, false);
+        CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+            .nonWalkerInOrderCmdsChaining = false,
+            .copyOffloadOperation = false,
+            .apiRequiredExternalGraphEvent = false};
+        handleInOrderDependencyCounter(nullptr, inOrderDependencyParams);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -4256,7 +4318,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
-    handleInOrderDependencyCounter(signalEvent, false, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     appendSynchronizedDispatchCleanupSection();
 
@@ -4790,7 +4856,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const {
+bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool apiRequestForGraphExternal) const {
     uint32_t eventsToWait = numWaitEvents;
 
     for (uint32_t i = 0; i < numWaitEvents; i++) {
@@ -4815,7 +4881,9 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 
     if (signalEvent) {
         const bool dcFLushEvent = getDcFlushRequired(signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
-        return !(dcFLushEvent || signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() || this->isInOrderCounterSignalPending() || Event::isAggregatedEvent(signalEvent));
+        return !(dcFLushEvent || signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased() ||
+                 this->isInOrderCounterSignalPending() || Event::isAggregatedEvent(signalEvent) ||
+                 signalEvent->isExternalEvent() || apiRequestForGraphExternal);
     }
 
     return true;
@@ -4825,7 +4893,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent, bool apiRequiredExternalGraphEvent) {
     if (hSignalEvent) {
         auto event = Event::fromHandle(hSignalEvent);
-        assignInOrderExecInfoToEvent(event);
+        assignInOrderExecInfoToEvent(event, apiRequiredExternalGraphEvent);
         event->setCbEventWithProfiling(this->latestOperationHasCbEventWithProfiling);
         if (isImmediateType()) {
             event->setLatestUsedCmdQueue(this->cmdQImmediate);
@@ -4836,7 +4904,7 @@ void CommandListCoreFamily<gfxCoreFamily>::setupEventParamsForInOrderBarrierSkip
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                                                 CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters) {
-    if (isInOrderExecutionEnabled() && isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
+    if (isInOrderExecutionEnabled() && isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents, signalEventParameters.apiRequestForGraphExternal)) {
         setupEventParamsForInOrderBarrierSkip(hSignalEvent, signalEventParameters.apiRequestForGraphExternal);
         return ZE_RESULT_SUCCESS;
     }
@@ -4889,7 +4957,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     if (isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false, hostVisibleEvent, false, false);
     }
-    handleInOrderDependencyCounter(signalEvent, false, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = signalEventParameters.apiRequestForGraphExternal};
+    handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     appendSynchronizedDispatchCleanupSection();
 
@@ -5044,7 +5116,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
-    handleInOrderDependencyCounter(signalEvent, false, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -5105,7 +5181,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(nullptr, false, false, false, false);
     }
-    handleInOrderDependencyCounter(nullptr, false, false);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(nullptr, inOrderDependencyParams);
 
     return ZE_RESULT_SUCCESS;
 }

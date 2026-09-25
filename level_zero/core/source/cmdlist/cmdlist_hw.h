@@ -90,6 +90,12 @@ struct CmdListEventOperation {
     bool isTimestmapEvent = false;
 };
 
+struct CmdListHandleInOrderDependencyParams {
+    bool nonWalkerInOrderCmdsChaining = false;
+    bool copyOffloadOperation = false;
+    bool apiRequiredExternalGraphEvent = false;
+};
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamily : public CommandList {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -254,7 +260,7 @@ struct CommandListCoreFamily : public CommandList {
     void appendWaitOnPatchPreamble(NEO::InOrderExecEventHelper &eventInOrderHelper, CommandToPatchContainer *outListCommands, bool skipAddingWaitEventsToResidency, bool dualStreamCopyOffloadOperation);
     bool isResolveIoqDependencyWithBarrier(bool implicitDependency, bool copyOnlyWait, bool dualStreamCopyOffloadOperation) const;
     MOCKABLE_VIRTUAL void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired, bool skipAggregatedEventSignaling);
-    void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining, bool copyOffloadOperation);
+    void handleInOrderDependencyCounter(Event *signalEvent, CmdListHandleInOrderDependencyParams &params);
     void handleInOrderCounterOverflow(bool copyOffloadOperation);
 
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
@@ -287,7 +293,7 @@ struct CommandListCoreFamily : public CommandList {
     MOCKABLE_VIRTUAL bool handleCounterBasedEventOperations(Event *signalEvent, bool skipAddingEventToResidency);
     bool isCbEventBoundToCmdList(Event *event) const;
     bool kernelMemoryPrefetchEnabled() const override;
-    void assignInOrderExecInfoToEvent(Event *event);
+    void assignInOrderExecInfoToEvent(Event *event, bool apiRequiredExternalGraphEvent);
     bool hasInOrderDependencies() const;
     MOCKABLE_VIRTUAL void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
     bool isUsingAdditionalBlitProperties() const { return useAdditionalBlitProperties; }
@@ -488,7 +494,7 @@ struct CommandListCoreFamily : public CommandList {
     uint64_t getInOrderIncrementValue() const;
     uint64_t getInOrderAtomicSignallingValue(bool executedByEachPartition) const;
     bool isInOrderCounterSignalPending() const;
-    bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const;
+    bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool apiRequestForGraphExternal) const;
     void encodeMiFlush(uint64_t immediateDataGpuAddress, uint64_t immediateData, NEO::MiFlushArgs &args);
 
     void appendCopyOperationFence(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyEngineOperation);

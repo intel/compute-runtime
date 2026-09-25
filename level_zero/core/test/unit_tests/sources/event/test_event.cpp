@@ -7733,6 +7733,14 @@ TEST_F(CounterBasedEventTests, givenEventCreatedWithCounterBasedEventPoolAndCall
     EXPECT_EQ(counterBasedEventPoolFlag, counterBasedEventFlags);
 }
 
+TEST_F(CounterBasedEventTests, givenCbEventWithApiRequiredExternalFlagSetWhenSettingGraphInternalThenEventIsNotSetAsInternal) {
+    EXPECT_TRUE(event->isCounterBased());
+    event->setApiRequiredGraphExternalEvent(true);
+    EXPECT_TRUE(event->getApiRequiredGraphExternalEvent());
+    event->setIsSignalledAsGraphInternalEvent(true);
+    EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+}
+
 using EventTemporaryAllocationCleanupTest = Test<DeviceFixture>;
 
 HWTEST_F(EventTemporaryAllocationCleanupTest,

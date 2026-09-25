@@ -3632,7 +3632,7 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalThenDoNotSkipI
     EXPECT_TRUE(Event::isAggregatedEvent(event.get()));
     EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
     EXPECT_EQ(eventData->counterValue, incValue * 2);
-    EXPECT_FALSE(cmdList->isSkippingInOrderBarrierAllowed(event->toHandle(), 0, nullptr));
+    EXPECT_FALSE(cmdList->isSkippingInOrderBarrierAllowed(event->toHandle(), 0, nullptr, false));
 
     CmdListSignalEventParameters signalEventParameters = {
         .relaxedOrderingDispatch = false,
@@ -3660,7 +3660,7 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenAppendSignalOnImmediateCmd
     EXPECT_TRUE(Event::isAggregatedEvent(event.get()));
     EXPECT_EQ(inOrderExecHelper.getIncrementValue(), incValue);
     EXPECT_EQ(eventData->counterValue, incValue * 2);
-    EXPECT_FALSE(immCmdList->isSkippingInOrderBarrierAllowed(event->toHandle(), 0, nullptr));
+    EXPECT_FALSE(immCmdList->isSkippingInOrderBarrierAllowed(event->toHandle(), 0, nullptr, false));
     CmdListSignalEventParameters signalEventParameters = {
         .relaxedOrderingDispatch = false,
     };

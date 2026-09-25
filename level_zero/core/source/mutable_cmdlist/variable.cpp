@@ -667,7 +667,10 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     updateAllocationResidency(oldEventAllocation, newEventAllocation);
 
     if (this->desc.eventValue.counterBasedEvent && !this->desc.eventValue.inOrderIncrementEvent) {
-        this->cmdList->switchCounterBasedEvents(this->desc.eventValue.inOrderExecBaseSignalValue, this->desc.eventValue.inOrderAllocationOffset, newEvent);
+        this->cmdList->switchCounterBasedEvents(this->desc.eventValue.inOrderExecBaseSignalValue,
+                                                this->desc.eventValue.inOrderAllocationOffset,
+                                                newEvent,
+                                                this->desc.eventValue.apiRequiredExternal);
 
         if (this->desc.eventValue.hasStandaloneProfilingNode) {
             newEvent->setCbEventWithProfiling(this->desc.eventValue.cbEventWithProfiling);

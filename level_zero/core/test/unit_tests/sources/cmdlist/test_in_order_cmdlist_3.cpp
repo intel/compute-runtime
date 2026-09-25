@@ -1766,7 +1766,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto eventObj = Event::fromHandle(handle);
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
-    regularCmdList->assignInOrderExecInfoToEvent(eventObj);
+    regularCmdList->assignInOrderExecInfoToEvent(eventObj, false);
 
     regularCmdList->allowCbWaitEventsNoopDispatch = false;
 
@@ -1795,7 +1795,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto eventObj = Event::fromHandle(handle);
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
-    regularCmdList->assignInOrderExecInfoToEvent(eventObj);
+    regularCmdList->assignInOrderExecInfoToEvent(eventObj, false);
 
     const bool useSemaphore64bCmd = device->getDeviceInfo().semaphore64bCmdSupport;
     const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(regularCmdList->isQwordInOrderCounter(), useSemaphore64bCmd);
@@ -1831,7 +1831,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto eventObj = Event::fromHandle(handle);
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
-    regularCmdList->assignInOrderExecInfoToEvent(eventObj);
+    regularCmdList->assignInOrderExecInfoToEvent(eventObj, false);
 
     const bool useSemaphore64bCmd = device->getDeviceInfo().semaphore64bCmdSupport;
     const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(regularCmdList->isQwordInOrderCounter(), useSemaphore64bCmd);
@@ -1892,6 +1892,82 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_NE(cmdlistResidency.end(), std::find(cmdlistResidency.begin(), cmdlistResidency.end(), &patchPreambleAlloc));
 
     zeEventDestroy(handle);
+}
+
+template <typename FamilyType>
+void testExternalTypeSignalEventForPropertyAndCommand(InOrderFixtureMockEvent *event,
+                                                      WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *cmdList,
+                                                      bool externalEvent, bool externalFlag) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    // do not test when both bool paramters are false
+    ASSERT_TRUE(externalEvent || externalFlag);
+
+    if (externalEvent) {
+        EXPECT_TRUE(event->isExternalEvent());
+    }
+
+    size_t sizeBefore = cmdList->commandContainer.getCommandStream()->getUsed();
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+        .apiRequestForGraphExternal = externalFlag};
+
+    auto ret = cmdList->appendSignalEvent(event->toHandle(), signalEventParameters);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    size_t sizeAfter = cmdList->commandContainer.getCommandStream()->getUsed();
+    EXPECT_NE(sizeBefore, sizeAfter);
+
+    GenCmdList cmdListParsed;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListParsed,
+        ptrOffset(cmdList->commandContainer.getCommandStream()->getCpuBase(), sizeBefore),
+        sizeAfter - sizeBefore));
+
+    if (externalFlag) {
+        EXPECT_TRUE(event->getApiRequiredGraphExternalEvent());
+    } else {
+        EXPECT_FALSE(event->getApiRequiredGraphExternalEvent());
+    }
+
+    // since it is host visible event, so PIPE_CONTROL w/ post sync
+    uint64_t deviceAllocGpuVa = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    uint64_t counterValue = event->getInOrderExecBaseSignalValue();
+
+    bool inOrderPostSyncFound = false;
+    for (auto &cmd : cmdListParsed) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(cmd);
+        if (pipeControl) {
+            if (pipeControl->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                if (deviceAllocGpuVa == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl) &&
+                    counterValue == pipeControl->getImmediateData()) {
+                    inOrderPostSyncFound = true;
+                    break;
+                }
+            }
+        }
+    }
+    EXPECT_TRUE(inOrderPostSyncFound);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderCmdListTests,
+            givenRegularCbEventWhenAppendSignalWithApiRequiredGraphExternalFlagThenEventPropertySetAndCommandDispatched) {
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto event = events[0].get();
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+
+    testExternalTypeSignalEventForPropertyAndCommand<FamilyType>(event, regularCmdList.get(), false, true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderCmdListTests,
+            givenExternalCbEventWhenAppendSignalWithoutApiRequiredGraphExternalFlagThenEventPropertyNotSetAndCommandDispatched) {
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto event = events[0].get();
+    event->externalEvent = true;
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+
+    testExternalTypeSignalEventForPropertyAndCommand<FamilyType>(event, regularCmdList.get(), true, false);
 }
 
 } // namespace ult
