@@ -333,7 +333,6 @@ TEST(SvmAllocationCacheSimpleTest, givenReuseCleanerWhenInsertingAllocationIntoC
 }
 
 struct SvmAllocationCacheTestFixture {
-    SvmAllocationCacheTestFixture() : executionEnvironment(defaultHwInfo.get()) {}
     void setUp() {
     }
     void tearDown() {
@@ -345,7 +344,6 @@ struct SvmAllocationCacheTestFixture {
     }
     static constexpr size_t allocationSizeBasis = MemoryConstants::pageSize64k;
     static constexpr uint64_t alwaysLimited = 0u;
-    MockExecutionEnvironment executionEnvironment;
     RootDeviceIndicesContainer rootDeviceIndices{mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 };
@@ -2730,9 +2728,9 @@ TEST_F(SvmSharedAllocationCacheTest, given2MBLocalMemAlignmentWhenSubAllocationF
     debugManager.flags.EnableLocalMemory.set(1);
     debugManager.flags.UseKmdMigration.set(0);
     debugManager.flags.ExperimentalEnableSharedAllocationCache.set(1);
-    debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.set(1);
     void *cmdQ = reinterpret_cast<void *>(0x12345);
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.set(1);
     auto device = deviceFactory->rootDevices[0];
     auto memoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
@@ -2764,8 +2762,8 @@ TEST_F(SvmDeviceAllocationCacheTest, given2MBLocalMemAlignmentWhenDeviceSubAlloc
     DebugManagerStateRestore restore;
     debugManager.flags.EnableLocalMemory.set(1);
     debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
-    debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.set(1);
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.set(1);
     auto device = deviceFactory->rootDevices[0];
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
     device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
