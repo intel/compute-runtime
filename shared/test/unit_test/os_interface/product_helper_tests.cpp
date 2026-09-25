@@ -642,6 +642,11 @@ HWTEST2_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnNonZero, I
     EXPECT_NE(0u, productHelper->getNumCacheRegions());
 }
 
+HWTEST2_F(ProductHelperTest, givenClosUnsupportedWhenGettingPatIndexThenAbortIsThrown, IsClosUnsupported) {
+    EXPECT_ANY_THROW(productHelper->getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
+    EXPECT_ANY_THROW(productHelper->getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
+}
+
 HWTEST_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters) {
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
 

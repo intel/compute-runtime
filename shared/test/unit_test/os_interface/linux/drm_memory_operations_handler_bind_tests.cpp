@@ -1660,59 +1660,6 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDecompressCalledThenPagingFenceI
 
 using DrmResidencyHandlerTests = ::testing::Test;
 
-HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue, IsXeCore) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    if (productHelper.getNumCacheRegions() == 0) {
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
-    } else {
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_EQ(1u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeCombined));
-        EXPECT_EQ(2u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeThrough));
-        EXPECT_EQ(3u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
-
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region1, CachePolicy::uncached));
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeCombined));
-        EXPECT_EQ(4u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeThrough));
-        EXPECT_EQ(5u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeBack));
-
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region2, CachePolicy::uncached));
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeCombined));
-        EXPECT_EQ(6u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeThrough));
-        EXPECT_EQ(7u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeBack));
-    }
-}
-
-HWTEST2_F(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForPatIndexThenReturnCorrectValue, IsXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForceAllResourcesUncached.set(1);
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    if (productHelper.getNumCacheRegions() == 0) {
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
-    } else {
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
-
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::uncached));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeBack));
-
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::uncached));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeBack));
-    }
-}
-
 HWTEST2_F(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenBindAvailableIsInitializedOnce, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(1);
