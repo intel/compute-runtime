@@ -738,8 +738,8 @@ ze_result_t DriverHandle::getPeerImage(Device *device, Image *image, Image **pee
         externalMemoryImportDesc.pNext = nullptr;
         desc.pNext = &externalMemoryImportDesc;
 
-        auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-        ze_result_t result = Image::create(productFamily, device, &desc, peerImage);
+        auto gfxCoreFamily = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+        ze_result_t result = Image::create(gfxCoreFamily, device, &desc, peerImage);
 
         if (result != ZE_RESULT_SUCCESS) {
             return result;

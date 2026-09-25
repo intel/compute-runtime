@@ -71,7 +71,7 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreate
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -113,7 +113,7 @@ HWTEST_F(ImageCreate, givenMipLevelsGreaterThanOneWhenImageCreateThenMipCountEqu
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -144,7 +144,7 @@ HWTEST_F(ImageCreate, givenMipLevelsEqualToOneWhenImageCreateThenMipCountIsZero)
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -175,7 +175,7 @@ HWTEST_F(ImageCreate, givenMipLevelsEqualToZeroWhenImageCreateThenMipCountIsZero
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -202,7 +202,7 @@ HWTEST_F(ImageCreate, givenBufferTypeWithoutPitchedPtrWhenImageCreateThenInvalid
     zeDesc.format = {};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
 
     ASSERT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
     ASSERT_EQ(imagePtr, nullptr);
@@ -551,7 +551,7 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedIm
     zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_P216};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
 
     ASSERT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT);
     ASSERT_EQ(imagePtr, nullptr);
@@ -1120,7 +1120,7 @@ HWTEST_F(ImageView, given3ChannelImageWhenCreateImageViewIsCalledThenProperViewI
                                   0};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &srcImgDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &srcImgDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_image_handle_t imgHandle = imagePtr->toHandle();
 
@@ -1155,7 +1155,7 @@ HWTEST_F(ImageView, given3Channel16BitImageWhenCreateImageViewIsCalledThenProper
                                   0};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &srcImgDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &srcImgDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_image_handle_t imgHandle = imagePtr->toHandle();
 
@@ -1190,7 +1190,7 @@ HWTEST_F(ImageView, given3ChannelMickedImageWhenCreateImageViewIsCalledThenPrope
                                   0};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &srcImgDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &srcImgDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_image_handle_t imgHandle = imagePtr->toHandle();
 
@@ -1234,7 +1234,7 @@ HWTEST_F(ImageView, given32bitImageWhenCreateImageViewIsCalledWith3ChannelThenNo
                                   0};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &srcImgDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &srcImgDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_image_handle_t imgHandle = imagePtr->toHandle();
 
@@ -1582,7 +1582,7 @@ HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageDescWhenFailImageAlloca
 
     L0::Image *imageHandle = nullptr;
     static_cast<FailMemoryManagerMock *>(execEnv->memoryManager.get())->fail = true;
-    auto ret = L0::Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imageHandle);
+    auto ret = L0::Image::create(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, device, &desc, &imageHandle);
 
     ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, ret);
     EXPECT_EQ(imageHandle, nullptr);
@@ -2132,7 +2132,7 @@ HWTEST_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGet
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -2173,7 +2173,7 @@ HWTEST_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnableC
 
     {
         Image *imagePtr = nullptr;
-        auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+        auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_NE(nullptr, imagePtr);
         std::unique_ptr<L0::Image> image(imagePtr);
@@ -2192,7 +2192,7 @@ HWTEST_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnableC
         zeDesc.pNext = &compressionHint;
 
         Image *imagePtr = nullptr;
-        auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+        auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_NE(nullptr, imagePtr);
         std::unique_ptr<L0::Image> image(imagePtr);
@@ -2206,7 +2206,7 @@ HWTEST_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnableC
         NEO::debugManager.flags.RenderCompressedImagesEnabled.set(1);
 
         Image *imagePtr = nullptr;
-        auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+        auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_NE(nullptr, imagePtr);
         std::unique_ptr<L0::Image> image(imagePtr);
@@ -2218,7 +2218,7 @@ HWTEST_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnableC
         NEO::debugManager.flags.RenderCompressedImagesEnabled.set(0);
 
         Image *imagePtr = nullptr;
-        auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+        auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_NE(nullptr, imagePtr);
         std::unique_ptr<L0::Image> image(imagePtr);
@@ -2250,7 +2250,7 @@ HWTEST_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingLinearImageThenD
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     Image *imagePtr = nullptr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_NE(nullptr, imagePtr);
     std::unique_ptr<L0::Image> image(imagePtr);
@@ -2272,7 +2272,7 @@ HWTEST2_PRODUCT_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMo
 
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
@@ -2319,7 +2319,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMos
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -2334,7 +2334,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, Is
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -2343,12 +2343,12 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, Is
     image->destroy();
 }
 
-HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenNullIsReturned, IsAtMostDg2) {
+HWTEST2_F(ImageCreate, givenInvalidGfxCoreFamilyThenNullIsReturned, IsAtMostDg2) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(IGFX_UNKNOWN, device, &desc, &imagePtr);
+    auto result = Image::create(IGFX_UNKNOWN_CORE, device, &desc, &imagePtr);
     ASSERT_NE(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -2369,7 +2369,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenImageIsCreatedThenDescMatchesAllocation, IsAt
 
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
@@ -3528,7 +3528,7 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionFor3ChannelWhenImageCreateThenIm
                      ZE_IMAGE_FORMAT_SWIZZLE_1};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -3554,7 +3554,7 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionFor3Channel16BitFloatWhenImageCr
                      ZE_IMAGE_FORMAT_SWIZZLE_1};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -3573,7 +3573,7 @@ HWTEST_F(ImageCreateExternalMemoryTest, givenNTHandleWhenCreatingInteropImageThe
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -3603,7 +3603,7 @@ HWTEST_F(ImageCreate, givenFDWhenCreatingImageWith3Channel8bitUintThenSuccessIsR
     desc.pNext = &importFd;
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -3633,7 +3633,7 @@ HWTEST_F(ImageCreateExternalMemoryTest, givenNtHandleWhenCreatingImageWith3Chann
     desc.pNext = &importNTHandle;
 
     Image *imagePtr = nullptr;
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     std::unique_ptr<L0::Image> image(imagePtr);
     EXPECT_EQ(image, nullptr);
@@ -3662,7 +3662,7 @@ HWTEST_F(ImageCreate, givenFDWhenCreatingImageWith3Channel16bitUintThenSuccessIs
     desc.pNext = &importFd;
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -3688,7 +3688,7 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionFor3Channel32BitFloatWhenImageCr
                      ZE_IMAGE_FORMAT_SWIZZLE_1};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     std::unique_ptr<L0::Image> image(imagePtr);
 
@@ -3714,7 +3714,7 @@ HWTEST_F(ImageView, given3ChannelImageWhenCreateImageViewWithNtHandleIsCalledThe
                                   0};
 
     Image *imagePtr;
-    auto result = Image::create(productFamily, device, &srcImgDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &srcImgDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_image_handle_t imgHandle = imagePtr->toHandle();
 
@@ -4310,7 +4310,7 @@ HWTEST_F(ImageCreate, givenCustomPitchDescWhenImageCreateThenCustomPitchesAreUse
     zeDesc.pNext = &customPitchDesc;
 
     Image *imagePtr = nullptr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     ASSERT_NE(imagePtr, nullptr);
 
@@ -4348,7 +4348,7 @@ HWTEST_F(ImageCreate, givenCustomPitchDescWithOnlyRowPitchWhenImageCreateThenOnl
     zeDesc.pNext = &customPitchDesc;
 
     Image *imagePtr = nullptr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     ASSERT_NE(imagePtr, nullptr);
 
@@ -4377,7 +4377,7 @@ HWTEST_F(ImageCreate, givenNoCustomPitchDescWhenImageCreateThenHasCustomPitchRet
                      ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     Image *imagePtr = nullptr;
-    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &zeDesc, &imagePtr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     ASSERT_NE(imagePtr, nullptr);
 

@@ -13,6 +13,7 @@ if(SUPPORT_XE_HPC_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_xe_hpc_core.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/image_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_xe_hpc_core.cpp
   )
 

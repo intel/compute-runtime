@@ -32,7 +32,7 @@ struct Image : _ze_image_handle_t {
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t destroyPeerImages(const void *ptr, Device *device) = 0;
 
-    static ze_result_t create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage);
+    static ze_result_t create(uint32_t gfxCoreFamily, Device *device, const ze_image_desc_t *desc, Image **pImage);
 
     virtual ze_result_t createView(Device *device, const ze_image_desc_t *desc, ze_image_handle_t *pImage) = 0;
 
@@ -75,9 +75,9 @@ struct Image : _ze_image_handle_t {
 using ImageAllocatorFn = Image *(*)();
 extern ImageAllocatorFn imageFactory[];
 
-template <uint32_t productFamily, typename ImageType>
+template <uint32_t gfxCoreFamily, typename ImageType>
 struct ImagePopulateFactory {
-    ImagePopulateFactory() { imageFactory[productFamily] = Image::Allocator<ImageType>::allocate; }
+    ImagePopulateFactory() { imageFactory[gfxCoreFamily] = Image::Allocator<ImageType>::allocate; }
 };
 
 } // namespace L0

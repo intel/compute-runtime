@@ -4468,7 +4468,7 @@ struct ImageWindowsExportImportTest : public MemoryExportImportWinHandleTest {
                          ZE_IMAGE_FORMAT_SWIZZLE_B,
                          ZE_IMAGE_FORMAT_SWIZZLE_A};
 
-        auto result = Image::create(productFamily, device, &zeDesc, &image);
+        auto result = Image::create(renderCoreFamily, device, &zeDesc, &image);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     }
 
@@ -4564,7 +4564,7 @@ struct ImageFdExportImportTest : public MemoryExportImportTest {
                          ZE_IMAGE_FORMAT_SWIZZLE_B,
                          ZE_IMAGE_FORMAT_SWIZZLE_A};
 
-        auto result = Image::create(productFamily, device, &zeDesc, &image);
+        auto result = Image::create(renderCoreFamily, device, &zeDesc, &image);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     }
 
@@ -7013,11 +7013,11 @@ HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     L0::Image *image0;
-    auto result = Image::create(productFamily, device0, &zeDesc, &image0);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device0, &zeDesc, &image0);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     L0::Image *image1;
-    result = Image::create(productFamily, device1, &zeDesc, &image1);
+    result = Image::create(FamilyType::gfxCoreFamily, device1, &zeDesc, &image1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     bool isNeeded = driverHandle->isRemoteImageNeeded(image0, device0);
@@ -7063,16 +7063,16 @@ HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
 
     L0::Image *image0Src;
     L0::Image *image0Dst;
-    auto result = Image::create(productFamily, device0, &desc, &image0Src);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device0, &desc, &image0Src);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = Image::create(productFamily, device0, &desc, &image0Dst);
+    result = Image::create(FamilyType::gfxCoreFamily, device0, &desc, &image0Dst);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     L0::Image *image1Src;
     L0::Image *image1Dst;
-    result = Image::create(productFamily, device1, &desc, &image1Src);
+    result = Image::create(FamilyType::gfxCoreFamily, device1, &desc, &image1Src);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = Image::create(productFamily, device1, &desc, &image1Dst);
+    result = Image::create(FamilyType::gfxCoreFamily, device1, &desc, &image1Dst);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     device0->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
@@ -7132,16 +7132,16 @@ HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
 
     L0::Image *image0Src;
     L0::Image *image0Dst;
-    auto result = Image::create(productFamily, device0, &desc, &image0Src);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device0, &desc, &image0Src);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = Image::create(productFamily, device0, &desc, &image0Dst);
+    result = Image::create(FamilyType::gfxCoreFamily, device0, &desc, &image0Dst);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     L0::Image *image1Src;
     L0::Image *image1Dst;
-    result = Image::create(productFamily, device1, &desc, &image1Src);
+    result = Image::create(FamilyType::gfxCoreFamily, device1, &desc, &image1Src);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = Image::create(productFamily, device1, &desc, &image1Dst);
+    result = Image::create(FamilyType::gfxCoreFamily, device1, &desc, &image1Dst);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     device0->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
@@ -7201,7 +7201,7 @@ HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
 
     L0::Image *image;
-    auto result = Image::create(productFamily, device1, &desc, &image);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device1, &desc, &image);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     L0::Image *peerImage = nullptr;

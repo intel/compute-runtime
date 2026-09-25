@@ -46,7 +46,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpg
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -61,7 +61,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCo
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -70,12 +70,12 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCo
     image->destroy();
 }
 
-HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenReturnNullPointer, IsXeHpgCore) {
+HWTEST2_F(ImageCreate, givenInvalidGfxCoreFamilyThenReturnNullPointer, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(IGFX_UNKNOWN, device, &desc, &imagePtr);
+    auto result = Image::create(IGFX_UNKNOWN_CORE, device, &desc, &imagePtr);
     ASSERT_NE(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -96,7 +96,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHp
 
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);

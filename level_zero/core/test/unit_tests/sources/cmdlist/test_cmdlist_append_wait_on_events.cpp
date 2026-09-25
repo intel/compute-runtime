@@ -1010,11 +1010,11 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     L0::Image *imagePtr;
 
-    auto result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
+    auto result = Image::create(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, device, &desc, &imagePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> imageDst(imagePtr);
 
-    result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
+    result = Image::create(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, device, &desc, &imagePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> imageSrc(imagePtr);
 
@@ -1043,7 +1043,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     L0::Image *imagePtr;
-    auto result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
+    auto result = Image::create(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, device, &desc, &imagePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> image(imagePtr);
     CmdListMemoryCopyParams copyParams = {};
@@ -1069,7 +1069,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
     L0::Image *imagePtr;
-    auto result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
+    auto result = Image::create(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, device, &desc, &imagePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> image(imagePtr);
     CmdListMemoryCopyParams copyParams = {};
