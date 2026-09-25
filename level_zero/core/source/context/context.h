@@ -430,6 +430,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     bool isIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) const;
     uint64_t getIpcHandleKey(const ze_ipc_mem_handle_t &ipcHandle) const;
     void closeIpcHandleTracking(uint64_t handle);
+    void destroyIpcHandleTracking(IpcHandleTracking *handleTracking);
     void releaseIpcRangeChunkHandles(const std::vector<uint64_t> &handleKeys);
     void releaseIpcRangeTransport(const void *transportPtr);
 

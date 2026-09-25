@@ -575,21 +575,8 @@ void Context::releaseIpcHandle(const void *ptr, NEO::UsmMemAllocPool *usmPool) {
             // pooled: close when the last export of this pool BO is released
             // non-pooled: the allocation is going away, so its entry must not outlive it
             if (ipcHandleIterator->second->refcnt == 0 || false == pooled) {
-                auto *memoryManager = driverHandle->getMemoryManager();
-                void *reservedHandleData = nullptr;
-                if (ipcHandleIterator->second->hasReservedHandleData) {
-                    reservedHandleData = ipcHandleIterator->second->opaqueData.reservedHandleData;
-                    memoryManager->closeInternalHandleWithReservedData(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc, reservedHandleData);
-                } else {
-                    memoryManager->closeInternalHandle(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
-                }
-                if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
-                    this->driverHandle->unregisterIpcHandleWithServer(ipcHandleIterator->second->handle);
-                }
-                // Clear the cached import handle when IPC memory is freed
-                this->driverHandle->clearCachedImportHandle(ipcHandleIterator->second->cacheID);
-                delete ipcHandleIterator->second;
-                this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
+                this->destroyIpcHandleTracking(ipcHandleIterator->second);
+                this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator);
             }
             break;
         }
@@ -880,22 +867,25 @@ void Context::closeIpcHandleTracking(uint64_t handle) {
         IpcHandleTracking *trackIPC = ipcIter->second;
         trackIPC->refcnt -= 1;
         if (trackIPC->refcnt == 0) {
-            void *reservedHandleData = nullptr;
-            if (trackIPC->hasReservedHandleData) {
-                reservedHandleData = trackIPC->opaqueData.reservedHandleData;
-                driverHandle->getMemoryManager()->closeInternalHandleWithReservedData(handle, trackIPC->handleId, trackIPC->alloc, reservedHandleData);
-            } else {
-                driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
-            }
-            if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
-                this->driverHandle->unregisterIpcHandleWithServer(handle);
-            }
-            // Clear the cached import handle when IPC handle is closed
-            this->driverHandle->clearCachedImportHandle(trackIPC->cacheID);
-            delete trackIPC;
-            ipcMap.erase(handle);
+            this->destroyIpcHandleTracking(trackIPC);
+            ipcMap.erase(ipcIter);
         }
     }
+}
+
+void Context::destroyIpcHandleTracking(IpcHandleTracking *handleTracking) {
+    uint64_t handle = handleTracking->handle;
+    auto *memoryManager = this->driverHandle->getMemoryManager();
+    if (handleTracking->hasReservedHandleData) {
+        memoryManager->closeInternalHandleWithReservedData(handle, handleTracking->handleId, handleTracking->alloc, handleTracking->opaqueData.reservedHandleData);
+    } else {
+        memoryManager->closeInternalHandle(handle, handleTracking->handleId, handleTracking->alloc);
+    }
+    if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
+        this->driverHandle->unregisterIpcHandleWithServer(handle);
+    }
+    this->driverHandle->clearCachedImportHandle(handleTracking->cacheID);
+    delete handleTracking;
 }
 
 void Context::trackIpcEventPoolHandle(uint64_t handle, NEO::GraphicsAllocation *alloc) {
