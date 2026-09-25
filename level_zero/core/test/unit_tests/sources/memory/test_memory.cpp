@@ -5209,6 +5209,138 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenFillRangeCoveredByImportedHostPo
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr1));
 }
 
+HWTEST_F(MultipleDevicePeerAllocationTest, givenFillRangeOverrunningOwnDeviceAllocationWhenAppendingBlitFillThenInvalidArgumentIsReturnedWithoutPeerImport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    L0::Device *device0 = driverHandle->devices[0];
+
+    const size_t allocationSize = MemoryConstants::pageSize;
+    const size_t fillSize = 2 * MemoryConstants::pageSize;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, allocationSize, 1, &ptr));
+    NEO::SvmAllocationData *rangeAllocData = nullptr;
+    ASSERT_FALSE(driverHandle->findAllocationDataForRange(ptr, fillSize, rangeAllocData));
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
+    CmdListMemoryCopyParams copyParams;
+    char pattern = 'a';
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), fillSize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(0u, device0->peerAllocations.allocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest, givenFillRangeOverrunningPeerDeviceAllocationWhenAppendingBlitFillThenInvalidArgumentIsReturnedWithoutPeerImport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    const size_t allocationSize = MemoryConstants::pageSize;
+    const size_t fillSize = 2 * MemoryConstants::pageSize;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, allocationSize, 1, &ptr));
+    NEO::SvmAllocationData *rangeAllocData = nullptr;
+    ASSERT_FALSE(driverHandle->findAllocationDataForRange(ptr, fillSize, rangeAllocData));
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
+    CmdListMemoryCopyParams copyParams;
+    char pattern = 'a';
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), fillSize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(0u, device1->peerAllocations.allocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest, givenSharedSystemAllocationsAllowedAndNonUsmNotTreatedAsSharedSystemWhenAppendingBlitFillOverrunningDeviceAllocationThenInvalidArgumentIsReturnedWithoutPeerImport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+    L0::Device *device0 = driverHandle->devices[0];
+    auto &hwInfo = *device0->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access;
+    ASSERT_TRUE(device0->getNEODevice()->areSharedSystemAllocationsAllowed());
+
+    const size_t allocationSize = MemoryConstants::pageSize;
+    const size_t fillSize = 2 * MemoryConstants::pageSize;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, allocationSize, 1, &ptr));
+    NEO::SvmAllocationData *rangeAllocData = nullptr;
+    ASSERT_FALSE(driverHandle->findAllocationDataForRange(ptr, fillSize, rangeAllocData));
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
+    CmdListMemoryCopyParams copyParams;
+    char pattern = 'a';
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), fillSize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(0u, device0->peerAllocations.allocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest, givenSharedSystemEnabledWhenAppendingBlitFillOverrunningDeviceAllocationThenSuccessIsReturnedWithoutPeerImport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    L0::Device *device0 = driverHandle->devices[0];
+    auto &hwInfo = *device0->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access;
+    ASSERT_TRUE(device0->getNEODevice()->areSharedSystemAllocationsAllowed());
+
+    const size_t allocationSize = MemoryConstants::pageSize;
+    const size_t fillSize = 2 * MemoryConstants::pageSize;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, allocationSize, 1, &ptr));
+    NEO::SvmAllocationData *rangeAllocData = nullptr;
+    ASSERT_FALSE(driverHandle->findAllocationDataForRange(ptr, fillSize, rangeAllocData));
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
+    CmdListMemoryCopyParams copyParams;
+    char pattern = 'a';
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), fillSize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(0u, device0->peerAllocations.allocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest, givenFillRangeOverrunningDeviceAllocationWhenAppendingMemoryFillOnComputeThenInvalidArgumentIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    L0::Device *device0 = driverHandle->devices[0];
+
+    const size_t allocationSize = MemoryConstants::pageSize;
+    const size_t fillSize = 2 * MemoryConstants::pageSize;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, allocationSize, 1, &ptr));
+    NEO::SvmAllocationData *rangeAllocData = nullptr;
+    ASSERT_FALSE(driverHandle->findAllocationDataForRange(ptr, fillSize, rangeAllocData));
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
+    CmdListMemoryCopyParams copyParams;
+    char pattern = 'a';
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendMemoryFill(ptr, &pattern, sizeof(pattern), fillSize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(0u, device0->peerAllocations.allocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
 HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToResolveAlignedAllocationAndImportFdHandleFailingThenPeerAllocNotFoundReturnsTrue) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;

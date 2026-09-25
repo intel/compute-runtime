@@ -3286,8 +3286,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         DriverHandle *driverHandle = device->getDriverHandle();
         auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
         if (gpuAllocation == nullptr && allocData) {
-            uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
-            gpuAllocation = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), nullptr, nullptr, false);
+            NEO::SvmAllocationData *rangeAllocData = nullptr;
+            if (driverHandle->findAllocationDataForRange(ptr, size, rangeAllocData)) {
+                uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+                gpuAllocation = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), nullptr, nullptr, false);
+            } else if (!sharedSystemEnabled) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         }
 
         uint32_t patternToCommand[4] = {};
