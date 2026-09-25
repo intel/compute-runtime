@@ -797,14 +797,14 @@ if(NOT NEO_DISABLE_MITIGATIONS)
       message(WARNING "Spectre mitigation is not supported by the compiler")
     endif()
   else()
-    if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
       check_cxx_compiler_flag(-mretpoline COMPILER_SUPPORTS_RETPOLINE)
       if(COMPILER_SUPPORTS_RETPOLINE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mretpoline")
       else()
         message(WARNING "Spectre mitigation -mretpoline flag is not supported by the compiler")
       endif()
-    else()
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       check_cxx_compiler_flag(-mindirect-branch=thunk COMPILER_SUPPORTS_INDIRECT_BRANCH_THUNK)
       if(COMPILER_SUPPORTS_INDIRECT_BRANCH_THUNK)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mindirect-branch=thunk")
@@ -868,13 +868,13 @@ if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter") # needed for unused function arguments
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers") # needed for dependencies, e.g. gmmlib
 
-  if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-    # clang only
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    # Clang and IntelLLVM diagnostics
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshorten-64-to-32 -Wno-extern-c-compat -Wno-instantiation-after-specialization")
-    if(WIN32 AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19)
+    if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type-mismatch")
     endif()
-  else()
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # gcc only
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
       # Disable specific warnings due to GCC bug for versions >= 12
