@@ -66,10 +66,7 @@ struct DrmCommandStreamEnhancedTestDrmPrelim : public DrmCommandStreamEnhancedTe
     DebugManagerStateRestore restorer;
 };
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenEnableImmediateVmBindExtSetWhenFlushThenWaitUserFenceIoctlIsCalled) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
+HWTEST2_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenEnableImmediateVmBindExtSetWhenFlushThenWaitUserFenceIoctlIsCalled, IsXeCore) {
     debugManager.flags.EnableImmediateVmBindExt.set(1);
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -95,11 +92,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenEnableImmediateVm
     mm->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenDirectSubmissionEnabledWhenFlushThenWaitUserFenceIoctlIsCalled) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenDirectSubmissionEnabledWhenFlushThenWaitUserFenceIoctlIsCalled, IsXeCore) {
     this->mock->setDirectSubmissionActive(true);
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -127,11 +120,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenDirectSubmissionE
     mm->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnabledWhenUseCtxIdSelectedThenExpectNonZeroContextId) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnabledWhenUseCtxIdSelectedThenExpectNonZeroContextId, IsXeCore) {
     auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
     std::vector<uint32_t> &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
     size_t drmCtxSize = drmCtxIds.size();
@@ -163,11 +152,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(-1, mock->context.receivedGemWaitUserFence.timeout);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnabledWhenUseCtxIdNotSelectedAndMultiplePartitionsThenExpectZeroContextIdAndEqualWaitCalls) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnabledWhenUseCtxIdNotSelectedAndMultiplePartitionsThenExpectZeroContextIdAndEqualWaitCalls, IsXeCore) {
     auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
     std::vector<uint32_t> &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
     size_t drmCtxSize = drmCtxIds.size();
@@ -220,11 +205,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(-1, mock->context.receivedGemWaitUserFence.timeout);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterruptIdWhenWaitingTheExecuteFenceWaitOnce) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterruptIdWhenWaitingTheExecuteFenceWaitOnce, IsXeCore) {
     auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
     std::vector<uint32_t> &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
     size_t drmCtxSize = drmCtxIds.size();
@@ -272,11 +253,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterrupt
     EXPECT_EQ(3u, mock->context.gemWaitUserFenceCalled);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenFailingIoctlWhenWaitingThenDoEarlyReturn) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenFailingIoctlWhenWaitingThenDoEarlyReturn, IsXeCore) {
     auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testDrmCsr->useUserFenceWait = true;
     testDrmCsr->activePartitions = 3u;

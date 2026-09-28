@@ -48,7 +48,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenDrmMemoryManage
     EXPECT_EQ(nullptr, bo.peekLockedAddress());
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithPrelimSupportWhenCreateBufferObjectInMemoryRegionIsCalledThenBufferObjectWithAGivenGpuAddressAndSizeIsCreatedAndAllocatedInASpecifiedMemoryRegion) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithPrelimSupportWhenCreateBufferObjectInMemoryRegionIsCalledThenBufferObjectWithAGivenGpuAddressAndSizeIsCreatedAndAllocatedInASpecifiedMemoryRegion, IsAtMostXeCore) {
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -612,8 +612,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationT
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
-       whenCreateUnifiedMemoryAllocationWithChunkingThenGemCreateExtAndPreferredLocationAreUsed) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest,
+          whenCreateUnifiedMemoryAllocationWithChunkingThenGemCreateExtAndPreferredLocationAreUsed, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableBOChunkingPreferredLocationHint.set(1);
     std::vector<MemoryRegion> regionInfo(2);
@@ -654,8 +654,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
-       whenCreateUnifiedMemoryAllocationWithChunkingAndModeNotSetToSharedThenChunkingIsNotUsed) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest,
+          whenCreateUnifiedMemoryAllocationWithChunkingAndModeNotSetToSharedThenChunkingIsNotUsed, IsAtMostXeCore) {
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -697,8 +697,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
-       whenCreateUnifiedMemoryAllocationWithChunkingAndSizeLessThanMinimalThenChunkingIsNotUsed) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest,
+          whenCreateUnifiedMemoryAllocationWithChunkingAndSizeLessThanMinimalThenChunkingIsNotUsed, IsAtMostXeCore) {
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -740,8 +740,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
-       whenCreateUnifiedMemoryAllocationWithChunkingModeSetToSharedAndSizeGreaterThanMinimalThenChunkingIsUsed) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest,
+          whenCreateUnifiedMemoryAllocationWithChunkingModeSetToSharedAndSizeGreaterThanMinimalThenChunkingIsUsed, IsAtMostXeCore) {
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -783,8 +783,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
-       whenCreateUnifiedMemoryAllocationWithChunkingModeSetToSharedAndSizeGreaterThanMinimalWithDebuggingEnabledThenChunkingIsNotUsed) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest,
+          whenCreateUnifiedMemoryAllocationWithChunkingModeSetToSharedAndSizeGreaterThanMinimalWithDebuggingEnabledThenChunkingIsNotUsed, IsAtMostXeCore) {
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -828,8 +828,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
-       whenCreateUnifiedMemoryAllocationWithChunkingAndNoEnableBOChunkingPreferredLocationHintSetThenGemCreateExtIsUsedWithoutPreferredLocation) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest,
+          whenCreateUnifiedMemoryAllocationWithChunkingAndNoEnableBOChunkingPreferredLocationHintSetThenGemCreateExtIsUsedWithoutPreferredLocation, IsAtMostXeCore) {
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -1038,7 +1038,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, MmapFailWhenCreateSharedUnifiedMem
     EXPECT_EQ(ptr, nullptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateSharedUnifiedMemoryAllocationWithDeviceThenKmdMigratedAllocationIsCreated) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateSharedUnifiedMemoryAllocationWithDeviceThenKmdMigratedAllocationIsCreated, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
@@ -1086,7 +1086,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhenCreatingKmdMigratedAllocationThenApplyVmAdviseAtomicCorrectly) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhenCreatingKmdMigratedAllocationThenApplyVmAdviseAtomicCorrectly, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
@@ -1133,7 +1133,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLocationWhenCreatingKmdMigratedAllocationThenApplyVmAdvisePreferredLocationCorrectly) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLocationWhenCreatingKmdMigratedAllocationThenApplyVmAdvisePreferredLocationCorrectly, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
@@ -1185,7 +1185,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLoc
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKmdMigratedSharedAllocationWhenCreatedInLocalMemory1OnlyThenApplyMemoryInstanceAndVmAdvisePreferredLocationCorrectly) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKmdMigratedSharedAllocationWhenCreatedInLocalMemory1OnlyThenApplyMemoryInstanceAndVmAdvisePreferredLocationCorrectly, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMultiStoragePlacement.set(0b10);
     debugManager.flags.UseKmdMigration.set(1);
@@ -1239,7 +1239,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKmdMigratedSharedAllocationWh
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersWhenCreatingKmdMigratedSharedAllocationThenDontSetPreferredLocation) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersWhenCreatingKmdMigratedSharedAllocationThenDontSetPreferredLocation, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     debugManager.flags.CreateContextWithAccessCounters.set(1);
@@ -1281,7 +1281,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersButOverriddenWithSetVmAdvisePreferredLocationWhenCreatingKmdMigratedSharedAllocationThenSetPreferredLocation) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersButOverriddenWithSetVmAdvisePreferredLocationWhenCreatingKmdMigratedSharedAllocationThenSetPreferredLocation, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     debugManager.flags.CreateContextWithAccessCounters.set(1);
@@ -1427,7 +1427,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrati
 }
 
 using DrmMemoryManagerWithSingleSubDevicePrelimTest = DrmMemoryManagerWithSubDevicesPrelimTest<false>;
-TEST_F(DrmMemoryManagerWithSingleSubDevicePrelimTest, givenUnifiedMemoryAllocationOnSubDevice0WhenCreatedWithInitialPlacementOnGpuThenCallMemoryPrefetch) {
+HWTEST2_F(DrmMemoryManagerWithSingleSubDevicePrelimTest, givenUnifiedMemoryAllocationOnSubDevice0WhenCreatedWithInitialPlacementOnGpuThenCallMemoryPrefetch, IsAtMostXeCore) {
     DeviceBitfield subDevices = 0b01;
     AllocationProperties gpuProperties{0u,
                                        MemoryConstants::pageSize64k,
@@ -1450,7 +1450,7 @@ TEST_F(DrmMemoryManagerWithSingleSubDevicePrelimTest, givenUnifiedMemoryAllocati
 }
 
 using DrmMemoryManagerWithMultipleSubDevicesPrelimTest = DrmMemoryManagerWithSubDevicesPrelimTest<true>;
-TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenUnifiedMemoryAllocationOnSubDevice1WhenCreatedWithInitialPlacementOnGpuThenCallMemoryPrefetch) {
+HWTEST2_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenUnifiedMemoryAllocationOnSubDevice1WhenCreatedWithInitialPlacementOnGpuThenCallMemoryPrefetch, IsAtMostXeCore) {
     DeviceBitfield subDevices = 0b10;
     AllocationProperties gpuProperties{0u,
                                        MemoryConstants::pageSize64k,
@@ -1472,7 +1472,7 @@ TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenUnifiedMemoryAlloc
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenUnifiedMemoryAllocationOnMultipleSubDevicesWhenCreatedWithInitialPlacementOnGpuThenCallVmPrefetchCorrectly) {
+HWTEST2_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenUnifiedMemoryAllocationOnMultipleSubDevicesWhenCreatedWithInitialPlacementOnGpuThenCallVmPrefetchCorrectly, IsAtMostXeCore) {
     DeviceBitfield subDevices = 0b11;
     AllocationProperties gpuProperties{0u,
                                        2 * MemoryConstants::pageSize64k,
@@ -1500,7 +1500,7 @@ TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenUnifiedMemoryAlloc
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenCreateKmdMigratedSharedAllocationWithMultipleBOsUnsetWhenCreatedWithInitialPlacementOnGpuThenCallVmPrefetchCorrectly) {
+HWTEST2_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenCreateKmdMigratedSharedAllocationWithMultipleBOsUnsetWhenCreatedWithInitialPlacementOnGpuThenCallVmPrefetchCorrectly, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
 
@@ -1525,7 +1525,7 @@ TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenCreateKmdMigratedS
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSharedUnifiedMemoryAllocationReturnsNullptr) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSharedUnifiedMemoryAllocationReturnsNullptr, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
@@ -2271,7 +2271,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithLocalMemo
     memoryManager->unlockBufferObject(nullptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFlagSetWhileCreatingBufferObjectInMemoryRegionThenDebugInformationIsPrinted) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFlagSetWhileCreatingBufferObjectInMemoryRegionThenDebugInformationIsPrinted, IsAtMostXeCore) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
@@ -2304,7 +2304,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFlagWhenCreatingSharedUnifiedAllocationThenPrintIoctlResult) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFlagWhenCreatingSharedUnifiedAllocationThenPrintIoctlResult, IsAtMostXeCore) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.UseKmdMigration.set(1);
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
@@ -3607,7 +3607,7 @@ struct DrmCommandStreamEnhancedPrelimTest : public DrmCommandStreamEnhancedTempl
     BatchBuffer batchBuffer;
 };
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindSetWhenFlushThenAllocIsBoundAndNotPassedToExec) {
+HWTEST2_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindSetWhenFlushThenAllocIsBoundAndNotPassedToExec, IsAtMostXeCore) {
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     const auto execObjectRequirements = [allocation = this->allocation](const auto &execObject) {

@@ -17,11 +17,14 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
-TEST(DrmQueryTopologyTest, givenDrmWhenQueryTopologyCalledThenPassNoFlags) {
+using DrmQueryTopologyTest = ::testing::Test;
+using DrmQueryTest = ::testing::Test;
+
+HWTEST2_F(DrmQueryTopologyTest, givenDrmWhenQueryTopologyCalledThenPassNoFlags, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -34,7 +37,7 @@ TEST(DrmQueryTopologyTest, givenDrmWhenQueryTopologyCalledThenPassNoFlags) {
     EXPECT_EQ(expectedFlag, drm.storedQueryItem.flags);
 }
 
-TEST(DrmQueryTopologyTest, givenPrelimIoctlHelperWhenQueryTopologyCalledThenRegionCountIsOne) {
+HWTEST2_F(DrmQueryTopologyTest, givenPrelimIoctlHelperWhenQueryTopologyCalledThenRegionCountIsOne, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -172,7 +175,7 @@ struct QueryTopologyTests : ::testing::Test {
     int receivedEuCount = 0;
 };
 
-TEST_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology) {
+HWTEST2_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology, IsAtMostXeCore) {
     createDrm(0);
 
     DrmQueryTopologyData topologyData = {};
@@ -190,7 +193,7 @@ TEST_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQueryTopology) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQueryTopology, IsAtMostXeCore) {
     debugManager.flags.UseNewQueryTopoIoctl.set(false);
     createDrm(2);
 
@@ -209,7 +212,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQ
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl, IsAtMostXeCore) {
     createDrm(2);
 
     DrmQueryTopologyData topologyData = {};
@@ -227,7 +230,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl) {
     EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback, IsAtMostXeCore) {
     createDrm(2);
 
     drmMock->engineInfo.reset();
@@ -246,7 +249,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback) {
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback, IsAtMostXeCore) {
     createDrm(2);
 
     drmMock->queryComputeSlicesEuCount = 0;
@@ -265,7 +268,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback) {
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallback) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallback, IsAtMostXeCore) {
     createDrm(2);
 
     drmMock->failOnQuery = true;
@@ -284,7 +287,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallba
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue) {
+HWTEST2_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue, IsAtMostXeCore) {
     createDrm(2);
 
     drmMock->useSmallerValuesOnSecondCall = true;
@@ -311,7 +314,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue) 
     EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrectMappingsReturnedForBothDeviceIndexes) {
+HWTEST2_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrectMappingsReturnedForBothDeviceIndexes, IsAtMostXeCore) {
     createDrm(2);
 
     drmMock->useSmallerValuesOnSecondCall = true;
@@ -333,7 +336,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrec
     }
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappingsThenMappingStoredForIndexZeroOnly) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappingsThenMappingStoredForIndexZeroOnly, IsAtMostXeCore) {
     debugManager.flags.UseNewQueryTopoIoctl.set(false);
     createDrm(2);
 
@@ -358,7 +361,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappi
     ASSERT_EQ(0u, device1SliceMapping.size());
 }
 
-TEST_F(QueryTopologyTests, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
+HWTEST2_F(QueryTopologyTests, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned, IsAtMostXeCore) {
     createDrm(2);
     DrmQueryTopologyData topologyData = {};
     drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
@@ -376,7 +379,7 @@ TEST_F(QueryTopologyTests, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturne
     }
 }
 
-TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalseByDefault) {
+HWTEST2_F(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalseByDefault, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -385,7 +388,7 @@ TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalseByDefault) {
     EXPECT_FALSE(drm.hasPageFaultSupport());
 }
 
-TEST(DrmQueryTest, givenPageFaultSupportEnabledWhenCallingQueryPageFaultSupportThenReturnCorrectValue) {
+HWTEST2_F(DrmQueryTest, givenPageFaultSupportEnabledWhenCallingQueryPageFaultSupportThenReturnCorrectValue, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
@@ -402,7 +405,7 @@ TEST(DrmQueryTest, givenPageFaultSupportEnabledWhenCallingQueryPageFaultSupportT
     }
 }
 
-TEST(DrmQueryTest, givenPrintIoctlDebugFlagSetWhenCallingQueryPageFaultSupportThenCaptureExpectedOutput) {
+HWTEST2_F(DrmQueryTest, givenPrintIoctlDebugFlagSetWhenCallingQueryPageFaultSupportThenCaptureExpectedOutput, IsAtMostXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintIoctlEntries.set(true);
 
@@ -427,7 +430,7 @@ TEST(DrmQueryTest, givenPrintIoctlDebugFlagSetWhenCallingQueryPageFaultSupportTh
     }
 }
 
-TEST(DrmQueryTest, givenPrintIoctlDebugFlagNotSetWhenIsPageFaultSupportedCalledThenNoCapturedOutput) {
+HWTEST2_F(DrmQueryTest, givenPrintIoctlDebugFlagNotSetWhenIsPageFaultSupportedCalledThenNoCapturedOutput, IsAtMostXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintIoctlEntries.set(false);
 
@@ -446,7 +449,7 @@ TEST(DrmQueryTest, givenPrintIoctlDebugFlagNotSetWhenIsPageFaultSupportedCalledT
     EXPECT_TRUE(outputString.empty());
 }
 
-TEST(DrmQueryTest, WhenQueryPageFaultSupportFailsThenReturnFalse) {
+HWTEST2_F(DrmQueryTest, WhenQueryPageFaultSupportFailsThenReturnFalse, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 

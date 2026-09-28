@@ -20,6 +20,8 @@
 
 using namespace NEO;
 
+using DrmPrelimTest = ::testing::Test;
+
 struct DrmDebugPrelimTest : public ::testing::Test {
   public:
     void SetUp() override {
@@ -39,7 +41,7 @@ struct MockIoctlHelperDebugPrelimResourceRegistration : public IoctlHelperPrelim
     MockIoctlHelperDebugPrelimResourceRegistration(Drm &drm) : IoctlHelperPrelim20(drm) {}
 };
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringClassesThenHandlesAreStored) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringClassesThenHandlesAreStored, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
@@ -59,7 +61,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringClassesThenHandlesAreStored) {
     EXPECT_TRUE(hasSubstr(std::string(drm.context.receivedRegisterUuid->uuid), classNamesToUuid[classNamesToUuid.size() - 1].second));
 }
 
-TEST_F(DrmDebugPrelimTest, GivenUnsupportedUUIDRegisterIoctlWhenRegisteringClassesThenErrorIsReturnedAndClassHandlesAreEmpty) {
+HWTEST2_F(DrmDebugPrelimTest, GivenUnsupportedUUIDRegisterIoctlWhenRegisteringClassesThenErrorIsReturnedAndClassHandlesAreEmpty, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
@@ -72,7 +74,7 @@ TEST_F(DrmDebugPrelimTest, GivenUnsupportedUUIDRegisterIoctlWhenRegisteringClass
     EXPECT_EQ(0u, ioctlHelper->classHandles.size());
 }
 
-TEST_F(DrmDebugPrelimTest, GivenNoClassesRegisteredWhenRegisteringResourceThenRegisterUUIDIoctlIsNotCalledAndZeroHandleReturned) {
+HWTEST2_F(DrmDebugPrelimTest, GivenNoClassesRegisteredWhenRegisteringResourceThenRegisterUUIDIoctlIsNotCalledAndZeroHandleReturned, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto registeredHandle = drm.registerResource(DrmResourceClass::isa, nullptr, 0);
@@ -80,7 +82,7 @@ TEST_F(DrmDebugPrelimTest, GivenNoClassesRegisteredWhenRegisteringResourceThenRe
     EXPECT_EQ(0u, drm.ioctlCallsCount);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegisterUUIDIoctlIsCalled) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegisterUUIDIoctlIsCalled, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
@@ -102,7 +104,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
     EXPECT_EQ(ioctlHelper->classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegisterUUIDIoctlReturnsWithError) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegisterUUIDIoctlReturnsWithError, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
@@ -136,7 +138,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
     EXPECT_EQ(ioctlHelper->classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUUIDIoctlIsCalledWithCorrectData) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUUIDIoctlIsCalledWithCorrectData, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = std::make_unique<MockIoctlHelperDebugPrelimResourceRegistration>(drm);
 
@@ -162,7 +164,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUU
     EXPECT_EQ(0u, receivedUuid->extensions);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIoctlIsCalled) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIoctlIsCalled, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto result = drm.registerResourceClasses();
@@ -184,7 +186,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIo
     EXPECT_EQ(0u, receivedUuid->extensions);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIoctlReturnsWithError) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIoctlReturnsWithError, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto result = drm.registerResourceClasses();
@@ -217,7 +219,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIo
     EXPECT_EQ(0u, receivedUuid->extensions);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenNotifyFirstCommandQueueCreatedCalledThenCorrectUuidIsRegisteredWithCorrectData) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenNotifyFirstCommandQueueCreatedCalledThenCorrectUuidIsRegisteredWithCorrectData, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto handle = drm.context.uuidHandle;
@@ -233,14 +235,14 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenNotifyFirstCommandQueueCreatedCalledThenC
     EXPECT_EQ(0, memcmp(receivedUuid->uuid, uuidL0CommandQueueHash, sizeof(receivedUuid->uuid)));
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenNotifyLastCommandQueueDestroyedCalledThenCorrectUuidIsUnregistered) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenNotifyLastCommandQueueDestroyedCalledThenCorrectUuidIsUnregistered, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     drm.notifyLastCommandQueueDestroyed(1234u);
     EXPECT_EQ(1234u, drm.context.receivedUnregisterUuid->handle);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringIsaCookieThenRegisterUUIDIoctlIsCalled) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringIsaCookieThenRegisterUUIDIoctlIsCalled, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto result = drm.registerResourceClasses();
@@ -254,7 +256,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringIsaCookieThenRegisterUUIDIoctl
     EXPECT_EQ(3u, drm.context.receivedRegisterUuid->uuidClass);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringIsaCookieThenRegisterUUIDIoctlReturnsError) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringIsaCookieThenRegisterUUIDIoctlReturnsError, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto result = drm.registerResourceClasses();
@@ -279,7 +281,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringIsaCookieThenRegisterUUIDIoctl
     EXPECT_EQ(3u, drm.context.receivedRegisterUuid->uuidClass);
 }
 
-TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringElfResourceWithoutDataThenRegisterUUIDIoctlIsCalled) {
+HWTEST2_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringElfResourceWithoutDataThenRegisterUUIDIoctlIsCalled, IsAtMostXeCore) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto result = drm.registerResourceClasses();
@@ -295,7 +297,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringElfResourceWithoutDataThenRegi
     EXPECT_EQ(0u, drm.context.receivedRegisterUuid->size);
 }
 
-TEST(DrmPrelimTest, givenContextDebugAvailableWhenCheckedForSupportThenTrueIsReturned) {
+HWTEST2_F(DrmPrelimTest, givenContextDebugAvailableWhenCheckedForSupportThenTrueIsReturned, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -319,7 +321,7 @@ TEST(DrmPrelimTest, givenContextDebugAvailableWhenCheckedForSupportThenTrueIsRet
     EXPECT_EQ(prevIoctls + 1u, drm->ioctlCallsCount);
 }
 
-TEST(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIsReturned) {
+HWTEST2_F(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIsReturned, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -342,7 +344,7 @@ TEST(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIs
     EXPECT_EQ(prevIoctls + 1u, drm->ioctlCallsCount);
 }
 
-TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultEngineContextThenExtensionsArePassedToVmBindIoctl) {
+HWTEST2_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultEngineContextThenExtensionsArePassedToVmBindIoctl, IsAtMostXeCore) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -415,7 +417,7 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
     EXPECT_EQ(1u, drm.context.vmUnbindCalled);
 }
 
-TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenDebugFlagSipParamIsSet) {
+HWTEST2_F(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenDebugFlagSipParamIsSet, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -437,7 +439,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
     EXPECT_EQ(0u, drm->passedContextDebugId);
 }
 
-TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenContextRunaloneIsSetOnlyIfCCSEnginesArePresent) {
+HWTEST2_F(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenContextRunaloneIsSetOnlyIfCCSEnginesArePresent, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,14 @@
 
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture_prelim.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
 using DrmBufferObjectPrelimFixture = DrmBufferObjectFixture<DrmMockCustomPrelim>;
 using DrmBufferObjectPrelimTest = Test<DrmBufferObjectPrelimFixture>;
 
-TEST_F(DrmBufferObjectPrelimTest, GivenCompletionAddressWhenCallingExecThenReturnIsCorrect) {
+HWTEST2_F(DrmBufferObjectPrelimTest, GivenCompletionAddressWhenCallingExecThenReturnIsCorrect, IsAtMostXeCore) {
     mock->ioctlExpected.total = 1;
     mock->ioctlRes = 0;
 

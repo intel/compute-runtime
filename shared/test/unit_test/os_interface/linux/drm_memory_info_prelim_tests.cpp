@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_library.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -119,7 +119,7 @@ struct DrmVmTestFixture {
 
 using DrmVmTestTest = Test<DrmVmTestFixture>;
 
-TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryThenVmCreatedUsingNewRegion) {
+HWTEST2_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryThenVmCreatedUsingNewRegion, IsAtMostXeCore) {
     debugManager.flags.EnableLocalMemory.set(1);
     drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
@@ -138,7 +138,7 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryT
     EXPECT_NE(0ull, drm->receivedGemVmControl.extensions);
 }
 
-TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCreatingVirtualMemoryThenVmCreatedNotUsingRegion) {
+HWTEST2_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCreatingVirtualMemoryThenVmCreatedNotUsingRegion, IsAtMostXeCore) {
     debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0);
 
     drm->memoryInfoQueried = false;
@@ -158,7 +158,7 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCre
     EXPECT_EQ(0ull, drm->receivedGemVmControl.extensions);
 }
 
-TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryFailsThenExpectDebugInformation) {
+HWTEST2_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryFailsThenExpectDebugInformation, IsAtMostXeCore) {
     NEO::debugManager.flags.PrintDebugMessages.set(1);
     NEO::debugManager.flags.EnableLocalMemory.set(1);
     drm->storedRetValForVmCreate = 1;

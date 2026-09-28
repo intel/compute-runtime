@@ -24,9 +24,11 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
+
+using IoctlHelperPrelimTest = ::testing::Test;
 
 extern int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal);
 
@@ -81,7 +83,7 @@ class IoctlHelperPrelimFixture : public ::testing::Test {
     std::unique_ptr<DrmPrelimMock> drm;
 };
 
-TEST(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsReturnedBasedOnIoctlResult) {
+HWTEST2_F(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsReturnedBasedOnIoctlResult, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -109,7 +111,7 @@ TEST(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsReturn
     }
 }
 
-TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperValueIsReturnedBasedOnIoctlResult) {
+HWTEST2_F(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperValueIsReturnedBasedOnIoctlResult, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -125,7 +127,7 @@ TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperValueIsReturnedBasedOnIo
     }
 }
 
-TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperCanonicalOrNonCanonicalAddressIsExpectedInVmBindInputsList) {
+HWTEST2_F(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperCanonicalOrNonCanonicalAddressIsExpectedInVmBindInputsList, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     IoctlHelperPrelim20 ioctlHelper{drm};
@@ -158,7 +160,7 @@ TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperCanonicalOrNonCanonicalA
     testAddress(0xf00000000000);     // non-canonical address test
 }
 
-TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOnIoctlResult) {
+HWTEST2_F(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOnIoctlResult, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -174,7 +176,7 @@ TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOn
     }
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugThenReturnCorrectValue) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugThenReturnCorrectValue, IsAtMostXeCore) {
     VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFreadReturn);
     VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
@@ -185,7 +187,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugThenReturnCorrectValue)
     EXPECT_EQ(1, prelimEnableEuDebug);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugWithInvalidPathThenReturnDefaultValue) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugWithInvalidPathThenReturnDefaultValue, IsAtMostXeCore) {
     VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFreadReturn);
     VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
@@ -197,7 +199,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugWithInvalidPathThenRetu
     EXPECT_EQ(0, prelimEnableEuDebug);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess, IsAtMostXeCore) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
@@ -210,13 +212,13 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenAtomicAccessModeHostWhenCallGetAtomicAccessReturnZero) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenAtomicAccessModeHostWhenCallGetAtomicAccessReturnZero, IsAtMostXeCore) {
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t ret = ioctlHelper->getAtomicAccess(AtomicAccessMode::host);
     EXPECT_EQ(0u, ret);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGetNumOfChunks) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGetNumOfChunks, IsAtMostXeCore) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.PrintBOChunkingLogs.set(true);
     debugManager.flags.NumberOfBOChunks.set(2);
@@ -235,7 +237,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGet
     EXPECT_EQ(2u, getNumOfChunks);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingAndAllocTooSmallThenExceptionThrown) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingAndAllocTooSmallThenExceptionThrown, IsAtMostXeCore) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.PrintBOChunkingLogs.set(false);
     debugManager.flags.NumberOfBOChunks.set(2);
@@ -248,7 +250,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingAndAllo
     EXPECT_THROW(ioctlHelper->createGemExt(memClassInstance, allocSize, handle, 0, {}, -1, true, getNumOfChunks, std::nullopt, std::nullopt, std::nullopt), std::runtime_error);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPrintDebugInfo, IsAtMostXeCore) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
@@ -265,7 +267,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered, IsAtMostXeCore) {
     GemContextCreateExt arg{};
     drm->ioctlCallsCount = 0;
     auto ret = drm->ioctlHelper->ioctl(DrmIoctl::gemContextCreateExt, &arg);
@@ -273,7 +275,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegiste
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegion) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegion, IsAtMostXeCore) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     auto cacheRegion = ioctlHelper->closAlloc(NEO::CacheLevel::level3);
@@ -282,7 +284,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegio
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocThenReturnNone) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocThenReturnNone, IsAtMostXeCore) {
     drm->ioctlRetVal = -1;
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
@@ -292,7 +294,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosFreeThenReturnCorrectRegion) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosFreeThenReturnCorrectRegion, IsAtMostXeCore) {
     auto ioctlHelper = drm->getIoctlHelper();
     drm->ioctlCallsCount = 0;
     auto cacheRegion = ioctlHelper->closFree(CacheRegion::region2);
@@ -301,7 +303,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosFreeThenReturnCorrectRegion
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFreeThenReturnNone) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFreeThenReturnNone, IsAtMostXeCore) {
     drm->ioctlRetVal = -1;
     drm->ioctlCallsCount = 0;
 
@@ -312,7 +314,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFre
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocWaysThenReturnCorrectRegion) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocWaysThenReturnCorrectRegion, IsAtMostXeCore) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     auto numWays = ioctlHelper->closAllocWays(CacheRegion::region2, 3, 10);
@@ -321,7 +323,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocWaysThenReturnCorrectR
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocWaysThenReturnNone) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocWaysThenReturnNone, IsAtMostXeCore) {
     drm->ioctlRetVal = -1;
     drm->ioctlCallsCount = 0;
 
@@ -332,7 +334,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenWaitUserFenceThenCorrectValueReturned) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenWaitUserFenceThenCorrectValueReturned, IsAtMostXeCore) {
     uint64_t gpuAddress = 0x1020304000ull;
     uint64_t value = 0x98765ull;
     auto ioctlHelper = drm->getIoctlHelper();
@@ -678,7 +680,7 @@ TEST_F(IoctlHelperPrelimFixture, givenVariousDirectSubmissionFlagSettingWhenCrea
     EXPECT_EQ(ioctlVal, drm->receivedContextCreateFlags);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistanceSet) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistanceSet, IsAtMostXeCore) {
     auto ioctlHelper = drm->getIoctlHelper();
     std::vector<DistanceInfo> distances(3);
     distances[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 0};
@@ -699,7 +701,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
     EXPECT_EQ(0u, queryItems[2].dataPtr);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryThenDistancesUsedAndMultileValuesSet) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryThenDistancesUsedAndMultileValuesSet, IsAtMostXeCore) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
@@ -731,7 +733,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryT
     EXPECT_EQ(3u, engines.size());
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFlagsSet) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFlagsSet, IsAtMostXeCore) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
@@ -748,7 +750,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFla
     EXPECT_EQ_VAL(1u, ccsInfo.Instances.CCSEnableMask);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditionalEnginesUsed) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditionalEnginesUsed, IsAtMostXeCore) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
@@ -769,7 +771,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditio
     EXPECT_EQ(5u, engines.size());
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenFalseReturned) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenFalseReturned, IsAtMostXeCore) {
     drm->ioctlCallsCount = 0;
     drm->queryDistanceIoctlRetVal = -1;
 
@@ -788,7 +790,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenF
     EXPECT_EQ(nullptr, engineInfo);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCountersIsCalledThenErrorIsReturned) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCountersIsCalledThenErrorIsReturned, IsAtMostXeCore) {
     drm->ioctlRetVal = EINVAL;
     drm->ioctlCallsCount = 0;
 
@@ -798,7 +800,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCou
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCountersIsCalledThenSuccessIsReturned) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCountersIsCalledThenSuccessIsReturned, IsAtMostXeCore) {
     drm->ioctlRetVal = 0;
     drm->ioctlCallsCount = 0;
 
@@ -808,7 +810,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCou
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsCalledThenErrorIsReturned) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsCalledThenErrorIsReturned, IsAtMostXeCore) {
     drm->ioctlRetVal = EINVAL;
     drm->ioctlCallsCount = 0;
 
@@ -818,7 +820,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsC
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContexIsCalledThenSuccessIsReturned) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContexIsCalledThenSuccessIsReturned, IsAtMostXeCore) {
     drm->ioctlRetVal = 0u;
     drm->ioctlCallsCount = 0;
 
@@ -903,7 +905,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupport
     EXPECT_TRUE(drm->capturedCooperativeContextRequest);
 }
 
-TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenInitializingContextThenVmIsCreatedWithAllNecessaryFlags) {
+HWTEST2_F(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenInitializingContextThenVmIsCreatedWithAllNecessaryFlags, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
@@ -929,7 +931,7 @@ TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenIni
     EXPECT_EQ(1, drm->createDrmVmCalled);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionIsSet) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionIsSet, IsAtMostXeCore) {
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (productHelper.isPlatformQuerySupported() == false) {
         GTEST_SKIP();
@@ -944,7 +946,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionI
     EXPECT_EQ(ipVersion.architecture, 3u);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperAndPlatformQueryNotSupportedWhenQueryIpVersionThenIpVersionIsSetFromHelper) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlHelperAndPlatformQueryNotSupportedWhenQueryIpVersionThenIpVersionIsSetFromHelper, IsAtMostXeCore) {
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (productHelper.isPlatformQuerySupported() == true) {
@@ -960,7 +962,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperAndPlatformQueryNotSupportedWhe
     EXPECT_EQ(config, ipVersion.value);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsCorrect) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsCorrect, IsAtMostXeCore) {
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     auto &ipVersion = hwInfo->ipVersion;
@@ -973,7 +975,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpV
     EXPECT_EQ(config, ipVersion.value);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenUnknownProductFamilyWhenQueryIpVersionThenIpVersionIsSetFromHelper) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenUnknownProductFamilyWhenQueryIpVersionThenIpVersionIsSetFromHelper, IsAtMostXeCore) {
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     auto &ipVersion = hwInfo->ipVersion;
@@ -985,7 +987,7 @@ TEST_F(IoctlHelperPrelimFixture, givenUnknownProductFamilyWhenQueryIpVersionThen
     EXPECT_EQ(config, ipVersion.value);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnInitializationThenErrorIsPrinted) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnInitializationThenErrorIsPrinted, IsAtMostXeCore) {
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (productHelper.isPlatformQuerySupported() == false) {
@@ -1007,7 +1009,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnIni
     EXPECT_STREQ(output.c_str(), expectedOutput.c_str());
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlatformQueryIsSupportedThenErrorIsPrinted) {
+HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlatformQueryIsSupportedThenErrorIsPrinted, IsAtMostXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(true);
 
