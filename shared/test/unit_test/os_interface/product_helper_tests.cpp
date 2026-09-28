@@ -1144,6 +1144,27 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySigna
     EXPECT_FALSE(productHelper->isDeviceToHostCopySignalingFenceRequired());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIfWriteSplitIsRequiredThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(true));
+}
+
+HWTEST_F(ProductHelperTest, givenOverrideBcsWriteSplitDebugFlagWhenAskingIfWriteSplitIsRequiredThenDebugFlagIsHonored) {
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.OverrideBcsWriteSplit.set(0);
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(true));
+
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
+    EXPECT_TRUE(productHelper->isWriteSplitRequired(true));
+
+    debugManager.flags.OverrideBcsWriteSplit.set(2);
+    EXPECT_TRUE(productHelper->isWriteSplitRequired(false));
+    EXPECT_TRUE(productHelper->isWriteSplitRequired(true));
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenFalseReturned) {
     for (auto preemptionMode : {PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread}) {
         for (bool hostWaitablePostSync : {true, false}) {

@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
@@ -4867,6 +4868,65 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenAllocDataWhenCheckingIfRemoteCop
     EXPECT_TRUE(commandList0->isRemoteAlloc(allocationData0));
 
     context->freeMem(ptr0);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledByDebugFlagAndCopyOnlyCommandListWhenAppendingMemoryCopyToRemoteDstAllocationThenCopyIsSplitInto2MBChunksEachFollowedByFlush, IsCRI) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    L0::Device *device0 = driverHandle->devices[0];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    const size_t numChunks = 2;
+    const size_t size = numChunks * BlitterConstants::writeSplitChunkSize;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, size, 1, &srcPtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, size, 1, &dstPtr));
+
+    for (auto ptr : {srcPtr, dstPtr}) {
+        auto allocData = svmManager->getSVMAlloc(ptr);
+        ASSERT_NE(nullptr, allocData);
+        static_cast<NEO::MemoryAllocation *>(allocData->gpuAllocations.getDefaultGraphicsAllocation())->overrideMemoryPool(MemoryPool::localMemory);
+    }
+    auto dstAllocData = svmManager->getSVMAlloc(dstPtr);
+
+    for (bool isImportedAllocation : {false, true}) {
+        dstAllocData->isImportedAllocation = isImportedAllocation;
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device0, NEO::EngineGroupType::copy, 0u));
+
+        CmdListMemoryCopyParams copyParams = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams));
+        EXPECT_EQ(isImportedAllocation, copyParams.isDstRemote);
+
+        auto cmdStream = commandList->getCmdContainer().getCommandStream();
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+        auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+
+        if (isImportedAllocation) {
+            ASSERT_EQ(numChunks, blits.size());
+            for (size_t i = 0; i < blits.size(); i++) {
+                auto blitCmd = genCmdCast<XY_COPY_BLT *>(*blits[i]);
+                EXPECT_EQ(128u, blitCmd->getDestinationY2CoordinateBottom());
+                auto nextBlit = (i + 1 < blits.size()) ? blits[i + 1] : cmdList.end();
+                EXPECT_NE(nextBlit, find<MI_FLUSH_DW *>(blits[i], nextBlit));
+            }
+        } else {
+            ASSERT_EQ(1u, blits.size());
+            EXPECT_LT(128u, genCmdCast<XY_COPY_BLT *>(*blits[0])->getDestinationY2CoordinateBottom());
+        }
+    }
+
+    dstAllocData->isImportedAllocation = false;
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest, givenBufferOwnedByOtherRootWhenGettingBufferGpuAddressThenPeerAllocationIsImportedAndOffsetApplied) {

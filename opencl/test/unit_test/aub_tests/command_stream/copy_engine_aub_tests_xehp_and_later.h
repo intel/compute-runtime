@@ -197,19 +197,19 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenNotCompressedBuffer
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         dstCompressedBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         srcNotCompressedBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
-        {dstCompressedBuffer->getOffset(), 0, 0}, {srcNotCompressedBuffer->getOffset(), 0, 0}, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
+        {dstCompressedBuffer->getOffset(), 0, 0}, {srcNotCompressedBuffer->getOffset(), 0, 0}, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation(), false);
     executeBlitCommand(blitProperties, true);
     // Buffer to Buffer - uncompressed HBM -> uncompressed HBM
     blitProperties = BlitProperties::constructPropertiesForCopy(
         dstNotCompressedBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         srcNotCompressedBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
-        {dstNotCompressedBuffer->getOffset(), 0, 0}, {srcNotCompressedBuffer->getOffset(), 0, 0}, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
+        {dstNotCompressedBuffer->getOffset(), 0, 0}, {srcNotCompressedBuffer->getOffset(), 0, 0}, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation(), false);
     executeBlitCommand(blitProperties, true);
     // Buffer to Buffer - compressed HBM -> uncompressed HBM
     blitProperties = BlitProperties::constructPropertiesForCopy(
         dstResolvedBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         dstCompressedBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
-        {dstResolvedBuffer->getOffset(), 0, 0}, {dstCompressedBuffer->getOffset(), 0, 0}, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
+        {dstResolvedBuffer->getOffset(), 0, 0}, {dstCompressedBuffer->getOffset(), 0, 0}, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation(), false);
     executeBlitCommand(blitProperties, true);
 
     blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr, *bcsCsr,
@@ -369,7 +369,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenOffsetsWhenBltExecu
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         dstBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         srcBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
-        {offset + dstBuffer->getOffset(), 0, 0}, {srcBuffer->getOffset(), 0, 0}, {copiedSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
+        {offset + dstBuffer->getOffset(), 0, 0}, {srcBuffer->getOffset(), 0, 0}, {copiedSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation(), false);
 
     executeBlitCommand(blitProperties, true);
 
@@ -399,7 +399,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenSrcCompressedBuffer
     blitProperties = BlitProperties::constructPropertiesForCopy(
         dstBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         srcBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
-        0, 0, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
+        0, 0, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation(), false);
 
     executeBlitCommand(blitProperties, true);
 
@@ -467,7 +467,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenSrcSystemBufferWhen
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         dstBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         srcBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
-        0, 0, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
+        0, 0, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation(), false);
 
     executeBlitCommand(blitProperties, true);
 
@@ -620,7 +620,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCopyBufferRectWithO
         dstBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         srcBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         dstOrigin, srcOrigin, region,
-        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation);
+        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation, false);
 
     executeBlitCommand(blitProperties, false);
 
@@ -666,7 +666,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCopyBufferRectWithB
         dstBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         srcBuffer->getGraphicsAllocation(rootDeviceIndex), 0,
         dstOrigin, srcOrigin, region,
-        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation);
+        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation, false);
     executeBlitCommand(blitProperties, false);
     bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 

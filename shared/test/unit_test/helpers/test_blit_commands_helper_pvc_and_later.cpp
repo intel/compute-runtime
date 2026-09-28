@@ -303,7 +303,7 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
 
     auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                      dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                     dstRowPitch, dstSlicePitch, &clearColorAlloc);
+                                                                     dstRowPitch, dstSlicePitch, &clearColorAlloc, false);
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));

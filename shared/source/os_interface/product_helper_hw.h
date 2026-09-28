@@ -203,6 +203,7 @@ class ProductHelperHw : public ProductHelper {
     bool useAdditionalBlitProperties() const override;
     bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const override;
     bool isFlushBetweenBlitsRequired() const override;
+    bool isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const override;
     bool isNonCoherentTimestampsModeEnabled() const override;
     bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const override;
     bool checkBcsForDirectSubmissionStop() const override;

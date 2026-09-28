@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,7 +69,7 @@ struct BlitProperties {
         const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
         size_t srcRowPitch, size_t srcSlicePitch,
         size_t dstRowPitch, size_t dstSlicePitch,
-        GraphicsAllocation *clearColorAllocation);
+        GraphicsAllocation *clearColorAllocation, bool isDstRemote);
 
     static BlitProperties constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
                                                                GraphicsAllocation *allocation, GraphicsAllocation *clearColorAllocation);
@@ -115,6 +115,7 @@ struct BlitProperties {
     ImagePlane dstPlane = ImagePlane::noPlane;
     ImagePlane srcPlane = ImagePlane::noPlane;
     bool isSystemMemoryPoolUsed = false;
+    bool isDstSystemOrRemoteMemory = false;
     bool highPriority = false;
 
     BlitPropertiesExt propertiesExt{};

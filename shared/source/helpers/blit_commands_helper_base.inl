@@ -16,6 +16,7 @@
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/lookup_array.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace NEO {
@@ -33,15 +34,19 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(const RootDeviceEnvironm
 }
 
 template <typename GfxFamily>
-uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory, uint64_t blitWidth) {
     if (debugManager.flags.LimitBlitterMaxHeight.get() != -1) {
         return static_cast<uint64_t>(debugManager.flags.LimitBlitterMaxHeight.get());
     }
+    auto maxBlitHeight = BlitterConstants::maxBlitHeight;
     auto maxBlitHeightOverride = getMaxBlitHeightOverride(rootDeviceEnvironment, isSystemMemoryPoolUsed);
     if (maxBlitHeightOverride > 0) {
-        return maxBlitHeightOverride;
+        maxBlitHeight = maxBlitHeightOverride;
     }
-    return BlitterConstants::maxBlitHeight;
+    if (rootDeviceEnvironment.getProductHelper().isWriteSplitRequired(isDstSystemOrRemoteMemory)) {
+        return std::clamp<uint64_t>(BlitterConstants::writeSplitChunkSize / std::max<uint64_t>(blitWidth, 1u), 1u, maxBlitHeight);
+    }
+    return maxBlitHeight;
 }
 
 template <typename GfxFamily>
@@ -80,7 +85,13 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd) {
+bool BlitCommandsHelper<GfxFamily>::isFlushBetweenBlitsRequired(const RootDeviceEnvironment &rootDeviceEnvironment, bool isDstSystemOrRemoteMemory) {
+    const auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    return productHelper.isFlushBetweenBlitsRequired() || productHelper.isWriteSplitRequired(isDstSystemOrRemoteMemory);
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd, bool isDstSystemOrRemoteMemory) {
     EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
     MiFlushArgs args{waArgs};
     if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
@@ -96,7 +107,10 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         }
     }
 
-    if ((rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired() || isLastCmd) && !hasAdditionalBlitProperties) {
+    const auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    const bool flushRequired = productHelper.isWriteSplitRequired(isDstSystemOrRemoteMemory) ||
+                               ((productHelper.isFlushBetweenBlitsRequired() || isLastCmd) && !hasAdditionalBlitProperties);
+    if (flushRequired) {
         EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
     }
 
@@ -134,7 +148,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(size_t nBlit
 
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket, bool profilingEnabled,
-                                                              bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled, bool validPitches) {
+                                                              bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled, bool validPitches, bool isDstSystemOrRemoteMemory) {
     size_t timestampCmdSize = 0;
     if (updateTimestampPacket) {
         EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
@@ -148,18 +162,18 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
     size_t sizePerBlit = 0u;
 
     if (isImage) {
-        nBlits = getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
+        nBlits = getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory);
         sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT);
     } else {
         if (validPitches) {
-            nBlits = std::min(getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed),
-                              getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed));
+            nBlits = std::min(getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory),
+                              getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory));
         } else {
-            nBlits = getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
+            nBlits = getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory);
         }
         sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
     }
-    auto nBlitsWithFlush = rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired() ? nBlits : 1u;
+    auto nBlitsWithFlush = isFlushBetweenBlitsRequired(rootDeviceEnvironment, isDstSystemOrRemoteMemory) ? nBlits : 1u;
     auto postBlitsCmdsSize = nBlits ? NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush) : 0u;
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies, relaxedOrderingEnabled) +
            TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDependencies) +
@@ -181,7 +195,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
         auto validPitches = BlitCommandsHelper<GfxFamily>::validatePitchesForCopyRegion(blitProperties.srcRowPitch, blitProperties.dstRowPitch);
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, updateTimestampPacket,
                                                                        profilingEnabled, isImage, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed,
-                                                                       relaxedOrderingEnabled, validPitches);
+                                                                       relaxedOrderingEnabled, validPitches, !isImage && blitProperties.isDstSystemOrRemoteMemory);
         if (blitProperties.multiRootDeviceEventSync != nullptr) {
             size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
         }
@@ -245,7 +259,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
     dispatchPreBlitCommand(linearStream, rootDeviceEnvironment);
     auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
     const auto maxWidth = getMaxBlitWidth(rootDeviceEnvironment);
-    const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+    const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory, maxWidth);
 
     appendColorDepth(blitProperties, bltCmd);
 
@@ -297,7 +311,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
                 if (lastCommand) {
                     result.lastBlitCommand = bltStream;
                 }
-                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, blitProperties.isDstSystemOrRemoteMemory);
 
                 sizeToBlit -= blitSize;
                 offset += blitSize;
@@ -356,7 +370,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
         if (lastCommand) {
             result.lastBlitCommand = cmd;
         }
-        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand);
+        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, false);
     }
     return result;
 }
@@ -416,7 +430,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &b
             dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
         } else {
             bool preferCopyBufferRegion = validatePitchesForCopyRegion(blitProperties.srcRowPitch, blitProperties.dstRowPitch) &&
-                                          isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+                                          isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory);
             preferCopyBufferRegion ? dispatchBlitCommandsForBufferRegion(blitProperties, linearStream, rootDeviceEnvironment)
                                    : dispatchBlitCommandsForBufferPerRow(blitProperties, linearStream, rootDeviceEnvironment);
         }
@@ -452,7 +466,8 @@ template <typename GfxFamily>
 BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
 
     const auto maxWidthToCopy = getMaxBlitWidth(rootDeviceEnvironment);
-    const auto maxHeightToCopy = getMaxBlitHeight(rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+    const auto blitWidth = std::min(static_cast<uint64_t>(blitProperties.copySize.x), maxWidthToCopy);
+    const auto maxHeightToCopy = getMaxBlitHeight(rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory, blitWidth);
 
     dispatchPreBlitCommand(linearStream, rootDeviceEnvironment);
 
@@ -499,7 +514,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
                 if (lastCommand) {
                     result.lastBlitCommand = cmd;
                 }
-                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, blitProperties.isDstSystemOrRemoteMemory);
 
                 srcAddress += width;
                 dstAddress += width;
@@ -522,15 +537,16 @@ bool BlitCommandsHelper<GfxFamily>::validatePitchesForCopyRegion(size_t srcRowPi
 }
 
 template <typename GfxFamily>
-bool BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
-    bool preferCopyRegion = getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed) < getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
+bool BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory) {
+    bool preferCopyRegion = getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory) < getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory);
     return preferCopyRegion;
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory) {
     auto maxWidthToCopy = getMaxBlitWidth(rootDeviceEnvironment);
-    auto maxHeightToCopy = getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed);
+    auto blitWidth = std::min(static_cast<uint64_t>(copySize.x), maxWidthToCopy);
+    auto maxHeightToCopy = getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory, blitWidth);
     auto xBlits = static_cast<size_t>(std::ceil(copySize.x / static_cast<double>(maxWidthToCopy)));
     auto yBlits = static_cast<size_t>(std::ceil(copySize.y / static_cast<double>(maxHeightToCopy)));
     auto zBlits = static_cast<size_t>(copySize.z);
@@ -540,13 +556,13 @@ size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(const Vec3<s
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory) {
     size_t xBlits = 0u;
     uint64_t width = 1;
     uint64_t height = 1;
     uint64_t sizeToBlit = copySize.x;
     const auto maxWidth = getMaxBlitWidth(rootDeviceEnvironment);
-    const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed);
+    const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory, maxWidth);
 
     while (sizeToBlit != 0) {
         if (sizeToBlit > maxWidth) {
@@ -573,7 +589,7 @@ size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(const Vec3<s
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
     auto maxWidthToFill = getMaxBlitWidth(rootDeviceEnvironment);
-    auto maxHeightToFill = getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed);
+    auto maxHeightToFill = getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed, false, maxWidthToFill);
     auto nBlits = 0;
     uint64_t width = 1;
     uint64_t height = 1;

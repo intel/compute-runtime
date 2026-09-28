@@ -1040,7 +1040,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenPageT
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         graphicsAllocation, 0,
         graphicsAllocation, 0,
-        0, 0, 0, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
+        0, 0, 0, 0, 0, 0, 0, bcsCsr->getClearColorAllocation(), false);
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
 
@@ -1084,7 +1084,8 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenPageT
                                                                      0,                                // dstRowPitch
                                                                      0,                                // dstSlicePitch
                                                                      bcsCsr->getClearColorAllocation() // clearColorAllocation
-    );
+                                                                     ,
+                                                                     false);
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
 
@@ -1124,7 +1125,8 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenNullP
                                                                      0,                                // dstRowPitch
                                                                      0,                                // dstSlicePitch
                                                                      bcsCsr->getClearColorAllocation() // clearColorAllocation
-    );
+                                                                     ,
+                                                                     false);
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
 

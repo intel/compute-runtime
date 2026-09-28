@@ -1875,7 +1875,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
         dstPtrAlloc, dstPtr,
         srcPtrAlloc, srcPtr,
         {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0},
-        0, 0, 0, 0, clearColorAllocation);
+        0, 0, 0, 0, clearColorAllocation, memoryCopyParams.isDstRemote);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
 
@@ -1884,7 +1884,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     addResidency(dstPtrAlloc, srcPtrAlloc, clearColorAllocation);
 
     if (useAdditionalBlitProperties) {
-        size_t nBlitsPerRow = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+        size_t nBlitsPerRow = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory);
         bool useAdditionalTimestamp = nBlitsPerRow > 1;
         setAdditionalBlitProperties(blitProperties, signalEvent, memoryCopyParams.forceAggregatedEventIncValue, useAdditionalTimestamp);
     }
@@ -1942,7 +1942,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         dstAllocationData->alloc, dstPtr,
         srcAllocationData->alloc, srcPtr,
         dstPtrOffset, srcPtrOffset, copySizeModified,
-        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation);
+        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation, isRemoteAlloc(dstAllocationData->svmAllocData));
 
     this->addResidency(dstAllocationData->alloc, srcAllocationData->alloc, clearColorAllocation);
 
@@ -1963,8 +1963,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
 
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::validatePitchesForCopyRegion(srcRowPitch, dstRowPitch) &&
-                               NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
-    size_t nBlits = copyRegionPreferred ? NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed) : NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+                               NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory);
+    size_t nBlits = copyRegionPreferred ? NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory) : NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory);
     bool useAdditionalTimestamp = nBlits > 1;
     if (useAdditionalBlitProperties) {
         setAdditionalBlitProperties(blitProperties, signalEvent, memoryCopyParams.forceAggregatedEventIncValue, useAdditionalTimestamp);
@@ -2031,7 +2031,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
         dst, dstPtr,
         src, srcPtr,
         dstOffsets, srcOffsets, copySize,
-        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation);
+        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation, false);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
     blitProperties.bytesPerPixel = bytesPerPixel;
@@ -2369,7 +2369,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     auto dstAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstptr), allocSize, dstAllocInfo, {.sharedSystemEnabled = sharedSystemEnabled, .copyOffload = isCopyOffloadEnabled()});
     auto srcAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcptr), allocSize, srcAllocInfo, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true, .copyOffload = isCopyOffloadEnabled()});
 
-    bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || isRemoteAlloc(dstAllocationStruct.svmAllocData);
+    memoryCopyParams.isDstRemote = isRemoteAlloc(dstAllocationStruct.svmAllocData);
+    bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || memoryCopyParams.isDstRemote;
 
     if (memoryCopyParams.bscSplitEnabled) {
         dstAllocationStruct.offset += ptrDiff(dstptr, memoryCopyParams.bcsSplitBaseDstPtr);

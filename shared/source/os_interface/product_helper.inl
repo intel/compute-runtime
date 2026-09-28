@@ -1084,6 +1084,18 @@ bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const {
+    switch (debugManager.flags.OverrideBcsWriteSplit.get()) {
+    case 1:
+        return isDstSystemOrRemoteMemory;
+    case 2:
+        return true;
+    default:
+        return false;
+    }
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPackedCopyFormatSupported() const {
     return false;
 }

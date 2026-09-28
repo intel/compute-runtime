@@ -162,3 +162,88 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenSrcGraphicAlloctionAndStatelessFlagSetAndS
 HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse, IsXe3pCore) {
     EXPECT_FALSE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
 }
+
+HWTEST2_F(BlitTests, givenCriWhenCheckingWriteSplitThenNotRequiredByDefault, IsCRI) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    EXPECT_FALSE(rootDeviceEnvironment.getProductHelper().isWriteSplitRequired(false));
+    EXPECT_FALSE(rootDeviceEnvironment.getProductHelper().isWriteSplitRequired(true));
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true));
+    EXPECT_EQ(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, false, BlitterConstants::maxBlitWidth),
+              BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, BlitterConstants::maxBlitWidth));
+}
+
+HWTEST2_F(BlitTests, givenCriAndWriteSplitEnabledByDebugFlagWhenCheckingWriteSplitThenRequiredOnlyForDstInSystemOrRemoteMemory, IsCRI) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, false));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true));
+    EXPECT_EQ(128u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, BlitterConstants::maxBlitWidth));
+    EXPECT_EQ(128u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, true, true, BlitterConstants::maxBlitWidth));
+    EXPECT_EQ(512u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, 4096u));
+    EXPECT_NE(128u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, false, BlitterConstants::maxBlitWidth));
+}
+
+HWTEST2_F(BlitTests, givenCriAndCopyToHostMemoryWhenDispatchBlitCommandsThenCopyIsSplitInto2MBChunksEachFollowedByFlush, IsCRI) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+
+    MockGraphicsAllocation srcAlloc(nullptr, 0x100000, 0);
+    srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
+    MockGraphicsAllocation dstAlloc(nullptr, 0x40000000, 0);
+    dstAlloc.overrideMemoryPool(MemoryPool::system4KBPages);
+
+    const size_t numChunks = 4;
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
+                                                                     0, 0, {numChunks * BlitterConstants::writeSplitChunkSize, 1, 1}, 0, 0, 0, 0, nullptr, false);
+
+    uint32_t streamBuffer[400] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommands(blitProperties, stream, rootDeviceEnvironment);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+    auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(numChunks, blits.size());
+    for (size_t i = 0; i < blits.size(); i++) {
+        auto blitCmd = genCmdCast<XY_COPY_BLT *>(*blits[i]);
+        EXPECT_EQ(BlitterConstants::writeSplitChunkSize, static_cast<uint64_t>(blitCmd->getDestinationX2CoordinateRight()) * blitCmd->getDestinationY2CoordinateBottom());
+        auto nextBlit = (i + 1 < blits.size()) ? blits[i + 1] : cmdList.end();
+        EXPECT_NE(nextBlit, find<MI_FLUSH_DW *>(blits[i], nextBlit));
+    }
+
+    BlitPropertiesContainer container;
+    container.push_back(blitProperties);
+    EXPECT_GE(BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(container, false, false, false, false, rootDeviceEnvironment), stream.getUsed());
+}
+
+HWTEST2_F(BlitTests, givenCriAndCopyToLocalMemoryWhenDispatchBlitCommandsThenCopyIsNotSplitInto2MBChunks, IsCRI) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+
+    MockGraphicsAllocation srcAlloc(nullptr, 0x100000, 0);
+    srcAlloc.overrideMemoryPool(MemoryPool::system4KBPages);
+    MockGraphicsAllocation dstAlloc(nullptr, 0x40000000, 0);
+    dstAlloc.overrideMemoryPool(MemoryPool::localMemory);
+
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
+                                                                     0, 0, {4 * BlitterConstants::writeSplitChunkSize, 1, 1}, 0, 0, 0, 0, nullptr, false);
+
+    uint32_t streamBuffer[400] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommands(blitProperties, stream, rootDeviceEnvironment);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    EXPECT_EQ(1u, hwParser.getCommandCount<XY_COPY_BLT>());
+    EXPECT_EQ(1u, hwParser.getCommandCount<MI_FLUSH_DW>());
+}

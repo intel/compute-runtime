@@ -816,11 +816,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     auto estimatedSize = commonImmediateCommandSize;
     if (isCopyOnly(true)) {
         auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
-        auto &productHelper = rootDeviceEnvironment.getProductHelper();
-        auto nBlits = size / (NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(rootDeviceEnvironment) *
-                              NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(rootDeviceEnvironment, true));
+        auto maxBlitWidth = NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(rootDeviceEnvironment);
+        auto nBlits = size / (maxBlitWidth * NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(rootDeviceEnvironment, true, true, maxBlitWidth));
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
-        auto nBlitsWithFlush = productHelper.isFlushBetweenBlitsRequired() ? nBlits : 1u;
+        auto nBlitsWithFlush = NEO::BlitCommandsHelper<GfxFamily>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true) ? nBlits : 1u;
         auto postBlitsCmdsSize = nBlits ? NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush) : 0u;
         estimatedSize += sizePerBlit * nBlits + postBlitsCmdsSize;
     }
@@ -895,13 +894,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     auto estimatedSize = commonImmediateCommandSize;
     if (isCopyOnly(true)) {
         auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
-        auto &productHelper = rootDeviceEnvironment.getProductHelper();
         auto xBlits = static_cast<size_t>(std::ceil(srcRegion->width / static_cast<double>(BlitterConstants::maxBlitWidth)));
-        auto yBlits = static_cast<size_t>(std::ceil(srcRegion->height / static_cast<double>(BlitterConstants::maxBlitHeight)));
+        auto maxBlitHeight = NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(rootDeviceEnvironment, true, true, std::min<uint64_t>(srcRegion->width, BlitterConstants::maxBlitWidth));
+        auto yBlits = static_cast<size_t>(std::ceil(srcRegion->height / static_cast<double>(maxBlitHeight)));
         auto zBlits = static_cast<size_t>(std::max(srcRegion->depth, 1u));
         auto nBlits = xBlits * yBlits * zBlits;
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
-        auto nBlitsWithFlush = productHelper.isFlushBetweenBlitsRequired() ? nBlits : 1u;
+        auto nBlitsWithFlush = NEO::BlitCommandsHelper<GfxFamily>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true) ? nBlits : 1u;
         estimatedSize += sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
         if (this->arePostBlitWACmdsRequired()) {
             estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();

@@ -272,6 +272,7 @@ class ProductHelper {
     virtual bool useAdditionalBlitProperties() const = 0;
     virtual bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const = 0;
     virtual bool isFlushBetweenBlitsRequired() const = 0;
+    virtual bool isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const = 0;
     virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
     virtual bool isPackedCopyFormatSupported() const = 0;
     virtual bool checkBcsForDirectSubmissionStop() const = 0;

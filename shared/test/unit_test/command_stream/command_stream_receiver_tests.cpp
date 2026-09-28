@@ -3590,7 +3590,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
     {
         mockAllocation.memoryPool = MemoryPool::localMemory;
 
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(&mockAllocation, 0, &mockAllocation, 0, {0, 0, 0}, {0, 0, 0}, {1, 1, 1}, 0, 0, 0, 0, nullptr);
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(&mockAllocation, 0, &mockAllocation, 0, {0, 0, 0}, {0, 0, 0}, {1, 1, 1}, 0, 0, 0, 0, nullptr, false);
         blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
 
         BlitPropertiesContainer blitPropertiesContainer;

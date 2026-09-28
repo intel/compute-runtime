@@ -382,7 +382,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsE
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         allocation, 0,
         allocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = Xe3CoreFamily::cmdInitXyCopyBlt;
 
@@ -412,7 +412,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenDstBufferInDeviceAndSrcInSystemMemoryWhenStatel
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         allocationDst, 0,
         allocationSrc, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = Xe3CoreFamily::cmdInitXyCopyBlt;
 
@@ -444,7 +444,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenCompressibleDstBuffersWhenAppendBlitCommandsFor
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         dstAllocation, 0,
         srcAllocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
@@ -478,7 +478,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenCompressibleSrcBuffersWhenAppendBlitCommandsFor
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         dstAllocation, 0,
         srcAllocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
@@ -512,7 +512,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenCompressibleSrcBuffersWhenAppendBlitCommandsBlo
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         dstAllocation, 0,
         srcAllocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -547,7 +547,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenCompressibleDstBuffersWhenAppendBlitCommandsBlo
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         dstAllocation, 0,
         srcAllocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -576,7 +576,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenCompressibleBuffersWhenBufferCompressionFormatI
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         allocation, 0,
         allocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -609,7 +609,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenNotCompressibleBuffersWhenBufferCompressionForm
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         allocation, 0,
         allocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -641,7 +641,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenOverriddenBlitterTargetToZeroWhenAppendBlitComm
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         allocation, 0,
         allocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -670,7 +670,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenOverriddenBlitterTargetToOneWhenAppendBlitComma
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         allocation, 0,
         allocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -699,7 +699,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenOverriddenBlitterTargetToTwoWhenAppendBlitComma
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         allocation, 0,
         allocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);
@@ -726,7 +726,7 @@ XE3_CORETEST_F(Xe3BcsTests, givenOverriddenMocksValueWhenAppendBlitCommandsBlock
     auto blitProperties = BlitProperties::constructPropertiesForCopy(
         allocation, 0,
         allocation, 0,
-        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+        0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
     auto bltCmd = stream.getSpaceForCmd<XY_BLOCK_COPY_BLT>();
     *bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     bltCmd->setDestinationX2CoordinateRight(1);

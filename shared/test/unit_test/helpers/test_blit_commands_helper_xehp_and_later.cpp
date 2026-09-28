@@ -189,12 +189,12 @@ HWTEST2_F(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValues
 
         if (isBlitSizeOverridden) {
             EXPECT_EQ(1024u, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(deviceFactory.rootDevices[0]->getRootDeviceEnvironment()));
-            EXPECT_EQ(1024u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(deviceFactory.rootDevices[0]->getRootDeviceEnvironment(), false));
+            EXPECT_EQ(1024u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(deviceFactory.rootDevices[0]->getRootDeviceEnvironment(), false, false, BlitterConstants::maxBlitWidth));
         } else {
             EXPECT_EQ(BlitterConstants::maxBlitWidth,
                       BlitCommandsHelper<FamilyType>::getMaxBlitWidth(deviceFactory.rootDevices[0]->getRootDeviceEnvironment()));
             EXPECT_EQ(BlitterConstants::maxBlitHeight,
-                      BlitCommandsHelper<FamilyType>::getMaxBlitHeight(deviceFactory.rootDevices[0]->getRootDeviceEnvironment(), false));
+                      BlitCommandsHelper<FamilyType>::getMaxBlitHeight(deviceFactory.rootDevices[0]->getRootDeviceEnvironment(), false, false, BlitterConstants::maxBlitWidth));
         }
     }
 }
@@ -454,7 +454,7 @@ HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsC
     size_t dstSlicePitch = 1;
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                          dstRowPitch, dstSlicePitch, &clearColorAllocation);
+                                                                          dstRowPitch, dstSlicePitch, &clearColorAllocation, false);
     blitProperties.srcSize = {1, 1, 1};
     blitProperties.dstSize = {1, 1, 1};
 
