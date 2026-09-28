@@ -332,6 +332,30 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableHwCommandTest,
+            givenFewerLocalIdDimensionsThanWorkGroupDimensionsWhenSettingGroupSizeThenAllLocalIdMaximumsSet) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    auto walkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferGpuPtr);
+
+    auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
+    std::array<uint32_t, 3> workgroupSize = {4, 2, 2};
+
+    this->stageCommit = false;
+    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
+    auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
+
+    mutableWalker->setWorkGroupSize(workgroupSize, 1u);
+
+    EXPECT_EQ(workgroupSize[0] - 1, cpuBuffer->getLocalXMaximum());
+    EXPECT_EQ(workgroupSize[1] - 1, cpuBuffer->getLocalYMaximum());
+    EXPECT_EQ(workgroupSize[2] - 1, cpuBuffer->getLocalZMaximum());
+    EXPECT_EQ(workgroupSize[0] - 1, walkerCmd->getLocalXMaximum());
+    EXPECT_EQ(workgroupSize[1] - 1, walkerCmd->getLocalYMaximum());
+    EXPECT_EQ(workgroupSize[2] - 1, walkerCmd->getLocalZMaximum());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableHwCommandTest,
             givenMutableComputeWalkerWhenSettingExecutionMaskThenCorrectValueSet) {
     using WalkerType = typename FamilyType::PorWalkerType;
 

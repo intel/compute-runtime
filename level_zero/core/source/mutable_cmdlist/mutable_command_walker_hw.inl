@@ -105,12 +105,8 @@ void MutableComputeWalkerHw<GfxFamily>::setWorkGroupSize(MaxChannelsArray workgr
 
     auto cpuBufferWalker = reinterpret_cast<WalkerType *>(this->cpuBuffer);
     cpuBufferWalker->setLocalXMaximum(workgroupSize[0] - 1);
-    if (localIdDimensions > 1) {
-        cpuBufferWalker->setLocalYMaximum(workgroupSize[1] - 1);
-    }
-    if (localIdDimensions > 2) {
-        cpuBufferWalker->setLocalZMaximum(workgroupSize[2] - 1);
-    }
+    cpuBufferWalker->setLocalYMaximum(workgroupSize[1] - 1);
+    cpuBufferWalker->setLocalZMaximum(workgroupSize[2] - 1);
 
     if (!this->stageCommitMode) {
         auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
