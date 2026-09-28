@@ -328,7 +328,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchFor
     auto commandList = CommandList::fromHandle(commandListHandle);
     commandList->close();
 
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.performMigration = true;
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
@@ -404,7 +404,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchF
     auto commandList = CommandList::fromHandle(commandListHandle);
     commandList->close();
 
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.performMigration = true;
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
@@ -441,7 +441,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefet
     auto commandList = CommandList::fromHandle(commandListHandle);
     commandList->close();
 
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.performMigration = true;
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
@@ -745,7 +745,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchFo
 
     ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -889,7 +889,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchFo
 
     auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::copy, cmdListFlags, returnValue, false);
     auto commandListHandle = commandList->toHandle();
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, commandList->isCopyOnly(false), false, true, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, commandList->isCopyOnly(false), false, true, returnValue);
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = 1;

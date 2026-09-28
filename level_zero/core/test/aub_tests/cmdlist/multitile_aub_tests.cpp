@@ -59,7 +59,7 @@ struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
         ASSERT_NE(nullptr, commandList.get());
 
         ze_command_queue_desc_t queueDesc = {};
-        cmdQ.reset(CommandQueue::create(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, rootDevice->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
+        cmdQ.reset(CommandQueue::create(rootDevice, rootDevice->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
         ASSERT_NE(nullptr, cmdQ.get());
     }
 

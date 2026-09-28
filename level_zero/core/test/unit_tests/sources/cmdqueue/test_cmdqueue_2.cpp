@@ -359,8 +359,7 @@ HWTEST2_PRODUCT_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCo
         tagAddress = ptrOffset(tagAddress, csr->getImmWritePostSyncWriteOffset());
     }
     csr->activePartitions = 2u;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -400,8 +399,7 @@ HWTEST2_PRODUCT_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActiv
         tagAddress = ptrOffset(tagAddress, csr->getImmWritePostSyncWriteOffset());
     }
     csr->activePartitions = 2u;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -442,8 +440,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionF
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           csr.get(),
                                                           &desc,
                                                           false,
@@ -484,8 +481,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     const ze_command_queue_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, 0, 0, 0, ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
     ze_result_t returnValue;
 
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -595,8 +591,7 @@ TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQue
     memoryManager->forceFailureInPrimaryAllocation = true;
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           csr.get(),
                                                           &desc,
                                                           false,
@@ -659,7 +654,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     memoryManager->storedAllocationProperties.clear();
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue);
+    L0::CommandQueue *commandQueue = CommandQueue::create(device, csr.get(), &desc, false, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
 
     const uint64_t expectedBitfield = maxNBitValue(numSubDevices);
@@ -693,7 +688,7 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue);
+    L0::CommandQueue *commandQueue = CommandQueue::create(device, csr.get(), &desc, false, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
     auto l0Device = static_cast<Device *>(device);
     EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
@@ -719,7 +714,7 @@ TEST_F(CommandQueueInitTests, givenPoolAllocatorDisabledWhenInitializingThenBuff
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue));
+    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(device, csr.get(), &desc, false, false, false, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -744,7 +739,7 @@ TEST_F(CommandQueueInitTests, givenPoolAllocatorEnabledWhenInitializingThenBuffe
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue));
+    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(device, csr.get(), &desc, false, false, false, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -792,8 +787,7 @@ HWTEST2_PRODUCT_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTra
     ze_result_t res = ZE_RESULT_SUCCESS;
 
     const ze_command_queue_desc_t desc = {};
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getInternalEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,

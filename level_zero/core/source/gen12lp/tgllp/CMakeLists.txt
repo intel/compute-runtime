@@ -8,6 +8,5 @@ if(SUPPORT_TGLLP)
   target_sources(${L0_STATIC_LIB_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_tgllp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_tgllp.cpp
   )
 endif()

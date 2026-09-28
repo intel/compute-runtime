@@ -52,8 +52,7 @@ TEST_F(CommandQueueCreateMt, givenCommandQueueWhenHandleIndirectAllocationReside
     ze_result_t returnValue;
 
     auto prevSvmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,

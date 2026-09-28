@@ -340,8 +340,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
     csr.programHardwareContextParentCall = true;
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -392,8 +391,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhe
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           false,
@@ -459,8 +457,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     }
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           false,
@@ -524,8 +521,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     }
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           false,
@@ -828,8 +824,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenMakeResidentAndMigrateWithEmptyR
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -848,8 +843,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenMakeResidentAndMigrateWithTwoAll
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -873,8 +867,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsFalseThenTrans
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -897,8 +890,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -922,8 +914,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -947,8 +938,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -1400,8 +1390,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenRegisterCsrClientCalledMultipleT
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           false,

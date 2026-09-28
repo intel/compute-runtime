@@ -88,8 +88,7 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
 
-    commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                     device,
+    commandQueue = whiteboxCast(CommandQueue::create(device,
                                                      neoDevice->getDefaultEngine().commandStreamReceiver,
                                                      &queueDesc,
                                                      createCopy,
@@ -134,8 +133,7 @@ void ModuleMutableCommandListFixture::setUpImpl() {
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
 
-    commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                     device,
+    commandQueue = whiteboxCast(CommandQueue::create(device,
                                                      neoDevice->getDefaultEngine().commandStreamReceiver,
                                                      &queueDesc,
                                                      false,
@@ -643,7 +641,7 @@ void CommandQueueThreadArbitrationPolicyFixture::setUp() {
     ASSERT_NE(nullptr, device);
 
     ze_command_queue_desc_t queueDesc = {};
-    commandQueue = whiteboxCast(CommandQueue::create(productFamily, device,
+    commandQueue = whiteboxCast(CommandQueue::create(device,
                                                      neoDevice->getDefaultEngine().commandStreamReceiver,
                                                      &queueDesc,
                                                      false,

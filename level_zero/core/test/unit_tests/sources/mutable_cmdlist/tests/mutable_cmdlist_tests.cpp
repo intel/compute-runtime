@@ -1833,8 +1833,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                                                 device,
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(device,
                                                                                  neoDevice->getDefaultEngine().commandStreamReceiver,
                                                                                  &queueDesc,
                                                                                  false,

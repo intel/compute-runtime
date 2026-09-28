@@ -790,8 +790,7 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
     ze_result_t returnValue;
 
     WhiteBox<L0::CommandQueue> *commandQueue = nullptr;
-    commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                     device,
+    commandQueue = whiteboxCast(CommandQueue::create(device,
                                                      neoDevice->getDefaultEngine().commandStreamReceiver,
                                                      &queueDesc,
                                                      false,

@@ -8,7 +8,6 @@ if(SUPPORT_DG2)
   target_sources(${L0_STATIC_LIB_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_dg2.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_dg2.cpp
   )
   add_subdirectories()

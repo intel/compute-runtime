@@ -707,7 +707,7 @@ HWTEST2_PRODUCT_F(CmdlistAppendLaunchKernelTests,
     commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    commandList->cmdQImmediate = CommandQueue::create(productFamily, device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, ret);
+    commandList->cmdQImmediate = CommandQueue::create(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, ret);
 
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -751,7 +751,7 @@ HWTEST2_PRODUCT_F(CmdlistAppendLaunchKernelTests,
     ze_result_t ret = ZE_RESULT_SUCCESS;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    commandList->cmdQImmediate = CommandQueue::create(productFamily, device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, ret);
+    commandList->cmdQImmediate = CommandQueue::create(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, ret);
 
     ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);

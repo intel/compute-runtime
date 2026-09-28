@@ -314,7 +314,7 @@ HWTEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndKernelWithAsser
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = false;
-    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
+    auto commandQueue = CommandQueue::create(device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
 
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -388,7 +388,7 @@ HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsyn
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = false;
-    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
+    auto commandQueue = CommandQueue::create(device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
 
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -421,7 +421,7 @@ HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSync
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
+    auto commandQueue = CommandQueue::create(device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
 
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -460,7 +460,7 @@ HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynchr
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
+    auto commandQueue = CommandQueue::create(device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
 
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -487,8 +487,7 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertWhenExecutingThenCommandQue
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -523,8 +522,7 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertWhenExecutingThenCommandQue
 TEST_F(CommandQueueWithAssert, GivenAssertKernelExecutedAndNoAssertHandlerWhenCheckingAssertThenUnrecoverableIsCalled) {
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -548,8 +546,7 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertExecutedWhenSynchronizeByPo
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -575,8 +572,7 @@ HWTEST_F(CommandQueueWithAssert, GivenCmdListWithAssertExecutedAndDetectedHangWh
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -609,8 +605,7 @@ TEST_F(CommandQueueWithAssert, GivenAssertKernelExecutedWhenSynchronizingFenceTh
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,

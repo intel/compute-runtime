@@ -73,7 +73,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     ze_result_t getMode(ze_command_queue_mode_t *pMode);
     ze_result_t getPriority(ze_command_queue_priority_t *pPriority);
 
-    static CommandQueue *create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
+    static CommandQueue *create(Device *device, NEO::CommandStreamReceiver *csr,
                                 const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, bool immediateCmdListQueue, ze_result_t &resultValue);
 
     static CommandQueue *fromHandle(ze_command_queue_handle_t handle) {
@@ -217,10 +217,10 @@ using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandS
                                                   const ze_command_queue_desc_t *desc);
 extern CommandQueueAllocatorFn commandQueueFactory[];
 
-template <uint32_t productFamily, typename CommandQueueType>
+template <uint32_t gfxCoreFamily, typename CommandQueueType>
 struct CommandQueuePopulateFactory {
     CommandQueuePopulateFactory() {
-        commandQueueFactory[productFamily] = CommandQueue::Allocator<CommandQueueType>::allocate;
+        commandQueueFactory[gfxCoreFamily] = CommandQueue::Allocator<CommandQueueType>::allocate;
     }
 };
 

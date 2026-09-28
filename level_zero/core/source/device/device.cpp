@@ -258,8 +258,6 @@ void Device::adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index) {
 ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
                                        ze_command_queue_handle_t *commandQueue,
                                        uint8_t powerHint) {
-    auto &platform = neoDevice->getHardwareInfo().platform;
-
     NEO::CommandStreamReceiver *csr = nullptr;
 
     ze_command_queue_desc_t commandQueueDesc = *desc;
@@ -282,7 +280,7 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
     UNRECOVERABLE_IF(csr == nullptr);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, &commandQueueDesc, isCopyOnly, false, false, returnValue);
+    *commandQueue = CommandQueue::create(this, csr, &commandQueueDesc, isCopyOnly, false, false, returnValue);
     if (queueOwnershipTaken) {
         if (*commandQueue != nullptr) {
             CommandQueue::fromHandle(*commandQueue)->takeCsrQueueOwnership();
@@ -295,8 +293,6 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
 
 ze_result_t Device::createInternalCommandQueue(const ze_command_queue_desc_t *desc,
                                                ze_command_queue_handle_t *commandQueue) {
-    auto &platform = neoDevice->getHardwareInfo().platform;
-
     auto internalEngine = this->getActiveDevice()->getInternalEngine();
     auto csr = internalEngine.commandStreamReceiver;
     auto engineGroupType = getInternalEngineGroupType();
@@ -305,7 +301,7 @@ ze_result_t Device::createInternalCommandQueue(const ze_command_queue_desc_t *de
     UNRECOVERABLE_IF(csr == nullptr);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, desc, isCopyOnly, true, false, returnValue);
+    *commandQueue = CommandQueue::create(this, csr, desc, isCopyOnly, true, false, returnValue);
     return returnValue;
 }
 

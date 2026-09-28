@@ -37,7 +37,7 @@
 
 namespace L0 {
 
-CommandQueueAllocatorFn commandQueueFactory[NEO::maxProductEnumValue] = {};
+CommandQueueAllocatorFn commandQueueFactory[NEO::maxCoreEnumValue] = {};
 
 bool CommandQueue::frontEndTrackingEnabled() const {
     return NEO::debugManager.flags.AllowPatchingVfeStateInCommandLists.get() || this->frontEndStateTracking;
@@ -240,11 +240,12 @@ void CommandQueue::postSyncOperations(bool hangDetected) {
     unregisterCsrClient();
 }
 
-CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
+CommandQueue *CommandQueue::create(Device *device, NEO::CommandStreamReceiver *csr,
                                    const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, bool immediateCmdListQueue, ze_result_t &returnValue) {
     CommandQueueAllocatorFn allocator = nullptr;
-    if (productFamily < NEO::maxProductEnumValue) {
-        allocator = commandQueueFactory[productFamily];
+    auto gfxCoreFamily = device->getNEODevice()->getRenderCoreFamily();
+    if (gfxCoreFamily < NEO::maxCoreEnumValue) {
+        allocator = commandQueueFactory[gfxCoreFamily];
     }
 
     CommandQueue *commandQueue = nullptr;

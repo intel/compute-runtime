@@ -26,7 +26,7 @@ struct SipResidencyFixture : DeviceFixture {
         CommandList::fromHandle(commandListHandle)->close();
 
         ze_command_queue_desc_t queueDesc{};
-        cmdQ = CommandQueue::create(productFamily, device,
+        cmdQ = CommandQueue::create(device,
                                     neoDevice->getDefaultEngine().commandStreamReceiver,
                                     &queueDesc, false, false, false, returnValue);
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -54,7 +54,7 @@ struct SipResidencyDebuggerFixture : L0DebuggerHwFixture {
         CommandList::fromHandle(commandListHandle)->close();
 
         ze_command_queue_desc_t queueDesc{};
-        cmdQ = CommandQueue::create(productFamily, device,
+        cmdQ = CommandQueue::create(device,
                                     neoDevice->getDefaultEngine().commandStreamReceiver,
                                     &queueDesc, false, false, false, returnValue);
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);

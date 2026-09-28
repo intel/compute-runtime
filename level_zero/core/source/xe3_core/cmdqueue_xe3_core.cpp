@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,10 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_xe_hp_core_and_later.inl"
 
 namespace L0 {
-template struct CommandQueueHw<IGFX_XE3_CORE>;
-static CommandQueuePopulateFactory<IGFX_PTL, CommandQueueHw<IGFX_XE3_CORE>>
-    populatePTL;
+
+static constexpr auto gfxCoreFamily = IGFX_XE3_CORE;
+
+template struct CommandQueueHw<gfxCoreFamily>;
+static CommandQueuePopulateFactory<gfxCoreFamily, CommandQueueHw<gfxCoreFamily>> populateXe3Core;
 
 } // namespace L0

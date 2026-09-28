@@ -2033,8 +2033,7 @@ HWTEST2_PRODUCT_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExe
         ze_result_t returnValue;
         ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
 
-        auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                              device,
+        auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                               neoDevice->getDefaultEngine().commandStreamReceiver,
                                                               &queueDesc,
                                                               false,

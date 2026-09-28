@@ -578,7 +578,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     CommandQueueAllocatorFn immediateQueueAllocator = nullptr;
     if (productFamily < NEO::maxProductEnumValue) {
         allocator = commandListFactoryImmediate[productFamily];
-        immediateQueueAllocator = commandQueueFactory[productFamily];
+        immediateQueueAllocator = commandQueueFactory[device->getHwInfo().platform.eRenderCoreFamily];
     }
 
     CommandList *commandList = nullptr;
@@ -717,7 +717,7 @@ ze_result_t CommandList::initializeImmediateResources() {
 
     csr->initializeResourcesAndDirectSubmission(device->getDevicePreemptionMode());
 
-    auto commandQueue = CommandQueue::create(device->getHwInfo().platform.eProductFamily, device, csr, &this->immediateCmdListQueueDesc,
+    auto commandQueue = CommandQueue::create(device, csr, &this->immediateCmdListQueueDesc,
                                              isCopyOnly(false), this->internalUsage, true, returnValue);
     if (queueOwnershipTaken) {
         if (commandQueue != nullptr) {
@@ -808,7 +808,7 @@ void CommandList::enableCopyOperationOffload() {
     copyQueueDesc.priority = immediateQueuePriority;
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto offloadCommandQueue = CommandQueue::create(device->getHwInfo().platform.eProductFamily, device, copyCsr, &copyQueueDesc, true, false, true, returnValue);
+    auto offloadCommandQueue = CommandQueue::create(device, copyCsr, &copyQueueDesc, true, false, true, returnValue);
     UNRECOVERABLE_IF(!offloadCommandQueue);
     if (queueOwnershipTaken) {
         offloadCommandQueue->takeCsrQueueOwnership();

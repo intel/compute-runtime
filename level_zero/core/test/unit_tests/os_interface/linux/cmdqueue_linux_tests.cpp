@@ -45,8 +45,7 @@ HWTEST2_PRODUCT_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecuti
     drm->errnoRetVal = EWOULDBLOCK;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,

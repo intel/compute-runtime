@@ -55,7 +55,7 @@ SBA_HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSb
     for (auto internalQueue : internalQueueMode) {
         ze_command_queue_desc_t queueDesc = {};
         ze_result_t returnValue;
-        auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, internalQueue, false, returnValue);
+        auto cmdQ = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, internalQueue, false, returnValue);
         ASSERT_NE(nullptr, cmdQ);
 
         auto commandQueue = whiteboxCast(cmdQ);
@@ -146,7 +146,7 @@ HWTEST2_PRODUCT_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWh
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, true, false, returnValue);
+    auto cmdQ = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, true, false, returnValue);
     ASSERT_NE(nullptr, cmdQ);
 
     auto cmdQHw = static_cast<CommandQueueHw<FamilyType::gfxCoreFamily> *>(cmdQ);
@@ -193,7 +193,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTime
     for (auto internalQueue : internalQueueMode) {
         ze_command_queue_desc_t queueDesc = {};
         ze_result_t returnValue;
-        auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, internalQueue, false, returnValue);
+        auto cmdQ = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, internalQueue, false, returnValue);
         ASSERT_NE(nullptr, cmdQ);
 
         auto commandQueue = whiteboxCast(cmdQ);
