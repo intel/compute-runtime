@@ -8,10 +8,13 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper_with_capture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -229,6 +232,55 @@ TEST(EngineInfoTest, whenEmptyEngineInfoCreatedThen0TileReturned) {
 
     auto engineInfo = std::make_unique<EngineInfo>(drm.get(), 0, distances, queryItems, engines);
     EXPECT_EQ(0u, engineInfo->getEngineTileIndex({static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 1}));
+}
+
+TEST(EngineInfoTest, givenIoctlHelperReturningEnginesWhenQueryingEngineInfoThenDrmStoresReturnedEngineInfo) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
+
+    auto renderClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender));
+    auto copyClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
+    ioctlHelper->enginesToReturn = std::vector<EngineCapabilities>{{{renderClass, 0}, {}}, {{copyClass, 0}, {}}};
+
+    EXPECT_TRUE(drm->queryEngineInfo(false));
+    EXPECT_EQ(1u, ioctlHelper->createEngineInfoCalled);
+
+    auto engineInfo = drm->getEngineInfo();
+    ASSERT_NE(nullptr, engineInfo);
+    EXPECT_TRUE(engineInfo->hasEngines());
+    EXPECT_EQ(2u, engineInfo->getEngineInfos().size());
+}
+
+TEST(EngineInfoTest, givenIoctlHelperReturningNoEngineInfoWhenQueryingEngineInfoThenEngineInfoIsNotSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
+
+    EXPECT_FALSE(drm->queryEngineInfo(false));
+    EXPECT_EQ(1u, ioctlHelper->createEngineInfoCalled);
+    EXPECT_EQ(nullptr, drm->getEngineInfo());
+}
+
+TEST(EngineInfoTest, givenIoctlHelperReturningEngineInfoWithoutEnginesWhenQueryingEngineInfoThenErrorIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
+    ioctlHelper->enginesToReturn = std::vector<EngineCapabilities>{};
+
+    StreamCapture capture;
+    capture.captureStderr();
+    EXPECT_TRUE(drm->queryEngineInfo(false));
+    auto output = capture.getCapturedStderr();
+
+    ASSERT_NE(nullptr, drm->getEngineInfo());
+    EXPECT_FALSE(drm->getEngineInfo()->hasEngines());
+    EXPECT_NE(std::string::npos, output.find("FATAL: Engine info size is equal to 0."));
 }
 
 using DisabledBCSEngineInfoTest = ::testing::Test;

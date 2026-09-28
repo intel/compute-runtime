@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,83 +7,19 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper_with_capture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
-
-TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableLocalMemory.set(1);
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
-    drm->ioctlCallsCount = 0;
-    drm->memoryInfoQueried = false;
-    drm->queryMemoryInfo();
-
-    EXPECT_EQ(2u, drm->ioctlCallsCount);
-    auto memoryInfo = drm->getMemoryInfo();
-    ASSERT_NE(nullptr, memoryInfo);
-    EXPECT_EQ(2u, memoryInfo->getDrmRegionInfos().size());
-}
-
-TEST(MemoryInfo, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMemoryInfoIsNotCreated) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableLocalMemory.set(1);
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
-    drm->ioctlCallsCount = 0;
-
-    drm->i915QuerySuccessCount = 0;
-    drm->memoryInfoQueried = false;
-    drm->queryMemoryInfo();
-
-    EXPECT_EQ(nullptr, drm->getMemoryInfo());
-    EXPECT_EQ(1u, drm->ioctlCallsCount);
-}
-
-TEST(MemoryInfo, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreated) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableLocalMemory.set(1);
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
-    drm->ioctlCallsCount = 0;
-
-    drm->memoryInfoQueried = false;
-    drm->queryMemoryRegionInfoSuccessCount = 0;
-    drm->queryMemoryInfo();
-    EXPECT_EQ(nullptr, drm->getMemoryInfo());
-    EXPECT_EQ(1u, drm->ioctlCallsCount);
-
-    drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
-    drm->ioctlCallsCount = 0;
-    drm->i915QuerySuccessCount = 1;
-    drm->memoryInfoQueried = false;
-    drm->queryMemoryInfo();
-    EXPECT_EQ(nullptr, drm->getMemoryInfo());
-    EXPECT_EQ(2u, drm->ioctlCallsCount);
-
-    drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
-    drm->ioctlCallsCount = 0;
-    drm->queryMemoryRegionInfoSuccessCount = 1;
-    drm->memoryInfoQueried = false;
-    drm->queryMemoryInfo();
-    EXPECT_EQ(nullptr, drm->getMemoryInfo());
-    EXPECT_EQ(2u, drm->ioctlCallsCount);
-}
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryEnabledWhenGettingMemoryRegionClassAndInstanceThenReturnCorrectValues) {
     DebugManagerStateRestore restorer;
@@ -95,7 +31,8 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryEnabledWhenGettingMemor
     regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperWithCapture>(*drm);
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
@@ -113,13 +50,17 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryEnabledWhenGettingMemor
 }
 
 TEST(MemoryInfo, givenMemoryInfoWithoutDeviceRegionWhenGettingDeviceRegionSizeThenReturnCorrectSize) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
     std::vector<MemoryRegion> regionInfo(1);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperWithCapture>(*drm);
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
+    EXPECT_ANY_THROW(memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0), *defaultHwInfo));
     EXPECT_ANY_THROW(memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0)));
 }
 
@@ -133,7 +74,8 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryDisabledWhenGettingMemo
     regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperWithCapture>(*drm);
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
@@ -159,7 +101,8 @@ TEST(MemoryInfo, whenDebugVariablePrintMemoryRegionSizeIsSetAndGetMemoryRegionSi
     regionInfo[0].probedSize = 16 * MemoryConstants::gigaByte;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperWithCapture>(*drm);
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
@@ -185,7 +128,8 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenGettingMemoryRegionClassAndInstan
     regionInfo[2].probedSize = 32 * MemoryConstants::gigaByte;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperWithCapture>(*drm);
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
@@ -224,51 +168,85 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenGettingMemoryRegionClassAndInstan
     }
 }
 
-using MemoryInfoTest = ::testing::Test;
-
-HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenReturnCorrectValues, NonDefaultIoctlsSupported) {
-    std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
-    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
-    regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
-
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRequestIsForwardedToIoctlHelper) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->ioctlCallsCount = 0;
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
+    ioctlHelper->createGemExtHandle = 5u;
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem)), 0};
+    regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
+    regionInfo[1].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice)), 0};
+    regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
-    ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
     uint32_t numOfChunks = 0;
     auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, false);
-    EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(1u, drm->ioctlCallsCount);
-    EXPECT_EQ(1024u, drm->createExt.size);
+    EXPECT_EQ(5u, handle);
+    ASSERT_EQ(1u, ioctlHelper->createGemExtCalls.size());
+    EXPECT_EQ(1024u, ioctlHelper->createGemExtCalls[0].allocSize);
+    ASSERT_EQ(2u, ioctlHelper->createGemExtCalls[0].memClassInstances.size());
+    EXPECT_EQ(regionInfo[0].region.memoryClass, ioctlHelper->createGemExtCalls[0].memClassInstances[0].memoryClass);
+    EXPECT_EQ(regionInfo[1].region.memoryClass, ioctlHelper->createGemExtCalls[0].memClassInstances[1].memoryClass);
 }
 
-HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThenReturnCorrectValues, NonDefaultIoctlsSupported) {
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThenDeviceRegionIsRequestedFromIoctlHelper) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);
-    std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
-    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
-    regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->ioctlCallsCount = 0;
-    uint32_t handle = 0;
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
-    ASSERT_NE(nullptr, memoryInfo);
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
 
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem)), 0};
+    regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
+    regionInfo[1].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice)), 0};
+    regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+
+    uint32_t handle = 0;
     auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, 0, -1, false);
-    EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(1u, drm->ioctlCallsCount);
-    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, drm->memRegions.memoryClass);
-    EXPECT_EQ(1024u, drm->createExt.size);
+    EXPECT_EQ(1u, handle);
+    ASSERT_EQ(1u, ioctlHelper->createGemExtCalls.size());
+    EXPECT_EQ(1024u, ioctlHelper->createGemExtCalls[0].allocSize);
+    ASSERT_EQ(1u, ioctlHelper->createGemExtCalls[0].memClassInstances.size());
+    EXPECT_EQ(regionInfo[1].region.memoryClass, ioctlHelper->createGemExtCalls[0].memClassInstances[0].memoryClass);
+}
+
+TEST(MemoryInfo, givenIoctlHelperReturningMemoryRegionsWhenQueryingMemoryInfoThenDrmStoresReturnedMemoryInfo) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem)), 0};
+    regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
+    regionInfo[1].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice)), 0};
+    regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
+    ioctlHelper->memoryRegionsToReturn = regionInfo;
+
+    drm->memoryInfoQueried = false;
+    EXPECT_TRUE(drm->queryMemoryInfo());
+
+    auto memoryInfo = drm->getMemoryInfo();
+    ASSERT_NE(nullptr, memoryInfo);
+    EXPECT_EQ(2u, memoryInfo->getDrmRegionInfos().size());
+}
+
+TEST(MemoryInfo, givenIoctlHelperReturningNoMemoryInfoWhenQueryingMemoryInfoThenMemoryInfoIsNotSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperWithCapture>(*drm);
+
+    drm->memoryInfoQueried = false;
+    EXPECT_FALSE(drm->queryMemoryInfo());
+    EXPECT_EQ(nullptr, drm->getMemoryInfo());
 }

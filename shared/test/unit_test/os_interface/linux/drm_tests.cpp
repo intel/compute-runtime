@@ -30,6 +30,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper_with_capture.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -3058,4 +3059,34 @@ TEST(DrmTest, givenSetupHardwareInfoWhenTopologyDataHasRegionCountThenFeatureTab
     drm.setupHardwareInfo(0, false);
 
     EXPECT_EQ(2u, hwInfo->featureTable.regionCount);
+}
+
+TEST(DrmTest, givenQueryIoctlFailingOrReturningNoDataWhenQueryingThenEmptyDataIsReturned) {
+    using QueryResult = MockIoctlHelperWithCapture::QueryResult;
+    std::vector<std::vector<QueryResult>> testCases = {
+        {{-1, 16}},
+        {{0, 0}},
+        {{0, 16}, {-1, 16}},
+        {{0, 16}, {0, 0}},
+    };
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    for (const auto &queryResults : testCases) {
+        DrmMockWithCaptureHelper drm{*executionEnvironment->rootDeviceEnvironments[0]};
+        auto ioctlHelper = drm.getMockIoctlHelper();
+        ioctlHelper->queryResults = queryResults;
+
+        EXPECT_TRUE(drm.query<uint64_t>(0u, 0u).empty());
+        EXPECT_EQ(queryResults.size(), ioctlHelper->queryCalled);
+    }
+}
+
+TEST(DrmTest, givenQueryIoctlReturningDataWhenQueryingThenDataSizedToReturnedLengthIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockWithCaptureHelper drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto ioctlHelper = drm.getMockIoctlHelper();
+    ioctlHelper->queryResults = {{0, 12}, {0, 12}};
+
+    auto data = drm.query<uint64_t>(0u, 0u);
+    EXPECT_EQ(2u, data.size());
+    EXPECT_EQ(2u, ioctlHelper->queryCalled);
 }
