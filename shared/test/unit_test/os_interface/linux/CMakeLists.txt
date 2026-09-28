@@ -35,6 +35,9 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation_view_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_version_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_i915_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_i915_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_upstream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_hardware_info_setup.h
     ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_TYPE}/file_logger_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_server_tests.cpp
@@ -94,10 +97,6 @@ endif()
 
 if("${BRANCH_TYPE}" STREQUAL "")
   list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_tests.cpp
-       #${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_data_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_upstream.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_upstream_tests.cpp
   )
 endif()

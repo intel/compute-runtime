@@ -2194,29 +2194,6 @@ TEST(DrmWrapperTest, WhenGettingDrmIoctlVersionValueThenIoctlHelperIsNotNeeded) 
     EXPECT_EQ(getIoctlRequestValue(DrmIoctl::version, nullptr), static_cast<unsigned int>(DRM_IOCTL_VERSION));
 }
 
-TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    MockIoctlHelper ioctlHelper{drm};
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::getparam).c_str(), "DRM_IOCTL_I915_GETPARAM");
-}
-TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    MockIoctlHelper ioctlHelper{drm};
-    std::map<DrmParam, const char *> ioctlCodeStringMap = {
-        {DrmParam::paramHasPooledEu, "I915_PARAM_HAS_POOLED_EU"},
-        {DrmParam::paramEuTotal, "I915_PARAM_EU_TOTAL"},
-        {DrmParam::paramSubsliceTotal, "I915_PARAM_SUBSLICE_TOTAL"},
-        {DrmParam::paramMinEuInPool, "I915_PARAM_MIN_EU_IN_POOL"},
-        {DrmParam::paramCsTimestampFrequency, "I915_PARAM_CS_TIMESTAMP_FREQUENCY"}};
-    for (auto &ioctlCodeString : ioctlCodeStringMap) {
-        EXPECT_STREQ(ioctlHelper.getDrmParamString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
-    }
-}
-
 TEST(DrmHwInfoTest, givenTopologyDataWithoutSystemInfoWhenSettingHwInfoThenCorrectValuesAreSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -3032,6 +3009,16 @@ TEST(DrmTest, givenCallToIoctlCheckNoVmOvercommitFlagThenNothingDone) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper{drm.getIoctlHelper()};
     ioctlHelper->checkNoVmOvercommitFlag();
+}
+
+TEST(DrmQueryTest, WhenSetPageFaultSupportedThenCallingQueryPageFaultSupportThenReturnsTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPageFaultSupported(true);
+    drm.queryPageFaultSupport();
+
+    EXPECT_TRUE(drm.hasPageFaultSupport());
 }
 
 TEST(DrmTest, givenSetupHardwareInfoWhenTopologyDataHasRegionCountThenFeatureTableRegionCountIsSet) {
