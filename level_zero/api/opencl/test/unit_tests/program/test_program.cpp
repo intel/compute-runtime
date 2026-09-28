@@ -65,6 +65,32 @@ struct MockTrackedModule : public L0::Module {
     std::vector<std::unique_ptr<L0::KernelImmutableData>> emptyKernelImmData;
 };
 
+struct MockIrModule : public MockTrackedModule {
+    MockIrModule(const void *ir, size_t irSize) : ir(reinterpret_cast<const uint8_t *>(ir)), irSize(irSize) {}
+
+    ze_result_t getIrBinary(size_t *pSize, uint8_t *pModuleIrBinary) override {
+        *pSize = irSize;
+        if (pModuleIrBinary) {
+            memcpy_s(pModuleIrBinary, irSize, ir, irSize);
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    const uint8_t *ir;
+    size_t irSize;
+};
+
+struct MockLlvmBcCompileCompilerInterface : public L0::ult::MockCompilerInterface {
+    NEO::TranslationErrorCode compile(const NEO::Device &device,
+                                      const NEO::TranslationInput &input,
+                                      NEO::TranslationOutput &output) override {
+        output.intermediateCodeType = IGC::CodeType::llvmBc;
+        output.intermediateRepresentation.mem = makeCopy(llvmBcBlob, sizeof(llvmBcBlob));
+        output.intermediateRepresentation.size = sizeof(llvmBcBlob);
+        return NEO::TranslationErrorCode::success;
+    }
+};
+
 struct MockEmptyContext : public Context {
     MockEmptyContext() : Context(nullptr, nullptr, 0, nullptr, false) {}
 };
@@ -73,6 +99,7 @@ struct WhiteBoxProgram : public Program {
     using Program::buildModulesForContextDevices;
     using Program::mapModuleBuildResult;
     using Program::moduleHandles;
+    using Program::populateIrBinaryFromModule;
     using Program::Program;
     using Program::programBinaryType;
 };
@@ -184,6 +211,34 @@ TEST_F(ClProgramCompileLinkTests, givenLlvmBcIlProgramWhenCompileProgramThenLibr
     cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
     EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_LIBRARY), binaryType);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenCompilerReturningLlvmBcWhenCompileSourceProgramWithoutCreateLibraryThenCompiledObjectWithLlvmBcIr) {
+    auto *mockCompiler = new MockLlvmBcCompileCompilerInterface();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    const char *source = "constant float foo = 9.6F;\n";
+    auto program = clCreateProgramWithSource(clContext, 1, &source, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    auto leoProgram = castToObject<Program>(program);
+    ASSERT_NE(nullptr, leoProgram);
+
+    cl_int result = clCompileProgram(program, 1, &clDeviceId, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, result);
+    EXPECT_FALSE(leoProgram->getIsSpirv());
+    ASSERT_EQ(sizeof(llvmBcBlob), leoProgram->getIrBinarySize());
+    EXPECT_EQ(0, memcmp(llvmBcBlob, leoProgram->getIrBinary(), sizeof(llvmBcBlob)));
+
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT), binaryType);
 
     clReleaseProgram(program);
     clReleaseContext(clContext);
@@ -341,6 +396,30 @@ TEST(ProgramRebuildTests, givenSourceCompileWhenIrCaptureFailsThenBinaryTypeStay
 
     EXPECT_EQ(CL_INVALID_OPERATION, result);
     EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
+}
+
+TEST(ProgramIrCaptureTests, givenModuleWithSpirvIrWhenPopulateIrBinaryFromModuleThenIsSpirvIsTrue) {
+    MockIrModule module(spirvBlob, sizeof(spirvBlob));
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    program.setModuleHandle(0u, module.toHandle());
+
+    EXPECT_EQ(CL_SUCCESS, program.populateIrBinaryFromModule());
+    EXPECT_TRUE(program.getIsSpirv());
+    ASSERT_EQ(sizeof(spirvBlob), program.getIrBinarySize());
+    EXPECT_EQ(0, memcmp(spirvBlob, program.getIrBinary(), sizeof(spirvBlob)));
+}
+
+TEST(ProgramIrCaptureTests, givenModuleWithLlvmBcIrWhenPopulateIrBinaryFromModuleThenIsSpirvIsFalse) {
+    MockIrModule module(llvmBcBlob, sizeof(llvmBcBlob));
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    program.setModuleHandle(0u, module.toHandle());
+
+    EXPECT_EQ(CL_SUCCESS, program.populateIrBinaryFromModule());
+    EXPECT_FALSE(program.getIsSpirv());
+    ASSERT_EQ(sizeof(llvmBcBlob), program.getIrBinarySize());
+    EXPECT_EQ(0, memcmp(llvmBcBlob, program.getIrBinary(), sizeof(llvmBcBlob)));
 }
 
 TEST(ProgramBuildResultTests, givenModuleBuildFailureWhenMapModuleBuildResultThenReturnsApiSpecificCode) {

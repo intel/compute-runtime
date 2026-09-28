@@ -606,6 +606,45 @@ TEST_F(ModuleTests, givenStaticLinkSpirVAndLlvmBcWithoutCreateLibraryOptionThenO
     EXPECT_TRUE(tu.capturedStaticLink);
 };
 
+TEST_F(ModuleTests, givenBuildFromSourceWithHeadersWithoutCreateLibraryOptionThenOutTypeIsUndefined) {
+    auto mockCompilerInterface = new MockCompilerInterface();
+    auto &rootDeviceEnv = *neoDevice->getExecutionEnvironment()
+                               ->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnv.compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnitCaptureCompileArgs tu(device);
+    tu.capturedOutType = IGC::CodeType::invalid;
+
+    const char source[] = "constant float foo = 9.6F;\n";
+    ze_result_t result = tu.buildFromSourceWithHeaders(ZE_MODULE_FORMAT_OCLC, source, sizeof(source),
+                                                       nullptr, nullptr,
+                                                       {}, {}, {});
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, tu.compileGenBinaryCalled);
+    EXPECT_EQ(IGC::CodeType::undefined, tu.capturedOutType);
+    EXPECT_FALSE(tu.capturedCreateLibrary);
+};
+
+TEST_F(ModuleTests, givenBuildFromSourceWithHeadersWithCreateLibraryOptionThenOutTypeIsLlvmBc) {
+    auto mockCompilerInterface = new MockCompilerInterface();
+    auto &rootDeviceEnv = *neoDevice->getExecutionEnvironment()
+                               ->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnv.compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnitCaptureCompileArgs tu(device);
+
+    const char source[] = "constant float foo = 9.6F;\n";
+    ze_result_t result = tu.buildFromSourceWithHeaders(ZE_MODULE_FORMAT_OCLC, source, sizeof(source),
+                                                       NEO::CompilerOptions::createLibrary.data(), nullptr,
+                                                       {}, {}, {});
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, tu.compileGenBinaryCalled);
+    EXPECT_EQ(IGC::CodeType::llvmBc, tu.capturedOutType);
+    EXPECT_TRUE(tu.capturedCreateLibrary);
+};
+
 TEST_F(ModuleTests, givenIsLlvmBcWhenFlagIsNotSetThenReturnsFalse) {
     WhiteBox<L0::Module> module(device, nullptr, ModuleType::user);
     EXPECT_FALSE(module.isLlvmBc());

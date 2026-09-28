@@ -396,7 +396,7 @@ ze_result_t ModuleTranslationUnit::buildFromSourceWithHeaders(ze_module_format_t
         elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_HEADER, NEO::ConstStringRef(headerNames[i], strlen(headerNames[i])), ArrayRef<const char>(headers[i], headerSizes[i]).toArrayRef<const uint8_t>());
     }
     std::vector<uint8_t> compileData = elfEncoder.encode();
-    NEO::TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::spirV};
+    NEO::TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
     inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(compileData.data()), compileData.size());
     inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());

@@ -126,7 +126,7 @@ void Program::invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, v
  * @brief Copy the IR (SPIR-V or LLVM BC) out of the underlying L0 module into the Program.
  * Keeps the Program self-contained so the link path never reaches into L0::ModuleImp internals.
  */
-cl_int Program::populateIrBinaryFromModule(bool isSpirv) {
+cl_int Program::populateIrBinaryFromModule() {
     auto l0Module = L0::Module::fromHandle(this->getModuleHandle());
     if (nullptr == l0Module) {
         return CL_INVALID_OPERATION;
@@ -141,12 +141,12 @@ cl_int Program::populateIrBinaryFromModule(bool isSpirv) {
         return CL_INVALID_OPERATION;
     }
     this->irBinarySize = irSize;
-    this->isSpirv = isSpirv;
+    this->isSpirv = NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), irSize));
     return CL_SUCCESS;
 }
 
 cl_int Program::captureIrForLibraryOutput() {
-    return populateIrBinaryFromModule(false);
+    return populateIrBinaryFromModule();
 }
 
 cl_int Program::createFromBinaryOrIl(cl_device_id device, size_t length, const unsigned char *binary) {
@@ -255,16 +255,16 @@ cl_int Program::compileFromSourceWithHeaders(const char *options, cl_uint numInp
     if (CL_SUCCESS != ret) {
         return ret;
     }
-    const bool isSpirv = !NEO::CompilerOptions::contains(this->options, NEO::CompilerOptions::createLibrary);
+    const bool isLibrary = NEO::CompilerOptions::contains(this->options, NEO::CompilerOptions::createLibrary);
     // IR is copied out, but the L0 module(s) are kept in moduleHandles (released on the next
     // rebuild via resetModules, or at ~Program). Set the binary type only after IR capture
     // succeeds so a failed capture leaves the program in a consistent NONE state.
-    ret = populateIrBinaryFromModule(isSpirv);
+    ret = populateIrBinaryFromModule();
     if (CL_SUCCESS != ret) {
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
         return ret;
     }
-    this->programBinaryType = isSpirv ? CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT : CL_PROGRAM_BINARY_TYPE_LIBRARY;
+    this->programBinaryType = isLibrary ? CL_PROGRAM_BINARY_TYPE_LIBRARY : CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
     return CL_SUCCESS;
 }
 
