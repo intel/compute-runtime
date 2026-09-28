@@ -7,8 +7,10 @@
 
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/source/sharings/unified/unified_image.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 
@@ -114,4 +116,30 @@ TEST_F(ImageMultiRootDeviceTests, givenDeviceHandleListWhenValidatingAndCreating
     EXPECT_NE(nullptr, image->getGraphicsAllocation(device2->getRootDeviceIndex()));
 
     clReleaseMemObject(clImage);
+}
+
+TEST_F(ImageWindowsTests, givenSharedTextureWhenSwappingGmmThenImageTakesLayoutOfTheTexture) {
+    auto gmm = std::make_unique<MockGmm>(context->getDevice(0)->getGmmHelper());
+    auto mockGmmResourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    mockGmmResourceInfo->mockResourceCreateParams.Type = RESOURCE_2D;
+    mockGmmResourceInfo->mockResourceCreateParams.BaseWidth = 64u;
+    mockGmmResourceInfo->mockResourceCreateParams.BaseHeight = 32u;
+    mockGmmResourceInfo->overrideReturnedRenderPitch(512u);
+    mockGmmResourceInfo->overrideReturnedQPitch(48u);
+
+    MockGraphicsAllocation allocation;
+    allocation.setDefaultGmm(gmm.get());
+
+    ImageInfo imgInfo = {};
+    imgInfo.imgDesc.imageType = ImageType::image2DArray;
+    imgInfo.imgDesc.imageWidth = 16u;
+    imgInfo.imgDesc.imageHeight = 16u;
+    imgInfo.imgDesc.imageArraySize = 2u;
+
+    UnifiedImage::swapGmm(&allocation, context.get(), &imgInfo);
+
+    EXPECT_EQ(gmm.get(), allocation.getDefaultGmm());
+    EXPECT_EQ(64u, imgInfo.imgDesc.imageWidth);
+    EXPECT_EQ(512u, imgInfo.imgDesc.imageRowPitch);
+    EXPECT_EQ(48u, imgInfo.qPitch);
 }

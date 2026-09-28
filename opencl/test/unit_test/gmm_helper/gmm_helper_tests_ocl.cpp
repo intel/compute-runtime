@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,6 +245,23 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
         EXPECT_EQ(imgDesc.imageHeight / 2, updateImgInfo.imgDesc.imageHeight);
         EXPECT_EQ(uvRowPitch / 2, updateImgInfo.imgDesc.imageRowPitch);
     }
+}
+
+TEST_F(GmmTests, givenResourceWithQPitchWhenUpdatingImgInfoAndDescThenQPitchOfResourceIsTaken) {
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::image2DArray;
+    imgDesc.imageWidth = 64;
+    imgDesc.imageHeight = 64;
+    imgDesc.imageArraySize = 4;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    auto gmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
+
+    constexpr uint32_t resourceQPitch = 96u;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->overrideReturnedQPitch(resourceQPitch);
+
+    ImageInfo updatedImgInfo = {};
+    gmm->updateImgInfoAndDesc(updatedImgInfo, 0, ImagePlane::noPlane);
+    EXPECT_EQ(resourceQPitch, updatedImgInfo.qPitch);
 }
 
 TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {

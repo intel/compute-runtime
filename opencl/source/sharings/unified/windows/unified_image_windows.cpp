@@ -25,6 +25,8 @@ void *UnifiedImage::swapGmm(GraphicsAllocation *graphicsAllocation, Context *con
         gmm->updateImgInfoAndDesc(*imgInfo, 0, NEO::ImagePlane::noPlane);
         delete graphicsAllocation->getDefaultGmm();
         graphicsAllocation->setDefaultGmm(gmm.release());
+    } else {
+        graphicsAllocation->getDefaultGmm()->updateImgInfoAndDesc(*imgInfo, 0, NEO::ImagePlane::noPlane);
     }
 
     return 0;

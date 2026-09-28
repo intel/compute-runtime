@@ -353,6 +353,7 @@ void Gmm::updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex, ImagePla
     } else {
         imgInfo.imgDesc.imageSlicePitch = gmmResourceInfo->getSizeAllocation();
     }
+    imgInfo.qPitch = queryQPitch();
 
     updateOffsetsInImgInfo(imgInfo, arrayIndex);
 }
