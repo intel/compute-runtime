@@ -65,6 +65,7 @@ struct UnifiedSharingMockMemoryManager : MockMemoryManager {
     using MockMemoryManager::MockMemoryManager;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
         ++createFromSharedHandleCalled;
+        capturedSharedHandle = osHandleData.handle;
         if (!validMemoryManager || createFromSharedHandleCalled > maxSuccessfulImports) {
             return nullptr;
         }

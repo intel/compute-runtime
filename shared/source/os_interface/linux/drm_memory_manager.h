@@ -53,6 +53,7 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
     GraphicsAllocation *createHostAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, const std::vector<uint64_t> &physicalOffsets, bool reuseSharedAllocation) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
+    std::unique_ptr<MultiGraphicsAllocation> createMultiGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, std::span<const AllocationProperties> properties, bool reuseSharedAllocation) override;
     void closeSharedHandle(GraphicsAllocation *gfxAllocation) override;
     void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override;
     void closeInternalHandleWithReservedData(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation, void *reservedHandleData) override;

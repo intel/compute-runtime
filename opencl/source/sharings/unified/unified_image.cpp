@@ -57,8 +57,13 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
 
     auto sharingHandler = new UnifiedImage(context->getSharing<UnifiedSharingFunctions>(), description.type);
 
-    return Image::createSharedImage(context, sharingHandler, McsSurfaceInfo{}, std::move(*multiGraphicsAllocation), nullptr,
-                                    flags, 0, clSurfaceFormat, imgInfo, gmmNoCubeMap, 0u, imageDesc->num_mip_levels, false, errcodeRet);
+    auto image = Image::createSharedImage(context, sharingHandler, McsSurfaceInfo{}, std::move(*multiGraphicsAllocation), nullptr,
+                                          flags, 0, clSurfaceFormat, imgInfo, gmmNoCubeMap, 0u, imageDesc->num_mip_levels, false, errcodeRet);
+    if (image != nullptr) {
+        consumeImportedHandle(description);
+    }
+
+    return image;
 }
 
 } // namespace NEO

@@ -41,6 +41,7 @@ class UnifiedSharing : public SharingHandler {
     void synchronizeObject(UpdateData &updateData) override;
     void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
 
+    static void consumeImportedHandle(const UnifiedSharingMemoryDescription &description);
     static std::unique_ptr<MultiGraphicsAllocation> createMultiGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType, cl_int *errcodeRet, const RootDeviceIndicesContainer &targetRootDeviceIndices);
 
   private:

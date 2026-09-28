@@ -419,6 +419,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t getSharedSystemAtomicAccessCalledCount = 0;
     std::atomic<uint32_t> allocateGraphicsMemoryWithPropertiesCalledCount{0};
     osHandle capturedSharedHandle = 0u;
+    uint32_t createGraphicsAllocationFromSharedHandleCalled = 0u;
+    uint32_t createGraphicsAllocationFromSharedHandleFailingRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     uint64_t capturedPhysicalOffset = std::numeric_limits<uint64_t>::max();
     std::vector<bool> capturedIsHostIpcAllocation;
     std::atomic<bool> allocationCreated{false};

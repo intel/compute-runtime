@@ -36,6 +36,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -180,6 +181,7 @@ class MemoryManager {
     virtual GraphicsAllocation *createHostAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, const std::vector<uint64_t> &physicalOffsets, bool reuseSharedAllocation) { return nullptr; }
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedName(const void *name, ExternalMemoryType type, const OsHandleData &osHandleData, const AllocationProperties &properties, bool reuseSharedAllocation, AllocationStatus &status);
+    virtual std::unique_ptr<MultiGraphicsAllocation> createMultiGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, std::span<const AllocationProperties> properties, bool reuseSharedAllocation);
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandleWithReservedData(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation, void *reservedHandleData) { closeInternalHandle(handle, handleId, graphicsAllocation); };

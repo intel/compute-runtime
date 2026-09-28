@@ -53,6 +53,7 @@
 #include "gtest/gtest.h"
 
 #include <algorithm>
+#include <array>
 #include <initializer_list>
 
 namespace NEO {
@@ -496,6 +497,66 @@ HWTEST_F(MemoryhManagerMultiContextResourceTests, givenAllocationUsedByManyOsCon
     EXPECT_EQ(1, multiContextDestructor->deferDeletionCalled);
     EXPECT_TRUE(nonDefaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
     EXPECT_TRUE(defaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+}
+
+TEST(MemoryManagerTest, givenPropertiesForEachRootDeviceWhenCreatingMultiGraphicsAllocationThenEachRootDeviceImportsSharedHandle) {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 2u};
+    MockMemoryManager memoryManager{executionEnvironment};
+    const osHandle sharedHandle = 7u;
+    const std::array<AllocationProperties, 2> properties{MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer},
+                                                         MockAllocationProperties{1u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    auto multiGraphicsAllocation = memoryManager.createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{sharedHandle}, properties, true);
+    ASSERT_NE(nullptr, multiGraphicsAllocation);
+
+    EXPECT_EQ(2u, memoryManager.createGraphicsAllocationFromSharedHandleCalled);
+    for (uint32_t rootDeviceIndex : {0u, 1u}) {
+        auto graphicsAllocation = multiGraphicsAllocation->getGraphicsAllocation(rootDeviceIndex);
+        ASSERT_NE(nullptr, graphicsAllocation);
+        EXPECT_EQ(rootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
+        EXPECT_EQ(sharedHandle, graphicsAllocation->peekSharedHandle());
+        memoryManager.freeGraphicsMemory(graphicsAllocation);
+    }
+}
+
+TEST(MemoryManagerTest, givenUnorderedPropertiesForSubsetOfRootDevicesWhenCreatingMultiGraphicsAllocationThenOnlyThoseRootDevicesImportAndItIsSizedToHighestRootDeviceIndex) {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 3u};
+    MockMemoryManager memoryManager{executionEnvironment};
+    const std::array<AllocationProperties, 2> properties{MockAllocationProperties{2u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer},
+                                                         MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    auto multiGraphicsAllocation = memoryManager.createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{7u}, properties, true);
+    ASSERT_NE(nullptr, multiGraphicsAllocation);
+
+    EXPECT_EQ(2u, memoryManager.createGraphicsAllocationFromSharedHandleCalled);
+    EXPECT_EQ(3u, multiGraphicsAllocation->getGraphicsAllocations().size());
+    EXPECT_EQ(nullptr, multiGraphicsAllocation->getGraphicsAllocation(1u));
+    for (uint32_t rootDeviceIndex : {0u, 2u}) {
+        auto graphicsAllocation = multiGraphicsAllocation->getGraphicsAllocation(rootDeviceIndex);
+        ASSERT_NE(nullptr, graphicsAllocation);
+        EXPECT_EQ(rootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
+        memoryManager.freeGraphicsMemory(graphicsAllocation);
+    }
+}
+
+TEST(MemoryManagerTest, givenNoPropertiesWhenCreatingMultiGraphicsAllocationThenNullptrIsReturnedAndNothingIsImported) {
+    MockExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager{executionEnvironment};
+
+    EXPECT_EQ(nullptr, memoryManager.createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{7u}, {}, true));
+    EXPECT_EQ(0u, memoryManager.createGraphicsAllocationFromSharedHandleCalled);
+}
+
+TEST(MemoryManagerTest, givenOneRootDeviceFailingToImportWhenCreatingMultiGraphicsAllocationThenNullptrIsReturnedAndCreatedAllocationsAreFreed) {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 2u};
+    MockMemoryManager memoryManager{executionEnvironment};
+    memoryManager.createGraphicsAllocationFromSharedHandleFailingRootDeviceIndex = 1u;
+    const std::array<AllocationProperties, 2> properties{MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer},
+                                                         MockAllocationProperties{1u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    EXPECT_EQ(nullptr, memoryManager.createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{7u}, properties, true));
+    EXPECT_EQ(2u, memoryManager.createGraphicsAllocationFromSharedHandleCalled);
+    EXPECT_EQ(1u, memoryManager.freeGraphicsMemoryCalled);
 }
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedOnSpecifiedHeapAndFreedThenAddressFromGfxPartitionIsUsed) {

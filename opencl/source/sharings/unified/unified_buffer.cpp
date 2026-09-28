@@ -22,5 +22,10 @@ Buffer *UnifiedBuffer::createSharedUnifiedBuffer(Context *context, cl_mem_flags 
 
     auto sharingHandler = new UnifiedBuffer(context->getSharing<UnifiedSharingFunctions>(), extMem.type);
 
-    return Buffer::createSharedBuffer(context, flags, sharingHandler, std::move(*multiGraphicsAllocation));
+    auto buffer = Buffer::createSharedBuffer(context, flags, sharingHandler, std::move(*multiGraphicsAllocation));
+    if (buffer != nullptr) {
+        consumeImportedHandle(extMem);
+    }
+
+    return buffer;
 }

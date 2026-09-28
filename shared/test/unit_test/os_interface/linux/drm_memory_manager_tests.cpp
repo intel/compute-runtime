@@ -3886,6 +3886,116 @@ TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenCreateAllocationFromHandleIs
     EXPECT_EQ(0u, memoryManager->unregisterAllocationCalled);
 }
 
+struct DrmMemoryManagerFdImportTest : DrmMemoryManagerWithExplicitExpectationsTest {
+    static constexpr int callerFd = 7;
+    static constexpr int firstDuplicateFd = 20;
+    static inline int nextDuplicateFd = firstDuplicateFd;
+
+    static int dupCallerFd(int fd) {
+        return (fd == callerFd) ? nextDuplicateFd++ : -1;
+    }
+
+    VariableBackup<int (*)(int)> dupBackup{&SysCalls::sysCallsDup, dupCallerFd};
+    VariableBackup<int> nextDuplicateFdBackup{&nextDuplicateFd, int{firstDuplicateFd}};
+    VariableBackup<int> dupCalledBackup{&SysCalls::dupCalled, 0};
+    VariableBackup<uint32_t> closeCalledBackup{&SysCalls::closeFuncCalled, 0u};
+    VariableBackup<int> closeArgBackup{&SysCalls::closeFuncArgPassed, 0};
+};
+
+TEST_F(DrmMemoryManagerFdImportTest, givenSharedHandleWhenCreatingMultiGraphicsAllocationThenAllocationOwnsDuplicateAndCallerFdIsNotClosed) {
+    const std::array<AllocationProperties, 1> properties{MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    auto multiGraphicsAllocation = memoryManager->createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{static_cast<osHandle>(callerFd)}, properties, true);
+    ASSERT_NE(nullptr, multiGraphicsAllocation);
+
+    EXPECT_EQ(1, SysCalls::dupCalled);
+    EXPECT_EQ(firstDuplicateFd, static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[0u]->osInterface->getDriverModel()->as<Drm>())->inputFd);
+    auto graphicsAllocation = multiGraphicsAllocation->getGraphicsAllocation(0u);
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_EQ(static_cast<osHandle>(firstDuplicateFd), graphicsAllocation->peekSharedHandle());
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+    EXPECT_EQ(1, closeCalledCount);
+    EXPECT_EQ(firstDuplicateFd, closeInputFd);
+}
+
+TEST_F(DrmMemoryManagerFdImportTest, givenPropertiesForEachRootDeviceWhenCreatingMultiGraphicsAllocationThenEachRootDeviceImportsItsOwnDuplicate) {
+    const std::array<AllocationProperties, 2> properties{MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer},
+                                                         MockAllocationProperties{1u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    auto multiGraphicsAllocation = memoryManager->createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{static_cast<osHandle>(callerFd)}, properties, true);
+    ASSERT_NE(nullptr, multiGraphicsAllocation);
+
+    EXPECT_EQ(2, SysCalls::dupCalled);
+    for (uint32_t rootDeviceIndex : {0u, 1u}) {
+        const int expectedDuplicateFd = firstDuplicateFd + static_cast<int>(rootDeviceIndex);
+        EXPECT_EQ(expectedDuplicateFd, static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>())->inputFd);
+        auto graphicsAllocation = multiGraphicsAllocation->getGraphicsAllocation(rootDeviceIndex);
+        ASSERT_NE(nullptr, graphicsAllocation);
+        EXPECT_EQ(rootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
+        EXPECT_EQ(static_cast<osHandle>(expectedDuplicateFd), graphicsAllocation->peekSharedHandle());
+        memoryManager->freeGraphicsMemory(graphicsAllocation);
+        EXPECT_EQ(expectedDuplicateFd, closeInputFd);
+    }
+    EXPECT_EQ(2, closeCalledCount);
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+}
+
+TEST_F(DrmMemoryManagerFdImportTest, givenUnorderedPropertiesForSubsetOfRootDevicesWhenCreatingMultiGraphicsAllocationThenOnlyThoseRootDevicesImportAndItIsSizedToHighestRootDeviceIndex) {
+    const std::array<AllocationProperties, 2> properties{MockAllocationProperties{2u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer},
+                                                         MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    auto multiGraphicsAllocation = memoryManager->createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{static_cast<osHandle>(callerFd)}, properties, true);
+    ASSERT_NE(nullptr, multiGraphicsAllocation);
+
+    EXPECT_EQ(3u, multiGraphicsAllocation->getGraphicsAllocations().size());
+    EXPECT_EQ(nullptr, multiGraphicsAllocation->getGraphicsAllocation(1u));
+    EXPECT_EQ(0, static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[1u]->osInterface->getDriverModel()->as<Drm>())->ioctlCnt.primeFdToHandle.load());
+    for (uint32_t rootDeviceIndex : {0u, 2u}) {
+        auto graphicsAllocation = multiGraphicsAllocation->getGraphicsAllocation(rootDeviceIndex);
+        ASSERT_NE(nullptr, graphicsAllocation);
+        EXPECT_EQ(rootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
+        memoryManager->freeGraphicsMemory(graphicsAllocation);
+    }
+}
+
+TEST_F(DrmMemoryManagerFdImportTest, givenNoPropertiesWhenCreatingMultiGraphicsAllocationThenNullptrIsReturnedAndCallerFdIsNotDuplicated) {
+    EXPECT_EQ(nullptr, memoryManager->createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{static_cast<osHandle>(callerFd)}, {}, true));
+    EXPECT_EQ(0, SysCalls::dupCalled);
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+}
+
+TEST_F(DrmMemoryManagerFdImportTest, givenCallerFdThatCannotBeDuplicatedWhenCreatingMultiGraphicsAllocationThenNothingIsImportedOrClosed) {
+    VariableBackup<int (*)(int)> failingDup{&SysCalls::sysCallsDup, [](int) { return -1; }};
+    const std::array<AllocationProperties, 1> properties{MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    EXPECT_EQ(nullptr, memoryManager->createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{static_cast<osHandle>(callerFd)}, properties, true));
+    EXPECT_EQ(0, static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[0u]->osInterface->getDriverModel()->as<Drm>())->ioctlCnt.primeFdToHandle.load());
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+}
+
+TEST_F(DrmMemoryManagerFdImportTest, givenDuplicateThatCannotBeImportedWhenCreatingMultiGraphicsAllocationThenOnlyDuplicateIsClosed) {
+    static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[0u]->osInterface->getDriverModel()->as<Drm>())->failOnPrimeFdToHandle = true;
+    const std::array<AllocationProperties, 1> properties{MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    EXPECT_EQ(nullptr, memoryManager->createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{static_cast<osHandle>(callerFd)}, properties, true));
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(firstDuplicateFd, SysCalls::closeFuncArgPassed);
+}
+
+TEST_F(DrmMemoryManagerFdImportTest, givenOneRootDeviceFailingToImportWhenCreatingMultiGraphicsAllocationThenCreatedAllocationsAreFreedAndFailedDuplicateIsClosed) {
+    static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[1u]->osInterface->getDriverModel()->as<Drm>())->failOnPrimeFdToHandle = true;
+    const std::array<AllocationProperties, 2> properties{MockAllocationProperties{0u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer},
+                                                         MockAllocationProperties{1u, false, MemoryConstants::pageSize, AllocationType::sharedBuffer}};
+
+    EXPECT_EQ(nullptr, memoryManager->createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{static_cast<osHandle>(callerFd)}, properties, true));
+    EXPECT_EQ(1, closeCalledCount);
+    EXPECT_EQ(firstDuplicateFd, closeInputFd);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(firstDuplicateFd + 1, SysCalls::closeFuncArgPassed);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPinBBAllocationFailsThenUnrecoverableIsCalled) {
     this->mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     this->mock->reset();

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,7 @@ if(UNIX)
   set(RUNTIME_SRCS_SHARINGS_UNIFIED_LINUX
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/unified_image_linux.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing_linux.cpp
   )
 
   target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SHARINGS_UNIFIED_LINUX})

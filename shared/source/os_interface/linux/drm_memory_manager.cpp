@@ -49,10 +49,12 @@
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/logger.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <fcntl.h>
 #include <memory>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <sys/ioctl.h>
@@ -2004,6 +2006,43 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
     }
 
     return drmAllocation;
+}
+
+std::unique_ptr<MultiGraphicsAllocation> DrmMemoryManager::createMultiGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, std::span<const AllocationProperties> properties, bool reuseSharedAllocation) {
+    if (properties.empty()) {
+        return nullptr;
+    }
+
+    const auto maxRootDeviceIndex = std::ranges::max(properties | std::views::transform(&AllocationProperties::rootDeviceIndex));
+    auto multiGraphicsAllocation = std::make_unique<MultiGraphicsAllocation>(maxRootDeviceIndex);
+
+    for (const auto &propertiesForRootDevice : properties) {
+        DEBUG_BREAK_IF(multiGraphicsAllocation->getGraphicsAllocation(propertiesForRootDevice.rootDeviceIndex) != nullptr);
+
+        GraphicsAllocation *graphicsAllocation = nullptr;
+        const int duplicateFd = SysCalls::dup(static_cast<int>(osHandleData.handle));
+
+        if (duplicateFd >= 0) {
+            OsHandleData duplicateHandleData = osHandleData;
+            duplicateHandleData.handle = static_cast<osHandle>(duplicateFd);
+
+            graphicsAllocation = createGraphicsAllocationFromSharedHandle(duplicateHandleData, propertiesForRootDevice, false, false, reuseSharedAllocation, nullptr);
+            if (!graphicsAllocation) {
+                SysCalls::close(duplicateFd);
+            }
+        }
+
+        if (!graphicsAllocation) {
+            for (auto createdAllocation : multiGraphicsAllocation->getGraphicsAllocations()) {
+                freeGraphicsMemory(createdAllocation);
+            }
+            return nullptr;
+        }
+
+        multiGraphicsAllocation->addAllocation(graphicsAllocation);
+    }
+
+    return multiGraphicsAllocation;
 }
 
 void DrmMemoryManager::closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {

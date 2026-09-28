@@ -50,7 +50,9 @@
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/logger_neo_only.h"
 
+#include <algorithm>
 #include <iostream>
+#include <ranges>
 #include <set>
 
 namespace NEO {
@@ -1563,6 +1565,31 @@ void MemoryManager::destroyPageFaultManager() {
 
 bool MemoryManager::isRemoteResourceNeeded(const SvmAllocationData &allocData, Device *device) const {
     return allocData.gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex()) == nullptr;
+}
+
+std::unique_ptr<MultiGraphicsAllocation> MemoryManager::createMultiGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, std::span<const AllocationProperties> properties, bool reuseSharedAllocation) {
+    if (properties.empty()) {
+        return nullptr;
+    }
+
+    const auto maxRootDeviceIndex = std::ranges::max(properties | std::views::transform(&AllocationProperties::rootDeviceIndex));
+    auto multiGraphicsAllocation = std::make_unique<MultiGraphicsAllocation>(maxRootDeviceIndex);
+
+    for (const auto &propertiesForRootDevice : properties) {
+        DEBUG_BREAK_IF(multiGraphicsAllocation->getGraphicsAllocation(propertiesForRootDevice.rootDeviceIndex) != nullptr);
+
+        auto graphicsAllocation = createGraphicsAllocationFromSharedHandle(osHandleData, propertiesForRootDevice, false, false, reuseSharedAllocation, nullptr);
+        if (!graphicsAllocation) {
+            for (auto createdAllocation : multiGraphicsAllocation->getGraphicsAllocations()) {
+                freeGraphicsMemory(createdAllocation);
+            }
+            return nullptr;
+        }
+
+        multiGraphicsAllocation->addAllocation(graphicsAllocation);
+    }
+
+    return multiGraphicsAllocation;
 }
 
 void *MemoryManager::importFdHandle(Device *neoDevice,

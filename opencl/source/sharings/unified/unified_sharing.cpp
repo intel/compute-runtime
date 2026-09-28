@@ -12,6 +12,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -44,31 +45,18 @@ std::unique_ptr<MultiGraphicsAllocation> UnifiedSharing::createMultiGraphicsAllo
         return nullptr;
     }
 
-    auto pRootDeviceIndices = (targetRootDeviceIndices.size() > 0) ? &targetRootDeviceIndices
-                                                                   : &context->getRootDeviceIndices();
+    auto &rootDeviceIndices = (targetRootDeviceIndices.size() > 0) ? targetRootDeviceIndices
+                                                                   : context->getRootDeviceIndices();
 
-    auto multiGraphicsAllocation = std::make_unique<MultiGraphicsAllocation>(context->getMaxRootDeviceIndex());
-    MemoryManager::OsHandleData osHandleData{description.handle};
+    StackVec<AllocationProperties, 4> properties;
+    for (auto &rootDeviceIndex : rootDeviceIndices) {
+        properties.push_back(AllocationProperties{rootDeviceIndex, false, imgInfo, allocationType, context->getDeviceBitfieldForAllocation(rootDeviceIndex)});
+    }
 
-    for (auto &rootDeviceIndex : *pRootDeviceIndices) {
-        const AllocationProperties properties{rootDeviceIndex,
-                                              false, // allocateMemory
-                                              imgInfo,
-                                              allocationType,
-                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
-
-        auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-        if (!graphicsAllocation) {
-            for (auto createdAllocation : multiGraphicsAllocation->getGraphicsAllocations()) {
-                if (createdAllocation != nullptr) {
-                    memoryManager->freeGraphicsMemory(createdAllocation);
-                }
-            }
-            errorCode.set(CL_INVALID_MEM_OBJECT);
-            return nullptr;
-        }
-
-        multiGraphicsAllocation->addAllocation(graphicsAllocation);
+    auto multiGraphicsAllocation = memoryManager->createMultiGraphicsAllocationFromSharedHandle(MemoryManager::OsHandleData{description.handle}, properties, true);
+    if (!multiGraphicsAllocation) {
+        errorCode.set(CL_INVALID_MEM_OBJECT);
+        return nullptr;
     }
 
     return multiGraphicsAllocation;

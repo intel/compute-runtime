@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/os_interface/product_helper_hw.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -53,6 +54,27 @@ static cl_image_desc getValidImageDesc() {
     imageDesc.num_samples = 0;
     imageDesc.buffer = nullptr;
     return imageDesc;
+}
+
+HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenImageRejectedAfterImportingHandleWhenCreatingImageFromSharedHandleThenImportedAllocationIsFreedAndErrorIsReturned) {
+    struct MockGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
+        bool isReducedSurfaceStateInUse(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            return true;
+        }
+    };
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+
+    const auto desc = getValidUnifiedSharingDesc();
+    const auto format = getValidImageFormat();
+    auto imageDesc = getValidImageDesc();
+    imageDesc.num_samples = 16;
+    cl_int retVal = CL_SUCCESS;
+    auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), CL_MEM_READ_WRITE, desc, &format, &imageDesc, &retVal, {}));
+
+    EXPECT_EQ(nullptr, image);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(1u, memoryManager->createFromSharedHandleCalled);
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }
 
 TEST_F(UnifiedSharingImageTestsWithInvalidMemoryManager, givenValidContextAndAllocationFailsWhenCreatingImageFromSharedHandleThenReturnInvalidMemObject) {
