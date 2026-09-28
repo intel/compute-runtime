@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/unified/unified_image.h"
@@ -112,6 +113,25 @@ class MockProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
         return pageTableManagerSupported;
     }
 };
+
+TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenSharedBufferWhenSwappingGmmThenLinearImageGmmIsCreated) {
+    const auto format = getValidImageFormat();
+    const auto imageDesc = getValidImageDesc();
+    ImageInfo imgInfo = {};
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
+    imgInfo.surfaceFormat = &Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &format)->surfaceFormat;
+
+    MockGraphicsAllocation allocation;
+    allocation.setDefaultGmm(new MockGmm(context->getDevice(0)->getGmmHelper()));
+    ASSERT_EQ(RESOURCE_BUFFER, allocation.getDefaultGmm()->gmmResourceInfo->getResourceType());
+
+    UnifiedImage::swapGmm(&allocation, context.get(), &imgInfo);
+
+    auto gmm = std::unique_ptr<Gmm>(allocation.getDefaultGmm());
+    EXPECT_TRUE(imgInfo.linearStorage);
+    ASSERT_FALSE(gmm->resourceParamsData.empty());
+    EXPECT_EQ(1u, reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data())->Flags.Info.Linear);
+}
 
 struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryManager<true> {
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
