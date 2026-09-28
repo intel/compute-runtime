@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,7 +119,7 @@ void MclEncoder::parseKernelData(const std::vector<std::unique_ptr<KernelData>> 
 
         auto kernelDataSymbolName = Symbols::SymbolNames::kernelDataPrefix.str() + kernelName;
         uint8_t indirectOffset = (kernelData->indirectOffset >> Symbols::KernelSymbol::indirectOffsetBitShift);
-        auto kernelDataSymbolValue = Symbols::KernelSymbol(static_cast<uint32_t>(kernelDataId), kernelData->skipPerThreadDataLoad, kernelData->simdSize, kernelData->passInlineData, indirectOffset);
+        auto kernelDataSymbolValue = Symbols::KernelSymbol(static_cast<uint32_t>(kernelDataId), kernelData->skipPerThreadDataLoad, kernelData->simdSize, kernelData->passInlineData, indirectOffset, kernelData->numLocalIdChannels);
         addSymbol(kernelDataSymbolName, Sections::SectionType::shtUndef, Symbols::SymbolType::kernel, kernelDataSymbolValue.data, 0U);
     }
 }
