@@ -166,9 +166,9 @@ HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenRe
 HWTEST2_F(BlitTests, givenCriWhenCheckingWriteSplitThenNotRequiredByDefault, IsCRI) {
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     EXPECT_FALSE(rootDeviceEnvironment.getProductHelper().isWriteSplitRequired(false));
-    EXPECT_FALSE(rootDeviceEnvironment.getProductHelper().isWriteSplitRequired(true));
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true));
-    EXPECT_EQ(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, false, BlitterConstants::maxBlitWidth),
+    EXPECT_TRUE(rootDeviceEnvironment.getProductHelper().isWriteSplitRequired(true));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true));
+    EXPECT_NE(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, false, BlitterConstants::maxBlitWidth),
               BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, BlitterConstants::maxBlitWidth));
 }
 

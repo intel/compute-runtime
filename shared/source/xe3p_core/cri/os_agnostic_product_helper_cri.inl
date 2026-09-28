@@ -190,4 +190,16 @@ uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const
     return isaSize;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const {
+    switch (debugManager.flags.OverrideBcsWriteSplit.get()) {
+    case 0:
+        return false;
+    case 2:
+        return true;
+    default:
+        return isDstSystemOrRemoteMemory;
+    }
+}
+
 } // namespace NEO

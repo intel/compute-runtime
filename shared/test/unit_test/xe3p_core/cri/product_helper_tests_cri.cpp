@@ -296,3 +296,8 @@ CRITEST_F(CriProductHelper, givenLimitIsaPrefetchSizeDebugFlagSetToZeroWhenGetti
 
     EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
 }
+
+CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIfWriteSplitIsRequiredThenTrueReturned) {
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
+    EXPECT_TRUE(productHelper->isWriteSplitRequired(true));
+}
