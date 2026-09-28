@@ -28,6 +28,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper_with_capture.h"
@@ -3059,6 +3060,93 @@ TEST(DrmTest, givenSetupHardwareInfoWhenTopologyDataHasRegionCountThenFeatureTab
     drm.setupHardwareInfo(0, false);
 
     EXPECT_EQ(2u, hwInfo->featureTable.regionCount);
+}
+
+TEST(DrmQueryTest, givenUseKmdMigrationWhenShouldAllocationFaultIsCalledOnFaultableHardwareThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseKmdMigration.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+
+    AllocationType allocationTypesThatShouldFault[] = {
+        AllocationType::unifiedSharedMemory};
+
+    for (auto allocationType : allocationTypesThatShouldFault) {
+        MockDrmAllocation allocation(0u, allocationType, MemoryPool::memoryNull);
+        EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
+    }
+
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::memoryNull);
+    EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
+}
+
+TEST(DrmQueryTest, givenRecoverablePageFaultsEnabledWhenCallingHasPageFaultSupportThenReturnCorrectValue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    for (bool hasPageFaultSupport : {false, true}) {
+        drm.pageFaultSupported = hasPageFaultSupport;
+
+        EXPECT_EQ(hasPageFaultSupport, drm.hasPageFaultSupport());
+    }
+}
+
+TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledOnNonFaultableHardwareThenReturnFalse) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = false;
+
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::memoryNull);
+    EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
+}
+
+TEST(DrmQueryTest, givenEnableImplicitMigrationOnFaultableHardwareWhenShouldAllocationFaultIsCalledThenReturnTrue) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableImplicitMigrationOnFaultableHardware.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::memoryNull);
+    EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
+}
+
+TEST(DrmQueryTest, givenUseKmdMigrationSetWhenCallingHasKmdMigrationSupportThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.pageFaultSupported = true;
+
+    for (auto useKmdMigration : {-1, 0, 1}) {
+        debugManager.flags.UseKmdMigration.set(useKmdMigration);
+        if (useKmdMigration == -1) {
+            EXPECT_FALSE(drm.hasKmdMigrationSupport());
+        } else {
+            EXPECT_EQ(useKmdMigration, drm.hasKmdMigrationSupport());
+        }
+    }
+}
+
+TEST(DrmQueryTest, givenKmdMigrationSupportedWhenShouldAllocationPageFaultIsCalledOnUnifiedSharedMemoryThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.pageFaultSupported = true;
+
+    MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::unifiedSharedMemory, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    EXPECT_EQ(drm.hasKmdMigrationSupport(), allocation.shouldAllocationPageFault(&drm));
 }
 
 TEST(DrmTest, givenQueryIoctlFailingOrReturningNoDataWhenQueryingThenEmptyDataIsReturned) {

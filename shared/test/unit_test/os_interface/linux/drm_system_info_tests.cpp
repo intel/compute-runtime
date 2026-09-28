@@ -65,9 +65,9 @@ struct DrmMockToQuerySystemInfo : public DrmMock {
 };
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystemInfoIsNotCreated) {
 
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
         uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
             return 0;
         }
@@ -100,9 +100,9 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
 
 TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpVersion) {
 
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
         uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
             HardwareIpVersion ipVersion{};
             ipVersion.architecture = 12u;
@@ -136,9 +136,9 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
 
 TEST(DrmSystemInfoTest, givenQueriedIpVersionWhenSetupHardwareInfoThenCapsAreSetupBasedOnIt) {
 
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
         uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
             return this->queriedIpVersion;
         }
@@ -191,12 +191,12 @@ TEST(DrmSystemInfoTest, givenInvalidDeviceIdWhenSetupHardwareInfoThenReturnsSucc
     ret = drm2.setupHardwareInfo(-1, false); // invalid device id, i915 kmd
     EXPECT_EQ(ret, -1);
 
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
         uint32_t revision;
         uint32_t release;
         uint32_t architecture;
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
         uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
             HardwareIpVersion ipVersion{};
             ipVersion.revision = this->revision;
@@ -535,12 +535,12 @@ TEST(DrmSystemInfoTest, givenIncompleteL3GroupsInfoWhenCreatingSystemInfoThenDon
 TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopologyDataWhenCreatingSystemInfoThenRespectThatNumberOfL3Banks) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
 
         bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
-            IoctlHelperPrelim20::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+            IoctlHelperUpstream::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
             topologyData.numL3Banks = 7;
             return true;
         }

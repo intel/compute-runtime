@@ -476,9 +476,9 @@ TEST_F(PeerAccessProbeTest, givenNoIafFabricDirectoryWhenQueryingFabricStatsThen
 
 namespace {
 
-class MockIoctlHelperIafTest : public IoctlHelperPrelim20 {
+class MockIoctlHelperIafTest : public IoctlHelperUpstream {
   public:
-    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    using IoctlHelperUpstream::IoctlHelperUpstream;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override {
         latency = 1;
         bandwidth = 10;
@@ -486,9 +486,9 @@ class MockIoctlHelperIafTest : public IoctlHelperPrelim20 {
     }
 };
 
-class MockIoctlHelperIafFailing : public IoctlHelperPrelim20 {
+class MockIoctlHelperIafFailing : public IoctlHelperUpstream {
   public:
-    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    using IoctlHelperUpstream::IoctlHelperUpstream;
     bool getFabricLatency(uint32_t, uint32_t &, uint32_t &) override {
         return false;
     }
