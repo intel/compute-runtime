@@ -40,7 +40,6 @@ std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInte
 std::unique_ptr<ExternalSemaphoreWindows> ExternalSemaphoreWindows::create(OSInterface *osInterface) {
     auto extSemWindows = std::make_unique<ExternalSemaphoreWindows>();
     extSemWindows->osInterface = osInterface;
-    extSemWindows->state = SemaphoreState::Initial;
 
     return extSemWindows;
 }
@@ -248,8 +247,6 @@ bool ExternalSemaphoreWindows::enqueueWait(uint64_t *fenceValue) {
         return false;
     }
 
-    this->state = SemaphoreState::Signaled;
-
     return true;
 }
 
@@ -267,8 +264,6 @@ bool ExternalSemaphoreWindows::enqueueSignal(uint64_t *fenceValue) {
     if (status != STATUS_SUCCESS) {
         return false;
     }
-
-    this->state = SemaphoreState::Signaled;
 
     return true;
 }

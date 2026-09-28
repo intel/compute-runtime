@@ -13,6 +13,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -34,7 +35,6 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/default_descriptors.h"
 #include "level_zero/core/source/image/image.h"
-#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/driver_experimental/zex_common.h"
 
 #include "driver_version.h"
@@ -249,9 +249,6 @@ DriverHandle::~DriverHandle() {
     if (this->defaultContext) {
         L0::Context::fromHandle(this->defaultContext)->destroy();
         this->defaultContext = nullptr;
-    }
-    if (this->externalSemaphoreController) {
-        this->externalSemaphoreController.reset();
     }
 
     if (memoryManager != nullptr) {

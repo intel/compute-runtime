@@ -3426,11 +3426,6 @@ TEST_F(EventSynchronizeTimestampTest, GivenCounterBasedTimestampEventBackedByNod
     EXPECT_EQ(expectedEnd, result.global.kernelEnd);
 }
 
-TEST_F(EventSynchronizeTimestampTest, GivenZeroTotalEventSizeWhenGettingPoolIndexThenZeroIsReturnedWithoutDivideByZero) {
-    event->totalEventSize = 0;
-    EXPECT_EQ(0u, event->getPoolIndex());
-}
-
 HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingCounterBasedEventThenBoundedUserFenceWaitIsUsed) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);

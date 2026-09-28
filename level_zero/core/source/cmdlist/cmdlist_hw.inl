@@ -5195,58 +5195,50 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                                                const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    if (NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
-        ExternalSemaphoreOperationData operationData{};
-        operationData.semaphores.reserve(numExternalSemaphores);
-        for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
-            auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
-            auto fenceValue = semaphore->neoExternalSemaphore->acquireWaitFenceValue(params[i].value);
-            operationData.semaphores.push_back(std::pair(semaphore, fenceValue));
-        }
-
-        void *pHostFunctionData = nullptr;
-        {
-            std::lock_guard<std::mutex> lock(externalSemaphoreHostFunctionDataMutex);
-            auto &hostFunctionData = externalSemaphoreHostFunctionData.emplace_back(*this, std::move(operationData));
-            hostFunctionData.self = std::prev(externalSemaphoreHostFunctionData.end());
-            pHostFunctionData = &hostFunctionData;
-        }
-
-        CmdListHostFunctionParameters parameters{.memorySynchronizationRequired = false};
-
-        return this->appendHostFunction(semaphoreWaitHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
+    ExternalSemaphoreOperationData operationData{};
+    operationData.semaphores.reserve(numExternalSemaphores);
+    for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
+        auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
+        auto fenceValue = semaphore->neoExternalSemaphore->acquireWaitFenceValue(params[i].value);
+        operationData.semaphores.push_back(std::pair(semaphore, fenceValue));
     }
 
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    void *pHostFunctionData = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(externalSemaphoreHostFunctionDataMutex);
+        auto &hostFunctionData = externalSemaphoreHostFunctionData.emplace_back(*this, std::move(operationData));
+        hostFunctionData.self = std::prev(externalSemaphoreHostFunctionData.end());
+        pHostFunctionData = &hostFunctionData;
+    }
+
+    CmdListHostFunctionParameters parameters{.memorySynchronizationRequired = false};
+
+    return this->appendHostFunction(semaphoreWaitHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                                                                  const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                  uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    if (NEO::debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
-        ExternalSemaphoreOperationData operationData{};
-        operationData.semaphores.reserve(numExternalSemaphores);
-        for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
-            auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
-            auto fenceValue = semaphore->neoExternalSemaphore->acquireSignalFenceValue(params[i].value);
-            operationData.semaphores.push_back(std::pair(semaphore, fenceValue));
-        }
-
-        void *pHostFunctionData = nullptr;
-        {
-            std::lock_guard<std::mutex> lock(externalSemaphoreHostFunctionDataMutex);
-            auto &hostFunctionData = externalSemaphoreHostFunctionData.emplace_back(*this, std::move(operationData));
-            hostFunctionData.self = std::prev(externalSemaphoreHostFunctionData.end());
-            pHostFunctionData = &hostFunctionData;
-        }
-
-        CmdListHostFunctionParameters parameters{.memorySynchronizationRequired = true};
-
-        return this->appendHostFunction(semaphoreSignalHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
+    ExternalSemaphoreOperationData operationData{};
+    operationData.semaphores.reserve(numExternalSemaphores);
+    for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
+        auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
+        auto fenceValue = semaphore->neoExternalSemaphore->acquireSignalFenceValue(params[i].value);
+        operationData.semaphores.push_back(std::pair(semaphore, fenceValue));
     }
 
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    void *pHostFunctionData = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(externalSemaphoreHostFunctionDataMutex);
+        auto &hostFunctionData = externalSemaphoreHostFunctionData.emplace_back(*this, std::move(operationData));
+        hostFunctionData.self = std::prev(externalSemaphoreHostFunctionData.end());
+        pHostFunctionData = &hostFunctionData;
+    }
+
+    CmdListHostFunctionParameters parameters{.memorySynchronizationRequired = true};
+
+    return this->appendHostFunction(semaphoreSignalHostFunction, pHostFunctionData, nullptr, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

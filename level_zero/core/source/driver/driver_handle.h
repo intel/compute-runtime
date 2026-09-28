@@ -49,7 +49,6 @@ class HostPointerManager;
 struct FabricVertex;
 struct FabricEdge;
 struct Image;
-class ExternalSemaphoreController;
 
 struct BaseDriver : _ze_driver_handle_t {
     virtual ~BaseDriver() = default;
@@ -195,9 +194,6 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;
-
-    std::unique_ptr<ExternalSemaphoreController> externalSemaphoreController;
-    std::mutex externalSemaphoreControllerMutex;
 
     uint32_t numDevices = 0;
 
