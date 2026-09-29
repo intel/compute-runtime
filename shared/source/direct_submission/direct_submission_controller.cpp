@@ -166,7 +166,7 @@ void DirectSubmissionController::checkNewSubmissions() {
             }
 
             state.isStopped = false;
-            state.idleSince.reset();
+            state.idleSince = now;
             state.taskCount = taskCount;
         }
     }

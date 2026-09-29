@@ -98,7 +98,7 @@ TEST(DirectSubmissionControllerTests, givenGpuIdleForLessThanTimeoutWhenChecking
     controller.registerDirectSubmission(&csr);
     controller.notifyNewSubmission(&csr);
     controller.checkNewSubmissions();
-    EXPECT_FALSE(controller.directSubmissions[&csr].idleSince.has_value());
+    EXPECT_TRUE(controller.directSubmissions[&csr].idleSince.has_value());
 
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
@@ -202,48 +202,20 @@ TEST(DirectSubmissionControllerTests, givenNewSubmissionDuringIdleDwellWhenCheck
     controller.checkNewSubmissions();
     EXPECT_TRUE(controller.directSubmissions[&csr].idleSince.has_value());
 
+    controller.cpuTimestamp += controller.timeout - std::chrono::microseconds(1);
     csr.taskCount.store(6u);
     controller.notifyNewSubmission(&csr);
     controller.checkNewSubmissions();
-    EXPECT_FALSE(controller.directSubmissions[&csr].idleSince.has_value());
+    ASSERT_TRUE(controller.directSubmissions[&csr].idleSince.has_value());
+    EXPECT_EQ(controller.cpuTimestamp, controller.directSubmissions[&csr].idleSince.value());
 
-    controller.cpuTimestamp += controller.timeout;
+    controller.cpuTimestamp += std::chrono::microseconds(1);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
 
     controller.cpuTimestamp += controller.timeout;
     controller.checkNewSubmissions();
     EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
-
-    controller.unregisterDirectSubmission(&csr);
-}
-
-TEST(DirectSubmissionControllerTests, givenTimeSpentDetectingIdleWhenArmingDwellThenIdleSinceIsStampedAfterTheIdleCheck) {
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
-
-    DeviceBitfield deviceBitfield(1);
-    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
-                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
-    csr.setupContext(*osContext.get());
-    csr.taskCount.store(5u);
-
-    DirectSubmissionControllerMock controller;
-    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
-    controller.registerDirectSubmission(&csr);
-    controller.notifyNewSubmission(&csr);
-    controller.checkNewSubmissions();
-
-    controller.cpuTimestampIncrementPerCall = std::chrono::microseconds(10);
-    const auto beforeIdleCheck = controller.cpuTimestamp;
-    controller.checkNewSubmissions();
-
-    ASSERT_TRUE(controller.directSubmissions[&csr].idleSince.has_value());
-    EXPECT_GT(controller.directSubmissions[&csr].idleSince.value(), beforeIdleCheck);
 
     controller.unregisterDirectSubmission(&csr);
 }
@@ -666,6 +638,51 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
     EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
     EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenGpuIdleAtFirstCheckAfterSubmissionWhenTimeoutElapsedThenDirectSubmissionIsStopped) {
+    csr->setLatestFlushedTaskCount(10u);
+    csr->isBusyReturnValue = false;
+
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
+    EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenGpuBusyAtFirstCheckAfterSubmissionWhenGpuBecomesIdleThenStopWaitsForFullTimeout) {
+    csr->setLatestFlushedTaskCount(10u);
+    csr->isBusyReturnValue = true;
+
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
+    EXPECT_FALSE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_FALSE(controller->directSubmissions[csr.get()].idleSince.has_value());
+
+    csr->isBusyReturnValue = false;
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
+    EXPECT_FALSE(controller->directSubmissions[csr.get()].isStopped);
+
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
+    EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenTimeSpentDetectingIdleWhenArmingDwellThenIdleSinceIsStampedAfterTheIdleCheck) {
+    csr->setLatestFlushedTaskCount(10u);
+    csr->isBusyReturnValue = true;
+    controller->checkNewSubmissions();
+    ASSERT_FALSE(controller->directSubmissions[csr.get()].idleSince.has_value());
+
+    csr->isBusyReturnValue = false;
+    controller->cpuTimestampIncrementPerCall = std::chrono::microseconds(10);
+    const auto beforeIdleCheck = controller->cpuTimestamp;
+    controller->checkNewSubmissions();
+
+    ASSERT_TRUE(controller->directSubmissions[csr.get()].idleSince.has_value());
+    EXPECT_GT(controller->directSubmissions[csr.get()].idleSince.value(), beforeIdleCheck);
 }
 
 TEST_F(DirectSubmissionIdleDetectionTests, givenPeerContentionThenIsDirectSubmissionIdleReflectsTryLockResult) {
