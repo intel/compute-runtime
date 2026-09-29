@@ -56,7 +56,7 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     }
 
     const auto aubCenter = executionEnvironment->rootDeviceEnvironments[0]->aubCenter.get();
-    auto memoryOperationsInterface = std::make_unique<NEO::AubMemoryOperationsHandler>(aubCenter->getAubManager());
+    auto memoryOperationsInterface = std::make_unique<NEO::AubMemoryOperationsHandler>(*aubCenter);
     memoryOperationsInterface->setAddressWidth(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper()->getAddressWidth());
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::move(memoryOperationsInterface);
 

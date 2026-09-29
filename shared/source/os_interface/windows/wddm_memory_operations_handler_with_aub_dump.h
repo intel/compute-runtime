@@ -32,7 +32,7 @@ class WddmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
         }
 
         const auto aubCenter = rootDeviceEnvironment.aubCenter.get();
-        aubMemoryOperationsHandler = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+        aubMemoryOperationsHandler = std::make_unique<AubMemoryOperationsHandler>(*aubCenter);
         aubMemoryOperationsHandler->setAddressWidth(rootDeviceEnvironment.getGmmHelper()->getAddressWidth());
     };
 

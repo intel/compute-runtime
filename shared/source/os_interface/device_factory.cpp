@@ -131,7 +131,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             rootDeviceEnvironment.initGmm();
             rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", csrType);
             auto aubCenter = rootDeviceEnvironment.aubCenter.get();
-            auto opsHandler = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+            auto opsHandler = std::make_unique<AubMemoryOperationsHandler>(*aubCenter);
             opsHandler->setAddressWidth(rootDeviceEnvironment.getGmmHelper()->getAddressWidth());
             rootDeviceEnvironment.memoryOperationsInterface = std::move(opsHandler);
 

@@ -14,6 +14,7 @@
 #include "aubstream/aubstream.h"
 #include "aubstream/hardware_context.h"
 
+#include <functional>
 #include <optional>
 #include <unordered_map>
 
@@ -140,6 +141,9 @@ class MockAubManager : public aub_stream::AubManager {
         if (storeAllocationParams) {
             storedAllocationParams.push_back(allocationParams);
         }
+        if (writeMemory2Callback) {
+            writeMemory2Callback();
+        }
     }
 
     void writePageTableEntries(uint64_t gfxAddress, size_t size, uint32_t memoryBanks, int hint,
@@ -154,6 +158,9 @@ class MockAubManager : public aub_stream::AubManager {
     void freeMemory(uint64_t gfxAddress, size_t size) override {
         freeMemoryCalled = true;
         freedGfxAddress = gfxAddress;
+        if (freeMemoryCallback) {
+            freeMemoryCallback();
+        }
     }
 
     bool reservePhysicalMemory(aub_stream::AllocationParams allocationParams, aub_stream::PhysicalAllocationInfo &physicalAllocInfo) override { return false; };
@@ -181,6 +188,8 @@ class MockAubManager : public aub_stream::AubManager {
     bool writePhysicalMemoryPagesCalled = false;
     bool freeMemoryCalled = false;
     uint64_t freedGfxAddress = 0;
+    std::function<void()> writeMemory2Callback;
+    std::function<void()> freeMemoryCallback;
     bool storeAllocationParams = false;
     uint32_t contextFlags = 0;
     int hintToWriteMemory = 0;

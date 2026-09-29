@@ -1035,6 +1035,30 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandle
     EXPECT_TRUE(mockManager1->freeMemoryCalled);
 }
 
+TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandlesAreCleanedThenAubManagerFreeMemoryIsCalledUnderPageTablesLock) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get(), true, 1);
+    MockMemoryManager mockMemoryManager(mockExecutionEnvironment);
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+    uint32_t lockCallsAtFree = 0u;
+    mockManager->freeMemoryCallback = [&] { lockCallsAtFree = mockAubCenter->obtainPageTablesLockCalled; };
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
+    mockMemoryManager.populateOsHandles(storage, rootDeviceIndex);
+    mockMemoryManager.getHostPtrManager()->releaseHandleStorage(rootDeviceIndex, storage);
+    mockMemoryManager.cleanOsHandles(storage, rootDeviceIndex);
+    mockManager->freeMemoryCallback = nullptr;
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+    EXPECT_EQ(1u, lockCallsAtFree);
+}
+
 HWTEST_F(MemoryAllocatorTest, givenAllocationUsedByContextWhenFreeingThenHandleCompletionIsCalled) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableFreeMemory.set(true);
@@ -1053,6 +1077,52 @@ HWTEST_F(MemoryAllocatorTest, givenAllocationUsedByContextWhenFreeingThenHandleC
 
     EXPECT_TRUE(mockManager0->freeMemoryCalled);
     EXPECT_TRUE(static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->pollForCompletionCalled);
+}
+
+TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenFreeingGraphicsMemoryThenAubManagerFreeMemoryIsCalledUnderPageTablesLock) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+    uint32_t lockCallsAtFree = 0u;
+    mockManager->freeMemoryCallback = [&] { lockCallsAtFree = mockAubCenter->obtainPageTablesLockCalled; };
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+    mockManager->freeMemoryCallback = nullptr;
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+    EXPECT_EQ(1u, lockCallsAtFree);
+}
+
+TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenFreeingGraphicsMemoryThenAubManagerFreeMemoryIsCalledBeforeGpuAddressRangeIsFreed) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, MemoryConstants::pageSize, nullptr, AllocationType::buffer);
+    ASSERT_NE(nullptr, allocation);
+
+    auto gfxPartition = new MockGfxPartition();
+    NonCopyableVariableBackup<std::unique_ptr<GfxPartition>> gfxPartitionBackup(&memoryManager->gfxPartitions[rootDeviceIndex], std::unique_ptr<GfxPartition>(gfxPartition));
+    uint32_t gpuAddressRangeFreesAtFree = 0u;
+    mockManager->freeMemoryCallback = [&] { gpuAddressRangeFreesAtFree = gfxPartition->freeGpuAddressRangeCalled; };
+
+    memoryManager->freeGraphicsMemory(allocation);
+    mockManager->freeMemoryCallback = nullptr;
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+    EXPECT_EQ(0u, gpuAddressRangeFreesAtFree);
+    EXPECT_EQ(1u, gfxPartition->freeGpuAddressRangeCalled);
 }
 
 TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeSizeWhenAskedForHostPtrAllocationThenGraphicsAllocationIsBeignCreatedWithAllFragmentsPresent) {
