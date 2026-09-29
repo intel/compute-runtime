@@ -10,29 +10,65 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_library.h"
 
-#include <atomic>
+#include "opencl/source/platform/platform.h"
+
+#include <algorithm>
 
 namespace NEO {
 
 static void loadL0Library();
 
-bool isLEOEnabled() {
-    auto flag = debugManager.flags.EnableLEO.get();
-    if (flag == 0) {
-        return false;
-    }
-    if (flag == 1) {
-        loadL0Library();
-        return true;
-    }
-    return l0ForwardingState && l0ForwardingState->forwardingActive.load(std::memory_order_acquire);
+bool isLeoForcedOn() {
+    return debugManager.flags.EnableLEO.get() == 1;
 }
 
-void activateLeoForwarding() {
+bool isLeoForcedOff() {
+    return debugManager.flags.EnableLEO.get() == 0;
+}
+
+bool ensureLeoLibraryLoaded() {
     loadL0Library();
-    if (l0ForwardingState) {
-        l0ForwardingState->forwardingActive.store(true, std::memory_order_release);
+    return l0ForwardingState && l0ForwardingState->library && l0ForwardingState->library->isLoaded();
+}
+
+bool isLeoPlatformHandle(cl_platform_id platform) {
+    if (platform == nullptr || leoPlatformEntries == nullptr) {
+        return false;
     }
+    return std::any_of(leoPlatformEntries->begin(), leoPlatformEntries->end(),
+                       [platform](const LeoPlatformEntry &entry) { return entry.handle == platform; });
+}
+
+bool areAllPlatformsLeo() {
+    if (leoPlatformEntries == nullptr || leoPlatformEntries->empty()) {
+        return false;
+    }
+    return platformsImpl != nullptr && platformsImpl->empty();
+}
+
+bool hasLeoPlatforms() {
+    if (isLeoForcedOn()) {
+        return true;
+    }
+    return leoPlatformEntries != nullptr && !leoPlatformEntries->empty();
+}
+
+std::vector<cl_platform_id> getLeoPlatforms() {
+    std::vector<cl_platform_id> leoPlatforms;
+    if (!ensureLeoLibraryLoaded() || l0ForwardingState->clGetPlatformIDsFunc == nullptr) {
+        return leoPlatforms;
+    }
+
+    cl_uint numLeoPlatforms = 0u;
+    if (CL_SUCCESS != l0ForwardingState->clGetPlatformIDsFunc(0u, nullptr, &numLeoPlatforms) || numLeoPlatforms == 0u) {
+        return leoPlatforms;
+    }
+
+    leoPlatforms.resize(numLeoPlatforms);
+    if (CL_SUCCESS != l0ForwardingState->clGetPlatformIDsFunc(numLeoPlatforms, leoPlatforms.data(), nullptr)) {
+        leoPlatforms.clear();
+    }
+    return leoPlatforms;
 }
 
 L0ForwardingState *l0ForwardingState = nullptr;

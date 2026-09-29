@@ -78,7 +78,9 @@ bool UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
              executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE)) {
             executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         }
-        quitOclInitIfLeoEnabled(*executionEnvironment.rootDeviceEnvironments[i]);
+        if (isLeoRootDevice(*executionEnvironment.rootDeviceEnvironments[i])) {
+            executionEnvironment.addLeoPlatformKey(*executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo());
+        }
         executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
         if (debugManager.flags.ExposeSingleDevice.get() != -1) {
             executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(!!debugManager.flags.ExposeSingleDevice.get());

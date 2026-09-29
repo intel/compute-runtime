@@ -35,6 +35,7 @@
 namespace NEO {
 
 std::vector<std::unique_ptr<Platform>> *platformsImpl = nullptr;
+std::vector<LeoPlatformEntry> *leoPlatformEntries = nullptr;
 
 Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvironment(executionEnvironmentIn) {
     clDevices.reserve(4);

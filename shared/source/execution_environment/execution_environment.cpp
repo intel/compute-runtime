@@ -27,6 +27,8 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/logger.h"
 
+#include <algorithm>
+
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
     this->configureNeoEnvironment();
@@ -37,6 +39,17 @@ UsmReusePerfLogger &ExecutionEnvironment::getUsmReusePerfLogger() const {
         usmReusePerfLogger = std::make_unique<UsmReusePerfLogger>();
     });
     return *usmReusePerfLogger;
+}
+
+void ExecutionEnvironment::addLeoPlatformKey(const HardwareInfo &hwInfo) {
+    const DeviceGroupSortKey key{hwInfo.platform.eProductFamily, hwInfo.capabilityTable.isIntegratedDevice};
+    for (const auto &existingKey : leoPlatformKeys) {
+        if (existingKey.productFamily == key.productFamily) {
+            return;
+        }
+    }
+    auto position = std::upper_bound(leoPlatformKeys.begin(), leoPlatformKeys.end(), key, compareDeviceGroups);
+    leoPlatformKeys.insert(position, key);
 }
 
 void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment) {

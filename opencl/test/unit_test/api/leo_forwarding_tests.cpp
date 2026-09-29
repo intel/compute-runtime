@@ -40,7 +40,8 @@ TEST(AdditionalExtension, whenCheckIsLEOEnabledWithFlagSetTo1ThenReturnTrue) {
     resetL0Library();
 
     debugManager.flags.EnableLEO.set(1);
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOn());
+    EXPECT_FALSE(isLeoForcedOff());
 
     leoTeardown();
 }
@@ -51,7 +52,8 @@ TEST(AdditionalExtension, whenCheckIsLEOEnabledWithFlagSetTo0ThenReturnFalse) {
     resetL0Library();
 
     debugManager.flags.EnableLEO.set(0);
-    EXPECT_FALSE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOff());
+    EXPECT_FALSE(isLeoForcedOn());
 
     leoTeardown();
 }
@@ -61,7 +63,8 @@ TEST(AdditionalExtension, whenCheckIsLEOEnabledWithDefaultFlagAndNoLibraryThenRe
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
     resetL0Library();
 
-    EXPECT_FALSE(isLEOEnabled());
+    EXPECT_FALSE(isLeoForcedOn());
+    EXPECT_FALSE(hasLeoPlatforms());
 
     leoTeardown();
 }
@@ -140,7 +143,8 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLoadingLibraryFailsThenForwardFuncti
         return nullptr;
     };
 
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOn());
+    EXPECT_FALSE(ensureLeoLibraryLoaded());
 
     cl_uint numPlatforms = 1u;
     auto retVal = forwardClGetPlatformIDs(0, nullptr, &numPlatforms);
@@ -184,7 +188,8 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLoadingLibrarySucceedsThenForwardFun
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
     OsLibrary::loadFunc = MockOsLibrary::load;
 
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOn());
+    EXPECT_TRUE(ensureLeoLibraryLoaded());
 
     cl_uint numPlatforms = 0u;
     auto retVal = forwardClGetPlatformIDs(0, nullptr, &numPlatforms);
@@ -223,7 +228,8 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLibraryLoadedButNotAllSymbolsResolve
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
     OsLibrary::loadFunc = MockOsLibrary::load;
 
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOn());
+    EXPECT_TRUE(ensureLeoLibraryLoaded());
 
     cl_uint numPlatforms = 0u;
     auto retVal = forwardClGetPlatformIDs(0, nullptr, &numPlatforms);
@@ -254,11 +260,11 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLibraryLoadedButNotAllSymbolsResolve
 TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenForwardingNotYetActivatedThenIsLEOEnabledReturnsFalseAndLibraryNotLoaded) {
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
 
-    EXPECT_FALSE(isLEOEnabled());
+    EXPECT_FALSE(hasLeoPlatforms());
     EXPECT_EQ(nullptr, l0ForwardingState->library.get());
 }
 
-TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenActivateLeoForwardingIsCalledThenIsLEOEnabledReturnsTrueAndLibraryIsLoaded) {
+TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenGettingLeoPlatformsThenLibraryIsLoadedOnDemandAndHandlesAreReturned) {
     VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, false};
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
     mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddressIcdOnly);
@@ -267,30 +273,26 @@ TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenActivateLeoForwardingIsCalledThenI
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
     OsLibrary::loadFunc = MockOsLibrary::load;
 
-    EXPECT_FALSE(isLEOEnabled());
+    EXPECT_EQ(nullptr, l0ForwardingState->library.get());
 
-    activateLeoForwarding();
+    auto leoPlatforms = getLeoPlatforms();
 
-    EXPECT_TRUE(isLEOEnabled());
     EXPECT_NE(nullptr, l0ForwardingState->library.get());
-
-    cl_uint numPlatforms = 0u;
-    EXPECT_EQ(CL_SUCCESS, forwardClGetPlatformIDs(0, nullptr, &numPlatforms));
-    EXPECT_EQ(42u, numPlatforms);
+    EXPECT_EQ(42u, leoPlatforms.size());
 
     OsLibrary::loadFunc = savedLoadFunc;
 }
 
-TEST_F(L0LibraryLoadTest, givenFlagZeroWhenActivateLeoForwardingIsCalledThenIsLEOEnabledStillReturnsFalse) {
+TEST_F(L0LibraryLoadTest, givenFlagZeroThenLeoIsForcedOffAndNoPlatformsAreReported) {
     debugManager.flags.EnableLEO.set(0);
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
 
-    activateLeoForwarding();
-
-    EXPECT_FALSE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOff());
+    EXPECT_FALSE(isLeoForcedOn());
+    EXPECT_FALSE(hasLeoPlatforms());
 }
 
-TEST_F(L0LibraryLoadTest, givenActivatedForwardingWhenLeoIsResetThenForwardingIsDisabledAgain) {
+TEST_F(L0LibraryLoadTest, givenLoadedLibraryWhenLeoIsResetThenLibraryIsUnloadedAgain) {
     auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
     mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddressIcdOnly);
 
@@ -298,11 +300,11 @@ TEST_F(L0LibraryLoadTest, givenActivatedForwardingWhenLeoIsResetThenForwardingIs
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
     OsLibrary::loadFunc = MockOsLibrary::load;
 
-    activateLeoForwarding();
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(ensureLeoLibraryLoaded());
 
     resetL0Library();
-    EXPECT_FALSE(isLEOEnabled());
+    OsLibrary::loadFunc = [](const OsLibraryCreateProperties &properties) -> OsLibrary * { return nullptr; };
+    EXPECT_FALSE(ensureLeoLibraryLoaded());
 
     OsLibrary::loadFunc = savedLoadFunc;
 }
@@ -313,7 +315,7 @@ TEST_F(L0LibraryLoadTest, givenDefaultFlagWhenLibraryLoadFailsThenIsLEOEnabledRe
         return nullptr;
     };
 
-    EXPECT_FALSE(isLEOEnabled());
+    EXPECT_FALSE(ensureLeoLibraryLoaded());
 
     OsLibrary::loadFunc = savedLoadFunc;
 }
@@ -329,7 +331,8 @@ TEST_F(L0LibraryLoadTest, givenFlag1WhenLibraryReturnsNoPlatformsThenIsLEOEnable
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
     OsLibrary::loadFunc = MockOsLibrary::load;
 
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOn());
+    EXPECT_TRUE(ensureLeoLibraryLoaded());
     EXPECT_NE(nullptr, l0ForwardingState->library.get());
 
     cl_uint numPlatforms = 5u;
@@ -345,7 +348,8 @@ TEST_F(L0LibraryLoadTest, givenLeoForwardingSelfLoadEnabledWhenLoadingLibraryThe
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, mockCapturingLoad};
     capturedPerformSelfLoad = false;
 
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOn());
+    ensureLeoLibraryLoaded();
     EXPECT_TRUE(capturedPerformSelfLoad);
 }
 
@@ -356,7 +360,8 @@ TEST_F(L0LibraryLoadTest, givenLeoForwardingSelfLoadDisabledWhenLoadingLibraryTh
     capturedPerformSelfLoad = true;
     capturedLibraryNameEmpty = true;
 
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOn());
+    ensureLeoLibraryLoaded();
     EXPECT_FALSE(capturedPerformSelfLoad);
     EXPECT_FALSE(capturedLibraryNameEmpty);
 }
@@ -373,7 +378,8 @@ TEST_F(L0LibraryLoadTest, givenSelfLoadWhenLibraryIsLoadedThenForwardFunctionsAr
     MockOsLibrary::loadLibraryNewObject = mockLibrary;
     OsLibrary::loadFunc = MockOsLibrary::load;
 
-    EXPECT_TRUE(isLEOEnabled());
+    EXPECT_TRUE(isLeoForcedOn());
+    EXPECT_TRUE(ensureLeoLibraryLoaded());
     EXPECT_EQ(nullptr, l0ForwardingState->clGetPlatformIDsFunc);
 
     cl_uint numPlatforms = 5u;

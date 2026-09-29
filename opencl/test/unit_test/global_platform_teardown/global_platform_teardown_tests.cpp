@@ -52,22 +52,27 @@ class GlobalPlatformTeardownTest : public ::testing::Test {
     void SetUp() override {
         tmpPlatforms = platformsImpl;
         platformsImpl = nullptr;
+        tmpLeoPlatformEntries = leoPlatformEntries;
+        leoPlatformEntries = nullptr;
     }
 
     void TearDown() override {
         globalPlatformTeardown(false);
         wasPlatformTeardownCalled = false;
         platformsImpl = tmpPlatforms;
+        leoPlatformEntries = tmpLeoPlatformEntries;
     }
 
   public:
     std::vector<std::unique_ptr<Platform>> *tmpPlatforms;
+    std::vector<LeoPlatformEntry> *tmpLeoPlatformEntries;
     SharingFactoryStateRestore sharingStateRestore;
 };
 
 TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformSetupThenPlatformsAllocated) {
     globalPlatformSetup();
     EXPECT_NE(platformsImpl, nullptr);
+    EXPECT_NE(leoPlatformEntries, nullptr);
 }
 TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformSetupThenWasTeardownCalledIsSetToFalse) {
     globalPlatformSetup();
@@ -79,6 +84,7 @@ TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownAndNotTerminatingP
 
     globalPlatformTeardown(false);
     EXPECT_EQ(platformsImpl, nullptr);
+    EXPECT_EQ(leoPlatformEntries, nullptr);
     EXPECT_TRUE(wasPlatformTeardownCalled);
 }
 TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownAndTerminatingProcessThenPlatformsNotDestroyed) {
@@ -87,6 +93,7 @@ TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownAndTerminatingProc
 
     globalPlatformTeardown(true);
     EXPECT_NE(platformsImpl, nullptr);
+    EXPECT_NE(leoPlatformEntries, nullptr);
     EXPECT_TRUE(wasPlatformTeardownCalled);
 }
 

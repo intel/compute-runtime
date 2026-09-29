@@ -1480,10 +1480,8 @@ std::vector<DeviceVector> Device::groupDevices(DeviceVector devices) {
     std::sort(outDevices.begin(), outDevices.end(), [](DeviceVector &lhs, DeviceVector &rhs) -> bool {
         auto &leftHwInfo = lhs[0]->getHardwareInfo();  // NOLINT(clang-analyzer-cplusplus.Move) - MSVC assumes usage of moved vector
         auto &rightHwInfo = rhs[0]->getHardwareInfo(); // NOLINT(clang-analyzer-cplusplus.Move)
-        if (leftHwInfo.capabilityTable.isIntegratedDevice != rightHwInfo.capabilityTable.isIntegratedDevice) {
-            return rightHwInfo.capabilityTable.isIntegratedDevice;
-        }
-        return leftHwInfo.platform.eProductFamily > rightHwInfo.platform.eProductFamily;
+        return compareDeviceGroups({leftHwInfo.platform.eProductFamily, leftHwInfo.capabilityTable.isIntegratedDevice},
+                                   {rightHwInfo.platform.eProductFamily, rightHwInfo.capabilityTable.isIntegratedDevice});
     });
     return outDevices;
 }

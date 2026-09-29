@@ -11,7 +11,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -289,18 +288,32 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
     }
 }
 
+namespace {
+std::vector<uint32_t> leoTestCreatedRootDeviceIndices;
+} // namespace
+
 struct DeviceFactoryLeoTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.EnableLEO.set(-1);
         ultHwConfig.leoDetectionEnabled = true;
-        DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &, uint32_t) -> std::unique_ptr<Device> { return nullptr; };
+        std::vector<uint32_t>{}.swap(leoTestCreatedRootDeviceIndices);
+        DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
+            leoTestCreatedRootDeviceIndices.push_back(rootDeviceIndex);
+            return nullptr;
+        };
     }
 
-    MockExecutionEnvironment &prepareEnvWithLeoSupport(bool isLeoSupported) {
-        executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
-        auto mockProductHelper = new MockProductHelper;
-        mockProductHelper->isLEOSupportedResult = isLeoSupported;
-        executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
+    void TearDown() override {
+        std::vector<uint32_t>{}.swap(leoTestCreatedRootDeviceIndices);
+    }
+
+    MockExecutionEnvironment &prepareEnvWithLeoSupport(const std::vector<bool> &leoSupportPerRootDevice) {
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), true, static_cast<uint32_t>(leoSupportPerRootDevice.size()));
+        for (size_t i = 0; i < leoSupportPerRootDevice.size(); i++) {
+            auto mockProductHelper = new MockProductHelper;
+            mockProductHelper->isLEOSupportedResult = leoSupportPerRootDevice[i];
+            executionEnvironment->rootDeviceEnvironments[i]->productHelper.reset(mockProductHelper);
+        }
         return *executionEnvironment;
     }
 
@@ -310,26 +323,81 @@ struct DeviceFactoryLeoTest : public ::testing::Test {
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
 };
 
-TEST_F(DeviceFactoryLeoTest, givenOpenClApiAndAutoEnableLeoWhenProductSupportsLeoThenCreateDevicesThrowsLeoSupportedException) {
-    auto &executionEnvironment = prepareEnvWithLeoSupport(true);
-    EXPECT_THROW(DeviceFactory::createDevices(executionEnvironment), LeoSupportedException);
+TEST_F(DeviceFactoryLeoTest, givenAffinityMaskSelectingNativeDeviceThenItSurvivesAndNoLeoKeyIsRecorded) {
+    debugManager.flags.ZE_AFFINITY_MASK.set("1");
+    auto &executionEnvironment = prepareEnvWithLeoSupport({true, false});
+
+    executionEnvironment.parseAffinityMask();
+    dropLeoRootDeviceEnvironments(executionEnvironment);
+
+    EXPECT_EQ(1u, executionEnvironment.rootDeviceEnvironments.size());
+    EXPECT_FALSE(executionEnvironment.isLeoRootDeviceDetected());
 }
 
-TEST_F(DeviceFactoryLeoTest, givenOpenClApiAndAutoEnableLeoWhenProductDoesNotSupportLeoThenCreateDevicesDoesNotThrow) {
-    auto &executionEnvironment = prepareEnvWithLeoSupport(false);
-    EXPECT_NO_THROW(DeviceFactory::createDevices(executionEnvironment));
+TEST_F(DeviceFactoryLeoTest, givenAffinityMaskSelectingLeoDeviceThenOnlyItsKeyIsRecordedAndNoNativeDeviceSurvives) {
+    debugManager.flags.ZE_AFFINITY_MASK.set("1");
+    auto &executionEnvironment = prepareEnvWithLeoSupport({false, true});
+
+    executionEnvironment.parseAffinityMask();
+    dropLeoRootDeviceEnvironments(executionEnvironment);
+
+    EXPECT_TRUE(executionEnvironment.rootDeviceEnvironments.empty());
+    EXPECT_EQ(1u, executionEnvironment.getLeoPlatformKeys().size());
 }
 
-TEST_F(DeviceFactoryLeoTest, givenLeoForcedOffWhenProductSupportsLeoThenCreateDevicesDoesNotThrow) {
+TEST_F(DeviceFactoryLeoTest, givenNoAffinityMaskThenLeoDevicesAreDroppedAndTheirKeysRecorded) {
+    auto &executionEnvironment = prepareEnvWithLeoSupport({true, false});
+
+    executionEnvironment.parseAffinityMask();
+    dropLeoRootDeviceEnvironments(executionEnvironment);
+
+    EXPECT_EQ(1u, executionEnvironment.rootDeviceEnvironments.size());
+    EXPECT_EQ(1u, executionEnvironment.getLeoPlatformKeys().size());
+}
+
+TEST_F(DeviceFactoryLeoTest, givenOpenClApiAndAutoEnableLeoWhenProductSupportsLeoThenNoNativeDeviceIsCreatedAndDetectionIsReported) {
+    auto &executionEnvironment = prepareEnvWithLeoSupport({true});
+    DeviceFactory::createDevices(executionEnvironment);
+    EXPECT_TRUE(executionEnvironment.isLeoRootDeviceDetected());
+    EXPECT_TRUE(leoTestCreatedRootDeviceIndices.empty());
+}
+
+TEST_F(DeviceFactoryLeoTest, givenOpenClApiAndAutoEnableLeoWhenProductDoesNotSupportLeoThenNativeDeviceIsCreated) {
+    auto &executionEnvironment = prepareEnvWithLeoSupport({false});
+    DeviceFactory::createDevices(executionEnvironment);
+    EXPECT_FALSE(executionEnvironment.isLeoRootDeviceDetected());
+    EXPECT_EQ(std::vector<uint32_t>{0u}, leoTestCreatedRootDeviceIndices);
+}
+
+TEST_F(DeviceFactoryLeoTest, givenMixedRootDevicesWhenOnlySomeSupportLeoThenOnlyTheRestAreCreatedNatively) {
+    auto &executionEnvironment = prepareEnvWithLeoSupport({false, true, false});
+    DeviceFactory::createDevices(executionEnvironment);
+    EXPECT_TRUE(executionEnvironment.isLeoRootDeviceDetected());
+    const std::vector<uint32_t> expected{0u, 2u};
+    EXPECT_EQ(expected, leoTestCreatedRootDeviceIndices);
+}
+
+TEST_F(DeviceFactoryLeoTest, givenLeoForcedOffWhenProductSupportsLeoThenNativeDeviceIsStillCreated) {
     debugManager.flags.EnableLEO.set(0);
-    auto &executionEnvironment = prepareEnvWithLeoSupport(true);
-    EXPECT_NO_THROW(DeviceFactory::createDevices(executionEnvironment));
+    auto &executionEnvironment = prepareEnvWithLeoSupport({true});
+    DeviceFactory::createDevices(executionEnvironment);
+    EXPECT_FALSE(executionEnvironment.isLeoRootDeviceDetected());
+    EXPECT_EQ(std::vector<uint32_t>{0u}, leoTestCreatedRootDeviceIndices);
 }
 
-TEST_F(DeviceFactoryLeoTest, givenLeoForcedOnWhenProductSupportsLeoThenCreateDevicesDoesNotThrow) {
+TEST_F(DeviceFactoryLeoTest, givenLeoForcedOnWhenProductSupportsLeoThenDetectionIsNotReported) {
     debugManager.flags.EnableLEO.set(1);
-    auto &executionEnvironment = prepareEnvWithLeoSupport(true);
-    EXPECT_NO_THROW(DeviceFactory::createDevices(executionEnvironment));
+    auto &executionEnvironment = prepareEnvWithLeoSupport({true});
+    DeviceFactory::createDevices(executionEnvironment);
+    EXPECT_FALSE(executionEnvironment.isLeoRootDeviceDetected());
+}
+
+TEST_F(DeviceFactoryLeoTest, givenLeoDetectionDisabledWhenProductSupportsLeoThenNativeDeviceIsCreated) {
+    ultHwConfig.leoDetectionEnabled = false;
+    auto &executionEnvironment = prepareEnvWithLeoSupport({true});
+    DeviceFactory::createDevices(executionEnvironment);
+    EXPECT_FALSE(executionEnvironment.isLeoRootDeviceDetected());
+    EXPECT_EQ(std::vector<uint32_t>{0u}, leoTestCreatedRootDeviceIndices);
 }
 
 TEST(DeviceFactory, givenHwModeSelectedWhenIsHwModeSelectedIsCalledThenTrueIsReturned) {

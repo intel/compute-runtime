@@ -49,7 +49,9 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
     {
         std::lock_guard<std::mutex> lock(NEO::LEO::Platform::platformsMutex);
 
-        if (NEO::LEO::platformsImpl->empty()) {
+        if (!NEO::LEO::platformsInitAttempted && NEO::LEO::platformsImpl->empty()) {
+            NEO::LEO::platformsInitAttempted = true;
+
             uint32_t driverCount = 0;
             ze_init_driver_type_desc_t desc{ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC, nullptr, ZE_INIT_DRIVER_TYPE_FLAG_GPU};
 
@@ -63,6 +65,9 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
 
                 if (initResult == ZE_RESULT_SUCCESS) {
                     for (int i = 0; i < std::ssize(driverHandles); ++i) {
+                        if (!NEO::LEO::isLeoExposedDriver(driverHandles[i])) {
+                            continue;
+                        }
                         NEO::LEO::platformsImpl->push_back(std::make_unique<NEO::LEO::Platform>(driverHandles[i]));
                     }
                 }

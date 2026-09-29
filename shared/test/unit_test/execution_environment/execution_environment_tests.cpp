@@ -384,6 +384,41 @@ TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecu
     EXPECT_EQ(debugManager.flags.ForceCommandBufferAlignment.get(), appCommandBufferAlignment);
 }
 
+TEST(ExecutionEnvironment, givenLeoPlatformKeysAddedInDiscoveryOrderThenTheyAreReportedInDeviceGroupOrder) {
+    MockExecutionEnvironment executionEnvironment{};
+
+    HardwareInfo integrated = *defaultHwInfo;
+    integrated.platform.eProductFamily = IGFX_ALDERLAKE_S;
+    integrated.capabilityTable.isIntegratedDevice = true;
+
+    HardwareInfo discrete = *defaultHwInfo;
+    discrete.platform.eProductFamily = IGFX_DG2;
+    discrete.capabilityTable.isIntegratedDevice = false;
+
+    executionEnvironment.addLeoPlatformKey(integrated);
+    executionEnvironment.addLeoPlatformKey(discrete);
+
+    const auto &keys = executionEnvironment.getLeoPlatformKeys();
+    ASSERT_EQ(2u, keys.size());
+    EXPECT_FALSE(keys[0].isIntegratedDevice);
+    EXPECT_EQ(IGFX_DG2, keys[0].productFamily);
+    EXPECT_TRUE(keys[1].isIntegratedDevice);
+    EXPECT_EQ(IGFX_ALDERLAKE_S, keys[1].productFamily);
+}
+
+TEST(ExecutionEnvironment, givenLeoPlatformKeyAddedTwiceForSameProductFamilyThenItIsRecordedOnce) {
+    MockExecutionEnvironment executionEnvironment{};
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.eProductFamily = IGFX_DG2;
+
+    executionEnvironment.addLeoPlatformKey(hwInfo);
+    executionEnvironment.addLeoPlatformKey(hwInfo);
+
+    EXPECT_EQ(1u, executionEnvironment.getLeoPlatformKeys().size());
+    EXPECT_TRUE(executionEnvironment.isLeoRootDeviceDetected());
+}
+
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitialized) {
     MockExecutionEnvironment executionEnvironment{};
     executionEnvironment.initializeMemoryManager();
@@ -415,6 +450,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::mutex) +
                                                   sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
                                                   sizeof(std::mutex) +
+                                                  sizeof(std::vector<DeviceGroupSortKey>) +
                                                   (is64bit ? 21 : 13),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 

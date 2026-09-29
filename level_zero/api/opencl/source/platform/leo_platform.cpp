@@ -11,6 +11,7 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/pin/pin.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
@@ -18,10 +19,14 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 
+#include <string>
+
 namespace NEO {
 namespace LEO {
 
 std::vector<std::unique_ptr<Platform>> *platformsImpl = nullptr;
+
+bool platformsInitAttempted = false;
 
 std::mutex Platform::platformsMutex;
 
@@ -152,6 +157,18 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     GetInfo::setParamValueReturnSize(paramValueSizeRet, paramSize, getInfoStatus);
 
     return retVal;
+}
+
+bool isLeoExposedDriver(ze_driver_handle_t driverHandle) {
+    if (debugManager.flags.EnableLEO.get() == 1) {
+        return true;
+    }
+
+    auto *driver = L0::DriverHandle::fromHandle(driverHandle);
+    if (driver == nullptr || driver->devices.empty()) {
+        return false;
+    }
+    return driver->devices[0]->getProductHelper().isLEOSupported();
 }
 
 void Platform::tryNotifyGtpinInit() {

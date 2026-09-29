@@ -968,6 +968,7 @@ TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatfor
 
     EXPECT_EQ(nullptr, platformsImpl);
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
+    leoPlatformEntries = new std::vector<LeoPlatformEntry>;
 }
 
 TEST_F(DrmTests, givenValidPciPathThenPciBusInfoIsAvailable) {
