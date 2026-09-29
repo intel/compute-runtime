@@ -10,6 +10,7 @@
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/cmdqueue/patch_preamble_cross_sync_definitions.h"
 #include "level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/ze_api.h"
@@ -218,8 +219,9 @@ struct RecordedApiCommands {
 
 struct Graph : _ze_graph_handle_t {
     Graph(L0::Context *ctx, bool preallocated, WeaklyShared<OrderedCommandsRegistry> &&orderedCommandsRegistry)
-        : ctx(ctx), preallocated(preallocated),
-          orderedCommands(std::move(orderedCommandsRegistry)) {
+        : ctx(ctx),
+          orderedCommands(std::move(orderedCommandsRegistry)),
+          preallocated(preallocated) {
         if (orderedCommands.empty()) {
             orderedCommands = WeaklyShared<OrderedCommandsRegistry>(new OrderedCommandsRegistry);
         }
@@ -434,6 +436,25 @@ struct Graph : _ze_graph_handle_t {
                                                GraphExportStyle &exportStyle,
                                                GraphExportEventNodes &exportEventNodes);
 
+    bool isInOrderGraph() const {
+        return inOrderGraph;
+    }
+
+    void enableInOrderGraph() {
+        inOrderGraph = true;
+        if (getParentGraph()) {
+            getParentGraph()->enableInOrderGraph();
+        }
+    }
+
+    bool getPatchPreambleCrossSync() const {
+        return patchPreambleCrossSync;
+    }
+
+    void enablePatchPreambleCrossSync() {
+        patchPreambleCrossSync = true;
+    }
+
   protected:
     template <typename GraphT>
     static GraphT *findRootGraph(GraphT *graph) {
@@ -467,11 +488,6 @@ struct Graph : _ze_graph_handle_t {
 
     const uint64_t id = getNextGraphId();
 
-    bool preallocated = false;
-    bool wasCapturingStopped = false;
-    bool multiEngineGraph = false;
-    bool mutableCmdlist = false;
-
     WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
 
     struct DestructorCallbackEntry {
@@ -480,6 +496,13 @@ struct Graph : _ze_graph_handle_t {
     };
     std::mutex destructorCallbacksMutex;
     std::vector<DestructorCallbackEntry> destructorCallbacks;
+
+    bool preallocated = false;
+    bool wasCapturingStopped = false;
+    bool multiEngineGraph = false;
+    bool mutableCmdlist = false;
+    bool inOrderGraph = false;
+    bool patchPreambleCrossSync = false;
 };
 
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);
@@ -669,7 +692,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     ze_result_t instantiateFrom(Graph &rootSrc, const GraphInstatiateSettings &settings);
     ze_result_t instantiateFrom(Graph &rootSrc) {
-        return this->instantiateFrom(rootSrc, {});
+        GraphInstatiateSettings settings{nullptr, rootSrc.isMultiEngineGraph()};
+        return this->instantiateFrom(rootSrc, settings);
     }
 
     ~ExecutableGraph();
@@ -696,7 +720,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     }
 
     ze_result_t execute(L0::CommandList *executionTarget, const void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
-    ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, PatchPreambleDataContainer *patchPreambleCrossSyncs);
 
     WeaklyShared<ExternalCbEventInfoContainer> getExternalCbEventInfoContainer() {
         return externalCbEventStorage;
@@ -718,6 +742,10 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
         return src;
     }
 
+    L0::CommandList *getExecutionTarget() const {
+        return executionTarget;
+    }
+
   protected:
     ze_result_t instantiateFrom(const OrderedCommandsSegment &segment, ExecGraphBuilder &builder, const GraphInstatiateSettings &settings);
 
@@ -735,6 +763,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
+    PatchPreambleCountersCrossSyncContainer internalPatchPreambleCrossSyncs;
+    PatchPreambleDataContainer graphWidePatchPreambleCrossSync;
 
     GraphInternalEvents internalEvents;
 

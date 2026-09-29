@@ -266,7 +266,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies);
     MOCKABLE_VIRTUAL ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
     ze_result_t stagingStatusToL0(const NEO::StagingTransferStatus &status) const;
-    size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists);
+    size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, CommandListExecutionInternalOptions &internalOptions);
     void tryResetKernelWithAssertFlag();
     void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload);
     size_t estimateCommandSizeForImageCopyBlit(ze_image_handle_t hImage, const ze_image_region_t *pRegion) const;

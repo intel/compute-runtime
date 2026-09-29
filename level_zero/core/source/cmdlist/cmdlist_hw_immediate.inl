@@ -1984,7 +1984,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     constexpr bool requireTaskCountUpdate = true;
     constexpr bool hasStallingCmds = true;
 
-    auto additionalSize = estimateAdditionalSizeAppendRegularCommandLists(numCommandLists, phCommandLists);
+    auto additionalSize = estimateAdditionalSizeAppendRegularCommandLists(numCommandLists, phCommandLists, internalOptions);
     auto spaceCheckStatus = checkAvailableSpace(numWaitEvents,
                                                 relaxedOrderingDispatch,
                                                 additionalSize + commonImmediateCommandSize,
@@ -2199,7 +2199,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
+size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, CommandListExecutionInternalOptions &internalOptions) {
     size_t additionalSize = 0;
     if (this->cmdQImmediate && this->cmdQImmediate->getPatchingPreamble()) {
         constexpr size_t bbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
@@ -2214,6 +2214,9 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
             additionalSize += cmdList->getActiveScratchPatchElemsPatchSize();
             additionalSize += cmdList->getFrontEndPatchSize();
             additionalSize += cmdList->getTotalNoopSpacePatchSize();
+        }
+        if (internalOptions.patchPreambleCountersCrossSyncContainer != nullptr) {
+            additionalSize += static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->estimatePatchPreambleCrossSyncSize(internalOptions.patchPreambleCountersCrossSyncContainer->list.size());
         }
     }
 

@@ -523,14 +523,14 @@ TEST_F(FailedImmediateCmdListTest, givenFailedInitializationOfGraphOwnExecutionT
     MockExecutableGraph executableGraph;
     executableGraph.executionTarget = failedCmdList.get();
 
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, executableGraph.executeSegment(passedExecutionTarget.get(), graphSegmentStart, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, executableGraph.executeSegment(passedExecutionTarget.get(), graphSegmentStart, nullptr, 0, nullptr, nullptr));
     EXPECT_EQ(nullptr, CommandList::whiteboxCast(passedExecutionTarget.get())->cmdQImmediate);
 }
 
 TEST_F(FailedImmediateCmdListTest, givenFailedInitializationOfPassedExecutionTargetWhenExecutingGraphSegmentThenCachedErrorIsReturned) {
     MockExecutableGraph executableGraph;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, executableGraph.executeSegment(failedCmdList.get(), graphSegmentStart, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, executableGraph.executeSegment(failedCmdList.get(), graphSegmentStart, nullptr, 0, nullptr, nullptr));
 }
 
 TEST_F(FailedImmediateCmdListTest, givenFailedInitializationWhenVerifyingMemoryThenFalseIsReturned) {
@@ -600,7 +600,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenGraphWithOwnExecutionTar
     MockExecutableGraph executableGraph;
     executableGraph.executionTarget = graphExecutionTarget.get();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.executeSegment(passedExecutionTarget.get(), graphSegmentStart, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.executeSegment(passedExecutionTarget.get(), graphSegmentStart, nullptr, 0, nullptr, nullptr));
 
     EXPECT_NE(nullptr, whiteBoxGraphExecutionTarget->cmdQImmediate);
     EXPECT_NE(nullptr, whiteBoxGraphExecutionTarget->getCmdContainer().getCommandStream());
@@ -624,7 +624,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenGraphWithOwnExecutionTar
     executableGraph.executionTarget = graphExecutionTarget.get();
     executableGraph.myOrderedSegments[graphSegmentStart] = segmentCmdList.get();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.executeSegment(passedExecutionTarget.get(), graphSegmentStart, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.executeSegment(passedExecutionTarget.get(), graphSegmentStart, nullptr, 0, nullptr, nullptr));
 
     EXPECT_NE(nullptr, whiteBoxGraphExecutionTarget->cmdQImmediate);
     EXPECT_EQ(nullptr, CommandList::whiteboxCast(passedExecutionTarget.get())->cmdQImmediate);
@@ -639,7 +639,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenGraphWithoutOwnExecution
     MockExecutableGraph executableGraph;
     ASSERT_EQ(nullptr, executableGraph.executionTarget);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.executeSegment(passedExecutionTarget.get(), graphSegmentStart, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.executeSegment(passedExecutionTarget.get(), graphSegmentStart, nullptr, 0, nullptr, nullptr));
 
     EXPECT_NE(nullptr, whiteBoxPassedExecutionTarget->cmdQImmediate);
     EXPECT_NE(nullptr, whiteBoxPassedExecutionTarget->getCmdContainer().getCommandStream());

@@ -40,6 +40,7 @@ struct CommandQueueHw : public CommandQueue {
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties);
     size_t estimateStateBaseAddressCmdSize();
+    size_t estimatePatchPreambleCrossSyncSize(size_t numberCrossSyncs);
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
     size_t estimateFrontEndCmdSize();
@@ -115,6 +116,7 @@ struct CommandQueueHw : public CommandQueue {
     inline void dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList);
     inline void dispatchPatchPreambleAsyncPatchElems(CommandListExecutionContext &ctx, CommandList *commandList);
     inline void dispatchPatchPreambleCommandListWaitSync(CommandListExecutionContext &ctx, CommandList *commandList);
+    inline void dispatchPatchPreambleCrossSync(CommandListExecutionContext &ctx, CommandList *commandList, NEO::LinearStream &commandStream);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
     inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);

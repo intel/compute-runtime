@@ -2023,7 +2023,8 @@ bool testWrappedMultipleEngines(ze_context_handle_t &context,
                                 const GraphDumpSettings &dumpSettings,
                                 uint32_t enginesCount,
                                 uint32_t pairCount,
-                                TestWrappedMultipleEnginesForkPolicy forkPolicy) {
+                                TestWrappedMultipleEnginesForkPolicy forkPolicy,
+                                bool useInOrder) {
     using ElemType = uint32_t;
     bool validRet = true;
 
@@ -2045,8 +2046,12 @@ bool testWrappedMultipleEngines(ze_context_handle_t &context,
     std::vector<ze_command_list_handle_t> cmdListCreated(queueCount);
     std::vector<ze_command_list_handle_t> cmdListSequence(sequenceCount);
 
+    ze_command_queue_flags_t immFlags = 0;
+    if (useInOrder) {
+        immFlags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
     for (uint32_t i = 0; i < queueCount; i++) {
-        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListCreated[i]);
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, immFlags, false, false, cmdListCreated[i]);
     }
 
     std::string forkPolicyString;
@@ -2153,7 +2158,8 @@ bool testSingleWrappedEngineDeepFork(ze_context_handle_t &context,
                                      TestKernelsContainer &testKernels,
                                      bool aubMode,
                                      const GraphDumpSettings &dumpSettings,
-                                     uint32_t enginesCount) {
+                                     uint32_t enginesCount,
+                                     bool useInOrder) {
     using ElemType = uint32_t;
     bool validRet = true;
 
@@ -2178,8 +2184,12 @@ bool testSingleWrappedEngineDeepFork(ze_context_handle_t &context,
     std::vector<ze_command_list_handle_t> cmdListCreated(queueCount);
     std::vector<ze_command_list_handle_t> cmdListSequence(kernelsAppendCount);
 
+    ze_command_queue_flags_t immFlags = 0;
+    if (useInOrder) {
+        immFlags |= ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
     for (uint32_t i = 0; i < queueCount; i++) {
-        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListCreated[i]);
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, immFlags, false, false, cmdListCreated[i]);
     }
 
     cmdListSequence[0] = cmdListCreated[0];                // root
@@ -2682,6 +2692,7 @@ int main(int argc, char *argv[]) {
 
     if (testMask.test(bitNumberTestWrappedMultipleEngines)) {
         uint32_t engineCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-e", "--engine_count", 60u);
+        bool useInOrder = !!(LevelZeroBlackBoxTests::getParamValue(argc, argv, "-o", "--in_order", 0u));
 
         if (testSubMask.test(0)) {
             uint32_t pairCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-p", "--pair_count", 3u);
@@ -2689,11 +2700,12 @@ int main(int argc, char *argv[]) {
                 LevelZeroBlackBoxTests::getParamValue(argc, argv, "-f", "--fork_policy", TestWrappedMultipleEnginesForkPolicy::max));
 
             auto testTitle = "Wrapped Multiple Engines";
-            auto getCaseName = [&testTitle](uint32_t engineCount, uint32_t pairCount, TestWrappedMultipleEnginesForkPolicy forkPolicy) -> std::string {
+            auto getCaseName = [&testTitle](uint32_t engineCount, uint32_t pairCount, TestWrappedMultipleEnginesForkPolicy forkPolicy, bool useInOrder) -> std::string {
                 std::ostringstream caseName;
                 caseName << testTitle << std::endl;
                 caseName << "engine count: " << engineCount << " pair count: " << pairCount;
                 caseName << " forkPolicy: " << forkPolicy;
+                caseName << " useInOrder: " << useInOrder;
                 return caseName.str();
             };
 
@@ -2707,25 +2719,26 @@ int main(int argc, char *argv[]) {
 
             for (size_t i = 0; i < forkPolicyValuesSize; i++) {
                 auto currentForkPolicy = forkPolicyValues[i];
-                currentTest = getCaseName(engineCount, pairCount, currentForkPolicy);
+                currentTest = getCaseName(engineCount, pairCount, currentForkPolicy, useInOrder);
                 LevelZeroBlackBoxTests::printTestHeader(currentTest);
-                casePass = testWrappedMultipleEngines(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, pairCount, currentForkPolicy);
+                casePass = testWrappedMultipleEngines(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, pairCount, currentForkPolicy, useInOrder);
                 LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
                 boxPass &= casePass;
             }
         }
         if (testSubMask.test(1)) {
             auto testTitle = "Single Wrapped Engine Deep Fork";
-            auto getCaseName = [&testTitle](uint32_t engineCount) -> std::string {
+            auto getCaseName = [&testTitle](uint32_t engineCount, bool useInOrder) -> std::string {
                 std::ostringstream caseName;
                 caseName << testTitle;
                 caseName << " engine count: " << engineCount;
+                caseName << " useInOrder: " << useInOrder;
                 return caseName.str();
             };
 
-            currentTest = getCaseName(engineCount);
+            currentTest = getCaseName(engineCount, useInOrder);
             LevelZeroBlackBoxTests::printTestHeader(currentTest);
-            casePass = testSingleWrappedEngineDeepFork(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount);
+            casePass = testSingleWrappedEngineDeepFork(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, useInOrder);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }

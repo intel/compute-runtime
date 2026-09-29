@@ -13,6 +13,7 @@
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/cmdqueue/patch_preamble_data_types.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
@@ -142,13 +143,6 @@ struct ExternalSignalCbEventInfo {
     bool apiRequiredSignalEvent = false;
 };
 
-using PatchPreambleCounter = uint64_t;
-using PatchPreambleHostAddress = uint64_t *;
-using PatchPreambleHostGpuAddress = uint64_t;
-using PatchPreambleHostGraphicsAllocation = NEO::GraphicsAllocation *;
-using PatchPreambleDeviceGpuAddress = uint64_t;
-using PatchPreambleDeviceGraphicsAllocation = NEO::GraphicsAllocation *;
-
 using PatchPreambleData = std::tuple<PatchPreambleCounter, PatchPreambleHostAddress, PatchPreambleHostGpuAddress, PatchPreambleHostGraphicsAllocation, PatchPreambleDeviceGpuAddress, PatchPreambleDeviceGraphicsAllocation>;
 struct PatchPreambleItem {
     PatchPreambleItem(uint64_t counter, uint64_t *hostAddress, uint64_t hostGpuAddress, NEO::GraphicsAllocation *hostAllocation,
@@ -212,13 +206,17 @@ struct ExternalCbEventInfoContainer {
     }
 
     PatchPreambleDataContainer::iterator getExecutorInfo(L0::CommandList *executor) {
-        return std::find_if(executorStorage.begin(),
-                            executorStorage.end(),
+        return getExecutorInfo(&this->executorStorage, executor);
+    }
+
+    PatchPreambleDataContainer::iterator getExecutorInfo(PatchPreambleDataContainer *container, L0::CommandList *executor) {
+        return std::find_if(container->begin(),
+                            container->end(),
                             [executor](const PatchPreambleItem &item) { return item.key == executor; });
     }
 
     void finalizeExecutorContainer();
-    void updateExecutorContainer(L0::CommandList *currentRoot);
+    void updateExecutorContainer(L0::CommandList *currentRoot, PatchPreambleDataContainer &patchPreambleCrossSyncs);
     PatchPreambleItem &getPreambleData(L0::CommandList *executor) {
         static PatchPreambleItem nullPatchPreambleItem;
         auto it = getExecutorInfo(executor);

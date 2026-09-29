@@ -14,6 +14,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
+#include "level_zero/core/source/cmdqueue/patch_preamble_cross_sync_definitions.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 
@@ -75,6 +76,7 @@ CommandListExecutionContext::CommandListExecutionContext(
     }
 
     this->pipelineCmdsDispatch |= (this->isProgramActivePartitionConfigRequired || this->isPreemptionModeInitial || this->stateSipRequired);
+    this->patchPreambleCountersCrossSyncContainer = internalOptions.patchPreambleCountersCrossSyncContainer;
 }
 
 } // namespace L0

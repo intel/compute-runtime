@@ -15,6 +15,7 @@ class LinearStream;
 } // namespace NEO
 
 namespace L0 {
+struct PatchPreambleCountersCrossSyncContainer;
 
 struct CommandListExecutionInternalOptions {
     uint64_t patchPreambleRequiredCounter = 0;
@@ -22,6 +23,7 @@ struct CommandListExecutionInternalOptions {
 
     NEO::LinearStream *parentImmediateCommandlistLinearStream = nullptr;
     std::unique_lock<std::mutex> *outerLockForIndirect = nullptr;
+    PatchPreambleCountersCrossSyncContainer *patchPreambleCountersCrossSyncContainer = nullptr;
 
     bool performMigration = false;
 };
