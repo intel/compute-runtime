@@ -261,9 +261,10 @@ NEO::SurfaceStateInHeapInfo *ImageImp::getBindlessSlotWithMipmap(uint32_t mipLev
     return mipLevelBindlessInfo.get();
 }
 
-ze_result_t Image::create(uint32_t gfxCoreFamily, Device *device, const ze_image_desc_t *desc, Image **pImage) {
+ze_result_t Image::create(Device *device, const ze_image_desc_t *desc, Image **pImage) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     ImageAllocatorFn allocator = nullptr;
+    auto gfxCoreFamily = device->getNEODevice()->getRenderCoreFamily();
     if (gfxCoreFamily < NEO::maxCoreEnumValue) {
         allocator = imageFactory[gfxCoreFamily];
     }

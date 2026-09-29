@@ -117,8 +117,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
         static Kernel *allocate(Module *module) { return new Type(module); }
     };
 
-    static Kernel *create(uint32_t gfxCoreFamily, Module *module,
-                          const ze_kernel_desc_t *desc, ze_result_t *ret);
+    static Kernel *create(Module *module, const ze_kernel_desc_t *desc, ze_result_t *ret);
 
     ~Kernel() override = default;
 

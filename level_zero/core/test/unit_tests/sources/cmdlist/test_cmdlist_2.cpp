@@ -2083,7 +2083,7 @@ HWTEST2_F(CommandListAppendImage, givenCopyCommandListWhenAppendImageCopyFromMem
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily, device, &zeDesc, &imagePtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtr));
     std::unique_ptr<L0::Image> image(imagePtr);
     ze_image_region_t dstImgRegion = {2, 1, 1, 4, 2, 2};
 
@@ -2113,7 +2113,7 @@ HWTEST2_F(CommandListAppendImage, givenCopyCommandListWhenAppendImageCopyFromMem
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily, device, &zeDesc, &imagePtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtr));
     std::unique_ptr<L0::Image> image(imagePtr);
     ze_image_region_t dstImgRegion = {2, 1, 1, 4, 2, 2};
 
@@ -2147,7 +2147,7 @@ HWTEST2_F(CommandListAppendImage, givenComputeCommandListWhenAppendImageCopyFrom
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily, device, &zeDesc, &imagePtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtr));
     std::unique_ptr<L0::Image> image(imagePtr);
     ze_image_region_t dstImgRegion = {2, 1, 1, 4, 2, 2};
 
@@ -2175,7 +2175,7 @@ HWTEST2_F(CommandListAppendImage, givenCopyCommandListWhenAppendImageCopyToMemor
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    auto result = L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily, device, &zeDesc, &imagePtr);
+    auto result = L0::Image::create(device, &zeDesc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> image(imagePtr);
     ze_image_region_t srcImgRegion = {2, 1, 1, 4, 2, 2};
@@ -2207,7 +2207,7 @@ HWTEST2_F(CommandListAppendImage, givenCopyCommandListWhenAppendImageCopyToMemor
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    auto result = L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily, device, &zeDesc, &imagePtr);
+    auto result = L0::Image::create(device, &zeDesc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> image(imagePtr);
     ze_image_region_t srcImgRegion = {2, 1, 1, 4, 2, 2};
@@ -2242,7 +2242,7 @@ HWTEST2_F(CommandListAppendImage, givenComputeCommandListWhenAppendImageCopyToMe
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    auto result = L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily, device, &zeDesc, &imagePtr);
+    auto result = L0::Image::create(device, &zeDesc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> image(imagePtr);
     ze_image_region_t srcImgRegion = {2, 1, 1, 4, 2, 2};

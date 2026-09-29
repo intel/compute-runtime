@@ -25,8 +25,7 @@ struct Sampler : _ze_sampler_handle_t {
     virtual ~Sampler() = default;
     virtual ze_result_t destroy() = 0;
 
-    static Sampler *create(uint32_t gfxCoreFamily, Device *device,
-                           const ze_sampler_desc_t *desc);
+    static Sampler *create(Device *device, const ze_sampler_desc_t *desc);
 
     virtual void copySamplerStateToDSH(ArrayRef<uint8_t> dynamicStateHeap,
                                        const uint32_t heapOffset) = 0;

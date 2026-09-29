@@ -23,8 +23,9 @@ ze_result_t SamplerImp::initialize(Device *device, const ze_sampler_desc_t *desc
     return ZE_RESULT_SUCCESS;
 }
 
-Sampler *Sampler::create(uint32_t gfxCoreFamily, Device *device, const ze_sampler_desc_t *desc) {
+Sampler *Sampler::create(Device *device, const ze_sampler_desc_t *desc) {
     SamplerAllocatorFn allocator = nullptr;
+    auto gfxCoreFamily = device->getNEODevice()->getRenderCoreFamily();
     if (gfxCoreFamily < NEO::maxCoreEnumValue) {
         allocator = samplerFactory[gfxCoreFamily];
     }

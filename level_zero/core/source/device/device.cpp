@@ -428,7 +428,6 @@ ze_result_t Device::getCommandQueueGroupProperties(uint32_t *pCount,
 }
 
 ze_result_t Device::createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) {
-    auto gfxCoreFamily = neoDevice->getHardwareInfo().platform.eRenderCoreFamily;
     Image *pImage = nullptr;
 
     if (neoDevice->getDeviceInfo().imageSupport == false) {
@@ -436,7 +435,7 @@ ze_result_t Device::createImage(const ze_image_desc_t *desc, ze_image_handle_t *
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    auto result = Image::create(gfxCoreFamily, this, desc, &pImage);
+    auto result = Image::create(this, desc, &pImage);
     if (result == ZE_RESULT_SUCCESS) {
         *phImage = pImage->toHandle();
     }
@@ -446,9 +445,7 @@ ze_result_t Device::createImage(const ze_image_desc_t *desc, ze_image_handle_t *
 
 ze_result_t Device::createSampler(const ze_sampler_desc_t *desc,
                                   ze_sampler_handle_t *sampler) {
-    auto gfxCoreFamily = neoDevice->getHardwareInfo().platform.eRenderCoreFamily;
-
-    *sampler = Sampler::create(gfxCoreFamily, this, desc);
+    *sampler = Sampler::create(this, desc);
     if (*sampler == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     } else {

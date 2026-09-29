@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -46,7 +47,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpg
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
+    auto result = Image::create(device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -61,7 +62,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCo
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
+    auto result = Image::create(device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -75,7 +76,8 @@ HWTEST2_F(ImageCreate, givenInvalidGfxCoreFamilyThenReturnNullPointer, IsXeHpgCo
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(IGFX_UNKNOWN_CORE, device, &desc, &imagePtr);
+    VariableBackup<GFXCORE_FAMILY> coreFamilyBackup(&device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->platform.eRenderCoreFamily, IGFX_UNKNOWN_CORE);
+    auto result = Image::create(device, &desc, &imagePtr);
     ASSERT_NE(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -96,7 +98,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHp
 
     L0::Image *imagePtr;
 
-    auto result = Image::create(FamilyType::gfxCoreFamily, device, &desc, &imagePtr);
+    auto result = Image::create(device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
