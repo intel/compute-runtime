@@ -784,7 +784,7 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventsT
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, result, false));
     auto &commandContainer = commandList->getCmdContainer();
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -832,7 +832,7 @@ HWTEST2_PRODUCT_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSign
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, result, false));
     auto &commandContainer = commandList->getCmdContainer();
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -874,7 +874,7 @@ HWTEST2_PRODUCT_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSign
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, result, false));
     auto &commandContainer = commandList->getCmdContainer();
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -980,7 +980,7 @@ HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullDestinationRegionWhenIma
 HWTEST2_PRODUCT_F(CommandListAppend, givenImmediateCommandListWhenImageCopyFromOrToMemoryWithExternalHostPtrThenRequireTaskCountUpdate, ImageSupport) {
     ze_command_queue_desc_t desc = {};
     ze_result_t ret = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::ult::CommandList> cmdList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, ret)));
+    std::unique_ptr<L0::ult::CommandList> cmdList(CommandList::whiteboxCast(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, ret)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     void *hostPtr = reinterpret_cast<void *>(0x1234);
@@ -1887,7 +1887,7 @@ HWTEST_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAndN
     uint64_t size = 1024;
 
     ze_result_t res = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, res, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, res, false));
 
     auto firstBatchBufferAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
 
@@ -2561,7 +2561,7 @@ HWTEST2_PRODUCT_F(PrimaryBatchBufferCmdListTest, givenRelaxedOrderingAndRegularC
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    auto immCommandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto immCommandList = zeUniquePtr(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
     whiteBoxCmdList->enableInOrderExecution();
@@ -2667,7 +2667,7 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCopyCommandLi
     ultCsr->recordFlushedBatchBuffer = true;
 
     std::unique_ptr<L0::ult::CommandList> commandListCopy;
-    commandListCopy.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false)));
+    commandListCopy.reset(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto &cmdContainerCopy = commandListCopy->getCmdContainer();
@@ -3173,8 +3173,7 @@ HWTEST2_PRODUCT_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstim
 
     neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &queueDesc,
                                                                               false,
                                                                               NEO::EngineGroupType::copy,

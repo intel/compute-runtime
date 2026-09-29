@@ -244,7 +244,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
     NEO::HostFunctionAllocator *getHostFunctionAllocator(NEO::CommandStreamReceiver *csr);
 
-    using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool, uint32_t);
+    using CmdListCreateFunPtrT = L0::CommandList *(*)(Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool, uint32_t);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_base_desc_t *desc);
     void getAdditionalExtProperties(ze_base_properties_t *extendedProperties);
 

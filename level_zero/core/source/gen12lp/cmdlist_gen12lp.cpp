@@ -353,4 +353,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled() const {
 template struct CommandListCoreFamily<gfxCoreFamily>;
 template struct CommandListCoreFamilyImmediate<gfxCoreFamily>;
 
+static CommandListPopulateFactory<gfxCoreFamily, CommandListCoreFamily<gfxCoreFamily>> populateGen12Lp;
+static CommandListImmediatePopulateFactory<gfxCoreFamily, CommandListCoreFamilyImmediate<gfxCoreFamily>> populateGen12LpImmediate;
+
 } // namespace L0

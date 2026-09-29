@@ -3965,7 +3965,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenAppendMarkerIsCalledThenRet
     EXPECT_NE(metricGroupHandle, nullptr);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
 
     EXPECT_EQ(zetCommandListAppendMarkerExp(commandList->toHandle(), metricGroupHandle, 0), ZE_RESULT_SUCCESS);
 }

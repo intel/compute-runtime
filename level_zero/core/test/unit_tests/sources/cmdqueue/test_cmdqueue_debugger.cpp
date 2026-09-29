@@ -63,7 +63,7 @@ SBA_HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSb
         Mock<KernelImp> kernel;
         kernel.module = mockModule.get();
 
-        std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
         ze_group_count_t groupCount{1, 1, 1};
         NEO::LinearStream &cmdStream = commandQueue->commandStream;
 
@@ -201,7 +201,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTime
         Mock<KernelImp> kernel;
         kernel.module = mockModule.get();
 
-        std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
         ze_group_count_t groupCount{1, 1, 1};
         NEO::LinearStream &cmdStream = commandQueue->commandStream;
 

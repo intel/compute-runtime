@@ -293,33 +293,33 @@ struct CommandList : _ze_command_list_handle_t {
                                            ze_event_handle_t *phWaitEvents,
                                            CmdListHostFunctionParameters &parameters) = 0;
 
-    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+    static CommandList *create(Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue,
                                bool internalUsage) {
-        return create(productFamily, device, engineGroupType, flags, resultValue, internalUsage, 0u);
+        return create(device, engineGroupType, flags, resultValue, internalUsage, 0u);
     }
-    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+    static CommandList *create(Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue,
                                bool internalUsage, uint32_t estimatedNumberOfCommands);
-    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+    static CommandList *createImmediate(Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
                                         ze_result_t &resultValue) {
-        return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, resultValue, 0u);
+        return createImmediate(device, desc, internalUsage, engineGroupType, resultValue, 0u);
     }
-    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+    static CommandList *createImmediate(Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
                                         ze_result_t &resultValue,
                                         uint8_t powerHint);
 
-    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+    static CommandList *createImmediate(Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
                                         ze_result_t &resultValue) {
-        return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, csr, resultValue, 0u);
+        return createImmediate(device, desc, internalUsage, engineGroupType, csr, resultValue, 0u);
     }
-    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+    static CommandList *createImmediate(Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
                                         ze_result_t &resultValue,
@@ -956,17 +956,17 @@ using CommandListAllocatorFn = CommandList *(*)(uint32_t);
 extern CommandListAllocatorFn commandListFactory[];
 extern CommandListAllocatorFn commandListFactoryImmediate[];
 
-template <uint32_t productFamily, typename CommandListType>
+template <uint32_t gfxCoreFamily, typename CommandListType>
 struct CommandListPopulateFactory {
     CommandListPopulateFactory() {
-        commandListFactory[productFamily] = CommandList::Allocator<CommandListType>::allocate;
+        commandListFactory[gfxCoreFamily] = CommandList::Allocator<CommandListType>::allocate;
     }
 };
 
-template <uint32_t productFamily, typename CommandListType>
+template <uint32_t gfxCoreFamily, typename CommandListType>
 struct CommandListImmediatePopulateFactory {
     CommandListImmediatePopulateFactory() {
-        commandListFactoryImmediate[productFamily] = CommandList::Allocator<CommandListType>::allocate;
+        commandListFactoryImmediate[gfxCoreFamily] = CommandList::Allocator<CommandListType>::allocate;
     }
 };
 

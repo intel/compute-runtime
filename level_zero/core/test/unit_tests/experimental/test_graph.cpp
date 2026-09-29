@@ -2029,7 +2029,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventWhenInsta
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
 
@@ -2069,7 +2069,7 @@ TEST_F(GraphTestInstantiationTest, givenImmediateOnlyCbEventRecordedIntoGraphWhe
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
 
@@ -2112,7 +2112,7 @@ struct GraphInternalEventFixture : public GraphFixture {
         ze_command_queue_desc_t queueDesc = {
             .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
             .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER};
-        inOrderCmdList.reset(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+        inOrderCmdList.reset(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         inOrderCmdList->setOrdinal(0);
 
@@ -2628,7 +2628,7 @@ TEST_F(GraphInternalEventTest, givenCbEventSignalledInsideForkedSubgraphWhenInst
     ze_command_queue_desc_t queueDesc = {
         .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
         .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER};
-    std::unique_ptr<L0::CommandList> childCmdList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> childCmdList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     childCmdList->setOrdinal(0);
 
@@ -2824,7 +2824,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInst
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
 
@@ -2875,7 +2875,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
 
@@ -2966,13 +2966,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
     auto whiteBoxCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(commandList.get())->cmdQImmediate);
     EXPECT_EQ(!FamilyType::isQwordInOrderCounter, whiteBoxCmdQueue->patchPreambleCounter.use32bSemaphore);
 
-    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     subCommandList->setOrdinal(0);
     auto subCommandListHandle = subCommandList->toHandle();
     auto whiteBoxSubCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(subCommandList.get())->cmdQImmediate);
@@ -3124,11 +3124,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
 
-    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     subCommandList->setOrdinal(0);
     auto subCommandListHandle = subCommandList->toHandle();
     auto whiteBoxSubCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(subCommandList.get())->cmdQImmediate);
@@ -3239,13 +3239,13 @@ void GraphExternalWaitEventFixtureInit::testExternalWaitEventRootChild(bool exte
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
     auto whiteBoxRootCmdList = CommandList::whiteboxCast(commandList.get());
     auto rootStream = whiteBoxRootCmdList->getCmdContainer().getCommandStream();
 
-    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     subCommandList->setOrdinal(0);
     auto subCommandListHandle = subCommandList->toHandle();
     auto whiteBoxSubCmdList = CommandList::whiteboxCast(subCommandList.get());
@@ -3605,7 +3605,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
     auto whiteBoxCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(commandList.get())->cmdQImmediate);
@@ -3695,7 +3695,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     commandList->setOrdinal(0);
     auto commandListHandle = commandList->toHandle();
     auto whiteBoxCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(commandList.get())->cmdQImmediate);

@@ -83,7 +83,7 @@ HWTEST_F(DeviceMtTest, givenMultiThreadsExecutingCmdListAndSynchronizingDeviceWh
     kernel.module = &module;
     kernel.immutableData.device = device;
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
 
     ze_group_count_t dispatchKernelArguments{1, 1, 1};
@@ -256,7 +256,7 @@ HWTEST2_PRODUCT_F(AggregatedBcsSplitMtTests, givenAggregatedModeOutOfOrderCopyWi
         ze_command_queue_desc_t desc = {};
         desc.ordinal = queryCopyOrdinal();
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        cmdLists[i] = DestroyableZeUniquePtr<L0::CommandList>(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
+        cmdLists[i] = DestroyableZeUniquePtr<L0::CommandList>(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::copy, returnValue));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         ASSERT_FALSE(cmdLists[i]->isInOrderExecutionEnabled());
         hostPtrs[i] = allocHostMem();

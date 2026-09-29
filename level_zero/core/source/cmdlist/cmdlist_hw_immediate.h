@@ -295,6 +295,4 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool copyOffloadTagUpdateRequired = false;
 };
 
-template <PRODUCT_FAMILY gfxProductFamily>
-struct CommandListImmediateProductFamily;
 } // namespace L0

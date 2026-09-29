@@ -4771,9 +4771,7 @@ TEST_F(DevicePowerHintCsrTest, givenCreateImmediateWithCsrWrapperWhenPowerHintIs
     ASSERT_NE(nullptr, csr);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::createImmediate(
-        neoDevice->getHardwareInfo().platform.eProductFamily,
-        device, &desc, false, NEO::EngineGroupType::renderCompute, csr, result));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, csr, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, commandList.get());
 }
@@ -6389,7 +6387,7 @@ TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmT
     debugManager.flags.EnableRecoverablePageFaults.set(1u);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     auto &hwInfo = *device1->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -6421,7 +6419,7 @@ TEST_F(MultipleDeviceMemAdviseTests, givenAllocationNotPresentOnAdvisedDeviceThe
     ASSERT_NE(nullptr, gfxAlloc);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     res = commandList->executeMemAdvise(device1, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);

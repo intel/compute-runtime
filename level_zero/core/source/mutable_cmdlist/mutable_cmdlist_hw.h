@@ -208,7 +208,5 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     MutableKernelGroup *getKernelGroupForPrefetch(uint64_t cmdId) const;
     size_t ensureCmdBufferSpaceForPrefetch() override;
 };
-template <PRODUCT_FAMILY gfxProductFamily>
-struct MutableCommandListProductFamily;
 } // namespace MCL
 } // namespace L0

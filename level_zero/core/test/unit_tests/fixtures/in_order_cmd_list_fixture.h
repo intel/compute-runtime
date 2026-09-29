@@ -510,8 +510,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
         desc.ordinal = copyOnly ? queryCopyOrdinal() : 0;
 
-        DestroyableZeUniquePtr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                                         device,
+        DestroyableZeUniquePtr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                                          &desc,
                                                                                          false,
                                                                                          copyOnly ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute,

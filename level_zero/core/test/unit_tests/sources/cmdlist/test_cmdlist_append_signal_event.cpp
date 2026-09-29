@@ -242,12 +242,12 @@ HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenImmediateCmdListAndAppendin
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
     ze_event_handle_t hSignalEventHandle = eventHostVisible->toHandle();
     ze_event_handle_t hWaitEventHandle = waitEvent->toHandle();
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
@@ -293,8 +293,7 @@ HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCompute
 
     using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>;
 
-    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(productFamily,
-                                                                                                                            device,
+    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(device,
                                                                                                                             &desc,
                                                                                                                             false,
                                                                                                                             NEO::EngineGroupType::compute,
@@ -305,7 +304,7 @@ HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCompute
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -341,12 +340,12 @@ HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenCopyOnlyImmediateCmdListAnd
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
     ze_event_handle_t hSignalEventHandle = eventHostVisible->toHandle();
     ze_event_handle_t hWaitEventHandle = waitEvent->toHandle();
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
@@ -383,8 +382,7 @@ HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQue
 
     using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>;
 
-    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(productFamily,
-                                                                                                                            device,
+    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(device,
                                                                                                                             &desc,
                                                                                                                             false,
                                                                                                                             NEO::EngineGroupType::copy,
@@ -395,7 +393,7 @@ HWTEST2_PRODUCT_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQue
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -426,10 +424,10 @@ HWTEST_F(CommandListAppendSignalEvent, givenOutOfOrderImmediateCmdListWhenAppend
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -467,10 +465,10 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
     ze_command_queue_desc_t desc = {};
     desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 

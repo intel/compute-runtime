@@ -171,7 +171,7 @@ TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKerne
     Mock<KernelImp> kernel;
     kernel.module = &module;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(&l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
@@ -188,8 +188,7 @@ TEST(CommandListAssertTest, GivenCmdListWithAppendedAssertKernelWhenResetThenKer
     MockDeviceImp l0Device(neoDevice);
     ze_result_t returnValue;
 
-    std::unique_ptr<ult::WhiteBox<L0::CommandList>> commandList(ult::CommandList::whiteboxCast(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily,
-                                                                                                                   &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    std::unique_ptr<ult::WhiteBox<L0::CommandList>> commandList(ult::CommandList::whiteboxCast(CommandList::create(&l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
 
     commandList->kernelWithAssertAppended = true;
     EXPECT_TRUE(commandList->hasKernelWithAssert());
@@ -212,7 +211,7 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithSyncModeWhenKern
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false,
                                                                               NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -241,7 +240,7 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithASynchronousMode
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false,
                                                                               NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -275,7 +274,7 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenKernelWithAssert
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false,
                                                                               NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -346,7 +345,7 @@ HWTEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenCheckingAssert
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false,
                                                                               NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -364,7 +363,7 @@ HWTEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndNoAssertHandler
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false,
                                                                               NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -499,7 +498,7 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertWhenExecutingThenCommandQue
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
     kernel.module = &module;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
@@ -639,8 +638,7 @@ TEST_F(CommandQueueWithAssert, GivenRegularCmdListWithAssertWhenExecutingAndSync
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily,
-                                                                                                                      device,
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(device,
                                                                                                                       &desc,
                                                                                                                       false,
                                                                                                                       NEO::EngineGroupType::compute,
@@ -654,7 +652,7 @@ TEST_F(CommandQueueWithAssert, GivenRegularCmdListWithAssertWhenExecutingAndSync
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
     kernel.module = &module;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;

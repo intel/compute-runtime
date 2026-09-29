@@ -82,17 +82,18 @@ void MutableResidencyAllocations::cleanResidencyContainer() {
     immutableResidencySize = 0;
 }
 
-MutableCommandListAllocFn mutableCommandListFactory[NEO::maxProductEnumValue] = {};
+MutableCommandListAllocFn mutableCommandListFactory[NEO::maxCoreEnumValue] = {};
 
 MutableCommandList *MutableCommandList::fromHandle(ze_command_list_handle_t handle) {
     return static_cast<MutableCommandList *>(L0::CommandList::fromHandle(handle)->asMutable());
 }
 
-CommandList *MutableCommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+CommandList *MutableCommandList::create(Device *device, NEO::EngineGroupType engineGroupType,
                                         ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType, uint32_t estimatedNumberOfCommands) {
     MutableCommandListAllocFn allocator = nullptr;
-    if (productFamily < NEO::maxProductEnumValue) {
-        allocator = mutableCommandListFactory[productFamily];
+    auto gfxCoreFamily = device->getNEODevice()->getRenderCoreFamily();
+    if (gfxCoreFamily < NEO::maxCoreEnumValue) {
+        allocator = mutableCommandListFactory[gfxCoreFamily];
     }
     if (allocator == nullptr) {
         resultValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

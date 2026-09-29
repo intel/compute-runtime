@@ -152,7 +152,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrSyncQueueAndKmdWaitWhenCallingExecuteC
     auto queue = L0::CommandQueue::fromHandle(commandQueue);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
@@ -178,7 +178,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndAsyncQueueWhenCallingExecuteCommand
     auto queue = L0::CommandQueue::fromHandle(commandQueue);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
@@ -370,7 +370,7 @@ HWTEST2_PRODUCT_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCo
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(2u, commandQueue->activeSubDevices);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
     commandList->partitionCount = 2;
 
@@ -410,7 +410,7 @@ HWTEST2_PRODUCT_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActiv
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(2u, commandQueue->activeSubDevices);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
@@ -492,7 +492,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, commandQueue->getCommandQueueMode());
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
 
     // 1st execute provides all preamble commands
@@ -797,7 +797,7 @@ HWTEST2_PRODUCT_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTra
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, commandQueue);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, res, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, res, false)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, commandList);
     Mock<KernelImp> kernel;

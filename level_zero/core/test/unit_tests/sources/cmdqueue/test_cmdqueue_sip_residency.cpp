@@ -21,7 +21,7 @@ struct SipResidencyFixture : DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         ze_result_t returnValue;
-        commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandListHandle = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         CommandList::fromHandle(commandListHandle)->close();
 
@@ -49,7 +49,7 @@ struct SipResidencyDebuggerFixture : L0DebuggerHwFixture {
     void setUp() {
         L0DebuggerHwFixture::setUp();
         ze_result_t returnValue;
-        commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandListHandle = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         CommandList::fromHandle(commandListHandle)->close();
 

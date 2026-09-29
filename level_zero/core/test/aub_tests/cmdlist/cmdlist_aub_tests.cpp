@@ -272,8 +272,7 @@ HWTEST_F(AUBAppendQueryKernelTimestampsImmediateL0, whenAppendQueryKernelTimesta
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    std::unique_ptr<L0::CommandList> immediateCommandList(CommandList::createImmediate(neoDevice->getHardwareInfo().platform.eProductFamily,
-                                                                                       device, &queueDesc, false,
+    std::unique_ptr<L0::CommandList> immediateCommandList(CommandList::createImmediate(device, &queueDesc, false,
                                                                                        NEO::EngineGroupType::compute, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto cmdListHandle = immediateCommandList->toHandle();
@@ -373,7 +372,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
         context.reset(Context::fromHandle(hContext));
 
         ze_result_t returnValue;
-        commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, NEO::EngineGroupType::compute, 0u, returnValue, false)));
+        commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(rootDevice, NEO::EngineGroupType::compute, 0u, returnValue, false)));
         ASSERT_NE(nullptr, commandList.get());
 
         ze_command_queue_desc_t queueDesc = {
@@ -381,8 +380,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
             .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
         };
 
-        commandList.reset(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily,
-                                                       rootDevice,
+        commandList.reset(CommandList::createImmediate(rootDevice,
                                                        &queueDesc,
                                                        false,
                                                        NEO::EngineGroupType::copy,
@@ -531,8 +529,7 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyOnTwoCmdListsWithEventsThenDataIsCo
 
     DestroyableZeUniquePtr<L0::CommandList> commandList2;
     ze_result_t returnValue;
-    commandList2.reset(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily,
-                                                    rootDevice,
+    commandList2.reset(CommandList::createImmediate(rootDevice,
                                                     &queueDesc,
                                                     false,
                                                     NEO::EngineGroupType::copy,
@@ -575,7 +572,7 @@ HWTEST2_F(BcsSplitMultiTileAubTests, whenAppendingCopyWithAggregatedEventThenEve
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT};
-    commandList.reset(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList.reset(CommandList::createImmediate(rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, commandList.get());
 
     auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandList> *>(commandList.get());
@@ -646,8 +643,7 @@ struct AubDirectSubmissionImmCmdListFixture : AUBFixtureL0 {
         ze_result_t returnValue;
         ze_command_queue_desc_t queueDesc = {};
         commandList.reset(ult::CommandList::whiteboxCast(
-            CommandList::createImmediate(neoDevice->getHardwareInfo().platform.eProductFamily,
-                                         device, &queueDesc, false,
+            CommandList::createImmediate(device, &queueDesc, false,
                                          NEO::EngineGroupType::compute, returnValue)));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         ASSERT_NE(nullptr, commandList.get());

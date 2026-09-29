@@ -648,7 +648,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetComm
     auto &l0Device = *static_cast<Device *>(devices[0]);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, l0Device.subDevices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(l0Device.subDevices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     TypedValue_1_0 value = {};

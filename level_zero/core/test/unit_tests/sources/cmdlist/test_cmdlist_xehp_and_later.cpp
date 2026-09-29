@@ -58,7 +58,7 @@ HEAPFUL_HWTEST_F(CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAdd
     auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
     auto gmmHelper = commandContainer.getDevice()->getGmmHelper();
 
@@ -136,7 +136,7 @@ HWTEST2_PRODUCT_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPi
     auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
     auto gmmHelper = commandContainer.getDevice()->getGmmHelper();
 
@@ -2402,7 +2402,7 @@ HWTEST2_PRODUCT_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWh
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
 
     uint64_t timestampAddress = 0x123456785000;

@@ -91,7 +91,7 @@ HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectS
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
 
@@ -195,7 +195,7 @@ HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectS
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
 
@@ -227,11 +227,11 @@ HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendin
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -409,7 +409,7 @@ HWTEST2_PRODUCT_F(CommandListImmediateAppendRegularTest, givenImmediateCommandLi
     cmdList->cmdQImmediate = &queue;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, result, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, result, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -449,7 +449,7 @@ HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectS
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
 
@@ -486,7 +486,7 @@ HWTEST2_PRODUCT_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectS
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
 

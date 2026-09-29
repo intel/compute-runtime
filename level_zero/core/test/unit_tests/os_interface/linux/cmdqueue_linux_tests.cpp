@@ -62,7 +62,7 @@ HWTEST2_PRODUCT_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecuti
         {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::kernelIsa, neoDevice->getDeviceBitfield()}));
     kernel.immutableData.device = device;
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandList);
 

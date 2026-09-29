@@ -388,8 +388,8 @@ void CommandList::setupPatchPreambleEnabled(bool initValue) {
     }
 }
 
-CommandListAllocatorFn commandListFactory[NEO::maxProductEnumValue] = {};
-CommandListAllocatorFn commandListFactoryImmediate[NEO::maxProductEnumValue] = {};
+CommandListAllocatorFn commandListFactory[NEO::maxCoreEnumValue] = {};
+CommandListAllocatorFn commandListFactoryImmediate[NEO::maxCoreEnumValue] = {};
 
 ze_result_t CommandList::destroy() {
     if (this->isBcsSplitEnabled()) {
@@ -467,12 +467,13 @@ ze_result_t CommandList::appendMetricQueryEnd(zet_metric_query_handle_t hMetricQ
     return MetricQuery::fromHandle(hMetricQuery)->appendEnd(*this, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+CommandList *CommandList::create(Device *device, NEO::EngineGroupType engineGroupType,
                                  ze_command_list_flags_t flags, ze_result_t &returnValue,
                                  bool internalUsage, uint32_t estimatedNumberOfCommands) {
     CommandListAllocatorFn allocator = nullptr;
-    if (productFamily < NEO::maxProductEnumValue) {
-        allocator = commandListFactory[productFamily];
+    auto gfxCoreFamily = device->getNEODevice()->getRenderCoreFamily();
+    if (gfxCoreFamily < NEO::maxCoreEnumValue) {
+        allocator = commandListFactory[gfxCoreFamily];
     }
 
     CommandList *commandList = nullptr;
@@ -554,15 +555,15 @@ ze_result_t CommandList::isMutableExp(ze_bool_t *pIsMutable) {
     return ZE_RESULT_SUCCESS;
 }
 
-CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device,
+CommandList *CommandList::createImmediate(Device *device,
                                           const ze_command_queue_desc_t *desc,
                                           bool internalUsage, NEO::EngineGroupType engineGroupType,
                                           ze_result_t &returnValue,
                                           uint8_t powerHint) {
-    return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, nullptr, returnValue, powerHint);
+    return createImmediate(device, desc, internalUsage, engineGroupType, nullptr, returnValue, powerHint);
 }
 
-CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device,
+CommandList *CommandList::createImmediate(Device *device,
                                           const ze_command_queue_desc_t *desc,
                                           bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
                                           ze_result_t &returnValue,
@@ -576,9 +577,10 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     }
     CommandListAllocatorFn allocator = nullptr;
     CommandQueueAllocatorFn immediateQueueAllocator = nullptr;
-    if (productFamily < NEO::maxProductEnumValue) {
-        allocator = commandListFactoryImmediate[productFamily];
-        immediateQueueAllocator = commandQueueFactory[device->getHwInfo().platform.eRenderCoreFamily];
+    auto gfxCoreFamily = device->getNEODevice()->getRenderCoreFamily();
+    if (gfxCoreFamily < NEO::maxCoreEnumValue) {
+        allocator = commandListFactoryImmediate[gfxCoreFamily];
+        immediateQueueAllocator = commandQueueFactory[gfxCoreFamily];
     }
 
     CommandList *commandList = nullptr;
@@ -976,7 +978,7 @@ void CommandList::ensureSubCmdLists(size_t count) {
 
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
-        auto subCmdList = CommandList::create(device->getHwInfo().platform.eProductFamily, subCmdListDevice, splitCmdList->getEngineGroupType(), ZE_COMMAND_LIST_FLAG_IN_ORDER, returnValue, true);
+        auto subCmdList = CommandList::create(subCmdListDevice, splitCmdList->getEngineGroupType(), ZE_COMMAND_LIST_FLAG_IN_ORDER, returnValue, true);
         UNRECOVERABLE_IF(returnValue != ZE_RESULT_SUCCESS);
 
         subCmdList->forceDisableInOrderWaits();

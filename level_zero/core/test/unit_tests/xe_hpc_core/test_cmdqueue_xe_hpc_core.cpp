@@ -49,7 +49,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingComma
     commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
     CommandListExecutionInternalOptions internalOptions = {};
@@ -77,7 +77,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingComma
     commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
     CommandListExecutionInternalOptions internalOptions = {};
@@ -108,7 +108,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingComma
     commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
     CommandListExecutionInternalOptions internalOptions = {};
@@ -357,11 +357,11 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediat
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     ASSERT_NE(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 
-    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList2);
     EXPECT_NE(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 
@@ -388,7 +388,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableWhenCre
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 
@@ -413,7 +413,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableAndSpli
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 2u);
 
@@ -438,7 +438,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhe
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 3u);
 }
@@ -459,13 +459,13 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediat
 
     debugManager.flags.SplitBcsMask.set(0b11001);
     debugManager.flags.SplitBcsRequiredEnginesCount.set(3);
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 3u);
 
     debugManager.flags.SplitBcsMask.set(0b110);
     debugManager.flags.SplitBcsRequiredEnginesCount.set(2);
-    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList2);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 3u);
 
@@ -489,7 +489,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediat
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, true, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, true, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
@@ -508,7 +508,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediat
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::linkedCopy));
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
@@ -527,7 +527,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateI
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(static_cast<Device *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
@@ -546,8 +546,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -595,8 +594,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -643,8 +641,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAnd
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -688,8 +685,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAnd
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -732,8 +728,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -776,8 +771,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -820,8 +814,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -870,8 +863,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndS
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -932,8 +924,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndS
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1027,8 +1018,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndI
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1091,8 +1081,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndS
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1166,8 +1155,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenD
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1235,8 +1223,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1284,8 +1271,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1333,8 +1319,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1385,8 +1370,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1454,8 +1438,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1519,8 +1502,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1589,8 +1571,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1646,8 +1627,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1719,8 +1699,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -1769,8 +1748,7 @@ HWTEST2_PRODUCT_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateComman
     ze_command_queue_desc_t desc = {};
     desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               testL0Device.get(),
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(testL0Device.get(),
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,

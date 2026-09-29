@@ -708,8 +708,7 @@ HWTEST_F(LocalMemoryMultiSubDeviceTest, givenImmediateCommandListWhenIsSuitableU
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCreatingThenCopyThroughLockedPtrEnabledIsSetCorrectly) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               device,
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(device,
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::renderCompute,

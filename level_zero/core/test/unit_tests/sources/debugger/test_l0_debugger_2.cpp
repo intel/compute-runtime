@@ -50,7 +50,7 @@ HEAPFUL_HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenC
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
 
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
@@ -91,7 +91,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSy
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
 
     auto cmdListImm = static_cast<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList);
 
@@ -122,7 +122,7 @@ HWTEST_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWithF
         GTEST_SKIP();
     }
 
-    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     EXPECT_EQ(&csr, commandList->getCsr(false));
 
@@ -169,7 +169,7 @@ HWTEST2_PRODUCT_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnab
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
 
-    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     EXPECT_EQ(&csr, commandList->getCsr(false));
 
@@ -221,7 +221,7 @@ HWTEST2_PRODUCT_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecut
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
 
-    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     EXPECT_EQ(&csr, commandList->getCsr(false));
 
@@ -274,7 +274,7 @@ HWTEST2_PRODUCT_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutin
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
 
-    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     EXPECT_EQ(&csr, commandList->getCsr(false));
 
@@ -313,7 +313,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImme
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount{1, 1, 1};
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
 
     auto result = commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -326,7 +326,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImme
     size_t dst = 0;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
 
     auto result = commandList->appendMemoryCopy(&dst, &src, sizeof(size_t), nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -344,7 +344,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImme
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
 
     auto result = commandList->appendMemoryCopyRegion(dstPtr, &dr, 0, 0, srcPtr, &sr, 0, 0, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -366,7 +366,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForRegu
     ASSERT_NE(nullptr, commandQueue);
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
+        CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto commandList = CommandList::fromHandle(commandLists[0]);
@@ -389,7 +389,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledCommand
     size_t dst = 0;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
     ASSERT_NE(nullptr, commandList);
 
     for (uint32_t count = 0; count < 8; count++) {
@@ -408,7 +408,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsedT
     EXPECT_TRUE(commandQueue->internalUsage);
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0, returnValue, false)->toHandle()};
+        CommandList::create(device, NEO::EngineGroupType::renderCompute, 0, returnValue, false)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     auto commandList = whiteboxCast(CommandList::fromHandle(commandLists[0]));
     commandList->close();
@@ -470,7 +470,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandList = CommandList::create(productFamily, device, EngineGroupType::copy, 0u, returnValue, false);
+    auto commandList = CommandList::create(device, EngineGroupType::copy, 0u, returnValue, false);
     ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 

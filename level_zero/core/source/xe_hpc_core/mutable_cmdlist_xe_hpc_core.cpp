@@ -21,19 +21,22 @@
 
 namespace L0::MCL {
 using Family = NEO::XeHpcCoreFamily;
+static constexpr auto gfxCoreFamily = Family::gfxCoreFamily;
 
 template <>
 GpuAddress MutableStoreDataImmHw<Family>::commandAddressRange = maxNBitValue(57);
 template <>
 GpuAddress MutableSemaphoreWaitHw<Family>::commandAddressRange = maxNBitValue(57);
 
-template struct MutableCommandListCoreFamily<IGFX_XE_HPC_CORE>;
+template struct MutableCommandListCoreFamily<gfxCoreFamily>;
 template struct MutableComputeWalkerHw<Family>;
 template struct MutableLoadRegisterImmHw<Family>;
 template struct MutablePipeControlHw<Family>;
 template struct MutableSemaphoreWaitHw<Family>;
 template struct MutableStoreDataImmHw<Family>;
 template struct MutableStoreRegisterMemHw<Family>;
+
+static MutableCommandListPopulateFactory<gfxCoreFamily, MutableCommandListCoreFamily<gfxCoreFamily>> populateMutableXeHpcCore;
 
 static_assert(NEO::NonCopyableAndNonMovable<MutableComputeWalkerHw<Family>>);
 

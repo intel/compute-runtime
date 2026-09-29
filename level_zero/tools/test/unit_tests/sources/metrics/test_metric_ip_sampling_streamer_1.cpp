@@ -290,7 +290,7 @@ HWTEST2_PRODUCT_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfulWhe
 
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
         std::unique_ptr<L0::CommandList> commandList(
-            CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+            CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
         EXPECT_EQ(zetCommandListAppendMetricStreamerMarker(commandList->toHandle(), streamerHandle, 0),
                   ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);

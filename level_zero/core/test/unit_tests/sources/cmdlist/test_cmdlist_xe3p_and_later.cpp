@@ -912,7 +912,7 @@ HWTEST2_PRODUCT_F(CommandListAppendLaunchKernelXe3pAndLater, givenHeaplessModeWh
     ze_result_t returnValue;
     auto backup = std::unique_ptr<NEO::CompilerProductHelper>{new MockCompilerProductHelperHeapless(true)};
     neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     device->getNEODevice()->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
 
     void *alloc = nullptr;

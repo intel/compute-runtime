@@ -24,8 +24,7 @@ HWTEST_F(CommandListThrottleTests, givenImmediateCommandListWithoutThrottleExten
     desc.pNext = nullptr;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &desc,
                                                                               false,
                                                                               NEO::EngineGroupType::renderCompute,
@@ -45,8 +44,7 @@ HWTEST_F(CommandListThrottleTests, givenImmediateCommandListWithLowThrottleExten
     desc.pNext = &throttleDesc;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &desc,
                                                                               false,
                                                                               NEO::EngineGroupType::renderCompute,
@@ -66,8 +64,7 @@ HWTEST_F(CommandListThrottleTests, givenImmediateCommandListWithHighThrottleExte
     desc.pNext = &throttleDesc;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &desc,
                                                                               false,
                                                                               NEO::EngineGroupType::renderCompute,

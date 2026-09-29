@@ -151,7 +151,7 @@ std::unique_ptr<MutableCommandList> MutableCommandListFixtureInit::createMutable
     }
 
     std::unique_ptr<MutableCommandList> mutableCommandListPtr(
-        MutableCommandList::whiteboxCast(::L0::MCL::MutableCommandList::fromHandle(::L0::MCL::MutableCommandList::create(productFamily, this->device, this->engineGroupType, flags, returnValue, false))));
+        MutableCommandList::whiteboxCast(::L0::MCL::MutableCommandList::fromHandle(::L0::MCL::MutableCommandList::create(this->device, this->engineGroupType, flags, returnValue, false))));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     return mutableCommandListPtr;

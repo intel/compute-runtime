@@ -1007,7 +1007,7 @@ HWTEST2_PRODUCT_F(MetricIpSamplingEnumerationTest, WhenAppendMetricMemoryBarrier
 
     auto &device = testDevices[0];
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
     EXPECT_EQ(zetCommandListAppendMetricMemoryBarrier(commandListHandle), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }

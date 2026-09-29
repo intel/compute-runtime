@@ -590,7 +590,7 @@ using CommandListCreateXe3pTest = Test<DeviceFixture>;
 XE3P_CORETEST_F(CommandListCreateXe3pTest,
                 givenHeaplessEnabledWhenCreatingRegularCommandListThenScratchAddressPatchingEnabled) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false)));
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList.get());
 
     EXPECT_TRUE(commandList->scratchAddressPatchingEnabled);
@@ -600,7 +600,7 @@ XE3P_CORETEST_F(CommandListCreateXe3pTest,
                 givenHeaplessEnabledWhenCreatingImmediateCommandListThenScratchAddressPatchingDisabled) {
     ze_result_t returnValue;
     const ze_command_queue_desc_t desc = {};
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue)));
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue)));
     ASSERT_NE(nullptr, commandList.get());
 
     EXPECT_FALSE(commandList->scratchAddressPatchingEnabled);

@@ -14,8 +14,6 @@
 
 #include "gtest/gtest.h"
 
-extern PRODUCT_FAMILY productFamily;
-
 namespace L0 {
 namespace ult {
 MultiTileCommandListAppendLaunchKernelFixture::MultiTileCommandListAppendLaunchKernelFixture() : backup({&NEO::ImplicitScaling::apiSupport, true}) {}
@@ -41,7 +39,7 @@ void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     contextImp = Context::fromHandle(hContext);
 
     ze_result_t returnValue;
-    commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    commandList = CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 

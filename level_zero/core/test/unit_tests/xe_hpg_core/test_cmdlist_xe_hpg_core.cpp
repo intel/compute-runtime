@@ -47,7 +47,7 @@ HWTEST2_PRODUCT_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePool
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
     auto gmmHelper = commandContainer.getDevice()->getGmmHelper();
 

@@ -100,11 +100,11 @@ struct MutableCommandList {
         static MutableCommandList *allocate(uint32_t numIddsPerBlock) { return new Type(numIddsPerBlock); }
     };
 
-    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+    static CommandList *create(Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType) {
-        return create(productFamily, device, engineGroupType, flags, resultValue, useInternalEngineType, 0u);
+        return create(device, engineGroupType, flags, resultValue, useInternalEngineType, 0u);
     }
-    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+    static CommandList *create(Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType, uint32_t estimatedNumberOfCommands);
     virtual ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) = 0;
     virtual ~MutableCommandList() = 0;
@@ -244,10 +244,10 @@ struct MutableCommandList {
 using MutableCommandListAllocFn = MutableCommandList *(*)(uint32_t);
 extern MutableCommandListAllocFn mutableCommandListFactory[];
 
-template <uint32_t productFamily, typename CommandListType>
+template <uint32_t gfxCoreFamily, typename CommandListType>
 struct MutableCommandListPopulateFactory {
     MutableCommandListPopulateFactory() {
-        mutableCommandListFactory[productFamily] = MutableCommandList::Allocator<CommandListType>::allocate;
+        mutableCommandListFactory[gfxCoreFamily] = MutableCommandList::Allocator<CommandListType>::allocate;
     }
 };
 } // namespace MCL

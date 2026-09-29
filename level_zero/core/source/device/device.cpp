@@ -129,7 +129,6 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
 
     NEO::EngineGroupType engineGroupType = getEngineGroupTypeForOrdinal(commandQueueGroupOrdinal);
 
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
     Device::CmdListCreateFunPtrT createCommandList = &CommandList::create;
@@ -154,7 +153,7 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
         pNext = reinterpret_cast<const ze_base_desc_t *>(pNext->pNext);
     }
 
-    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, false, estimatedNumberOfCommands);
+    *commandList = createCommandList(this, engineGroupType, desc->flags, returnValue, false, estimatedNumberOfCommands);
 
     if (returnValue != ZE_RESULT_SUCCESS) {
         return returnValue;
@@ -195,10 +194,9 @@ ze_result_t Device::createInternalCommandList(const ze_command_list_desc_t *desc
                                               ze_command_list_handle_t *commandList) {
     NEO::EngineGroupType engineGroupType = getInternalEngineGroupType();
 
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
-    *commandList = CommandList::create(productFamily, this, engineGroupType, desc->flags, returnValue, true);
+    *commandList = CommandList::create(this, engineGroupType, desc->flags, returnValue, true);
     return returnValue;
 }
 
@@ -216,9 +214,8 @@ ze_result_t Device::createCommandListImmediate(const ze_command_queue_desc_t *de
 
     NEO::EngineGroupType engineGroupType = getEngineGroupTypeForOrdinal(commandQueueDesc.ordinal);
 
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *phCommandList = CommandList::createImmediate(productFamily, this, &commandQueueDesc, false, engineGroupType, returnValue, powerHint);
+    *phCommandList = CommandList::createImmediate(this, &commandQueueDesc, false, engineGroupType, returnValue, powerHint);
     if (returnValue == ZE_RESULT_SUCCESS) {
         CommandList::fromHandle(*phCommandList)->setOrdinal(commandQueueDesc.ordinal);
     }
@@ -1647,8 +1644,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         }
 
         device->pageFaultCommandList =
-            CommandList::createImmediate(
-                device->neoDevice->getHardwareInfo().platform.eProductFamily, pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::copy, resultValue, 0u);
+            CommandList::createImmediate(pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::copy, resultValue, 0u);
     }
 
     if (osInterface) {

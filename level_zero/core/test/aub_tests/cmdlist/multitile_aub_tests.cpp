@@ -55,7 +55,7 @@ struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
         kernel.reset(Kernel::fromHandle(hKernel));
 
         ze_result_t returnValue;
-        commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, NEO::EngineGroupType::compute, 0u, returnValue, false)));
+        commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(rootDevice, NEO::EngineGroupType::compute, 0u, returnValue, false)));
         ASSERT_NE(nullptr, commandList.get());
 
         ze_command_queue_desc_t queueDesc = {};
@@ -139,7 +139,7 @@ HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatching
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
-    commandList.reset(ult::CommandList::whiteboxCast(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
+    commandList.reset(ult::CommandList::whiteboxCast(CommandList::createImmediate(rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
     ASSERT_TRUE(commandList->isCopyOffloadEnabled());
 
     commandList->getCsr(true)->overrideDispatchPolicy(NEO::DispatchMode::immediateDispatch);

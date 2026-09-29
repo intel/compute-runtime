@@ -1257,7 +1257,7 @@ HWTEST2_PRODUCT_F(AppendMemoryCopyTests, givenCopyCommandListWhenCopyFromImagBli
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     zeDesc.type = ZE_IMAGE_TYPE_3D;
@@ -1549,7 +1549,7 @@ HWTEST2_PRODUCT_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCm
     ze_command_queue_desc_t desc = {
         .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
     };
-    std::unique_ptr<L0::CommandList> commandList1(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList1(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     auto mockCmdList1 = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList1.get());
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1559,7 +1559,7 @@ HWTEST2_PRODUCT_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCm
 
     debugManager.flags.SplitBcsForCopyOffload.set(0);
 
-    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     auto mockCmdList2 = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList2.get());
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -2017,7 +2017,7 @@ HWTEST2_PRODUCT_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOff
     ze_command_queue_desc_t desc = {
         .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
     };
-    std::unique_ptr<L0::CommandList> commandList1(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList1(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     auto mockCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList1.get());
 
     if (!mockCmdList->isBcsSplitEnabled()) {

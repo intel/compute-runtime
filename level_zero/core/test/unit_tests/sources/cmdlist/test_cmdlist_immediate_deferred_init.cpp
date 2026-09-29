@@ -40,7 +40,7 @@ struct ImmediateCmdListCreationFixture : public DeviceFixture {
 
     std::unique_ptr<L0::CommandList> createImmediateCmdList(const ze_command_queue_desc_t &desc, bool internalUsage, NEO::EngineGroupType engineGroupType) {
         ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-        std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, internalUsage, engineGroupType, returnValue));
+        std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, internalUsage, engineGroupType, returnValue));
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         return commandList;
     }
@@ -82,7 +82,7 @@ TEST_F(ImmediateCmdListCreationTest, givenInvalidIndexWhenCreatingFirstImmediate
     desc.index = std::numeric_limits<uint32_t>::max();
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue);
 
     EXPECT_EQ(nullptr, commandList);
     EXPECT_FALSE(device->getFirstImmCmdlistCreated());
@@ -165,7 +165,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenNotYetInitializedImmedia
     ASSERT_EQ(nullptr, whiteBoxImmediateCmdList->cmdQImmediate);
 
     ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    std::unique_ptr<L0::CommandList> regularCmdList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> regularCmdList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ze_command_list_handle_t regularCmdListHandle = regularCmdList->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, regularCmdList->close());
@@ -244,7 +244,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenCsrProvidedWhenCreatingI
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, true, NEO::EngineGroupType::compute, providedCsr.get(), returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, true, NEO::EngineGroupType::compute, providedCsr.get(), returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
@@ -350,7 +350,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenNotUsedImmediateCmdListW
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    auto commandList = CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList);
@@ -368,7 +368,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenInvalidIndexWhenCreating
     desc.index = std::numeric_limits<uint32_t>::max();
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
     EXPECT_EQ(nullptr, commandList);
@@ -567,7 +567,7 @@ TEST_F(FailedImmediateCmdListTest, givenFailedInitializationWhenSettingPatchingP
 
 TEST_F(ImmediateCmdListDeferredInitializationTest, givenRegularCmdListWhenSettingPatchingPreambleThenResourcesAreNotInitialized) {
     ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
@@ -609,7 +609,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenGraphWithOwnExecutionTar
 
 TEST_F(ImmediateCmdListDeferredInitializationTest, givenGraphWithOwnExecutionTargetWhenExecutingSegmentThenSegmentIsSubmittedToInitializedTarget) {
     ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    std::unique_ptr<L0::CommandList> segmentCmdList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> segmentCmdList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendBarrier(segmentCmdList.get()));
     ASSERT_EQ(ZE_RESULT_SUCCESS, segmentCmdList->close());
@@ -733,7 +733,7 @@ TEST(ImmediateCmdListDeferredInitialization, givenForcedBcsEngineIndexWithoutLin
     ze_command_queue_desc_t desc = {};
     desc.ordinal = copyOrdinal;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(hwInfo.platform.eProductFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue);
+    auto commandList = CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::copy, returnValue);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
     EXPECT_EQ(nullptr, commandList);

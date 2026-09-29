@@ -9,6 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -33,10 +34,11 @@ using MutableCommandListTest = Test<MutableCommandListFixture<false, -1>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
-            givenInvalidProductWhenCreatingCommandListThenNoObjectCreated) {
+            givenInvalidCoreFamilyWhenCreatingCommandListThenNoObjectCreated) {
     ze_result_t returnValue;
 
-    auto mcl = MutableCommandList::create(NEO::maxProductEnumValue, device, this->engineGroupType, 0, returnValue, false);
+    VariableBackup<GFXCORE_FAMILY> coreFamilyBackup(&device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->platform.eRenderCoreFamily, GFXCORE_FAMILY{NEO::maxCoreEnumValue});
+    auto mcl = MutableCommandList::create(device, this->engineGroupType, 0, returnValue, false);
     EXPECT_EQ(nullptr, mcl);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, returnValue);
 }
@@ -47,7 +49,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ze_result_t returnValue;
 
     constexpr uint32_t estimatedNumberOfCommands = 8u;
-    auto mcl = MutableCommandList::create(productFamily, device, this->engineGroupType, 0, returnValue, false, estimatedNumberOfCommands);
+    auto mcl = MutableCommandList::create(device, this->engineGroupType, 0, returnValue, false, estimatedNumberOfCommands);
     ASSERT_NE(nullptr, mcl);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 

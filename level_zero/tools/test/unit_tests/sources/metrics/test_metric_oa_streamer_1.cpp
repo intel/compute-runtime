@@ -1279,7 +1279,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
 
     // One api: command list handle.
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
 
     // One api: streamer handle.
     zet_metric_streamer_handle_t streamerHandle = {};
@@ -1396,7 +1396,7 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
 
     // One api: command list handle.
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
 
     // One api: streamer handle.
     zet_metric_streamer_handle_t streamerHandle = {};

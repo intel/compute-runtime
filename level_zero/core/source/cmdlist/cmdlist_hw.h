@@ -557,7 +557,4 @@ struct CommandListCoreFamily : public CommandList {
     bool isWalkerPostSyncSkipEnabled = false;
 };
 
-template <PRODUCT_FAMILY gfxProductFamily>
-struct CommandListProductFamily;
-
 } // namespace L0

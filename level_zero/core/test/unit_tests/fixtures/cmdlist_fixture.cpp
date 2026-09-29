@@ -37,7 +37,7 @@ CommandListFixture ::~CommandListFixture() = default;
 void CommandListFixture::setUp() {
     DeviceFixture::setUp();
     ze_result_t returnValue;
-    commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -100,10 +100,10 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
 
     if (!createImmediate) {
-        commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, cmdListEngineType, 0u, returnValue, false)));
+        commandList.reset(CommandList::whiteboxCast(CommandList::create(device, cmdListEngineType, 0u, returnValue, false)));
     } else {
         const ze_command_queue_desc_t desc = {};
-        commandList.reset(CommandList::whiteboxCast(CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
+        commandList.reset(CommandList::whiteboxCast(CommandList::createImmediate(device, &desc, createInternal, cmdListEngineType, returnValue)));
     }
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -144,8 +144,8 @@ void ModuleMutableCommandListFixture::setUpImpl() {
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     engineGroupType = gfxCoreHelper.getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
 
-    commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
-    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(device, engineGroupType, 0u, returnValue, false)));
+    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, engineGroupType, returnValue)));
 
     mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
@@ -194,7 +194,7 @@ void CmdListPipelineSelectStateFixture::setUp() {
     ModuleMutableCommandListFixture::setUp();
 
     auto result = ZE_RESULT_SUCCESS;
-    commandList2.reset(CommandList::whiteboxCast(CommandList::create(productFamily, this->device, this->engineGroupType, 0u, result, false)));
+    commandList2.reset(CommandList::whiteboxCast(CommandList::create(this->device, this->engineGroupType, 0u, result, false)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -272,7 +272,7 @@ void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
     debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
 
     ze_result_t returnValue;
-    commandListPrivateHeap.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
+    commandListPrivateHeap.reset(CommandList::whiteboxCast(CommandList::create(device, engineGroupType, 0u, returnValue, false)));
 
     debugManager.flags.SelectCmdListHeapAddressModel.set(globalHeapMode);
 }
@@ -305,7 +305,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
 
-    commandListImmediateCoexisting.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandListImmediateCoexisting.reset(CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, engineGroupType, returnValue)));
 
     if (this->dshRequired) {
         mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers = 2;
@@ -533,7 +533,7 @@ void CommandListAppendLaunchRayTracingKernelFixture::setUp() {
     ASSERT_NE(nullptr, buffer2);
 
     ze_result_t returnValue;
-    commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    commandList = CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(commandList->getCmdContainer().getCommandStream(), nullptr);
 
     dispatchKernelArguments.groupCountX = 1u;
@@ -566,8 +566,8 @@ void PrimaryBatchBufferPreamblelessCmdListFixture::setUp() {
     PrimaryBatchBufferCmdListFixture::setUp();
 
     ze_result_t returnValue;
-    commandList2.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
-    commandList3.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
+    commandList2.reset(CommandList::whiteboxCast(CommandList::create(device, engineGroupType, 0u, returnValue, false)));
+    commandList3.reset(CommandList::whiteboxCast(CommandList::create(device, engineGroupType, 0u, returnValue, false)));
 }
 
 void PrimaryBatchBufferPreamblelessCmdListFixture::tearDown() {
@@ -650,7 +650,7 @@ void CommandQueueThreadArbitrationPolicyFixture::setUp() {
                                                      returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
-    commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
+    commandList = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
     ASSERT_NE(nullptr, commandList);
 
     commandList->close();

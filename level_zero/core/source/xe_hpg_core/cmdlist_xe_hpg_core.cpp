@@ -21,10 +21,12 @@
 
 namespace L0 {
 
+static constexpr auto gfxCoreFamily = IGFX_XE_HPG_CORE;
+
 template <>
-void CommandListCoreFamily<IGFX_XE_HPG_CORE>::applyMemoryRangesBarrier(uint32_t numRanges,
-                                                                       const size_t *pRangeSizes,
-                                                                       const void **pRanges) {
+void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t numRanges,
+                                                                    const size_t *pRangeSizes,
+                                                                    const void **pRanges) {
 
     NEO::LinearStream *commandStream = commandContainer.getCommandStream();
     NEO::SVMAllocsManager *svmAllocsManager =
@@ -67,7 +69,10 @@ void CommandListCoreFamily<IGFX_XE_HPG_CORE>::applyMemoryRangesBarrier(uint32_t 
     }
 }
 
-template struct CommandListCoreFamily<IGFX_XE_HPG_CORE>;
-template struct CommandListCoreFamilyImmediate<IGFX_XE_HPG_CORE>;
+template struct CommandListCoreFamily<gfxCoreFamily>;
+template struct CommandListCoreFamilyImmediate<gfxCoreFamily>;
+
+static CommandListPopulateFactory<gfxCoreFamily, CommandListCoreFamily<gfxCoreFamily>> populateXeHpgCore;
+static CommandListImmediatePopulateFactory<gfxCoreFamily, CommandListCoreFamilyImmediate<gfxCoreFamily>> populateXeHpgCoreImmediate;
 
 } // namespace L0

@@ -1022,7 +1022,7 @@ struct OutOfOrderImmediateCmdListBarrierFixture : public DeviceFixture {
         ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
         queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-        commandList.reset(CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &queueDesc,
+        commandList.reset(CommandList::createImmediate(device, &queueDesc,
                                                        false, NEO::EngineGroupType::renderCompute, returnValue));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         ASSERT_FALSE(commandList->isInOrderExecutionEnabled());
@@ -1164,7 +1164,7 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenCopyOnlyListAfterHostSynchroniz
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    commandList.reset(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, result));
+    commandList.reset(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::copy, result));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_FALSE(commandList->isInOrderExecutionEnabled());
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));

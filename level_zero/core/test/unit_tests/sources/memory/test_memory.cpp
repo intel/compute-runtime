@@ -7137,8 +7137,7 @@ HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
 
     device0->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               device0,
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(device0,
                                                                                &queueDesc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,
@@ -7207,8 +7206,7 @@ HWTEST2_PRODUCT_F(MultipleDevicePeerImageTest,
     device0->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     const ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               device0,
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(device0,
                                                                                &queueDesc,
                                                                                false,
                                                                                NEO::EngineGroupType::copy,

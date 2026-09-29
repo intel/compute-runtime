@@ -552,8 +552,7 @@ HWTEST_F(FenceTest, givenFenceCreatedFromSingleCommandQueueWhenExecutedOnAnother
                                                                false,
                                                                returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto cmdList = whiteboxCast(CommandList::create(productFamily,
-                                                    device,
+    auto cmdList = whiteboxCast(CommandList::create(device,
                                                     NEO::EngineGroupType::compute,
                                                     0u,
                                                     returnValue,

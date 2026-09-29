@@ -32,7 +32,7 @@ using HostFunctionTests = Test<DeviceFixture>;
 HWTEST_F(HostFunctionTests, givenRegularCommandListWhenZeCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
     auto result = L0::zeCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
@@ -42,7 +42,7 @@ HWTEST_F(HostFunctionTests, givenRegularCommandListWhenZeCommandListAppendHostFu
 HWTEST_F(HostFunctionTests, givenCopyCommandListWhenZeCommandListAppendHostFunctionIsCalledThenSuccessIsReturned) {
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
     auto result = L0::zeCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
@@ -54,7 +54,7 @@ HWTEST_F(HostFunctionTests, givenSynchronousImmediateCommandListWhenZeCommandLis
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
     auto result = L0::zeCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
@@ -66,7 +66,7 @@ HWTEST_F(HostFunctionTests, givenAsynchronousImmediateCommandListWhenZeCommandLi
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
     auto result = L0::zeCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
@@ -76,7 +76,7 @@ HWTEST_F(HostFunctionTests, givenAsynchronousImmediateCommandListWhenZeCommandLi
 HWTEST_F(HostFunctionTests, givenInvalidWaitEventsHandleWhenAppendHostFunctionIsCalledThenInvalidArgumentErrorIsReturned) {
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
     CmdListHostFunctionParameters parameters;
@@ -93,7 +93,7 @@ HWTEST_F(HostFunctionTests, givenWaitEventWhenAppendHostFunctionIsCalledThenSema
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -149,7 +149,7 @@ HWTEST_F(HostFunctionTests, givenOOQCmdListAndCounterBasedEventThenAppendHostFun
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false)));
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, result, false)));
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
     CmdListHostFunctionParameters parameters;
@@ -169,7 +169,7 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionIsCalledT
 
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandList(
-        CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+        CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
 
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
@@ -250,7 +250,7 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWithHostFunctionsRequiringDiffere
 
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandList(
-        CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+        CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
 
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
@@ -275,7 +275,7 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWhenAddingHostFunctionsThenWithAn
 
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandList(
-        CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+        CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
 
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
@@ -340,7 +340,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = queueMode;
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
 
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     uint64_t hostFunctionAddress = reinterpret_cast<uint64_t>(pHostFunction);
@@ -419,7 +419,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = queueMode;
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
     commandList->ensureImmediateResourcesInitialized();
     auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
     uint64_t hostFunctionAddress = reinterpret_cast<uint64_t>(pHostFunction);

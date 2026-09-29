@@ -41,11 +41,11 @@ struct CommandQueueExecuteCommandListsFixtureInit : DeviceFixture {
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandLists[0] = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandLists[1] = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -107,13 +107,13 @@ struct MultiDeviceCommandQueueExecuteCommandListsFixture : public MultiDeviceFix
         ASSERT_NE(nullptr, device);
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandLists[0] = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[0])->getPartitionCount());
         CommandList::fromHandle(commandLists[0])->close();
 
-        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandLists[1] = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[1])->getPartitionCount());
@@ -726,11 +726,11 @@ void CommandQueueExecuteCommandListsFixtureInit::twoCommandListCommandPreemption
     preemptionCmdProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(NEO::PreemptionMode::ThreadGroup, NEO::PreemptionMode::Disabled) > 0u;
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandListDisabled = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto commandListDisabled = CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     commandListDisabled->commandListPreemptionMode = NEO::PreemptionMode::Disabled;
     commandListDisabled->close();
 
-    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
     commandListThreadGroup->close();
 
@@ -1015,7 +1015,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     constexpr uint32_t preemptionRegisterOffset = 0x2580;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
@@ -1073,7 +1073,7 @@ struct CommandQueueExecuteCommandListSWTagsTestsFixture : public DeviceFixture {
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
-        auto cmdList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
+        auto cmdList = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
         commandLists[0] = cmdList->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1357,7 +1357,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecut
     debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
@@ -1411,7 +1411,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     using Parse = typename FamilyType::Parse;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
@@ -1481,7 +1481,7 @@ void CommandQueueExecuteCommandListsFixtureInit::testPatchPreambleAsyncPatchList
 
     auto engineType = copyEngine ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
 
-    auto commandList = CommandList::create(productFamily, device, engineType, 0u, returnValue, false);
+    auto commandList = CommandList::create(device, engineType, 0u, returnValue, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     size_t expectedEncodePatchSize = 0;

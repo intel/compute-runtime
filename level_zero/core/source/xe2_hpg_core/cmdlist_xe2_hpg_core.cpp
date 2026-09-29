@@ -21,7 +21,12 @@
 
 namespace L0 {
 
-template struct CommandListCoreFamily<IGFX_XE2_HPG_CORE>;
-template struct CommandListCoreFamilyImmediate<IGFX_XE2_HPG_CORE>;
+static constexpr auto gfxCoreFamily = IGFX_XE2_HPG_CORE;
+
+template struct CommandListCoreFamily<gfxCoreFamily>;
+template struct CommandListCoreFamilyImmediate<gfxCoreFamily>;
+
+static CommandListPopulateFactory<gfxCoreFamily, CommandListCoreFamily<gfxCoreFamily>> populateXe2HpgCore;
+static CommandListImmediatePopulateFactory<gfxCoreFamily, CommandListCoreFamilyImmediate<gfxCoreFamily>> populateXe2HpgCoreImmediate;
 
 } // namespace L0
