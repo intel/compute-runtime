@@ -436,7 +436,8 @@ struct Event : _ze_event_handle_t {
     }
 
     bool isCapturedGraphInternalEvent() const {
-        return (nullptr != getRecordedSignalFrom()) && isCounterBased() && (false == externalEvent);
+        return (nullptr != getRecordedSignalFrom()) &&
+               isCounterBased() && (false == (isExternalEvent() || getApiRequiredGraphExternalEvent()));
     }
 
     virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) = 0;

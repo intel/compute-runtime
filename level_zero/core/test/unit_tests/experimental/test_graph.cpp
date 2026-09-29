@@ -20,11 +20,14 @@
 #include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_semaphore_wait_hw.h"
+#include "level_zero/core/source/mutable_cmdlist/variable.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_cmdlist.h"
+#include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_load_register_imm_hw.h"
+#include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_semaphore_wait_hw.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/ze_api.h"
 
@@ -2057,8 +2060,8 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventWhenInsta
     execGraph.instantiateFrom(*(srcGraph.get()));
 
     auto event = L0::Event::fromHandle(eventHandle);
-    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbEventInfos();
-    EXPECT_EQ(0u, externalCbEventContainer.size());
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    EXPECT_EQ(0u, externalCbSignalEventContainer.size());
     srcGraph.reset();
     event->destroy();
 }
@@ -2853,11 +2856,11 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInst
     execGraph.instantiateFrom(*(srcGraph.get()));
 
     auto event = L0::Event::fromHandle(eventHandle);
-    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbEventInfos();
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
     // event used twice in the graph, but should be recorded only once
-    EXPECT_EQ(1u, externalCbEventContainer.size());
+    EXPECT_EQ(1u, externalCbSignalEventContainer.size());
     bool externalCbEventFound = false;
-    for (const auto &entry : externalCbEventContainer) {
+    for (const auto &entry : externalCbSignalEventContainer) {
         EXPECT_EQ(nullptr, entry.executorCommandList);
         if (event == entry.event) {
             externalCbEventFound = true;
@@ -2906,8 +2909,8 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     execGraph.instantiateFrom(*(srcGraph.get()));
 
     const NEO::InOrderExecEventHelper *graphExecHelper = nullptr;
-    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbEventInfos();
-    for (const auto &entry : externalCbEventContainer) {
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    for (const auto &entry : externalCbSignalEventContainer) {
         if (event == entry.event) {
             graphExecHelper = &entry.inOrderExecEventHelper;
             break;
@@ -2923,8 +2926,8 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     execGraph2.instantiateFrom(*(srcGraph.get()));
 
     const NEO::InOrderExecEventHelper *graphExecHelper2 = nullptr;
-    auto &externalCbEventContainer2 = execGraph2.getExternalCbEventInfoContainer()->getCbEventInfos();
-    for (const auto &entry : externalCbEventContainer2) {
+    auto &externalCbSignalEventContainer2 = execGraph2.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    for (const auto &entry : externalCbSignalEventContainer2) {
         if (event == entry.event) {
             graphExecHelper2 = &entry.inOrderExecEventHelper;
             break;
@@ -3008,8 +3011,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     bool forkEventFound = false;
     bool joinEventFound = false;
 
-    auto &externalCbEventContainer = cbEventContainer->getCbEventInfos();
-    for (const auto &entry : externalCbEventContainer) {
+    auto &externalCbSignalEventContainer = cbEventContainer->getCbSignalEventInfos();
+    for (const auto &entry : externalCbSignalEventContainer) {
         if (entry.event == forkEvent) {
             EXPECT_EQ(nullptr, entry.executorCommandList);
             forkEventFound = true;
@@ -3161,8 +3164,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto cbEventContainer = execGraph.getExternalCbEventInfoContainer().get();
 
     bool eventFound = false;
-    auto &externalCbEventContainer = cbEventContainer->getCbEventInfos();
-    for (const auto &entry : externalCbEventContainer) {
+    auto &externalCbSignalEventContainer = cbEventContainer->getCbSignalEventInfos();
+    for (const auto &entry : externalCbSignalEventContainer) {
         if (entry.event == event) {
             EXPECT_NE(nullptr, entry.executorCommandList);
             eventFound = true;
@@ -3887,6 +3890,322 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, sdiCmds.size());
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(immCmdListHandleMultiEngine));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            givenInOrderCmdListAndRegularCbEventRecordedWithApiGraphExternalFlagWhenInstantiateToGraphAndRunningOnOutsideGraphThenRecordAsExternalCbEventAndDispatchCommands) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    ze_event_flags_exp_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+
+    std::unique_ptr<L0::Graph> outsideGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t outsideGraphHandle = outsideGraph->toHandle();
+
+    // attach event to the outside graph, so when it runs, it will have its own patch preamble and in order counter when the outside graph is executed
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, outsideGraphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(commandListHandle, &eventFlagsDesc, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &outsideGraphHandle, nullptr));
+    ExecutableGraph outsideExecGraph;
+    auto ret = outsideExecGraph.instantiateFrom(*(outsideGraph.get()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto outsideExecGraphHandle = outsideExecGraph.toHandle();
+
+    auto &outsideExternalCbSignalEventContainer = outsideExecGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    ASSERT_EQ(1u, outsideExternalCbSignalEventContainer.size());
+    auto itSignalOutside = std::find_if(outsideExternalCbSignalEventContainer.begin(),
+                                        outsideExternalCbSignalEventContainer.end(),
+                                        [event](const ExternalSignalCbEventInfo &info) { return info.event == event; });
+    ASSERT_NE(outsideExternalCbSignalEventContainer.end(), itSignalOutside);
+    EXPECT_TRUE((*itSignalOutside).apiRequiredSignalEvent);
+
+    // now record wait and signal on event with external flag
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEventsWithParameters(commandListHandle, &eventFlagsDesc, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(commandListHandle, &eventFlagsDesc, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+    ExecutableGraph execGraph;
+    ret = execGraph.instantiateFrom(*(srcGraph.get()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto execGraphHandle = execGraph.toHandle();
+
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    ASSERT_EQ(1u, externalCbSignalEventContainer.size());
+
+    auto itSignal = std::find_if(externalCbSignalEventContainer.begin(),
+                                 externalCbSignalEventContainer.end(),
+                                 [event](const ExternalSignalCbEventInfo &info) { return info.event == event; });
+    ASSERT_NE(externalCbSignalEventContainer.end(), itSignal);
+    EXPECT_TRUE((*itSignal).apiRequiredSignalEvent);
+
+    const auto &externalCbWaitEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbWaitEventInfos();
+    ASSERT_EQ(1u, externalCbWaitEventContainer.size());
+    const auto &info = externalCbWaitEventContainer[0];
+    ASSERT_EQ(1u, info.waitEvents.size());
+    EXPECT_EQ(eventHandle, info.waitEvents[0]);
+
+    auto mclBackendCmdList = externalCbWaitEventContainer[0].executor->asMutable();
+    ASSERT_NE(nullptr, mclBackendCmdList);
+    auto whiteBoxMcl = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(mclBackendCmdList);
+    ASSERT_NE(0u, whiteBoxMcl->eventMutations.size());
+    auto &eventMutationPoint = whiteBoxMcl->eventMutations[0];
+    ASSERT_EQ(1u, eventMutationPoint.waitEvents.size());
+    auto waitExternalVariable = eventMutationPoint.waitEvents[0].eventVariable;
+    EXPECT_TRUE(waitExternalVariable->getDesc().eventValue.apiRequiredExternal);
+    EXPECT_TRUE(waitExternalVariable->getDesc().eventValue.isExternalFlag);
+    ASSERT_EQ(2u, waitExternalVariable->getSemWaitList().size());
+
+    // first sem wait is for patch preamble, second is for in order counter
+    auto mutableSemWaitPatchPreamble = waitExternalVariable->getSemWaitList()[0];
+    EXPECT_EQ(L0::MCL::MutableSemaphoreWait::cbEventWaitPatchPreambleCounter, mutableSemWaitPatchPreamble->getType());
+    auto mutableSemWaitInOrderCounter = waitExternalVariable->getSemWaitList()[1];
+    EXPECT_EQ(L0::MCL::MutableSemaphoreWait::cbEventWait, mutableSemWaitInOrderCounter->getType());
+
+    // executing outside graph means the event is in state attached to the outside graph, so it should have attached its patch preamble and in its order counter
+    ret = L0::zeCommandListAppendGraphExp(commandListHandle, outsideExecGraphHandle, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto outsidePatchPreambleCounter = event->getInOrderExecEventHelper().getPatchPreambleCounter();
+    auto outsidePatchPreambleDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
+
+    auto outsideInOrderCounter = event->getInOrderExecBaseSignalValue();
+    auto outsideInOrderCounterGpuAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+
+    // now use it on target exec graph
+    ret = L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    // graph uses command views to program and mutate commands
+    auto semWaitCmdPatchPreamble = genCmdCast<MI_SEMAPHORE_WAIT *>(mutableSemWaitPatchPreamble->getCommandView());
+    ASSERT_NE(nullptr, semWaitCmdPatchPreamble);
+    EXPECT_EQ(outsidePatchPreambleDeviceGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdPatchPreamble));
+
+    auto semWaitCmdInOrderCounter = genCmdCast<MI_SEMAPHORE_WAIT *>(mutableSemWaitInOrderCounter->getCommandView());
+    ASSERT_NE(nullptr, semWaitCmdInOrderCounter);
+    EXPECT_EQ(outsideInOrderCounterGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdInOrderCounter));
+
+    if (waitExternalVariable->getDesc().eventValue.qwordIndirect) {
+        // qword indirect means counter value is at lri commands, 1st pair is for patch preamble (1st is lower), 2nd pair is for in order counter (3rd is lower)
+        ASSERT_EQ(4u, waitExternalVariable->getLoadRegImmList().size());
+        auto mutableLriPatchPreambleLower = waitExternalVariable->getLoadRegImmList()[0];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, mutableLriPatchPreambleLower->getType());
+        auto lriCmdPatchPreambleLower = genCmdCast<MI_LOAD_REGISTER_IMM *>(mutableLriPatchPreambleLower->getCommandView());
+        ASSERT_NE(nullptr, lriCmdPatchPreambleLower);
+        EXPECT_EQ(outsidePatchPreambleCounter, lriCmdPatchPreambleLower->getDataDword());
+
+        auto mutableLriInOrderCounterLower = waitExternalVariable->getLoadRegImmList()[2];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, mutableLriInOrderCounterLower->getType());
+        auto lriCmdInOrderCounterLower = genCmdCast<MI_LOAD_REGISTER_IMM *>(mutableLriInOrderCounterLower->getCommandView());
+        ASSERT_NE(nullptr, lriCmdInOrderCounterLower);
+        EXPECT_EQ(outsideInOrderCounter, lriCmdInOrderCounterLower->getDataDword());
+    } else {
+        EXPECT_EQ(outsidePatchPreambleCounter, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmdPatchPreamble));
+        EXPECT_EQ(outsideInOrderCounter, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmdInOrderCounter));
+    }
+
+    // and now since the event is used on the target exec graph, as a signal event, it should have its own patch preamble, which is different from the outside graph's
+    // counter in this test was used on the same immediate command list, so the address will be the same, but the counter value should be greater
+    auto execGraphPatchPreambleCounter = event->getInOrderExecEventHelper().getPatchPreambleCounter();
+    auto execGraphPatchPreambleDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
+    EXPECT_EQ(execGraphPatchPreambleDeviceGpuAddress, outsidePatchPreambleDeviceGpuAddress);
+    EXPECT_GT(execGraphPatchPreambleCounter, outsidePatchPreambleCounter);
+    // verify that attaching the event as signal set correctly api required external graph flag
+    EXPECT_TRUE(event->getApiRequiredGraphExternalEvent());
+
+    outsideGraph.reset();
+    srcGraph.reset();
+    zeEventDestroy(eventHandle);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            givenInOrderCmdListAndRegularCbEventRecordedWithApiGraphExternalFlagWhenInstantiateToGraphAndRunningOnOutsideImmediateCmdListThenRecordAsExternalCbEventAndDispatchCommands) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    alignas(4) uint8_t noopSemWait[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    alignas(4) uint8_t noopLri[sizeof(MI_LOAD_REGISTER_IMM)] = {};
+
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    ze_event_flags_exp_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+
+    // now record wait and signal on event with external flag
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEventsWithParameters(commandListHandle, &eventFlagsDesc, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(commandListHandle, &eventFlagsDesc, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+    ExecutableGraph execGraph;
+    auto ret = execGraph.instantiateFrom(*(srcGraph.get()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto execGraphHandle = execGraph.toHandle();
+
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    ASSERT_EQ(1u, externalCbSignalEventContainer.size());
+
+    auto itSignal = std::find_if(externalCbSignalEventContainer.begin(),
+                                 externalCbSignalEventContainer.end(),
+                                 [event](const ExternalSignalCbEventInfo &info) { return info.event == event; });
+    ASSERT_NE(externalCbSignalEventContainer.end(), itSignal);
+    EXPECT_TRUE((*itSignal).apiRequiredSignalEvent);
+
+    const auto &externalCbWaitEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbWaitEventInfos();
+    ASSERT_EQ(1u, externalCbWaitEventContainer.size());
+    const auto &info = externalCbWaitEventContainer[0];
+    ASSERT_EQ(1u, info.waitEvents.size());
+    EXPECT_EQ(eventHandle, info.waitEvents[0]);
+
+    auto mclBackendCmdList = externalCbWaitEventContainer[0].executor->asMutable();
+    ASSERT_NE(nullptr, mclBackendCmdList);
+    auto whiteBoxMcl = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(mclBackendCmdList);
+    ASSERT_NE(0u, whiteBoxMcl->eventMutations.size());
+    auto &eventMutationPoint = whiteBoxMcl->eventMutations[0];
+    ASSERT_EQ(1u, eventMutationPoint.waitEvents.size());
+    auto waitExternalVariable = eventMutationPoint.waitEvents[0].eventVariable;
+    EXPECT_TRUE(waitExternalVariable->getDesc().eventValue.apiRequiredExternal);
+    EXPECT_TRUE(waitExternalVariable->getDesc().eventValue.isExternalFlag);
+    ASSERT_EQ(2u, waitExternalVariable->getSemWaitList().size());
+
+    // first sem wait is for patch preamble, second is for in order counter
+    auto mutableSemWaitPatchPreamble = waitExternalVariable->getSemWaitList()[0];
+    EXPECT_EQ(L0::MCL::MutableSemaphoreWait::cbEventWaitPatchPreambleCounter, mutableSemWaitPatchPreamble->getType());
+    auto mutableSemWaitInOrderCounter = waitExternalVariable->getSemWaitList()[1];
+    EXPECT_EQ(L0::MCL::MutableSemaphoreWait::cbEventWait, mutableSemWaitInOrderCounter->getType());
+
+    // now execute immediate command list and signal the event, but since it is a immediate, no patch preamble, but in order counter is still used
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(commandListHandle, eventHandle));
+
+    auto outsidePatchPreambleCounter = event->getInOrderExecEventHelper().getPatchPreambleCounter();
+    auto outsidePatchPreambleDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
+    EXPECT_EQ(0u, outsidePatchPreambleCounter);
+    EXPECT_EQ(0u, outsidePatchPreambleDeviceGpuAddress);
+    auto outsideInOrderCounter = event->getInOrderExecBaseSignalValue();
+    auto outsideInOrderCounterGpuAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+
+    // now use it on target exec graph
+    ret = L0::zeCommandListAppendGraphExp(commandListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    // graph uses command views to program and mutate commands, noop patch preamble and program wait on in order counter
+    EXPECT_EQ(0, memcmp(mutableSemWaitPatchPreamble->getCommandView(), noopSemWait, sizeof(MI_SEMAPHORE_WAIT)));
+
+    auto semWaitCmdInOrderCounter = genCmdCast<MI_SEMAPHORE_WAIT *>(mutableSemWaitInOrderCounter->getCommandView());
+    ASSERT_NE(nullptr, semWaitCmdInOrderCounter);
+    EXPECT_EQ(outsideInOrderCounterGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdInOrderCounter));
+
+    if (waitExternalVariable->getDesc().eventValue.qwordIndirect) {
+        // qword indirect means counter value is at lri commands, 1st pair is for patch preamble (1st is lower), 2nd pair is for in order counter (3rd is lower)
+        ASSERT_EQ(4u, waitExternalVariable->getLoadRegImmList().size());
+        auto mutableLriPatchPreambleLower = waitExternalVariable->getLoadRegImmList()[0];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, mutableLriPatchPreambleLower->getType());
+        EXPECT_EQ(0, memcmp(mutableLriPatchPreambleLower->getCommandView(), noopLri, sizeof(MI_LOAD_REGISTER_IMM)));
+
+        auto mutableLriInOrderCounterLower = waitExternalVariable->getLoadRegImmList()[2];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, mutableLriInOrderCounterLower->getType());
+        auto lriCmdInOrderCounterLower = genCmdCast<MI_LOAD_REGISTER_IMM *>(mutableLriInOrderCounterLower->getCommandView());
+        ASSERT_NE(nullptr, lriCmdInOrderCounterLower);
+        EXPECT_EQ(outsideInOrderCounter, lriCmdInOrderCounterLower->getDataDword());
+    } else {
+        EXPECT_EQ(outsideInOrderCounter, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmdInOrderCounter));
+    }
+
+    // and now since the event is used on the target exec graph, as a signal event, it should have its own patch preamble, which should have non-zero counter and address
+    auto execGraphPatchPreambleCounter = event->getInOrderExecEventHelper().getPatchPreambleCounter();
+    auto execGraphPatchPreambleDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
+    EXPECT_NE(0u, execGraphPatchPreambleDeviceGpuAddress);
+    EXPECT_NE(0u, execGraphPatchPreambleCounter);
+    // verify that attaching the event as signal set correctly api required external graph flag
+    EXPECT_TRUE(event->getApiRequiredGraphExternalEvent());
+
+    srcGraph.reset();
+    zeEventDestroy(eventHandle);
+}
+
+TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventRecordedWithoutApiGraphExternalFlagWhenInstantiateToGraphThenDoNotRecordAsExternalCbEvent) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEventsWithParameters(commandListHandle, nullptr, 1, &eventHandle));
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+    ze_group_count_t groupCount = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, nullptr, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(commandListHandle, nullptr, eventHandle));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*(srcGraph.get()));
+
+    auto event = L0::Event::fromHandle(eventHandle);
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    ASSERT_EQ(0u, externalCbSignalEventContainer.size());
+
+    const auto &externalCbWaitEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbWaitEventInfos();
+    ASSERT_EQ(0u, externalCbWaitEventContainer.size());
+
+    srcGraph.reset();
+    event->destroy();
 }
 
 TEST_F(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenAppendBarrierHandlingEvents) {

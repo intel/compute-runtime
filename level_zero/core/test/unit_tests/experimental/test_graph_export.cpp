@@ -15,6 +15,7 @@
 #include "level_zero/api/core/ze_graph_api_entrypoints.h"
 #include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
@@ -1409,7 +1410,9 @@ TEST_F(ExtractParametersTest, zeCommandListAppendSignalEvent) {
 }
 
 TEST_F(ExtractParametersTest, zeCommandListAppendSignalEventWithParameters) {
+    MockEvent event;
     Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters>::ApiArgs args{};
+    args.hEvent = event.toHandle();
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendSignalEventWithParameters>(args);
 }
 
@@ -1824,11 +1827,12 @@ TEST_F(ExtractParametersTest, GivenMemoryFillWithParametersWhenNoExtensionsProvi
 }
 
 TEST_F(ExtractParametersTest, GivenSignalEventWithParametersWhenEventFlagsExtensionProvidedThenExtractsFlagsDetails) {
+    MockEvent event;
     ze_event_flags_exp_desc_t eventFlagsDesc = {
         ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
 
     Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters>::ApiArgs args{nullptr};
-    args.hEvent = dummyEvents[0];
+    args.hEvent = event.toHandle();
     args.pNext = &eventFlagsDesc;
 
     Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> closure(args, storage);

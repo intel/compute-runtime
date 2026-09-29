@@ -135,10 +135,11 @@ struct EventParams {
     ze_event_handle_t *phWaitEvents;
 };
 
-struct ExternalCbEventInfo {
+struct ExternalSignalCbEventInfo {
     L0::Event *event = nullptr;
     L0::CommandList *executorCommandList = nullptr;
     NEO::InOrderExecEventHelper inOrderExecEventHelper;
+    bool apiRequiredSignalEvent = false;
 };
 
 using PatchPreambleCounter = uint64_t;
@@ -184,26 +185,27 @@ struct ExternalWaitCbEventsInfo {
 };
 
 struct ExternalCbEventInfoContainer {
-    void addCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList) {
-        auto it = std::find_if(storage.begin(),
-                               storage.end(),
-                               [event](const ExternalCbEventInfo &info) { return info.event == event; });
+    void addSignalCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList, bool apiRequiredSignalEvent) {
+        auto it = std::find_if(signalEventStorage.begin(),
+                               signalEventStorage.end(),
+                               [event](const ExternalSignalCbEventInfo &info) { return info.event == event; });
 
-        if (it != storage.end()) {
+        if (it != signalEventStorage.end()) {
             event->getInOrderExecEventHelper().copyData(it->inOrderExecEventHelper);
             it->executorCommandList = executorCommandList;
         } else {
-            ExternalCbEventInfo &info = storage.emplace_back(event, executorCommandList);
+            ExternalSignalCbEventInfo &info = signalEventStorage.emplace_back(event, executorCommandList);
             info.inOrderExecEventHelper.initializeLocalTempStorage();
             event->getInOrderExecEventHelper().copyData(info.inOrderExecEventHelper);
+            info.apiRequiredSignalEvent = apiRequiredSignalEvent;
         }
     }
-    bool externalCbEventsPresent() const {
-        return false == storage.empty();
+    bool externalCbSignalEventsPresent() const {
+        return false == signalEventStorage.empty();
     }
-    void attachExternalCbEventsToExecutableGraph();
-    const std::vector<ExternalCbEventInfo> &getCbEventInfos() const {
-        return storage;
+    void attachExternalCbSignalEventsToExecutableGraph();
+    const std::vector<ExternalSignalCbEventInfo> &getCbSignalEventInfos() const {
+        return signalEventStorage;
     }
     const PatchPreambleDataContainer &getExecutorInfos() const {
         return executorStorage;
@@ -242,6 +244,13 @@ struct ExternalCbEventInfoContainer {
         info.waitEvents.assign(phWaitEvents, phWaitEvents + numWaitEvents);
         info.commandId = commandId;
         info.executor = executor;
+        auto it = std::find_if(waitEventMclContainer.begin(),
+                               waitEventMclContainer.end(),
+                               [executor](const L0::CommandList *savedExecutor) { return savedExecutor == executor; });
+        // commiting a mcl (command list close operation) should be done only once
+        if (it == waitEventMclContainer.end()) {
+            waitEventMclContainer.push_back(executor);
+        }
     }
     const std::vector<ExternalWaitCbEventsInfo> &getCbWaitEventInfos() const {
         return waitEventsContainer;
@@ -250,10 +259,12 @@ struct ExternalCbEventInfoContainer {
         return false == waitEventsContainer.empty();
     }
     void refreshExternalCbWaitEvents();
+    void commitMclForExternalCbWaitEvents();
 
   protected:
-    std::vector<ExternalCbEventInfo> storage;
+    std::vector<ExternalSignalCbEventInfo> signalEventStorage;
     std::vector<ExternalWaitCbEventsInfo> waitEventsContainer;
+    std::vector<L0::CommandList *> waitEventMclContainer;
     PatchPreambleDataContainer executorStorage;
 };
 
@@ -271,10 +282,18 @@ class GraphInternalEvents {
         }
     }
 
-    static bool isInternalEventDependency(const L0::Event *event) {
-        return event->isCounterBasedExplicitlyEnabled() && (false == event->isIpcImported()) &&
-               (0 == (event->getCounterBasedFlags() & ZE_EVENT_COUNTER_BASED_FLAG_IPC)) &&
-               (false == event->isExternalEvent()) && (false == L0::Event::isAggregatedEvent(event));
+    static bool isInternalEventDependency(L0::Event *event) {
+        bool apiRequiredExternalSignalEvent = event->getApiRequiredGraphExternalEvent();
+        bool isQualifiedForInternal = event->isCounterBasedExplicitlyEnabled() && (false == event->isIpcImported()) &&
+                                      (0 == (event->getCounterBasedFlags() & ZE_EVENT_COUNTER_BASED_FLAG_IPC)) &&
+                                      (false == (event->isExternalEvent() || apiRequiredExternalSignalEvent)) &&
+                                      (false == L0::Event::isAggregatedEvent(event));
+        // api required is one time append decision (in runtime/instantiation it is cleared when signal event is assigned to the next append)
+        // clear it once is checked for being external
+        if (apiRequiredExternalSignalEvent) {
+            event->setApiRequiredGraphExternalEvent(false);
+        }
+        return isQualifiedForInternal;
     }
 
     ze_result_t addInternalEvent(L0::Event *originalEvent, ze_context_handle_t hContext);
@@ -542,6 +561,21 @@ template <class ApiArgsT>
 concept HasPCommandId = requires(ApiArgsT &apiArgs) {
     apiArgs.pCommandId;
 };
+
+bool getGraphExternalWaitEventFlagFromPNext(const void *pNext);
+
+template <CaptureApi api, typename... TArgs>
+    requires(api == CaptureApi::zeCommandListAppendWaitOnEventsWithParameters)
+inline bool getCommandsGraphExternalWaitFlag(TArgs... args) {
+    typename Closure<api>::ApiArgs structuredApiArgs{args...};
+    return getGraphExternalWaitEventFlagFromPNext(structuredApiArgs.pNext);
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires(api != CaptureApi::zeCommandListAppendWaitOnEventsWithParameters)
+inline bool getCommandsGraphExternalWaitFlag(TArgs... args) {
+    return false;
+}
 
 struct IndirectArgsWithWaitEvents {
     IndirectArgsWithWaitEvents() = default;

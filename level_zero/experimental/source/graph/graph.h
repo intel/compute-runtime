@@ -490,7 +490,7 @@ bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
 bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events);
 bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent);
-bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents);
+bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents, bool apiRequiredCurrentFlag);
 
 template <CaptureApi api, typename... TArgs>
 ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarget, RecordedApiCommands *flatCaptureTarget, TArgs... apiArgs) {
@@ -508,6 +508,7 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
 
     auto eventsWaitList = getCommandsWaitEventsList<api>(apiArgs...);
     const auto signalEvent = getCommandsSignalEvent<api>(apiArgs...);
+    const bool apiExternalGraphFlag = (false == eventsWaitList.empty()) && getCommandsGraphExternalWaitFlag<api>(apiArgs...);
     if (false == isGraphCapturingAllowed(srcCmdList)) {
         if (usesForkEvents(eventsWaitList)) {
             // it's an error to try and fork to a cmdlist that doesn't support capturing
@@ -523,7 +524,7 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
             return ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT;
         }
         // a non-external counter-based event bound outside the graph cannot be re-resolved per replay
-        if (waitsOnCbEventSignalledOutsideGraph(eventsWaitList)) {
+        if (waitsOnCbEventSignalledOutsideGraph(eventsWaitList, apiExternalGraphFlag)) {
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
     }
@@ -542,9 +543,14 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     if (ZE_RESULT_SUCCESS != ret) {
         return ret;
     }
-    for (const auto &event : eventsWaitList) {
-        if (L0::Event::fromHandle(event)->isExternalEvent()) {
-            graphCaptureTarget->enableMutableCommandList();
+
+    if (apiExternalGraphFlag) {
+        graphCaptureTarget->enableMutableCommandList();
+    } else {
+        for (const auto &event : eventsWaitList) {
+            if (L0::Event::fromHandle(event)->isExternalEvent()) {
+                graphCaptureTarget->enableMutableCommandList();
+            }
         }
     }
 
@@ -558,11 +564,12 @@ struct ExecutableGraph;
 using GraphSubmissionSegment = std::variant<L0::CommandList *, ExecutableGraph *>;
 using GraphSubmissionChain = std::vector<GraphSubmissionSegment>;
 
-void handleExternalCbEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext);
+void handleExternalCbSignalEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext);
 void handleExternalCbWaitEvents(uint32_t numWaitEvents,
                                 ze_event_handle_t *phWaitEvents,
                                 CbExternalEventInstantiateContext &cbEventContext,
-                                L0::CommandList *executionTarget);
+                                L0::CommandList *executionTarget,
+                                bool apiRequiredExternalFlag);
 
 struct GraphInstatiateSettings {
     GraphInstatiateSettings() = default;
