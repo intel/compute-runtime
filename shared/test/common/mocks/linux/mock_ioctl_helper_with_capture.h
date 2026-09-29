@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
@@ -13,6 +14,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace NEO {
@@ -21,6 +23,7 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
   public:
     using IoctlHelperUpstream::ioctl;
     using IoctlHelperUpstream::IoctlHelperUpstream;
+    using IoctlHelperUpstream::waitUserFence;
 
     struct QueryResult {
         int ret = 0;
@@ -62,6 +65,76 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         return std::make_unique<MemoryInfo>(*memoryRegionsToReturn, drm);
     }
 
+    CacheRegion closAlloc(CacheLevel cacheLevel) override {
+        if (!closSupported || ++closIndex == 0) {
+            return CacheRegion::none;
+        }
+        return static_cast<CacheRegion>(closIndex);
+    }
+
+    uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override {
+        if (!closSupported || toUnderlying(closIndex) > this->closIndex || numWays > closMaxNumWays - closAllocatedNumWays) {
+            return 0;
+        }
+        closAllocatedNumWays += numWays;
+        return numWays;
+    }
+
+    CacheRegion closFree(CacheRegion closIndex) override {
+        if (!closSupported || toUnderlying(closIndex) > this->closIndex) {
+            return CacheRegion::none;
+        }
+        this->closIndex--;
+        return closIndex;
+    }
+
+    bool isVmBindPatIndexExtSupported() override {
+        return true;
+    }
+
+    void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override {
+        filledVmBindExtPatIndex = patIndex;
+    }
+
+    int vmBind(const VmBindParams &vmBindParams) override {
+        vmBindCalled++;
+        receivedVmBind = vmBindParams;
+        receivedVmBindPatIndex = std::exchange(filledVmBindExtPatIndex, std::nullopt);
+        return vmBindResult;
+    }
+
+    int vmUnbind(const VmBindParams &vmBindParams) override {
+        vmUnbindCalled++;
+        receivedVmUnbind = vmBindParams;
+        receivedVmUnbindPatIndex = std::exchange(filledVmBindExtPatIndex, std::nullopt);
+        return vmUnbindResult;
+    }
+
+    int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                      bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
+        waitUserFenceCalled++;
+        return waitUserFenceResult;
+    }
+
+    bool requiresUserFenceSetup(bool bind) const override {
+        return userFenceSetupRequired;
+    }
+
+    bool isVmBindAvailable() override {
+        isVmBindAvailableCalled++;
+        return vmBindAvailable;
+    }
+
+    bool isSetPairAvailable() override {
+        isSetPairAvailableCalled++;
+        return setPairAvailable;
+    }
+
+    bool isChunkingAvailable() override {
+        isChunkingAvailableCalled++;
+        return chunkingAvailable;
+    }
+
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override {
         createEngineInfoCalled++;
         if (!enginesToReturn) {
@@ -71,6 +144,11 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         return std::make_unique<EngineInfo>(&drm, engineInfosPerTile);
     }
 
+    bool closSupported = false;
+    uint16_t closIndex = 0u;
+    uint16_t closMaxNumWays = 32u;
+    uint16_t closAllocatedNumWays = 0u;
+
     std::vector<QueryResult> queryResults;
     size_t queryCalled = 0u;
 
@@ -79,6 +157,26 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     int createGemExtResult = 0;
 
     std::optional<std::vector<MemoryRegion>> memoryRegionsToReturn;
+
+    std::optional<uint64_t> filledVmBindExtPatIndex;
+    std::optional<VmBindParams> receivedVmBind;
+    std::optional<uint64_t> receivedVmBindPatIndex;
+    std::optional<VmBindParams> receivedVmUnbind;
+    std::optional<uint64_t> receivedVmUnbindPatIndex;
+    uint32_t vmBindCalled = 0u;
+    int vmBindResult = 0;
+    uint32_t vmUnbindCalled = 0u;
+    int vmUnbindResult = 0;
+    uint32_t waitUserFenceCalled = 0u;
+    int waitUserFenceResult = 0;
+    bool userFenceSetupRequired = false;
+
+    uint32_t isVmBindAvailableCalled = 0u;
+    uint32_t isSetPairAvailableCalled = 0u;
+    uint32_t isChunkingAvailableCalled = 0u;
+    bool vmBindAvailable = false;
+    bool setPairAvailable = false;
+    bool chunkingAvailable = false;
 
     uint32_t createEngineInfoCalled = 0u;
     std::optional<std::vector<EngineCapabilities>> enginesToReturn;

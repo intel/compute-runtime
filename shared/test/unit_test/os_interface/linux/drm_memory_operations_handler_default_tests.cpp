@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
-#include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -39,7 +39,7 @@ struct DrmMemoryOperationsHandlerBaseTest : public ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->calculateMaxOsContextCount();
-        mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[0]);
+        mock = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
         mock->setBindAvailable();
 
         drmMemoryOperationsHandler = std::make_unique<MockDrmMemoryOperationsHandlerDefault>(*executionEnvironment->rootDeviceEnvironments[0].get(), 0);
@@ -67,7 +67,7 @@ struct DrmMemoryOperationsHandlerBaseTest : public ::testing::Test {
     }
 
     ExecutionEnvironment *executionEnvironment;
-    DrmQueryMock *mock;
+    DrmMock *mock;
     BufferObjects mockBos;
     MockDrmAllocation *drmAllocation = nullptr;
     GraphicsAllocation *allocationPtr = nullptr;

@@ -873,3 +873,43 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
 }
+
+using IoctlPrelimHelperCapabilityQueryTests = ::testing::Test;
+
+HWTEST2_F(IoctlPrelimHelperCapabilityQueryTests, whenCheckingSetPairAvailabilityThenGetParamValueIsReturnedOnSuccessAndFalseOnFailure, IsAtMostXeCore) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto ioctlHelper = drm.getIoctlHelper();
+
+    struct {
+        int queryValue;
+        int queryReturn;
+        bool expected;
+    } testCases[] = {{1, 0, true}, {0, 0, false}, {1, 1, false}};
+
+    for (const auto &testCase : testCases) {
+        drm.context.setPairQueryValue = testCase.queryValue;
+        drm.context.setPairQueryReturn = testCase.queryReturn;
+        EXPECT_EQ(testCase.expected, ioctlHelper->isSetPairAvailable());
+    }
+    EXPECT_EQ(3u, drm.context.setPairQueryCalled);
+}
+
+HWTEST2_F(IoctlPrelimHelperCapabilityQueryTests, whenCheckingChunkingAvailabilityThenGetParamValueIsReturnedOnSuccessAndFalseOnFailure, IsAtMostXeCore) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto ioctlHelper = drm.getIoctlHelper();
+
+    struct {
+        int queryValue;
+        int queryReturn;
+        bool expected;
+    } testCases[] = {{1, 0, true}, {0, 0, false}, {1, 1, false}};
+
+    for (const auto &testCase : testCases) {
+        drm.context.chunkingQueryValue = testCase.queryValue;
+        drm.context.chunkingQueryReturn = testCase.queryReturn;
+        EXPECT_EQ(testCase.expected, ioctlHelper->isChunkingAvailable());
+    }
+    EXPECT_EQ(3u, drm.context.chunkingQueryCalled);
+}
