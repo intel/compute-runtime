@@ -2017,8 +2017,8 @@ ze_result_t Context::getAtomicAccessAttribute(ze_device_handle_t hDevice, const 
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     } else {
-        if (device->atomicAccessAllocations.find(allocData) != device->atomicAccessAllocations.end()) {
-            *pAttr = device->atomicAccessAllocations[allocData];
+        if (auto it = device->atomicAccessAllocations.find(allocData); it != device->atomicAccessAllocations.end()) {
+            *pAttr = it->second;
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

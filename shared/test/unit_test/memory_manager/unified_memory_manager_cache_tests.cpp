@@ -2681,11 +2681,11 @@ TEST_F(SvmSharedAllocationCacheTest, givenDualStorageSharedAllocationWhenFreeing
     auto svmData = svmManager->getSVMAlloc(allocation);
     ASSERT_NE(nullptr, svmData);
     EXPECT_NE(nullptr, svmData->cpuAllocation);
-    EXPECT_NE(mockPageFaultManager->memoryData.end(), mockPageFaultManager->memoryData.find(allocation));
+    EXPECT_TRUE(mockPageFaultManager->memoryData.contains(allocation));
 
     svmManager->freeSVMAlloc(allocation);
     EXPECT_EQ(1u, svmManager->usmSharedAllocationsCache->allocations.size());
-    EXPECT_EQ(mockPageFaultManager->memoryData.end(), mockPageFaultManager->memoryData.find(allocation));
+    EXPECT_FALSE(mockPageFaultManager->memoryData.contains(allocation));
 
     svmManager->cleanupUSMAllocCaches();
 }
@@ -2712,12 +2712,12 @@ TEST_F(SvmSharedAllocationCacheTest, givenDualStorageSharedAllocationWhenReusedT
     ASSERT_NE(nullptr, allocation);
     svmManager->freeSVMAlloc(allocation);
     ASSERT_EQ(1u, svmManager->usmSharedAllocationsCache->allocations.size());
-    ASSERT_EQ(mockPageFaultManager->memoryData.end(), mockPageFaultManager->memoryData.find(allocation));
+    ASSERT_FALSE(mockPageFaultManager->memoryData.contains(allocation));
 
     auto recycled = svmManager->createSharedUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties, &cmdQ);
     EXPECT_EQ(recycled, allocation);
     EXPECT_EQ(0u, svmManager->usmSharedAllocationsCache->allocations.size());
-    EXPECT_NE(mockPageFaultManager->memoryData.end(), mockPageFaultManager->memoryData.find(recycled));
+    EXPECT_TRUE(mockPageFaultManager->memoryData.contains(recycled));
 
     svmManager->freeSVMAlloc(recycled);
     svmManager->cleanupUSMAllocCaches();
@@ -2903,11 +2903,11 @@ TEST_F(SvmSharedAllocationCacheTest, givenDualStorageSharedAllocationWhenFreeing
 
     auto allocation = svmManager->createSharedUnifiedMemoryAllocation(allocationSizeBasis, unifiedMemoryProperties, &cmdQ);
     ASSERT_NE(nullptr, allocation);
-    EXPECT_NE(mockPageFaultManager->memoryData.end(), mockPageFaultManager->memoryData.find(allocation));
+    EXPECT_TRUE(mockPageFaultManager->memoryData.contains(allocation));
 
     svmManager->freeSVMAllocDefer(allocation);
     EXPECT_EQ(1u, svmManager->usmSharedAllocationsCache->allocations.size());
-    EXPECT_EQ(mockPageFaultManager->memoryData.end(), mockPageFaultManager->memoryData.find(allocation));
+    EXPECT_FALSE(mockPageFaultManager->memoryData.contains(allocation));
 
     svmManager->cleanupUSMAllocCaches();
 }

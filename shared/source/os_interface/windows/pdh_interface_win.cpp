@@ -39,12 +39,13 @@ uint64_t PdhInterfaceWindows::getCurrentMemoryUsage(uint32_t rootDeviceIndex, bo
         counterPath = constructPdhCounterString(L"GPU Adapter Memory", L"Shared Usage", wddm.getAdapterLuid(), 0);
     }
 
-    if (counterHandles.find(counterPath) == counterHandles.end()) {
+    auto counterIt = counterHandles.find(counterPath);
+    if (counterIt == counterHandles.end()) {
         PDH_HCOUNTER counterHandle = nullptr;
         if (pdhAddEnglishCounterWFunction(memoryUsageQuery, counterPath.c_str(), 0, &counterHandle) != ERROR_SUCCESS) {
             return 0;
         }
-        counterHandles[counterPath] = counterHandle;
+        counterIt = counterHandles.emplace(counterPath, counterHandle).first;
     }
 
     if (pdhCollectQueryDataFunction(memoryUsageQuery) != ERROR_SUCCESS) {
@@ -52,7 +53,7 @@ uint64_t PdhInterfaceWindows::getCurrentMemoryUsage(uint32_t rootDeviceIndex, bo
     }
 
     PDH_FMT_COUNTERVALUE counterValue{};
-    if (pdhGetFormattedCounterValueFunction(counterHandles[counterPath], PDH_FMT_LARGE, nullptr, &counterValue) != ERROR_SUCCESS) {
+    if (pdhGetFormattedCounterValueFunction(counterIt->second, PDH_FMT_LARGE, nullptr, &counterValue) != ERROR_SUCCESS) {
         return 0;
     }
 

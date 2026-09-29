@@ -57,7 +57,7 @@ TEST_F(LeoMultiDevicePlatformTests, givenMultiRootDeviceDriverWhenCreatingPlatfo
 
     for (auto &clDevice : platform->getDevices()) {
         EXPECT_FALSE(clDevice->getIsSubdevice());
-        EXPECT_NE(platform->getDeviceBitfields().end(), platform->getDeviceBitfields().find(clDevice->getRootDeviceIndex()));
+        EXPECT_TRUE(platform->getDeviceBitfields().contains(clDevice->getRootDeviceIndex()));
     }
 }
 

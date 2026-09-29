@@ -269,10 +269,10 @@ ze_result_t MetricDeviceContext::activateMetricGroupsPreferDeferred(uint32_t cou
 
         auto sourceType = metricSourceEntry->getType();
 
-        if (metricGroupsPerMetricSourceMap.find(sourceType) == metricGroupsPerMetricSourceMap.end()) {
+        if (auto it = metricGroupsPerMetricSourceMap.find(sourceType); it == metricGroupsPerMetricSourceMap.end()) {
             status = metricSourceEntry->activateMetricGroupsPreferDeferred(0, nullptr);
         } else {
-            auto &metricGroupVec = metricGroupsPerMetricSourceMap[sourceType];
+            auto &metricGroupVec = it->second;
             status = metricSourceEntry->activateMetricGroupsPreferDeferred(
                 static_cast<uint32_t>(metricGroupVec.size()),
                 metricGroupVec.data());

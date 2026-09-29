@@ -737,8 +737,8 @@ ze_result_t DriverHandle::getPeerImage(Device *device, Image *image, Image **pee
 
     std::unique_lock<NEO::SpinLock> lock(device->peerImageAllocationsMutex);
 
-    if (device->peerImageAllocations.find(imageAllocPtr) != device->peerImageAllocations.end()) {
-        *peerImage = device->peerImageAllocations[imageAllocPtr];
+    if (auto it = device->peerImageAllocations.find(imageAllocPtr); it != device->peerImageAllocations.end()) {
+        *peerImage = it->second;
     } else {
         uint64_t handle = 0;
 

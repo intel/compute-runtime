@@ -192,20 +192,12 @@ class MockProgram : public Program {
     }
 
     void replaceDeviceBinary(std::unique_ptr<char[]> &&newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) override {
-        if (replaceDeviceBinaryCalledPerRootDevice.find(rootDeviceIndex) == replaceDeviceBinaryCalledPerRootDevice.end()) {
-            replaceDeviceBinaryCalledPerRootDevice.insert({rootDeviceIndex, 1});
-        } else {
-            replaceDeviceBinaryCalledPerRootDevice[rootDeviceIndex]++;
-        }
+        replaceDeviceBinaryCalledPerRootDevice[rootDeviceIndex]++;
         Program::replaceDeviceBinary(std::move(newBinary), newBinarySize, rootDeviceIndex);
     }
     cl_int processGenBinary(ClDevice &clDevice) override {
         auto rootDeviceIndex = clDevice.getRootDeviceIndex();
-        if (processGenBinaryCalledPerRootDevice.find(rootDeviceIndex) == processGenBinaryCalledPerRootDevice.end()) {
-            processGenBinaryCalledPerRootDevice.insert({rootDeviceIndex, 1});
-        } else {
-            processGenBinaryCalledPerRootDevice[rootDeviceIndex]++;
-        }
+        processGenBinaryCalledPerRootDevice[rootDeviceIndex]++;
         return Program::processGenBinary(clDevice);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,8 +127,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Run test.
-    if (tests.find(testSettings->testName) != tests.end()) {
-        if (tests[testSettings->testName]() == true) {
+    if (auto it = tests.find(testSettings->testName); it != tests.end()) {
+        if (it->second() == true) {
             LOG(zmu::LogLevel::INFO) << testSettings->testName << " : PASS\n";
             runStatus = 0;
         } else {

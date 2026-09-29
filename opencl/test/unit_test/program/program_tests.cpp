@@ -1423,8 +1423,8 @@ class Callback {
   private:
     void (*oldCallback)(void *);
     static void thisCallback(void *p) {
-        if (watchList.find(p) != watchList.end()) {
-            watchList[p]++;
+        if (auto it = watchList.find(p); it != watchList.end()) {
+            it->second++;
         }
     }
     static std::map<const void *, uint32_t> watchList;

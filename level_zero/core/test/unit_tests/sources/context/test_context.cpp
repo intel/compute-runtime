@@ -57,7 +57,7 @@ TEST_F(MultiDeviceContextTests,
     Context *contextImp = Context::fromHandle(hContext);
 
     for (size_t i = 0; i < driverHandle->devices.size(); i++) {
-        EXPECT_NE(contextImp->getDevices().find(driverHandle->devices[i]->getRootDeviceIndex()), contextImp->getDevices().end());
+        EXPECT_TRUE(contextImp->getDevices().contains(driverHandle->devices[i]->getRootDeviceIndex()));
     }
 
     res = L0::Context::fromHandle(hContext)->destroy();

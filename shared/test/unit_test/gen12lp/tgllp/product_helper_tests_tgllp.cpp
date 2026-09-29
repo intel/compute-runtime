@@ -138,7 +138,7 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenPrepareDevice
 
         auto memoryOperationInterface = rootDeviceEnvironment->memoryOperationsInterface.get();
         EXPECT_NE(nullptr, memoryOperationInterface);
-        EXPECT_EQ(memoryOperationHandlers.end(), memoryOperationHandlers.find(memoryOperationInterface));
+        EXPECT_FALSE(memoryOperationHandlers.contains(memoryOperationInterface));
         memoryOperationHandlers.insert(memoryOperationInterface);
     }
 }

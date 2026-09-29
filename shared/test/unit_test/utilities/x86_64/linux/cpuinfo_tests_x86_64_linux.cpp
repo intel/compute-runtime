@@ -144,7 +144,7 @@ int fakeClosedir(DIR *dir) {
 }
 
 int fakeOpen(const char *pathname, int flags) {
-    if (fakeSysFs->files.find(pathname) == fakeSysFs->files.end()) {
+    if (!fakeSysFs->files.contains(pathname)) {
         return -1;
     }
     const int descriptor = fakeSysFs->nextDescriptor++;

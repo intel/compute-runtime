@@ -62,8 +62,8 @@ class MockOclocArgHelper : public OclocArgHelper {
         if (shouldReturnEmptyVectorOfStrings) {
             lines.clear();
             return;
-        } else if (filesMap.find(filename) != filesMap.end()) {
-            auto mockInputFile = std::istringstream(filesMap[filename]);
+        } else if (auto it = filesMap.find(filename); it != filesMap.end()) {
+            auto mockInputFile = std::istringstream(it->second);
             ::istreamToVectorOfStrings(mockInputFile, lines);
             return;
         }

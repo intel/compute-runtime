@@ -118,9 +118,9 @@ ze_result_t ImageImp::destroyPeerImages(const void *ptr, Device *device) {
 
     std::unique_lock<NEO::SpinLock> lock(device->peerImageAllocationsMutex);
 
-    if (device->peerImageAllocations.find(ptr) != device->peerImageAllocations.end()) {
-        delete device->peerImageAllocations[ptr];
-        device->peerImageAllocations.erase(ptr);
+    if (auto it = device->peerImageAllocations.find(ptr); it != device->peerImageAllocations.end()) {
+        delete it->second;
+        device->peerImageAllocations.erase(it);
     }
 
     return ZE_RESULT_SUCCESS;

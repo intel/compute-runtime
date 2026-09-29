@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -269,7 +269,7 @@ TEST_F(SupportedDevicesHelperTest, WhenDeserializingSupportedDevicesDataThenAllF
     auto deserializedData = supportedDevicesHelper.deserialize(yamlData);
 
     ASSERT_EQ(deserializedData.size(), 1u);
-    ASSERT_TRUE(deserializedData.find("ocloc-test") != deserializedData.end());
+    ASSERT_TRUE(deserializedData.contains("ocloc-test"));
 
     auto &data = deserializedData["ocloc-test"];
 
@@ -329,7 +329,7 @@ TEST_F(SupportedDevicesHelperTest, WhenSerializingDeserializingAndSerializingAga
 
     auto deserializedData = supportedDevicesHelper.deserialize(firstSerialization);
     ASSERT_EQ(deserializedData.size(), 1u);
-    ASSERT_TRUE(deserializedData.find("ocloc-test") != deserializedData.end());
+    ASSERT_TRUE(deserializedData.contains("ocloc-test"));
 
     std::string secondSerialization = supportedDevicesHelper.serialize("ocloc-test", deserializedData["ocloc-test"]);
 
@@ -337,7 +337,7 @@ TEST_F(SupportedDevicesHelperTest, WhenSerializingDeserializingAndSerializingAga
 
     auto secondDeserializationData = supportedDevicesHelper.deserialize(secondSerialization);
     ASSERT_EQ(secondDeserializationData.size(), 1u);
-    ASSERT_TRUE(secondDeserializationData.find("ocloc-test") != secondDeserializationData.end());
+    ASSERT_TRUE(secondDeserializationData.contains("ocloc-test"));
 
     const auto &finalData = secondDeserializationData["ocloc-test"];
 
@@ -575,7 +575,7 @@ TEST_F(SupportedDevicesHelperTest, WhenMergeAndSerializeWithFormerDataThenBothVe
 
     auto deserializedResult = supportedDevicesHelper.deserialize(mergeResult);
     ASSERT_EQ(deserializedResult.size(), 1u);
-    ASSERT_TRUE(deserializedResult.find("ocloc") != deserializedResult.end());
+    ASSERT_TRUE(deserializedResult.contains("ocloc"));
     const auto &mergedData = deserializedResult["ocloc"];
 
     std::vector<uint32_t> expectedIpVersions = {0x1000001, 0x2000002, 0x3000001, 0x3000002};
@@ -743,7 +743,7 @@ ocloc-test:
     auto result = helper.deserialize(incompleteYaml);
 
     ASSERT_EQ(result.size(), 1u);
-    ASSERT_TRUE(result.find("ocloc-test") != result.end());
+    ASSERT_TRUE(result.contains("ocloc-test"));
     const auto &data = result["ocloc-test"];
 
     EXPECT_TRUE(data.deviceIpVersions.empty());
@@ -763,7 +763,7 @@ ocloc-test:
     auto result = helper.deserialize(missingYaml);
 
     ASSERT_EQ(result.size(), 1u);
-    ASSERT_TRUE(result.find("ocloc-test") != result.end());
+    ASSERT_TRUE(result.contains("ocloc-test"));
     const auto &data = result["ocloc-test"];
 
     EXPECT_TRUE(data.deviceIpVersions.empty());

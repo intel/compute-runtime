@@ -238,12 +238,12 @@ TEST_F(DeviceFactoryTest, whenPrepareDeviceEnvironmentsIsCalledThenAllRootDevice
 
         auto memoryOperationInterface = rootDeviceEnvironment->memoryOperationsInterface.get();
         EXPECT_NE(nullptr, memoryOperationInterface);
-        EXPECT_EQ(memoryOperationHandlers.end(), memoryOperationHandlers.find(memoryOperationInterface));
+        EXPECT_FALSE(memoryOperationHandlers.contains(memoryOperationInterface));
         memoryOperationHandlers.insert(memoryOperationInterface);
 
         auto osInterface = rootDeviceEnvironment->osInterface.get();
         EXPECT_NE(nullptr, osInterface);
-        EXPECT_EQ(osInterfaces.end(), osInterfaces.find(osInterface));
+        EXPECT_FALSE(osInterfaces.contains(osInterface));
         osInterfaces.insert(osInterface);
     }
 }

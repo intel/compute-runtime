@@ -190,7 +190,7 @@ size_t getLastLevelCacheSizeLinux() {
         }
 
         const auto processorId = static_cast<uint32_t>(std::strtoul(processorIdString, nullptr, 10));
-        if (visitedProcessors.count(processorId) != 0) {
+        if (visitedProcessors.contains(processorId)) {
             continue;
         }
         visitedProcessors.insert(processorId);

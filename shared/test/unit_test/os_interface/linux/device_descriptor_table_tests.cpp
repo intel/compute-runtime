@@ -79,6 +79,6 @@ TEST(DeviceDescriptorTableTest, givenDeviceDescriptorTableAndProductConfigsThenS
     }
 
     for (const auto &[deviceId, productFamily] : configDeviceIds) {
-        EXPECT_NE(tableDeviceIds.end(), tableDeviceIds.find(deviceId)) << "device id 0x" << std::hex << deviceId << " missing in device descriptor table";
+        EXPECT_TRUE(tableDeviceIds.contains(deviceId)) << "device id 0x" << std::hex << deviceId << " missing in device descriptor table";
     }
 }

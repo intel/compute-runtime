@@ -693,11 +693,12 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
 }
 
 EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority) {
-    if (secondaryEngines.find(engineTypeUsage.first) == secondaryEngines.end()) {
+    auto secondaryEnginesIt = secondaryEngines.find(engineTypeUsage.first);
+    if (secondaryEnginesIt == secondaryEngines.end()) {
         return nullptr;
     }
 
-    auto &secondaryEnginesForType = secondaryEngines[engineTypeUsage.first];
+    auto &secondaryEnginesForType = secondaryEnginesIt->second;
 
     auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, hwPriority);
 
@@ -1547,12 +1548,12 @@ void Device::initializePeerAccessForDevices(const std::vector<NEO::Device *> &de
             }
 
             bool canAccess = false;
-            if (device->crossAccessEnabledDevices.find(peerRootIndex) == device->crossAccessEnabledDevices.end()) {
+            if (auto it = device->crossAccessEnabledDevices.find(peerRootIndex); it == device->crossAccessEnabledDevices.end()) {
                 auto lock = device->getExecutionEnvironment()->obtainPeerAccessQueryLock();
                 canAccess = device->queryPeerAccess(*peerDevice, &probeAllocation, &handle);
                 device->updatePeerAccessCache(peerDevice, canAccess);
             } else {
-                canAccess = device->crossAccessEnabledDevices[peerRootIndex];
+                canAccess = it->second;
             }
 
             if (canAccess) {

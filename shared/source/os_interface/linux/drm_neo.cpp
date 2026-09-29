@@ -2004,13 +2004,15 @@ PhysicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
         {16.0, {4, gen3EncodingLossFactor}},
         {32.0, {5, gen3EncodingLossFactor}}};
 
-    if (maxSpeedToGenAndEncodingLossMapping.find(maxSpeed) == maxSpeedToGenAndEncodingLossMapping.end()) {
+    auto it = maxSpeedToGenAndEncodingLossMapping.find(maxSpeed);
+    if (it == maxSpeedToGenAndEncodingLossMapping.end()) {
         return pciSpeedInfo;
     }
-    pciSpeedInfo.genVersion = maxSpeedToGenAndEncodingLossMapping[maxSpeed].first;
+    const auto &[genVersion, encodingLossFactor] = it->second;
+    pciSpeedInfo.genVersion = genVersion;
 
     constexpr double gigaBitsPerSecondToBytesPerSecondMultiplier = 125000000;
-    const auto maxSpeedWithEncodingLoss = maxSpeed * gigaBitsPerSecondToBytesPerSecondMultiplier * maxSpeedToGenAndEncodingLossMapping[maxSpeed].second;
+    const auto maxSpeedWithEncodingLoss = maxSpeed * gigaBitsPerSecondToBytesPerSecondMultiplier * encodingLossFactor;
     pciSpeedInfo.maxBandwidth = static_cast<int64_t>(maxSpeedWithEncodingLoss * pciSpeedInfo.width);
 
     return pciSpeedInfo;

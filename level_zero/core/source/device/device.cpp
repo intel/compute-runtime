@@ -2185,14 +2185,15 @@ bool Device::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &sl
         UNRECOVERABLE_IF(!deviceBitfield.any());
         uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
 
-        if (topologyMap.find(subDeviceIndex) != topologyMap.end()) {
-            if (slice < topologyMap.at(subDeviceIndex).sliceIndices.size()) {
+        if (auto it = topologyMap.find(subDeviceIndex); it != topologyMap.end()) {
+            const auto &mapping = it->second;
+            if (slice < mapping.sliceIndices.size()) {
                 deviceIndex = subDeviceIndex;
-                slice = topologyMap.at(subDeviceIndex).sliceIndices[slice];
+                slice = mapping.sliceIndices[slice];
 
-                if (topologyMap.at(subDeviceIndex).sliceIndices.size() == 1) {
+                if (mapping.sliceIndices.size() == 1) {
                     uint32_t subsliceId = subslice;
-                    subslice = topologyMap.at(subDeviceIndex).subsliceIndices[subsliceId];
+                    subslice = mapping.subsliceIndices[subsliceId];
                 }
                 return true;
             }
@@ -2210,7 +2211,8 @@ bool Device::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, 
         deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
     }
 
-    if (topologyMap.find(deviceIndex) != topologyMap.end()) {
+    if (auto it = topologyMap.find(deviceIndex); it != topologyMap.end()) {
+        const auto &mapping = it->second;
         uint32_t apiSliceId = 0;
         if (!isSubdevice) {
             for (uint32_t devId = 0; devId < deviceIndex; devId++) {
@@ -2220,13 +2222,13 @@ bool Device::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, 
             }
         }
 
-        for (uint32_t i = 0; i < topologyMap.at(deviceIndex).sliceIndices.size(); i++) {
-            if (static_cast<uint32_t>(topologyMap.at(deviceIndex).sliceIndices[i]) == slice) {
+        for (uint32_t i = 0; i < mapping.sliceIndices.size(); i++) {
+            if (static_cast<uint32_t>(mapping.sliceIndices[i]) == slice) {
                 apiSliceId += i;
                 slice = apiSliceId;
-                if (topologyMap.at(deviceIndex).sliceIndices.size() == 1) {
-                    for (uint32_t subsliceApiId = 0; subsliceApiId < topologyMap.at(deviceIndex).subsliceIndices.size(); subsliceApiId++) {
-                        if (static_cast<uint32_t>(topologyMap.at(deviceIndex).subsliceIndices[subsliceApiId]) == subslice) {
+                if (mapping.sliceIndices.size() == 1) {
+                    for (uint32_t subsliceApiId = 0; subsliceApiId < mapping.subsliceIndices.size(); subsliceApiId++) {
+                        if (static_cast<uint32_t>(mapping.subsliceIndices[subsliceApiId]) == subslice) {
                             subslice = subsliceApiId;
                         }
                     }

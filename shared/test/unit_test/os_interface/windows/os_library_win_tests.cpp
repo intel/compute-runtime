@@ -334,11 +334,12 @@ class GetLoadedLibVersionWinTest : public ::testing::Test {
                 return TRUE;
             }
 
-            if (mod->settings.verQueryValueW.versionPerCodepage.find(lpSubBlock) == mod->settings.verQueryValueW.versionPerCodepage.end()) {
+            auto it = mod->settings.verQueryValueW.versionPerCodepage.find(lpSubBlock);
+            if (it == mod->settings.verQueryValueW.versionPerCodepage.end()) {
                 return FALSE;
             }
 
-            *lplpBuffer = const_cast<void *>(reinterpret_cast<const void *>(mod->settings.verQueryValueW.versionPerCodepage[lpSubBlock].c_str()));
+            *lplpBuffer = const_cast<void *>(reinterpret_cast<const void *>(it->second.c_str()));
             return TRUE;
         };
     }

@@ -1092,7 +1092,7 @@ TEST_F(OfflineCompilerTests, WhenQueryingSupportedDevicesThenNonEmptyOutputFileI
         Ocloc::SupportedDevicesHelper supportedDevicesHelper(mode, oclocArgHelperWithoutInput->productConfigHelper.get());
         std::string expectedFileName = supportedDevicesHelper.getCurrentOclocOutputFilename();
 
-        EXPECT_NE(oclocArgHelperWithoutInput->filesMap.find(expectedFileName), oclocArgHelperWithoutInput->filesMap.end());
+        EXPECT_TRUE(oclocArgHelperWithoutInput->filesMap.contains(expectedFileName));
 
         std::string generatedContent = oclocArgHelperWithoutInput->filesMap[expectedFileName];
         EXPECT_FALSE(generatedContent.empty());
@@ -1377,8 +1377,7 @@ TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLin
     const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     EXPECT_EQ(OCLOC_SUCCESS, result);
 
-    ASSERT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(relevantAcronymStr));
+    ASSERT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(relevantAcronymStr));
     EXPECT_STREQ(mockOfflineCompiler->perDeviceOptions[relevantAcronymStr].c_str(),
                  exampleDevOptionsStr.c_str());
 }
@@ -5985,7 +5984,7 @@ TEST_F(OfflineCompilerTests, GivenVariousLinesInSpecConstFileWhenParsingThenFile
             EXPECT_EQ(testCase.expectedConstants.size(), mockOfflineCompiler.specConstants.size());
 
             for (const auto &[id, value] : testCase.expectedConstants) {
-                ASSERT_NE(mockOfflineCompiler.specConstants.end(), mockOfflineCompiler.specConstants.find(id));
+                ASSERT_TRUE(mockOfflineCompiler.specConstants.contains(id));
                 EXPECT_EQ(value, mockOfflineCompiler.specConstants.at(id));
             }
         } else {
@@ -6043,8 +6042,7 @@ TEST_F(OfflineCompilerTests, givenDeviceAsIpVersionAndDeviceOptionsWithAcronymWh
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
 
-    ASSERT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(acronym));
+    ASSERT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(acronym));
     EXPECT_TRUE(hasSubstr(mockOfflineCompiler->perDeviceOptions[acronym], testOptions));
 
     EXPECT_TRUE(hasSubstr(mockOfflineCompiler->options, testOptions));
@@ -6081,8 +6079,7 @@ TEST_F(OfflineCompilerTests, givenValidIpVersionInDeviceOptionsWhenParsingThenSu
     int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
-    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(ipVersion));
+    EXPECT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(ipVersion));
 }
 
 TEST_F(OfflineCompilerTests, givenInvalidIpVersionInDeviceOptionsWhenParsingThenFails) {
@@ -6139,8 +6136,7 @@ TEST_F(OfflineCompilerTests, givenValidAcronymInDeviceOptionsWhenParsingThenSucc
     int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
-    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(acronym));
+    EXPECT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(acronym));
 }
 
 TEST_F(OfflineCompilerTests, givenInvalidAcronymInDeviceOptionsWhenParsingThenFails) {
@@ -6201,8 +6197,7 @@ TEST_F(OfflineCompilerTests, givenValidConfigValueInDeviceOptionsWhenParsingThen
     int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
-    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(configStr));
+    EXPECT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(configStr));
 }
 
 TEST_F(OfflineCompilerTests, givenInvalidConfigValueInDeviceOptionsWhenParsingThenFails) {
@@ -6261,10 +6256,8 @@ TEST_F(OfflineCompilerTests, givenMultipleValidDevicesInDeviceOptionsWhenParsing
     int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
-    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(acronyms[0]));
-    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(acronyms[1]));
+    EXPECT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(acronyms[0]));
+    EXPECT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(acronyms[1]));
 }
 
 TEST_F(OfflineCompilerTests, givenMultipleDevicesWithOneInvalidInDeviceOptionsWhenParsingThenFails) {
@@ -6327,8 +6320,7 @@ TEST_F(OfflineCompilerTests, givenDeprecatedAcronymInDeviceOptionsWhenParsingThe
     int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
-    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(deprecatedAcronym));
+    EXPECT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(deprecatedAcronym));
 }
 
 TEST_F(OfflineCompilerTests, givenMixedValidFormatsInDeviceOptionsWhenParsingThenSucceeds) {
@@ -6371,10 +6363,8 @@ TEST_F(OfflineCompilerTests, givenMixedValidFormatsInDeviceOptionsWhenParsingThe
     int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
-    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(acronym));
-    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
-              mockOfflineCompiler->perDeviceOptions.find(ipVersion));
+    EXPECT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(acronym));
+    EXPECT_TRUE(mockOfflineCompiler->perDeviceOptions.contains(ipVersion));
 }
 
 TEST(OclocOutputFileExtensions, GivenKnownFileFormatTheChooseProperExtension) {

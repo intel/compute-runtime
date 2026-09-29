@@ -1228,9 +1228,9 @@ TEST_F(GlSharingTests, givenKnownBaseEventWhenRemoveGlArbSyncEventMappingIsCalle
     auto baseEvent = new MockEvent<UserEvent>;
     auto arbSyncEvent = reinterpret_cast<GlArbSyncEvent *>(0x1c);
     sharing->glArbEventMapping[baseEvent] = arbSyncEvent;
-    EXPECT_NE(sharing->glArbEventMapping.end(), sharing->glArbEventMapping.find(baseEvent));
+    EXPECT_TRUE(sharing->glArbEventMapping.contains(baseEvent));
     sharing->removeGlArbSyncEventMapping(*baseEvent);
-    EXPECT_EQ(sharing->glArbEventMapping.end(), sharing->glArbEventMapping.find(baseEvent));
+    EXPECT_FALSE(sharing->glArbEventMapping.contains(baseEvent));
     baseEvent->release();
 }
 
@@ -1241,11 +1241,11 @@ TEST_F(GlSharingTests, givenUnknownBaseEventWhenRemoveGlArbSyncEventMappingIsCal
     auto unknownBaseEvent = new MockEvent<UserEvent>;
     auto arbSyncEvent = reinterpret_cast<GlArbSyncEvent *>(0x1c);
     sharing->glArbEventMapping[baseEvent] = arbSyncEvent;
-    EXPECT_NE(sharing->glArbEventMapping.end(), sharing->glArbEventMapping.find(baseEvent));
-    EXPECT_EQ(sharing->glArbEventMapping.end(), sharing->glArbEventMapping.find(unknownBaseEvent));
+    EXPECT_TRUE(sharing->glArbEventMapping.contains(baseEvent));
+    EXPECT_FALSE(sharing->glArbEventMapping.contains(unknownBaseEvent));
     sharing->removeGlArbSyncEventMapping(*unknownBaseEvent);
-    EXPECT_NE(sharing->glArbEventMapping.end(), sharing->glArbEventMapping.find(baseEvent));
-    EXPECT_EQ(sharing->glArbEventMapping.end(), sharing->glArbEventMapping.find(unknownBaseEvent));
+    EXPECT_TRUE(sharing->glArbEventMapping.contains(baseEvent));
+    EXPECT_FALSE(sharing->glArbEventMapping.contains(unknownBaseEvent));
     unknownBaseEvent->release();
     baseEvent->release();
 }

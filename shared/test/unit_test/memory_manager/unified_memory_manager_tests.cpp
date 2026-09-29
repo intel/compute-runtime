@@ -758,7 +758,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSubmitIndirectAllocationsAsPackCalledBut
 
     EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(csr->getOsContext().getContextId()));
     EXPECT_EQ(0u, svmManager->indirectAllocationsResidency.size());
-    EXPECT_EQ(svmManager->indirectAllocationsResidency.find(csr.get()), svmManager->indirectAllocationsResidency.end());
+    EXPECT_FALSE(svmManager->indirectAllocationsResidency.contains(csr.get()));
 
     svmManager->freeSVMAlloc(ptr);
 }

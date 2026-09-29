@@ -2773,7 +2773,7 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledAndAllocationUsedBySeconadryContex
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
     auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment->memoryManager.get());
 
-    EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(aub_stream::ENGINE_CCS));
+    EXPECT_TRUE(device->secondaryEngines.contains(aub_stream::ENGINE_CCS));
     auto &secondaryEngines = device->secondaryEngines[aub_stream::ENGINE_CCS];
     auto secondaryEnginesCount = secondaryEngines.engines.size();
     ASSERT_EQ(5u, secondaryEnginesCount);
@@ -2839,7 +2839,7 @@ HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTy
 
         if (supportedRegular || supportedHp) {
             auto usage = supportedRegular ? EngineUsage::regular : EngineUsage::highPriority;
-            EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(engineType));
+            EXPECT_TRUE(device->secondaryEngines.contains(engineType));
 
             auto expectedEngineCount = 5u;
             if (supportedRegular) {
@@ -2864,7 +2864,7 @@ HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTy
             EXPECT_NE(csr->getOsContext().getContextId(), csr2->getOsContext().getContextId());
             EXPECT_NE(tagAddress, tagAddress2);
         } else {
-            EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(engineType));
+            EXPECT_FALSE(device->secondaryEngines.contains(engineType));
         }
     }
 
@@ -2898,7 +2898,7 @@ HWTEST_F(DeviceTests, givenDebugFlagSetWhenCreatingSecondaryEnginesThenSkipSelec
     executionEnvironment->incRefInternal();
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
 
-    EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(aub_stream::ENGINE_CCS));
+    EXPECT_FALSE(device->secondaryEngines.contains(aub_stream::ENGINE_CCS));
 
     executionEnvironment->decRefInternal();
 }
@@ -2926,8 +2926,9 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndDebugFlagSetWhenCreatingSecondaryEngin
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment.release(), 0));
 
     EXPECT_NE(nullptr, device->getHpCopyEngine());
-    EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(hpEngine));
-    for (auto &enginePair : device->secondaryEngines.find(hpEngine)->second.engines) {
+    auto secondaryEnginesIt = device->secondaryEngines.find(hpEngine);
+    ASSERT_NE(device->secondaryEngines.end(), secondaryEnginesIt);
+    for (auto &enginePair : secondaryEnginesIt->second.engines) {
         EXPECT_TRUE(enginePair.osContext->isExclusivelyHpContext());
     }
 }
@@ -2959,8 +2960,8 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndAggregatedProcessCountWhenCreatingSeco
 
         EXPECT_NE(nullptr, device->getHpCopyEngine());
 
-        if (device->secondaryEngines.find(hpEngine) != device->secondaryEngines.end()) {
-            auto &secondaryEngines = device->secondaryEngines[hpEngine];
+        if (auto it = device->secondaryEngines.find(hpEngine); it != device->secondaryEngines.end()) {
+            auto &secondaryEngines = it->second;
             auto expectedContextCount = gfxCoreHelper.getContextGroupContextsCount();
             // Without process division, should have full context group count (64 contexts total)
             EXPECT_EQ(expectedContextCount, secondaryEngines.engines.size());
@@ -2982,8 +2983,8 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndAggregatedProcessCountWhenCreatingSeco
 
         EXPECT_NE(nullptr, device->getHpCopyEngine());
 
-        if (device->secondaryEngines.find(hpEngine) != device->secondaryEngines.end()) {
-            auto &secondaryEngines = device->secondaryEngines[hpEngine];
+        if (auto it = device->secondaryEngines.find(hpEngine); it != device->secondaryEngines.end()) {
+            auto &secondaryEngines = it->second;
 
             // With process division: max(64/4, 2) = max(16, 2) = 16 contexts total
             const uint32_t expectedContextCount = std::max(gfxCoreHelper.getContextGroupContextsCount() / numProcesses, 2u);

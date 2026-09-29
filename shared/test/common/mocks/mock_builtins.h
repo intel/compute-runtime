@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,8 @@ class MockBuiltins : public BuiltIns {
     const SipKernel &getSipKernel(SipKernelType type, Device &device) override {
         getSipKernelCalled = true;
         getSipKernelType = type;
-        if (sipKernelsOverride.find(type) != sipKernelsOverride.end()) {
-            return *sipKernelsOverride[type];
+        if (auto it = sipKernelsOverride.find(type); it != sipKernelsOverride.end()) {
+            return *it->second;
         }
         if (callBaseGetSipKernel) {
             return BuiltIns::getSipKernel(type, device);

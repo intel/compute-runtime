@@ -71,8 +71,10 @@ inline char *mockGetenv(const char *name) noexcept {
     if (strcmp(name, "OpenCLDriverName") == 0) {
         return const_cast<char *>(openCLDriverName);
     }
-    if (mockableEnvValues != nullptr && mockableEnvValues->find(name) != mockableEnvValues->end()) {
-        return const_cast<char *>(mockableEnvValues->find(name)->second.c_str());
+    if (mockableEnvValues != nullptr) {
+        if (auto it = mockableEnvValues->find(name); it != mockableEnvValues->end()) {
+            return const_cast<char *>(it->second.c_str());
+        }
     }
     return nullptr;
 }
