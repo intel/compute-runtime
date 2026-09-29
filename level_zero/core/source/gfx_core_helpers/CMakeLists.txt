@@ -68,5 +68,8 @@ endif()
 if(SUPPORT_XE3P_AND_LATER)
   target_sources(${L0_STATIC_LIB_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe3p_and_later.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe3p_and_later_specializations.inl
   )
 endif()
+
+add_subdirectories()
