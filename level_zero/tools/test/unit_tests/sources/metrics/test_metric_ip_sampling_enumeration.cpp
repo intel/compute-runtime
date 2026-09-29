@@ -1003,7 +1003,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, WhenQueryPoolCreateIsCalledThenUnsupp
     }
 }
 
-HWTEST2_PRODUCT_F(MetricIpSamplingEnumerationTest, WhenAppendMetricMemoryBarrierIsCalledThenUnsupportedFeatureIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingEnumerationTest, WhenAppendMetricMemoryBarrierIsCalledThenUnsupportedFeatureIsReturned, HasIPSamplingSupport) {
 
     auto &device = testDevices[0];
     ze_result_t returnValue;

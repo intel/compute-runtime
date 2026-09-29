@@ -894,7 +894,7 @@ HWTEST2_F(CommandListScratchPatchImmediateGlobalStatelessHeapsStateInitTestXe3pA
 
 using CommandListAppendLaunchKernelXe3pAndLater = Test<ModuleFixture>;
 
-HWTEST2_PRODUCT_F(CommandListAppendLaunchKernelXe3pAndLater, givenHeaplessModeWhenAppendingThenIndirectDataPointerAddressIsProgrammedCorrectly, IsAtLeastXe3pCore) {
+HWTEST2_F(CommandListAppendLaunchKernelXe3pAndLater, givenHeaplessModeWhenAppendingThenIndirectDataPointerAddressIsProgrammedCorrectly, IsAtLeastXe3pCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     Mock<::L0::KernelImp> kernel;

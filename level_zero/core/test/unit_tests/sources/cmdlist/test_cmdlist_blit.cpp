@@ -1252,7 +1252,7 @@ HWTEST_F(AppendMemoryCopyTests, givenWaitWhenWhenAppendBlitCalledThenProgramSema
     }
 }
 
-HWTEST2_PRODUCT_F(AppendMemoryCopyTests, givenCopyCommandListWhenCopyFromImagBlitThenCommandAddedToStream, ImageSupport) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenCopyFromImagBlitThenCommandAddedToStream, ImageSupport) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
 
@@ -1542,7 +1542,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenBcsSplitDisabledWhenCallingZeDeviceGetAg
     EXPECT_EQ(incValue, 1u); // single tile
 }
 
-HWTEST2_PRODUCT_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThenEnableBcsSplit, IsAtLeastXeHpcCore) {
+HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThenEnableBcsSplit, IsAtLeastXeHpcCore) {
     debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
 
     ze_result_t returnValue;
@@ -2009,7 +2009,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenSetupingThe
     }
 }
 
-HWTEST2_PRODUCT_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnabledThenProgramAtomicEventCorrectly, IsAtLeastXeHpcCore) {
+HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnabledThenProgramAtomicEventCorrectly, IsAtLeastXeHpcCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
 

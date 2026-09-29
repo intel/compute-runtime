@@ -147,7 +147,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeCo
     commandQueue->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothThenPipelineSelectProgrammedOnce, IsAtMostXeCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothThenPipelineSelectProgrammedOnce, IsAtMostXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
     auto &productHelper = device->getProductHelper();
@@ -212,7 +212,7 @@ HWTEST2_PRODUCT_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueu
     commandQueue2->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothQueuesThenPreemptionModeIsProgrammedOnce, IsAtMostXeCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothQueuesThenPreemptionModeIsProgrammedOnce, IsAtMostXeCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     ze_result_t returnValue;
@@ -1909,7 +1909,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     commandList->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
@@ -2020,7 +2020,7 @@ HWTEST2_PRODUCT_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleW
     commandList->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostFunctionsRequireDifferentMemorySynchronizationThenEstimatedSizeIsCorect, IsAtLeastXeCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenHostFunctionsRequireDifferentMemorySynchronizationThenEstimatedSizeIsCorect, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
 
     ze_result_t returnValue;
@@ -2072,7 +2072,7 @@ HWTEST2_PRODUCT_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleW
     commandList->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequiredPatchPreambleWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequiredPatchPreambleWhenAppendHostFunctionWasCalledThenCmdsWerePatchedCorrectly, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

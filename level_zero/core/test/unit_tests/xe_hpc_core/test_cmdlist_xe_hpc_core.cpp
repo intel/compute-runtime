@@ -78,7 +78,7 @@ HWTEST2_F(CommandListInOrderDependencyXeHpcCore, givenImplicitInOrderDependencyW
 
 using CommandListAppendSignalEventXeHpcCore = Test<CommandListFixture>;
 
-HWTEST2_PRODUCT_F(CommandListAppendSignalEventXeHpcCore, givenInOrderImmediateCmdListWhenAppendingRegularCommandListWithCounterBasedSignalEventThenDispatchCorrectCommands, IsXeHpcCore) {
+HWTEST2_F(CommandListAppendSignalEventXeHpcCore, givenInOrderImmediateCmdListWhenAppendingRegularCommandListWithCounterBasedSignalEventThenDispatchCorrectCommands, IsXeHpcCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -305,7 +305,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnUnSupp
     EXPECT_FALSE(pCommandList->isMemoryPrefetchRequested());
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsCalled, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(true);
     debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
@@ -342,7 +342,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchFor
     commandQueue->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListsOnImmediateCommandListThenMemoryPrefetchIsCalledOnce, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListsOnImmediateCommandListThenMemoryPrefetchIsCalledOnce, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(true);
     debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
@@ -381,7 +381,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchFor
     commandListImmediate->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchForKmdMigratedSharedAllocationsAndNoEnableBOChunkingPrefetchWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsNotCalled, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchForKmdMigratedSharedAllocationsAndNoEnableBOChunkingPrefetchWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsNotCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(true);
     debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
@@ -418,7 +418,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchF
     commandQueue->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefetchWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsCalled, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefetchWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(true);
     debugManager.flags.EnableBOChunkingPrefetch.set(true);
@@ -455,7 +455,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefet
     commandQueue->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListImmediateWithFlushTaskThenMemoryPrefetchIsCalled, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListImmediateWithFlushTaskThenMemoryPrefetchIsCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(true);
     debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
@@ -488,7 +488,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchFor
     context->freeMem(ptr);
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationPrefetchWhenExecutingCommandListImmediateWithFlushTaskThenMemoryPrefetchIsCalledAndRemovePrefetchAllocationsCalled, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationPrefetchWhenExecutingCommandListImmediateWithFlushTaskThenMemoryPrefetchIsCalledAndRemovePrefetchAllocationsCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
 
@@ -634,7 +634,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     context->freeMem(ptr);
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedDeviceMemoryThenDontCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedDeviceMemoryThenDontCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -681,7 +681,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchFo
     commandList->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -730,7 +730,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchFo
     commandList->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -799,7 +799,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchFo
     commandQueue->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetOnRegularCmdListWhenPrefetchApiIsCalledOnUnifiedSharedMemoryAndRegularExecutedOnImmediateThenCallMigrateAllocationsToGpuOnce, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetOnRegularCmdListWhenPrefetchApiIsCalledOnUnifiedSharedMemoryAndRegularExecutedOnImmediateThenCallMigrateAllocationsToGpuOnce, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -872,7 +872,7 @@ HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchFo
     commandList->destroy();
 }
 
-HWTEST2_PRODUCT_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledForUnifiedSharedMemoryOnCmdListCopyOnlyThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledForUnifiedSharedMemoryOnCmdListCopyOnlyThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -1642,7 +1642,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 using CreateCommandListXeHpcTest = Test<DeviceFixture>;
 
-HWTEST2_PRODUCT_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandListCreatedThenHeapSharingEnabled, IsXeHpcCore) {
+HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandListCreatedThenHeapSharingEnabled, IsXeHpcCore) {
     std::unique_ptr<L0::ult::CommandList> commandListImmediate;
 
     auto &hwInfo = device->getHwInfo();
@@ -1661,7 +1661,7 @@ HWTEST2_PRODUCT_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCo
     EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
 }
 
-HWTEST2_PRODUCT_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThenGlobalAllocationListFilledWithCommandBuffer, IsXeHpcCore) {
+HWTEST2_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThenGlobalAllocationListFilledWithCommandBuffer, IsXeHpcCore) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -1676,7 +1676,7 @@ HWTEST2_PRODUCT_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThe
     EXPECT_FALSE(static_cast<Device *>(device)->allocationsForReuse->peekIsEmpty());
 }
 
-HWTEST2_PRODUCT_F(CreateCommandListXeHpcTest, whenFlagEnabledAndCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
+HWTEST2_F(CreateCommandListXeHpcTest, whenFlagEnabledAndCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.SetAmountOfReusableAllocations.set(2);
     const ze_command_queue_desc_t desc = {};
@@ -1692,7 +1692,7 @@ HWTEST2_PRODUCT_F(CreateCommandListXeHpcTest, whenFlagEnabledAndCreateImmediateC
     EXPECT_TRUE(static_cast<Device *>(device)->allocationsForReuse->peekIsEmpty());
 }
 
-HWTEST2_PRODUCT_F(CreateCommandListXeHpcTest, whenCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
+HWTEST2_F(CreateCommandListXeHpcTest, whenCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 

@@ -272,7 +272,7 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenReadDataFromKmdFailsWhenStreamerRea
     }
 }
 
-HWTEST2_PRODUCT_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfulWhenStreamerAppendMarkerIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfulWhenStreamerAppendMarkerIsCalledThenErrorIsReturned, HasIPSamplingSupport) {
 
     for (auto device : rootOneSubDev) {
 

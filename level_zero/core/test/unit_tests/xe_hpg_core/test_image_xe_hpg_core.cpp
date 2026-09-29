@@ -42,7 +42,7 @@ HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenPropertiesSetCorrectly, IsX
     EXPECT_TRUE(samplerFilterFlagsValid);
 }
 
-HWTEST2_PRODUCT_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
+HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -57,7 +57,7 @@ HWTEST2_PRODUCT_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpg
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_PRODUCT_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
+HWTEST2_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -84,7 +84,7 @@ HWTEST2_F(ImageCreate, givenInvalidGfxCoreFamilyThenReturnNullPointer, IsXeHpgCo
     ASSERT_EQ(nullptr, image);
 }
 
-HWTEST2_PRODUCT_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHpgCore) {
+HWTEST2_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHpgCore) {
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
