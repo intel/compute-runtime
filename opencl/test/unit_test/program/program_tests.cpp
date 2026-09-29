@@ -1243,6 +1243,30 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
 }
 
+TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC31ThenFeaturesAreAdded) {
+    zebinPtr->setAsMockCompilerReturnedBinary();
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = pContext->getDevice(0);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
+    pProgram->sourceCode = "__kernel mock() {}";
+    pProgram->createdFrom = Program::CreatedFrom::source;
+
+    MockProgram::getInternalOptionsCalled = 0;
+
+    auto extensionsOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensionsWithFeatures();
+    EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsOption));
+    EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
+
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.1");
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, "-ocl-version=310"));
+    EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsOption));
+    EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
+    EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
+}
+
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAddedOnlyOnce) {
     zebinPtr->setAsMockCompilerReturnedBinary();
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
@@ -1336,6 +1360,26 @@ TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesAreAd
 
     retVal = pProgram->compile(pProgram->getDevices(), "-cl-std=CL3.0", 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsOption));
+    EXPECT_TRUE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsWithFeaturesOption));
+}
+
+TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC31ThenFeaturesAreAdded) {
+    auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = pContext->getDevice(0);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+    auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
+    pProgram->sourceCode = "__kernel mock() {}";
+    pProgram->createdFrom = Program::CreatedFrom::source;
+
+    auto extensionsOption = pClDevice->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
+    EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsOption));
+    EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsWithFeaturesOption));
+
+    retVal = pProgram->compile(pProgram->getDevices(), "-cl-std=CL3.1", 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(CompilerOptions::contains(pCompilerInterface->buildInternalOptions, "-ocl-version=310"));
     EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsOption));
     EXPECT_TRUE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsWithFeaturesOption));
 }
@@ -1912,13 +1956,13 @@ TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
 
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=300")) << internalOptions;
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=310")) << internalOptions;
 }
 
 TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclOptionIsPresent) {
     MockProgram program{pContext, false, toClDeviceVector(*pClDevice)};
     auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=300"));
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=310"));
 }
 
 TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredOptionIsSet) {

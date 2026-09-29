@@ -117,9 +117,9 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.vendor = vendor.c_str();
     deviceInfo.profile = profile.c_str();
-    deviceInfo.clVersion = "OpenCL 3.0 LEO ";
+    deviceInfo.clVersion = "OpenCL 3.1 LEO ";
     deviceInfo.clCVersion = "OpenCL C 1.2 ";
-    deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 0, 0);
+    deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 1, 0);
     deviceInfo.latestConformanceVersionPassed = latestConformanceVersionPassed;
     initializeOpenclCAllVersions();
     deviceInfo.spirVersions = spirVersions.c_str();
@@ -378,7 +378,7 @@ void ClDevice::initializeExtensionsWithVersion() {
 }
 
 void ClDevice::initializeOpenclCAllVersions() {
-    auto deviceOpenCLCVersions = this->getCompilerProductHelper().getDeviceOpenCLCVersions({3, 0});
+    auto deviceOpenCLCVersions = this->getCompilerProductHelper().getDeviceOpenCLCVersions({3, 1});
     cl_name_version openClCVersion;
     strcpy_s(openClCVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, "OpenCL C");
 
