@@ -58,11 +58,21 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         return createGemExtResult;
     }
 
+    bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override {
+        retrieveMmapOffsetCalled++;
+        offset = mmapOffsetToReturn;
+        return retrieveMmapOffsetResult;
+    }
+
     std::unique_ptr<MemoryInfo> createMemoryInfo() override {
         if (!memoryRegionsToReturn) {
             return nullptr;
         }
         return std::make_unique<MemoryInfo>(*memoryRegionsToReturn, drm);
+    }
+
+    std::optional<uint32_t> getVmAdviseAtomicAttribute() override {
+        return vmAdviseAtomicAttribute;
     }
 
     CacheRegion closAlloc(CacheLevel cacheLevel) override {
@@ -156,7 +166,13 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     uint32_t createGemExtHandle = 1u;
     int createGemExtResult = 0;
 
+    uint64_t mmapOffsetToReturn = 0u;
+    uint32_t retrieveMmapOffsetCalled = 0u;
+    bool retrieveMmapOffsetResult = true;
+
     std::optional<std::vector<MemoryRegion>> memoryRegionsToReturn;
+
+    std::optional<uint32_t> vmAdviseAtomicAttribute = 0u;
 
     std::optional<uint64_t> filledVmBindExtPatIndex;
     std::optional<VmBindParams> receivedVmBind;

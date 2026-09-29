@@ -58,6 +58,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_tests.cpp
 )
 
 if(${NEO_TARGET_PROCESSOR} STREQUAL "x86_64")
@@ -73,7 +74,6 @@ if(NEO_ENABLE_I915_PRELIM_DETECTION)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_info_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_prelim_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_debug_surface_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_topology_prelim_tests.cpp
@@ -92,12 +92,6 @@ endif()
 if(TESTS_XEHP_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later_tests.cpp
-  )
-endif()
-
-if("${BRANCH_TYPE}" STREQUAL "")
-  list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_upstream_tests.cpp
   )
 endif()
 
