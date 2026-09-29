@@ -81,6 +81,7 @@ class GfxCoreHelper {
     virtual bool makeResidentBeforeLockNeeded(bool precondition) const = 0;
     virtual size_t getRenderSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isReducedSurfaceStateInUse(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual size_t getScratchSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual void setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                          void *surfaceStateBuffer,
                                                          size_t bufferSize,
@@ -235,6 +236,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     size_t getRenderSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     bool isReducedSurfaceStateInUse(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
+
+    size_t getScratchSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     size_t getSamplerStateSize() const override {
         using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;

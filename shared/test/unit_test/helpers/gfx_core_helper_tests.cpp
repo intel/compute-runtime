@@ -464,6 +464,15 @@ TEST(HwInfoTest, givenNodeOrdinalSetWhenChosenEngineTypeQueriedThenSetValueIsRet
     EXPECT_EQ(aub_stream::ENGINE_VECS, engineType);
 }
 
+HWTEST_F(GfxCoreHelperTest, givenDefaultSettingsWhenGettingScratchSurfaceStateSizeThen64ByteAlignedRenderSurfaceStateSizeIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    auto scratchSurfaceStateSize = gfxCoreHelper.getScratchSurfaceStateSize(rootDeviceEnvironment);
+    EXPECT_EQ(gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment), scratchSurfaceStateSize);
+    EXPECT_TRUE(isAligned<64u>(scratchSurfaceStateSize));
+}
+
 HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThenUseArgumentsasInput) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;

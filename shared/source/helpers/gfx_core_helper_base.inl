@@ -76,6 +76,11 @@ bool GfxCoreHelperHw<Family>::isReducedSurfaceStateInUse(const RootDeviceEnviron
 }
 
 template <typename Family>
+size_t GfxCoreHelperHw<Family>::getScratchSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    return getRenderSurfaceStateSize(rootDeviceEnvironment);
+}
+
+template <typename Family>
 void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                                       void *surfaceStateBuffer,
                                                                       size_t bufferSize,
