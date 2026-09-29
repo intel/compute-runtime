@@ -13,8 +13,10 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
@@ -25,6 +27,8 @@
 #include "shared/test/unit_test/encoders/test_encode_dispatch_kernel_dg2_and_later.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
+
+#include "implicit_args.h"
 
 using namespace NEO;
 
@@ -1295,4 +1299,294 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenThreadGroupPreemptionAndHost
     auto walkerCmd = reinterpret_cast<WalkerType *>(dispatchArgs.outWalkerPtr);
     ASSERT_NE(nullptr, walkerCmd);
     EXPECT_FALSE(walkerCmd->getInterfaceDescriptor().getThreadPreemption());
+}
+
+HWTEST2_F(CommandEncoderTestXe3pAndLater, givenProductHelperWithInvalidGrfNumbersWhenProgrammingIddThenErrorIsThrown, IsAtLeastXe3pCore) {
+    struct ProductHelperWithInvalidGrfNumbers : public NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        const SupportedNumGrfs getSupportedNumGrfs(const NEO::ReleaseHelper &releaseHelper) const override {
+            return invalidGrfs;
+        }
+        SupportedNumGrfs invalidGrfs = {127u, 255u};
+    };
+
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    RAIIProductHelperFactory<ProductHelperWithInvalidGrfNumbers> productHelperBackup{*mockExecutionEnvironment.rootDeviceEnvironments[0]};
+    const auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+
+    INTERFACE_DESCRIPTOR_DATA_2 idd = FamilyType::cmdInitInterfaceDescriptorData2;
+    size_t emptyValue = 0;
+
+    std::vector<uint32_t> supportedNumGrfs = {128, 256};
+
+    for (auto &numGrf : supportedNumGrfs) {
+        EXPECT_THROW(EncodeDispatchKernel<FamilyType>::setGrfInfo(&idd, numGrf, emptyValue, emptyValue, rootDeviceEnvironment),
+                     std::exception);
+    }
+}
+
+HWTEST2_F(CommandEncoderTestXe3pAndLater, given57bitVaForDestinationAddressWhenProgrammingMiFlushDwThenVerifyAll57bitsAreUsed, IsAtLeastXe3pCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const uint64_t setGpuAddress = 0xffffffffffffffff;
+    const uint64_t verifyGpuAddress = 0xfffffffffffffff8;
+
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
+    args.commandWithPostSync = true;
+
+    EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, setGpuAddress, 0, args);
+    auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
+
+    EXPECT_EQ(verifyGpuAddress, miFlushDwCmd->getDestinationAddress());
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenEncodeSurfaceStateAndFlagEnableExtendedScratchSurfaceSizeDisabledWhenSetPitchForScratchThenPitchIsCorrect, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableExtendedScratchSurfaceSize.set(0);
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    uint32_t pitch = 128u;
+    const auto &productHelper = getHelper<ProductHelper>();
+    EncodeSurfaceState<FamilyType>::setPitchForScratch(&surfaceState, pitch, productHelper);
+    auto pitchFromEncode = EncodeSurfaceState<FamilyType>::getPitchForScratchInBytes(&surfaceState, productHelper);
+    EXPECT_EQ(pitch, pitchFromEncode);
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDisabledFlagEnableExtendedScratchSurfaceSizeWhenCallGetPitchForScratchInBytesThenPitchIsAsSet, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableExtendedScratchSurfaceSize.set(0);
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    uint32_t pitch = 64u;
+    surfaceState.setSurfacePitch(pitch);
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_EQ(pitch, EncodeSurfaceState<FamilyType>::getPitchForScratchInBytes(&surfaceState, productHelper));
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDisabledFlagEnableExtendedScratchSurfaceSizeWhenCallSetPitchForScratchThenPitchIsAsSetAndExtendScratchSurfaceSizeIsNotSet, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableExtendedScratchSurfaceSize.set(0);
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    uint32_t pitch = 128u;
+    const auto &productHelper = getHelper<ProductHelper>();
+    EncodeSurfaceState<FamilyType>::setPitchForScratch(&surfaceState, pitch, productHelper);
+    EXPECT_EQ(pitch, surfaceState.getSurfacePitch());
+    EXPECT_FALSE(surfaceState.getExtendScratchSurfaceSize());
+}
+
+using Walker2DispatchTestsXe3pAndLater = ::testing::Test;
+
+template <typename WalkerType, typename InterfaceDescriptorDataType, typename FamilyType>
+static void whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySetFunction() {
+    DebugManagerStateRestore debugRestorer;
+    MockExecutionEnvironment executionEnvironment;
+    auto walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+
+    EncodeWalkerArgs walkerArgs{
+        .kernelExecutionType = KernelExecutionType::concurrent,
+        .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
+        .maxFrontEndThreads = 113,
+        .requiredSystemFence = true,
+        .hasSample = false};
+
+    {
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    VariableBackup<uint32_t> sliceCountBackup(&executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.SliceCount, 4);
+
+    {
+        walkerArgs.kernelExecutionType = KernelExecutionType::defaultType;
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        walkerCmd.getInterfaceDescriptor().setThreadGroupDispatchSize(InterfaceDescriptorDataType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        VariableBackup<uint32_t> sliceCountBackup(&executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.SliceCount, 2);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        EncodeDispatchKernel<FamilyType>::template encodeComputeDispatchAllWalker<WalkerType, InterfaceDescriptorDataType>(walkerCmd, nullptr, *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        VariableBackup<uint32_t> maxFrontEndThreadsBackup(&walkerArgs.maxFrontEndThreads, 0u);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        walkerCmd.getInterfaceDescriptor().setThreadGroupDispatchSize(InterfaceDescriptorDataType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.set(1);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+}
+
+HWTEST2_F(Walker2DispatchTestsXe3pAndLater, whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySet, IsAtLeastXe3pCore) {
+    whenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySetFunction<typename FamilyType::DefaultWalkerType, typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2, FamilyType>();
+}
+
+template <typename WalkerType, typename FamilyType>
+static void givenSampleSetWhenEncodingExtraParamsThenSetCorrectFieldsFunction() {
+
+    using DISPATCH_WALK_ORDER = typename WalkerType::DISPATCH_WALK_ORDER;
+    using THREAD_GROUP_BATCH_SIZE = typename WalkerType::THREAD_GROUP_BATCH_SIZE;
+
+    auto walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs = CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(kernelDescriptor);
+
+    {
+        walkerArgs.hasSample = false;
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
+        EXPECT_NE(DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_MORTON_WALK, walkerCmd.getDispatchWalkOrder());
+        EXPECT_EQ(THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_1, walkerCmd.getThreadGroupBatchSize());
+    }
+
+    {
+        walkerArgs.hasSample = true;
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
+        EXPECT_EQ(DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_MORTON_WALK, walkerCmd.getDispatchWalkOrder());
+        EXPECT_EQ(THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_4, walkerCmd.getThreadGroupBatchSize());
+    }
+}
+
+HWTEST2_F(Walker2DispatchTestsXe3pAndLater, givenSampleSetWhenEncodingExtraParamsThenSetCorrectFields, IsAtLeastXe3pCore) {
+    givenSampleSetWhenEncodingExtraParamsThenSetCorrectFieldsFunction<typename FamilyType::DefaultWalkerType, FamilyType>();
+}
+
+HWTEST2_F(Walker2DispatchTestsXe3pAndLater, givenMaximumNumberOfThreadsWhenEncodingExtraParamsThenSetCorrectFields, IsAtLeastXe3pCore) {
+
+    DebugManagerStateRestore restore;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    auto walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    KernelDescriptor kernelDescriptor;
+    uint32_t maximumNumberOfThreads = 64u;
+    EncodeWalkerArgs walkerArgs = CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(kernelDescriptor);
+    walkerArgs.maxFrontEndThreads = maximumNumberOfThreads;
+
+    EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
+    EXPECT_EQ(maximumNumberOfThreads, walkerCmd.getMaximumNumberOfThreads());
+
+    uint32_t maximumNumberOfThreadsOverride = 32u;
+    debugManager.flags.MaximumNumberOfThreads.set(static_cast<int32_t>(maximumNumberOfThreadsOverride));
+    EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
+    EXPECT_EQ(maximumNumberOfThreadsOverride, walkerCmd.getMaximumNumberOfThreads());
+}
+
+HWTEST2_F(Walker2DispatchTestsXe3pAndLater, givenDebugFlagSetWhenProgrammingAdditionalWalkerFieldsThenSetThreadArbitrationPolicy, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+    using THREAD_ARBITRATION_POLICY = typename WalkerType::THREAD_ARBITRATION_POLICY;
+
+    DebugManagerStateRestore restore;
+
+    auto walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA_2>();
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+
+    EXPECT_EQ(THREAD_ARBITRATION_POLICY::THREAD_ARBITRATION_POLICY_ALWAYS_ROUND_ROBIN, walkerCmd.getThreadArbitrationPolicy());
+
+    THREAD_ARBITRATION_POLICY expectedValue = THREAD_ARBITRATION_POLICY::THREAD_ARBITRATION_POLICY_ABRITRATION_SWITCH_AT_50;
+    debugManager.flags.OverrideComputeWalker2ThreadArbitrationPolicy.set(static_cast<int32_t>(expectedValue));
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+    EXPECT_EQ(expectedValue, walkerCmd.getThreadArbitrationPolicy());
+}
+
+HWTEST2_F(Walker2DispatchTestsXe3pAndLater, givenDebugFlagSetWhenProgrammingAdditionalWalkerFieldsThenSetThreadDispatchPolicy, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+    using THREAD_DISPATCH_POLICY = typename WalkerType::THREAD_DISPATCH_POLICY;
+
+    DebugManagerStateRestore restore;
+
+    auto walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA_2>();
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+
+    EXPECT_EQ(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_BREADTH_WISE, walkerCmd.getThreadDispatchPolicy());
+
+    debugManager.flags.OverrideComputeWalker2ThreadDispatchPolicy.set(static_cast<int32_t>(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_DEPTH_WISE));
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+    EXPECT_EQ(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_DEPTH_WISE, walkerCmd.getThreadDispatchPolicy());
+
+    debugManager.flags.OverrideComputeWalker2ThreadDispatchPolicy.set(static_cast<int32_t>(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_BREADTH_WISE));
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+    EXPECT_EQ(THREAD_DISPATCH_POLICY::THREAD_DISPATCH_POLICY_BREADTH_WISE, walkerCmd.getThreadDispatchPolicy());
+}
+
+HWTEST2_F(Walker2DispatchTestsXe3pAndLater, givenOverDispatchControlDebugFlagWhenProgrammingAdditionalWalkerFieldsThenOverDispatchControlIsSetCorrectly, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+
+    DebugManagerStateRestore restore;
+    auto walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+    auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA_2>();
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+    EXPECT_EQ(WalkerType::OVER_DISPATCH_CONTROL::OVER_DISPATCH_CONTROL_NORMAL, walkerCmd.getOverDispatchControl());
+
+    for (auto overDispatchControl : {WalkerType::OVER_DISPATCH_CONTROL::OVER_DISPATCH_CONTROL_NONE,
+                                     WalkerType::OVER_DISPATCH_CONTROL::OVER_DISPATCH_CONTROL_LOW,
+                                     WalkerType::OVER_DISPATCH_CONTROL::OVER_DISPATCH_CONTROL_NORMAL,
+                                     WalkerType::OVER_DISPATCH_CONTROL::OVER_DISPATCH_CONTROL_HIGH}) {
+
+        debugManager.flags.OverDispatchControl.set(overDispatchControl);
+        EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+        EXPECT_EQ(overDispatchControl, walkerCmd.getOverDispatchControl());
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHeaplessModeEnabledWhenPatchScratchAddressInImplicitArgsIsCalledThenScratchIsPatchedCorrectly, IsAtLeastXe3pCore) {
+    {
+        ImplicitArgs implicitArgs{};
+        implicitArgs.v1.header.structVersion = 1;
+        implicitArgs.v1.scratchPtr = 0u;
+        uint64_t scratchAddress = 0x80;
+
+        bool scratchPtrPatchingRequired = false;
+        EncodeDispatchKernel<FamilyType>::patchScratchAddressInImplicitArgs(implicitArgs, scratchAddress, scratchPtrPatchingRequired);
+
+        EXPECT_NE(scratchAddress, implicitArgs.v1.scratchPtr);
+    }
+    {
+        ImplicitArgs implicitArgs{};
+        implicitArgs.v1.header.structVersion = 1;
+        implicitArgs.v1.scratchPtr = 0u;
+        uint64_t scratchAddress = 0x80;
+
+        bool scratchPtrPatchingRequired = true;
+        EncodeDispatchKernel<FamilyType>::patchScratchAddressInImplicitArgs(implicitArgs, scratchAddress, scratchPtrPatchingRequired);
+
+        EXPECT_EQ(scratchAddress, implicitArgs.v1.scratchPtr);
+    }
 }
