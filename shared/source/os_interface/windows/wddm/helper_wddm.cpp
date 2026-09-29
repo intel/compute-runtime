@@ -106,6 +106,7 @@ void OsContextWin::prepareLatePreemptionStart(CREATECONTEXT_PVTDATA &privateData
 
     D3DKMT_ESCAPE escapeArguments = {};
     escapeArguments.hAdapter = wddm.getAdapter();
+    escapeArguments.hDevice = wddm.getDeviceHandle();
     escapeArguments.Type = D3DKMT_ESCAPE_DRIVERPRIVATE;
     escapeArguments.Flags.DriverKnownEscape = 1;
     escapeArguments.Flags.NoAdapterSynchronization = 1;
