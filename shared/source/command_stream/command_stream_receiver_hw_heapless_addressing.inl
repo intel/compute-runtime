@@ -379,7 +379,6 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForHeaplessPrologue(Device &device) const {
 
     using STATE_CONTEXT_DATA_BASE_ADDRESS = typename GfxFamily::STATE_CONTEXT_DATA_BASE_ADDRESS;
-    using _3DSTATE_BTD = typename GfxFamily::_3DSTATE_BTD;
 
     size_t size = 0u;
     size += getCmdSizeForPrologue();
@@ -400,7 +399,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForHeaplessPrologue(Device 
 
     auto rayTracingBuffer = device.getRTMemoryBackedBuffer();
     if (rayTracingBuffer) {
-        size += sizeof(_3DSTATE_BTD);
+        size += EncodeEnableRayTracing<GfxFamily>::getCmdSizeFor3dStateBtd();
     }
     return size;
 }

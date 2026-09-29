@@ -1284,6 +1284,11 @@ void EncodeEnableRayTracing<Family>::programEnableRayTracing(LinearStream &comma
 }
 
 template <typename Family>
+size_t EncodeEnableRayTracing<Family>::getCmdSizeFor3dStateBtd() {
+    return sizeof(typename Family::_3DSTATE_BTD);
+}
+
+template <typename Family>
 inline void EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args) {
     args.unTypedDataPortCacheFlush = true;
 }
