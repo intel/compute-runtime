@@ -106,6 +106,43 @@ TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineT
     EXPECT_THROW(factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::lowPriority}), std::runtime_error);
 }
 
+struct DeferredImmediateCmdListDeviceTest : public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.CreateMultipleSubDevices.set(2);
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+        executionEnvironment->incRefInternal();
+        executionEnvironment->initializeMemoryManager();
+    }
+
+    void createRootDevice(bool isWddmOnLinux) {
+        static_cast<MockRootDeviceEnvironment *>(executionEnvironment->rootDeviceEnvironments[0].get())->isWddmOnLinuxEnable = isWddmOnLinux;
+        device.reset(Device::create<RootDevice>(executionEnvironment.get(), 0u));
+        ASSERT_NE(nullptr, device);
+        ASSERT_EQ(2u, device->getNumSubDevices());
+    }
+
+    void expectDeferredImmediateCmdListEnabled(bool expectedEnabled) {
+        EXPECT_EQ(expectedEnabled, device->isDeferredImmediateCmdListEnabled());
+        for (uint32_t subDeviceIndex = 0; subDeviceIndex < device->getNumSubDevices(); subDeviceIndex++) {
+            EXPECT_EQ(expectedEnabled, device->getSubDevice(subDeviceIndex)->isDeferredImmediateCmdListEnabled());
+        }
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<Device> device;
+};
+
+TEST_F(DeferredImmediateCmdListDeviceTest, givenWddmOnLinuxWhenRootDeviceIsCreatedThenDeferredImmediateCmdListIsDisabledForRootAndSubDevices) {
+    createRootDevice(true);
+    expectDeferredImmediateCmdListEnabled(false);
+}
+
+TEST_F(DeferredImmediateCmdListDeviceTest, givenNoWddmOnLinuxWhenRootDeviceIsCreatedThenDeferredImmediateCmdListIsEnabledForRootAndSubDevices) {
+    createRootDevice(false);
+    expectDeferredImmediateCmdListEnabled(true);
+}
+
 TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 

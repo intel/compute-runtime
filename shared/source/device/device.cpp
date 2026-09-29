@@ -168,6 +168,10 @@ bool Device::createSubDevices() {
 }
 
 bool Device::createDeviceImpl() {
+    if (getRootDeviceEnvironment().isWddmOnLinux()) {
+        deferredImmediateCmdListEnabled = false;
+    }
+
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(getHardwareInfo());
 
     auto &productHelper = getProductHelper();
