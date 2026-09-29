@@ -145,6 +145,7 @@ ssize_t (*sysCallsSendmsg)(int sockfd, const struct msghdr *msg, int flags) = nu
 ssize_t (*sysCallsRecvmsg)(int sockfd, struct msghdr *msg, int flags) = nullptr;
 int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval, socklen_t optlen) = nullptr;
 int (*sysCallsDup)(int oldfd) = nullptr;
+int (*sysCallsFcntl)(int fd, int cmd, int arg) = nullptr;
 void *(*sysCallsMmap)(void *addr, size_t size, int prot, int flags, int fd, off_t off) = nullptr;
 int (*sysCallsMunmap)(void *addr, size_t size) = nullptr;
 void *(*sysCallsMremapFixed)(void *oldAddress, size_t size, void *newAddress) = nullptr;
@@ -494,6 +495,9 @@ int fcntl(int fd, int cmd) {
 int fcntl(int fd, int cmd, int arg) {
     if (failFcntl1) {
         return -1;
+    }
+    if (sysCallsFcntl != nullptr) {
+        return sysCallsFcntl(fd, cmd, arg);
     }
 
     return 0;

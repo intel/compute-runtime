@@ -5,14 +5,29 @@
  *
  */
 
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
 NTSTATUS Wddm::createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle) {
-    return getGdi()->shareObjects(1, resourceHandle, nullptr, SHARED_ALLOCATION_ALL_ACCESS, ntHandle);
+    auto status = getGdi()->shareObjects(1, resourceHandle, nullptr, SHARED_ALLOCATION_ALL_ACCESS, ntHandle);
+
+    if (status == STATUS_SUCCESS && *ntHandle == nullptr) {
+        // WSL represents the shared HANDLE as a Linux fd. Zero is a valid fd,
+        // but WddmAllocation reserves zero for "no handle".
+        // Duplicate it to a nonzero fd and release the original
+        auto fd = SysCalls::fcntl(0, F_DUPFD_CLOEXEC, 1);
+        SysCalls::close(0);
+        if (fd < 0) {
+            return STATUS_UNSUCCESSFUL;
+        }
+        *ntHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(fd));
+    }
+    return status;
 }
+
 bool Wddm::getReadOnlyFlagValue(const void *cpuPtr) const {
     return false;
 }
