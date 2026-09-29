@@ -104,10 +104,10 @@ class Context : public BaseObject<_cl_context> {
     }
 
     uint32_t getDefaultRootDeviceIndex() const { return this->clDevices[0]->getRootDeviceIndex(); };
-    ze_command_list_handle_t getInternalCopyCmdList(uint32_t rootDeviceIndex) const { return this->internalCopyCmdLists.at(rootDeviceIndex); };
-    ze_command_list_handle_t getInternalCopyCmdList() const { return getInternalCopyCmdList(getDefaultRootDeviceIndex()); };
-    ze_command_list_handle_t getInternalComputeCmdList(uint32_t rootDeviceIndex) const { return this->internalComputeCmdLists.at(rootDeviceIndex); };
-    ze_command_list_handle_t getInternalComputeCmdList() const { return getInternalComputeCmdList(getDefaultRootDeviceIndex()); };
+    ze_result_t getInternalCopyCmdList(uint32_t rootDeviceIndex, ze_command_list_handle_t &cmdList);
+    ze_result_t getInternalCopyCmdList(ze_command_list_handle_t &cmdList) { return getInternalCopyCmdList(getDefaultRootDeviceIndex(), cmdList); };
+    ze_result_t getInternalComputeCmdList(uint32_t rootDeviceIndex, ze_command_list_handle_t &cmdList);
+    ze_result_t getInternalComputeCmdList(ze_command_list_handle_t &cmdList) { return getInternalComputeCmdList(getDefaultRootDeviceIndex(), cmdList); };
 
     [[nodiscard]] std::unique_lock<std::mutex> lockInternalCopy() { return std::unique_lock(this->internalCopyMtx); };
     [[nodiscard]] std::unique_lock<std::mutex> lockInternalCompute() { return std::unique_lock(this->internalComputeMtx); };
@@ -131,6 +131,7 @@ class Context : public BaseObject<_cl_context> {
   protected:
     void storeProperties(const cl_context_properties *properties);
     void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
+    ze_result_t obtainInternalCmdList(std::map<uint32_t, ze_command_list_handle_t> &internalCmdLists, uint32_t rootDeviceIndex, ze_command_queue_flags_t cmdListFlags, ze_command_list_handle_t &cmdList);
 
     std::vector<std::pair<CallbackT, void *>> callbacks{};
 
@@ -149,6 +150,7 @@ class Context : public BaseObject<_cl_context> {
     std::map<uint32_t, ze_command_list_handle_t> internalComputeCmdLists{};
     std::mutex internalCopyMtx;
     std::mutex internalComputeMtx;
+    std::mutex internalCmdListsCreationMtx;
 
     bool interopUserSync = false;
     bool executionTerminated = false;

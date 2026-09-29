@@ -274,6 +274,7 @@ TEST_F(MockPerfCountersFixture, givenDeferredImmediateCmdListInitializationWhenS
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
     NEO::debugManager.flags.DeferCmdQBcsInitialization.set(1);
+    clDevice->getL0Object()->setFirstImmCmdlistCreated();
 
     auto devicePerfCounters = setupDevicePerfCounters();
 
@@ -308,6 +309,7 @@ TEST_F(MockPerfCountersFixture, givenDeferredImmediateCmdListInitializationWhenC
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
     NEO::debugManager.flags.DeferCmdQBcsInitialization.set(1);
+    clDevice->getL0Object()->setFirstImmCmdlistCreated();
 
     setInstrumentationEnabled(true);
     auto devicePerfCounters = setupDevicePerfCounters();
@@ -339,6 +341,7 @@ TEST_F(MockPerfCountersFixture, givenDeferredImmediateCmdListInitializationAndNo
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
     NEO::debugManager.flags.DeferCmdQBcsInitialization.set(1);
+    clDevice->getL0Object()->setFirstImmCmdlistCreated();
 
     cl_int errcode = CL_SUCCESS;
     auto queue = clCreateCommandQueue(getClContext(), clDevice, 0, &errcode);

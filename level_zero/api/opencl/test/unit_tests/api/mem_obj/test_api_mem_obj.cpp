@@ -19,6 +19,7 @@
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj_helper.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
+#include "level_zero/api/opencl/test/common/fixtures/command_list_create_immediate_hook.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -943,10 +944,158 @@ TEST_F(LeoNv12HostPtrImageTest, givenHostPtrCopyFailureWhenCreateImageThenNoImag
     EXPECT_TRUE(capturingCmdList.appendImageCopyFromMemoryExtArgs.wasCalled());
 }
 
+TEST_F(LeoNv12HostPtrImageTest, givenInternalCopyCmdListCreationFailureWhenCreateImageWithHostPtrThenNoImageIsReturnedAndErrorIsPropagated) {
+    hostPtrContext->internalCopyCmdLists.clear();
+    CommandListCreateImmediateHook createImmediateHook;
+    createImmediateHook.resultToReturn = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    std::vector<uint8_t> hostData((width * height * 3) / 2, 0x80);
+
+    cl_int err = CL_SUCCESS;
+    auto parent = clCreateImage(hostPtrContext.get(),
+                                CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_COPY_HOST_PTR,
+                                &nv12Format, &nv12Desc, hostData.data(), &err);
+
+    EXPECT_EQ(nullptr, parent);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, err);
+    EXPECT_EQ(1u, createImmediateHook.requestedFlags.size());
+    EXPECT_TRUE(hostPtrContext->internalCopyCmdLists.empty());
+    EXPECT_FALSE(capturingCmdList.appendImageCopyFromMemoryExtArgs.wasCalled());
+}
+
+TEST_F(LeoNv12ImageTest, givenImageWithoutHostPtrWhenCreateImageThenInternalCopyCmdListIsNotCreated) {
+    CommandListCreateImmediateHook createImmediateHook;
+
+    auto parent = createParent();
+    ASSERT_NE(nullptr, parent);
+
+    EXPECT_TRUE(createImmediateHook.requestedFlags.empty());
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+}
+
 struct WhiteBoxHostPtrContext : public Context {
     using Context::Context;
     using Context::internalCopyCmdLists;
 };
+
+struct MemFreeHook {
+    MemFreeHook() : memFreeBackup(&NEO::LEO::zeMemFree, &hookedMemFree) {
+        activeHook = this;
+    }
+
+    ~MemFreeHook() {
+        activeHook = nullptr;
+    }
+
+    static ze_result_t ZE_APICALL hookedMemFree(ze_context_handle_t hContext, void *ptr) {
+        activeHook->freedPtrs.push_back(ptr);
+        return ::zeMemFree(hContext, ptr);
+    }
+
+    inline static MemFreeHook *activeHook = nullptr;
+
+    VariableBackup<decltype(NEO::LEO::zeMemFree)> memFreeBackup;
+    std::vector<void *> freedPtrs;
+};
+
+struct CreateBufferWithCopyHostPtrTest : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        cl_device_id clDeviceId = clDevice;
+        leoContext = std::make_unique<WhiteBoxHostPtrContext>(nullptr, context->toHandle(), 1, &clDeviceId, true);
+        svmAllocsManager = driverHandle->getSvmAllocsManager();
+    }
+
+    void TearDown() override {
+        leoContext->internalCopyCmdLists.clear();
+        leoContext.reset();
+        Test<OclFixture>::TearDown();
+    }
+
+    static constexpr size_t bufferSize = 4 * MemoryConstants::megaByte;
+
+    ClDevice *clDevice = nullptr;
+    std::unique_ptr<WhiteBoxHostPtrContext> leoContext;
+    SVMAllocsManager *svmAllocsManager = nullptr;
+    std::vector<uint8_t> hostData = std::vector<uint8_t>(bufferSize, 0x5a);
+};
+
+TEST_F(CreateBufferWithCopyHostPtrTest, givenCopyHostPtrWhenCreatingBufferThenInternalCopyCmdListIsCreatedOnDemandAndHostDataIsCopiedWithIt) {
+    CapturingCommandList capturingCmdList{};
+    CommandListCreateImmediateHook createImmediateHook;
+    createImmediateHook.cmdListToReturn = capturingCmdList.toHandle();
+    EXPECT_TRUE(leoContext->internalCopyCmdLists.empty());
+
+    cl_int err = CL_INVALID_VALUE;
+    auto buffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bufferSize, hostData.data(), &err);
+    EXPECT_EQ(CL_SUCCESS, err);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(capturingCmdList.toHandle(), leoContext->internalCopyCmdLists[clDevice->getRootDeviceIndex()]);
+    ASSERT_EQ(1u, createImmediateHook.requestedFlags.size());
+    EXPECT_EQ(static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_QUEUE_FLAG_IN_ORDER), createImmediateHook.requestedFlags[0]);
+    ASSERT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(castToObject<Buffer>(buffer)->getUsmPtr(), capturingCmdList.appendMemoryCopyArgs[0].dstptr);
+    EXPECT_EQ(static_cast<const void *>(hostData.data()), capturingCmdList.appendMemoryCopyArgs[0].srcptr);
+    EXPECT_EQ(bufferSize, capturingCmdList.appendMemoryCopyArgs[0].size);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(CreateBufferWithCopyHostPtrTest, givenInternalCopyCmdListCreationFailureWhenCreatingBufferWithCopyHostPtrThenErrorIsReturnedAndAllocationIsFreed) {
+    CommandListCreateImmediateHook createImmediateHook;
+    createImmediateHook.resultToReturn = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    MemFreeHook memFreeHook;
+
+    cl_int err = CL_SUCCESS;
+    auto buffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bufferSize, hostData.data(), &err);
+
+    EXPECT_EQ(nullptr, buffer);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, err);
+    ASSERT_EQ(1u, memFreeHook.freedPtrs.size());
+    EXPECT_NE(nullptr, memFreeHook.freedPtrs[0]);
+    EXPECT_TRUE(leoContext->internalCopyCmdLists.empty());
+}
+
+TEST_F(CreateBufferWithCopyHostPtrTest, givenUsmHostPtrSmallerThanBufferWhenCreatingBufferWithUseHostPtrThenInvalidBufferSizeIsReturnedAndInternalCopyCmdListIsNotCreated) {
+    void *usmHostPtr = nullptr;
+    ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeMemAllocHost(context->toHandle(), &hostAllocDesc, bufferSize, 0, &usmHostPtr));
+
+    CommandListCreateImmediateHook createImmediateHook;
+    cl_int err = CL_SUCCESS;
+    auto buffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 2 * bufferSize, usmHostPtr, &err);
+
+    EXPECT_EQ(nullptr, buffer);
+    EXPECT_EQ(CL_INVALID_BUFFER_SIZE, err);
+    EXPECT_TRUE(createImmediateHook.requestedFlags.empty());
+    EXPECT_TRUE(leoContext->internalCopyCmdLists.empty());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(context->toHandle(), usmHostPtr));
+}
+
+TEST_F(CreateBufferWithCopyHostPtrTest, givenInputMemObjHandleAndInternalCopyCmdListCreationFailureWhenCreatingBufferWithCopyHostPtrThenErrorIsReturnedAndInputAllocationIsKept) {
+    void *inputAllocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeMemAllocDevice(context->toHandle(), &deviceAllocDesc, bufferSize, 0, device->toHandle(), &inputAllocation));
+
+    cl_mem_properties properties[] = {CL_L0_MEM_OBJ_HANDLE, reinterpret_cast<cl_mem_properties>(inputAllocation), 0};
+    {
+        CommandListCreateImmediateHook createImmediateHook;
+        createImmediateHook.resultToReturn = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        MemFreeHook memFreeHook;
+
+        cl_int err = CL_SUCCESS;
+        auto buffer = clCreateBufferWithProperties(leoContext.get(), properties, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bufferSize, hostData.data(), &err);
+
+        EXPECT_EQ(nullptr, buffer);
+        EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, err);
+        EXPECT_TRUE(memFreeHook.freedPtrs.empty());
+        EXPECT_NE(nullptr, svmAllocsManager->getSVMAlloc(inputAllocation));
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(context->toHandle(), inputAllocation));
+}
 
 struct LeoZeroCopyUseHostPtrTest : public Test<OclFixture> {
     void SetUp() override {
