@@ -55,6 +55,7 @@ DECLARE_DEBUG_VARIABLE(bool, TbxDownloadAllAllocations, false, "Download all all
 
 /*DEBUG FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableSWTags, false, "Enable software tagging in batch buffer")
+DECLARE_DEBUG_VARIABLE(bool, EnableExtendedSoftwareTags, false, "Requires EnableSWTags. Emit driver counters (dispatch/ROP/flush) into CS_GPR after each software tag. Mutually exclusive with direct submission relaxed ordering, which is force disabled when this is set")
 DECLARE_DEBUG_VARIABLE(bool, DumpSWTagsBXML, false, "Dump software tags BXML into a file")
 DECLARE_DEBUG_VARIABLE(bool, DumpGraphOnInstantiate, false, "Dump graph contents to a file during graph instantiation; file name is composed of application name, process id, graph id, source graph handle and executable graph handle")
 DECLARE_DEBUG_VARIABLE(bool, DisableTimestampPacketOptimizations, false, "Allocate new allocation per node + don't reuse old nodes")

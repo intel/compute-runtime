@@ -27,6 +27,24 @@ enum class Component : uint32_t {
     common = 1
 };
 
+enum class CounterType : uint32_t {
+    none,
+    dispatch,
+    rop,
+    flush,
+};
+
+uint32_t getCounterRegisterOffset(CounterType type);
+
+struct CounterContext {
+    uint32_t incrementAndGet(CounterType type);
+    void reset() { *this = CounterContext{}; }
+
+    uint32_t dispatch = 0;
+    uint32_t rop = 0;
+    uint32_t flush = 0;
+};
+
 inline constexpr uint32_t reservedDefault = 0u;
 inline constexpr uint32_t driverDebugDefault = 1u;
 

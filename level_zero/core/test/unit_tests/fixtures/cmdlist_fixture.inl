@@ -72,7 +72,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         {
             ASSERT_NE(cmdList.end(), itor);
             auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-            EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+            EXPECT_EQ(RegisterOffsets::csGprR13, cmdMem->getRegisterAddress());
             EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
             if (workloadPartition) {
                 EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
@@ -120,7 +120,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         {
             ASSERT_NE(cmdList.end(), itor);
             auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-            EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+            EXPECT_EQ(RegisterOffsets::csGprR13, cmdMem->getRegisterAddress());
             EXPECT_EQ(secondStoreRegMemAddress, cmdMem->getMemoryAddress());
             if (workloadPartition) {
                 EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
@@ -192,7 +192,7 @@ void validateTimestampLongRegisters(GenCmdList &cmdList,
         {
             ASSERT_NE(cmdList.end(), itor);
             auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-            EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+            EXPECT_EQ(RegisterOffsets::csGprR13, cmdMem->getRegisterAddress());
             EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
             if (workloadPartition) {
                 EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
@@ -250,7 +250,7 @@ void validateTimestampLongRegisters(GenCmdList &cmdList,
         {
             ASSERT_NE(cmdList.end(), itor);
             cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-            EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+            EXPECT_EQ(RegisterOffsets::csGprR13, cmdMem->getRegisterAddress());
             EXPECT_EQ(thirdStoreRegMemAddress, cmdMem->getMemoryAddress());
             if (workloadPartition) {
                 EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));

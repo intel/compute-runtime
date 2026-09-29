@@ -104,9 +104,9 @@ struct CommandListXe2AndLaterFixture : public DeviceFixture {
         if (useMask) {
             ASSERT_EQ(6u, srmCommands.size());
 
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[0]), globalAddress, RegisterOffsets::csGprR12);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[0]), globalAddress, RegisterOffsets::csGprR13);
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[1]), globalAddress + sizeof(uint32_t), RegisterOffsets::globalTimestampUn);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), contextAddress, RegisterOffsets::csGprR12);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), contextAddress, RegisterOffsets::csGprR13);
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), ContextTimestampRegister<FamilyType>::getRegisterOffsetHigh());
 
             validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[4]), RegisterOffsets::globalTimestampLdw);

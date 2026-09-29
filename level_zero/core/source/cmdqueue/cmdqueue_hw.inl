@@ -100,6 +100,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         this->startingCmdBuffer = &this->commandStream;
     }
 
+    this->swTagCounters.reset();
+
     auto neoDevice = device->getNEODevice();
 
     if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
@@ -1390,10 +1392,14 @@ void CommandQueueHw<gfxCoreFamily>::updateOneCmdListPreemptionModeAndCtxStatePre
     if (cmdListRequired.flags.preemptionDirty) {
         if (NEO::debugManager.flags.EnableSWTags.get()) {
             NEO::Device *neoDevice = this->device->getNEODevice();
-            neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::PipeControlReasonTag>(
+            auto tagsManager = neoDevice->getRootDeviceEnvironment().tagsManager.get();
+            tagsManager->insertTag<GfxFamily, NEO::SWTags::PipeControlReasonTag>(
                 cmdStream,
                 *neoDevice,
                 "CommandList Preemption Mode update", 0u);
+            tagsManager->insertCounterUpdate<GfxFamily>(cmdStream, NEO::SWTags::CounterType::flush,
+                                                        this->swTagCounters.incrementAndGet(NEO::SWTags::CounterType::flush),
+                                                        this->isCopyOnlyCommandQueue);
         }
         if (this->preemptionCmdSyncProgramming) {
             NEO::PipeControlArgs args;

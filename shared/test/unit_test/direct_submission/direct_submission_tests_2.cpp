@@ -1995,6 +1995,19 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenAskingForRel
     }
 }
 
+HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenSoftwareTagCountersEnabledWhenAskingForRelaxedOrderingSupportThenDisable) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.EnableSWTags.set(true);
+    debugManager.flags.EnableExtendedSoftwareTags.set(true);
+
+    // Counters are written to CS_GPR R10/R11, which the relaxed ordering scheduler owns.
+    MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
+
+    EXPECT_FALSE(directSubmission.isRelaxedOrderingEnabled());
+}
+
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcsDispatcherThenEnableRelaxedOrdering, IsAtLeastXeHpcCore) {
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},

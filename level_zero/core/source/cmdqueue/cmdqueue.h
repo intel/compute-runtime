@@ -12,6 +12,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/heap_base_address_model.h"
+#include "shared/source/utilities/software_tags.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_helpers.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
@@ -189,6 +190,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     uint32_t activeSubDevices = 1;
     std::atomic<TaskCountType> taskCount = 0;
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+    NEO::SWTags::CounterContext swTagCounters{};
 
     uint32_t currentStateChangeIndex = 0;
 

@@ -184,9 +184,9 @@ void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, ui
     EncodeSetMMIO<Family>::encodeIMM(container, RegisterOffsets::csGprR14, immVal, true, isBcs);
     EncodeMath<Family>::bitwiseAnd(container, AluRegisters::gpr13,
                                    AluRegisters::gpr14,
-                                   AluRegisters::gpr12);
+                                   AluRegisters::gpr13);
     EncodeStoreMMIO<Family>::encode(*container.getCommandStream(),
-                                    RegisterOffsets::csGprR12, dstAddress, workloadPartition, outCmdBuffer, isBcs);
+                                    RegisterOffsets::csGprR13, dstAddress, workloadPartition, outCmdBuffer, isBcs);
 }
 
 /*

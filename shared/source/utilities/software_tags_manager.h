@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/software_tags.h"
 
@@ -36,9 +37,15 @@ class SWTagsManager {
     void insertSWTagHeapAddress(LinearStream &cmdStream);
     template <typename GfxFamily, typename Tag, typename... Params>
     void insertTag(LinearStream &cmdStream, Device &device, Params... params);
+    template <typename GfxFamily>
+    void insertCounterUpdate(LinearStream &cmdStream, SWTags::CounterType type, uint32_t value, bool isBcs);
 
     template <typename GfxFamily>
     static size_t estimateSpaceForSWTags();
+
+    static bool countersEnabled() {
+        return debugManager.flags.EnableSWTags.get() && debugManager.flags.EnableExtendedSoftwareTags.get();
+    }
 
     static const uint32_t maxTagCount = 1024;
     static const uint32_t maxTagHeapSize = 512 * MemoryConstants::kiloByte;
@@ -120,10 +127,27 @@ void SWTagsManager::insertTag(LinearStream &cmdStream, Device &device, Params...
 }
 
 template <typename GfxFamily>
+void SWTagsManager::insertCounterUpdate(LinearStream &cmdStream, SWTags::CounterType type, uint32_t value, bool isBcs) {
+    if (type == SWTags::CounterType::none || !countersEnabled()) {
+        return;
+    }
+
+    LriHelper<GfxFamily>::program(&cmdStream, SWTags::getCounterRegisterOffset(type), value, true, isBcs);
+}
+
+template <typename GfxFamily>
 size_t SWTagsManager::estimateSpaceForSWTags() {
     using MI_NOOP = typename GfxFamily::MI_NOOP;
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    return 2 * EncodeStoreMemory<GfxFamily>::getStoreDataImmSize() + 2 * maxTagCount * sizeof(MI_NOOP);
+    size_t size = 2 * EncodeStoreMemory<GfxFamily>::getStoreDataImmSize() + 2 * maxTagCount * sizeof(MI_NOOP);
+
+    if (countersEnabled()) {
+        // At most one counter is updated per tag.
+        size += maxTagCount * sizeof(MI_LOAD_REGISTER_IMM);
+    }
+
+    return size;
 }
 
 } // namespace NEO

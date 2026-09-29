@@ -28,6 +28,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/software_tags_manager.h"
 
 #include "create_direct_submission_hw.inl"
 
@@ -86,6 +87,13 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     if (Dispatcher::isCopy() && relaxedOrderingEnabled) {
         relaxedOrderingEnabled = (debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
+    }
+
+    if (relaxedOrderingEnabled && SWTagsManager::countersEnabled()) {
+        // Software tag counters are written to CS_GPR R10/R11, which the relaxed ordering scheduler owns.
+        relaxedOrderingEnabled = false;
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                     "WARNING: EnableExtendedSoftwareTags disables direct submission relaxed ordering\n");
     }
 
     this->isSwitchOnUnsuccessful = false;

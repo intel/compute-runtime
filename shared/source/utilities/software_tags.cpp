@@ -8,12 +8,41 @@
 #include "shared/source/utilities/software_tags.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/register_offsets.h"
 
 #include <sstream>
 
 namespace NEO {
 namespace SWTags {
+
+uint32_t getCounterRegisterOffset(CounterType type) {
+    switch (type) {
+    case CounterType::dispatch:
+        return RegisterOffsets::csGprR10;
+    case CounterType::rop:
+        return RegisterOffsets::csGprR11;
+    case CounterType::flush:
+        return RegisterOffsets::csGprR12 + sizeof(uint32_t);
+    default:
+        UNRECOVERABLE_IF(true);
+        return 0;
+    }
+}
+
+uint32_t CounterContext::incrementAndGet(CounterType type) {
+    switch (type) {
+    case CounterType::dispatch:
+        return ++dispatch;
+    case CounterType::rop:
+        return ++rop;
+    case CounterType::flush:
+        return ++flush;
+    default:
+        return 0;
+    }
+}
 
 void BXMLHeapInfo::bxml(std::ostream &os) {
     os << "<Structure Name=\"SWTAG_BXML_HEAP_INFO\" Source=\"Driver\" Project=\"All\">\n";

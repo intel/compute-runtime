@@ -9,10 +9,12 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/program/sync_buffer_handler.h"
+#include "shared/source/utilities/software_tags.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -1063,6 +1065,110 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBui
 
     commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+}
+
+struct CommandListSWTagCountersImageTest : CommandListTest {
+    void SetUp() override {
+        debugManager.flags.EnableSWTags.set(true);
+        debugManager.flags.EnableExtendedSoftwareTags.set(true);
+        CommandListTest::SetUp();
+
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
+        static_cast<Mock<::L0::KernelImp> *>(kernel)->setArgRedescribedImageCallBase = false;
+    }
+
+    template <typename FamilyType>
+    void expectSingleRopOperation(L0::CommandList &commandList) {
+        using MI_NOOP = typename FamilyType::MI_NOOP;
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+        auto cmdStream = commandList.getCmdContainer().getCommandStream();
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+        uint32_t callNameBeginTags = 0u;
+        std::vector<uint32_t> ropValues;
+        uint32_t dispatchCounterUpdates = 0u;
+        for (auto &cmd : cmdList) {
+            if (auto marker = genCmdCast<MI_NOOP *>(cmd)) {
+                if (NEO::SWTags::BaseTag::getMarkerNoopID(NEO::SWTags::OpCode::callNameBegin) == marker->getIdentificationNumber() &&
+                    marker->getIdentificationNumberRegisterWriteEnable()) {
+                    callNameBeginTags++;
+                }
+            } else if (auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd)) {
+                if (lri->getRegisterOffset() == RegisterOffsets::csGprR11) {
+                    ropValues.push_back(static_cast<uint32_t>(lri->getDataDword()));
+                } else if (lri->getRegisterOffset() == RegisterOffsets::csGprR10) {
+                    dispatchCounterUpdates++;
+                }
+            }
+        }
+
+        EXPECT_EQ(1u, callNameBeginTags);
+        ASSERT_EQ(1u, ropValues.size());
+        EXPECT_EQ(1u, ropValues[0]);
+        EXPECT_EQ(0u, dispatchCounterUpdates);
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+};
+
+HWTEST2_F(CommandListSWTagCountersImageTest, givenExtendedSWTagsWhenImageCopyFromMemoryThenOnlyRopCounterIsProgrammed, ImageSupport) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 2;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
+    ASSERT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    expectSingleRopOperation<FamilyType>(*commandList);
+}
+
+HWTEST2_F(CommandListSWTagCountersImageTest, givenExtendedSWTagsWhenImageCopyToMemoryThenOnlyRopCounterIsProgrammed, ImageSupport) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    commandList->appendImageCopyToMemory(dstPtr, imageHw->toHandle(), &srcRegion, nullptr, 0, nullptr, copyParams);
+    ASSERT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    expectSingleRopOperation<FamilyType>(*commandList);
+}
+
+HWTEST2_F(CommandListSWTagCountersImageTest, givenExtendedSWTagsWhenImageCopyRegionThenOnlyRopCounterIsProgrammed, ImageSupport) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto imageHwSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHwDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHwSrc->initialize(device, &zeDesc);
+    imageHwDst->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    commandList->appendImageCopyRegion(imageHwDst->toHandle(), imageHwSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, copyParams);
+    ASSERT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    expectSingleRopOperation<FamilyType>(*commandList);
 }
 
 HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyFromMemoryThenCorrectRowAndSlicePitchArePassed, HeaplessSupport) {

@@ -811,7 +811,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
-    uint32_t expecteNumberOfNops = 10u;
+    uint32_t expecteNumberOfNops = 6u;
     EXPECT_EQ(expecteNumberOfNops, noops.size());
 
     bool tagFound = false;
@@ -845,6 +845,322 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
         }
     }
     EXPECT_TRUE(tagFound);
+}
+
+struct CommandListAppendLaunchKernelSWTagCounters : public Test<ModuleFixture> {
+    void SetUp() override {
+
+        NEO::debugManager.flags.EnableSWTags.set(true);
+        NEO::debugManager.flags.EnableExtendedSoftwareTags.set(true);
+        ModuleFixture::setUp();
+    }
+
+    template <typename FamilyType>
+    std::vector<uint32_t> getCounterValues(GenCmdList &cmdList, NEO::SWTags::OpCode opcode, uint32_t registerOffset) {
+        using MI_NOOP = typename FamilyType::MI_NOOP;
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+        std::vector<uint32_t> values;
+
+        for (auto it = cmdList.begin(); it != cmdList.end(); ++it) {
+            auto marker = genCmdCast<MI_NOOP *>(*it);
+            if (marker == nullptr ||
+                NEO::SWTags::BaseTag::getMarkerNoopID(opcode) != marker->getIdentificationNumber() ||
+                !marker->getIdentificationNumberRegisterWriteEnable()) {
+                continue;
+            }
+
+            auto offsetIt = it;
+            ++offsetIt; // SWTAG_OFFSET
+            if (offsetIt == cmdList.end() || ++offsetIt == cmdList.end()) {
+                break;
+            }
+
+            // Counter is programmed directly after the SWTAG_OFFSET of its tag.
+            auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*offsetIt);
+            if (lri != nullptr && lri->getRegisterOffset() == registerOffset) {
+                values.push_back(static_cast<uint32_t>(lri->getDataDword()));
+            }
+        }
+
+        return values;
+    }
+
+    template <typename FamilyType>
+    void expectSingleRopOperation(L0::CommandList &commandList) {
+        auto cmdStream = commandList.getCmdContainer().getCommandStream();
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+        uint32_t callNameBeginTags = 0u;
+        for (auto &cmd : cmdList) {
+            auto marker = genCmdCast<typename FamilyType::MI_NOOP *>(cmd);
+            if (marker != nullptr &&
+                NEO::SWTags::BaseTag::getMarkerNoopID(NEO::SWTags::OpCode::callNameBegin) == marker->getIdentificationNumber() &&
+                marker->getIdentificationNumberRegisterWriteEnable()) {
+                callNameBeginTags++;
+            }
+        }
+        EXPECT_EQ(1u, callNameBeginTags);
+
+        auto ropValues = getCounterValues<FamilyType>(cmdList, NEO::SWTags::OpCode::callNameBegin, RegisterOffsets::csGprR11);
+        ASSERT_EQ(1u, ropValues.size());
+        EXPECT_EQ(1u, ropValues[0]);
+
+        auto dispatchValues = getCounterValues<FamilyType>(cmdList, NEO::SWTags::OpCode::callNameBegin, RegisterOffsets::csGprR10);
+        EXPECT_EQ(0u, dispatchValues.size());
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+};
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppendingLaunchKernelThenDispatchCounterIsProgrammed) {
+    createKernel();
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto values = getCounterValues<FamilyType>(cmdList, NEO::SWTags::OpCode::callNameBegin, RegisterOffsets::csGprR10);
+
+    ASSERT_EQ(2u, values.size());
+    EXPECT_EQ(1u, values[0]);
+    EXPECT_EQ(2u, values[1]);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenCommandListIsResetThenCountersRestart) {
+    createKernel();
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->reset());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto values = getCounterValues<FamilyType>(cmdList, NEO::SWTags::OpCode::callNameBegin, RegisterOffsets::csGprR10);
+
+    ASSERT_EQ(1u, values.size());
+    EXPECT_EQ(1u, values[0]);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppendingMemoryCopyThenRopCounterIsProgrammed) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    void *srcBuffer = reinterpret_cast<void *>(0x0F000000);
+    void *dstBuffer = reinterpret_cast<void *>(0x0FF00000);
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstBuffer, srcBuffer, 1024, nullptr, 0, nullptr, copyParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto ropValues = getCounterValues<FamilyType>(cmdList, NEO::SWTags::OpCode::callNameBegin, RegisterOffsets::csGprR11);
+
+    ASSERT_EQ(1u, ropValues.size());
+    EXPECT_EQ(1u, ropValues[0]);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppendingMemoryCopyThenDispatchCounterIsNotProgrammed) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+
+    void *srcBuffer = reinterpret_cast<void *>(0x0F000000);
+    void *dstBuffer = reinterpret_cast<void *>(0x0FF00000);
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstBuffer, srcBuffer, 1024, nullptr, 0, nullptr, copyParams));
+
+    expectSingleRopOperation<FamilyType>(*commandList);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppending2dMemoryCopyRegionThenOnlyRopCounterIsProgrammed) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+
+    void *srcBuffer = reinterpret_cast<void *>(0x0F000000);
+    void *dstBuffer = reinterpret_cast<void *>(0x0FF00000);
+    uint32_t width = 16;
+    uint32_t height = 16;
+    ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
+    ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                                     srcBuffer, &sr, width, 0, nullptr, 0, nullptr, copyParams));
+
+    expectSingleRopOperation<FamilyType>(*commandList);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppending3dMemoryCopyRegionThenOnlyRopCounterIsProgrammed) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+
+    void *srcBuffer = reinterpret_cast<void *>(0x0F000000);
+    void *dstBuffer = reinterpret_cast<void *>(0x0FF00000);
+    uint32_t width = 16;
+    uint32_t height = 16;
+    uint32_t depth = 2;
+    ze_copy_region_t sr = {0U, 0U, 0U, width, height, depth};
+    ze_copy_region_t dr = {0U, 0U, 0U, width, height, depth};
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, width * height,
+                                                                     srcBuffer, &sr, width, width * height, nullptr, 0, nullptr, copyParams));
+
+    expectSingleRopOperation<FamilyType>(*commandList);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppendingMemoryFillThenOnlyRopCounterIsProgrammed) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer));
+
+    int pattern = 1;
+    CmdListMemoryCopyParams copyParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryFill(dstBuffer, &pattern, sizeof(pattern), 4096u, nullptr, 0, nullptr, copyParams));
+
+    expectSingleRopOperation<FamilyType>(*commandList);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppendingBarrierThenFlushCounterIsProgrammed) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto values = getCounterValues<FamilyType>(cmdList, NEO::SWTags::OpCode::callNameBegin,
+                                               RegisterOffsets::csGprR12 + sizeof(uint32_t));
+
+    ASSERT_EQ(1u, values.size());
+    EXPECT_EQ(1u, values[0]);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppendingProfiledOperationFollowedByAnotherTagThenFlushCounterRegisterIsNotClobbered) {
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    constexpr uint32_t flushCounterRegister = RegisterOffsets::csGprR12 + sizeof(uint32_t);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t returnValue;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    // Profiled operation writes masked kernel timestamps, followed by another tagged operation.
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto values = getCounterValues<FamilyType>(cmdList, NEO::SWTags::OpCode::callNameBegin, flushCounterRegister);
+    ASSERT_EQ(2u, values.size());
+    EXPECT_EQ(1u, values[0]);
+    EXPECT_EQ(2u, values[1]);
+
+    auto isR12 = [](uint64_t reg) {
+        return reg == RegisterOffsets::csGprR12 || reg == RegisterOffsets::csGprR12 + sizeof(uint32_t);
+    };
+
+    bool maskedTimestampFound = false;
+    for (auto &cmd : cmdList) {
+        if (auto srm = genCmdCast<MI_STORE_REGISTER_MEM *>(cmd)) {
+            maskedTimestampFound |= (srm->getRegisterAddress() == RegisterOffsets::csGprR13);
+        } else if (auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd)) {
+            // Only the flush counter itself may be loaded into R12.
+            EXPECT_NE(RegisterOffsets::csGprR12, lri->getRegisterOffset());
+        } else if (auto lrr = genCmdCast<MI_LOAD_REGISTER_REG *>(cmd)) {
+            EXPECT_FALSE(isR12(lrr->getDestinationRegisterAddress()));
+        } else if (auto lrm = genCmdCast<MI_LOAD_REGISTER_MEM *>(cmd)) {
+            EXPECT_FALSE(isR12(lrm->getRegisterAddress()));
+        } else if (auto math = genCmdCast<MI_MATH *>(cmd)) {
+            auto aluInst = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(ptrOffset(cmd, sizeof(uint32_t)));
+            for (uint32_t i = 0; i <= math->DW0.BitField.DwordLength; i++) {
+                if (aluInst[i].DW0.BitField.ALUOpcode == static_cast<uint32_t>(AluRegisters::opcodeStore)) {
+                    EXPECT_NE(static_cast<uint32_t>(AluRegisters::gpr12), aluInst[i].DW0.BitField.Operand1);
+                }
+            }
+        }
+    }
+    EXPECT_TRUE(maskedTimestampFound);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTags, givenExtendedSWTagsDisabledWhenAppendingLaunchKernelThenNoCounterIsProgrammed) {
+    createKernel();
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto lris = findAll<typename FamilyType::MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    for (auto &it : lris) {
+        auto lri = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(*it);
+        EXPECT_NE(RegisterOffsets::csGprR10, lri->getRegisterOffset());
+    }
 }
 
 using CmdlistAppendLaunchKernelTests = Test<ModuleImmutableDataFixture>;

@@ -24,6 +24,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/software_tags.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_signal_event_parameters.h"
@@ -906,6 +907,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t estimatedNumberOfCommands = 0;
     NEO::BuiltIn::AddressingMode defaultBuiltInMode;
     NEO::QueueThrottle queueThrottle = NEO::QueueThrottle::MEDIUM;
+    NEO::SWTags::CounterContext swTagCounters{};
 
     uint8_t powerHint = 0u;
     bool isSyncModeQueue = false;
@@ -946,6 +948,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
     bool inOrderWaitsDisabled = false;
     bool swTagsEnabled = false;
+    bool swTagScopeActive = false;
     bool patchPreambleEnabled = false;
     bool frontEndControllerEnabled = false;
     bool copyOffloadHintRequested = false;

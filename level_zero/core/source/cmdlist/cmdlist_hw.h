@@ -517,7 +517,7 @@ struct CommandListCoreFamily : public CommandList {
     virtual size_t ensureCmdBufferSpaceForPrefetch() { return 0; }
     void patchKernelProperties(CmdListKernelLaunchParams &launchParams, Kernel &kernel, const ze_group_count_t &threadGroupDimensions);
     bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const;
-    std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName);
+    std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName, NEO::SWTags::CounterType counterType = NEO::SWTags::CounterType::none);
     size_t getDefaultMinBcsSplitSize() const;
     void calculateHostFunctionsPatchSize();
     void calculateAsyncPatchlistPatchSize();

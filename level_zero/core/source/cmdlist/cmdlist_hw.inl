@@ -127,6 +127,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     commandContainer.reset();
     clearCommandsToPatch();
     externalSemaphoreHostFunctionData.clear();
+    this->swTagCounters.reset();
 
     if (!isCopyOnly(false)) {
         printfKernelContainer.clear();
@@ -485,12 +486,16 @@ void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStrea
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 std::optional<SWTagScope<typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily>>
-CommandListCoreFamily<gfxCoreFamily>::emplaceSWTagScope(const char *callName) {
-    if (this->swTagsEnabled) {
+CommandListCoreFamily<gfxCoreFamily>::emplaceSWTagScope(const char *callName, NEO::SWTags::CounterType counterType) {
+    if (this->swTagsEnabled && !this->swTagScopeActive) {
         return std::make_optional<SWTagScope<GfxFamily>>(
             *device->getNEODevice(),
             *commandContainer.getCommandStream(),
-            callName);
+            callName,
+            this->swTagCounters,
+            counterType,
+            this->isCopyOnly(false),
+            this->swTagScopeActive);
     }
     return std::nullopt;
 }
@@ -531,7 +536,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
                                                                      ze_event_handle_t *phWaitEvents,
                                                                      CmdListKernelLaunchParams &launchParams) {
 
-    auto swTagScope = emplaceSWTagScope(launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel");
+    auto swTagScope = emplaceSWTagScope(launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel",
+                                        NEO::SWTags::CounterType::dispatch);
 
     auto kernel = Kernel::fromHandle(kernelHandle);
 
@@ -606,6 +612,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
                                                                              ze_event_handle_t hEvent,
                                                                              uint32_t numWaitEvents,
                                                                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendLaunchKernelIndirect", NEO::SWTags::CounterType::dispatch);
 
     CmdListWaitEventParameters waitEventsParameters = {
         .outWaitCmds = nullptr,
@@ -910,6 +918,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }
 
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendImageCopyFromMemory", NEO::SWTags::CounterType::rop);
+
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     auto image = Image::fromHandle(hDstImage);
@@ -1148,6 +1158,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     if (!hSrcImage) {
         return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
     }
+
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendImageCopyToMemory", NEO::SWTags::CounterType::rop);
 
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
@@ -1390,6 +1402,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
                                                                         ze_event_handle_t hEvent,
                                                                         uint32_t numWaitEvents,
                                                                         ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendImageCopyRegion", NEO::SWTags::CounterType::rop);
+
     auto dstImage = L0::Image::fromHandle(hDstImage);
     auto srcImage = L0::Image::fromHandle(hSrcImage);
     cl_int4 srcOffset, dstOffset;
@@ -2358,7 +2372,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
-    auto swTagScope = emplaceSWTagScope("zeCommandListAppendMemoryCopy");
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendMemoryCopy", NEO::SWTags::CounterType::rop);
     NEO::TransferDirection direction;
 
     if (this->bcsSplitMode == BcsSplitParams::BcsSplitMode::recorded && this->isAppendSplitNeeded(dstptr, srcptr, size, direction)) {
@@ -2633,7 +2647,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
-    auto swTagScope = emplaceSWTagScope("zeCommandListAppendMemoryCopyRegion");
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendMemoryCopyRegion", NEO::SWTags::CounterType::rop);
 
     auto dstSize = this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch);
     auto srcSize = this->getTotalSizeForCopyRegion(srcRegion, srcPitch, srcSlicePitch);
@@ -3000,7 +3014,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     NEO::Device *neoDevice = device->getNEODevice();
     bool sharedSystemEnabled = isSharedSystemEnabled();
-    auto swTagScope = emplaceSWTagScope("zeCommandListAppendMemoryFill");
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendMemoryFill", NEO::SWTags::CounterType::rop);
 
     CmdListKernelLaunchParams launchParams = {};
 
@@ -4909,6 +4923,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         setupEventParamsForInOrderBarrierSkip(hSignalEvent, signalEventParameters.apiRequestForGraphExternal);
         return ZE_RESULT_SUCCESS;
     }
+
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendBarrier", NEO::SWTags::CounterType::flush);
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventsParameters);
     if (ret) {
