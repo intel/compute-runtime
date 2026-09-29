@@ -39,12 +39,18 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
 
     struct CreateGemExtCall {
         MemRegionsVec memClassInstances;
+        std::optional<std::vector<unsigned long>> memPolicyNodemask;
         size_t allocSize = 0;
         uint64_t patIndex = 0;
+        std::optional<uint32_t> vmId;
+        std::optional<uint32_t> memPolicyMode;
+        int32_t pairHandle = -1;
+        uint32_t numOfChunks = 0;
+        bool isChunked = false;
     };
 
     int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) override {
-        createGemExtCalls.push_back({memClassInstances, allocSize, patIndex});
+        createGemExtCalls.push_back({memClassInstances, memPolicyNodemask, allocSize, patIndex, vmId, memPolicyMode, pairHandle, numOfChunks, isChunked});
         handle = createGemExtHandle;
         return createGemExtResult;
     }

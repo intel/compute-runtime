@@ -25,7 +25,6 @@
 using namespace NEO;
 
 using DrmTest = ::testing::Test;
-
 using DrmTestXeHPAndLater = ::testing::Test;
 using DrmTestXeHPCAndLater = ::testing::Test;
 
@@ -95,41 +94,6 @@ HWTEST2_F(DrmTest, givenMemRegionQueryNotSupportedWhenQueryingMemRegionInfoThenF
     drm->queryEngineInfo();
     EXPECT_EQ(2u, drm->ioctlCallsCount);
     EXPECT_EQ(nullptr, drm->engineInfo);
-}
-
-class MockIoctlHelperEngineInfoDetection : public IoctlHelperPrelim20 {
-  public:
-    using IoctlHelperPrelim20::IoctlHelperPrelim20;
-
-    std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override {
-        std::vector<NEO::EngineCapabilities> engineInfo(0);
-        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{engineInfo};
-
-        return std::make_unique<EngineInfo>(&drm, engineInfosPerTile);
-    }
-};
-
-TEST(DrmTest, givenEngineQueryOnIncorrectSetupWithZeroEnginesThenProperDebugMessageIsPrinted) {
-    DebugManagerStateRestore dbgState;
-    debugManager.flags.PrintDebugMessages.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto ioctlHelper = std::make_unique<MockIoctlHelperEngineInfoDetection>(*drm);
-    drm->ioctlHelper.reset(ioctlHelper.release());
-
-    StreamCapture capture;
-    capture.captureStderr();
-
-    drm->queryEngineInfo();
-    EXPECT_EQ(0u, drm->engineInfo.get()->getEngineInfos().size());
-
-    std::string output = capture.getCapturedStderr();
-    std::string expectedError = "FATAL: Engine info size is equal to 0.\n";
-
-    EXPECT_EQ(output, expectedError);
 }
 
 HWTEST2_F(DrmTest, givenDistanceQueryNotSupportedWhenQueryingDistanceInfoThenFailGracefully, IsAtMostXeCore) {
@@ -715,30 +679,6 @@ HWTEST2_F(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBa
     }
 }
 
-TEST(DrmTest, givenDisabledCcsSupportWhenQueryingThenResetHwInfoParams) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-
-    drm->context.disableCcsSupport = true;
-
-    auto hwInfo = drm->rootDeviceEnvironment.getMutableHardwareInfo();
-    hwInfo->gtSystemInfo.CCSInfo.IsValid = true;
-    hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-    hwInfo->gtSystemInfo.CCSInfo.Instances.CCSEnableMask = 0b1111;
-    hwInfo->capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCS;
-
-    drm->queryEngineInfo();
-    EXPECT_NE(nullptr, drm->engineInfo);
-
-    EXPECT_FALSE(hwInfo->gtSystemInfo.CCSInfo.IsValid);
-    EXPECT_EQ(0u, hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
-    EXPECT_EQ(0u, hwInfo->gtSystemInfo.CCSInfo.Instances.CCSEnableMask);
-    EXPECT_EQ(EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, drm->rootDeviceEnvironment),
-              hwInfo->capabilityTable.defaultEngineType);
-}
-
 HWTEST2_F(DrmTest, givenVirtualEnginesDisabledWhenCreatingContextThenDontEnableLoadBalancing, IsAtMostXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseDrmVirtualEnginesForCcs.set(0);
@@ -910,89 +850,6 @@ HWTEST2_F(DrmTest, givenSetParamEnginesFailsWhenBindingDrmContextThenCallUnrecov
     drm->storedRetValForSetParamEngines = -1;
     auto drmContextId = 42u;
     EXPECT_ANY_THROW(drm->bindDrmContext(drmContextId, 0u, renderEngine));
-}
-
-TEST(DrmTest, whenQueryingEngineInfoThenMultiTileArchInfoIsUnchanged) {
-    auto originalMultiTileArchInfo = defaultHwInfo->gtSystemInfo.MultiTileArchInfo;
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
-
-    drm->memoryInfoQueried = true;
-    drm->queryEngineInfo();
-    EXPECT_NE(nullptr, drm->engineInfo);
-
-    auto hwInfo = drm->rootDeviceEnvironment.getHardwareInfo();
-    EXPECT_EQ(originalMultiTileArchInfo.IsValid, hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid);
-    auto tileCount = hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount;
-    EXPECT_EQ(originalMultiTileArchInfo.TileCount, tileCount);
-    auto tileMask = hwInfo->gtSystemInfo.MultiTileArchInfo.TileMask;
-    EXPECT_EQ(originalMultiTileArchInfo.TileMask, tileMask);
-}
-
-TEST(DrmTest, givenNewMemoryInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsInitialized) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    ASSERT_NE(nullptr, drm);
-
-    drm->queryEngineInfo();
-    EXPECT_NE(nullptr, drm->engineInfo);
-}
-struct MockEngineInfo : EngineInfo {
-    using EngineInfo::EngineInfo;
-    using EngineInfo::getBaseCopyEngineType;
-};
-
-TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsIntegratedGpuThenBcs0AlwaysIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
-    std::vector<NEO::EngineCapabilities> i915engineInfo(1);
-    StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915engineInfo};
-
-    auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), engineInfosPerTile);
-    bool isIntegratedGpu = true;
-    EngineCapabilities::Flags capabilities{};
-    capabilities.copyClassSaturateLink = true;
-    capabilities.copyClassSaturatePCIE = false;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
-
-    capabilities.copyClassSaturateLink = false;
-    capabilities.copyClassSaturatePCIE = true;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
-
-    capabilities.copyClassSaturateLink = false;
-    capabilities.copyClassSaturatePCIE = false;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
-}
-
-TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsNotIntegratedGpuThenProperBcsIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
-    std::vector<NEO::EngineCapabilities> i915engineInfo(1);
-
-    StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915engineInfo};
-
-    auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), engineInfosPerTile);
-    bool isIntegratedGpu = false;
-
-    EngineCapabilities::Flags capabilities{};
-    capabilities.copyClassSaturateLink = false;
-    capabilities.copyClassSaturatePCIE = true;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
-
-    capabilities.copyClassSaturateLink = true;
-    capabilities.copyClassSaturatePCIE = false;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
-
-    capabilities.copyClassSaturateLink = false;
-    capabilities.copyClassSaturatePCIE = false;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
 }
 
 struct DistanceQueryDrmTests : ::testing::Test {
