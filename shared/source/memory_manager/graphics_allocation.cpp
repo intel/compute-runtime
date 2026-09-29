@@ -175,7 +175,6 @@ void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t 
 bool GraphicsAllocation::hasAllocationReadOnlyType() {
     if (allocationType == AllocationType::kernelIsa ||
         allocationType == AllocationType::kernelIsaInternal ||
-        allocationType == AllocationType::commandBuffer ||
         allocationType == AllocationType::ringBuffer) {
         return true;
     }

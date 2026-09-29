@@ -880,8 +880,13 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
 
+    bool readOnlyAllocationsSupported = productHelper.supportReadOnlyAllocations();
+    if (debugManager.flags.EnableReadOnlyAllocations.get() != -1) {
+        readOnlyAllocationsSupported = !!debugManager.flags.EnableReadOnlyAllocations.get();
+    }
+
     bool isReadOnly = properties.flags.readOnly ||
-                      (productHelper.supportReadOnlyAllocations() &&
+                      (readOnlyAllocationsSupported &&
                        !productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *allocation) &&
                        allocation->canBeReadOnly());
 

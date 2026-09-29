@@ -780,6 +780,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForcePreferredAllocationMethod, -1, "Sets prefer
 DECLARE_DEBUG_VARIABLE(int32_t, EventTimestampRefreshIntervalInMilliSec, -1, "-1: use driver default, This value sets the refresh interval for getting synchronized GPU and CPU timestamp")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSamplerArbitrationControl, -1, "-1: default, >=0: override SBA->SamplerArbitrationControl to given value")
 DECLARE_DEBUG_VARIABLE(int64_t, ReadOnlyAllocationsTypeMask, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, set as read only resource.")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableReadOnlyAllocations, -1, "-1: default, 0: disabled, 1: enabled. Map read only allocation types as read only resources")
 DECLARE_DEBUG_VARIABLE(bool, IgnoreZebinUnknownAttributes, false, "enable to treat unknown zebin attributes as warning instead of error")
 DECLARE_DEBUG_VARIABLE(std::string, FinalizerInputType, std::string("unk"), "unk: default (N/A), input type for finalizer")
 DECLARE_DEBUG_VARIABLE(std::string, FinalizerLibraryName, std::string("unk"), "Library name for finalizer")

@@ -1014,6 +1014,52 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndSupportReadOnlyBu
     EXPECT_EQ(mockGa.setAsReadOnlyCalled, 0u);
 }
 
+TEST(MemoryManagerTest, givenPlatformSupportsReadOnlyAllocationsAndEnableReadOnlyAllocationsDisabledWhenAllocatingReadOnlyTypeThenAllocationIsNotSetAsReadOnly) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableReadOnlyAllocations.set(0);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    MockGraphicsAllocation mockGa;
+
+    mockGa.hasAllocationReadOnlyTypeResult = true;
+
+    memoryManager.mockGa = &mockGa;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield},
+                                                                          nullptr);
+    EXPECT_EQ(allocation, &mockGa);
+    EXPECT_EQ(mockGa.setAsReadOnlyCalled, 0u);
+}
+
+TEST(MemoryManagerTest, givenPlatformDoesNotSupportReadOnlyAllocationsAndEnableReadOnlyAllocationsEnabledWhenAllocatingReadOnlyTypeThenAllocationIsSetAsReadOnly) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableReadOnlyAllocations.set(1);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+    mockProductHelper->supportReadOnlyAllocationsResult = false;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    MockGraphicsAllocation mockGa;
+
+    mockGa.hasAllocationReadOnlyTypeResult = true;
+
+    memoryManager.mockGa = &mockGa;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield},
+                                                                          nullptr);
+    EXPECT_EQ(allocation, &mockGa);
+    EXPECT_EQ(mockGa.setAsReadOnlyCalled, 1u);
+}
+
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportReadOnlyAllocationAndBliterTransferRequiredThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto mockProductHelper = std::make_unique<MockProductHelper>();
