@@ -396,10 +396,10 @@ TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnSameFileThenVerifyCacheIsUp
     EXPECT_LE(0, pFdCache->getFd("dummy.txt"));
 
     // Verify Cache have the elements that are accessed more number of times
-    EXPECT_NE(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile0.txt"));
+    EXPECT_TRUE(pFdCache->fdMap.contains("mockfile0.txt"));
 
     // Verify cache doesn't have an element that is accessed less number of times.
-    EXPECT_EQ(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile9.txt"));
+    EXPECT_FALSE(pFdCache->fdMap.contains("mockfile9.txt"));
 }
 
 TEST(FdCacheTest, GivenValidFdCacheWhenClearingCacheThenVerifyProperFdsAreClosedAndCacheIsUpdatedProperly) {
@@ -439,10 +439,10 @@ TEST(FdCacheTest, GivenValidFdCacheWhenClearingCacheThenVerifyProperFdsAreClosed
     EXPECT_LE(0, pFdCache->getFd("dummy.txt"));
 
     // Verify Cache have the elements that are accessed more number of times
-    EXPECT_NE(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile0.txt"));
+    EXPECT_TRUE(pFdCache->fdMap.contains("mockfile0.txt"));
 
     // Verify cache doesn't have an element that is accessed less number of times.
-    EXPECT_EQ(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile9.txt"));
+    EXPECT_FALSE(pFdCache->fdMap.contains("mockfile9.txt"));
 
     delete pFdCache;
 }

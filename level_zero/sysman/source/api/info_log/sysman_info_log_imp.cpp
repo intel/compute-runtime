@@ -44,7 +44,7 @@ ze_result_t InfoLogImp::infoLogCreateInstance(const char *pInstanceName,
 
     std::lock_guard<std::mutex> lock(instancesMutex);
 
-    if (pInstanceName != nullptr && activeInstanceNames.count(pInstanceName) != 0) {
+    if (pInstanceName != nullptr && activeInstanceNames.contains(pInstanceName)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Collection instance '%s' is already in use, returning error: 0x%x\n", NEO_FUNCTION_NAME, pInstanceName, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     }

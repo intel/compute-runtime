@@ -36,21 +36,19 @@ void FdCacheInterface::eraseLeastUsedEntryFromCache() {
 }
 
 int FdCacheInterface::getFd(std::string file) {
-    int fd = -1;
-    if (fdMap.find(file) == fdMap.end()) {
-        fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
-        if (fd < 0) {
-            return -1;
-        }
-        if (fdMap.size() == maxSize) {
-            eraseLeastUsedEntryFromCache();
-        }
-        fdMap[file] = std::make_pair(fd, 1);
-    } else {
-        auto &fdPair = fdMap[file];
-        fdPair.second++;
+    if (auto it = fdMap.find(file); it != fdMap.end()) {
+        it->second.second++;
+        return it->second.first;
     }
-    return fdMap[file].first;
+    int fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
+    if (fd < 0) {
+        return -1;
+    }
+    if (fdMap.size() == maxSize) {
+        eraseLeastUsedEntryFromCache();
+    }
+    fdMap.emplace(std::move(file), std::make_pair(fd, 1));
+    return fd;
 }
 
 void FdCacheInterface::clearFdCache() {

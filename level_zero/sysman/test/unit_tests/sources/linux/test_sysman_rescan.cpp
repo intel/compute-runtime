@@ -456,7 +456,7 @@ TEST_F(SysmanRescanDriverHandleTest, GivenEmptyPciUuidWhenCallingUpdatePciUuidMa
     const size_t sizeBefore = pSysmanDriverHandleImp->pciUuidToPciBusInfoMap.size();
     pSysmanDriverHandleImp->updatePciUuidMap(pSysmanDeviceImp);
     EXPECT_EQ(sizeBefore, pSysmanDriverHandleImp->pciUuidToPciBusInfoMap.size());
-    EXPECT_EQ(pSysmanDriverHandleImp->pciUuidToPciBusInfoMap.end(), pSysmanDriverHandleImp->pciUuidToPciBusInfoMap.find(""));
+    EXPECT_FALSE(pSysmanDriverHandleImp->pciUuidToPciBusInfoMap.contains(""));
 
     pSysmanDeviceImp->pOsSysman = pOrigOsSysman;
 }
@@ -504,7 +504,7 @@ TEST_F(SysmanRescanDriverHandleTest, GivenBdfChangedForCachedUuidWhenCallingGetD
     pMockOsSysmanDriver->mockPciBdf = "0000:ab:00.0";
     pMockOsSysmanDriver->mockPciUuid = mockRescanPciUuid;
 
-    EXPECT_EQ(pSysmanDriverHandleImp->getUuidDeviceMap().find(recomputedUuid), pSysmanDriverHandleImp->getUuidDeviceMap().end());
+    EXPECT_FALSE(pSysmanDriverHandleImp->getUuidDeviceMap().contains(recomputedUuid));
 
     uint32_t count = 1;
     std::vector<zes_device_handle_t> handles(count, nullptr);

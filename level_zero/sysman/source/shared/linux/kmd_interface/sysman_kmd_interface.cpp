@@ -163,9 +163,9 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForDevice(std::strin
 }
 
 SysfsValueUnit SysmanKmdInterface::getNativeUnit(const SysfsName sysfsName) {
-    auto sysfsNameToNativeUnitMap = getSysfsNameToNativeUnitMap();
-    if (sysfsNameToNativeUnitMap.find(sysfsName) != sysfsNameToNativeUnitMap.end()) {
-        return sysfsNameToNativeUnitMap[sysfsName];
+    const auto &sysfsNameToNativeUnitMap = getSysfsNameToNativeUnitMap();
+    if (auto it = sysfsNameToNativeUnitMap.find(sysfsName); it != sysfsNameToNativeUnitMap.end()) {
+        return it->second;
     }
     // Entries are expected to be available at sysfsNameToNativeUnitMap
     DEBUG_BREAK_IF(true);

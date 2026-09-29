@@ -84,8 +84,8 @@ std::string SysmanKmdInterfaceI915Prelim::getBasePath(uint32_t subDeviceId) cons
 }
 
 std::string SysmanKmdInterfaceI915Prelim::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory) {
-    if (sysfsNameToFileMap.find(sysfsName) != sysfsNameToFileMap.end()) {
-        std::string filePath = prefixBaseDirectory ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
+    if (auto it = sysfsNameToFileMap.find(sysfsName); it != sysfsNameToFileMap.end()) {
+        std::string filePath = prefixBaseDirectory ? getBasePath(subDeviceId) + it->second.first : it->second.second;
         return filePath;
     }
     // All sysfs accesses are expected to be covered

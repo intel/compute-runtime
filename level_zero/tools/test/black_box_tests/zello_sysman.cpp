@@ -366,8 +366,8 @@ static std::string getPowerDomainType(zes_power_domain_t type) {
         {ZES_POWER_DOMAIN_STACK, "ZES_POWER_DOMAIN_STACK"},
         {ZES_POWER_DOMAIN_MEMORY, "ZES_POWER_DOMAIN_MEMORY"},
         {ZES_POWER_DOMAIN_GPU, "ZES_POWER_DOMAIN_GPU"}};
-    if (powerDomainEnumToStringMap.find(type) != powerDomainEnumToStringMap.end()) {
-        return powerDomainEnumToStringMap.at(type);
+    if (auto it = powerDomainEnumToStringMap.find(type); it != powerDomainEnumToStringMap.end()) {
+        return it->second;
     } else {
         return "invalid";
     }
@@ -2508,8 +2508,8 @@ static std::string getMemoryModuleLocation(zes_mem_loc_t type) {
     static const std::map<zes_mem_loc_t, std::string> memoryModuleLocationEnumToStringMap{
         {ZES_MEM_LOC_SYSTEM, "ZES_MEM_LOC_SYSTEM"},
         {ZES_MEM_LOC_DEVICE, "ZES_MEM_LOC_DEVICE"}};
-    if (memoryModuleLocationEnumToStringMap.find(type) != memoryModuleLocationEnumToStringMap.end()) {
-        return memoryModuleLocationEnumToStringMap.at(type);
+    if (auto it = memoryModuleLocationEnumToStringMap.find(type); it != memoryModuleLocationEnumToStringMap.end()) {
+        return it->second;
     } else {
         return "NOT SUPPORTED MEMORY MODULE LOCATION";
     }

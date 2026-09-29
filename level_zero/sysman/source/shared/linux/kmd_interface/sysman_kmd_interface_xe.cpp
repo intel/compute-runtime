@@ -144,8 +144,8 @@ void SysmanKmdInterfaceXe::initSysfsNameToNativeUnitMap(SysmanProductHelper *pSy
 }
 
 std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory) {
-    if (sysfsNameToFileMap.find(sysfsName) != sysfsNameToFileMap.end()) {
-        std::string filePath = prefixBaseDirectory ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
+    if (auto it = sysfsNameToFileMap.find(sysfsName); it != sysfsNameToFileMap.end()) {
+        std::string filePath = prefixBaseDirectory ? getBasePath(subDeviceId) + it->second.first : it->second.second;
         return filePath;
     }
     // All sysfs accesses are expected to be covered
@@ -165,9 +165,9 @@ std::string SysmanKmdInterfaceXe::getNodeFileName(NodeName nodeName) {
 
 std::string SysmanKmdInterfaceXe::getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
                                                             zes_freq_domain_t frequencyDomainNumber) {
-    if (sysfsNameToFileMap.find(sysfsName) != sysfsNameToFileMap.end()) {
+    if (auto it = sysfsNameToFileMap.find(sysfsName); it != sysfsNameToFileMap.end()) {
         if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEDIA) {
-            std::string filePath = prefixBaseDirectory ? getBasePathForFreqDomain(subDeviceId, frequencyDomainNumber) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
+            std::string filePath = prefixBaseDirectory ? getBasePathForFreqDomain(subDeviceId, frequencyDomainNumber) + it->second.first : it->second.second;
             return filePath;
         } else {
             std::string filePath = getSysfsFilePath(sysfsName, subDeviceId, prefixBaseDirectory);

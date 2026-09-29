@@ -536,8 +536,8 @@ uint32_t LinuxSysmanImp::getMemoryType() {
 
 ze_result_t LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &offset) {
 
-    if (mapOfSubDeviceIdToTelemData.find(subDeviceId) != mapOfSubDeviceIdToTelemData.end()) {
-        auto pTelemData = mapOfSubDeviceIdToTelemData[subDeviceId].get();
+    if (auto it = mapOfSubDeviceIdToTelemData.find(subDeviceId); it != mapOfSubDeviceIdToTelemData.end()) {
+        auto pTelemData = it->second.get();
         telemDir = pTelemData->telemDir;
         guid = pTelemData->guid;
         offset = pTelemData->offset;

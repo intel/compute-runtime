@@ -58,7 +58,7 @@ static std::unordered_map<std::string, uint64_t> readMemInfoValues(FsAccess &fsA
             if (!label.empty() && label.back() == ':') {
                 label.pop_back();
             }
-            if (keys.count(label)) {
+            if (keys.contains(label)) {
                 result[label] = value;
                 if (result.size() == keys.size()) {
                     break;
@@ -94,8 +94,8 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
         const std::string memTotalKey = "MemTotal";
         std::unordered_set<std::string> keys{memTotalKey};
         auto memInfoValues = readMemInfoValues(pLinuxSysmanImp->getFsAccess(), keys);
-        if (memInfoValues.find(memTotalKey) != memInfoValues.end()) {
-            pProperties->physicalSize = memInfoValues[memTotalKey] * 1024;
+        if (auto it = memInfoValues.find(memTotalKey); it != memInfoValues.end()) {
+            pProperties->physicalSize = it->second * 1024;
         }
         pProperties->type = ZES_MEM_TYPE_DDR;
         pProperties->numChannels = -1;
@@ -407,9 +407,11 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         const std::string memAvailableKey = "MemAvailable";
         std::unordered_set<std::string> keys{memFreeKey, memAvailableKey};
         auto memInfoValues = readMemInfoValues(pLinuxSysmanImp->getFsAccess(), keys);
-        if (memInfoValues.find(memFreeKey) != memInfoValues.end() && memInfoValues.find(memAvailableKey) != memInfoValues.end()) {
-            pState->free = memInfoValues[memFreeKey] * 1024;
-            pState->size = memInfoValues[memAvailableKey] * 1024;
+        auto memFreeIt = memInfoValues.find(memFreeKey);
+        auto memAvailableIt = memInfoValues.find(memAvailableKey);
+        if (memFreeIt != memInfoValues.end() && memAvailableIt != memInfoValues.end()) {
+            pState->free = memFreeIt->second * 1024;
+            pState->size = memAvailableIt->second * 1024;
         } else {
             pState->free = 0;
             pState->size = 0;

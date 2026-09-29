@@ -98,35 +98,23 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
         this->init();
     });
 
-    zes_event_type_flags_t prevRegisteredEvents = 0;
-    if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
-        prevRegisteredEvents = deviceEventsMap[pSysmanDevice];
-    }
-
     eventsMutex.lock();
+    auto &registeredEvents = deviceEventsMap[pSysmanDevice];
+    const zes_event_type_flags_t prevRegisteredEvents = registeredEvents;
     if (!events) {
         // If user is trying to register events with empty events argument, then clear all the registered events
-        if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
-            deviceEventsMap[pSysmanDevice] = events;
-        } else {
-            deviceEventsMap.emplace(pSysmanDevice, events);
-        }
+        registeredEvents = events;
     } else {
-        zes_event_type_flags_t registeredEvents = 0;
         // supportedEventMask --> this mask checks for events that supported currently
         zes_event_type_flags_t supportedEventMask = ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
                                                     ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED |
                                                     ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
                                                     ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS;
-        if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
-            registeredEvents = deviceEventsMap[pSysmanDevice];
-        }
         registeredEvents |= (events & supportedEventMask);
-        deviceEventsMap[pSysmanDevice] = registeredEvents;
     }
 
     // Write to Pipe only if eventregister() is called during listen and previously registered events are modified.
-    if ((pipeFd[1] != -1) && (prevRegisteredEvents != deviceEventsMap[pSysmanDevice])) {
+    if ((pipeFd[1] != -1) && (prevRegisteredEvents != registeredEvents)) {
         uint8_t value = 0x00;
         if (NEO::SysCalls::write(pipeFd[1], &value, 1) < 0) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -147,8 +135,8 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::SysmanDevice::fromHandle(phDevices[devIndex]));
         eventsMutex.lock();
-        if (deviceEventsMap.find(device) != deviceEventsMap.end()) {
-            registeredEvents[devIndex] = deviceEventsMap[device];
+        if (auto it = deviceEventsMap.find(device); it != deviceEventsMap.end()) {
+            registeredEvents[devIndex] = it->second;
         }
         eventsMutex.unlock();
         if (registeredEvents[devIndex]) {
