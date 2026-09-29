@@ -3333,7 +3333,7 @@ TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramT
         nullptr);
 
     auto output = capture.getCapturedStdout();
-    EXPECT_FALSE(output.compare(0, 14, "Elapsed time: "));
+    EXPECT_TRUE(output.starts_with("Elapsed time: "));
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 

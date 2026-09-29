@@ -59,7 +59,7 @@ AOT::PRODUCT_CONFIG FormerProductConfigHelper::getProductConfigFromDeviceName(co
         config = ProductConfigHelper::getProductConfigFromVersionValue(device);
     } else if (std::all_of(device.begin(), device.end(), (::isdigit))) {
         config = static_cast<uint32_t>(std::stoul(device));
-    } else if (device.substr(0, hexPrefixLength) == "0x" && std::all_of(device.begin() + hexPrefixLength, device.end(), (::isxdigit))) {
+    } else if (device.starts_with("0x") && std::all_of(device.begin() + hexPrefixLength, device.end(), (::isxdigit))) {
         auto deviceId = static_cast<unsigned short>(std::stoi(device, 0, 16));
         config = getProductConfigFromDeviceId(deviceId);
     } else {

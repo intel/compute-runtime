@@ -95,7 +95,7 @@ inline std::vector<MemberInfo> parseStructString(const char *str) {
     std::regex memberRegex(R"(^\s*(uint8_t|uint16_t|uint32_t|uint64_t)\s+(\w+)(\[(\d+)\])?\s*;\s*$)");
 
     while (std::getline(stream, line)) {
-        if (line.find("struct ") == 0 || line.empty()) {
+        if (line.starts_with("struct ") || line.empty()) {
             continue;
         }
 

@@ -649,7 +649,7 @@ void ModuleTranslationUnit::processDebugData() {
             kernelName = reinterpret_cast<const char *>(ptrOffset(kernelDebugHeader, sizeof(iOpenCL::SKernelDebugDataHeaderIGC)));
 
             auto kernelInfo = programInfo.kernelInfos[i];
-            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName.compare(0, kernelInfo->kernelDescriptor.kernelMetadata.kernelName.size(), kernelName) != 0);
+            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName != kernelName);
 
             kernelDebugData = ptrOffset(kernelName, kernelDebugHeader->KernelNameSize);
 

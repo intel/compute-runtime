@@ -208,7 +208,7 @@ class MockPerCpuStats {
 
     static bool isStatsFile(const char *file) {
         constexpr std::string_view perCpuPrefix = "per_cpu/";
-        return (file != nullptr) && (std::string_view(file).compare(0, perCpuPrefix.size(), perCpuPrefix) == 0);
+        return (file != nullptr) && std::string_view(file).starts_with(perCpuPrefix);
     }
 
     static char *read(const char *file) {

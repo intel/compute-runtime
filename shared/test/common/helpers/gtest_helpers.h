@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,18 +59,6 @@ inline bool memoryEqualsPointer(const void *mem, const uintptr_t expectedPointer
 
 inline bool hasSubstr(const std::string &str, const std::string &subStr) {
     return std::string::npos != str.find(subStr);
-}
-
-inline bool startsWith(const std::string &str, const std::string &subStr) {
-    return 0 == str.find(subStr, 0);
-}
-
-inline bool endsWith(const std::string &str, const std::string &subStr) {
-    if (subStr.size() > str.size()) {
-        return false;
-    }
-
-    return 0 == str.compare(str.size() - subStr.size(), subStr.size(), subStr);
 }
 
 inline bool isEmpty(const std::string &str) {

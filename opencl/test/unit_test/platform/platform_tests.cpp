@@ -286,7 +286,7 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     if (hwInfo->capabilityTable.supportsImages) {
         EXPECT_TRUE(hasSubstr(extensionsList, std::string("cl_khr_3d_image_writes")));
     }
-    EXPECT_TRUE(endsWith(compilerExtensions, std::string(" ")));
+    EXPECT_TRUE(compilerExtensions.ends_with(' '));
 }
 
 TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchingSubstrings) {

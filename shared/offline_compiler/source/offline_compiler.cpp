@@ -1047,7 +1047,7 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(const std::string &de
 
 bool OfflineCompiler::isArgumentDeviceId(const std::string &argument) const {
     const char hexPrefixLength = 2;
-    return argument.substr(0, hexPrefixLength) == "0x" && std::all_of(argument.begin() + hexPrefixLength, argument.end(), (::isxdigit));
+    return argument.starts_with("0x") && std::all_of(argument.begin() + hexPrefixLength, argument.end(), (::isxdigit));
 }
 
 int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {

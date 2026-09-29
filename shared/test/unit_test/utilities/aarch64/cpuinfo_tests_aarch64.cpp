@@ -27,7 +27,7 @@ void mockGetCpuFlags(std::string &cpuFlags) {
     std::istringstream cpuinfo(data);
     std::string line;
     while (std::getline(cpuinfo, line)) {
-        if (line.substr(0, 8) == "Features") {
+        if (line.starts_with("Features")) {
             cpuFlags = line;
             break;
         }

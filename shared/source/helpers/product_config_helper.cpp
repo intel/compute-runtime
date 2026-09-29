@@ -386,7 +386,7 @@ std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbb
     AOT::PRODUCT_CONFIG requestedConfig = AOT::PRODUCT_CONFIG::UNKNOWN_ISA;
     for (const auto &acronymEntry : AOT::deviceAcronyms) {
         if (acronymEntry.first == requestedProductAbbreviation ||
-            acronymEntry.first.rfind(requestedProductAbbreviation + "-", 0) == 0) {
+            acronymEntry.first.starts_with(requestedProductAbbreviation + "-")) {
             requestedConfig = acronymEntry.second;
             break;
         }

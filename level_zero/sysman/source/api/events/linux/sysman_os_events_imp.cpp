@@ -306,7 +306,7 @@ bool LinuxEventsUtil::isDrmCardNode(const std::string &eventDevPath, const std::
     // A single unbind/bind generates add/remove uevents for every child node of the PCI device
     // (drm card, render node, connectors, auxiliary devices). Only the primary drm card node
     // (e.g. <pciDevPath>/drm/card0) is used to report the device attach/detach events once.
-    if (eventDevPath.compare(0, pciDevPath.length(), pciDevPath) != 0) {
+    if (!eventDevPath.starts_with(pciDevPath)) {
         return false;
     }
     const std::regex drmCardNodeRegex("/drm/card[0-9]+");

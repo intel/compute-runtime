@@ -2336,7 +2336,7 @@ TEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSize
     NEO::KernelInfo *ki = nullptr;
     for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
         ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
-        if (ki->kernelDescriptor.kernelMetadata.kernelName.compare(0, ki->kernelDescriptor.kernelMetadata.kernelName.size(), kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName) == 0) {
+        if (ki->kernelDescriptor.kernelMetadata.kernelName == kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName) {
             break;
         }
     }
@@ -2359,7 +2359,7 @@ TEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurfac
     NEO::KernelInfo *ki = nullptr;
     for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
         ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
-        if (ki->kernelDescriptor.kernelMetadata.kernelName.compare(0, ki->kernelDescriptor.kernelMetadata.kernelName.size(), kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName) == 0) {
+        if (ki->kernelDescriptor.kernelMetadata.kernelName == kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName) {
             break;
         }
     }

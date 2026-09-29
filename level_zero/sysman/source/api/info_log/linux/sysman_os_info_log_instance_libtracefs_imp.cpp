@@ -356,7 +356,7 @@ static uint32_t countPerCpuEntries(const std::string &perCpuPath) {
     while ((entry = NEO::SysCalls::readdir(dir)) != nullptr) {
         std::string_view name(entry->d_name);
         constexpr std::string_view cpuPrefix = "cpu";
-        if (name.compare(0, cpuPrefix.size(), cpuPrefix) != 0) {
+        if (!name.starts_with(cpuPrefix)) {
             continue;
         }
 

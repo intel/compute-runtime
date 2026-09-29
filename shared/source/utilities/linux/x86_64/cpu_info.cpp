@@ -163,7 +163,7 @@ void getCpuFlagsLinux(std::string &cpuFlags) {
     std::istringstream stream(content);
     std::string line;
     while (std::getline(stream, line)) {
-        if (line.substr(0, 5) == "flags") {
+        if (line.starts_with("flags")) {
             cpuFlags = line;
             break;
         }

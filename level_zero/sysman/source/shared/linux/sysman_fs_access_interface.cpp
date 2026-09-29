@@ -471,7 +471,7 @@ void SysFsAccessInterface::init(const std::string &dev) {
     deviceNames.clear();
     FsAccessInterface::listDirectory(devicesDir, deviceNames);
     for (auto &&next : deviceNames) {
-        if (!next.compare(0, primaryDevName.length(), primaryDevName)) {
+        if (next.starts_with(primaryDevName)) {
             dirname = drmPath + next + std::string("/");
             break;
         }

@@ -452,7 +452,7 @@ SysfsAccess::SysfsAccess(const std::string dev) {
 
     FsAccess::listDirectory(std::move(devicesDir), deviceNames);
     for (auto &&next : deviceNames) {
-        if (!next.compare(0, primaryDevName.length(), primaryDevName)) {
+        if (next.starts_with(primaryDevName)) {
             dirname = drmPath + next + std::string("/");
             break;
         }
