@@ -2824,23 +2824,9 @@ void testSysmanDriverProperties(zes_driver_handle_t driver) {
     std::cout << std::endl
               << " ----  Driver Properties tests ---- " << std::endl;
 
-    using zesIntelDriverGetPropertiesExp_pfn = ze_result_t(ZE_APICALL *)(zes_driver_handle_t, zes_intel_driver_properties_exp_t *);
-
-    auto getDriverPropertiesExpFunctionPointer = [](zes_driver_handle_t driverHandle) {
-        zesIntelDriverGetPropertiesExp_pfn functionPointer = nullptr;
-        VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverGetPropertiesExp", reinterpret_cast<void **>(&functionPointer)));
-        return functionPointer;
-    };
-
-    auto zesIntelDriverGetPropertiesExpPtr = getDriverPropertiesExpFunctionPointer(driver);
-    if (!zesIntelDriverGetPropertiesExpPtr) {
-        std::cout << "Driver Properties EXP function pointer not available" << std::endl;
-        return;
-    }
-
-    zes_intel_driver_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP};
+    zes_driver_properties_t properties = {ZES_STRUCTURE_TYPE_DRIVER_PROPERTIES};
     memset(properties.uuid.id, 0xFF, sizeof(properties.uuid.id));
-    VALIDATECALL(zesIntelDriverGetPropertiesExpPtr(driver, &properties));
+    VALIDATECALL(zesDriverGetProperties(driver, &properties));
 
     if (verbose) {
         std::cout << "properties.driverVersion = " << properties.driverVersion << std::endl;

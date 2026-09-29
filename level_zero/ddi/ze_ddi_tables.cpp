@@ -77,7 +77,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.Debug = &this->toolsDebug;
 
     this->sysman.isValidFlag = true;
-    this->sysman.version = ZE_API_VERSION_1_18;
+    this->sysman.version = ZE_API_VERSION_1_19;
     this->sysman.Global = &this->sysmanGlobal;
     this->sysman.Device = &this->sysmanDevice;
     this->sysman.DeviceExp = &this->sysmanDeviceExp;
@@ -484,6 +484,7 @@ DriverDispatch::DriverDispatch() {
     this->sysmanDriver.pfnGet = L0::zesDriverGet;
     this->sysmanDriver.pfnGetExtensionProperties = L0::zesDriverGetExtensionProperties;
     this->sysmanDriver.pfnGetExtensionFunctionAddress = L0::zesDriverGetExtensionFunctionAddress;
+    this->sysmanDriver.pfnGetProperties = L0::zesDriverGetProperties;
     this->sysmanDriverExp.pfnGetDeviceByUuidExp = L0::zesDriverGetDeviceByUuidExp;
     this->sysmanOverclock.pfnGetDomainProperties = L0::zesOverclockGetDomainProperties;
     this->sysmanOverclock.pfnGetDomainVFProperties = L0::zesOverclockGetDomainVFProperties;

@@ -81,6 +81,7 @@ constexpr DdiEntryExpectation entries[] = {
     DDI_ENTRY(pfnGet, ZE_API_VERSION_1_5),
     DDI_ENTRY(pfnGetExtensionProperties, ZE_API_VERSION_1_8),
     DDI_ENTRY(pfnGetExtensionFunctionAddress, ZE_API_VERSION_1_8),
+    DDI_ENTRY(pfnGetProperties, ZE_API_VERSION_1_19),
 };
 } // namespace zesDriver
 

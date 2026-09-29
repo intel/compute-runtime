@@ -99,6 +99,7 @@ zesGetDriverProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGet, L0::globalDriverDispatch.sysmanDriver.pfnGet, version, ZE_API_VERSION_1_5);
     fillDdiEntry(pDdiTable->pfnGetExtensionProperties, L0::globalDriverDispatch.sysmanDriver.pfnGetExtensionProperties, version, ZE_API_VERSION_1_8);
     fillDdiEntry(pDdiTable->pfnGetExtensionFunctionAddress, L0::globalDriverDispatch.sysmanDriver.pfnGetExtensionFunctionAddress, version, ZE_API_VERSION_1_8);
+    fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.sysmanDriver.pfnGetProperties, version, ZE_API_VERSION_1_19);
     return result;
 }
 

@@ -53,7 +53,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     ze_result_t driverEventRegister(zes_event_type_flags_t events) override;
     ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override;
     ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) override;
-    ze_result_t getDriverProperties(zes_intel_driver_properties_exp_t *pProperties) override;
+    ze_result_t getDriverProperties(zes_driver_properties_t *pProperties) override;
     const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {
         return uuidDeviceMap;
     }

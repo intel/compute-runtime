@@ -80,6 +80,14 @@ ze_result_t ZE_APICALL zesDriverGetExtensionFunctionAddress(
     }
 }
 
+ze_result_t ZE_APICALL zesDriverGetProperties(
+    zes_driver_handle_t hDriver,
+    zes_driver_properties_t *pDriverProperties) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getDriverProperties(pDriverProperties); });
+}
+
 ze_result_t ZE_APICALL zesDeviceGetProperties(
     zes_device_handle_t hDevice,
     zes_device_properties_t *pProperties) {
@@ -2623,6 +2631,14 @@ zesDriverGetExtensionFunctionAddress(
         hDriver,
         name,
         ppFunctionAddress);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGetProperties(
+    zes_driver_handle_t hDriver,
+    zes_driver_properties_t *pDriverProperties) {
+    return L0::zesDriverGetProperties(
+        hDriver,
+        pDriverProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceSetOverclockWaiver(
