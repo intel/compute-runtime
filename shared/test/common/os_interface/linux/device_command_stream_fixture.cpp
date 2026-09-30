@@ -168,12 +168,14 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         auto waitArgs = static_cast<NEO::SyncObjWait *>(arg);
         syncObjWaitTimeoutNs = waitArgs->timeoutNs;
         syncObjWaitFlags = waitArgs->flags;
+        syncObjWaitCountHandles = waitArgs->countHandles;
         ioctlCnt.syncObjWait++;
         if (failOnSyncObjWait == true) {
             return -1;
         }
     } break;
     case DrmIoctl::syncObjSignal: {
+        syncObjSignalCountHandles = static_cast<NEO::SyncObjArray *>(arg)->countHandles;
         ioctlCnt.syncObjSignal++;
         if (failOnSyncObjSignal == true) {
             return -1;
@@ -183,12 +185,17 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         auto waitArgs = static_cast<SyncObjTimelineWait *>(arg);
         syncObjTimelineWaitTimeoutNs = waitArgs->timeoutNs;
         syncObjTimelineWaitFlags = waitArgs->flags;
+        auto waitPoints = reinterpret_cast<const uint64_t *>(waitArgs->points);
+        syncObjTimelineWaitPoints.assign(waitPoints, waitPoints + waitArgs->countHandles);
         ioctlCnt.syncObjTimelineWait++;
         if (failOnSyncObjTimelineWait == true) {
             return -1;
         }
     } break;
     case DrmIoctl::syncObjTimelineSignal: {
+        auto signalArgs = static_cast<NEO::SyncObjTimelineArray *>(arg);
+        auto signalPoints = reinterpret_cast<const uint64_t *>(signalArgs->points);
+        syncObjTimelineSignalPoints.assign(signalPoints, signalPoints + signalArgs->countHandles);
         ioctlCnt.syncObjTimelineSignal++;
         if (failOnSyncObjTimelineSignal == true) {
             return -1;

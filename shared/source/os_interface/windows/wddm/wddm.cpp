@@ -28,6 +28,7 @@
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
@@ -46,6 +47,8 @@
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
+
+#include <algorithm>
 
 namespace NEO {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
@@ -1354,6 +1357,56 @@ WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, u
         return WaitStatus::gpuHang;
     }
     return lastFenceValue <= *monitoredFence.cpuAddress ? WaitStatus::ready : WaitStatus::notReady;
+}
+
+Wddm::ExternalSemaphoreSyncObjects Wddm::getExternalSemaphoreSyncObjects(std::span<const ExternalSemaphoreOperation> operations) {
+    ExternalSemaphoreSyncObjects syncObjects;
+    for (const auto &operation : operations) {
+        syncObjects.handles.push_back(operation.semaphore->getSyncHandle());
+        syncObjects.fenceValues.push_back(operation.fenceValue);
+    }
+    return syncObjects;
+}
+
+bool Wddm::waitExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> waits) {
+    const auto syncObjects = getExternalSemaphoreSyncObjects(waits);
+
+    D3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPU_FLAGS waitFlags = {};
+    waitFlags.WaitAny = false;
+
+    for (size_t first = 0; first < syncObjects.handles.size(); first += D3DDDI_MAX_OBJECT_WAITED_ON) {
+        D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU wait = {};
+        wait.hDevice = getDeviceHandle();
+        wait.ObjectCount = static_cast<UINT>(std::min<size_t>(D3DDDI_MAX_OBJECT_WAITED_ON, syncObjects.handles.size() - first));
+        wait.ObjectHandleArray = syncObjects.handles.data() + first;
+        wait.FenceValueArray = syncObjects.fenceValues.data() + first;
+        wait.hAsyncEvent = nullptr;
+        wait.Flags = waitFlags;
+
+        if (getGdi()->waitForSynchronizationObjectFromCpu(&wait) != STATUS_SUCCESS) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Wddm::signalExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> signals) {
+    const auto syncObjects = getExternalSemaphoreSyncObjects(signals);
+    bool success = true;
+
+    for (size_t first = 0; first < syncObjects.handles.size(); first += D3DDDI_MAX_OBJECT_SIGNALED) {
+        D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU signal = {};
+        signal.hDevice = getDeviceHandle();
+        signal.ObjectCount = static_cast<UINT>(std::min<size_t>(D3DDDI_MAX_OBJECT_SIGNALED, syncObjects.handles.size() - first));
+        signal.ObjectHandleArray = syncObjects.handles.data() + first;
+        signal.FenceValueArray = syncObjects.fenceValues.data() + first;
+        signal.Flags.AllowFenceRewind = true;
+
+        success &= (getGdi()->signalSynchronizationObjectFromCpu(&signal) == STATUS_SUCCESS);
+    }
+
+    return success;
 }
 
 bool Wddm::isGpuHangDetected(OsContext &osContext) {

@@ -7,15 +7,11 @@
 
 #include "shared/source/os_interface/linux/external_semaphore_linux.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
-
-#include <cinttypes>
-#include <limits>
 
 namespace NEO {
 
@@ -72,76 +68,6 @@ ExternalSemaphore::ImportResult ExternalSemaphoreLinux::importSemaphore(void *ex
     this->type = type;
 
     return ImportResult::success;
-}
-
-bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
-    auto drm = this->osInterface->getDriverModel()->as<Drm>();
-    auto ioctlHelper = drm->getIoctlHelper();
-
-    if (this->type == ExternalSemaphore::TimelineSemaphoreFd) {
-        struct SyncObjTimelineWait args = {};
-        args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
-        args.points = reinterpret_cast<uintptr_t>(fenceValue);
-        args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
-        args.countHandles = 1u;
-        args.flags = 0x2; // DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT
-
-        PRINT_STRING(debugManager.flags.PrintExternalSemaphoreTimeline.get() == 1, stdout,
-                     "ExternalSemaphore timeline wait: handle=0x%x, value=%" PRIu64 "\n",
-                     this->syncHandle,
-                     fenceValue ? *fenceValue : 0);
-
-        int ret = ioctlHelper->ioctl(DrmIoctl::syncObjTimelineWait, &args);
-        if (ret != 0) {
-            return false;
-        }
-    } else {
-        struct SyncObjWait args = {};
-        args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
-        args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
-        args.countHandles = 1u;
-        args.flags = 0x2; // DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT
-
-        int ret = ioctlHelper->ioctl(DrmIoctl::syncObjWait, &args);
-        if (ret != 0) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool ExternalSemaphoreLinux::enqueueSignal(uint64_t *fenceValue) {
-    auto drm = this->osInterface->getDriverModel()->as<Drm>();
-    auto ioctlHelper = drm->getIoctlHelper();
-
-    if (this->type == ExternalSemaphore::TimelineSemaphoreFd) {
-        struct SyncObjTimelineArray args = {};
-        args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
-        args.points = reinterpret_cast<uintptr_t>(fenceValue);
-        args.countHandles = 1u;
-
-        PRINT_STRING(debugManager.flags.PrintExternalSemaphoreTimeline.get() == 1, stdout,
-                     "ExternalSemaphore timeline signal: handle=0x%x, value=%" PRIu64 "\n",
-                     this->syncHandle,
-                     fenceValue ? *fenceValue : 0);
-
-        int ret = ioctlHelper->ioctl(DrmIoctl::syncObjTimelineSignal, &args);
-        if (ret != 0) {
-            return false;
-        }
-    } else {
-        struct SyncObjArray args = {};
-        args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
-        args.countHandles = 1u;
-
-        int ret = ioctlHelper->ioctl(DrmIoctl::syncObjSignal, &args);
-        if (ret != 0) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 ExternalSemaphoreLinux::~ExternalSemaphoreLinux() {

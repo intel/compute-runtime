@@ -8,32 +8,36 @@
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
 
 namespace L0 {
 
-void ExternalSemaphoreImp::semaphoreWait(const ExternalSemaphoreOperationData &operationData) {
-    for (auto [semaphore, value] : operationData.semaphores) {
-        [[maybe_unused]] bool result = semaphore->neoExternalSemaphore->enqueueWait(&value);
-        PRINT_STRING(NEO::debugManager.flags.PrintExternalSemaphoreOperationResults.get(), stdout,
-                     "ExternalSemaphoreImp::semaphoreWait semaphore=%p value=%llu result=%d\n",
-                     static_cast<void *>(semaphore),
-                     static_cast<unsigned long long>(value),
-                     static_cast<int>(result));
-    }
-};
+void ExternalSemaphoreOperationData::add(const ExternalSemaphoreImp &semaphore, uint64_t fenceValue) {
+    operations.push_back({semaphore.neoExternalSemaphore.get(), fenceValue});
+}
 
-void ExternalSemaphoreImp::semaphoreSignal(const ExternalSemaphoreOperationData &operationData) {
-    for (auto [semaphore, value] : operationData.semaphores) {
-        [[maybe_unused]] bool result = semaphore->neoExternalSemaphore->enqueueSignal(&value);
+namespace {
+void printResults(const char *operationName, const ExternalSemaphoreOperationData &operationData, bool result) {
+    for (const auto &operation : operationData.operations) {
         PRINT_STRING(NEO::debugManager.flags.PrintExternalSemaphoreOperationResults.get(), stdout,
-                     "ExternalSemaphoreImp::semaphoreSignal semaphore=%p value=%llu result=%d\n",
-                     static_cast<void *>(semaphore),
-                     static_cast<unsigned long long>(value),
-                     static_cast<int>(result));
+                     "ExternalSemaphoreImp::%s semaphore=%p handle=0x%x value=%llu result=%d\n",
+                     operationName, static_cast<const void *>(operation.semaphore), operation.semaphore->getSyncHandle(),
+                     static_cast<unsigned long long>(operation.fenceValue), static_cast<int>(result));
     }
-};
+}
+} // namespace
+
+void ExternalSemaphoreImp::semaphoreWait(NEO::DriverModel &driverModel, const ExternalSemaphoreOperationData &operationData) {
+    const bool result = driverModel.waitExternalSemaphoresFromCpu(operationData.operations);
+    printResults("semaphoreWait", operationData, result);
+}
+
+void ExternalSemaphoreImp::semaphoreSignal(NEO::DriverModel &driverModel, const ExternalSemaphoreOperationData &operationData) {
+    const bool result = driverModel.signalExternalSemaphoresFromCpu(operationData.operations);
+    printResults("semaphoreSignal", operationData, result);
+}
 
 ze_result_t
 ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_external_semaphore_ext_desc_t *semaphoreDesc, ze_external_semaphore_ext_handle_t *phSemaphore) {

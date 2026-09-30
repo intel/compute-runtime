@@ -27,8 +27,8 @@ class ExternalSemaphoreImp : public ExternalSemaphore {
     ze_result_t initialize(ze_device_handle_t device, const ze_external_semaphore_ext_desc_t *semaphoreDesc);
     ze_result_t releaseExternalSemaphore() override;
 
-    static void semaphoreWait(const ExternalSemaphoreOperationData &operationData);
-    static void semaphoreSignal(const ExternalSemaphoreOperationData &operationData);
+    static void semaphoreWait(NEO::DriverModel &driverModel, const ExternalSemaphoreOperationData &operationData);
+    static void semaphoreSignal(NEO::DriverModel &driverModel, const ExternalSemaphoreOperationData &operationData);
 
     ExternalSemaphore *toBase() { return static_cast<ExternalSemaphore *>(this); }
     static bool areImportedToDevice(Device &device, uint32_t numSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores);
@@ -40,7 +40,9 @@ class ExternalSemaphoreImp : public ExternalSemaphore {
 };
 
 struct ExternalSemaphoreOperationData {
-    StackVec<std::pair<ExternalSemaphoreImp *, uint64_t>, 4> semaphores;
+    void add(const ExternalSemaphoreImp &semaphore, uint64_t fenceValue);
+
+    StackVec<NEO::ExternalSemaphoreOperation, 4> operations;
 };
 
 } // namespace L0

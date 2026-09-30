@@ -25,12 +25,6 @@ class ExternalSemaphoreLinux : public ExternalSemaphore {
     ~ExternalSemaphoreLinux() override;
 
     ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
-
-    bool enqueueWait(uint64_t *fenceValue) override;
-    bool enqueueSignal(uint64_t *fenceValue) override;
-
-  protected:
-    uint32_t syncHandle = 0;
 };
 
 } // namespace NEO

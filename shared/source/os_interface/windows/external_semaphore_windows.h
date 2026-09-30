@@ -39,9 +39,6 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
 
     ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
 
-    bool enqueueWait(uint64_t *fenceValue) override;
-    bool enqueueSignal(uint64_t *fenceValue) override;
-
     uint64_t acquireWaitFenceValue(uint64_t fenceValue) override;
     uint64_t acquireSignalFenceValue(uint64_t fenceValue) override;
 
@@ -66,7 +63,6 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
     // returns an owned NT handle (caller must CloseHandle) or nullptr on failure.
     static void *openSyncObjectByName(Gdi *gdi, const char *name, uint32_t desiredAccess, bool forceGlobal);
 
-    D3DKMT_HANDLE syncHandle;
     void *pCpuAddress = nullptr;
     volatile uint64_t *pLastSignaledValue = nullptr;
 };

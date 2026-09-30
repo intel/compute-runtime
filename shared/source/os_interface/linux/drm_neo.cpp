@@ -27,6 +27,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
@@ -261,6 +262,75 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) {
 
 bool Drm::isVmBindSupported() {
     return isVmBindAvailable();
+}
+
+Drm::ExternalSemaphoreSyncObjects Drm::getExternalSemaphoreSyncObjects(std::span<const ExternalSemaphoreOperation> operations) {
+    ExternalSemaphoreSyncObjects syncObjects;
+    for (const auto &operation : operations) {
+        if (operation.semaphore->getType() == ExternalSemaphore::TimelineSemaphoreFd) {
+            syncObjects.timelineHandles.push_back(operation.semaphore->getSyncHandle());
+            syncObjects.timelinePoints.push_back(operation.fenceValue);
+        } else {
+            syncObjects.binaryHandles.push_back(operation.semaphore->getSyncHandle());
+        }
+    }
+    return syncObjects;
+}
+
+bool Drm::waitExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> waits) {
+    const auto syncObjects = getExternalSemaphoreSyncObjects(waits);
+    constexpr uint32_t waitFlags = DRM_SYNCOBJ_WAIT_FLAGS_WAIT_ALL | DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT;
+
+    if (!syncObjects.timelineHandles.empty()) {
+        SyncObjTimelineWait args = {};
+        args.handles = reinterpret_cast<uintptr_t>(syncObjects.timelineHandles.data());
+        args.points = reinterpret_cast<uintptr_t>(syncObjects.timelinePoints.data());
+        args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
+        args.countHandles = static_cast<uint32_t>(syncObjects.timelineHandles.size());
+        args.flags = waitFlags;
+
+        if (getIoctlHelper()->ioctl(DrmIoctl::syncObjTimelineWait, &args) != 0) {
+            return false;
+        }
+    }
+
+    if (!syncObjects.binaryHandles.empty()) {
+        SyncObjWait args = {};
+        args.handles = reinterpret_cast<uintptr_t>(syncObjects.binaryHandles.data());
+        args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
+        args.countHandles = static_cast<uint32_t>(syncObjects.binaryHandles.size());
+        args.flags = waitFlags;
+
+        if (getIoctlHelper()->ioctl(DrmIoctl::syncObjWait, &args) != 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Drm::signalExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> signals) {
+    const auto syncObjects = getExternalSemaphoreSyncObjects(signals);
+    bool success = true;
+
+    if (!syncObjects.timelineHandles.empty()) {
+        SyncObjTimelineArray args = {};
+        args.handles = reinterpret_cast<uintptr_t>(syncObjects.timelineHandles.data());
+        args.points = reinterpret_cast<uintptr_t>(syncObjects.timelinePoints.data());
+        args.countHandles = static_cast<uint32_t>(syncObjects.timelineHandles.size());
+
+        success &= (getIoctlHelper()->ioctl(DrmIoctl::syncObjTimelineSignal, &args) == 0);
+    }
+
+    if (!syncObjects.binaryHandles.empty()) {
+        SyncObjArray args = {};
+        args.handles = reinterpret_cast<uintptr_t>(syncObjects.binaryHandles.data());
+        args.countHandles = static_cast<uint32_t>(syncObjects.binaryHandles.size());
+
+        success &= (getIoctlHelper()->ioctl(DrmIoctl::syncObjSignal, &args) == 0);
+    }
+
+    return success;
 }
 
 bool Drm::isGpuHangDetected(OsContext &osContext) {

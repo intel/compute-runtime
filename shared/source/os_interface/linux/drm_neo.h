@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/user_fence.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "neo_igfxfmid.h"
 
@@ -133,6 +134,10 @@ class Drm : public DriverModel {
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
     bool isGpuHangDetected(OsContext &osContext) override;
+
+    bool waitExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> waits) override;
+    bool signalExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> signals) override;
+
     bool isVmBindSupported() override;
     MOCKABLE_VIRTUAL bool checkResetStatus(OsContext &osContext);
 
@@ -295,6 +300,13 @@ class Drm : public DriverModel {
     std::unordered_map<uint32_t, IsaDebugData> isaDebugDataMap;
 
   protected:
+    struct ExternalSemaphoreSyncObjects {
+        StackVec<uint32_t, 4> timelineHandles;
+        StackVec<uint64_t, 4> timelinePoints;
+        StackVec<uint32_t, 4> binaryHandles;
+    };
+    static ExternalSemaphoreSyncObjects getExternalSemaphoreSyncObjects(std::span<const ExternalSemaphoreOperation> operations);
+
     int waitOnUserFencesImpl(UserFenceWaitOperation operation, const OsContextLinux &osContext, uint64_t address, uint64_t value, ValueWidth readWidth, ValueWidth waitWidth, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
                              uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait);
 

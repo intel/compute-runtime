@@ -444,7 +444,6 @@ DECLARE_DEBUG_VARIABLE(bool, LogIndirectDetectionKernelDetails, false, "Log info
 DECLARE_DEBUG_VARIABLE(bool, PrintMclData, false, "Print all parameters used for MCL");
 DECLARE_DEBUG_VARIABLE(bool, PrintSecondaryContextEngineInfo, false, "Print info about used secondary contexts engine");
 DECLARE_DEBUG_VARIABLE(bool, PrintLateMidThreadPreemptionStartInfo, false, "Print info related to late mid thread preemption start feature")
-DECLARE_DEBUG_VARIABLE(int32_t, PrintExternalSemaphoreTimeline, -1, "-1: default, 0: disabled, 1: enabled. If set, print external semaphore timeline values for wait/signal ioctls")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintExternalSemaphoreOperationResults, false, "Print results of wait/signal external semaphore operations")
 
 /*PERFORMANCE FLAGS*/

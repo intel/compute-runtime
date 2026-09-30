@@ -6,19 +6,17 @@
  */
 
 #pragma once
-#include "shared/source/device/device.h"
-#include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/driver_model_type.h"
-#include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/helpers/topology_map.h"
-#include "shared/source/os_interface/os_handle.h"
-#include "shared/source/os_interface/os_interface.h"
-
-#include <limits>
+#include <cstdint>
 #include <memory>
-#include <string>
 
 namespace NEO {
+class ExternalSemaphore;
+class OSInterface;
+
+struct ExternalSemaphoreOperation {
+    const ExternalSemaphore *semaphore = nullptr;
+    uint64_t fenceValue = 0u;
+};
 
 class ExternalSemaphore {
   public:
@@ -52,16 +50,17 @@ class ExternalSemaphore {
 
     virtual ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) = 0;
 
-    virtual bool enqueueWait(uint64_t *fenceValue) = 0;
-    virtual bool enqueueSignal(uint64_t *fenceValue) = 0;
-
     OSInterface *osInterface = nullptr;
 
     virtual uint64_t acquireWaitFenceValue(uint64_t fenceValue) { return fenceValue; }
     virtual uint64_t acquireSignalFenceValue(uint64_t fenceValue) { return fenceValue; }
 
+    Type getType() const { return type; }
+    uint32_t getSyncHandle() const { return syncHandle; }
+
   protected:
     Type type = Type::Invalid;
+    uint32_t syncHandle = 0;
 };
 
 } // namespace NEO

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/external_semaphore.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 
 #include "gtest/gtest.h"
 
@@ -13,8 +14,6 @@ namespace NEO {
 
 struct MockBaseExternalSemaphore : public ExternalSemaphore {
     ImportResult importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override { return ImportResult::success; }
-    bool enqueueWait(uint64_t *fenceValue) override { return true; }
-    bool enqueueSignal(uint64_t *fenceValue) override { return true; }
 };
 
 TEST(ExternalSemaphoreBaseTest, givenBaseExternalSemaphoreWhenAcquireWaitFenceValueIsCalledThenPassedValueIsReturned) {
@@ -31,6 +30,22 @@ TEST(ExternalSemaphoreBaseTest, givenBaseExternalSemaphoreWhenAcquireSignalFence
     EXPECT_EQ(0ull, semaphore.acquireSignalFenceValue(0ull));
     EXPECT_EQ(321ull, semaphore.acquireSignalFenceValue(321ull));
     EXPECT_EQ(321ull, semaphore.acquireSignalFenceValue(321ull));
+}
+
+TEST(ExternalSemaphoreBaseTest, givenBaseExternalSemaphoreWhenNotImportedThenTypeIsInvalidAndSyncHandleIsZero) {
+    MockBaseExternalSemaphore semaphore;
+
+    EXPECT_EQ(ExternalSemaphore::Type::Invalid, semaphore.getType());
+    EXPECT_EQ(0u, semaphore.getSyncHandle());
+}
+
+TEST(ExternalSemaphoreBaseTest, givenBaseDriverModelWhenExternalSemaphoreOperationsAreCalledThenFalseIsReturned) {
+    MockDriverModel driverModel;
+    MockBaseExternalSemaphore semaphore;
+
+    const ExternalSemaphoreOperation operations[] = {{&semaphore, 1u}};
+    EXPECT_FALSE(driverModel.waitExternalSemaphoresFromCpu(operations));
+    EXPECT_FALSE(driverModel.signalExternalSemaphoresFromCpu(operations));
 }
 
 } // namespace NEO

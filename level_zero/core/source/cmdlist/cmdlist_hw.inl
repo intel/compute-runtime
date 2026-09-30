@@ -5216,11 +5216,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitExternalSemaphores(u
     }
 
     ExternalSemaphoreOperationData operationData{};
-    operationData.semaphores.reserve(numExternalSemaphores);
     for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
         auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
         auto fenceValue = semaphore->neoExternalSemaphore->acquireWaitFenceValue(params[i].value);
-        operationData.semaphores.push_back(std::pair(semaphore, fenceValue));
+        operationData.add(*semaphore, fenceValue);
     }
 
     void *pHostFunctionData = nullptr;
@@ -5245,11 +5244,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalExternalSemaphores
     }
 
     ExternalSemaphoreOperationData operationData{};
-    operationData.semaphores.reserve(numExternalSemaphores);
     for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
         auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
         auto fenceValue = semaphore->neoExternalSemaphore->acquireSignalFenceValue(params[i].value);
-        operationData.semaphores.push_back(std::pair(semaphore, fenceValue));
+        operationData.add(*semaphore, fenceValue);
     }
 
     void *pHostFunctionData = nullptr;

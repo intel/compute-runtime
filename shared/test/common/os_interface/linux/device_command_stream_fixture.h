@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <vector>
 
 using NEO::Drm;
 using NEO::DrmIoctl;
@@ -282,9 +283,16 @@ struct DrmMockCustom : public Drm {
     // DRM_IOCTL_SYNCOBJ_WAIT
     int64_t syncObjWaitTimeoutNs = 0;
     uint32_t syncObjWaitFlags = 0;
+    uint32_t syncObjWaitCountHandles = 0;
+    // DRM_IOCTL_SYNCOBJ_SIGNAL
+    uint32_t syncObjSignalCountHandles = 0;
     // DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT
     int64_t syncObjTimelineWaitTimeoutNs = 0;
     uint32_t syncObjTimelineWaitFlags = 0;
+    std::vector<uint64_t> syncObjTimelineWaitPoints;
+    // DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL
+    std::vector<uint64_t> syncObjTimelineSignalPoints;
+
     bool failOnMmapOffset = false;
     bool failOnPrimeFdToHandle = false;
     bool failOnSecondPrimeFdToHandle = false;

@@ -9,9 +9,11 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/topology_map.h"
+#include "shared/source/os_interface/external_semaphore.h"
 
 #include <limits>
 #include <memory>
+#include <span>
 #include <string>
 
 namespace NEO {
@@ -116,6 +118,9 @@ class DriverModel : public NonCopyableClass {
     virtual bool isVmBindSupported() {
         return false;
     }
+
+    virtual bool waitExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> waits) { return false; }
+    virtual bool signalExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> signals) { return false; }
 
     const TopologyMap &getTopologyMap() {
         return topologyMap;

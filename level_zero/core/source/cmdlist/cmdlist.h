@@ -23,6 +23,7 @@
 #include "shared/source/host_function/host_function.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags.h"
 #include "shared/source/utilities/stackvec.h"
@@ -769,8 +770,10 @@ struct CommandList : _ze_command_list_handle_t {
         DEBUG_BREAK_IF(data == nullptr);
         auto extSemaphoreHostFnData = static_cast<ExternalSemaphoreHostFunctionData *>(data);
         auto &cmdList = extSemaphoreHostFnData->cmdList;
+        auto osInterface = cmdList.device->getOsInterface();
+        DEBUG_BREAK_IF(osInterface == nullptr);
 
-        ExternalSemaphoreImp::semaphoreWait(extSemaphoreHostFnData->operationData);
+        ExternalSemaphoreImp::semaphoreWait(*osInterface->getDriverModel(), extSemaphoreHostFnData->operationData);
 
         if (cmdList.isImmediateType()) {
             std::lock_guard<std::mutex> lock(cmdList.externalSemaphoreHostFunctionDataMutex);
@@ -781,8 +784,10 @@ struct CommandList : _ze_command_list_handle_t {
         DEBUG_BREAK_IF(data == nullptr);
         auto extSemaphoreHostFnData = static_cast<ExternalSemaphoreHostFunctionData *>(data);
         auto &cmdList = extSemaphoreHostFnData->cmdList;
+        auto osInterface = cmdList.device->getOsInterface();
+        DEBUG_BREAK_IF(osInterface == nullptr);
 
-        ExternalSemaphoreImp::semaphoreSignal(extSemaphoreHostFnData->operationData);
+        ExternalSemaphoreImp::semaphoreSignal(*osInterface->getDriverModel(), extSemaphoreHostFnData->operationData);
 
         if (cmdList.isImmediateType()) {
             std::lock_guard<std::mutex> lock(cmdList.externalSemaphoreHostFunctionDataMutex);

@@ -228,46 +228,6 @@ ExternalSemaphore::ImportResult ExternalSemaphoreWindows::importSemaphore(void *
     return ImportResult::success;
 }
 
-bool ExternalSemaphoreWindows::enqueueWait(uint64_t *fenceValue) {
-    auto wddm = this->osInterface->getDriverModel()->as<Wddm>();
-
-    D3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPU_FLAGS waitFlags = {};
-    waitFlags.WaitAny = false;
-
-    D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU wait = {};
-    wait.hDevice = wddm->getDeviceHandle();
-    wait.ObjectCount = 1;
-    wait.ObjectHandleArray = &this->syncHandle;
-    wait.FenceValueArray = fenceValue;
-    wait.hAsyncEvent = nullptr;
-    wait.Flags = waitFlags;
-
-    auto status = wddm->getGdi()->waitForSynchronizationObjectFromCpu(&wait);
-    if (status != STATUS_SUCCESS) {
-        return false;
-    }
-
-    return true;
-}
-
-bool ExternalSemaphoreWindows::enqueueSignal(uint64_t *fenceValue) {
-    auto wddm = this->osInterface->getDriverModel()->as<Wddm>();
-
-    D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU signal = {};
-    signal.hDevice = wddm->getDeviceHandle();
-    signal.ObjectCount = 1;
-    signal.ObjectHandleArray = &this->syncHandle;
-    signal.FenceValueArray = fenceValue;
-    signal.Flags.AllowFenceRewind = true;
-
-    auto status = wddm->getGdi()->signalSynchronizationObjectFromCpu(&signal);
-    if (status != STATUS_SUCCESS) {
-        return false;
-    }
-
-    return true;
-}
-
 uint64_t ExternalSemaphoreWindows::acquireWaitFenceValue(uint64_t fenceValue) {
     if (this->type == ExternalSemaphore::OpaqueWin32) {
         return *this->pLastSignaledValue;

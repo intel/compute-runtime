@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <atomic>
 
@@ -117,6 +118,9 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool isNativeFenceAvailable();
 
     bool isGpuHangDetected(OsContext &osContext) override;
+
+    bool waitExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> waits) override;
+    bool signalExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> signals) override;
 
     bool configureDeviceAddressSpace();
     const FeatureTable &getFeatureTable() const {
@@ -249,6 +253,12 @@ class Wddm : public DriverModel {
     bool needsNotifyAubCaptureCallback() const;
 
   protected:
+    struct ExternalSemaphoreSyncObjects {
+        StackVec<D3DKMT_HANDLE, 4> handles;
+        StackVec<uint64_t, 4> fenceValues;
+    };
+    static ExternalSemaphoreSyncObjects getExternalSemaphoreSyncObjects(std::span<const ExternalSemaphoreOperation> operations);
+
     bool translateTopologyInfo(TopologyMapping &mapping);
     CommandStreamReceiver *getCsrForMonitoredFence(const MonitoredFence &monitoredFence);
     MOCKABLE_VIRTUAL HANDLE createMonitoredFenceKmdWaitEvent();
