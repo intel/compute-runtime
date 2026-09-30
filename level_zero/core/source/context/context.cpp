@@ -1019,6 +1019,7 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
     NEO::GraphicsAllocation *alloc = nullptr;
     bool fabricAccessibleHandle = false;
     bool allocSupportsIpc = false;
+    uint64_t allocationBaseAddress = castToUint64(ptr);
 
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (!allocData) {
@@ -1047,6 +1048,7 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
         }
         usmPool = poolLookup.pool;
         alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        allocationBaseAddress = usmPool ? castToUint64(poolLookup.pooledAllocationBasePtr) : alloc->getGpuAddress();
         fabricAccessibleHandle = allocData->ipcHandleTypeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
         allocSupportsIpc = allocData->ipcHandleTypeFlags != 0;
     }
@@ -1114,16 +1116,15 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
 
         memoryManager->registerIpcExportedAllocation(alloc);
 
-        uint64_t ptrAddr = reinterpret_cast<uint64_t>(ptr);
         if (settings.useOpaqueHandle) {
             using IpcDataT = IpcOpaqueMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddr, ipcType,
+            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, allocationBaseAddress, ipcType,
                                        usmPool, settings.handleType, reservedHandleData, physicalOffset);
         } else {
             using IpcDataT = IpcMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddr, ipcType,
+            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, allocationBaseAddress, ipcType,
                                        usmPool, settings.handleType, nullptr, physicalOffset);
         }
     }
