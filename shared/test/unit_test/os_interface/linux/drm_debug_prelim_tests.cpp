@@ -364,59 +364,6 @@ HWTEST2_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefau
     EXPECT_EQ(0u, drm.context.receivedVmBindUuidExt[1]->nextExtension);
 }
 
-TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternalContextThenExtensionsAreNotPassedToVmBindIoctl) {
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    bo.addBindExtHandle(4);
-    bo.addBindExtHandle(5);
-
-    OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/});
-    osContext.ensureContextInitialized();
-    bo.bind(&osContext, 0, false);
-
-    EXPECT_FALSE(drm.context.receivedVmBindUuidExt[0]);
-}
-
-TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngineContextThenExtensionsAreNotPassedToVmBindIoctl) {
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    bo.addBindExtHandle(4);
-    bo.addBindExtHandle(5);
-
-    drm.context.receivedVmBindUuidExt[0].reset();
-
-    OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/});
-    osContext.ensureContextInitialized();
-    bo.bind(&osContext, 0, false);
-
-    EXPECT_FALSE(drm.context.receivedVmBindUuidExt[0]);
-}
-
-HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtensionsAreNotSet) {
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.queryAndSetVmBindPatIndexProgrammingSupport();
-
-    MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
-    bo.addBindExtHandle(4);
-    bo.addBindExtHandle(5);
-
-    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized();
-    bo.bind(&osContext, 0, false);
-    EXPECT_NE(0u, drm.context.receivedVmBind.value().extensions);
-
-    bo.unbind(&osContext, 0);
-    auto &productHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    if (productHelper.isVmBindPatIndexProgrammingSupported()) {
-        EXPECT_NE(0u, drm.context.receivedVmUnbind.value().extensions);
-    } else {
-        EXPECT_EQ(0u, drm.context.receivedVmUnbind.value().extensions);
-    }
-    EXPECT_EQ(1u, drm.context.vmUnbindCalled);
-}
-
 HWTEST2_F(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenDebugFlagSipParamIsSet, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);

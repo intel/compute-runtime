@@ -40,6 +40,24 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         return result.ret;
     }
 
+    static constexpr uint64_t vmBindFlagCapture = 1u << 0;
+    static constexpr uint64_t vmBindFlagImmediate = 1u << 1;
+    static constexpr uint64_t vmBindFlagMakeResident = 1u << 2;
+    static constexpr uint64_t vmBindFlagLockedMemory = 1u << 3;
+    static constexpr uint64_t vmBindFlagReadOnly = 1u << 4;
+    static constexpr uint64_t vmBindFlagResolve = 1u << 5;
+
+    struct UserFence {
+        uint64_t address = 0;
+        uint64_t value = 0;
+    };
+
+    struct VmCreateFlags {
+        bool disableScratch = false;
+        bool enablePageFault = false;
+        bool useVmBind = false;
+    };
+
     struct VmPrefetchCall {
         uint64_t start = 0;
         uint64_t length = 0;
@@ -135,10 +153,38 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         filledVmBindExtPatIndex = patIndex;
     }
 
+    uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override {
+        receivedVmCreateFlags = VmCreateFlags{disableScratch, enablePageFault, useVmBind};
+        return IoctlHelperUpstream::getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
+    }
+
+    std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override {
+        createVmControlExtRegionCalled++;
+        receivedVmControlRegion = regionInstanceClass;
+        return IoctlHelperUpstream::createVmControlExtRegion(regionInstanceClass);
+    }
+
+    std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) override {
+        prepareVmBindExtCalls.emplace_back(bindExtHandles.begin(), bindExtHandles.end());
+        return std::make_unique<uint8_t[]>(1);
+    }
+
+    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLockedMemory, bool readOnlyResource, bool resolveResource) override {
+        return (bindCapture ? vmBindFlagCapture : 0) | (bindImmediate ? vmBindFlagImmediate : 0) | (bindMakeResident ? vmBindFlagMakeResident : 0) |
+               (bindLockedMemory ? vmBindFlagLockedMemory : 0) | (readOnlyResource ? vmBindFlagReadOnly : 0) | (resolveResource ? vmBindFlagResolve : 0);
+    }
+
+    void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override {
+        filledVmBindExtUserFence = UserFence{fenceAddress, fenceValue};
+    }
+
     int vmBind(const VmBindParams &vmBindParams) override {
         vmBindCalled++;
         receivedVmBind = vmBindParams;
         receivedVmBindPatIndex = std::exchange(filledVmBindExtPatIndex, std::nullopt);
+        if (filledVmBindExtUserFence) {
+            receivedVmBindUserFence = std::exchange(filledVmBindExtUserFence, std::nullopt);
+        }
         return vmBindResult;
     }
 
@@ -146,6 +192,9 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         vmUnbindCalled++;
         receivedVmUnbind = vmBindParams;
         receivedVmUnbindPatIndex = std::exchange(filledVmBindExtPatIndex, std::nullopt);
+        if (filledVmBindExtUserFence) {
+            receivedVmBindUserFence = std::exchange(filledVmBindExtUserFence, std::nullopt);
+        }
         return vmUnbindResult;
     }
 
@@ -209,7 +258,15 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     uint32_t retrieveMmapOffsetCalled = 0u;
     uint64_t mmapOffsetToReturn = 0u;
 
+    uint32_t createVmControlExtRegionCalled = 0u;
+    std::optional<MemoryClassInstance> receivedVmControlRegion;
+    std::optional<VmCreateFlags> receivedVmCreateFlags;
+
+    std::vector<std::vector<uint32_t>> prepareVmBindExtCalls;
+
     std::optional<uint64_t> filledVmBindExtPatIndex;
+    std::optional<UserFence> filledVmBindExtUserFence;
+    std::optional<UserFence> receivedVmBindUserFence;
     std::optional<VmBindParams> receivedVmBind;
     std::optional<uint64_t> receivedVmBindPatIndex;
     std::optional<VmBindParams> receivedVmUnbind;
