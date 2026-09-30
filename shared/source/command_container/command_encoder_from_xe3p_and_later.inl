@@ -24,6 +24,16 @@
 namespace NEO {
 
 template <typename Family>
+void appendTdlRowArbitrationPolicy(typename Family::STATE_COMPUTE_MODE &stateComputeMode, uint32_t &maskBits2) {
+    using TDL_ROW_ARBITRATION_POLICY = typename Family::STATE_COMPUTE_MODE::TDL_ROW_ARBITRATION_POLICY;
+
+    if (debugManager.flags.ScmTdlRowArbitrationPolicyOverride.get() != -1) {
+        stateComputeMode.setTdlRowArbitrationPolicy(static_cast<TDL_ROW_ARBITRATION_POLICY>(debugManager.flags.ScmTdlRowArbitrationPolicyOverride.get()));
+        maskBits2 |= Family::stateComputeModeTdlRowArbitrationPolicyMask;
+    }
+}
+
+template <typename Family>
 void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }

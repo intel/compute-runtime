@@ -295,6 +295,45 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenLSCSamplerBa
     }
 }
 
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagWhenProgrammingStateComputeModeThenTdlRowArbitrationPolicyIsOverridden, IsAtLeastXe3pCore) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    using TDL_ROW_ARBITRATION_POLICY = typename STATE_COMPUTE_MODE::TDL_ROW_ARBITRATION_POLICY;
+
+    constexpr uint32_t tdlRowArbitrationPolicyMask = FamilyType::stateComputeModeTdlRowArbitrationPolicyMask;
+
+    DebugManagerStateRestore restore;
+
+    alignas(STATE_COMPUTE_MODE) uint8_t buffer[sizeof(STATE_COMPUTE_MODE)]{};
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    auto programStateComputeMode = [&]() -> STATE_COMPUTE_MODE & {
+        LinearStream linearStream(buffer, sizeof(buffer));
+
+        StreamProperties streamProperties{};
+        streamProperties.initSupport(rootDeviceEnvironment);
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
+
+        return *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
+    };
+
+    {
+        // default - neither the field nor its mask bit are touched
+        auto &stateComputeModeCmd = programStateComputeMode();
+        EXPECT_EQ(TDL_ROW_ARBITRATION_POLICY::TDL_ROW_ARBITRATION_POLICY_LEGACY_ROUND_ROBIN, stateComputeModeCmd.getTdlRowArbitrationPolicy());
+        EXPECT_EQ(0u, stateComputeModeCmd.getMask2() & tdlRowArbitrationPolicyMask);
+    }
+
+    for (auto policy : {TDL_ROW_ARBITRATION_POLICY::TDL_ROW_ARBITRATION_POLICY_LEGACY_ROUND_ROBIN,
+                        TDL_ROW_ARBITRATION_POLICY::TDL_ROW_ARBITRATION_POLICY_ORDERED_ROUND_ROBIN}) {
+        debugManager.flags.ScmTdlRowArbitrationPolicyOverride.set(static_cast<int32_t>(policy));
+
+        auto &stateComputeModeCmd = programStateComputeMode();
+        EXPECT_EQ(policy, stateComputeModeCmd.getTdlRowArbitrationPolicy());
+        EXPECT_EQ(tdlRowArbitrationPolicyMask, stateComputeModeCmd.getMask2() & tdlRowArbitrationPolicyMask);
+    }
+}
+
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, whenAdjustSamplerStateBorderColorIsCalledThenBorderColorInSamplerStateIsCorrect, IsAtLeastXe3pCore) {
 
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;

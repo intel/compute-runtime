@@ -124,6 +124,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     }
 
     appendMidthreadPreemptionDelayTimer(stateComputeMode, maskBits2, rootDeviceEnvironment);
+    appendTdlRowArbitrationPolicy<Family>(stateComputeMode, maskBits2);
 
     stateComputeMode.setMask1(maskBits);
     stateComputeMode.setMask2(maskBits2);
