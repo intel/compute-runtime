@@ -22,13 +22,14 @@ Zero primitive rather than a new execution engine.
 > **Partially implemented** -- do not enable outside development.
 
 Implemented: the command buffer object, creation, finalization, reference
-counting, the info queries, and replay of an *empty* command buffer.
+counting, the info queries, replay, sync points, and recording with
+`clCommandNDRangeKernelKHR`, `clCommandCopyBufferKHR`,
+`clCommandCopyBufferRectKHR`, `clCommandFillBufferKHR`,
+`clCommandBarrierWithWaitListKHR`, `clCommandSVMMemcpyKHR` and
+`clCommandSVMMemFillKHR`.
 
-Not implemented: every command recording entry point
-(`clCommandNDRangeKernelKHR`, `clCommandCopyBufferKHR`,
-`clCommandFillBufferKHR`, ...), sync points, and
-`cl_khr_command_buffer_mutable_dispatch`. A command buffer therefore cannot be
-given any work yet.
+Not implemented: the image commands, kernels using printf or with image or
+shared object arguments, and `cl_khr_command_buffer_mutable_dispatch`.
 
 ## Enabling it
 
@@ -59,18 +60,35 @@ With the default, the driver is indistinguishable from one without the feature:
 
 ## What is reported when enabled
 
-`CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR` reports no optional capability, and
-both `CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR` and
-`CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR` report no properties,
-because nothing beyond an empty buffer has been validated.
+`CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR` reports no optional capability.
+`CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR` reports
+`CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE` and `CL_QUEUE_PROFILING_ENABLE`, and
+`CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR` reports none.
 
-The recorded command list mirrors the ordering and copy-offload behaviour of the
-queue the buffer is created with, so a recorded command behaves like the
-equivalent enqueue on that queue. Those are fixed at creation, so replaying onto
-a different queue does not take on that queue's ordering.
+Commands are recorded into an in-order Level Zero command list, also for an
+out-of-order queue. A sync point can only name an earlier command, so recording
+order satisfies every sync point; commands of one command buffer do not run
+concurrently.
+
+A command buffer may be enqueued again while an earlier enqueue of it is still
+executing, as long as the new enqueue depends on the earlier one, for example
+through an in-order queue, an event or a barrier. The recorded list uses the
+patch preamble, so each execution initializes its in-order counter on the GPU,
+in submission order.
+
+A command buffer holds a reference to every kernel and memory object it
+records, so it stays valid after the application releases them. As the
+extension specifies, objects set as kernel arguments are not retained: the
+application keeps them until the command buffer is released.
+
+A command buffer may be released while it is still executing. The release
+waits for every queue the command buffer was enqueued on before the recorded
+list is destroyed.
 
 A replay may target a queue other than the one the buffer was created with, as
-long as it is on the same device and in the same context.
+long as it is on the same device, in the same context and on the same engine
+group. A queue on another engine group is rejected with
+`CL_INCOMPATIBLE_COMMAND_QUEUE_KHR`.
 
 ## Validation
 

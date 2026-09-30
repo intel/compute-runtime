@@ -197,6 +197,13 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
         RETURN_FUNC_PTR_IF_EXIST(clReleaseCommandBufferKHR);
         RETURN_FUNC_PTR_IF_EXIST(clEnqueueCommandBufferKHR);
         RETURN_FUNC_PTR_IF_EXIST(clGetCommandBufferInfoKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clCommandBarrierWithWaitListKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clCommandCopyBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clCommandCopyBufferRectKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clCommandFillBufferKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clCommandSVMMemcpyKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clCommandSVMMemFillKHR);
+        RETURN_FUNC_PTR_IF_EXIST(clCommandNDRangeKernelKHR);
     }
 
     void *ret = NEO::LEO::sharingFactory.getExtensionFunctionAddress(funcName);

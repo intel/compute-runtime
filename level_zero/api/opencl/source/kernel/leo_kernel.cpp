@@ -17,6 +17,7 @@
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
+#include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel_info_cl.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
@@ -31,7 +32,7 @@ Kernel::Kernel(std::map<uint32_t, ze_kernel_handle_t> kernelHandles, Program *pr
     program->incRefInternal();
 }
 
-Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), sharedObjArgs(sourceKernel->sharedObjArgs), program(sourceKernel->program), executionType(sourceKernel->executionType) {
+Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), imageArgs(sourceKernel->imageArgs), sharedObjArgs(sourceKernel->sharedObjArgs), program(sourceKernel->program), executionType(sourceKernel->executionType) {
     for (const auto &[rootDeviceIndex, kernelHandle] : sourceKernel->kernelHandles) {
         this->kernelHandles[rootDeviceIndex] = static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle))->makeDependentClone().release();
     }
@@ -395,6 +396,61 @@ cl_int Kernel::getSuggestedLocalWorkSize(const ClDevice &clDevice, cl_uint workD
 
     for (auto dim = 0u; dim < workDim; ++dim) {
         suggestedLocalWorkSize[dim] = suggestedGroupSize[dim];
+    }
+    return CL_SUCCESS;
+}
+
+cl_int Kernel::setupDispatch(const ClDevice &clDevice, cl_uint workDim, const size_t *globalWorkOffset,
+                             const size_t *globalWorkSize, const size_t *localWorkSize, ze_group_count_t &groupCount) {
+    UNRECOVERABLE_IF(workDim > 3u);
+    const auto rootDeviceIndex = clDevice.getRootDeviceIndex();
+    auto kernelHandle = this->getL0Handle(rootDeviceIndex);
+
+    uint32_t gwo[3] = {globalWorkOffset ? static_cast<uint32_t>(globalWorkOffset[0]) : 0,
+                       workDim > 1 ? static_cast<uint32_t>(globalWorkOffset ? globalWorkOffset[1] : 0) : 0,
+                       workDim > 2 ? static_cast<uint32_t>(globalWorkOffset ? globalWorkOffset[2] : 0) : 0};
+
+    zeKernelSetGlobalOffsetExp(kernelHandle, gwo[0], gwo[1], gwo[2]);
+
+    uint32_t lws[3] = {1, 1, 1};
+
+    if (localWorkSize) {
+        lws[0] = static_cast<uint32_t>(localWorkSize[0]);
+        if (workDim > 1) {
+            lws[1] = static_cast<uint32_t>(localWorkSize[1]);
+        }
+        if (workDim > 2) {
+            lws[2] = static_cast<uint32_t>(localWorkSize[2]);
+        }
+    } else if (this->getL0Object()->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize[0]) {
+        lws[0] = this->getL0Object()->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize[0];
+        lws[1] = workDim > 1 ? this->getL0Object()->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize[1] : 1u;
+        lws[2] = workDim > 2 ? this->getL0Object()->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize[2] : 1u;
+    } else {
+        uint32_t gws[3] = {static_cast<uint32_t>(globalWorkSize[0]),
+                           workDim > 1 ? static_cast<uint32_t>(globalWorkSize[1]) : 1u,
+                           workDim > 2 ? static_cast<uint32_t>(globalWorkSize[2]) : 1u};
+        auto ret = this->getL0Object(rootDeviceIndex)->suggestGroupSize(gws[0], gws[1], gws[2], workDim, &lws[0], &lws[1], &lws[2]);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(ret);
+        }
+    }
+
+    auto ret = zeKernelSetGroupSize(kernelHandle, lws[0], lws[1], lws[2]);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(ret);
+    }
+
+    groupCount = {static_cast<uint32_t>(globalWorkSize[0] / lws[0]),
+                  workDim > 1 ? static_cast<uint32_t>(globalWorkSize[1] / lws[1]) : 1u,
+                  workDim > 2 ? static_cast<uint32_t>(globalWorkSize[2] / lws[2]) : 1u};
+
+    for (cl_uint i = 0; i < workDim; ++i) {
+        if (globalWorkSize[i] % lws[i] != 0) [[unlikely]] {
+            return CL_INVALID_WORK_GROUP_SIZE;
+        }
+        // ze_group_count_t is 32 bit, so a group count that does not fit cannot be dispatched
+        UNRECOVERABLE_IF(!NEO::LEO::fitsInUint32(globalWorkSize[i] / lws[i]));
     }
     return CL_SUCCESS;
 }

@@ -314,10 +314,9 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR:
     case CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR:
     case CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR:
-        // No optional capability is claimed, and no queue property is either supported or required,
-        // while command recording is not implemented. All three are bitfields of the same width.
+        // All three are bitfields of the same width.
         if (CommandBuffer::isSupported()) {
-            param.bitfield = 0u;
+            param.bitfield = (paramName == CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR) ? CommandBuffer::supportedQueueProperties : 0u;
             src = &param.bitfield;
             retSize = srcSize = sizeof(cl_bitfield);
         }

@@ -407,21 +407,22 @@ TEST_F(ClDeviceInfoTest, givenCommandBufferDisabledWhenQueryingCommandBufferPara
     }
 }
 
-TEST_F(ClDeviceInfoTest, givenCommandBufferEnabledWhenQueryingCommandBufferParamsThenReturnsEmptyBitfields) {
+TEST_F(ClDeviceInfoTest, givenCommandBufferEnabledWhenQueryingCommandBufferParamsThenOnlySupportedQueuePropertiesAreReported) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableClKhrCommandBuffer.set(1);
 
-    const cl_device_info params[] = {CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR,
-                                     CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR,
-                                     CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR};
+    const std::pair<cl_device_info, cl_bitfield> params[] = {
+        {CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR, 0u},
+        {CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE},
+        {CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR, 0u}};
 
-    for (auto paramName : params) {
+    for (const auto &[paramName, expected] : params) {
         cl_bitfield bitfield = 0xFFu;
         size_t retSize = 0;
         EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(paramName, sizeof(bitfield), &bitfield, &retSize))
             << "param 0x" << std::hex << paramName;
         EXPECT_EQ(sizeof(cl_bitfield), retSize);
-        EXPECT_EQ(0u, bitfield);
+        EXPECT_EQ(expected, bitfield);
     }
 }
 

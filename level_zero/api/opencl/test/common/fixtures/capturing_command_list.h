@@ -26,6 +26,7 @@ namespace ult {
     MACRO(appendMemoryCopyRegion, AppendMemoryCopyRegionArgs)             \
     MACRO(appendMemoryFill, AppendMemoryFillArgs)                         \
     MACRO(appendImageCopyFromMemoryExt, AppendImageCopyFromMemoryExtArgs) \
+    MACRO(appendLaunchKernel, AppendLaunchKernelArgs)                     \
     MACRO(appendBarrier, AppendBarrierArgs)                               \
     MACRO(appendHostFunction, AppendHostFunctionArgs)                     \
     MACRO(appendCommandLists, AppendCommandListsArgs)                     \
@@ -108,6 +109,14 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     }
 
     ze_result_t appendImageCopyFromMemoryExtResult = ZE_RESULT_SUCCESS;
+
+    ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle, const ze_group_count_t &threadGroupDimensions,
+                                   ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                   L0::CmdListKernelLaunchParams &launchParams) override {
+        auto result = BaseClass::appendLaunchKernel(kernelHandle, threadGroupDimensions, hEvent, numWaitEvents, phWaitEvents, launchParams);
+        return record(this->appendLaunchKernelArgs, ApiId::appendLaunchKernel,
+                      AppendLaunchKernelArgs{kernelHandle, threadGroupDimensions, hEvent, numWaitEvents, phWaitEvents}, result);
+    }
 
     bool completeSignalEventOnAppendBarrier = false;
 

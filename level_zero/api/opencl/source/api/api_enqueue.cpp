@@ -45,15 +45,6 @@
 namespace NEO {
 namespace LEO {
 
-inline void applyDefaultRectPitches(const size_t *region, size_t &rowPitch, size_t &slicePitch) {
-    if (rowPitch == 0) {
-        rowPitch = region[0];
-    }
-    if (slicePitch == 0) {
-        slicePitch = region[1] * rowPitch;
-    }
-}
-
 inline uint32_t getOclMipLevel(NEO::LEO::Image *pImage, const size_t *origin) {
     if (pImage == nullptr || origin == nullptr) {
         return 0u;
@@ -1245,58 +1236,11 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
 
     auto lock = pCommandQueue->takeOwnership();
 
-    uint32_t gwo[3] = {globalWorkOffset ? static_cast<uint32_t>(globalWorkOffset[0]) : 0,
-                       workDim > 1 ? static_cast<uint32_t>(globalWorkOffset ? globalWorkOffset[1] : 0) : 0,
-                       workDim > 2 ? static_cast<uint32_t>(globalWorkOffset ? globalWorkOffset[2] : 0) : 0};
-
-    zeKernelSetGlobalOffsetExp(kernelHandle, gwo[0], gwo[1], gwo[2]);
-
-    uint32_t lws[3] = {1, 1, 1};
-
-    if (localWorkSize) {
-        lws[0] = static_cast<uint32_t>(localWorkSize[0]);
-        if (workDim > 1) {
-            lws[1] = static_cast<uint32_t>(localWorkSize[1]);
-        }
-        if (workDim > 2) {
-            lws[2] = static_cast<uint32_t>(localWorkSize[2]);
-        }
-    } else if (pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize[0]) {
-        lws[0] = pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize[0];
-        lws[1] = workDim > 1 ? pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize[1] : 1u;
-        lws[2] = workDim > 2 ? pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.requiredWorkgroupSize[2] : 1u;
-    } else {
-        uint32_t gws[3] = {static_cast<uint32_t>(globalWorkSize[0]),
-                           workDim > 1 ? static_cast<uint32_t>(globalWorkSize[1]) : 1u,
-                           workDim > 2 ? static_cast<uint32_t>(globalWorkSize[2]) : 1u};
-        ret = pKernel->getL0Object(pCommandQueue->getDevice()->getRootDeviceIndex())
-                  ->suggestGroupSize(gws[0], gws[1], gws[2], workDim, &lws[0], &lws[1], &lws[2]);
-        if (ret != ZE_RESULT_SUCCESS) {
-            cl_int tracingRetVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
-            return tracingRetVal;
-        }
-    }
-
-    ret = zeKernelSetGroupSize(kernelHandle, lws[0], lws[1], lws[2]);
-    if (ret != ZE_RESULT_SUCCESS) {
-        cl_int tracingRetVal = L0ToClResultMapper(ret);
-        TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
-        return tracingRetVal;
-    }
-
-    ze_group_count_t wgc{static_cast<uint32_t>(globalWorkSize[0] / lws[0]),
-                         workDim > 1 ? static_cast<uint32_t>(globalWorkSize[1] / lws[1]) : 1u,
-                         workDim > 2 ? static_cast<uint32_t>(globalWorkSize[2] / lws[2]) : 1u};
-
-    for (cl_uint i = 0; i < workDim; ++i) {
-        if (globalWorkSize[i] % lws[i] != 0) [[unlikely]] {
-            cl_int tracingRetVal = CL_INVALID_WORK_GROUP_SIZE;
-            TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
-            return tracingRetVal;
-        }
-        // ze_group_count_t is 32 bit, so a group count that does not fit cannot be dispatched
-        UNRECOVERABLE_IF(!NEO::LEO::fitsInUint32(globalWorkSize[i] / lws[i]));
+    ze_group_count_t wgc{};
+    cl_int setupRetVal = pKernel->setupDispatch(*pCommandQueue->getDevice(), workDim, globalWorkOffset, globalWorkSize, localWorkSize, wgc);
+    if (setupRetVal != CL_SUCCESS) {
+        TRACING_EXIT(ClEnqueueNdRangeKernel, &setupRetVal);
+        return setupRetVal;
     }
 
     if (pCommandQueue->isPerfCountersEnabled() && event) {

@@ -101,6 +101,18 @@ struct AppendMemoryFillArgs {
           signalEvent(signalEvent), waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
 };
 
+struct AppendLaunchKernelArgs {
+    ze_kernel_handle_t kernel;
+    ze_group_count_t groupCount;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendLaunchKernelArgs(ze_kernel_handle_t kernel, const ze_group_count_t &groupCount, ze_event_handle_t signalEvent,
+                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : kernel(kernel), groupCount(groupCount), signalEvent(signalEvent),
+          waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+};
+
 struct AppendBarrierArgs {
     ze_event_handle_t signalEvent;
     EventHandles waitEvents;

@@ -223,6 +223,15 @@ template <typename... CastObjs>
            fitsInUint32(rowPitch) && fitsInUint32(slicePitch);
 }
 
+inline void applyDefaultRectPitches(const size_t *region, size_t &rowPitch, size_t &slicePitch) {
+    if (rowPitch == 0) {
+        rowPitch = region[0];
+    }
+    if (slicePitch == 0) {
+        slicePitch = region[1] * rowPitch;
+    }
+}
+
 [[nodiscard]] cl_int validateYuvOperation(const size_t *origin, const size_t *region) noexcept;
 [[nodiscard]] bool isPackedYuvImage(const cl_image_format *imageFormat) noexcept;
 [[nodiscard]] bool isNV12Image(const cl_image_format *imageFormat) noexcept;

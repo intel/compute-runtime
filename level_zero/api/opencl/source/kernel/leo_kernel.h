@@ -56,6 +56,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     cl_int getSuggestedLocalWorkSize(const ClDevice &clDevice, cl_uint workDim, const size_t *globalWorkSize,
                                      size_t *suggestedLocalWorkSize);
+    cl_int setupDispatch(const ClDevice &clDevice, cl_uint workDim, const size_t *globalWorkOffset,
+                         const size_t *globalWorkSize, const size_t *localWorkSize, ze_group_count_t &groupCount);
     cl_int getMaxConcurrentWorkGroupCount(cl_uint workDim, const size_t *localWorkSize, size_t *suggestedWorkGroupCount);
     Context *getContext() const { return this->program->getContext(); }
 

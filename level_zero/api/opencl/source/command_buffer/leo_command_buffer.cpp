@@ -14,7 +14,12 @@
 #include "level_zero/api/opencl/source/event/leo_event.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
+
+#include <algorithm>
+#include <limits>
 
 namespace NEO {
 namespace LEO {
@@ -28,7 +33,19 @@ CommandBuffer::CommandBuffer(Context *context, CommandQueue *commandQueue, ze_co
 }
 
 CommandBuffer::~CommandBuffer() {
+    for (auto queue : this->replayQueues) {
+        queue->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    }
     zeCommandListDestroy(this->cmdListHandle);
+    for (auto kernel : this->recordedKernels) {
+        kernel->decRefInternal();
+    }
+    for (auto memObj : this->recordedMemObjs) {
+        memObj->decRefInternal();
+    }
+    for (auto queue : this->replayQueues) {
+        queue->decRefInternal();
+    }
     this->commandQueue->decRefInternal();
     this->context->decRefInternal();
 }
@@ -51,6 +68,50 @@ cl_int CommandBuffer::finalize() {
     return CL_SUCCESS;
 }
 
+cl_int CommandBuffer::validateCommand(cl_command_queue commandQueue, const cl_command_properties_khr *properties,
+                                      cl_uint numSyncPointsInWaitList, const cl_sync_point_khr *syncPointWaitList,
+                                      const cl_mutable_command_khr *mutableHandle) const {
+    if (this->isFinalized()) {
+        return CL_INVALID_OPERATION;
+    }
+    if (commandQueue != nullptr) {
+        return CL_INVALID_COMMAND_QUEUE;
+    }
+    if ((properties != nullptr && *properties != 0) || (mutableHandle != nullptr)) {
+        return CL_INVALID_VALUE;
+    }
+    if ((numSyncPointsInWaitList == 0u) != (syncPointWaitList == nullptr)) {
+        return CL_INVALID_SYNC_POINT_WAIT_LIST_KHR;
+    }
+    for (cl_uint i = 0; i < numSyncPointsInWaitList; ++i) {
+        if (syncPointWaitList[i] >= this->numRecordedCommands) {
+            return CL_INVALID_SYNC_POINT_WAIT_LIST_KHR;
+        }
+    }
+    return CL_SUCCESS;
+}
+
+cl_int CommandBuffer::recordCommand(ze_result_t appendResult, cl_sync_point_khr *syncPoint) {
+    if (appendResult != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(appendResult);
+    }
+    if (syncPoint != nullptr) {
+        *syncPoint = this->numRecordedCommands;
+    }
+    ++this->numRecordedCommands;
+    return CL_SUCCESS;
+}
+
+void CommandBuffer::keepAlive(Kernel *kernel) {
+    kernel->incRefInternal();
+    this->recordedKernels.push_back(kernel);
+}
+
+void CommandBuffer::keepAlive(MemObj *memObj) {
+    memObj->incRefInternal();
+    this->recordedMemObjs.push_back(memObj);
+}
+
 cl_int CommandBuffer::enqueue(CommandQueue *commandQueue, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     if (false == this->isFinalized()) {
         return CL_INVALID_OPERATION;
@@ -59,8 +120,13 @@ cl_int CommandBuffer::enqueue(CommandQueue *commandQueue, cl_uint numEventsInWai
     auto [waitEvents, hSignalEvent] = Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COMMAND_BUFFER_KHR, commandQueue);
 
     auto lock = commandQueue->takeOwnership();
-    return L0ToClResultMapper(zeCommandListImmediateAppendCommandListsExp(commandQueue->getL0Handle(), 1, &this->cmdListHandle,
-                                                                          hSignalEvent, waitEvents.size(), waitEvents.data()));
+    auto result = zeCommandListImmediateAppendCommandListsExp(commandQueue->getL0Handle(), 1, &this->cmdListHandle,
+                                                              hSignalEvent, waitEvents.size(), waitEvents.data());
+    if (result == ZE_RESULT_SUCCESS && std::find(this->replayQueues.begin(), this->replayQueues.end(), commandQueue) == this->replayQueues.end()) {
+        commandQueue->incRefInternal();
+        this->replayQueues.push_back(commandQueue);
+    }
+    return L0ToClResultMapper(result);
 }
 
 cl_int CommandBuffer::getInfo(cl_command_buffer_info_khr paramName, size_t paramValueSize,
