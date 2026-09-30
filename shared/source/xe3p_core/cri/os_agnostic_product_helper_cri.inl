@@ -57,11 +57,6 @@ bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isWalkerPreemptionFallbackRequired(PreemptionMode preemptionMode, bool hostWaitablePostSync) const {
     return hostWaitablePostSync && (preemptionMode == PreemptionMode::MidThread);
 }

@@ -757,7 +757,7 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDefaultSettingForFenceWhenEventHo
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
-XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDefaultSettingForFenceWhenKernelUsesSystemMemoryAndHostSignalEventFlagTrueThenUseSystemFence) {
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDefaultSettingForFenceWhenKernelUsesSystemMemoryAndHostSignalEventFlagTrueThenNotUseSystemFence) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
@@ -781,7 +781,7 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDefaultSettingForFenceWhenKernelU
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_EQ(postSyncData.getSystemMemoryFenceRequest(), !pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice);
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDebugFlagSetWhenSetPropertiesAllCalledThenDisablePipelinedThreadArbitrationPolicy) {
@@ -930,7 +930,7 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenNoDebugFlagWhenProgrammingStateCo
     EXPECT_FALSE(stateComputeModeCmd.getOutOfBoundariesInTranslationExceptionEnable());
 }
 
-XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDebugFlagWhenProgrammingStateComputeModeThenEnableSystemMemoryReadFenceFieldIsCorrectlySet) {
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenAnyDebugFlagValueWhenProgrammingStateComputeModeThenSystemMemoryReadFenceIsNotEnabled) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     DebugManagerStateRestore restore;
@@ -939,47 +939,20 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDebugFlagWhenProgrammingStateComp
     MockExecutionEnvironment executionEnvironment{};
     const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
-    {
-        // default
-        LinearStream linearStream(buffer, sizeof(buffer));
+    for (auto debugFlagValue : {-1, 0, 1}) {
+        debugManager.flags.EnableSystemMemoryReadFence.set(debugFlagValue);
 
-        StreamProperties streamProperties{};
-        streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
-        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
+        for (auto hasPeerAccess : {false, true}) {
+            LinearStream linearStream(buffer, sizeof(buffer));
 
-        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
-        EXPECT_FALSE(stateComputeModeCmd.getSystemMemoryReadFenceEnable());
-    }
+            StreamProperties streamProperties{};
+            streamProperties.initSupport(rootDeviceEnvironment);
+            streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, hasPeerAccess);
+            EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
-    {
-        // enabled
-        debugManager.flags.EnableSystemMemoryReadFence.set(1);
-
-        LinearStream linearStream(buffer, sizeof(buffer));
-
-        StreamProperties streamProperties{};
-        streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
-        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
-
-        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
-        EXPECT_TRUE(stateComputeModeCmd.getSystemMemoryReadFenceEnable());
-    }
-
-    {
-        // disabled
-        debugManager.flags.EnableSystemMemoryReadFence.set(0);
-
-        LinearStream linearStream(buffer, sizeof(buffer));
-
-        StreamProperties streamProperties{};
-        streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, true);
-        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
-
-        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
-        EXPECT_FALSE(stateComputeModeCmd.getSystemMemoryReadFenceEnable());
+            auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
+            EXPECT_FALSE(stateComputeModeCmd.getSystemMemoryReadFenceEnable());
+        }
     }
 }
 

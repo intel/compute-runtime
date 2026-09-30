@@ -26,12 +26,17 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
-    return !hwInfo.capabilityTable.isIntegratedDevice;
+    return false;
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
     return !hwInfo.capabilityTable.isIntegratedDevice;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const {
+    return false;
 }
 
 template <>
@@ -88,8 +93,6 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureExtra(StateCo
         propertiesSupport.enableBreakpoints = true;
         propertiesSupport.enableForceExternalHaltAndForceException = true;
     }
-
-    propertiesSupport.enableSystemMemoryReadFence = true;
 }
 
 template <>

@@ -130,10 +130,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorS
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceTrueReturned) {
-    EXPECT_TRUE(productHelper->isDeviceToHostCopySignalingFenceRequired());
-}
-
 CRITEST_F(CriProductHelper, givenMidThreadPreemptionWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenTrueReturnedOnlyForHostWaitablePostSync) {
     EXPECT_TRUE(productHelper->isWalkerPreemptionFallbackRequired(PreemptionMode::MidThread, true));
     EXPECT_FALSE(productHelper->isWalkerPreemptionFallbackRequired(PreemptionMode::MidThread, false));

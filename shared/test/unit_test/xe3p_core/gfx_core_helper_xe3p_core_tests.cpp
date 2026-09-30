@@ -631,17 +631,14 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenGfxCoreHelperWhenAskedIfFenceAl
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(0u, MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * 2 * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(0u, MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -660,26 +657,14 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenProgramGlobalFenceAsMiMemFenceC
     EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDefaultMemorySynchronizationCommandsWhenAddingAdditionalSynchronizationThenMemoryFenceIsReleased) {
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDefaultMemorySynchronizationCommandsWhenAddingReleaseSynchronizationThenNothingIsProgrammed) {
     auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    auto &hardwareInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    if (hardwareInfo.capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP();
-    }
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
+
     uint8_t buffer[128] = {};
     LinearStream commandStream(buffer, 128);
 
     MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream);
-    EXPECT_EQ(1u, hwParser.cmdList.size());
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
+    EXPECT_EQ(0u, commandStream.getUsed());
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenAddingAdditionalSynchronizationThenSemaphoreWaitIsCalled) {
@@ -863,9 +848,9 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenIsBlitterForIma
     EXPECT_TRUE(productHelper.isBlitterForImagesSupported());
 }
 
-XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForGlobalFenceSupportThenReturnTrue) {
+XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForGlobalFenceInPostSyncThenReturnFalse) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.isReleaseGlobalFenceInCommandStreamRequired(*defaultHwInfo), !defaultHwInfo->capabilityTable.isIntegratedDevice);
+    EXPECT_FALSE(productHelper.isGlobalFenceInPostSyncRequired(*defaultHwInfo));
 }
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForCooperativeEngineSupportThenReturnFalse) {

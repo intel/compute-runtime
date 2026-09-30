@@ -524,7 +524,7 @@ XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3pCore,
 }
 
 XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3pCore,
-                givenAppendKernelWhenKernelUsingUsmHostMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed) {
+                givenAppendKernelWhenKernelUsingUsmHostMemoryAllocationsAndEventHostSignalScopeThenExpectsNoSystemFenceUsed) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -579,7 +579,7 @@ XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3pCore,
 
     auto walker = genCmdCast<WalkerType *>(*it);
     auto &postSync = walker->getPostSync();
-    EXPECT_EQ(postSync.getSystemMemoryFenceRequest(), !device->getHwInfo().capabilityTable.isIntegratedDevice);
+    EXPECT_FALSE(postSync.getSystemMemoryFenceRequest());
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
