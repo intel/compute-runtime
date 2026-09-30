@@ -51,6 +51,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
         this->allocId = svmAllocData.allocId;
         this->pageSizeForAlignment = svmAllocData.pageSizeForAlignment;
         this->isImportedAllocation = svmAllocData.isImportedAllocation;
+        this->isExportedAllocation = svmAllocData.isExportedAllocation;
         this->isInternalAllocation = svmAllocData.isInternalAllocation;
         this->isExternalMemmapAllocation = svmAllocData.isExternalMemmapAllocation;
         for (auto allocation : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
@@ -78,6 +79,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;
     bool isImportedAllocation = false;
+    bool isExportedAllocation = false;
     bool isExternalMemmapAllocation = false;
     // Guarded by SVMAllocsManager::getMemFreeCallbacksMutex(): pooled chunks share one
     // SvmAllocationData, so registrations for different chunks reach the same vector.

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -127,6 +128,67 @@ TEST_F(SingleDeviceReuseWithoutPoolingTest, givenMemAdvisedAllocationWhenAllocat
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(SingleDeviceReuseWithoutPoolingTest, givenIpcExportedDeviceAllocationWhenFreeingThenAllocationIsNotSavedForReuse) {
+    constexpr size_t size = MemoryConstants::pageSize;
+    auto device = driverHandle->devices[0];
+    context->settings.enableIpcHandleSharingByDefault = true;
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(svmAllocsManager->usmDeviceAllocationsCache->allocations.empty());
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(ptr));
+}
+
+TEST_F(SingleDeviceReuseWithoutPoolingTest, givenIpcExportedDeviceAllocationWhenDeferFreeingThenAllocationIsNotSavedForReuse) {
+    constexpr size_t size = MemoryConstants::pageSize;
+    auto device = driverHandle->devices[0];
+    context->settings.enableIpcHandleSharingByDefault = true;
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_free_ext_desc_t freeDesc = {ZE_STRUCTURE_TYPE_MEMORY_FREE_EXT_DESC};
+    freeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    result = context->freeMemExt(&freeDesc, ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(svmAllocsManager->usmDeviceAllocationsCache->allocations.empty());
+}
+
+TEST_F(SingleDeviceReuseWithoutPoolingTest, givenIpcExportedHostAllocationWhenFreeingThenAllocationIsNotSavedForReuse) {
+    constexpr size_t size = MemoryConstants::pageSize;
+    context->settings.enableIpcHandleSharingByDefault = true;
+
+    void *ptr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 0u, &ptr));
+    ASSERT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(ptr, nullptr, &ipcHandle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+
+    EXPECT_TRUE(svmAllocsManager->usmHostAllocationsCache->allocations.empty());
+}
+
 struct SingleDeviceWithPoolingTest : public UsmReuseMemoryTest<2, 8, 1> {
     void SetUp() override {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
@@ -162,6 +224,35 @@ TEST_F(SingleDeviceWithPoolingTest, givenPooledAllocationWhenExecuteMemAdviseIsC
 
     result = context->freeMem(ptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+struct SingleDeviceReuseWithSinglePoolTest : public UsmReuseMemoryTest<2, 8, 1> {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+        NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+        UsmReuseMemoryTest<2, 8, 1>::SetUp();
+    }
+};
+
+TEST_F(SingleDeviceReuseWithSinglePoolTest, givenIpcExportedPooledChunkWhenPoolIsCleanedUpThenPoolAllocationIsNotSavedForReuse) {
+    auto device = driverHandle->devices[0];
+    context->settings.enableIpcHandleSharingByDefault = true;
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 1u, 0u, &ptr));
+    auto &poolFacade = device->getNEODevice()->getDeviceUsmMemAllocPoolFacade();
+    auto pool = poolFacade.getPool();
+    ASSERT_NE(nullptr, pool);
+    ASSERT_TRUE(pool->isInPoolRange(ptr));
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(ptr, nullptr, &ipcHandle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+
+    poolFacade.cleanup();
+
+    EXPECT_TRUE(svmAllocsManager->usmDeviceAllocationsCache->allocations.empty());
 }
 } // namespace ult
 } // namespace L0

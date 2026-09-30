@@ -51,6 +51,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         size_t size;
         size_t requestedSize;
         std::unordered_map<Device *, bool> isResident;
+        bool isExported{false};
     };
 
     // A chunk freed with FreePolicyType::defer. The chunk is withheld from
@@ -86,6 +87,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     bool isEmpty() const;
     MOCKABLE_VIRTUAL UsmPoolFreeResult freeSVMAlloc(const void *ptr, FreePolicyType policy);
     void reclaimDeferredFreeChunks();
+    void markChunkExported(const void *ptr);
     UsmPoolLookupResult lookupAlloc(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
     uint64_t getPoolAddress() const;
@@ -137,7 +139,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     bool isEmptyImpl() const;
     // Caller must hold mtx.
     void drainDeferredFreeChunks();
-    // Gives the chunk space back and drops the residency it held. Caller must hold mtx.
+    // Releases a freed chunk and the residency it held. Caller must hold mtx.
     void releaseChunk(const AllocationInfo &allocationInfo);
     CustomCleanupFn customCleanup = nullptr;
     PeerAllocationsFn peerAllocationsFn = nullptr;

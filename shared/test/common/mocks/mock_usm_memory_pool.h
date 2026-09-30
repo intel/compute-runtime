@@ -12,6 +12,7 @@ namespace NEO {
 class MockUsmMemAllocPool : public UsmMemAllocPool {
   public:
     using UsmMemAllocPool::allocation;
+    using UsmMemAllocPool::allocationData;
     using UsmMemAllocPool::allocations;
     using UsmMemAllocPool::chunkAllocator;
     using UsmMemAllocPool::customCleanup;

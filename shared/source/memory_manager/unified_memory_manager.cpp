@@ -83,6 +83,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
     if (false == sizeAllowed(size) ||
         svmData->isInternalAllocation ||
         svmData->isImportedAllocation ||
+        svmData->isExportedAllocation ||
         svmData->isExternalMemmapAllocation ||
         svmData->allocationFlagsProperty.hostptr != 0u) {
 

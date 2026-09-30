@@ -375,6 +375,27 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFro
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(AllocUsmHostEnabledMemoryTest, givenIpcExportedPooledHostAllocationWhenFreeingThenChunkIsNotReused) {
+    auto hostMemAllocPool = driverHandle->usmHostMemAllocPoolFacade.getPool();
+    ASSERT_NE(nullptr, hostMemAllocPool);
+
+    void *exportedAllocation = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 1u, 0u, &exportedAllocation));
+    ASSERT_TRUE(hostMemAllocPool->isInPoolRange(exportedAllocation));
+
+    ze_ipc_mem_handle_t ipcHandle{};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(exportedAllocation, nullptr, &ipcHandle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(exportedAllocation));
+
+    void *nextAllocation = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 1u, 0u, &nextAllocation));
+    EXPECT_TRUE(hostMemAllocPool->isInPoolRange(nextAllocation));
+    EXPECT_NE(exportedAllocation, nextAllocation);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(nextAllocation));
+}
+
 TEST_F(AllocUsmHostEnabledMemoryTest, givenDefaultContextWhenCallingPoolCleanupThenFreePeerAllocations) {
     auto context = std::make_unique<Mock<Context>>(driverHandle.get());
     auto contextHandle = context->toHandle();
@@ -956,6 +977,52 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDeferFreePolicyWhenFreein
     memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, allocation));
     EXPECT_EQ(0u, ipcHandleMap.size());
+}
+
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenIpcExportedPooledAllocationWhenFreeingThenChunkIsNotReused) {
+    auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+
+    void *exportedAllocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &exportedAllocation));
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(exportedAllocation));
+
+    ze_ipc_mem_handle_t ipcHandle{};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(exportedAllocation, nullptr, &ipcHandle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(exportedAllocation));
+
+    void *nextAllocation = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &nextAllocation));
+    EXPECT_TRUE(mockDeviceMemAllocPool->isInPoolRange(nextAllocation));
+    EXPECT_NE(exportedAllocation, nextAllocation);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(nextAllocation));
+}
+
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenIpcExportedPooledAllocationWhenDeferFreeingThenChunkIsNotReused) {
+    auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+
+    void *exportedAllocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &exportedAllocation));
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(exportedAllocation));
+
+    ze_ipc_mem_handle_t ipcHandle{};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(exportedAllocation, nullptr, &ipcHandle));
+
+    ze_memory_free_ext_desc_t memFreeDesc = {};
+    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMemExt(&memFreeDesc, exportedAllocation));
+    mockDeviceMemAllocPool->reclaimDeferredFreeChunks();
+
+    void *nextAllocation = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &nextAllocation));
+    EXPECT_TRUE(mockDeviceMemAllocPool->isInPoolRange(nextAllocation));
+    EXPECT_NE(exportedAllocation, nextAllocation);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(nextAllocation));
 }
 
 TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCallingResidencyOperationsThenSkipIfAllowed) {

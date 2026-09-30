@@ -239,6 +239,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, mockUsmPool->pool);
     mockUsmPool->poolEnd = ptrOffset(mockUsmPool->pool, poolSize);
+    mockUsmPool->allocationData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(mockUsmPool->pool);
     static_cast<MockUsmMemAllocPoolsFacade &>(device->getNEODevice()->getDeviceUsmMemAllocPoolFacade()).pool.reset(mockUsmPool);
 
     size_t size = 10;

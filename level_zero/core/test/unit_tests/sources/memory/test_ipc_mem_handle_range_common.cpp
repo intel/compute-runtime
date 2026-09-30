@@ -285,6 +285,7 @@ struct IpcMemHandleRangeCommonTest : public MemoryOpenIpcHandleTest {
         installedPoolFacade = &static_cast<NEO::MockUsmMemAllocPoolsFacade &>(neoDevice->getDeviceUsmMemAllocPoolFacade());
         installedPoolFacade->pool.reset(pool);
         installSvmAllocation(ptr, poolSize);
+        pool->allocationData = rangeSvmManager->getSVMAlloc(ptr);
         return pool;
     }
 

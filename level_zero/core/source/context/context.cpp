@@ -1114,6 +1114,12 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
 
+        if (allocData) {
+            allocData->isExportedAllocation = true;
+        }
+        if (usmPool) {
+            usmPool->markChunkExported(ptr);
+        }
         memoryManager->registerIpcExportedAllocation(alloc);
 
         if (settings.useOpaqueHandle) {

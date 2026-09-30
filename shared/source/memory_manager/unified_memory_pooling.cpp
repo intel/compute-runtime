@@ -207,7 +207,10 @@ UsmPoolFreeResult UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType 
 }
 
 void UsmMemAllocPool::releaseChunk(const AllocationInfo &allocationInfo) {
-    this->chunkAllocator->free(allocationInfo.address, allocationInfo.size);
+    // importers keep an exported chunk mapped until they close it, which the exporter cannot observe
+    if (false == allocationInfo.isExported) {
+        this->chunkAllocator->free(allocationInfo.address, allocationInfo.size);
+    }
     if (trackResidency) {
         OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);
         for (const auto &[neoDevice, isResident] : allocationInfo.isResident) {
@@ -215,6 +218,14 @@ void UsmMemAllocPool::releaseChunk(const AllocationInfo &allocationInfo) {
                 evictPool(neoDevice);
             }
         }
+    }
+}
+
+void UsmMemAllocPool::markChunkExported(const void *ptr) {
+    std::unique_lock<std::mutex> lock(mtx);
+    if (auto allocationInfo = allocations.get(ptr)) {
+        allocationInfo->isExported = true;
+        this->allocationData->isExportedAllocation = true;
     }
 }
 

@@ -447,6 +447,51 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolWithSingleChunkWhenFree
     EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(allocFromPool, FreePolicyType::blocking).poolNowEmpty);
 }
 
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenExportedChunkWhenFreeingItThenChunkIsNotReusedAndPoolNowEmptyIsTrue) {
+    auto memoryProperties = makeHostProperties();
+    const auto allocationSize = 1 * MemoryConstants::kiloByte;
+
+    auto exportedAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_NE(nullptr, exportedAlloc);
+    usmMemAllocPool.markChunkExported(exportedAlloc);
+    EXPECT_TRUE(usmMemAllocPool.allocationData->isExportedAllocation);
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(exportedAlloc, FreePolicyType::blocking).poolNowEmpty);
+
+    auto nextAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_NE(nullptr, nextAlloc);
+    EXPECT_NE(exportedAlloc, nextAlloc);
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenInteriorPointerOfChunkWhenMarkingItExportedThenChunkIsNotReused) {
+    auto memoryProperties = makeHostProperties();
+    const auto allocationSize = 1 * MemoryConstants::kiloByte;
+
+    auto exportedAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_NE(nullptr, exportedAlloc);
+    usmMemAllocPool.markChunkExported(ptrOffset(exportedAlloc, allocationSize / 2));
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(exportedAlloc, FreePolicyType::blocking).freeSucceeded);
+
+    auto nextAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_NE(nullptr, nextAlloc);
+    EXPECT_NE(exportedAlloc, nextAlloc);
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenFreedChunkWhenMarkingItExportedThenPoolIsNotMarkedExportedAndChunkIsReused) {
+    auto memoryProperties = makeHostProperties();
+    const auto allocationSize = 1 * MemoryConstants::kiloByte;
+
+    auto freedAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_NE(nullptr, freedAlloc);
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(freedAlloc, FreePolicyType::blocking).freeSucceeded);
+
+    usmMemAllocPool.markChunkExported(freedAlloc);
+    EXPECT_FALSE(usmMemAllocPool.allocationData->isExportedAllocation);
+
+    EXPECT_EQ(freedAlloc, usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties));
+}
+
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPointerNotFromPoolWhenFreeingThenFreeSucceededAndPoolNowEmptyAreFalse) {
     ASSERT_TRUE(usmMemAllocPool.isEmpty());
     const auto bogusPtr = reinterpret_cast<void *>(0x1);
@@ -689,6 +734,21 @@ TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenDeferFreePolicyWhenChunkIsUsed
     EXPECT_EQ(deferFreedPtr, usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties));
     EXPECT_TRUE(usmMemAllocPool.deferredFreeChunks.empty());
     EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+}
+
+TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenExportedChunkDeferFreedWhileUsedByGpuWhenWorkCompletesThenChunkIsNotReused) {
+    auto memoryProperties = makeHostProperties();
+    auto pooledPtrs = fillPool(chunkSize);
+    auto exportedPtr = pooledPtrs[0];
+    usmMemAllocPool.markChunkExported(exportedPtr);
+
+    markPoolUsedByGpu(completedTaskCount + 1);
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(exportedPtr, FreePolicyType::defer).freeSucceeded);
+    EXPECT_EQ(1u, usmMemAllocPool.deferredFreeChunks.size());
+
+    *csr->tagAddress = completedTaskCount + 1;
+    EXPECT_EQ(nullptr, usmMemAllocPool.createUnifiedMemoryAllocation(chunkSize, memoryProperties));
+    EXPECT_TRUE(usmMemAllocPool.deferredFreeChunks.empty());
 }
 
 TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenDeferFreePolicyWhenGpuWorkAlreadyCompletedThenChunkIsReclaimedImmediately) {
