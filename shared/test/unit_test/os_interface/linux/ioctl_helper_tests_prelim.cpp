@@ -814,66 +814,6 @@ HWTEST2_F(IoctlPrelimHelperTests, GivenIoctlHelperWhenCallingGetGtIdFromTileIdTh
     EXPECT_EQ(tileId, ioctlHelper.getGtIdFromTileId(tileId, I915_ENGINE_CLASS_VIDEO));
 }
 
-TEST(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    pDrm->storedRetVal = 0;
-    pDrm->storedPreemptionSupport =
-        I915_SCHEDULER_CAP_ENABLED |
-        I915_SCHEDULER_CAP_PRIORITY |
-        I915_SCHEDULER_CAP_PREEMPTION;
-    pDrm->checkPreemptionSupport();
-    EXPECT_TRUE(pDrm->isPreemptionSupported());
-
-    pDrm->storedPreemptionSupport = 0;
-    pDrm->checkPreemptionSupport();
-    EXPECT_FALSE(pDrm->isPreemptionSupported());
-
-    pDrm->storedRetVal = -1;
-    pDrm->storedPreemptionSupport =
-        I915_SCHEDULER_CAP_ENABLED |
-        I915_SCHEDULER_CAP_PRIORITY |
-        I915_SCHEDULER_CAP_PREEMPTION;
-    pDrm->checkPreemptionSupport();
-    EXPECT_FALSE(pDrm->isPreemptionSupported());
-
-    pDrm->storedPreemptionSupport = 0;
-    pDrm->checkPreemptionSupport();
-    EXPECT_FALSE(pDrm->isPreemptionSupported());
-
-    delete pDrm;
-}
-
-TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContextThenCallSetContextPriorityIoctl) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    drmMock.preemptionSupported = false;
-
-    OsContextLinux osContext1(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext1.ensureContextInitialized();
-    OsContextLinux osContext2(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
-    osContext2.ensureContextInitialized();
-
-    EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
-
-    drmMock.preemptionSupported = true;
-
-    OsContextLinux osContext3(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext3.ensureContextInitialized();
-    EXPECT_EQ(6u, drmMock.receivedContextParamRequestCount);
-
-    OsContextLinux osContext4(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
-    osContext4.ensureContextInitialized();
-    EXPECT_EQ(9u, drmMock.receivedContextParamRequestCount);
-    EXPECT_EQ(drmMock.storedDrmContextId, drmMock.receivedContextParamRequest.contextId);
-    EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
-    EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
-    EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
-}
-
 using IoctlPrelimHelperCapabilityQueryTests = ::testing::Test;
 
 HWTEST2_F(IoctlPrelimHelperCapabilityQueryTests, whenCheckingSetPairAvailabilityThenGetParamValueIsReturnedOnSuccessAndFalseOnFailure, IsAtMostXeCore) {

@@ -153,6 +153,20 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         filledVmBindExtPatIndex = patIndex;
     }
 
+    uint32_t getDirectSubmissionFlag() override {
+        return directSubmissionFlag;
+    }
+
+    uint32_t createContextWithAccessCounters(GemContextCreateExt &gcc) override {
+        createContextWithAccessCountersCalled++;
+        return IoctlHelperUpstream::createContextWithAccessCounters(gcc);
+    }
+
+    uint32_t createCooperativeContext(GemContextCreateExt &gcc) override {
+        createCooperativeContextCalled++;
+        return IoctlHelperUpstream::createCooperativeContext(gcc);
+    }
+
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override {
         receivedVmCreateFlags = VmCreateFlags{disableScratch, enablePageFault, useVmBind};
         return IoctlHelperUpstream::getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
@@ -279,12 +293,16 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     int waitUserFenceResult = 0;
     bool userFenceSetupRequired = false;
 
-    uint32_t isVmBindAvailableCalled = 0u;
-    uint32_t isSetPairAvailableCalled = 0u;
-    uint32_t isChunkingAvailableCalled = 0u;
     bool vmBindAvailable = false;
     bool setPairAvailable = false;
     bool chunkingAvailable = false;
+    uint32_t isVmBindAvailableCalled = 0u;
+    uint32_t isSetPairAvailableCalled = 0u;
+    uint32_t isChunkingAvailableCalled = 0u;
+
+    uint32_t directSubmissionFlag = 0u;
+    uint32_t createContextWithAccessCountersCalled = 0u;
+    uint32_t createCooperativeContextCalled = 0u;
 
     uint32_t createEngineInfoCalled = 0u;
     std::optional<std::vector<EngineCapabilities>> enginesToReturn;

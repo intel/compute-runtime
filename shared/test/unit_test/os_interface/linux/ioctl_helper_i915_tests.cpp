@@ -11,9 +11,13 @@
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper_with_capture.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
@@ -284,4 +288,182 @@ HWTEST2_F(IoctlHelperI915Test, givenMemoryRegionsQueryDataWhenTranslatingToMemor
         EXPECT_EQ(expectedMemRegions[i].unallocatedSize, memRegions[i].unallocatedSize);
         EXPECT_EQ(expectedMemRegions[i].cpuVisibleSize, memRegions[i].cpuVisibleSize);
     }
+}
+
+using DrmTest = ::testing::Test;
+
+HWTEST2_F(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned, IsAtMostXeCore) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    pDrm->storedRetVal = 0;
+    pDrm->storedPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
+    pDrm->checkPreemptionSupport();
+    EXPECT_TRUE(pDrm->isPreemptionSupported());
+
+    pDrm->storedPreemptionSupport = 0;
+    pDrm->checkPreemptionSupport();
+    EXPECT_FALSE(pDrm->isPreemptionSupported());
+
+    pDrm->storedRetVal = -1;
+    pDrm->storedPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
+    pDrm->checkPreemptionSupport();
+    EXPECT_FALSE(pDrm->isPreemptionSupported());
+
+    pDrm->storedPreemptionSupport = 0;
+    pDrm->checkPreemptionSupport();
+    EXPECT_FALSE(pDrm->isPreemptionSupported());
+
+    delete pDrm;
+}
+
+HWTEST2_F(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContextThenCallSetContextPriorityIoctl, IsAtMostXeCore) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock.preemptionSupported = false;
+
+    OsContextLinux osContext1(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext1.ensureContextInitialized();
+    OsContextLinux osContext2(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
+    osContext2.ensureContextInitialized();
+
+    EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
+
+    drmMock.preemptionSupported = true;
+
+    OsContextLinux osContext3(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext3.ensureContextInitialized();
+    EXPECT_EQ(6u, drmMock.receivedContextParamRequestCount);
+
+    OsContextLinux osContext4(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
+    osContext4.ensureContextInitialized();
+    EXPECT_EQ(9u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(drmMock.storedDrmContextId, drmMock.receivedContextParamRequest.contextId);
+    EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
+    EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
+    EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
+}
+
+class DrmI915CreateContextTest : public ::testing::Test {
+  public:
+    void SetUp() override {
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+        drm = std::make_unique<DrmMockWithCaptureHelper>(*executionEnvironment->rootDeviceEnvironments[0]);
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<DrmMockWithCaptureHelper> drm;
+};
+
+HWTEST2_F(DrmI915CreateContextTest, givenVariousDirectSubmissionFlagSettingWhenCreateDrmContextIsCalledThenCorrectFlagsArePassedToIoctl, IsAtMostXeCore) {
+    constexpr uint32_t directSubmissionFlag = (1u << 31);
+    drm->getMockIoctlHelper()->directSubmissionFlag = directSubmissionFlag;
+    uint32_t vmId = 0u;
+    constexpr bool isCooperativeContextRequested = false;
+
+    debugManager.flags.DirectSubmissionDrmContext.set(-1);
+    drm->receivedContextCreateFlags = 0;
+    drm->createDrmContext(vmId, true, isCooperativeContextRequested);
+    EXPECT_EQ(directSubmissionFlag, drm->receivedContextCreateFlags);
+
+    debugManager.flags.DirectSubmissionDrmContext.set(0);
+    drm->receivedContextCreateFlags = 0;
+    drm->createDrmContext(vmId, true, isCooperativeContextRequested);
+    EXPECT_EQ(0u, drm->receivedContextCreateFlags);
+
+    debugManager.flags.DirectSubmissionDrmContext.set(1);
+    drm->receivedContextCreateFlags = 0;
+    drm->createDrmContext(vmId, false, isCooperativeContextRequested);
+    EXPECT_EQ(directSubmissionFlag, drm->receivedContextCreateFlags);
+}
+
+HWTEST2_F(DrmI915CreateContextTest, whenCreateDrmContextIsCalledThenExactlyOneContextCreationPathIsUsed, IsAtMostXeCore) {
+    auto ioctlHelper = drm->getMockIoctlHelper();
+    constexpr bool isDirectSubmissionRequested = false;
+
+    for (auto isCooperativeContextRequested : {false, true}) {
+        for (auto forceRunAloneContext : {-1, 0, 1}) {
+            debugManager.flags.ForceRunAloneContext.set(forceRunAloneContext);
+            for (auto createContextWithAccessCounters : {-1, 0, 1}) {
+                debugManager.flags.CreateContextWithAccessCounters.set(createContextWithAccessCounters);
+                for (auto vmId = 0u; vmId < 3; vmId++) {
+                    ioctlHelper->createContextWithAccessCountersCalled = 0u;
+                    ioctlHelper->createCooperativeContextCalled = 0u;
+                    drm->ioctlCount.contextCreate = 0;
+
+                    drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
+
+                    const bool expectAccessCounters = createContextWithAccessCounters > 0;
+                    const bool cooperativeRequested = forceRunAloneContext == -1 ? isCooperativeContextRequested : forceRunAloneContext != 0;
+                    const bool expectCooperative = !expectAccessCounters && cooperativeRequested;
+                    EXPECT_EQ(expectAccessCounters ? 1u : 0u, ioctlHelper->createContextWithAccessCountersCalled);
+                    EXPECT_EQ(expectCooperative ? 1u : 0u, ioctlHelper->createCooperativeContextCalled);
+                    EXPECT_EQ((expectAccessCounters || expectCooperative) ? 0 : 1, drm->ioctlCount.contextCreate.load());
+                }
+            }
+        }
+    }
+}
+
+HWTEST2_F(DrmI915CreateContextTest, givenProgramDebuggingAndContextDebugSupportedWhenCreatingContextThenCooperativeFlagIsPassedToCreateDrmContextOnlyIfCCSEnginesArePresent, IsAtMostXeCore) {
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    drm->contextDebugSupported = true;
+    drm->callBaseCreateDrmContext = false;
+
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
+
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
+    osContext.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+    if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
+        EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+    } else {
+    }
+
+    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::cooperative}));
+    osContext2.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+    EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+}
+
+HWTEST2_F(DrmI915CreateContextTest, givenProgramDebuggingModeAndContextDebugSupportedAndRegularEngineUsageWhenCreatingContextThenCooperativeFlagIsNotPassedInOfflineDebuggingMode, IsAtMostXeCore) {
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    drm->contextDebugSupported = true;
+    drm->callBaseCreateDrmContext = false;
+
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
+    osContext.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+
+    if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
+        EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+    } else {
+        EXPECT_FALSE(drm->capturedCooperativeContextRequest);
+    }
+
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::offline);
+
+    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
+    osContext2.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+    EXPECT_FALSE(drm->capturedCooperativeContextRequest);
+
+    OsContextLinux osContext3(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::cooperative}));
+    osContext3.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+    EXPECT_TRUE(drm->capturedCooperativeContextRequest);
 }

@@ -26,6 +26,7 @@ using namespace NEO;
 using DrmQueryTest = ::testing::Test;
 using DrmPrelimTest = ::testing::Test;
 using DrmBufferObjectTestPrelim = ::testing::Test;
+using DrmBufferObjectPrelim = ::testing::Test;
 using DrmTestPrelim = ::testing::Test;
 
 HWTEST2_F(DrmQueryTest, givenDirectSubmissionActiveWhenCreateDrmContextThenProperFlagIsSet, IsAtMostXeCore) {
@@ -35,30 +36,6 @@ HWTEST2_F(DrmQueryTest, givenDirectSubmissionActiveWhenCreateDrmContextThenPrope
     drm.createDrmContext(0, true, false);
 
     EXPECT_TRUE(drm.receivedContextCreateFlags & DrmPrelimHelper::getLongRunningContextCreateFlag());
-}
-
-TEST(DrmQueryTest, givenDirectSubmissionDisabledAndDirectSubmissionDrmContextSetWhenCreateDrmContextThenProperFlagIsSet) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionDrmContext.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    drm.createDrmContext(0, false, false);
-
-    EXPECT_TRUE(drm.receivedContextCreateFlags & DrmPrelimHelper::getLongRunningContextCreateFlag());
-}
-
-TEST(DrmQueryTest, givenDirectSubmissionActiveAndDirectSubmissionDrmContextSetZeroWhenCreateDrmContextThenProperFlagIsNotSet) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionDrmContext.set(0);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    drm.createDrmContext(0, true, false);
-
-    EXPECT_FALSE(drm.receivedContextCreateFlags & DrmPrelimHelper::getLongRunningContextCreateFlag());
 }
 
 HWTEST2_F(DrmQueryTest, givenCooperativeEngineWhenCreateDrmContextThenRunAloneContextIsRequested, IsAtMostXeCore) {
@@ -77,34 +54,6 @@ HWTEST2_F(DrmQueryTest, givenCooperativeEngineWhenCreateDrmContextThenRunAloneCo
     EXPECT_EQ(0u, extSetparam.param.size);
     EXPECT_EQ(0u, extSetparam.param.contextId);
     EXPECT_EQ(0u, extSetparam.param.value);
-}
-
-TEST(DrmQueryTest, givenForceRunAloneContextFlagSetWhenCreateDrmContextThenRunAloneContextIsRequested) {
-    DebugManagerStateRestore restorer;
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    {
-        debugManager.flags.ForceRunAloneContext.set(0);
-        drm.createDrmContext(0, false, false);
-
-        auto extSetparam = drm.receivedContextCreateSetParam;
-        EXPECT_NE(static_cast<uint64_t>(DrmPrelimHelper::getRunAloneContextParam()), extSetparam.param.param);
-    }
-    {
-        debugManager.flags.ForceRunAloneContext.set(1);
-        drm.createDrmContext(0, false, false);
-
-        auto extSetparam = drm.receivedContextCreateSetParam;
-        EXPECT_EQ(static_cast<uint32_t>(I915_CONTEXT_CREATE_EXT_SETPARAM), extSetparam.base.name);
-        EXPECT_EQ(0u, extSetparam.base.nextExtension);
-        EXPECT_EQ(0u, extSetparam.base.flags);
-
-        EXPECT_EQ(static_cast<uint64_t>(DrmPrelimHelper::getRunAloneContextParam()), extSetparam.param.param);
-        EXPECT_EQ(0u, extSetparam.param.size);
-        EXPECT_EQ(0u, extSetparam.param.contextId);
-        EXPECT_EQ(0u, extSetparam.param.value);
-    }
 }
 
 HWTEST2_F(DrmQueryTest, givenCreateContextWithAccessCountersWhenDrmContextIsCreatedThenProgramAccessCountersWithDefaultGranularity, IsAtMostXeCore) {
@@ -135,15 +84,6 @@ HWTEST2_F(DrmQueryTest, givenCreateContextWithAccessCountersWhenDrmContextIsCrea
     EXPECT_EQ(1u, paramAcc->notify);
     EXPECT_EQ(0u, paramAcc->trigger);
     EXPECT_EQ(static_cast<uint8_t>(DrmPrelimHelper::getContextAcgValues()[1]), paramAcc->granularity);
-}
-
-TEST(DrmQueryTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    pDrm->storedRetVal = -1;
-    EXPECT_EQ(-1, pDrm->createDrmContext(1, false, false));
-    pDrm->storedRetVal = 0;
-    delete pDrm;
 }
 
 HWTEST2_F(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThenProgramAccessCountersWithSpecifiedTriggeringThreshold, IsAtMostXeCore) {

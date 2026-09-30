@@ -28,8 +28,6 @@
 
 using namespace NEO;
 
-using IoctlHelperPrelimTest = ::testing::Test;
-
 extern int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal);
 
 class DrmPrelimMock : public DrmMock {
@@ -70,6 +68,8 @@ class DrmPrelimMock : public DrmMock {
         return handlePrelimRequests(request, arg, ioctlRetVal, queryDistanceIoctlRetVal);
     }
 };
+
+using IoctlHelperPrelimTest = ::testing::Test;
 
 class IoctlHelperPrelimFixture : public ::testing::Test {
   public:
@@ -361,32 +361,6 @@ HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlResultWhenSettingVmAdviseOrPrefetc
     }
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenVariousDirectSubmissionFlagSettingWhenCreateDrmContextIsCalledThenCorrectFlagsArePassedToIoctl) {
-    DebugManagerStateRestore stateRestore;
-    uint32_t vmId = 0u;
-    constexpr bool isCooperativeContextRequested = false;
-    bool isDirectSubmissionRequested{};
-    uint32_t ioctlVal = (1u << 31);
-
-    debugManager.flags.DirectSubmissionDrmContext.set(-1);
-    drm->receivedContextCreateFlags = 0;
-    isDirectSubmissionRequested = true;
-    drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
-    EXPECT_EQ(ioctlVal, drm->receivedContextCreateFlags);
-
-    debugManager.flags.DirectSubmissionDrmContext.set(0);
-    drm->receivedContextCreateFlags = 0;
-    isDirectSubmissionRequested = true;
-    drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
-    EXPECT_EQ(0u, drm->receivedContextCreateFlags);
-
-    debugManager.flags.DirectSubmissionDrmContext.set(1);
-    drm->receivedContextCreateFlags = 0;
-    isDirectSubmissionRequested = false;
-    drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
-    EXPECT_EQ(ioctlVal, drm->receivedContextCreateFlags);
-}
-
 HWTEST2_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistanceSet, IsAtMostXeCore) {
     auto ioctlHelper = drm->getIoctlHelper();
     std::vector<DistanceInfo> distances(3);
@@ -535,81 +509,6 @@ HWTEST2_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContex
     GemContextCreateExt gcc{};
     EXPECT_EQ(0u, ioctlHelper->createCooperativeContext(gcc));
     EXPECT_EQ(1u, drm->ioctlCallsCount);
-}
-
-TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextIsCalledThenIoctlIsCalledOnlyOnce) {
-    drm->ioctlRetVal = 0u;
-
-    DebugManagerStateRestore stateRestore;
-    constexpr bool isCooperativeContextRequested = true;
-    constexpr bool isDirectSubmissionRequested = false;
-
-    for (auto &cooperativeContextRequested : {-1, 0, 1}) {
-        debugManager.flags.ForceRunAloneContext.set(cooperativeContextRequested);
-        for (auto &accessCountersRequested : {-1, 0, 1}) {
-            debugManager.flags.CreateContextWithAccessCounters.set(accessCountersRequested);
-            for (auto vmId = 0u; vmId < 3; vmId++) {
-                drm->ioctlCallsCount = 0u;
-                drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
-
-                EXPECT_EQ(vmId > 0 ? 2u : 1u, drm->ioctlCallsCount);
-            }
-        }
-    }
-}
-
-TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWhenCreatingContextThenCooperativeFlagIsPassedToCreateDrmContextOnlyIfCCSEnginesArePresent) {
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
-    drm->contextDebugSupported = true;
-    drm->callBaseCreateDrmContext = false;
-
-    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
-
-    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
-    osContext.ensureContextInitialized();
-
-    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
-    if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
-        EXPECT_TRUE(drm->capturedCooperativeContextRequest);
-    } else {
-    }
-
-    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::cooperative}));
-    osContext2.ensureContextInitialized();
-
-    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
-    EXPECT_TRUE(drm->capturedCooperativeContextRequest);
-}
-
-TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupportedAndRegularEngineUsageWhenCreatingContextThenCooperativeFlagIsNotPassedInOfflineDebuggingMode) {
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
-    drm->contextDebugSupported = true;
-    drm->callBaseCreateDrmContext = false;
-
-    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
-    osContext.ensureContextInitialized();
-
-    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
-
-    if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
-        EXPECT_TRUE(drm->capturedCooperativeContextRequest);
-    } else {
-        EXPECT_FALSE(drm->capturedCooperativeContextRequest);
-    }
-
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::offline);
-
-    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
-    osContext2.ensureContextInitialized();
-
-    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
-    EXPECT_FALSE(drm->capturedCooperativeContextRequest);
-
-    OsContextLinux osContext3(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::cooperative}));
-    osContext3.ensureContextInitialized();
-
-    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
-    EXPECT_TRUE(drm->capturedCooperativeContextRequest);
 }
 
 HWTEST2_F(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenInitializingContextThenVmIsCreatedWithAllNecessaryFlags, IsAtMostXeCore) {
