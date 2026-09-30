@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,8 +32,9 @@ bool Gdi::setupHwQueueProcAddresses() {
     createHwQueue = gdiDll->getProcAddress("D3DKMTCreateHwQueue");
     destroyHwQueue = gdiDll->getProcAddress("D3DKMTDestroyHwQueue");
     submitCommandToHwQueue = gdiDll->getProcAddress("D3DKMTSubmitCommandToHwQueue");
+    submitWaitForSyncObjectsToHwQueue = gdiDll->getProcAddress("D3DKMTSubmitWaitForSyncObjectsToHwQueue");
 
-    if (!createHwQueue || !destroyHwQueue || !submitCommandToHwQueue) {
+    if (!createHwQueue || !destroyHwQueue || !submitCommandToHwQueue || !submitWaitForSyncObjectsToHwQueue) {
         return false;
     }
     return true;

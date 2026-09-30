@@ -28,6 +28,7 @@
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_external_semaphore.h"
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
@@ -1679,4 +1680,83 @@ HWTEST_TEMPLATED_F(SemaphoreWaitForResidencyTest, givenIllegalAllocationTypeThen
     EXPECT_TRUE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);
 
     memoryManager->freeGraphicsMemory(cmdBuffer);
+}
+
+template <typename GfxFamily>
+struct WddmCsrWithStopDirectSubmissionTracking : public WddmCommandStreamReceiver<GfxFamily> {
+    using WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver;
+
+    void stopDirectSubmission(bool blocking, bool needsLock) override {
+        stopDirectSubmissionCalled++;
+        stopDirectSubmissionBlocking = blocking;
+        stopDirectSubmissionNeedsLock = needsLock;
+        kmdWaitsQueuedBeforeStop = static_cast<WddmMock *>(this->wddm)->waitExternalSemaphoresFromGpuCalled;
+        WddmCommandStreamReceiver<GfxFamily>::stopDirectSubmission(blocking, needsLock);
+    }
+
+    uint32_t stopDirectSubmissionCalled = 0;
+    bool stopDirectSubmissionBlocking = true;
+    bool stopDirectSubmissionNeedsLock = true;
+    uint32_t kmdWaitsQueuedBeforeStop = 0;
+};
+
+struct WddmCommandStreamExternalSemaphoreTest : public WddmCommandStreamTest {
+    template <typename GfxFamily>
+    void setUpT() {
+        WddmCommandStreamTest::setUpT<GfxFamily>();
+        auto trackingCsr = new WddmCsrWithStopDirectSubmissionTracking<GfxFamily>(*device->getExecutionEnvironment(), 0, device->getDeviceBitfield());
+        device->resetCommandStreamReceiver(trackingCsr);
+        trackingCsr->getOsContext().ensureContextInitialized();
+        csr = trackingCsr;
+        wddm->callBaseWaitExternalSemaphoresFromGpu = false;
+    }
+
+    template <typename GfxFamily>
+    void tearDownT() {
+        WddmCommandStreamTest::tearDownT<GfxFamily>();
+    }
+
+    template <typename GfxFamily>
+    WddmCsrWithStopDirectSubmissionTracking<GfxFamily> &getCsr() {
+        return static_cast<WddmCsrWithStopDirectSubmissionTracking<GfxFamily> &>(*csr);
+    }
+};
+
+HWTEST_TEMPLATED_F(WddmCommandStreamExternalSemaphoreTest, givenExternalSemaphoreWaitsWhenSubmittingThemThenDirectSubmissionIsStoppedBeforeAllWaitsAreQueuedInKmdOnCsrOsContext) {
+    auto &trackingCsr = getCsr<FamilyType>();
+
+    MockExternalSemaphore semaphore0;
+    MockExternalSemaphore semaphore1;
+    const ExternalSemaphoreOperation waits[] = {{&semaphore0, 5u}, {&semaphore1, 7u}};
+    EXPECT_TRUE(trackingCsr.submitExternalSemaphoreWaits(waits));
+
+    EXPECT_EQ(1u, trackingCsr.stopDirectSubmissionCalled);
+    EXPECT_FALSE(trackingCsr.stopDirectSubmissionBlocking);
+    EXPECT_FALSE(trackingCsr.stopDirectSubmissionNeedsLock);
+    EXPECT_EQ(0u, trackingCsr.kmdWaitsQueuedBeforeStop);
+
+    EXPECT_EQ(1u, wddm->waitExternalSemaphoresFromGpuCalled);
+    EXPECT_EQ(&trackingCsr.getOsContext(), wddm->waitExternalSemaphoresFromGpuOsContext);
+    ASSERT_EQ(2u, wddm->waitExternalSemaphoresFromGpuWaits.size());
+    EXPECT_EQ(&semaphore0, wddm->waitExternalSemaphoresFromGpuWaits[0].semaphore);
+    EXPECT_EQ(5u, wddm->waitExternalSemaphoresFromGpuWaits[0].fenceValue);
+    EXPECT_EQ(&semaphore1, wddm->waitExternalSemaphoresFromGpuWaits[1].semaphore);
+    EXPECT_EQ(7u, wddm->waitExternalSemaphoresFromGpuWaits[1].fenceValue);
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamExternalSemaphoreTest, givenKmdWaitFailureWhenSubmittingExternalSemaphoreWaitsThenFalseIsReturned) {
+    wddm->waitExternalSemaphoresFromGpuReturnValue = false;
+
+    MockExternalSemaphore semaphore;
+    const ExternalSemaphoreOperation waits[] = {{&semaphore, 5u}};
+    EXPECT_FALSE(csr->submitExternalSemaphoreWaits(waits));
+    EXPECT_EQ(1u, wddm->waitExternalSemaphoresFromGpuCalled);
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamExternalSemaphoreTest, givenNoExternalSemaphoreWaitsWhenSubmittingThemThenTrueIsReturnedAndDirectSubmissionIsNotStoppedAndKmdIsNotCalled) {
+    auto &trackingCsr = getCsr<FamilyType>();
+
+    EXPECT_TRUE(trackingCsr.submitExternalSemaphoreWaits({}));
+    EXPECT_EQ(0u, trackingCsr.stopDirectSubmissionCalled);
+    EXPECT_EQ(0u, wddm->waitExternalSemaphoresFromGpuCalled);
 }

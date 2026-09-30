@@ -656,6 +656,17 @@ NTSTATUS __stdcall mockD3DKMTSubmitCommandToHwQueue(IN CONST D3DKMT_SUBMITCOMMAN
     return STATUS_SUCCESS;
 }
 
+static D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE submitWaitForSyncObjectsToHwQueueData{};
+static bool submitWaitForSyncObjectsToHwQueueFailCall = false;
+
+NTSTATUS __stdcall mockD3DKMTSubmitWaitForSyncObjectsToHwQueue(IN CONST D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE *submitWaitForSyncObjectsToHwQueue) {
+    if (submitWaitForSyncObjectsToHwQueueFailCall) {
+        return STATUS_INVALID_PARAMETER;
+    }
+    submitWaitForSyncObjectsToHwQueueData = *submitWaitForSyncObjectsToHwQueue;
+    return STATUS_SUCCESS;
+}
+
 D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData{};
 uint32_t destroySynchronizationObjectCallCount = 0;
 
@@ -719,7 +730,14 @@ NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObjectFromCpu(IN CONST D3DKMT_
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall mockD3DKMTWaitForSynchronizationObjectFromGpu(IN CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU *) {
+static D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU waitForSynchronizationObjectFromGpuData{};
+static bool waitForSynchronizationObjectFromGpuFailCall = false;
+
+NTSTATUS __stdcall mockD3DKMTWaitForSynchronizationObjectFromGpu(IN CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU *waitFromGpu) {
+    if (waitForSynchronizationObjectFromGpuFailCall) {
+        return STATUS_INVALID_PARAMETER;
+    }
+    waitForSynchronizationObjectFromGpuData = *waitFromGpu;
     return STATUS_SUCCESS;
 }
 
@@ -843,6 +861,14 @@ D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData() {
     return &submitCommandToHwQueueData;
 }
 
+D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE *getSubmitWaitForSyncObjectsToHwQueueData() {
+    return &submitWaitForSyncObjectsToHwQueueData;
+}
+
+D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU *getWaitForSynchronizationObjectFromGpuData() {
+    return &waitForSynchronizationObjectFromGpuData;
+}
+
 D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *getDestroySynchronizationObjectData() {
     return &destroySynchronizationObjectData;
 }
@@ -865,6 +891,14 @@ bool *getCreateSynchronizationObject2FailCall() {
 
 bool *getRegisterTrimNotificationFailCall() {
     return &registerTrimNotificationFailCall;
+}
+
+bool *getSubmitWaitForSyncObjectsToHwQueueFailCall() {
+    return &submitWaitForSyncObjectsToHwQueueFailCall;
+}
+
+bool *getWaitForSynchronizationObjectFromGpuFailCall() {
+    return &waitForSynchronizationObjectFromGpuFailCall;
 }
 
 uint32_t getLastPriority() {

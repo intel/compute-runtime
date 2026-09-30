@@ -340,3 +340,25 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenContextGroupWhenContextFromContextGroupD
 
     EXPECT_EQ(1u, wddm->destroyContextResult.called);
 }
+
+TEST_F(Wddm23Tests, whenWaitingForSyncObjectsFromGpuThenWaitIsSubmittedToHwQueue) {
+    D3DKMT_HANDLE handles[] = {0x10, 0x20};
+    uint64_t fenceValues[] = {3u, 4u};
+    EXPECT_TRUE(wddm->getWddmInterface()->waitForSyncObjectsFromGpu(*osContext, 2u, handles, fenceValues));
+
+    auto waitData = getSubmitWaitForSyncObjectsToHwQueueDataFcn();
+    EXPECT_EQ(osContext->getHwQueue().handle, waitData->hHwQueue);
+    EXPECT_EQ(2u, waitData->ObjectCount);
+    EXPECT_EQ(handles, waitData->ObjectHandleArray);
+    EXPECT_EQ(fenceValues, waitData->FenceValueArray);
+
+    EXPECT_EQ(nullptr, getWaitForSynchronizationObjectFromGpuDataFcn()->ObjectHandleArray);
+}
+
+TEST_F(Wddm23Tests, givenKmdWaitFailureWhenWaitingForSyncObjectsFromGpuThenFalseIsReturned) {
+    *getSubmitWaitForSyncObjectsToHwQueueFailCallFcn() = true;
+
+    D3DKMT_HANDLE handle = 0x10;
+    uint64_t fenceValue = 3u;
+    EXPECT_FALSE(wddm->getWddmInterface()->waitForSyncObjectsFromGpu(*osContext, 1u, &handle, &fenceValue));
+}

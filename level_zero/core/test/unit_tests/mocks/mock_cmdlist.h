@@ -362,6 +362,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::graphCapture;
     using BaseClass::heaplessModeEnabled;
     using BaseClass::immediateCmdListHeapSharing;
+    using BaseClass::immediateResourcesInitializationResult;
     using BaseClass::initialize;
     using BaseClass::inOrderExecInfo;
     using BaseClass::interruptEvents;

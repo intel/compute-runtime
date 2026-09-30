@@ -14,6 +14,7 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
+#include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -23,6 +24,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <vector>
 
 namespace NEO {
 class GmmPageTableMngr;
@@ -99,6 +101,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::dcFlushSupport;
     using BaseClass::directSubmission;
     using BaseClass::dshState;
+    using BaseClass::externalSemaphoreGpuWaitAllowed;
     using BaseClass::flushTaskHeapful;
     using BaseClass::flushTaskHeapless;
     using BaseClass::getCmdSizeForExceptions;
@@ -639,6 +642,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         }
     }
 
+    bool submitExternalSemaphoreWaits(std::span<const ExternalSemaphoreOperation> waits) override {
+        submitExternalSemaphoreWaitsCalled++;
+        submittedExternalSemaphoreWaits.assign(waits.begin(), waits.end());
+        taskCountAtExternalSemaphoreWaitsSubmission = this->peekTaskCount();
+        return submitExternalSemaphoreWaitsReturnValue;
+    }
+
     void setupContext(OsContext &osContext) override {
         if (!initialOsContext) {
             initialOsContext = this->osContext;
@@ -856,6 +866,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool isKmdWaitOnTaskCountAllowedValue = false;
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
+    bool submitExternalSemaphoreWaitsReturnValue = true;
+    uint32_t submitExternalSemaphoreWaitsCalled = 0;
+    std::vector<ExternalSemaphoreOperation> submittedExternalSemaphoreWaits;
+    TaskCountType taskCountAtExternalSemaphoreWaitsSubmission = 0;
     bool isUserFenceWaitSupported = false;
     bool isWaitUserFenceNotEqualSupportedValue = false;
     bool getAcLineConnectedCallBase = true;

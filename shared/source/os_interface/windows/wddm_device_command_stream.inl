@@ -242,6 +242,20 @@ CommandStreamReceiver *createWddmDeviceCommandStreamReceiver(bool withAubDump,
 }
 
 template <typename GfxFamily>
+bool WddmCommandStreamReceiver<GfxFamily>::submitExternalSemaphoreWaits(std::span<const ExternalSemaphoreOperation> waits) {
+    if (waits.empty()) {
+        return true;
+    }
+
+    auto lock = this->obtainUniqueOwnership();
+
+    // Running ULLS ring does not yield back to KMD, which would block the wait queued in KMD, so the ring is ended.
+    this->stopDirectSubmission(false, false);
+
+    return wddm->waitExternalSemaphoresFromGpu(*static_cast<OsContextWin *>(this->osContext), waits);
+}
+
+template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::setupContext(OsContext &osContext) {
     CommandStreamReceiver::setupContext(osContext);
 }

@@ -93,6 +93,11 @@ TEST_F(OsContextWinTest, givenOsContextWinWhenQueryingForOfflineDumpContextIdThe
     EXPECT_EQ(0u, osContext->getOfflineDumpContextId(0));
 }
 
+TEST_F(OsContextWinTest, givenOsContextWinWhenCheckingExternalSemaphoreGpuWaitSupportThenTrueIsReturned) {
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_TRUE(osContext->isExternalSemaphoreGpuWaitSupported());
+}
+
 TEST_F(OsContextWinTest, givenWddm20AndProductSupportDirectSubmissionThenDirectSubmissionIsSupported) {
     auto &productHelper = this->rootDeviceEnvironment->getHelper<ProductHelper>();
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));

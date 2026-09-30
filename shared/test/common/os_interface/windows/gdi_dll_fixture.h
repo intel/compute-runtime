@@ -35,6 +35,8 @@ struct GdiDllFixture {
         getCreateHwQueueDataFcn = &getCreateHwQueueData;
         getDestroyHwQueueDataFcn = &getDestroyHwQueueData;
         getSubmitCommandToHwQueueDataFcn = &getSubmitCommandToHwQueueData;
+        getSubmitWaitForSyncObjectsToHwQueueDataFcn = &getSubmitWaitForSyncObjectsToHwQueueData;
+        getWaitForSynchronizationObjectFromGpuDataFcn = &getWaitForSynchronizationObjectFromGpuData;
         getDestroySynchronizationObjectDataFcn = &getDestroySynchronizationObjectData;
         getMonitorFenceCpuFenceAddressFcn = &getMonitorFenceCpuFenceAddress;
         getMonitorFenceCpuAddressSelectorFcn = &getMonitorFenceCpuAddressSelector;
@@ -42,6 +44,8 @@ struct GdiDllFixture {
         getFailOnSetContextSchedulingPriorityCallFcn = &getFailOnSetContextSchedulingPriorityCall;
         getSetContextSchedulingPriorityDataCallFcn = &getSetContextSchedulingPriorityDataCall;
         getRegisterTrimNotificationFailCallFcn = &getRegisterTrimNotificationFailCall;
+        getSubmitWaitForSyncObjectsToHwQueueFailCallFcn = &getSubmitWaitForSyncObjectsToHwQueueFailCall;
+        getWaitForSynchronizationObjectFromGpuFailCallFcn = &getWaitForSynchronizationObjectFromGpuFailCall;
         getLastPriorityFcn = &getLastPriority;
         setAdapterBDFFcn = &setAdapterBDF;
         setMockDeviceExecutionStateFcn = &setMockDeviceExecutionState;
@@ -55,6 +59,10 @@ struct GdiDllFixture {
         *getFailOnSetContextSchedulingPriorityCallFcn() = false;
         *getSetContextSchedulingPriorityDataCallFcn() = {};
         *getRegisterTrimNotificationFailCallFcn() = false;
+        *getSubmitWaitForSyncObjectsToHwQueueDataFcn() = {};
+        *getWaitForSynchronizationObjectFromGpuDataFcn() = {};
+        *getSubmitWaitForSyncObjectsToHwQueueFailCallFcn() = false;
+        *getWaitForSynchronizationObjectFromGpuFailCallFcn() = false;
     }
 
     void tearDown() {
@@ -67,6 +75,10 @@ struct GdiDllFixture {
         *getFailOnSetContextSchedulingPriorityCallFcn() = false;
         *getSetContextSchedulingPriorityDataCallFcn() = {};
         *getRegisterTrimNotificationFailCallFcn() = false;
+        *getSubmitWaitForSyncObjectsToHwQueueDataFcn() = {};
+        *getWaitForSynchronizationObjectFromGpuDataFcn() = {};
+        *getSubmitWaitForSyncObjectsToHwQueueFailCallFcn() = false;
+        *getWaitForSynchronizationObjectFromGpuFailCallFcn() = false;
     }
 
     decltype(&setMockSizes) setSizesFcn = nullptr;
@@ -84,6 +96,8 @@ struct GdiDllFixture {
     decltype(&getCreateHwQueueData) getCreateHwQueueDataFcn = nullptr;
     decltype(&getDestroyHwQueueData) getDestroyHwQueueDataFcn = nullptr;
     decltype(&getSubmitCommandToHwQueueData) getSubmitCommandToHwQueueDataFcn = nullptr;
+    decltype(&getSubmitWaitForSyncObjectsToHwQueueData) getSubmitWaitForSyncObjectsToHwQueueDataFcn = nullptr;
+    decltype(&getWaitForSynchronizationObjectFromGpuData) getWaitForSynchronizationObjectFromGpuDataFcn = nullptr;
     decltype(&getDestroySynchronizationObjectData) getDestroySynchronizationObjectDataFcn = nullptr;
     decltype(&getMonitorFenceCpuFenceAddress) getMonitorFenceCpuFenceAddressFcn = nullptr;
     decltype(&getMonitorFenceCpuAddressSelector) getMonitorFenceCpuAddressSelectorFcn = nullptr;
@@ -91,6 +105,8 @@ struct GdiDllFixture {
     decltype(&getFailOnSetContextSchedulingPriorityCall) getFailOnSetContextSchedulingPriorityCallFcn = nullptr;
     decltype(&getSetContextSchedulingPriorityDataCall) getSetContextSchedulingPriorityDataCallFcn = nullptr;
     decltype(&getRegisterTrimNotificationFailCall) getRegisterTrimNotificationFailCallFcn = nullptr;
+    decltype(&getSubmitWaitForSyncObjectsToHwQueueFailCall) getSubmitWaitForSyncObjectsToHwQueueFailCallFcn = nullptr;
+    decltype(&getWaitForSynchronizationObjectFromGpuFailCall) getWaitForSynchronizationObjectFromGpuFailCallFcn = nullptr;
     decltype(&getLastPriority) getLastPriorityFcn = nullptr;
     decltype(&setAdapterBDF) setAdapterBDFFcn = nullptr;
     decltype(&setMockDeviceExecutionState) setMockDeviceExecutionStateFcn = nullptr;

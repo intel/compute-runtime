@@ -41,6 +41,17 @@ void WddmInterface::destroyMonitorFence(D3DKMT_HANDLE fenceHandle) {
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
 }
 
+bool WddmInterface::waitForSyncObjectsFromGpu(OsContextWin &osContext, uint32_t objectCount, const D3DKMT_HANDLE *objectHandles, const uint64_t *fenceValues) {
+    D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU waitFromGpu = {};
+    waitFromGpu.hContext = osContext.getWddmContextHandle();
+    waitFromGpu.ObjectCount = objectCount;
+    waitFromGpu.ObjectHandleArray = objectHandles;
+    waitFromGpu.MonitoredFenceValueArray = fenceValues;
+
+    auto status = wddm.getGdi()->waitForSynchronizationObjectFromGpu(&waitFromGpu);
+    return status == STATUS_SUCCESS;
+}
+
 bool WddmInterface20::createHwQueue(OsContextWin &osContext) {
     return false;
 }
@@ -188,6 +199,17 @@ bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandH
     }
 
     auto status = wddm.getGdi()->submitCommandToHwQueue(&submitCommand);
+    return status == STATUS_SUCCESS;
+}
+
+bool WddmInterface23::waitForSyncObjectsFromGpu(OsContextWin &osContext, uint32_t objectCount, const D3DKMT_HANDLE *objectHandles, const uint64_t *fenceValues) {
+    D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE waitForSyncObjects = {};
+    waitForSyncObjects.hHwQueue = osContext.getHwQueue().handle;
+    waitForSyncObjects.ObjectCount = objectCount;
+    waitForSyncObjects.ObjectHandleArray = objectHandles;
+    waitForSyncObjects.FenceValueArray = fenceValues;
+
+    auto status = wddm.getGdi()->submitWaitForSyncObjectsToHwQueue(&waitForSyncObjects);
     return status == STATUS_SUCCESS;
 }
 

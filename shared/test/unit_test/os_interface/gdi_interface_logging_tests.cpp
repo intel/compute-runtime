@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1271,6 +1271,31 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSubmitCommandT
                    << " " << std::endl;
     capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *>(status, &param);
+    std::string logExitStr = capture.getCapturedStdout();
+    EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
+}
+
+TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSubmitWaitForSyncObjectsToHwQueueThenExpectCorrectStrings) {
+    D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE param = {};
+    param.ObjectCount = 3;
+
+    std::stringstream expectedOutput;
+    expectedOutput << logEnterBegin
+                   << "D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE ObjectCount 3"
+                   << std::endl;
+
+    StreamCapture capture;
+    capture.captureStdout();
+    GdiLogging::logEnter<CONST D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE *>(&param);
+    std::string logEnterStr = capture.getCapturedStdout();
+    EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
+
+    expectedOutput.str(std::string());
+    expectedOutput << logExitBegin
+                   << std::hex << status
+                   << " " << std::endl;
+    capture.captureStdout();
+    GdiLogging::logExit<CONST D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE *>(status, &param);
     std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }

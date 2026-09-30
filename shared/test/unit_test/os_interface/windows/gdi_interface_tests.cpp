@@ -64,6 +64,23 @@ TEST(GdiInterface, givenPrintKmdTimesWhenCallThkWrapperThenRecordTime) {
     EXPECT_TRUE(output.find("\n--- Gdi statistics ---\n") != std::string::npos);
 }
 
+TEST(GdiInterface, givenAllHwQueueFunctionsExportedWhenSettingUpHwQueueProcAddressesThenTrueIsReturned) {
+    MockGdi gdi;
+    EXPECT_TRUE(gdi.setupHwQueueProcAddresses());
+    EXPECT_NE(nullptr, gdi.createHwQueue.mFunc);
+    EXPECT_NE(nullptr, gdi.destroyHwQueue.mFunc);
+    EXPECT_NE(nullptr, gdi.submitCommandToHwQueue.mFunc);
+    EXPECT_NE(nullptr, gdi.submitWaitForSyncObjectsToHwQueue.mFunc);
+}
+
+TEST(GdiInterface, givenAnyHwQueueFunctionNotExportedWhenSettingUpHwQueueProcAddressesThenFalseIsReturned) {
+    for (const auto *procName : {"D3DKMTCreateHwQueue", "D3DKMTDestroyHwQueue", "D3DKMTSubmitCommandToHwQueue", "D3DKMTSubmitWaitForSyncObjectsToHwQueue"}) {
+        MockGdi gdi;
+        gdi.hideProcAddress(procName);
+        EXPECT_FALSE(gdi.setupHwQueueProcAddresses()) << procName;
+    }
+}
+
 TEST(ThkWrapperTest, givenThkWrapperWhenConstructedThenmFuncIsInitialized) {
     GdiProfiler profiler{};
     NEO::ThkWrapper<void *> wrapper(profiler, "nullptr", 0u);

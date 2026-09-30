@@ -126,6 +126,7 @@ class Wddm : public DriverModel {
 
     bool waitExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> waits) override;
     bool signalExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> signals) override;
+    MOCKABLE_VIRTUAL bool waitExternalSemaphoresFromGpu(OsContextWin &osContext, std::span<const ExternalSemaphoreOperation> waits);
 
     bool configureDeviceAddressSpace();
     const FeatureTable &getFeatureTable() const {

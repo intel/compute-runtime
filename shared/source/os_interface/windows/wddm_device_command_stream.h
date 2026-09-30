@@ -43,6 +43,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     bool waitUserFenceSupported(SyncFence *syncFence) override;
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *fence) override;
     void allocateUserFence(std::unique_ptr<SyncFence> &mf) override;
+    bool submitExternalSemaphoreWaits(std::span<const ExternalSemaphoreOperation> waits) override;
     using CommandStreamReceiver::pageTableManager;
 
   protected:

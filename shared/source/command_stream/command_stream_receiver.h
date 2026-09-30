@@ -22,6 +22,7 @@
 #include "shared/source/host_function/host_function.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/os_interface/defs.h"
+#include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/user_fence.h"
 #include "shared/source/utilities/spinlock.h"
 
@@ -31,6 +32,7 @@
 #include <functional>
 #include <mutex>
 #include <optional>
+#include <span>
 
 namespace aub_stream {
 struct AllocationParams;
@@ -676,6 +678,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         this->initDirectSubmission();
     }
 
+    bool isExternalSemaphoreGpuWaitAllowed() const { return externalSemaphoreGpuWaitAllowed; }
+    virtual bool submitExternalSemaphoreWaits(std::span<const ExternalSemaphoreOperation> waits) { return false; }
+
   protected:
     MOCKABLE_VIRTUAL void startHostFunctionWorker(HostFunctionAllocator *allocator);
 
@@ -839,6 +844,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool csrSurfaceProgrammingDone = false;
     bool latestFlushIsTaskCountUpdateOnly = false;
     bool residencyContainerDuplicateRemovalRequired = false;
+    bool externalSemaphoreGpuWaitAllowed = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandStreamReceiver>);

@@ -33,6 +33,7 @@ class WddmInterface {
     virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) = 0;
     virtual bool createFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) = 0;
     virtual bool createNativeFence(MonitoredFence &monitorFence, bool useForWalkerInterrupt) { return false; };
+    virtual bool waitForSyncObjectsFromGpu(OsContextWin &osContext, uint32_t objectCount, const D3DKMT_HANDLE *objectHandles, const uint64_t *fenceValues);
     Wddm &wddm;
 };
 
@@ -58,6 +59,7 @@ class WddmInterface23 : public WddmInterface {
     bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
     bool createFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) override;
+    bool waitForSyncObjectsFromGpu(OsContextWin &osContext, uint32_t objectCount, const D3DKMT_HANDLE *objectHandles, const uint64_t *fenceValues) override;
     virtual bool createSyncObject(MonitoredFence &monitorFence);
 };
 

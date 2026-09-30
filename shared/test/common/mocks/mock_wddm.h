@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
+#include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
@@ -19,6 +20,7 @@
 #include <limits>
 #include <memory>
 #include <unordered_set>
+#include <vector>
 
 namespace NEO {
 
@@ -135,6 +137,15 @@ class WddmMock : public Wddm {
         }
         return isNativeFenceAvailableReturnValue;
     }
+    bool waitExternalSemaphoresFromGpu(OsContextWin &osContext, std::span<const ExternalSemaphoreOperation> waits) override {
+        waitExternalSemaphoresFromGpuCalled++;
+        waitExternalSemaphoresFromGpuOsContext = &osContext;
+        waitExternalSemaphoresFromGpuWaits.assign(waits.begin(), waits.end());
+        if (callBaseWaitExternalSemaphoresFromGpu) {
+            return Wddm::waitExternalSemaphoresFromGpu(osContext, waits);
+        }
+        return waitExternalSemaphoresFromGpuReturnValue;
+    }
     LUID getAdapterLuid() { return hwDeviceId->getAdapterLuid(); }
     bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) override;
 
@@ -248,6 +259,11 @@ class WddmMock : public Wddm {
     bool failFreeGpuVirtualAddress = false;
     bool callBaseIsNativeFenceAvailable = true;
     bool isNativeFenceAvailableReturnValue = false;
+    uint32_t waitExternalSemaphoresFromGpuCalled = 0;
+    OsContextWin *waitExternalSemaphoresFromGpuOsContext = nullptr;
+    std::vector<ExternalSemaphoreOperation> waitExternalSemaphoresFromGpuWaits;
+    bool callBaseWaitExternalSemaphoresFromGpu = true;
+    bool waitExternalSemaphoresFromGpuReturnValue = true;
     bool failReserveGpuVirtualAddress = false;
     bool failCreateAllocation = false;
 };

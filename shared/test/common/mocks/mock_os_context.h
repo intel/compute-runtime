@@ -52,10 +52,13 @@ class OsContextMock : public OsContext {
         return mockDirectSubmissionSupported;
     }
 
+    bool isExternalSemaphoreGpuWaitSupported() const override { return mockExternalSemaphoreGpuWaitSupported; }
+
     uint64_t offlineDumpCtxId = 0;
 
     bool callBaseIsDirectSubmissionSupported = true;
     bool mockDirectSubmissionSupported = false;
+    bool mockExternalSemaphoreGpuWaitSupported = false;
 };
 
 } // namespace NEO

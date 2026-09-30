@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_wddm_interface20.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/test.h"
@@ -698,6 +699,72 @@ TEST_F(WddmExternalSemaphoreBatchTest, givenKmdSignalFailsWhenSignalingMoreSemap
 
     EXPECT_FALSE(wddm->signalExternalSemaphoresFromCpu(operations));
     EXPECT_EQ(expectedCalls, MockSyncGdi::signalFromCpuCallCount);
+}
+
+struct WddmExternalSemaphoreGpuWaitTest : public WddmExternalSemaphoreTest {
+    void SetUp() override {
+        WddmExternalSemaphoreTest::SetUp();
+        mockWddmInterface = new WddmMockInterface20(*wddm);
+        mockWddmInterface->callBaseWaitForSyncObjectsFromGpu = false;
+        wddm->wddmInterface.reset(mockWddmInterface);
+    }
+
+    WddmMockInterface20 *mockWddmInterface = nullptr;
+    uint64_t lastSignaledValue = 0u;
+};
+
+TEST_F(WddmExternalSemaphoreGpuWaitTest, givenMultipleSemaphoresWithinKmdLimitWhenWaitingForThemFromGpuThenSingleKmdWaitIsQueuedForAllOfThem) {
+    auto extSem0 = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::D3d12Fence, &lastSignaledValue);
+    auto extSem1 = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::TimelineSemaphoreWin32, &lastSignaledValue);
+    extSem0->syncHandle = 0x1234;
+    extSem1->syncHandle = 0x5678;
+
+    const ExternalSemaphoreOperation waits[] = {{extSem0.get(), 42u}, {extSem1.get(), 43u}};
+    EXPECT_TRUE(wddm->waitExternalSemaphoresFromGpu(*osContext, waits));
+    EXPECT_EQ(1u, mockWddmInterface->waitForSyncObjectsFromGpuCalled);
+    EXPECT_EQ(osContext.get(), mockWddmInterface->waitForSyncObjectsFromGpuOsContext);
+    EXPECT_EQ((std::vector<D3DKMT_HANDLE>{0x1234, 0x5678}), mockWddmInterface->waitForSyncObjectsFromGpuHandles);
+    EXPECT_EQ((std::vector<uint64_t>{42u, 43u}), mockWddmInterface->waitForSyncObjectsFromGpuFenceValues);
+}
+
+TEST_F(WddmExternalSemaphoreGpuWaitTest, givenNoWaitsWhenWaitingForExternalSemaphoresFromGpuThenTrueIsReturnedAndKmdIsNotCalled) {
+    EXPECT_TRUE(wddm->waitExternalSemaphoresFromGpu(*osContext, {}));
+    EXPECT_EQ(0u, mockWddmInterface->waitForSyncObjectsFromGpuCalled);
+}
+
+struct WddmExternalSemaphoreGpuWaitBatchTest : public WddmExternalSemaphoreGpuWaitTest {
+    void SetUp() override {
+        WddmExternalSemaphoreGpuWaitTest::SetUp();
+        for (uint32_t i = 0; i < numSemaphores; ++i) {
+            auto &semaphore = semaphores.emplace_back(std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::D3d12Fence, &lastSignaledValue));
+            semaphore->syncHandle = i;
+            operations.push_back({semaphore.get(), i});
+        }
+    }
+
+    static constexpr uint32_t maxPerCall = D3DDDI_MAX_OBJECT_WAITED_ON;
+    static constexpr uint32_t numSemaphores = 2 * maxPerCall + 1; // full KMD calls and a partial one
+    std::vector<std::unique_ptr<MockWindowsExternalSemaphore>> semaphores;
+    std::vector<ExternalSemaphoreOperation> operations;
+};
+
+TEST_F(WddmExternalSemaphoreGpuWaitBatchTest, givenMoreSemaphoresThanKmdLimitWhenWaitingFromGpuThenWaitIsSplitIntoCallsWithinLimitOnTheSameContext) {
+    EXPECT_TRUE(wddm->waitExternalSemaphoresFromGpu(*osContext, operations));
+
+    EXPECT_EQ((std::vector<uint32_t>{maxPerCall, maxPerCall, 1u}), mockWddmInterface->waitForSyncObjectsFromGpuObjectCounts);
+    EXPECT_EQ(osContext.get(), mockWddmInterface->waitForSyncObjectsFromGpuOsContext);
+    ASSERT_EQ(numSemaphores, mockWddmInterface->waitForSyncObjectsFromGpuHandles.size());
+    for (uint32_t i = 0; i < numSemaphores; i++) {
+        EXPECT_EQ(i, mockWddmInterface->waitForSyncObjectsFromGpuHandles[i]);
+        EXPECT_EQ(i, mockWddmInterface->waitForSyncObjectsFromGpuFenceValues[i]);
+    }
+}
+
+TEST_F(WddmExternalSemaphoreGpuWaitBatchTest, givenKmdWaitFailsWhenWaitingOnMoreSemaphoresThanKmdLimitFromGpuThenFalseIsReturnedAndRemainingWaitsAreSkipped) {
+    mockWddmInterface->waitForSyncObjectsFromGpuReturnValue = false;
+
+    EXPECT_FALSE(wddm->waitExternalSemaphoresFromGpu(*osContext, operations));
+    EXPECT_EQ(1u, mockWddmInterface->waitForSyncObjectsFromGpuCalled);
 }
 
 } // namespace NEO

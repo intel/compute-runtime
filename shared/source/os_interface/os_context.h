@@ -136,6 +136,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     void setExclusivelyHpContext() { exclusivelyHpContext = true; }
     bool isExclusivelyHpContext() const { return exclusivelyHpContext; }
     virtual bool isPriorityChangeSupported() const { return false; }
+    virtual bool isExternalSemaphoreGpuWaitSupported() const { return false; }
     virtual void onFirstSubmission() {}
 
   protected:

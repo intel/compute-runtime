@@ -8,10 +8,12 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -552,6 +554,245 @@ HWTEST_F(ExternalSemaphoreTest, givenSemaphoreImportedToDifferentDeviceWhenAppen
     EXPECT_EQ(0u, neoSemaphore0->acquireSignalFenceValueCalledTimes);
     EXPECT_EQ(0u, neoSemaphore1->acquireWaitFenceValueCalledTimes);
     EXPECT_EQ(0u, neoSemaphore1->acquireSignalFenceValueCalledTimes);
+}
+
+struct ExternalSemaphoreKmdWaitTest : public ExternalSemaphoreTest {
+    std::unique_ptr<L0::ult::CommandList> createImmediateCmdList(ze_command_queue_flags_t flags) {
+        ze_command_queue_desc_t queueDesc = {};
+        queueDesc.flags = flags;
+        ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
+        std::unique_ptr<L0::ult::CommandList> cmdList(CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        return cmdList;
+    }
+
+    template <typename FamilyType>
+    NEO::UltCommandStreamReceiver<FamilyType> &getCsrWithExternalSemaphoreGpuWaitAllowed(L0::CommandList &cmdList) {
+        auto &csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> &>(*cmdList.getCsr(false));
+        csr.externalSemaphoreGpuWaitAllowed = true;
+        return csr;
+    }
+};
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenExternalSemaphoreGpuWaitAllowedWhenAppendWaitExternalSemaphoresIsCalledOnImmediateCmdListThenAllWaitsAreSubmittedToCsrBeforeCommandsAreFlushed) {
+    auto cmdList = createImmediateCmdList(0);
+    ASSERT_NE(nullptr, cmdList);
+    auto &csr = getCsrWithExternalSemaphoreGpuWaitAllowed<FamilyType>(*cmdList);
+
+    ExternalSemaphoreImp semaphore0;
+    ExternalSemaphoreImp semaphore1;
+    semaphore0.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    auto neoSemaphore0 = static_cast<MockNeoExtSemaphore *>(semaphore0.neoExternalSemaphore.get());
+    semaphore1.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    auto neoSemaphore1 = static_cast<MockNeoExtSemaphore *>(semaphore1.neoExternalSemaphore.get());
+    neoSemaphore0->acquireWaitFenceValueReturnValue = 11u;
+    neoSemaphore1->acquireWaitFenceValueReturnValue = 22u;
+
+    ze_external_semaphore_ext_handle_t hSemaphores[] = {semaphore0.toHandle(), semaphore1.toHandle()};
+    ze_external_semaphore_wait_params_ext_t waitParams[2] = {};
+    waitParams[0].value = 1u;
+    waitParams[1].value = 2u;
+
+    ze_result_t result = cmdList->appendWaitExternalSemaphores(2, hSemaphores, waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, neoSemaphore0->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(1u, neoSemaphore0->lastAcquireWaitFenceValueArg);
+    EXPECT_EQ(1u, neoSemaphore1->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(2u, neoSemaphore1->lastAcquireWaitFenceValueArg);
+
+    EXPECT_EQ(1u, csr.submitExternalSemaphoreWaitsCalled);
+    ASSERT_EQ(2u, csr.submittedExternalSemaphoreWaits.size());
+    EXPECT_EQ(neoSemaphore0, csr.submittedExternalSemaphoreWaits[0].semaphore);
+    EXPECT_EQ(11u, csr.submittedExternalSemaphoreWaits[0].fenceValue);
+    EXPECT_EQ(neoSemaphore1, csr.submittedExternalSemaphoreWaits[1].semaphore);
+    EXPECT_EQ(22u, csr.submittedExternalSemaphoreWaits[1].fenceValue);
+    EXPECT_GT(csr.peekTaskCount(), csr.taskCountAtExternalSemaphoreWaitsSubmission);
+
+    EXPECT_EQ(0u, neoSemaphore0->cpuWaitCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore1->cpuWaitCalledTimes);
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenExternalSemaphoreGpuWaitAllowedWhenAppendWaitExternalSemaphoresIsCalledOnInOrderImmediateCmdListThenInOrderCounterIsSignaled) {
+    auto cmdList = createImmediateCmdList(ZE_COMMAND_QUEUE_FLAG_IN_ORDER);
+    ASSERT_NE(nullptr, cmdList);
+    ASSERT_TRUE(cmdList->isInOrderExecutionEnabled());
+    auto &csr = getCsrWithExternalSemaphoreGpuWaitAllowed<FamilyType>(*cmdList);
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+
+    auto counterBefore = cmdList->inOrderExecInfo->getCounterValue();
+
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    ze_result_t result = cmdList->appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, csr.submitExternalSemaphoreWaitsCalled);
+    EXPECT_EQ(counterBefore + 1, cmdList->inOrderExecInfo->getCounterValue());
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenKmdWaitSubmissionFailureWhenAppendWaitExternalSemaphoresIsCalledOnImmediateCmdListThenErrorIsReturnedAndNothingIsFlushed) {
+    auto cmdList = createImmediateCmdList(0);
+    ASSERT_NE(nullptr, cmdList);
+    auto &csr = getCsrWithExternalSemaphoreGpuWaitAllowed<FamilyType>(*cmdList);
+    csr.submitExternalSemaphoreWaitsReturnValue = false;
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+
+    auto taskCountBefore = csr.peekTaskCount();
+
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    ze_result_t result = cmdList->appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    EXPECT_EQ(1u, csr.submitExternalSemaphoreWaitsCalled);
+    EXPECT_EQ(taskCountBefore, csr.peekTaskCount());
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenImmediateResourcesInitializationFailureWhenAppendWaitExternalSemaphoresIsCalledOnImmediateCmdListThenErrorIsReturnedAndFenceValueIsNotAcquired) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
+    device->setFirstImmCmdlistCreated();
+
+    auto cmdList = createImmediateCmdList(0);
+    ASSERT_NE(nullptr, cmdList);
+    ASSERT_EQ(nullptr, cmdList->cmdQImmediate);
+    cmdList->immediateResourcesInitializationResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    auto neoSemaphore = static_cast<MockNeoExtSemaphore *>(semaphore.neoExternalSemaphore.get());
+
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    ze_result_t result = cmdList->appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    EXPECT_EQ(nullptr, cmdList->cmdQImmediate);
+    EXPECT_EQ(0u, neoSemaphore->acquireWaitFenceValueCalledTimes);
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenImmediateCmdListWithDeferredResourcesInitializationWhenAppendWaitExternalSemaphoresIsCalledThenResourcesAreInitializedAndSuccessIsReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
+    device->setFirstImmCmdlistCreated();
+
+    auto cmdList = createImmediateCmdList(0);
+    ASSERT_NE(nullptr, cmdList);
+    ASSERT_EQ(nullptr, cmdList->cmdQImmediate);
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+
+    ze_result_t result = cmdList->appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, cmdList->cmdQImmediate);
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenWaitEventsWithoutHandlesWhenAppendWaitExternalSemaphoresIsCalledOnImmediateCmdListThenInvalidArgumentIsReturnedAndWaitIsNotSubmitted) {
+    auto cmdList = createImmediateCmdList(0);
+    ASSERT_NE(nullptr, cmdList);
+    auto &csr = getCsrWithExternalSemaphoreGpuWaitAllowed<FamilyType>(*cmdList);
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    auto neoSemaphore = static_cast<MockNeoExtSemaphore *>(semaphore.neoExternalSemaphore.get());
+
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    ze_result_t result = cmdList->appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 1, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    EXPECT_EQ(0u, neoSemaphore->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(0u, csr.submitExternalSemaphoreWaitsCalled);
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenCounterBasedSignalEventOnOutOfOrderImmediateCmdListWhenAppendWaitExternalSemaphoresIsCalledThenInvalidArgumentIsReturnedAndWaitIsNotSubmitted) {
+    auto cmdList = createImmediateCmdList(0);
+    ASSERT_NE(nullptr, cmdList);
+    ASSERT_FALSE(cmdList->isInOrderExecutionEnabled());
+    auto &csr = getCsrWithExternalSemaphoreGpuWaitAllowed<FamilyType>(*cmdList);
+
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+    ze_event_handle_t hEvent = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &hEvent));
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    ze_result_t result = cmdList->appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, hEvent, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(0u, csr.submitExternalSemaphoreWaitsCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(hEvent));
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenSemaphoreImportedToDifferentDeviceWhenAppendWaitExternalSemaphoresIsCalledOnImmediateCmdListThenInvalidArgumentIsReturnedAndNothingIsSubmitted) {
+    auto cmdList = createImmediateCmdList(0);
+    ASSERT_NE(nullptr, cmdList);
+    auto &csr = getCsrWithExternalSemaphoreGpuWaitAllowed<FamilyType>(*cmdList);
+    auto taskCountBefore = csr.peekTaskCount();
+
+    ExternalSemaphoreImp semaphore0;
+    ExternalSemaphoreImp semaphore1;
+    semaphore0.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    NEO::OSInterface otherDeviceOsInterface;
+    semaphore1.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(&otherDeviceOsInterface);
+
+    ze_external_semaphore_ext_handle_t hSemaphores[] = {semaphore0.toHandle(), semaphore1.toHandle()};
+    ze_external_semaphore_wait_params_ext_t waitParams[2] = {};
+
+    ze_result_t result = cmdList->appendWaitExternalSemaphores(2, hSemaphores, waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(0u, csr.submitExternalSemaphoreWaitsCalled);
+    EXPECT_EQ(taskCountBefore, csr.peekTaskCount());
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenExternalSemaphoreGpuWaitNotAllowedWhenAppendWaitExternalSemaphoresIsCalledOnImmediateCmdListThenWaitHostFunctionIsAppended) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ASSERT_FALSE(csr.isExternalSemaphoreGpuWaitAllowed());
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, &csr, &queueDesc);
+
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+
+    ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, cmdList.appendHostFunctionCalledTimes);
+    EXPECT_EQ(0u, csr.submitExternalSemaphoreWaitsCalled);
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenExternalSemaphoreGpuWaitAllowedWhenAppendWaitExternalSemaphoresIsCalledOnRegularCmdListThenWaitHostFunctionIsAppended) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.externalSemaphoreGpuWaitAllowed = true;
+
+    MockCommandListExtSem<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+
+    ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, cmdList.appendHostFunctionCalledTimes);
+    EXPECT_EQ(0u, csr.submitExternalSemaphoreWaitsCalled);
 }
 
 } // namespace ult

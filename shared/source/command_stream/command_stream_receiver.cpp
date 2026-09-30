@@ -269,6 +269,8 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 void CommandStreamReceiver::setupContext(OsContext &osContext) {
     this->osContext = &osContext;
     this->skipPreemptionAllocation = this->skipPreemptionAllocation && osContext.isLatePreemptionStartTarget();
+    this->externalSemaphoreGpuWaitAllowed = !debugManager.flags.ForceExternalSemaphoreHostFunctionWait.get() &&
+                                            osContext.isExternalSemaphoreGpuWaitSupported();
 }
 
 void CommandStreamReceiver::makeResidentPreemptionAllocation() {

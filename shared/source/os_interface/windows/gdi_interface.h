@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,7 @@ class Gdi {
     DEFINE_THK_WRAPPER(IN OUT D3DKMT_CREATEHWQUEUE *, createHwQueue);
     DEFINE_THK_WRAPPER(IN CONST D3DKMT_DESTROYHWQUEUE *, destroyHwQueue);
     DEFINE_THK_WRAPPER(IN CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *, submitCommandToHwQueue);
+    DEFINE_THK_WRAPPER(IN CONST D3DKMT_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE *, submitWaitForSyncObjectsToHwQueue);
 
     // For debug purposes
     DEFINE_THK_WRAPPER(IN OUT D3DKMT_GETDEVICESTATE *, getDeviceState);

@@ -45,6 +45,7 @@
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 
 #include "encode_surface_state_args.h"
 
@@ -1313,6 +1314,84 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendHostFunction(
     const bool requireTaskCountUpdate = false;
     const bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, parameters.waitEventParams.relaxedOrderingAllowed);
     return flushImmediate(ret, performMigration, stallingCmdsForRelaxedOrdering, parameters.waitEventParams.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, copyOffload, hSignalEvent, requireTaskCountUpdate, nullptr, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
+                                                                                        const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
+                                                                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (!ExternalSemaphoreImp::areImportedToDevice(*this->device, numExternalSemaphores, hSemaphores)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    const bool copyOffload = false;
+
+    auto csr = getCsr(copyOffload, ret);
+    if (csr == nullptr) {
+        return ret;
+    }
+
+    if (!csr->isExternalSemaphoreGpuWaitAllowed()) {
+        return CommandListCoreFamily<gfxCoreFamily>::appendWaitExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
+    }
+
+    ret = checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    CmdListWaitEventParameters waitEventParams{
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false};
+    ret = this->addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventParams);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    auto signalEvent = Event::fromHandle(hSignalEvent);
+    const bool skipAddingSignalEventsToResidency = false;
+    const bool skipBarrierForEndProfiling = true;
+    const bool copyQueue = this->isCopyOnly(copyOffload);
+
+    if (!this->handleCounterBasedEventOperations(signalEvent, skipAddingSignalEventsToResidency)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ExternalSemaphoreOperationData operationData{};
+    for (uint32_t i = 0; i < numExternalSemaphores; ++i) {
+        const auto semaphore = static_cast<ExternalSemaphoreImp *>(hSemaphores[i]);
+        const auto fenceValue = semaphore->neoExternalSemaphore->acquireWaitFenceValue(params[i].value);
+        operationData.add(*semaphore, fenceValue);
+    }
+    if (!csr->submitExternalSemaphoreWaits(operationData.operations)) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    this->appendSynchronizedDispatchInitializationSection();
+
+    this->appendEventForProfiling(signalEvent, nullptr, true, skipBarrierForEndProfiling, skipAddingSignalEventsToResidency, copyQueue);
+    this->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipBarrierForEndProfiling, skipAddingSignalEventsToResidency, copyQueue);
+    this->addToMappedEventList(signalEvent);
+
+    if (this->isInOrderExecutionEnabled()) {
+        this->appendSignalInOrderDependencyCounter(signalEvent, copyOffload, false, false, false);
+    }
+
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = copyOffload,
+        .apiRequiredExternalGraphEvent = false};
+    this->handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
+
+    this->appendSynchronizedDispatchCleanupSection();
+
+    const bool hasRelaxedOrderingDependencies = false;
+    const bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, hasRelaxedOrderingDependencies);
+    return flushImmediate(ret, false, hasStallingCmds, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, copyOffload, hSignalEvent, true, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

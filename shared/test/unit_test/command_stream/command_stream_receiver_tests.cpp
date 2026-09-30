@@ -7867,3 +7867,43 @@ HWTEST_F(CommandStreamReceiverImmediateSWTagsTest, givenEnableSWTagsWhenFlushBcs
     EXPECT_FALSE(commandStreamReceiver.isMadeResident(bxmlHeap));
     EXPECT_FALSE(commandStreamReceiver.isMadeResident(tagHeap));
 }
+
+TEST_F(CommandStreamReceiverTest, givenBaseCommandStreamReceiverWhenUsingExternalSemaphoreGpuWaitThenItIsNotAllowedAndSubmissionFails) {
+    MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    EXPECT_FALSE(csr.isExternalSemaphoreGpuWaitAllowed());
+    EXPECT_FALSE(csr.submitExternalSemaphoreWaits({}));
+}
+
+TEST_F(CommandStreamReceiverTest, givenOsContextSupportingExternalSemaphoreGpuWaitWhenSettingUpContextThenExternalSemaphoreGpuWaitIsAllowed) {
+    OsContextMock osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.mockExternalSemaphoreGpuWaitSupported = true;
+
+    MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.setupContext(osContext);
+
+    EXPECT_TRUE(csr.isExternalSemaphoreGpuWaitAllowed());
+}
+
+TEST_F(CommandStreamReceiverTest, givenOsContextNotSupportingExternalSemaphoreGpuWaitWhenSettingUpContextThenExternalSemaphoreGpuWaitIsNotAllowed) {
+    OsContextMock osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.mockExternalSemaphoreGpuWaitSupported = false;
+
+    MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.setupContext(osContext);
+
+    EXPECT_FALSE(csr.isExternalSemaphoreGpuWaitAllowed());
+}
+
+TEST_F(CommandStreamReceiverTest, givenForceExternalSemaphoreHostFunctionWaitAndOsContextSupportingExternalSemaphoreGpuWaitWhenSettingUpContextThenExternalSemaphoreGpuWaitIsNotAllowed) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForceExternalSemaphoreHostFunctionWait.set(true);
+
+    OsContextMock osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.mockExternalSemaphoreGpuWaitSupported = true;
+
+    MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.setupContext(osContext);
+
+    EXPECT_FALSE(csr.isExternalSemaphoreGpuWaitAllowed());
+}

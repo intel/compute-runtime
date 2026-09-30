@@ -230,6 +230,12 @@ TEST(OSContext, givenOsContextWithPriorityLevelWhenOverridingAgainThenPriorityLe
     delete osContext;
 }
 
+TEST(OSContext, givenOsContextWhenCheckingExternalSemaphoreGpuWaitSupportThenFalseIsReturned) {
+    auto pOsContext = OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
+    EXPECT_FALSE(pOsContext->isExternalSemaphoreGpuWaitSupported());
+    delete pOsContext;
+}
+
 struct DeferredOsContextCreationTests : ::testing::Test {
     void SetUp() override {
         device = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};

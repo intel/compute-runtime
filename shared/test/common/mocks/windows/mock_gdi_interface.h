@@ -6,8 +6,12 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
+
+#include <memory>
+#include <string>
 
 namespace NEO {
 
@@ -110,6 +114,10 @@ class MockGdi : public Gdi {
         return true;
     }
 
+    void hideProcAddress(const std::string &procName) {
+        gdiDll = std::make_unique<OsLibraryWithHiddenProc>(std::move(gdiDll), procName);
+    }
+
     static D3DDDI_MAKERESIDENT &getMakeResidentArg() {
         static D3DDDI_MAKERESIDENT makeResidentArg;
         return makeResidentArg;
@@ -164,6 +172,23 @@ class MockGdi : public Gdi {
         static D3DKMT_OPENRESOURCE openResource;
         return openResource;
     }
+
+  protected:
+    class OsLibraryWithHiddenProc : public OsLibrary {
+      public:
+        OsLibraryWithHiddenProc(std::unique_ptr<OsLibrary> library, const std::string &hiddenProcName)
+            : library(std::move(library)), hiddenProcName(hiddenProcName) {}
+
+        void *getProcAddress(const std::string &procName) override {
+            return procName == hiddenProcName ? nullptr : library->getProcAddress(procName);
+        }
+        bool isLoaded() override { return library->isLoaded(); }
+        std::string getFullPath() override { return library->getFullPath(); }
+
+      protected:
+        std::unique_ptr<OsLibrary> library;
+        std::string hiddenProcName;
+    };
 };
 
 } // namespace NEO

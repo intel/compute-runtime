@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,6 +94,9 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "D3DKMTSubmitCommandToHwQueue") {
         return reinterpret_cast<void *>(mockD3DKMTSubmitCommandToHwQueue);
     }
+    if (procName == "D3DKMTSubmitWaitForSyncObjectsToHwQueue") {
+        return reinterpret_cast<void *>(mockD3DKMTSubmitWaitForSyncObjectsToHwQueue);
+    }
     if (procName == "D3DKMTMakeResident") {
         return reinterpret_cast<void *>(mockD3DKMTMakeResident);
     }
@@ -166,6 +169,12 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "getSubmitCommandToHwQueueData") {
         return reinterpret_cast<void *>(getSubmitCommandToHwQueueData);
     }
+    if (procName == "getSubmitWaitForSyncObjectsToHwQueueData") {
+        return reinterpret_cast<void *>(getSubmitWaitForSyncObjectsToHwQueueData);
+    }
+    if (procName == "getWaitForSynchronizationObjectFromGpuData") {
+        return reinterpret_cast<void *>(getWaitForSynchronizationObjectFromGpuData);
+    }
     if (procName == "getDestroySynchronizationObjectData") {
         return reinterpret_cast<void *>(getDestroySynchronizationObjectData);
     }
@@ -186,6 +195,12 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     }
     if (procName == "getRegisterTrimNotificationFailCall") {
         return reinterpret_cast<void *>(getRegisterTrimNotificationFailCall);
+    }
+    if (procName == "getSubmitWaitForSyncObjectsToHwQueueFailCall") {
+        return reinterpret_cast<void *>(getSubmitWaitForSyncObjectsToHwQueueFailCall);
+    }
+    if (procName == "getWaitForSynchronizationObjectFromGpuFailCall") {
+        return reinterpret_cast<void *>(getWaitForSynchronizationObjectFromGpuFailCall);
     }
     if (procName == "getLastPriority") {
         return reinterpret_cast<void *>(getLastPriority);

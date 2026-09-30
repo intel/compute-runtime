@@ -1391,6 +1391,19 @@ bool Wddm::signalExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOper
     return success;
 }
 
+bool Wddm::waitExternalSemaphoresFromGpu(OsContextWin &osContext, std::span<const ExternalSemaphoreOperation> waits) {
+    const auto syncObjects = getExternalSemaphoreSyncObjects(waits);
+
+    for (size_t first = 0; first < syncObjects.handles.size(); first += D3DDDI_MAX_OBJECT_WAITED_ON) {
+        const auto count = static_cast<uint32_t>(std::min<size_t>(D3DDDI_MAX_OBJECT_WAITED_ON, syncObjects.handles.size() - first));
+        if (!wddmInterface->waitForSyncObjectsFromGpu(osContext, count, syncObjects.handles.data() + first, syncObjects.fenceValues.data() + first)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool Wddm::isGpuHangDetected(OsContext &osContext) {
     const auto osContextWin = static_cast<OsContextWin *>(&osContext);
     const auto &monitoredFence = osContextWin->getMonitoredFence();

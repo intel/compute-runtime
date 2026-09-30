@@ -2227,3 +2227,23 @@ TEST_F(WddmPagingFenceTest, givenPagingFenceDelayZeroWhenCurrentPagingFenceValue
 
     EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
 }
+
+TEST_F(Wddm20WithMockGdiDllTests, whenWaitingForSyncObjectsFromGpuThenWaitIsQueuedOnWddmContext) {
+    D3DKMT_HANDLE handles[] = {0x10, 0x20};
+    uint64_t fenceValues[] = {3u, 4u};
+    EXPECT_TRUE(wddm->getWddmInterface()->waitForSyncObjectsFromGpu(*osContext, 2u, handles, fenceValues));
+
+    auto waitData = getWaitForSynchronizationObjectFromGpuDataFcn();
+    EXPECT_EQ(osContext->getWddmContextHandle(), waitData->hContext);
+    EXPECT_EQ(2u, waitData->ObjectCount);
+    EXPECT_EQ(handles, waitData->ObjectHandleArray);
+    EXPECT_EQ(fenceValues, waitData->MonitoredFenceValueArray);
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, givenKmdWaitFailureWhenWaitingForSyncObjectsFromGpuThenFalseIsReturned) {
+    *getWaitForSynchronizationObjectFromGpuFailCallFcn() = true;
+
+    D3DKMT_HANDLE handle = 0x10;
+    uint64_t fenceValue = 3u;
+    EXPECT_FALSE(wddm->getWddmInterface()->waitForSyncObjectsFromGpu(*osContext, 1u, &handle, &fenceValue));
+}
