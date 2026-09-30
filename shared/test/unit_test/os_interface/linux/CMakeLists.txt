@@ -13,6 +13,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation_mem_advise_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_bind_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_mm_tests.cpp

@@ -40,6 +40,13 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         return result.ret;
     }
 
+    struct VmPrefetchCall {
+        uint64_t start = 0;
+        uint64_t length = 0;
+        uint32_t region = 0;
+        uint32_t vmId = 0;
+    };
+
     struct CreateGemExtCall {
         MemRegionsVec memClassInstances;
         std::optional<std::vector<unsigned long>> memPolicyNodemask;
@@ -69,6 +76,28 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
             return nullptr;
         }
         return std::make_unique<MemoryInfo>(*memoryRegionsToReturn, drm);
+    }
+
+    bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override {
+        vmBoAdviseCalled++;
+        return vmBoAdviseResult;
+    }
+
+    bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override {
+        vmBoAdviseForChunkingCalled++;
+        return vmBoAdviseResult;
+    }
+
+    bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override {
+        vmPrefetchCalls.push_back({start, length, region, vmId});
+        return vmPrefetchResult;
+    }
+
+    std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override {
+        if (!preferredLocationRegionAvailable) {
+            return std::nullopt;
+        }
+        return MemoryClassInstance{static_cast<uint16_t>(getDrmParamValue(DrmParam::memoryClassDevice)), static_cast<uint16_t>(memoryInstance)};
     }
 
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override {
@@ -166,13 +195,19 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     uint32_t createGemExtHandle = 1u;
     int createGemExtResult = 0;
 
-    uint64_t mmapOffsetToReturn = 0u;
-    uint32_t retrieveMmapOffsetCalled = 0u;
-    bool retrieveMmapOffsetResult = true;
-
     std::optional<std::vector<MemoryRegion>> memoryRegionsToReturn;
 
+    std::vector<VmPrefetchCall> vmPrefetchCalls;
     std::optional<uint32_t> vmAdviseAtomicAttribute = 0u;
+    uint32_t vmBoAdviseCalled = 0u;
+    uint32_t vmBoAdviseForChunkingCalled = 0u;
+    bool vmBoAdviseResult = true;
+    bool vmPrefetchResult = true;
+    bool preferredLocationRegionAvailable = false;
+
+    bool retrieveMmapOffsetResult = true;
+    uint32_t retrieveMmapOffsetCalled = 0u;
+    uint64_t mmapOffsetToReturn = 0u;
 
     std::optional<uint64_t> filledVmBindExtPatIndex;
     std::optional<VmBindParams> receivedVmBind;
