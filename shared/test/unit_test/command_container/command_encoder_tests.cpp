@@ -14,7 +14,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -917,249 +916,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenLocalWorkgroupSizeGreater
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
 }
 
-HWTEST2_F(CommandEncoderTests, givenXe3AndEarlierWhenAskingForHwLocalIdGenerationWithInactiveDimensionsSupportThenItIsNotSupported, IsWithinXeCoreAndXe3Core) {
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported());
-}
-
-HWTEST2_F(CommandEncoderTests, givenXe3pWhenAskingForHwLocalIdGenerationWithInactiveDimensionsSupportThenItIsSupported, IsXe3pCore) {
-    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported());
-}
-
-namespace {
-
-struct InactiveLocalIdDimensionCase {
-    uint32_t activeChannels;
-    std::array<size_t, 3> lws;
-};
-
-inline constexpr InactiveLocalIdDimensionCase inactiveLocalIdDimensionCases[] = {
-    {1, {16, 7, 1}},
-    {1, {15, 7, 1}},
-    {1, {16, 7, 3}},
-    {2, {8, 4, 3}},
-    {2, {8, 3, 7}},
-};
-
-} // namespace
-
-HWTEST2_F(CommandEncoderTests, givenInactiveDimensionGreaterThanOneWhenHwSupportsItThenHwGeneratesLocalIds, IsXe3pCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-
-    for (const auto &testCase : inactiveLocalIdDimensionCases) {
-        uint32_t requiredWalkOrder = 77u;
-        EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(testCase.activeChannels, testCase.lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    }
-}
-
-HWTEST2_F(CommandEncoderTests, givenInactiveDimensionGreaterThanOneWhenPlatformIsBeforeXe3pThenRuntimeMustGenerateLocalIds, IsWithinXeCoreAndXe3Core) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-
-    for (const auto &testCase : inactiveLocalIdDimensionCases) {
-        uint32_t requiredWalkOrder = 77u;
-        EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(testCase.activeChannels, testCase.lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    }
-}
-
-HWTEST2_F(CommandEncoderTests, givenInactiveDimensionsWhenCheckingLocalWorkgroupSizeLimitThenOnlyEmittedDimensionsAreCounted, IsXe3pCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-    constexpr std::array<size_t, 3> lws = {1024, 2, 1};
-    uint32_t requiredWalkOrder = 77u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(1, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(3, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-}
-
-HWTEST2_F(CommandEncoderTests, givenOnlyXChannelEmittedWithNonDegenerateInactiveDimensionWhenHwGeneratesLocalIdsThenXIsOuterWalkDimension, IsXe3pCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-
-    for (const auto &testCase : inactiveLocalIdDimensionCases) {
-        if (testCase.activeChannels != 1u) {
-            continue;
-        }
-        uint32_t requiredWalkOrder = 77u;
-        EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(testCase.activeChannels, testCase.lws.data(), walkOrder, false, requiredWalkOrder, simd));
-
-        const auto selectedOrder = HwWalkOrderHelper::compatibleDimensionOrders[requiredWalkOrder];
-        EXPECT_EQ(HwWalkOrderHelper::x, selectedOrder[2]);
-    }
-}
-
-HWTEST2_F(CommandEncoderTests, givenOnlyXChannelEmittedWithDegenerateInactiveDimensionsWhenWalkOrderIsRestrictedThenXIsStillOuterWalkDimension, IsXe3pCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-    constexpr std::array<size_t, 3> lws = {16, 1, 1};
-    uint32_t requiredWalkOrder = 77u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(1, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(HwWalkOrderHelper::singleDimWalkIndex, requiredWalkOrder);
-}
-
-HWTEST2_F(CommandEncoderTests, givenOnlyXChannelEmittedWithDegenerateInactiveDimensionsWhenWalkOrderIsNotRestrictedThenLinearWalkOrderIsKept, IsWithinXeCoreAndXe3Core) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-    constexpr std::array<size_t, 3> lws = {16, 1, 1};
-    uint32_t requiredWalkOrder = 77u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(1, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-    EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, requiredWalkOrder);
-}
-
-HWTEST2_F(CommandEncoderTests, givenOnlyXAndYChannelsEmittedWithNonDegenerateInactiveDimensionWhenHwGeneratesLocalIdsThenZIsInnerWalkDimension, IsXe3pCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-
-    for (const auto &testCase : inactiveLocalIdDimensionCases) {
-        if (testCase.activeChannels != 2u) {
-            continue;
-        }
-        uint32_t requiredWalkOrder = 77u;
-        EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(testCase.activeChannels, testCase.lws.data(), walkOrder, false, requiredWalkOrder, simd));
-
-        const auto selectedOrder = HwWalkOrderHelper::compatibleDimensionOrders[requiredWalkOrder];
-        EXPECT_EQ(HwWalkOrderHelper::z, selectedOrder[0]);
-    }
-}
-
-HWTEST2_F(CommandEncoderTests, givenXYLocalIdsAndUnitYWhenZIsNotEmittedThenXIsOuterRegardlessOfFullZSize, IsXe3pCore) {
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-
-    for (size_t xSize : {15u, 16u}) {
-        for (size_t zSize : {1u, 4u, 7u}) {
-            const std::array<size_t, 3> lws = {xSize, 1, zSize};
-            uint32_t requiredWalkOrder = 77u;
-            ASSERT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(2, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-            EXPECT_TRUE(requiredWalkOrder == 4u || requiredWalkOrder == 5u);
-        }
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenWorkGroupSpanningXAloneWhenSelectingWalkOrderThenXIsOuterOnlyWhenRestricted) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-    constexpr std::array<size_t, 3> lws = {16, 1, 1};
-    const auto walkOrderRestricted = EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported();
-
-    for (uint32_t activeChannels : {2u, 3u}) {
-        uint32_t requiredWalkOrder = 77u;
-        EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(activeChannels, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-
-        if (walkOrderRestricted) {
-            EXPECT_EQ(HwWalkOrderHelper::x, HwWalkOrderHelper::compatibleDimensionOrders[requiredWalkOrder][2]);
-        } else {
-            EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, requiredWalkOrder);
-        }
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenThreeActiveChannelsAndDegenerateZWhenSelectingWalkOrderThenZIsInnerOnlyWhenRestricted) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-    constexpr std::array<size_t, 3> lws = {16, 16, 1};
-    uint32_t requiredWalkOrder = 77u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(3u, lws.data(), walkOrder, false, requiredWalkOrder, simd));
-
-    if (EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported()) {
-        EXPECT_EQ(HwWalkOrderHelper::z, HwWalkOrderHelper::compatibleDimensionOrders[requiredWalkOrder][0]);
-    } else {
-        EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, requiredWalkOrder);
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenRequestedWalkOrderContradictingXOuterRequirementThenRuntimeMustGenerateLocalIds) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-    constexpr std::array<size_t, 3> lws = {16, 1, 1};
-    uint32_t requiredWalkOrder = 77u;
-
-    const bool walkOrderRestricted = EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported();
-    EXPECT_EQ(walkOrderRestricted,
-              EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(3u, lws.data(), walkOrder, true, requiredWalkOrder, simd));
-
-    if (!walkOrderRestricted) {
-        EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, requiredWalkOrder);
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenRequestedWalkOrderContradictingZInnerRequirementThenRuntimeMustGenerateLocalIds) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {0, 1, 2};
-    constexpr std::array<size_t, 3> lws = {16, 16, 1};
-    uint32_t requiredWalkOrder = 77u;
-
-    const bool walkOrderRestricted = EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported();
-    EXPECT_EQ(walkOrderRestricted,
-              EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(3u, lws.data(), walkOrder, true, requiredWalkOrder, simd));
-
-    if (!walkOrderRestricted) {
-        EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, requiredWalkOrder);
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenXOuterRequirementMetWhenRequestedWalkOrderIsNotZInnerThenZInnerRuleDoesNotApply) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {1, 2, 0};
-    constexpr std::array<size_t, 3> lws = {16, 1, 1};
-    uint32_t requiredWalkOrder = 77u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(3u, lws.data(), walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(4u, requiredWalkOrder);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenRequestedWalkOrderMatchingXOuterRequirementThenItIsHonoured) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableHwGenerationLocalIds.set(1);
-
-    constexpr uint32_t simd = 16;
-    constexpr std::array<uint8_t, 3> walkOrder = {2, 1, 0};
-    constexpr std::array<size_t, 3> lws = {16, 1, 1};
-    uint32_t requiredWalkOrder = 77u;
-
-    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(3u, lws.data(), walkOrder, true, requiredWalkOrder, simd));
-    EXPECT_EQ(5u, requiredWalkOrder);
-}
-
 HWTEST_F(CommandEncoderTests, givenNotify) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
@@ -1588,26 +1344,27 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenEnabledLocalIdsGeneration
     uint32_t workDim = 2;
     uint32_t simd = 8;
 
-    const bool walkOrderRestricted = EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported();
-
     struct WalkOrderTestCase {
         size_t lws[3];
         std::optional<std::array<uint8_t, 3>> inputWalkOrder;
         std::optional<uint32_t> expectedWalkOrder;
-        std::optional<uint32_t> expectedWalkOrderWhenRestricted;
-    } testCases[10] = {
-        {{15, 16, 1}, {{1, 0, 2}}, 4u, 5u}, // WalkOrder: (2, 0, 1)
-        {{15, 16, 1}, std::nullopt, 4u, 5u},
-        {{16, 16, 1}, {{1, 0, 2}}, 2u, 5u},  // WalkOrder: (1, 0, 2)
-        {{16, 16, 1}, std::nullopt, 0u, 3u}, // WalkOrder: (0, 1, 2)
-        {{16, 15, 1}, std::nullopt, 1u, 3u}, // WalkOrder: (0, 2, 1)
-        {{16, 15, 1}, {{0, 1, 2}}, 1u, 3u},
+    } testCases[12] = {
+        {{15, 16, 1}, {{1, 0, 2}}, 4u}, // WalkOrder: (2, 0, 1)
+        {{15, 16, 1}, std::nullopt, 4u},
+        {{16, 16, 1}, {{1, 0, 2}}, 2u},  // WalkOrder: (1, 0, 2)
+        {{16, 16, 1}, std::nullopt, 0u}, // WalkOrder: (0, 1, 2)
+        {{16, 15, 1}, std::nullopt, 1u}, // WalkOrder: (0, 2, 1)
+        {{16, 15, 1}, {{0, 1, 2}}, 1u},
+
+        // Inactive channel (Z) is set - runtime generation required
+        {{16, 15, 15}, {{0, 1, 2}}, std::nullopt},
+        {{16, 15, 15}, std::nullopt, std::nullopt},
 
         // Invalid cases - runtime generation required
-        {{15, 16, 1}, {{0, 1, 2}}, std::nullopt, std::nullopt},
-        {{16, 15, 1}, {{1, 0, 2}}, std::nullopt, std::nullopt},
-        {{15, 15, 1}, {{0, 1, 2}}, std::nullopt, std::nullopt},
-        {{15, 15, 1}, std::nullopt, std::nullopt, std::nullopt},
+        {{15, 16, 1}, {{0, 1, 2}}, std::nullopt},
+        {{16, 15, 1}, {{1, 0, 2}}, std::nullopt},
+        {{15, 15, 1}, {{0, 1, 2}}, std::nullopt},
+        {{15, 15, 1}, std::nullopt, std::nullopt},
     };
 
     for (auto &testCase : testCases) {
@@ -1615,14 +1372,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenEnabledLocalIdsGeneration
         auto &lws = testCase.lws;
         std::array<uint8_t, 3> walkOrder = testCase.inputWalkOrder.value_or(std::array<uint8_t, 3>{{0, 1, 2}});
         auto requireInputWalkOrder = testCase.inputWalkOrder.has_value();
-        auto &expected = walkOrderRestricted ? testCase.expectedWalkOrderWhenRestricted : testCase.expectedWalkOrder;
-        auto isRuntimeGenerationRequired = !expected.has_value();
+        auto isRuntimeGenerationRequired = !testCase.expectedWalkOrder.has_value();
         EXPECT_EQ(isRuntimeGenerationRequired,
                   EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
                       workDim, lws, walkOrder, requireInputWalkOrder, requiredWalkOrder, simd));
 
         if (!isRuntimeGenerationRequired) {
-            EXPECT_EQ(expected.value(), requiredWalkOrder);
+            EXPECT_EQ(testCase.expectedWalkOrder.value(), requiredWalkOrder);
         }
     }
 }

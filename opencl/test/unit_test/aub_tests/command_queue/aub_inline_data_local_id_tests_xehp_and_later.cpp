@@ -502,12 +502,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
         expectedEmitLocal |= (1 << 2);
     }
 
-    const auto expectedWalkOrderIndex = EncodeDispatchKernel<FamilyType>::isHwLocalIdGenerationWithInactiveDimensionsSupported() ? HwWalkOrderHelper::singleDimWalkIndex : HwWalkOrderHelper::linearWalkIndex;
-
     auto walker = genCmdCast<WalkerType *>(*hwParser.itorWalker);
     EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
     EXPECT_EQ(1u, walker->getGenerateLocalId());
-    EXPECT_EQ(expectedWalkOrderIndex, walker->getWalkOrder());
+    EXPECT_EQ(HwWalkOrderHelper::linearWalkIndex, walker->getWalkOrder());
     if (kernelAttributes.numLocalIdChannels != 1) {
         for (size_t i = 0; i < 3; i++) {
             EXPECT_EQ(kernelAttributes.workgroupWalkOrder[i], HwWalkOrderHelper::compatibleDimensionOrders[walker->getWalkOrder()][i]);
