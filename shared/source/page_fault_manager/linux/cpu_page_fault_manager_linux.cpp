@@ -114,7 +114,7 @@ void PageFaultManagerLinux::protectCpuMemoryFromWrites(void *ptr, size_t size) {
 
 void PageFaultManagerLinux::callPreviousHandler(int signal, siginfo_t *info, void *context) {
     handlerIndex++;
-    UNRECOVERABLE_IF(handlerIndex < 0 && handlerIndex >= static_cast<int>(previousPageFaultHandlers.size()));
+    UNRECOVERABLE_IF(handlerIndex <= 0 || handlerIndex > static_cast<int>(previousPageFaultHandlers.size()));
     auto previousPageFaultHandler = previousPageFaultHandlers[previousPageFaultHandlers.size() - handlerIndex];
     if (previousPageFaultHandler.sa_flags & SA_SIGINFO) {
         previousPageFaultHandler.sa_sigaction(signal, info, context);
