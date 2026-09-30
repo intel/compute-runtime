@@ -24,7 +24,7 @@
 #include "environment.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_offline_compiler.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -1192,7 +1192,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFullRangeWhenGetProductsForRange
         GTEST_SKIP();
     }
     auto product = aotInfos[0].aotConfig.value;
-    uint32_t productTo = AOT::getConfixMaxPlatform();
+    uint32_t productTo = AOT::CONFIG_MAX_PLATFORM;
     --productTo;
     auto got = NEO::getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), oclocArgHelperWithoutInput.get());
 
@@ -1230,7 +1230,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOnlyRtlIdAcronymsForConfigWhenGe
     std::string tmpStr("tmp");
     aotInfo.rtlIdAcronyms.push_back(ConstStringRef(tmpStr));
 
-    uint32_t productTo = AOT::getConfixMaxPlatform();
+    uint32_t productTo = AOT::CONFIG_MAX_PLATFORM;
     --productTo;
     auto acronyms = NEO::getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), oclocArgHelperWithoutInput.get());
 

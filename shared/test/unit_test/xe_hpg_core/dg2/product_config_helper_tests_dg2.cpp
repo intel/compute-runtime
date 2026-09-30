@@ -25,7 +25,7 @@
 
 #include "aubstream/product_family.h"
 #include "gtest/gtest.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <array>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "shared/test/common/test_macros/test_base.h"
 
 #include "gtest/gtest.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 using namespace NEO;
 

@@ -29,7 +29,6 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/igc_platform_helper.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/igc_platform_helper.cpp
-    ${NEO_SHARED_DIRECTORY}/device_binary_format/aot_platforms/neo_aot_platforms.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.h

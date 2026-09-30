@@ -9,7 +9,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 
 #include "aubstream/product_family.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <algorithm>
 #include <array>

@@ -19,8 +19,6 @@
 #include "shared/source/helpers/product_config_helper_former.h"
 #include "shared/source/os_interface/os_library.h"
 
-#include "neo_aot_platforms.h"
-
 #include <memory>
 
 namespace Ocloc {

@@ -14,12 +14,13 @@
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/logger.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 namespace NEO {
 template <>
@@ -53,7 +54,7 @@ bool isZebin(ArrayRef<const uint8_t> binary) {
 
 bool isTargetProductConfigCompatibleWithProductConfig(const AOT::PRODUCT_CONFIG &targetDeviceProductConfig,
                                                       const AOT::PRODUCT_CONFIG &productConfig) {
-    const auto &invertedMapping = AOT::getInvertedCompatibilityMapping();
+    const auto &invertedMapping = ProductConfigHelper::getInvertedCompatibilityMapping();
     auto invertedProdConfPairItr = invertedMapping.find(targetDeviceProductConfig);
     if (invertedProdConfPairItr == invertedMapping.end()) {
         return false;

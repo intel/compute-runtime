@@ -13,7 +13,7 @@
 #include "shared/test/unit_test/release_helpers/release_helper/release_helper_tests_base.h"
 
 #include "gtest/gtest.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 struct ReleaseHelperNvlPTests : public ReleaseHelperTests<35, 10> {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 namespace NEO {
 template <>

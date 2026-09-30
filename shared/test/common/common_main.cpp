@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/stdio.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/cpu_info.h"
@@ -32,7 +33,6 @@
 
 #include "gtest/gtest.h"
 #include "hw_cmds_default.h"
-#include "neo_aot_platforms.h"
 
 #include <fstream>
 #include <iomanip>
@@ -161,7 +161,7 @@ void applyCommonWorkarounds() {
 
     // Force initialization of inverted compatibility mapping here so its allocations happen before memory-leak listener is enabled.
     // This prevents false-positive leak reports.
-    AOT::getInvertedCompatibilityMapping();
+    ProductConfigHelper::getInvertedCompatibilityMapping();
 }
 
 bool enableAlarm = ENABLE_ALARM_DEFAULT;

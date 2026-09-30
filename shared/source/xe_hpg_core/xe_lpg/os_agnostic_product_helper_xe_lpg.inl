@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
 
 #include "aubstream/product_family.h"
-#include "neo_aot_platforms.h"
 
 namespace NEO {
 

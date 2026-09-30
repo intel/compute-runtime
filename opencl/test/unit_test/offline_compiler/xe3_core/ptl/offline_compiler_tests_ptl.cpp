@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "opencl/test/unit_test/offline_compiler/mock/mock_offline_compiler.h"
 
 #include "device_ids_configs_ptl.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 using namespace NEO;
 

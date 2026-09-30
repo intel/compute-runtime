@@ -34,7 +34,7 @@
 #include "shared/source/helpers/validators.h"
 #include "shared/source/utilities/io_functions.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <filesystem>
 #include <iomanip>

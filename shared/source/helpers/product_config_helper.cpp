@@ -11,7 +11,7 @@
 
 #include "device_ids_configs.h"
 #include "hw_cmds.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 ProductConfigHelper::ProductConfigHelper() : deviceAotInfo({
 #define DEVICE_CONFIG(productConfig, productFamily, deviceIds, aotFamily, release) {{AOT::productConfig}, NEO::hardwareInfoTable[productFamily], &NEO::deviceIds, AOT::aotFamily, AOT::release, {}, {}},
@@ -150,8 +150,8 @@ uint32_t ProductConfigHelper::getDeviceIdFromIpVersion(uint32_t ipVersion) const
         return it->deviceIds->front();
     }
 
-    auto compatibilityMappingIt = AOT::getCompatibilityMapping().find(static_cast<AOT::PRODUCT_CONFIG>(ipVersion));
-    if (compatibilityMappingIt != AOT::getCompatibilityMapping().end()) {
+    auto compatibilityMappingIt = AOT::compatibilityMapping.find(static_cast<AOT::PRODUCT_CONFIG>(ipVersion));
+    if (compatibilityMappingIt != AOT::compatibilityMapping.end()) {
         for (const auto &compatibleConfig : compatibilityMappingIt->second) {
             auto compatibleIt = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(compatibleConfig));
             if (compatibleIt != deviceAotInfo.end()) {
@@ -348,7 +348,7 @@ void ProductConfigHelper::initialize() {
             }
         }
 
-        for (const auto &[acronym, value] : AOT::getRtlIdAcronyms()) {
+        for (const auto &[acronym, value] : AOT::rtlIdAcronyms) {
             if (value == device.aotConfig.value) {
                 device.rtlIdAcronyms.push_back(NEO::ConstStringRef(acronym));
             }
@@ -368,8 +368,8 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromAcronym(const std::
         return deviceAcronymIt->second;
     }
 
-    auto rtlIdAcronymIt = std::find_if(AOT::getRtlIdAcronyms().begin(), AOT::getRtlIdAcronyms().end(), findMapAcronymWithoutDash(device));
-    if (rtlIdAcronymIt != AOT::getRtlIdAcronyms().end()) {
+    auto rtlIdAcronymIt = std::find_if(AOT::rtlIdAcronyms.begin(), AOT::rtlIdAcronyms.end(), findMapAcronymWithoutDash(device));
+    if (rtlIdAcronymIt != AOT::rtlIdAcronyms.end()) {
         return rtlIdAcronymIt->second;
     }
 
@@ -378,6 +378,22 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromAcronym(const std::
         return genericIdAcronymIt->second;
     }
     return AOT::UNKNOWN_ISA;
+}
+
+const std::map<AOT::PRODUCT_CONFIG, std::vector<AOT::PRODUCT_CONFIG>> &ProductConfigHelper::getInvertedCompatibilityMapping() {
+    static const std::map<AOT::PRODUCT_CONFIG, std::vector<AOT::PRODUCT_CONFIG>> invertedMapping = []() {
+        std::map<AOT::PRODUCT_CONFIG, std::vector<AOT::PRODUCT_CONFIG>> inverted;
+
+        for (const auto &[targetConfig, compatibleConfigs] : AOT::compatibilityMapping) {
+            for (const auto &compatConfig : compatibleConfigs) {
+                inverted[compatConfig].push_back(targetConfig);
+            }
+        }
+
+        return inverted;
+    }();
+
+    return invertedMapping;
 }
 
 std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(const std::string &requestedProductAbbreviation) {
@@ -395,7 +411,7 @@ std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbb
         return result;
     }
 
-    const auto &invertedMapping = AOT::getInvertedCompatibilityMapping();
+    const auto &invertedMapping = getInvertedCompatibilityMapping();
 
     auto it = invertedMapping.find(requestedConfig);
     if (it != invertedMapping.end()) {

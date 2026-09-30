@@ -62,7 +62,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/driver_experimental/zex_module.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <algorithm>
 

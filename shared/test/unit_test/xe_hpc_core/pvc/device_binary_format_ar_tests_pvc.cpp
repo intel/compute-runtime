@@ -20,7 +20,7 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 using PvcUnpackSingleDeviceBinaryAr = ::testing::Test;
 

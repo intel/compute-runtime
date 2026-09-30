@@ -13,7 +13,7 @@
 #include "shared/source/helpers/string.h"
 
 #include "hw_cmds.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <algorithm>
 #include <cstring>

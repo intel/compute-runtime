@@ -11,7 +11,7 @@
 
 #include "device_ids_configs.h"
 #include "hw_cmds.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 FormerProductConfigHelper::FormerProductConfigHelper()
     : helper(Ocloc::SupportedDevicesMode::concat, nullptr) {

@@ -13,7 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
 #include "shared/source/helpers/compiler_product_helper_product_config_default.inl"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 namespace NEO {
 

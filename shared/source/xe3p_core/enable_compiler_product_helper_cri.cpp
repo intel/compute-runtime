@@ -13,7 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 #include "shared/source/helpers/compiler_product_helper_xe_hpc_and_later.inl"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 constexpr auto gfxProduct = IGFX_CRI;
 #include "shared/source/xe3p_core/compiler_product_helper_xe3p.inl"
 namespace NEO {

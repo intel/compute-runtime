@@ -11,7 +11,7 @@
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/caps/materialize_caps.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <optional>
 

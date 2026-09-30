@@ -13,6 +13,7 @@
 #include "neo_igfxfmid.h"
 
 #include <algorithm>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -66,6 +67,7 @@ struct ProductConfigHelper {
     static uint32_t getProductConfigFromVersionValue(const std::string &device);
     static AOT::PRODUCT_CONFIG getProductConfigFromAcronym(const std::string &device);
     static std::vector<std::string> getCompatibilityFallbackProductAbbreviations(const std::string &requestedProductAbbreviation);
+    static const std::map<AOT::PRODUCT_CONFIG, std::vector<AOT::PRODUCT_CONFIG>> &getInvertedCompatibilityMapping();
 
     static bool compareConfigs(DeviceAotInfo deviceAotInfo0, DeviceAotInfo deviceAotInfo1);
 

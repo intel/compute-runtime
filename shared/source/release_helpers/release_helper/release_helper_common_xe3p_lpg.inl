@@ -8,7 +8,7 @@
 #include "shared/source/release_helpers/release_helper/release_helper_base.inl"
 #include "shared/source/xe3p_core/hw_cmds_base.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 #include "release_definitions.h"
 
 namespace NEO {

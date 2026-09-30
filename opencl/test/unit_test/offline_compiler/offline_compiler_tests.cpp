@@ -43,7 +43,7 @@
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_multi_command.h"
 #include "mock/mock_offline_compiler.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <algorithm>
 #include <array>
@@ -1348,7 +1348,7 @@ TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLin
         };
 
         if (addFirstMatchingAcronym(AOT::deviceAcronyms) ||
-            addFirstMatchingAcronym(AOT::getRtlIdAcronyms()) ||
+            addFirstMatchingAcronym(AOT::rtlIdAcronyms) ||
             addFirstMatchingAcronym(AOT::genericIdAcronyms)) {
             break;
         }

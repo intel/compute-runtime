@@ -30,7 +30,7 @@
 #include "gtest/gtest.h"
 #include "hw_cmds_default.h"
 #include "mock/mock_argument_helper.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <algorithm>
 #include <array>

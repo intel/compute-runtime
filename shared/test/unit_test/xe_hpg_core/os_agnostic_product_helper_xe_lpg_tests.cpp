@@ -20,7 +20,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "aubstream/product_family.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 using namespace NEO;
 
