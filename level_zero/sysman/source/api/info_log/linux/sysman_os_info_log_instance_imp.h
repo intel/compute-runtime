@@ -24,21 +24,21 @@ extern const std::vector<std::string> tracefsPaths;
 
 class LinuxInfoLogInstanceImp : public OsInfoLogInstance {
   public:
-    LinuxInfoLogInstanceImp(TraceFsApi *pTraceFsApi, zes_intel_info_log_format_exp_t format,
+    LinuxInfoLogInstanceImp(TraceFsApi *pTraceFsApi, zes_info_log_format_ext_t format,
                             struct tracefs_instance *pTraceFsInstance, const std::string &instanceName,
                             bool instanceWasPreExisting, bool eventWasAlreadyEnabled, bool tracingWasAlreadyOn,
                             int ownershipFd = -1);
     ~LinuxInfoLogInstanceImp() override;
 
     ze_result_t readWithMetadata(uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
-                                 uint32_t *pRecordCount, zes_intel_info_log_metadata_exp *pDescriptors,
-                                 zes_intel_info_log_read_status_exp_t *pReadStatus) override;
+                                 uint32_t *pRecordCount, zes_info_log_metadata_ext_t *pDescriptors,
+                                 zes_info_log_read_status_ext_t *pReadStatus) override;
     ze_result_t peekWithMetadata(uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
-                                 uint32_t *pRecordCount, zes_intel_info_log_metadata_exp *pDescriptors,
-                                 zes_intel_info_log_read_status_exp_t *pReadStatus) override;
+                                 uint32_t *pRecordCount, zes_info_log_metadata_ext_t *pDescriptors,
+                                 zes_info_log_read_status_ext_t *pReadStatus) override;
     ze_result_t teardown() override;
     int getTracePipeFd() const override { return tracePipeFd; }
-    ze_result_t applyBufferConfiguration(zes_intel_info_log_instance_exp_desc_t *pDesc);
+    ze_result_t applyBufferConfiguration(zes_info_log_instance_ext_desc_t *pDesc);
     ze_result_t startCollection();
 
   protected:
@@ -51,18 +51,22 @@ class LinuxInfoLogInstanceImp : public OsInfoLogInstance {
                             deadline,
                             error };
 
-    ze_result_t queryRecords(uint32_t *pSize, uint32_t *pRecordCount, bool &anyFound);
+    bool isDeadlineReached(uint64_t deadlineMs);
+    bool countCperRecordsAndSize(const std::string &traceOutput, uint32_t &cperCount, uint32_t &totalSize,
+                                 uint64_t deadlineMs);
+    ze_result_t queryRecords(uint64_t deadlineMs, uint32_t *pSize, uint32_t *pRecordCount, bool &anyFound,
+                             StopReason &stopReason);
     ze_result_t extractFromTracePipe(uint64_t deadlineMs, uint32_t *pSize, uint8_t *pBuffer,
-                                     uint32_t *pRecordCount, zes_intel_info_log_metadata_exp *pDescriptors,
-                                     StopReason &stopReason);
+                                     uint32_t *pRecordCount, zes_info_log_metadata_ext_t *pDescriptors,
+                                     StopReason &stopReason, uint64_t &consumedDataSize);
     ze_result_t extractFromTraceSnapshot(uint64_t deadlineMs, uint32_t *pSize, uint8_t *pBuffer,
-                                         uint32_t *pRecordCount, zes_intel_info_log_metadata_exp *pDescriptors,
-                                         StopReason &stopReason);
+                                         uint32_t *pRecordCount, zes_info_log_metadata_ext_t *pDescriptors,
+                                         StopReason &stopReason, uint64_t &consumedDataSize);
     ze_result_t collect(uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer, uint32_t *pRecordCount,
-                        zes_intel_info_log_metadata_exp *pDescriptors,
-                        zes_intel_info_log_read_status_exp_t *pReadStatus, bool consuming);
-    void fillReadStatus(zes_intel_info_log_read_status_exp_t *pReadStatus, StopReason stopReason,
-                        bool queryCall, bool anyRecordFound);
+                        zes_info_log_metadata_ext_t *pDescriptors,
+                        zes_info_log_read_status_ext_t *pReadStatus, bool consuming);
+    ze_result_t reportReadStatus(zes_info_log_read_status_ext_t *pReadStatus, StopReason stopReason,
+                                 bool queryCall, bool anyRecordFound, uint64_t consumedDataSize);
     ze_result_t openTracePipe();
     void closeTracePipe();
     ze_result_t applyBufferSize(uint32_t *pBufferSize);
@@ -70,7 +74,7 @@ class LinuxInfoLogInstanceImp : public OsInfoLogInstance {
     uint32_t getPerCpuBufferCount();
     uint32_t scanPerCpuBufferCount();
     uint64_t readDroppedRecordTotal(bool &isComplete);
-    bool consumeDroppedRecordCount(uint32_t &droppedRecordCount);
+    int64_t consumeDroppedRecordCount(bool isReported);
     void setImmediateWakeBufferPercent();
     void restoreBufferPercent();
     void restoreBufferSize();
@@ -80,7 +84,7 @@ class LinuxInfoLogInstanceImp : public OsInfoLogInstance {
     static constexpr size_t kMaxAccumulatedLineSize = 16384;
 
     TraceFsApi *pTraceFsApi = nullptr;
-    zes_intel_info_log_format_exp_t infoLogFormat = ZES_INTEL_INFO_LOG_FORMAT_CPER;
+    zes_info_log_format_ext_t infoLogFormat = ZES_INFO_LOG_FORMAT_EXT_CPER;
     struct tracefs_instance *pTraceFsInstance = nullptr;
     std::string instanceName;
     bool instanceWasPreExisting = false;
@@ -90,6 +94,7 @@ class LinuxInfoLogInstanceImp : public OsInfoLogInstance {
     long long savedPerCpuBufferSizeKb = -1;
     uint32_t perCpuBufferCount = 0;
     uint64_t reportedDroppedRecordTotal = 0;
+    uint64_t warnedDroppedRecordTotal = 0;
     int tracePipeFd = -1;
     // Instance directory descriptor holding the advisory lock which marks the tracefs instance as
     // owned by this API. Closing it on teardown is what releases the lock. -1 when nothing is owned.

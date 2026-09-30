@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/api/info_log/sysman_info_log_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/info_log/linux/mock_sysman_info_log.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 #include <cerrno>
 
@@ -73,37 +74,52 @@ class SysmanInfoLogFixture : public ::testing::Test {
         L0::Sysman::sysmanOnlyInit = false;
     }
 
-    std::vector<zes_intel_info_log_handle_t> getInfoLogHandles(uint32_t count) {
-        std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
-        EXPECT_EQ(zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+    std::vector<zes_info_log_handle_t> getInfoLogHandles(uint32_t count) {
+        std::vector<zes_info_log_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
     }
 
-    static zes_intel_info_log_instance_exp_desc_t makeInstanceDesc(uint32_t *pBufferSize = nullptr) {
-        zes_intel_info_log_instance_exp_desc_t desc = {};
-        desc.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC;
-        desc.pBufferSize = pBufferSize;
+    static zes_info_log_instance_ext_desc_t makeInstanceDesc(uint32_t *pBufferSize = nullptr) {
+        zes_info_log_instance_ext_desc_t desc = {ZES_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXT_DESC};
+        desc.pBufferSizeInKb = pBufferSize;
         return desc;
     }
 
-    zes_intel_info_log_instance_handle_t createInfoLogInstance(zes_intel_info_log_handle_t hInfoLog, const char *pInstanceName = nullptr) {
+    zes_info_log_instance_handle_t createInfoLogInstance(zes_info_log_handle_t hInfoLog, const char *pInstanceName = nullptr) {
         auto desc = makeInstanceDesc();
-        zes_intel_info_log_instance_handle_t hInstance = nullptr;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(hInfoLog, pInstanceName, &desc, &hInstance));
+        zes_info_log_instance_handle_t hInstance = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(hInfoLog, pInstanceName, &desc, &hInstance));
         EXPECT_NE(nullptr, hInstance);
         return hInstance;
     }
 
-    ze_result_t readInfoLogData(zes_intel_info_log_instance_handle_t hInstance, uint32_t *pSize, uint8_t *pBuffer) {
+    ze_result_t readInfoLogData(zes_info_log_instance_handle_t hInstance, uint32_t *pSize, uint8_t *pBuffer) {
         uint32_t recordCount = maxRecordsPerRead;
-        std::vector<zes_intel_info_log_metadata_exp> descriptors(recordCount);
-        return zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, pSize, pBuffer, &recordCount, descriptors.data(), nullptr);
+        std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
+        return zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, pSize, pBuffer, &recordCount, descriptors.data(), nullptr);
     }
 
-    ze_result_t peekInfoLogData(zes_intel_info_log_instance_handle_t hInstance, uint32_t *pSize, uint8_t *pBuffer) {
+    ze_result_t peekInfoLogData(zes_info_log_instance_handle_t hInstance, uint32_t *pSize, uint8_t *pBuffer) {
         uint32_t recordCount = maxRecordsPerRead;
-        std::vector<zes_intel_info_log_metadata_exp> descriptors(recordCount);
-        return zesIntelInfoLogInstancePeekWithMetadataExp(hInstance, noTimeout, pSize, pBuffer, &recordCount, descriptors.data(), nullptr);
+        std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
+        return zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, pSize, pBuffer, &recordCount, descriptors.data(), nullptr);
+    }
+
+    static ze_result_t peekOneRecord(LinuxInfoLogInstanceImp &instance, zes_info_log_read_status_ext_t *pReadStatus,
+                                     uint32_t *pEventCount = nullptr, uint32_t *pSize = nullptr) {
+        uint32_t size = 1024;
+        uint32_t eventCount = 1;
+        std::vector<uint8_t> buffer(size);
+        std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+        ze_result_t result = instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), pReadStatus);
+        if (pEventCount != nullptr) {
+            *pEventCount = eventCount;
+        }
+        if (pSize != nullptr) {
+            *pSize = size;
+        }
+        return result;
     }
 
     L0::Sysman::LinuxSysmanDriverImp *getLinuxSysmanDriverImp() {
@@ -130,6 +146,7 @@ class SysmanInfoLogFixture : public ::testing::Test {
     const uint32_t numRootDevices = 1u;
     VariableBackup<bool> allowFakeDevicePathBackup{&NEO::SysCalls::allowFakeDevicePath};
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncBackup{&NEO::OsLibrary::loadFunc};
+    MockPerCpuCountersWithoutDrops perCpuCountersBackup;
 };
 
 TEST_F(SysmanInfoLogFixture, GivenDefaultCreateTraceFsApiLambdaWhenInvokedThenNonNullTraceFsApiIsReturned) {
@@ -140,7 +157,7 @@ TEST_F(SysmanInfoLogFixture, GivenDefaultCreateTraceFsApiLambdaWhenInvokedThenNo
 TEST_F(SysmanInfoLogFixture, GivenTracepointPathInaccessibleWhenEnumeratingInfoLogsThenNoHandlesAreReturned) {
     VariableBackup<bool> failAccessBackup(&NEO::SysCalls::failAccess, true);
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     EXPECT_EQ(0u, count);
 }
 
@@ -151,7 +168,7 @@ TEST_F(SysmanInfoLogFixture, GivenValidDriverHandleWhenEnumeratingInfoLogsThenSu
         return mockApi;
     });
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     EXPECT_EQ(1u, count);
 }
 
@@ -162,12 +179,12 @@ TEST_F(SysmanInfoLogFixture, GivenRequestedInfoLogCountGreaterThanOneWhenEnumera
         return mockApi;
     });
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     ASSERT_EQ(1u, count);
 
     count = count + 1;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     EXPECT_EQ(handleCount, count);
 }
 
@@ -181,14 +198,13 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingGetPropertiesApiT
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogGetPropertiesExp(infoLogHandles[0], &properties));
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogGetPropertiesExt(infoLogHandles[0], &properties));
 
-    EXPECT_EQ(ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE, properties.infoLogType);
-    EXPECT_EQ(ZES_INTEL_INFO_LOG_FORMAT_CPER, properties.infoLogFormat);
-    EXPECT_TRUE(properties.isPeekSupported);
-    EXPECT_TRUE(properties.isNamedInstancedCollectionSupported);
+    EXPECT_EQ(ZES_INFO_LOG_TYPE_EXT_DEVICE, properties.infoLogType);
+    EXPECT_EQ(ZES_INFO_LOG_FORMAT_EXT_CPER, properties.infoLogFormat);
+    EXPECT_TRUE(properties.isPeekDataSupported);
+    EXPECT_TRUE(properties.isNamedInstanceSupported);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenEnumeratingInfoLogsThenErrorIsReturned) {
@@ -215,8 +231,8 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCreatingInstanceSuccessf
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_NE(nullptr, hInstance);
 }
 
@@ -233,7 +249,91 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogInstanceWhenDeletingItThenSuccessI
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto hInstance = createInfoLogInstance(infoLogHandles[0]);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNonNullPNextInApiStructsWhenCallingInfoLogApisThenInvalidArgumentIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_info_log_ext_properties_t propertiesExtension = {};
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
+    properties.pNext = &propertiesExtension;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogGetPropertiesExt(infoLogHandles[0], &properties));
+
+    zes_info_log_instance_ext_desc_t descExtension = {};
+    auto desc = makeInstanceDesc();
+    desc.pNext = &descExtension;
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(nullptr, hInstance);
+    hInstance = createInfoLogInstance(infoLogHandles[0]);
+
+    uint32_t size = 1024;
+    uint32_t recordCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
+    zes_info_log_read_status_ext_t readStatusExtension = {};
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    readStatus.pNext = &readStatusExtension;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), &readStatus));
+
+    zes_info_log_metadata_ext_t descriptorExtension = {};
+    descriptors[0].pNext = &descriptorExtension;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenQueryCallWithNonNullPNextInDescriptorWhenReadingAndPeekingThenDescriptorsAreIgnoredButReadStatusIsStillValidated) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+
+    zes_info_log_metadata_ext_t descriptorExtension = {};
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.pNext = &descriptorExtension;
+    std::vector<uint8_t> buffer(1024);
+
+    uint32_t size = 0;
+    uint32_t recordCount = 1000;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    size = 0;
+    recordCount = 1000;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+
+    size = static_cast<uint32_t>(buffer.size());
+    recordCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    size = static_cast<uint32_t>(buffer.size());
+    recordCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+
+    zes_info_log_read_status_ext_t readStatusExtension = {};
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    readStatus.pNext = &readStatusExtension;
+    size = 0;
+    recordCount = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, nullptr, &readStatus));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, nullptr, &readStatus));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsTraceOnFailsThenErrorIsReturned) {
@@ -249,8 +349,8 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsTraceOnFailsThenE
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsEventDisableFailsThenErrorIsReturned) {
@@ -266,9 +366,9 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsEventDisableFails
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsTraceOffFailsThenErrorIsReturned) {
@@ -285,9 +385,9 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenTraceFsTraceOffFailsThen
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenBufferSizeIsZeroThenTotalsAreQueried) {
@@ -306,7 +406,7 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenBufferSizeIsZeroThenTota
     EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &zeroSize, buffer.data()));
     EXPECT_EQ(mockCperLen, zeroSize);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenReadingMultipleCperDataThenSuccessAndAllDataIsReturned) {
@@ -326,8 +426,8 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenReadingMultipleCperDataT
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Total size is 3 * 532 = 1596 bytes
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
@@ -373,8 +473,8 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenBufferCanFitOnlyOneCperT
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Allocate buffer that can fit only 1 CPER (532 bytes) but not 2 (1064 bytes)
     uint32_t size = 600u;
@@ -406,8 +506,8 @@ TEST_F(SysmanInfoLogFixture, GivenCorruptedOddLengthCperRawWhenReadingInfoLogThe
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -428,8 +528,8 @@ TEST_F(SysmanInfoLogFixture, GivenInvalidHexCharacterInCperRawWhenReadingInfoLog
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -450,8 +550,8 @@ TEST_F(SysmanInfoLogFixture, GivenMissingCperLenFieldWhenReadingInfoLogThenZeroB
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -472,8 +572,8 @@ TEST_F(SysmanInfoLogFixture, GivenCompactHexCperRawWithNoSpacesWhenReadingInfoLo
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -496,8 +596,8 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawWithMultipleSpacedBytesAndTrailingField
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -522,8 +622,8 @@ TEST_F(SysmanInfoLogFixture, GivenTraceOutputWithNonCperLineWhenReadingInfoLogTh
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -546,8 +646,8 @@ TEST_F(SysmanInfoLogFixture, GivenCperEventWithZeroLengthWhenReadingInfoLogThenR
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -568,8 +668,8 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawWithEmptyValueWhenReadingInfoLogThenWhi
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -590,8 +690,8 @@ TEST_F(SysmanInfoLogFixture, GivenCperLenFieldEmptyAtEndOfLineWhenReadingInfoLog
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -612,8 +712,8 @@ TEST_F(SysmanInfoLogFixture, GivenCperRawByteCountMismatchesLenFieldWhenReadingI
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -634,8 +734,8 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFileReadReturnsNullWhenPeekingInfoLogThen
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -656,8 +756,8 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeDeliversExtraLargerRecordAfterFitting
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Buffer fits 3x 2-byte records (6 bytes) but not 2x 2-byte + 1x 4-byte (8 bytes)
     uint32_t size = 7u;
@@ -693,8 +793,8 @@ TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenAccessChecksFailThenSuccessI
     // Global enable takes no access based decision, so it still succeeds when access() fails.
     VariableBackup<bool> failAccessBackup(&NEO::SysCalls::failAccess, true);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenGlobalWithTracingAlreadyOnWhenCreatingInstanceThenSuccessIsReturnedAndTraceOnIsSkipped) {
@@ -711,8 +811,8 @@ TEST_F(SysmanInfoLogFixture, GivenGlobalWithTracingAlreadyOnWhenCreatingInstance
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenGlobalWithEventAlreadyEnabledWhenCreatingInstanceThenSuccessIsReturnedAndEventEnableIsSkipped) {
@@ -729,8 +829,8 @@ TEST_F(SysmanInfoLogFixture, GivenGlobalWithEventAlreadyEnabledWhenCreatingInsta
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenEventAlreadyEnabledWhenDeletingInstanceThenEventDisableIsSkippedAndSuccessIsReturned) {
@@ -747,9 +847,9 @@ TEST_F(SysmanInfoLogFixture, GivenEventAlreadyEnabledWhenDeletingInstanceThenEve
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTracingAlreadyOnWhenDeletingInstanceThenTraceOffIsSkippedAndSuccessIsReturned) {
@@ -766,9 +866,9 @@ TEST_F(SysmanInfoLogFixture, GivenTracingAlreadyOnWhenDeletingInstanceThenTraceO
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNullBufferWhenQueryingWithMetaDataThenSizeAndCountAreReturned) {
@@ -784,15 +884,14 @@ TEST_F(SysmanInfoLogFixture, GivenNullBufferWhenQueryingWithMetaDataThenSizeAndC
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
     EXPECT_EQ(mockCperLen, size);
     EXPECT_EQ(1u, eventCount);
-    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_EQ(0, readStatus.droppedRecordCount);
     EXPECT_TRUE(readStatus.hasDataToRead);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNullBufferAndMultipleEventsWhenQueryingWithMetaDataThenCorrectCountIsReturned) {
@@ -808,11 +907,11 @@ TEST_F(SysmanInfoLogFixture, GivenNullBufferAndMultipleEventsWhenQueryingWithMet
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
     EXPECT_EQ(3u * mockCperLen, size);
     EXPECT_EQ(3u, eventCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidBufferWhenReadingWithMetaDataThenDataAndMetaDataAreReturned) {
@@ -832,14 +931,14 @@ TEST_F(SysmanInfoLogFixture, GivenValidBufferWhenReadingWithMetaDataThenDataAndM
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = mockCperLen;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(mockCperLen, size);
     EXPECT_EQ(1u, eventCount);
 
@@ -886,13 +985,13 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Query mode: get total count and size
     uint32_t querySize = 0;
     uint32_t queryEventCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &querySize, nullptr, &queryEventCount, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &querySize, nullptr, &queryEventCount, nullptr, nullptr));
     EXPECT_EQ(8u, queryEventCount) << "Should have 8 xe_error_cper events total";
     EXPECT_EQ(8u * mockCperLen, querySize) << "Total size should be 8 * 532";
 
@@ -900,9 +999,9 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     uint32_t read1EventCount = 3;
     uint32_t read1Size = read1EventCount * mockCperLen;
     std::vector<uint8_t> buffer1(read1Size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors1(read1EventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors1(read1EventCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &read1Size, buffer1.data(), &read1EventCount, descriptors1.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &read1Size, buffer1.data(), &read1EventCount, descriptors1.data(), nullptr));
     EXPECT_EQ(3u, read1EventCount);
     EXPECT_EQ(3u * mockCperLen, read1Size);
 
@@ -923,9 +1022,9 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     uint32_t read2EventCount = 1;
     uint32_t read2Size = read2EventCount * mockCperLen;
     std::vector<uint8_t> buffer2(read2Size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors2(read2EventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors2(read2EventCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &read2Size, buffer2.data(), &read2EventCount, descriptors2.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &read2Size, buffer2.data(), &read2EventCount, descriptors2.data(), nullptr));
     EXPECT_EQ(1u, read2EventCount);
     EXPECT_EQ(1u * mockCperLen, read2Size);
 
@@ -938,9 +1037,9 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     uint32_t read3EventCount = 4;
     uint32_t read3Size = read3EventCount * mockCperLen;
     std::vector<uint8_t> buffer3(read3Size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors3(read3EventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors3(read3EventCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &read3Size, buffer3.data(), &read3EventCount, descriptors3.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &read3Size, buffer3.data(), &read3EventCount, descriptors3.data(), nullptr));
     EXPECT_EQ(4u, read3EventCount);
     EXPECT_EQ(4u * mockCperLen, read3Size);
 
@@ -965,7 +1064,7 @@ TEST_F(SysmanInfoLogFixture, GivenSampleCperLogWhenReadingWithMetaDataMultipleTi
     uint32_t read4EventCount = 10; // Request more than available
     uint32_t read4Size = read4EventCount * mockCperLen;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &read4Size, nullptr, &read4EventCount, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &read4Size, nullptr, &read4EventCount, nullptr, nullptr));
     EXPECT_EQ(0u, read4EventCount) << "No more events should be available after reading all 8";
     EXPECT_EQ(0u, read4Size) << "Size should be 0 when no events are available";
 
@@ -1020,8 +1119,8 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenNonBlockingReadReportsEagai
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Deliver one record in two installments, the way a non-blocking trace_pipe hands over a line the
     // kernel has not finished writing. The split point is mid-line, so the first half carries no
@@ -1037,11 +1136,11 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenNonBlockingReadReportsEagai
     uint32_t size = mockCperLen;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
 
     // Only the front half is queued, so nothing may be reported yet. Parsing it here would fail the
     // cper_len check and discard the prefix, which cannot be re-read from the pipe.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount) << "A line cut short by EAGAIN must not be reported as a record";
     EXPECT_EQ(0u, size);
 
@@ -1050,7 +1149,7 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenNonBlockingReadReportsEagai
 
     size = mockCperLen;
     eventCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount) << "The split record must be recovered once the rest of the line arrives";
     EXPECT_EQ(mockCperLen, size);
 
@@ -1079,8 +1178,8 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenTracePipeReadFailsThenErrno
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     // Same mid-line split as the EAGAIN case, but the read fails for a reason that will not clear up.
     const size_t splitPos = mockCperEvent1.size() / 2;
@@ -1093,10 +1192,10 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenTracePipeReadFailsThenErrno
     uint32_t size = mockCperLen;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
 
     // A broken stream must surface the errno rather than pass as a successful empty read.
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 
@@ -1107,7 +1206,7 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenTracePipeReadFailsThenErrno
 
     size = mockCperLen;
     eventCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount) << "A discarded prefix must not corrupt the next complete record";
     EXPECT_EQ(mockCperLen, size);
 }
@@ -1159,16 +1258,16 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledTruncatedLineWi
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
     // Should still process the incomplete line
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(mockCperLen, size);
 }
@@ -1186,15 +1285,15 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleReadMetaDataCalledMissingCperRawT
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 2000;
     uint32_t eventCount = 10;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(10);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount); // Only event2 extracted
 }
 
@@ -1212,16 +1311,16 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleMissingDevFieldThenZeroBDF) {
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
     // Graceful: Record still processed with zero BDF
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(0u, descriptors[0].address.domain);
     EXPECT_EQ(0u, descriptors[0].address.bus);
@@ -1245,25 +1344,24 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleBufferTooSmallForOneRecordThenNot
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 100; // Too small for 532-byte record
     uint32_t eventCount = 10;
     std::vector<uint8_t> buffer(mockCperLen);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    std::vector<zes_info_log_metadata_ext_t> descriptors(10);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
     EXPECT_EQ(0u, eventCount); // No records fit
     EXPECT_EQ(0u, size);
-    EXPECT_EQ(0u, readStatus.droppedRecordCount);
+    EXPECT_EQ(0, readStatus.droppedRecordCount);
     EXPECT_TRUE(readStatus.hasDataToRead);
 
     size = mockCperLen;
     eventCount = 10;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(mockCperLen, size);
 }
@@ -1279,15 +1377,15 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleNullBufferInExtractModeThenQueryM
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 0;
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
     // pBuffer=NULL, pDescriptors!=NULL triggers query mode
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(mockCperLen, size);
     EXPECT_EQ(1u, eventCount);
 }
@@ -1318,16 +1416,16 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleFgetsReturnsNullThenPartialResult
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 2000;
     uint32_t eventCount = 10;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(10);
 
     // Graceful: Returns whatever was extracted before fgets failed
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     // Should have partial data (exact count depends on when fgets failed during line read)
     EXPECT_LE(eventCount, 3u);
 }
@@ -1352,15 +1450,15 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleFdopenFailsThenErrorReturned) {
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 10;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(10);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 }
@@ -1383,15 +1481,15 @@ TEST_F(SysmanInfoLogFixture, GivenInfologHandleDupFailsThenErrorReturned) {
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 10;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(10);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(10);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 }
@@ -1410,15 +1508,15 @@ TEST_F(SysmanInfoLogFixture, GivenTimestampWithoutDotWhenParsingThenReturnsZero)
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(0ULL, descriptors[0].timestamp); // Should be 0 when parsing fails
 }
@@ -1435,8 +1533,8 @@ TEST_F(SysmanInfoLogFixture, GivenNullEntryPointsWhenCallingTraceFsApiFunctionsT
 
     // Try to enable - will fail due to null entry points
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_NE(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_NE(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenCreatingASecondGlobalInstanceThenBothAreIndependent) {
@@ -1452,15 +1550,15 @@ TEST_F(SysmanInfoLogFixture, GivenGlobalInstanceWhenCreatingASecondGlobalInstanc
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
-    zes_intel_info_log_instance_handle_t hInstance2 = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance2));
+    zes_info_log_instance_handle_t hInstance2 = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance2));
     EXPECT_NE(hInstance, hInstance2);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance2));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidBufferSizeWhenCreatingInstanceThenRequestIsSplitAcrossPerCpuBuffersAndAppliedTotalIsReported) {
@@ -1479,8 +1577,8 @@ TEST_F(SysmanInfoLogFixture, GivenValidBufferSizeWhenCreatingInstanceThenRequest
     const size_t expectedPerCpuBufferSize = bufferSize / MockPerCpuDir::mockPerCpuBufferCount;
 
     auto desc = makeInstanceDesc(&bufferSize);
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferSizeCallCount);
     EXPECT_EQ(expectedPerCpuBufferSize, PublicTraceFsApi::lastSetBufferSize);
     EXPECT_EQ(-1, PublicTraceFsApi::lastSetBufferSizeCpu);
@@ -1489,7 +1587,7 @@ TEST_F(SysmanInfoLogFixture, GivenValidBufferSizeWhenCreatingInstanceThenRequest
     EXPECT_EQ(static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize), bufferSize);
     EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferSizeCallCount);
     EXPECT_EQ(static_cast<size_t>(MockTraceFsOsLibrary::mockBufferSize), PublicTraceFsApi::lastSetBufferSize);
@@ -1509,13 +1607,13 @@ TEST_F(SysmanInfoLogFixture, GivenZeroBufferSizeWhenCreatingInstanceThenBufferIs
 
     uint32_t bufferSize = 0u;
     auto desc = makeInstanceDesc(&bufferSize);
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
     // Nothing was resized, and the size the buffer already had is what the descriptor reports back.
     EXPECT_EQ(static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize), bufferSize);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
 }
 
@@ -1532,8 +1630,8 @@ TEST_F(SysmanInfoLogFixture, GivenPerCpuDirectoryCannotBeScannedWhenCreatingInst
 
     uint32_t bufferSize = 1024u;
     auto desc = makeInstanceDesc(&bufferSize);
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
 }
@@ -1551,19 +1649,19 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsInstanceCreationFailsWhenCreatingInstan
 
     const char *instanceName = "test_instance";
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], instanceName, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedWhenCallingInfoLogReadWithMetaDataThenErrorIsReturned) {
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
     ASSERT_EQ(-1, instance.getTracePipeFd());
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, instance.readWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, size);
     EXPECT_EQ(0u, eventCount);
@@ -1571,20 +1669,19 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedWhenCallingInfoLogReadWithMe
 
 TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedWhenCallingInfoLogPeekWithMetaDataThenRecordsAreStillReturned) {
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
     ASSERT_EQ(-1, instance.getTracePipeFd());
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
     EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
     EXPECT_EQ(mockCperLen, size);
     EXPECT_EQ(1u, eventCount);
-    EXPECT_EQ(0u, readStatus.droppedRecordCount);
-    EXPECT_EQ(ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE, descriptors[0].recordType);
+    EXPECT_EQ(0, readStatus.droppedRecordCount);
+    EXPECT_EQ(ZES_INFO_LOG_RECORD_TYPE_EXT_ERROR_RECOVERABLE, descriptors[0].recordType);
 
     uint32_t secondSize = 1024;
     uint32_t secondCount = 1;
@@ -1594,23 +1691,23 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedWhenCallingInfoLogPeekWithMe
 }
 
 TEST_F(SysmanInfoLogFixture, GivenCperEventsWithDifferentSeveritiesWhenPeekingWithMetadataThenRecordTypeReflectsTheSeverity) {
-    const std::vector<std::pair<const std::string *, zes_intel_info_log_record_type_exp_t>> severityToRecordType = {
-        {&mockCperEventWithRecoverableSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE},
-        {&mockCperEventWithFatalSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_FATAL},
-        {&mockCperEventWithCorrectedSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_CORRECTED},
-        {&mockCperEventWithInformationalSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_INFORMATIONAL},
-        {&mockCperEventWithUnrecognizedSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN},
-        {&mockCperEventWithNonNumericSeverity, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN},
-        {&mockSmallCperTraceEvent, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN}};
+    const std::vector<std::pair<const std::string *, zes_info_log_record_type_ext_t>> severityToRecordType = {
+        {&mockCperEventWithRecoverableSeverity, ZES_INFO_LOG_RECORD_TYPE_EXT_ERROR_RECOVERABLE},
+        {&mockCperEventWithFatalSeverity, ZES_INFO_LOG_RECORD_TYPE_EXT_ERROR_FATAL},
+        {&mockCperEventWithCorrectedSeverity, ZES_INFO_LOG_RECORD_TYPE_EXT_ERROR_CORRECTED},
+        {&mockCperEventWithInformationalSeverity, ZES_INFO_LOG_RECORD_TYPE_EXT_INFORMATIONAL},
+        {&mockCperEventWithUnrecognizedSeverity, ZES_INFO_LOG_RECORD_TYPE_EXT_UNKNOWN},
+        {&mockCperEventWithNonNumericSeverity, ZES_INFO_LOG_RECORD_TYPE_EXT_UNKNOWN},
+        {&mockSmallCperTraceEvent, ZES_INFO_LOG_RECORD_TYPE_EXT_UNKNOWN}};
 
     for (const auto &[traceData, expectedRecordType] : severityToRecordType) {
         MockTraceFsApiWithData traceFsApi(false, false, *traceData);
-        LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+        LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
         uint32_t size = 1024;
         uint32_t eventCount = 1;
         std::vector<uint8_t> buffer(size);
-        std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+        std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
         ASSERT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
         ASSERT_EQ(1u, eventCount);
         EXPECT_EQ(expectedRecordType, descriptors[0].recordType);
@@ -1619,19 +1716,19 @@ TEST_F(SysmanInfoLogFixture, GivenCperEventsWithDifferentSeveritiesWhenPeekingWi
 
 TEST_F(SysmanInfoLogFixture, GivenCperEventWithUnassignedFieldNameOccurrencesWhenPeekingWithMetadataThenOnlyAssignedOccurrencesAreExtracted) {
     MockTraceFsApiWithData traceFsApi(false, false, mockCperEventWithUnassignedFieldNameOccurrences);
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t recordCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(recordCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
     ASSERT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
     ASSERT_EQ(1u, recordCount);
     EXPECT_EQ(2u, size);
     EXPECT_EQ(0xAB, buffer[0]);
     EXPECT_EQ(0xCD, buffer[1]);
     EXPECT_EQ(2u, descriptors[0].lengthOfData);
-    EXPECT_EQ(ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN, descriptors[0].recordType);
+    EXPECT_EQ(ZES_INFO_LOG_RECORD_TYPE_EXT_UNKNOWN, descriptors[0].recordType);
     EXPECT_EQ(0u, descriptors[0].address.domain);
     EXPECT_EQ(0x13u, descriptors[0].address.bus);
     EXPECT_EQ(0u, descriptors[0].address.device);
@@ -1658,15 +1755,15 @@ TEST_F(SysmanInfoLogFixture, GivenTimestampWithoutColonSeparatorWhenParsingThenT
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(0ULL, descriptors[0].timestamp); // Should be 0 when xe_error_cper marker not found
 }
@@ -1686,15 +1783,15 @@ TEST_F(SysmanInfoLogFixture, GivenBdfWithInvalidFormatWhenParsingThenParseBdfFai
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
 }
 
@@ -1713,15 +1810,15 @@ TEST_F(SysmanInfoLogFixture, GivenUuidWithInvalidFormatWhenParsingThenParseUuidF
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
 }
 
@@ -1740,16 +1837,16 @@ TEST_F(SysmanInfoLogFixture, GivenNonCperLineWhenParsingThenProcessCperLineSkips
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
     // Should succeed but extract 0 events because line is not a CPER line
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
 }
 
@@ -1768,13 +1865,13 @@ TEST_F(SysmanInfoLogFixture, GivenCperLenZeroWhenCountingRecordsThenSkipsRecord)
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
     // Query mode (pBuffer is null) - will call countCperRecordsAndSize
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
     EXPECT_EQ(0u, eventCount); // Should be 0 because cper_len=0 is skipped
     EXPECT_EQ(0u, size);
 }
@@ -1792,9 +1889,9 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceGetFileReturnsNullWhenCreatingNamedIns
 
     const char *instanceName = "test_instance";
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    zes_info_log_instance_handle_t hInstance = nullptr;
     // Should fail because traceFsInstanceGetFile returns nullptr
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], instanceName, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedForNamedInstanceWhenReadingThenErrorIsReturned) {
@@ -1818,9 +1915,9 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeNotOpenedForNamedInstanceWhenReadingT
 
     const char *instanceName = "test_instance";
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    zes_info_log_instance_handle_t hInstance = nullptr;
     // Enable will fail because open fails
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], instanceName, &desc, &hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTraceFsInstanceFileReadReturnsNullInQueryModeThenErrorIsReturned) {
@@ -1836,13 +1933,13 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsInstanceFileReadReturnsNullInQueryModeT
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
     // Query mode - will fail because trace file read returns nullptr
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 }
@@ -1859,8 +1956,8 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceNotPreExistingWhenEventEnableFail
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
 }
@@ -1877,8 +1974,8 @@ TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceWhenEventEnableFailsTh
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
 }
@@ -1898,8 +1995,8 @@ TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceOwnedByAnotherCollecti
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
 
     // The owner is still collecting from it, so it is released without being destroyed, and the
@@ -1927,7 +2024,7 @@ TEST_F(SysmanInfoLogFixture, GivenPreExistingNamedInstanceNotOwnedByAnyCollectio
     EXPECT_EQ(1, MockTraceFsApiWithData::instanceDirOpenCallCount);
     EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirCloseCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
     // Deleting the collection instance releases the lock, which is what closing the directory does.
@@ -1947,9 +2044,9 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceDirectoryCannotBeOpenedWhenCreatingNam
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    zes_info_log_instance_handle_t hInstance = nullptr;
     // The mock reports EACCES, which is what the caller is told about.
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
     EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
@@ -1967,8 +2064,8 @@ TEST_F(SysmanInfoLogFixture, GivenNoTracefsInstancesDirectoryWhenCreatingNamedIn
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
     EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirOpenCallCount);
 }
@@ -1990,7 +2087,7 @@ TEST_F(SysmanInfoLogFixture, GivenUnnamedInstanceWhenCreatingInstanceThenNoOwner
     EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirOpenCallCount);
     EXPECT_EQ(0, NEO::SysCalls::flockCalled);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(0, MockTraceFsApiWithData::instanceDirCloseCallCount);
 }
 
@@ -2009,15 +2106,15 @@ TEST_F(SysmanInfoLogFixture, GivenOverlongLineAtEndOfTraceDataWhenReadingWithMet
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 }
@@ -2037,17 +2134,16 @@ TEST_F(SysmanInfoLogFixture, GivenIncompleteFinalLineNotFittingInBufferWhenReadi
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 2;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
     EXPECT_TRUE(readStatus.hasDataToRead);
@@ -2068,15 +2164,15 @@ TEST_F(SysmanInfoLogFixture, GivenSetvbufFailsWhenReadingWithMetaDataThenErrorIs
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = mockCperLen;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 }
@@ -2093,12 +2189,12 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenTraceFileReadFailsInQueryMode
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
     EXPECT_EQ(1u, MockTraceFsApiWithConfigurableBehavior::traceReadCallCount);
@@ -2117,8 +2213,8 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenPeekingInfoLogThenTraceFileIs
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
 
     uint32_t size = 1024u;
     std::vector<uint8_t> buffer(size);
@@ -2143,15 +2239,15 @@ TEST_F(SysmanInfoLogFixture, GivenTimestampWithShortFractionalPartWhenReadingWit
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(5058240000000ULL, descriptors[0].timestamp);
 }
@@ -2171,15 +2267,15 @@ TEST_F(SysmanInfoLogFixture, GivenNoSpaceBeforeTimestampWhenReadingWithMetaDataT
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(2u, size);
     EXPECT_EQ(0ULL, descriptors[0].timestamp);
@@ -2197,12 +2293,12 @@ TEST_F(SysmanInfoLogFixture, GivenNewlyCreatedNamedInstanceWhenDeletingInstanceT
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(0u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(0u, MockTraceFsApiWithData::instanceFreeCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
 }
@@ -2219,8 +2315,8 @@ TEST_F(SysmanInfoLogFixture, GivenEventAlreadyEnabledWhenTraceOnFailsThenEventIs
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(0, MockTraceFsApiWithData::eventDisableCallCount);
 }
 
@@ -2238,8 +2334,8 @@ TEST_F(SysmanInfoLogFixture, GivenSetBufferSizeFailsWhenCreatingNamedInstanceThe
 
     uint32_t bufferSize = 1024u;
     auto desc = makeInstanceDesc(&bufferSize);
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceDestroyCallCount);
     EXPECT_EQ(1u, MockTraceFsApiWithData::instanceFreeCallCount);
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferSizeCallCount);
@@ -2323,10 +2419,10 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceCreatedWhenCreatingASecondInstanceThen
     EXPECT_EQ(1u, getCperTracePipeFdCount());
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hFirstInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hFirstInstance));
     EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hSecondInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hSecondInstance));
     EXPECT_EQ(2, MockTraceFsApiWithData::closeCallCount);
     EXPECT_EQ(0u, getCperTracePipeFdCount());
     EXPECT_EQ(-1, getCperTracePipeFd());
@@ -2338,7 +2434,7 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceWithoutAnOpenTracePipeWhenReadingWithM
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
 
-    auto nonCperFormat = static_cast<zes_intel_info_log_format_exp_t>(ZES_INTEL_INFO_LOG_FORMAT_CPER + 1);
+    auto nonCperFormat = static_cast<zes_info_log_format_ext_t>(ZES_INFO_LOG_FORMAT_EXT_CPER + 1);
     LinuxInfoLogImp infoLogImp(nonCperFormat);
 
     auto desc = makeInstanceDesc();
@@ -2350,7 +2446,7 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceWithoutAnOpenTracePipeWhenReadingWithM
     uint32_t size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
     uint32_t recordCount = maxRecordsPerRead;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(recordCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE,
               pOsInfoLogInstance->readWithMetadata(noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, size);
@@ -2369,13 +2465,13 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenCreatingAndDeletingItThenWake
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, PublicTraceFsApi::lastSetBufferPercentInstance);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, PublicTraceFsApi::lastSetBufferPercentInstance);
@@ -2395,8 +2491,8 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWithABufferSizeWhenCreatingInstan
 
     uint32_t bufferSize = 1002u;
     auto desc = makeInstanceDesc(&bufferSize);
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
 
     EXPECT_EQ(std::string(MockTraceFsOsLibrary::mockTraceDir) + "/per_cpu", MockPerCpuDir::openedPath);
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferSizeCallCount);
@@ -2406,7 +2502,7 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWithABufferSizeWhenCreatingInstan
     EXPECT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, PublicTraceFsApi::lastSetBufferPercentInstance);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
 }
@@ -2425,8 +2521,8 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstancePerCpuPathIsUnavailableWhenCreati
 
     uint32_t bufferSize = 1024u;
     auto desc = makeInstanceDesc(&bufferSize);
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], "my_instance", &desc, &hInstance));
     EXPECT_TRUE(MockPerCpuDir::openedPath.empty());
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferSizeCallCount);
 }
@@ -2444,7 +2540,7 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceCreatedWhenDeletingInstanceThenPreviou
     ASSERT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
     ASSERT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
 }
@@ -2501,7 +2597,7 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogFormatIsNotCperWhenCreatingInstanceThen
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
 
-    auto nonCperFormat = static_cast<zes_intel_info_log_format_exp_t>(ZES_INTEL_INFO_LOG_FORMAT_CPER + 1);
+    auto nonCperFormat = static_cast<zes_info_log_format_ext_t>(ZES_INFO_LOG_FORMAT_EXT_CPER + 1);
     LinuxInfoLogImp infoLogImp(nonCperFormat);
 
     auto desc = makeInstanceDesc();
@@ -2530,7 +2626,7 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkAlreadyZeroWhenCreatingIns
 
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
 }
 
@@ -2547,12 +2643,12 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeProgrammedWhenCrea
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(MockTraceFsApiWithData::mockTracePipeFd, getCperTracePipeFd());
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
 }
 
@@ -2571,7 +2667,7 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkCannotBeReadWhenCreatingIn
 
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(0u, PublicTraceFsApi::setBufferPercentCallCount);
 }
 
@@ -2589,7 +2685,7 @@ TEST_F(SysmanInfoLogFixture, GivenTraceFsWakeWatermarkRestoreFailsWhenDeletingIn
     ASSERT_EQ(1u, PublicTraceFsApi::setBufferPercentCallCount);
     ASSERT_EQ(0, PublicTraceFsApi::lastSetBufferPercent);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
 }
@@ -2604,8 +2700,8 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeOpenFailsWhenCreatingInstanceThenErro
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(-1, getCperTracePipeFd());
     EXPECT_EQ(2u, PublicTraceFsApi::setBufferPercentCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
@@ -2640,8 +2736,8 @@ TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenReadingInfoLogThenTh
 
     size = static_cast<uint32_t>(MockTraceFsOsLibrary::mockBufferSize);
     uint32_t eventCount = 1;
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, size);
     EXPECT_EQ(0u, eventCount);
 
@@ -2664,8 +2760,8 @@ TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenCreatingInstanceThen
     L0::Sysman::globalSysmanDriver = nullptr;
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(0, MockTraceFsApiWithData::openCallCount);
 
     EXPECT_EQ(0, MockTraceFsApiWithData::closeCallCount);
@@ -2692,7 +2788,7 @@ TEST_F(SysmanInfoLogFixture, GivenNullGlobalSysmanDriverWhenDeletingInstanceThen
     auto *originalGlobalSysmanDriver = L0::Sysman::globalSysmanDriver;
     L0::Sysman::globalSysmanDriver = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(1, MockTraceFsApiWithData::closeCallCount);
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, PublicTraceFsApi::lastSetBufferPercent);
 
@@ -2714,8 +2810,8 @@ TEST_F(SysmanInfoLogFixture, GivenTracepointEnableStateReadsAsZeroWhenCreatingIn
 
     // The tracepoint reads back as present but off, so enabling it is attempted and the failure surfaces.
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
@@ -2735,13 +2831,13 @@ TEST_F(SysmanInfoLogFixture, GivenTracingOnStateReadsAsZeroWhenCreatingInstanceT
 
     // Tracing is reported as off, so enabling has to turn it on.
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(1u, MockTraceFsApiWithConfigurableBehavior::traceOnCallCount);
     EXPECT_EQ(0, MockTraceFsApiWithData::traceOffCallCount);
 
     // Tracing was not already on before enabling, so disabling has to turn it back off.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
     EXPECT_EQ(1, MockTraceFsApiWithData::traceOffCallCount);
 }
 
@@ -2757,21 +2853,21 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenCreatingAnotherInstanceWithTh
 
     const char *instanceName = "named_instance";
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], instanceName, &desc, &hInstance));
     EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
 
     auto secondDesc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hSecondInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &secondDesc, &hSecondInstance));
+    zes_info_log_instance_handle_t hSecondInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, zesInfoLogCreateInstanceExt(infoLogHandles[0], instanceName, &secondDesc, &hSecondInstance));
     EXPECT_EQ(nullptr, hSecondInstance);
     EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], instanceName, &secondDesc, &hSecondInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], instanceName, &secondDesc, &hSecondInstance));
     EXPECT_EQ(2, MockTraceFsApiWithData::openCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hSecondInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hSecondInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenCreatingADifferentNamedInstanceThenBothAreIndependent) {
@@ -2786,19 +2882,19 @@ TEST_F(SysmanInfoLogFixture, GivenNamedInstanceWhenCreatingADifferentNamedInstan
 
     const char *firstInstanceName = "instance_a";
     auto firstDesc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hFirstInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], firstInstanceName, &firstDesc, &hFirstInstance));
+    zes_info_log_instance_handle_t hFirstInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], firstInstanceName, &firstDesc, &hFirstInstance));
     EXPECT_EQ(1, MockTraceFsApiWithData::openCallCount);
 
     const char *secondInstanceName = "instance_b";
     auto secondDesc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hSecondInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], secondInstanceName, &secondDesc, &hSecondInstance));
+    zes_info_log_instance_handle_t hSecondInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], secondInstanceName, &secondDesc, &hSecondInstance));
     EXPECT_NE(hFirstInstance, hSecondInstance);
     EXPECT_EQ(2, MockTraceFsApiWithData::openCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hFirstInstance));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hSecondInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hFirstInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hSecondInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenEmptyLineReadFromTracePipeWhenReadingWithMetaDataThenFollowingEventIsStillExtracted) {
@@ -2816,16 +2912,16 @@ TEST_F(SysmanInfoLogFixture, GivenEmptyLineReadFromTracePipeWhenReadingWithMetaD
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
     // The first read hands out a zero length line, which must not be mistaken for a complete record.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(2u, size);
     EXPECT_EQ(0xABu, buffer[0]);
@@ -2849,17 +2945,17 @@ TEST_F(SysmanInfoLogFixture, GivenEmptyLineWhileResynchronizingAfterOverlongLine
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(1);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(1);
 
     // The overlong line is abandoned on the third read, so the injected empty line lands inside the
     // resynchronization loop, where it must not be treated as the end of the discarded record.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(4u, MockTraceFsApiWithConfigurableBehavior::emptyLineOnFgetsCall);
     EXPECT_GT(MockTraceFsApiWithConfigurableBehavior::fgetsCallCount, 4u);
     EXPECT_EQ(1u, eventCount);
@@ -2875,21 +2971,19 @@ TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsReportLostRecordsWhenPeekingWithMet
     MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(3, 0), MockPerCpuStats::makeBlob(0, 5),
                                              MockPerCpuStats::makeBlob(2, 4, 100), MockPerCpuStats::makeBlob(0, 0)});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
     EXPECT_EQ(1u, eventCount);
 
     // 'overrun' and 'dropped events' are summed across the per-CPU buffers, while 'commit overrun'
     // counts records lost to nested writes rather than to an overflow and is left out.
-    EXPECT_EQ(14u, readStatus.droppedRecordCount);
-    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+    EXPECT_EQ(14, readStatus.droppedRecordCount);
 
     ASSERT_EQ(static_cast<size_t>(MockPerCpuDir::mockPerCpuBufferCount), MockPerCpuStats::filesRead.size());
     EXPECT_EQ("per_cpu/cpu0/stats", MockPerCpuStats::filesRead[0]);
@@ -2901,17 +2995,15 @@ TEST_F(SysmanInfoLogFixture, GivenAlreadyReportedDropsWhenPeekingAgainThenOnlyTh
     MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(7, 0), MockPerCpuStats::makeBlob(0, 0),
                                              MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
-    EXPECT_EQ(7u, readStatus.droppedRecordCount);
-    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(7, readStatus.droppedRecordCount);
 
     // Two more records lost since that peek: the kernel counters are cumulative, so only the
     // difference is reported.
@@ -2919,9 +3011,8 @@ TEST_F(SysmanInfoLogFixture, GivenAlreadyReportedDropsWhenPeekingAgainThenOnlyTh
 
     size = 1024;
     eventCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
-    EXPECT_EQ(2u, readStatus.droppedRecordCount);
-    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(2, readStatus.droppedRecordCount);
 
     // The number of per-CPU buffers cannot change while the instance is alive, so it is scanned once.
     EXPECT_EQ(1u, MockPerCpuDir::closedirCallCount);
@@ -2932,16 +3023,15 @@ TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsCountersRestartedWhenPeekingAgainTh
     MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(12, 0), MockPerCpuStats::makeBlob(0, 0),
                                              MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
-    EXPECT_EQ(12u, readStatus.droppedRecordCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(12, readStatus.droppedRecordCount);
 
     // Resizing a buffer, or clearing it through tracefs, restarts the kernel counters. The reported
     // total has to follow them back down instead of underflowing into a huge count.
@@ -2950,29 +3040,26 @@ TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsCountersRestartedWhenPeekingAgainTh
     size = 1024;
     eventCount = 1;
     EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
-    EXPECT_EQ(0u, readStatus.droppedRecordCount);
-    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+    EXPECT_EQ(0, readStatus.droppedRecordCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenSomePerCpuStatsFilesCannotBeReadWhenPeekingWithMetaDataThenTheCountIsReportedAsInvalid) {
     MockPerCpuDirBackup perCpuDirBackup;
     MockPerCpuStatsBackup perCpuStatsBackup({"", MockPerCpuStats::makeBlob(6, 0), "", MockPerCpuStats::makeBlob(0, 1)});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
 
     // The 7 records the readable buffers report are not the number of records lost, because the two
     // buffers which could not be read may have lost any number of them. Reporting the sum would tell
     // the caller a wrong count, so no count is reported and the read is still not failed over it.
-    EXPECT_EQ(0u, readStatus.droppedRecordCount);
-    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+    EXPECT_EQ(-1, readStatus.droppedRecordCount);
 
     // The readable buffers are still visited, so a later read can report the loss once all of the
     // counters can be read.
@@ -2984,16 +3071,15 @@ TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsBecomeReadableAgainWhenPeekingAgain
     MockPerCpuStatsBackup perCpuStatsBackup({"", MockPerCpuStats::makeBlob(0, 0),
                                              MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
-    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(-1, readStatus.droppedRecordCount);
 
     // A read which reports no count leaves the baseline where it was, so the loss it could not report
     // is reported in full by the first read which can read all of the counters again.
@@ -3001,29 +3087,26 @@ TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsBecomeReadableAgainWhenPeekingAgain
 
     size = 1024;
     eventCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
-    EXPECT_EQ(5u, readStatus.droppedRecordCount);
-    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(5, readStatus.droppedRecordCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenPerCpuDirectoryCannotBeScannedWhenPeekingWithMetaDataThenNoDropsAreReported) {
     MockPerCpuDirBackup perCpuDirBackup(true);
     MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(9, 9)});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
 
     // Without the number of per-CPU buffers there is nothing to read the counters from, so no count
     // is reported rather than 0 being reported as if nothing had been lost.
-    EXPECT_EQ(0u, readStatus.droppedRecordCount);
-    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+    EXPECT_EQ(-1, readStatus.droppedRecordCount);
     EXPECT_TRUE(MockPerCpuStats::filesRead.empty());
 }
 
@@ -3037,21 +3120,19 @@ TEST_F(SysmanInfoLogFixture, GivenUnparsableDropCounterWhenPeekingWithMetaDataTh
     MockPerCpuStatsBackup perCpuStatsBackup({malformedStats, MockPerCpuStats::makeBlob(0, 0),
                                              MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
 
     // 'dropped events' parses as 8 and the trailing text is ignored, but 'overrun' carries a value
     // which cannot be read at all, so 8 is not the number of records this buffer lost and no count is
     // reported for the interval.
-    EXPECT_EQ(0u, readStatus.droppedRecordCount);
-    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+    EXPECT_EQ(-1, readStatus.droppedRecordCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsWithoutDropCountersWhenPeekingWithMetaDataThenTheCountIsReportedAsInvalid) {
@@ -3064,37 +3145,33 @@ TEST_F(SysmanInfoLogFixture, GivenPerCpuStatsWithoutDropCountersWhenPeekingWithM
     MockPerCpuStatsBackup perCpuStatsBackup({statsWithoutDropCounters, statsWithoutDropCounters,
                                              statsWithoutDropCounters, statsWithoutDropCounters});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
-    EXPECT_EQ(0u, readStatus.droppedRecordCount);
-    EXPECT_FALSE(readStatus.isDroppedRecordCountValid);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(-1, readStatus.droppedRecordCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenMoreDropsThanFitInTheReportedCountWhenPeekingWithMetaDataThenTheCountIsClamped) {
     MockPerCpuDirBackup perCpuDirBackup;
-    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(UINT32_MAX, 1), MockPerCpuStats::makeBlob(UINT32_MAX, 1),
-                                             MockPerCpuStats::makeBlob(UINT32_MAX, 1), MockPerCpuStats::makeBlob(UINT32_MAX, 1)});
+    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(INT64_MAX, 1), MockPerCpuStats::makeBlob(0, 0),
+                                             MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
 
-    // The counters are 64 bit wide, the reported count is not.
-    EXPECT_EQ(UINT32_MAX, readStatus.droppedRecordCount);
-    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+    // The counters are unsigned 64 bit wide, the reported count is signed so that -1 can mean unknown.
+    EXPECT_EQ(INT64_MAX, readStatus.droppedRecordCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenRecordsLostBeforeCollectionStartsWhenReadingWithMetaDataThenOnlyLaterLossesAreReported) {
@@ -3117,13 +3194,11 @@ TEST_F(SysmanInfoLogFixture, GivenRecordsLostBeforeCollectionStartsWhenReadingWi
 
     uint32_t size = 0;
     uint32_t eventCount = 0;
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
-    EXPECT_EQ(3u, readStatus.droppedRecordCount);
-    EXPECT_TRUE(readStatus.isDroppedRecordCountValid);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(3, readStatus.droppedRecordCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenLastFieldValueEndsWithTrailingSpaceWhenPeekingWithMetaDataThenFieldScanStopsAtEndOfLine) {
@@ -3131,12 +3206,12 @@ TEST_F(SysmanInfoLogFixture, GivenLastFieldValueEndsWithTrailingSpaceWhenPeeking
     // trailing space becomes the last character of the line and the field scan runs off the end of
     // the line instead of stopping at a field separator.
     MockTraceFsApiWithData traceFsApi(false, false, mockCperEventWithTrailingSpaceValue);
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(2u, size);
@@ -3146,14 +3221,14 @@ TEST_F(SysmanInfoLogFixture, GivenLastFieldValueEndsWithTrailingSpaceWhenPeeking
 
 TEST_F(SysmanInfoLogFixture, GivenBufferTooSmallForFirstRecordWhenPeekingWithMetaDataThenSizeLimitStopsExtractionWithNothingReturned) {
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     // The single record is larger than the buffer, so nothing is copied and the read stops on the
     // size limit rather than draining the snapshot.
     uint32_t size = 8;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
@@ -3161,16 +3236,15 @@ TEST_F(SysmanInfoLogFixture, GivenBufferTooSmallForFirstRecordWhenPeekingWithMet
 
 TEST_F(SysmanInfoLogFixture, GivenMoreRecordsRequestedThanAvailableWhenPeekingWithMetaDataThenSnapshotIsReportedDrained) {
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     // Room for two records but only one in the snapshot, so the second getline() drains it. A drained
     // stop reports no more data available.
     uint32_t size = 1024;
     uint32_t eventCount = 2;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
     EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(mockCperLen, size);
@@ -3179,12 +3253,12 @@ TEST_F(SysmanInfoLogFixture, GivenMoreRecordsRequestedThanAvailableWhenPeekingWi
 
 TEST_F(SysmanInfoLogFixture, GivenZeroTimeoutWhenPeekingWithMetaDataThenTheDeadlineStopsExtractionWhileAFiniteTimeoutStillReads) {
     MockTraceFsApiWithData traceFsApi;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t size = 1024;
     uint32_t eventCount = 2;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
 
     // A zero timeout puts the deadline in the past, so the very first loop iteration stops before any
     // record is read.
@@ -3221,22 +3295,22 @@ TEST_F(SysmanInfoLogFixture, GivenZeroTimeoutWhenReadingWithMetaDataThenTheDeadl
     uint32_t size = mockCperLen;
     uint32_t eventCount = 1;
     std::vector<uint8_t> buffer(size);
-    std::vector<zes_intel_info_log_metadata_exp> descriptors(eventCount);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
 
     // A zero timeout puts the deadline in the past, so extraction stops on the first loop iteration,
     // before a single line is pulled from trace_pipe.
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, 0u, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, 0u, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(0u, eventCount);
     EXPECT_EQ(0u, size);
 
     // A generous but finite timeout never fires within the test, so the buffered record is read out.
     size = mockCperLen;
     eventCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, largeTimeoutMs, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, largeTimeoutMs, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
     EXPECT_EQ(1u, eventCount);
     EXPECT_EQ(mockCperLen, size);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(hInstance));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenBufferSizeReadBackFailsAfterSizingWhenApplyingBufferConfigurationThenAppliedTotalIsReportedAsZero) {
@@ -3244,7 +3318,7 @@ TEST_F(SysmanInfoLogFixture, GivenBufferSizeReadBackFailsAfterSizingWhenApplying
     MockTraceFsApiWithConfigurableBehavior traceFsApi;
     // The set succeeds but every buffer-size query reports -1, so the applied total cannot be read back.
     traceFsApi.failGetBufferSize = true;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t bufferSize = 4096u;
     auto desc = makeInstanceDesc(&bufferSize);
@@ -3261,7 +3335,7 @@ TEST_F(SysmanInfoLogFixture, GivenZeroBufferSizeWhenApplyingBufferConfigurationT
     // cpu -1 reports the total across the per-CPU buffers while a single cpu reports just its own, so
     // the value which comes back tells the two queries apart.
     traceFsApi.reportDistinctPerCpuAndTotalBufferSize = true;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t bufferSize = 0u;
     auto desc = makeInstanceDesc(&bufferSize);
@@ -3278,7 +3352,7 @@ TEST_F(SysmanInfoLogFixture, GivenZeroBufferSizeAndBufferSizeCannotBeReadWhenApp
     MockTraceFsApiWithConfigurableBehavior traceFsApi;
     // Every buffer-size query reports -1, so the size the buffer already has cannot be determined.
     traceFsApi.failGetBufferSize = true;
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
     uint32_t bufferSize = 0u;
     auto desc = makeInstanceDesc(&bufferSize);
@@ -3296,7 +3370,7 @@ TEST_F(SysmanInfoLogFixture, GivenBufferSizeRestoreFailsWhenTearingDownInstanceT
     // The sizing set (the first) succeeds; the restore set (the second, issued on teardown) fails.
     traceFsApi.failSetBufferSizeOnCall = 2;
     {
-        LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, false, false);
+        LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
 
         uint32_t bufferSize = 4096u;
         auto desc = makeInstanceDesc(&bufferSize);
@@ -3316,7 +3390,7 @@ TEST_F(SysmanInfoLogFixture, GivenTracePipeCannotBeOpenedWhenStartingCollectionW
     MockPerCpuDirBackup perCpuDirBackup;
     MockTraceFsApiWithData traceFsApi;
     // The tracepoint was already enabled and tracing already on before this instance started.
-    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INTEL_INFO_LOG_FORMAT_CPER, nullptr, "", false, true, true);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, true, true);
 
     MockTraceFsApiWithData::traceOffCallCount = 0;
     MockTraceFsApiWithData::eventDisableCallCount = 0;
@@ -3332,14 +3406,14 @@ TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureFailedAtInitWhenGettingProperti
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
-    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    InfoLogImp infoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
     auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
     pMockOsInfoLog->getPropertiesResult = ZE_RESULT_ERROR_UNKNOWN;
     infoLog.pOsInfoLog = std::move(pMockOsInfoLog);
     infoLog.init();
 
     // A failed capture at init is remembered and reported to every property query.
-    zes_intel_info_log_properties_exp_t properties = {};
+    zes_info_log_ext_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, infoLog.infoLogGetProperties(&properties));
 }
 
@@ -3347,7 +3421,7 @@ TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureFailedAtInitWhenCreatingInstanc
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
-    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    InfoLogImp infoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
     auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
     pMockOsInfoLog->getPropertiesResult = ZE_RESULT_ERROR_UNKNOWN;
     auto *pRawMockOsInfoLog = pMockOsInfoLog.get();
@@ -3357,7 +3431,7 @@ TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureFailedAtInitWhenCreatingInstanc
     // Without captured properties there is nothing to create a collection instance from, so the
     // capture error is reported instead of the properties being read as if they were valid.
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    zes_info_log_instance_handle_t hInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, infoLog.infoLogCreateInstance(nullptr, &desc, &hInstance));
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, infoLog.infoLogCreateInstance("named", &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
@@ -3368,14 +3442,14 @@ TEST_F(SysmanInfoLogFixture, GivenNamedCollectionUnsupportedWhenCreatingNamedIns
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
-    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    InfoLogImp infoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
     auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
-    pMockOsInfoLog->isNamedInstancedCollectionSupported = false;
+    pMockOsInfoLog->isNamedInstanceSupported = false;
     infoLog.pOsInfoLog = std::move(pMockOsInfoLog);
     infoLog.init();
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    zes_info_log_instance_handle_t hInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, infoLog.infoLogCreateInstance("named", &desc, &hInstance));
 }
 
@@ -3383,11 +3457,39 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceNotOwnedByThisInfoLogWhenDestroyingItT
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
-    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    InfoLogImp infoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
     // An instance this InfoLog never handed out is not in its bookkeeping.
     InfoLogInstanceImp strayInstance(&infoLog, nullptr, std::make_unique<MockOsInfoLogInstance>());
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, infoLog.destroyInstance(&strayInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNonNullPNextInLastDescriptorWhenReadingAndPeekingThenOnlyDescriptorsWithinRecordCountAreChecked) {
+    auto pMockOsInstance = std::make_unique<MockOsInfoLogInstance>();
+    auto *pRawMockOsInstance = pMockOsInstance.get();
+    InfoLogInstanceImp instance(nullptr, nullptr, std::move(pMockOsInstance));
+
+    uint32_t size = 1024;
+    uint32_t recordCount = 2;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
+    zes_info_log_metadata_ext_t descriptorExtension = {};
+    descriptors[1].pNext = &descriptorExtension;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, instance.readWithMetadata(noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(0u, pRawMockOsInstance->readCallCount);
+    EXPECT_EQ(0u, pRawMockOsInstance->peekCallCount);
+
+    recordCount = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.readWithMetadata(noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(1u, pRawMockOsInstance->readCallCount);
+    EXPECT_EQ(1u, pRawMockOsInstance->peekCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.readWithMetadata(noTimeout, &size, buffer.data(), &recordCount, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &recordCount, nullptr, nullptr));
+    EXPECT_EQ(2u, pRawMockOsInstance->readCallCount);
+    EXPECT_EQ(2u, pRawMockOsInstance->peekCallCount);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenInstanceAlreadyTornDownWhenTearingDownAgainThenTheBackendIsToldOnlyOnce) {
@@ -3405,7 +3507,7 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceTeardownFailsWhenDestroyingAllInstance
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
     });
-    InfoLogImp infoLog(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    InfoLogImp infoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
     auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
     auto *pRawMockOsInfoLog = pMockOsInfoLog.get();
     pMockOsInfoLog->instanceTeardownResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -3413,8 +3515,8 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceTeardownFailsWhenDestroyingAllInstance
     infoLog.init();
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hNamedInstance = nullptr;
-    zes_intel_info_log_instance_handle_t hUnnamedInstance = nullptr;
+    zes_info_log_instance_handle_t hNamedInstance = nullptr;
+    zes_info_log_instance_handle_t hUnnamedInstance = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, infoLog.infoLogCreateInstance("named", &desc, &hNamedInstance));
     ASSERT_EQ(ZE_RESULT_SUCCESS, infoLog.infoLogCreateInstance(nullptr, &desc, &hUnnamedInstance));
 
@@ -3422,7 +3524,7 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceTeardownFailsWhenDestroyingAllInstance
     EXPECT_EQ(2u, pRawMockOsInfoLog->instanceTeardownCallCount);
 
     pRawMockOsInfoLog->instanceTeardownResult = ZE_RESULT_SUCCESS;
-    zes_intel_info_log_instance_handle_t hReusedInstance = nullptr;
+    zes_info_log_instance_handle_t hReusedInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, infoLog.infoLogCreateInstance("named", &desc, &hReusedInstance));
     EXPECT_NE(nullptr, hReusedInstance);
 }
@@ -3440,31 +3542,30 @@ TEST_F(SysmanInfoLogFixture, GivenSysmanInitFromCoreWhenCallingInfoLogEntryPoint
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto hInstance = createInfoLogInstance(infoLogHandles[0]);
 
-    // Sysman was brought up from core rather than as a standalone init, so every experimental
-    // info-log entry point is refused up front on the init state alone.
+    // Sysman was brought up from core rather than as a standalone init, so every info-log entry
+    // point is refused up front on the init state alone.
     VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
 
     uint32_t count = handleCount;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
 
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogGetPropertiesExp(infoLogHandles[0], &properties));
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogGetPropertiesExt(infoLogHandles[0], &properties));
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hNewInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hNewInstance));
+    zes_info_log_instance_handle_t hNewInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hNewInstance));
     EXPECT_EQ(nullptr, hNewInstance);
 
     uint32_t size = mockCperLen;
     uint32_t recordCount = 1;
     std::vector<uint8_t> buffer(size);
-    zes_intel_info_log_metadata_exp descriptor = {};
+    zes_info_log_metadata_ext_t descriptor = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
-              zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+              zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
-              zesIntelInfoLogInstancePeekWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogInstanceDeleteExp(hInstance));
+              zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNeitherInitFlagSetWhenCallingInfoLogEntryPointsThenUninitializedIsReturned) {
@@ -3485,26 +3586,317 @@ TEST_F(SysmanInfoLogFixture, GivenNeitherInitFlagSetWhenCallingInfoLogEntryPoint
     VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
 
     uint32_t count = handleCount;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
 
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogGetPropertiesExp(infoLogHandles[0], &properties));
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogGetPropertiesExt(infoLogHandles[0], &properties));
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hNewInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogCreateInstanceExp(infoLogHandles[0], nullptr, &desc, &hNewInstance));
+    zes_info_log_instance_handle_t hNewInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hNewInstance));
     EXPECT_EQ(nullptr, hNewInstance);
 
     uint32_t size = mockCperLen;
     uint32_t recordCount = 1;
     std::vector<uint8_t> buffer(size);
-    zes_intel_info_log_metadata_exp descriptor = {};
+    zes_info_log_metadata_ext_t descriptor = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED,
-              zesIntelInfoLogInstanceReadWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+              zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED,
-              zesIntelInfoLogInstancePeekWithMetadataExp(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogInstanceDeleteExp(hInstance));
+              zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogInstanceDeleteExt(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenReadStatusWhenReadingWithMetaDataThenConsumedDataSizeCoversEveryTracePipeByteRead) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+
+    uint32_t size = 0;
+    uint32_t eventCount = 0;
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    readStatus.consumedDataSize = UINT64_MAX;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(0u, readStatus.consumedDataSize);
+
+    size = 1024;
+    eventCount = 2;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(static_cast<uint64_t>(mockSingleCperEventData.size()), readStatus.consumedDataSize);
+    EXPECT_FALSE(readStatus.hasDataToRead);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenReadStatusWhenPeekingWithMetaDataThenConsumedDataSizeCoversEverySnapshotByteSearched) {
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 1024;
+    uint32_t eventCount = 2;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(static_cast<uint64_t>(mockSingleCperEventData.size()), readStatus.consumedDataSize);
+
+    size = 1024;
+    eventCount = 2;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(static_cast<uint64_t>(mockSingleCperEventData.size()), readStatus.consumedDataSize);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenZeroTimeoutWhenQueryingWithMetaDataThenNothingIsSearchedAndDataIsStillReportedAsPending) {
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 0;
+    uint32_t eventCount = 0;
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(0u, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(0u, size);
+    EXPECT_EQ(0u, eventCount);
+    EXPECT_TRUE(readStatus.hasDataToRead);
+    EXPECT_EQ(0u, readStatus.consumedDataSize);
+
+    size = 0;
+    eventCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(largeTimeoutMs, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(mockCperLen, size);
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_TRUE(readStatus.hasDataToRead);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenDeadlineReachedPartWayThroughCountingWhenQueryingWithMetaDataThenOnlyTheRecordsCountedSoFarAreReportedAndAnOverflowingDeadlineDoesNotWrap) {
+    MockTraceFsApiWithData traceFsApi(true);
+    MockLinuxInfoLogInstanceImpWithClock instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
+
+    instance.clockReadsBeforeDeadline = 3;
+    uint32_t size = 0;
+    uint32_t eventCount = 0;
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(largeTimeoutMs, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(4u, instance.clockReadCount);
+    EXPECT_EQ(mockCperLen, size);
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_TRUE(readStatus.hasDataToRead);
+    EXPECT_EQ(0u, readStatus.consumedDataSize);
+
+    size = 0;
+    eventCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(3u * mockCperLen, size);
+    EXPECT_EQ(3u, eventCount);
+
+    instance.clockReadsBeforeDeadline = UINT32_MAX;
+    size = 0;
+    eventCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(UINT64_MAX - 1, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(3u * mockCperLen, size);
+    EXPECT_EQ(3u, eventCount);
+    EXPECT_TRUE(readStatus.hasDataToRead);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenSnapshotWhoseLastLineHasNoNewlineWhenPeekingWithMetaDataThenConsumedDataSizeMatchesTheSnapshotSizeExactly) {
+    const std::string traceData = mockCperEvent2 + mockCperEvent1.substr(0, mockCperEvent1.size() - 1);
+    MockTraceFsApiWithData traceFsApi(false, false, traceData);
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 4u * mockCperLen;
+    uint32_t eventCount = 4;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(2u, eventCount);
+    EXPECT_EQ(2u * mockCperLen, size);
+    EXPECT_EQ(0, std::memcmp(buffer.data() + mockCperLen, expectedCper1Bytes.data(), mockCperLen));
+    EXPECT_EQ(static_cast<uint64_t>(traceData.size()), readStatus.consumedDataSize);
+    EXPECT_FALSE(readStatus.hasDataToRead);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNoRecordsHeldWhenQueryingWithMetaDataThenNothingIsReportedAsPending) {
+    MockTraceFsApiWithData traceFsApi(false, false, "# tracer: nop\n");
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 0;
+    uint32_t eventCount = 0;
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    readStatus.hasDataToRead = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.peekWithMetadata(noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
+    EXPECT_EQ(0u, size);
+    EXPECT_EQ(0u, eventCount);
+    EXPECT_FALSE(readStatus.hasDataToRead);
+}
+
+class SysmanInfoLogDroppedRecordsFixture : public SysmanInfoLogFixture {
+  protected:
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup{{MockPerCpuStats::makeBlob(7, 0), MockPerCpuStats::makeBlob(0, 0),
+                                             MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)}};
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance{&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false};
+};
+
+TEST_F(SysmanInfoLogDroppedRecordsFixture, GivenDroppedRecordsAndNoReadStatusWhenPeekingWithMetaDataThenWarningIsReturnedAndTheCountIsKeptForTheNextReadStatus) {
+    uint32_t eventCount = 0;
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr, &eventCount));
+    EXPECT_EQ(1u, eventCount);
+
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, &readStatus));
+    EXPECT_EQ(7, readStatus.droppedRecordCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, &readStatus));
+    EXPECT_EQ(0, readStatus.droppedRecordCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+}
+
+TEST_F(SysmanInfoLogDroppedRecordsFixture, GivenDroppedRecordsAndNoReadStatusWhenPeekingWithMetaDataRepeatedlyThenWarningIsReturnedOnlyForNewLoss) {
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(9, 0);
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, &readStatus));
+    EXPECT_EQ(9, readStatus.droppedRecordCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+}
+
+TEST_F(SysmanInfoLogDroppedRecordsFixture, GivenDroppedRecordsWarnedWithoutReadStatusAndCountersRestartedWhenPeekingWithoutReadStatusThenWarningIsReturnedForTheNewLoss) {
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr));
+
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(0, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(3, 0);
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr));
+
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, &readStatus));
+    EXPECT_EQ(3, readStatus.droppedRecordCount);
+}
+
+TEST_F(SysmanInfoLogDroppedRecordsFixture, GivenDroppedRecordsReportedThroughReadStatusWhenPeekingWithoutReadStatusThenWarningIsReturnedOnlyForNewLoss) {
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, &readStatus));
+    EXPECT_EQ(7, readStatus.droppedRecordCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(9, 0);
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, &readStatus));
+    EXPECT_EQ(2, readStatus.droppedRecordCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenDroppedRecordsWarnedWithoutReadStatusWhenCollectionIsRestartedThenWarningIsReturnedForLossAfterTheNewBaseline) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup({MockPerCpuStats::makeBlob(20, 0), MockPerCpuStats::makeBlob(0, 0),
+                                             MockPerCpuStats::makeBlob(0, 0), MockPerCpuStats::makeBlob(0, 0)});
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, true, true);
+
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr));
+
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(5, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, instance.startCollection());
+
+    MockPerCpuStats::blobs[0] = MockPerCpuStats::makeBlob(10, 0);
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, peekOneRecord(instance, nullptr));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenDropCountersCannotBeReadAndNoReadStatusWhenPeekingWithMetaDataThenWarningIsReturned) {
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup;
+    MockTraceFsApiWithData traceFsApi;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
+
+    uint32_t eventCount = 0;
+    uint32_t size = 0;
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, peekOneRecord(instance, nullptr, &eventCount, &size));
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(mockCperLen, size);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenDropCountersCannotBeReadWhenQueryFailsThenTheErrorIsReturnedRatherThanTheWarning) {
+    MockPerCpuStatsBackup perCpuStatsBackup;
+    MockTraceFsApiWithConfigurableBehavior traceFsApi;
+    traceFsApi.failTraceFileRead = true;
+    LinuxInfoLogInstanceImp instance(&traceFsApi, ZES_INFO_LOG_FORMAT_EXT_CPER, nullptr, "", false, false, false);
+
+    uint32_t size = 0;
+    uint32_t eventCount = 0;
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, instance.peekWithMetadata(noTimeout, &size, nullptr, &eventCount, nullptr, &readStatus));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogAndInstanceHandlesThenTheyCarryTheSysmanDdiTablesForTheLoader) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>();
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+
+    auto pInfoLogDdi = reinterpret_cast<ze_handle_t *>(infoLogHandles[0]);
+    EXPECT_EQ(&L0::globalDriverDispatch.sysman, pInfoLogDdi->pSysman);
+    EXPECT_EQ(L0::globalDriverDispatch.sysman.InfoLog->pfnCreateInstanceExt, pInfoLogDdi->pSysman->InfoLog->pfnCreateInstanceExt);
+    EXPECT_NE(nullptr, pInfoLogDdi->pSysman->InfoLog->pfnGetPropertiesExt);
+
+    auto pInstanceDdi = reinterpret_cast<ze_handle_t *>(hInstance);
+    EXPECT_EQ(&L0::globalDriverDispatch.sysman, pInstanceDdi->pSysman);
+    EXPECT_NE(nullptr, pInstanceDdi->pSysman->InfoLogInstance->pfnReadWithMetadataExt);
+    EXPECT_NE(nullptr, pInstanceDdi->pSysman->InfoLogInstance->pfnPeekWithMetadataExt);
+    EXPECT_NE(nullptr, pInstanceDdi->pSysman->InfoLogInstance->pfnDeleteExt);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenExperimentalInfoLogEntryPointsWhenCalledThenUnsupportedFeatureIsReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(0u, count);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogGetPropertiesExp(nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogCreateInstanceExp(nullptr, nullptr, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogInstanceReadWithMetadataExp(nullptr, noTimeout, nullptr, nullptr, nullptr, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogInstancePeekWithMetadataExp(nullptr, noTimeout, nullptr, nullptr, nullptr, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogInstanceDeleteExp(nullptr));
+
+    decltype(&::zesIntelDriverEnumInfoLogsExp) pfnEnumInfoLogsExp = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverEnumInfoLogsExp", reinterpret_cast<void **>(&pfnEnumInfoLogsExp)));
+    ASSERT_NE(nullptr, pfnEnumInfoLogsExp);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pfnEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
 }
 
 } // namespace ult

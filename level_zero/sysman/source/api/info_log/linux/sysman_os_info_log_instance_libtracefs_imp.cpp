@@ -135,26 +135,26 @@ static zes_uuid_t parseUuid(const std::string &uuidStr) {
     return uuid;
 }
 
-static const std::map<unsigned long, zes_intel_info_log_record_type_exp_t> cperSeverityToRecordType = {
-    {0, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_RECOVERABLE},
-    {1, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_FATAL},
-    {2, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_ERROR_CORRECTED},
-    {3, ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_INFORMATIONAL}};
+static const std::map<unsigned long, zes_info_log_record_type_ext_t> cperSeverityToRecordType = {
+    {0, ZES_INFO_LOG_RECORD_TYPE_EXT_ERROR_RECOVERABLE},
+    {1, ZES_INFO_LOG_RECORD_TYPE_EXT_ERROR_FATAL},
+    {2, ZES_INFO_LOG_RECORD_TYPE_EXT_ERROR_CORRECTED},
+    {3, ZES_INFO_LOG_RECORD_TYPE_EXT_INFORMATIONAL}};
 
-static zes_intel_info_log_record_type_exp_t parseRecordType(const std::string &severityStr) {
+static zes_info_log_record_type_ext_t parseRecordType(const std::string &severityStr) {
     char *end = nullptr;
     unsigned long severity = std::strtoul(severityStr.c_str(), &end, 10);
     if (severityStr.empty() || end != severityStr.c_str() + severityStr.length()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Warning@ %s(): Reporting unknown record type for unparsable severity: '%s'\n",
                      NEO_FUNCTION_NAME, severityStr.c_str());
-        return ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN;
+        return ZES_INFO_LOG_RECORD_TYPE_EXT_UNKNOWN;
     }
 
     auto recordType = cperSeverityToRecordType.find(severity);
     if (recordType == cperSeverityToRecordType.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Warning@ %s(): Reporting unknown record type for unrecognized severity: %lu\n",
                      NEO_FUNCTION_NAME, severity);
-        return ZES_INTEL_INFO_LOG_RECORD_TYPE_EXP_UNKNOWN;
+        return ZES_INFO_LOG_RECORD_TYPE_EXT_UNKNOWN;
     }
     return recordType->second;
 }
@@ -198,13 +198,18 @@ static uint64_t parseTimestamp(const std::string &line) {
 //   #              | |       |   ||||       |         |
 //        kworker-42   [000] ....  1234.567890: xe_error_cper: cper_len=8 cper_raw=AB CD EF 01 02 03 04 05
 //        kworker-42   [000] ....  1234.567891: xe_error_cper: cper_len=4 cper_raw=DE AD BE EF
-static void countCperRecordsAndSize(const std::string &traceOutput, uint32_t &cperCount, uint32_t &totalSize) {
+bool LinuxInfoLogInstanceImp::countCperRecordsAndSize(const std::string &traceOutput, uint32_t &cperCount, uint32_t &totalSize,
+                                                      uint64_t deadlineMs) {
     std::istringstream iss(traceOutput);
     std::string line;
     cperCount = 0;
     totalSize = 0;
 
-    while (std::getline(iss, line)) {
+    while (!isDeadlineReached(deadlineMs)) {
+        if (!std::getline(iss, line)) {
+            return true;
+        }
+
         if (line.find("xe_error_cper:") == std::string::npos) {
             continue;
         }
@@ -218,18 +223,20 @@ static void countCperRecordsAndSize(const std::string &traceOutput, uint32_t &cp
         totalSize += cperLen;
         cperCount++;
     }
+
+    return false;
 }
 
 struct CperExtractionState {
     uint8_t *pBuffer;
     uint32_t bufferSize;
-    zes_intel_info_log_metadata_exp *pDescriptors;
+    zes_info_log_metadata_ext_t *pDescriptors;
     uint32_t aggregatedCperLen = 0;
     uint32_t recordsExtracted = 0;
     uint32_t maxRecords;
 
     CperExtractionState(uint8_t *buffer, uint32_t bufSize,
-                        zes_intel_info_log_metadata_exp *descriptors, uint32_t maxRecs)
+                        zes_info_log_metadata_ext_t *descriptors, uint32_t maxRecs)
         : pBuffer(buffer), bufferSize(bufSize), pDescriptors(descriptors),
           maxRecords(maxRecs) {}
 };
@@ -286,7 +293,7 @@ static bool processCperLine(const std::string &line, CperExtractionState &state,
     }
 
     // Fill per-record metadata
-    zes_intel_info_log_metadata_exp &desc = state.pDescriptors[state.recordsExtracted];
+    zes_info_log_metadata_ext_t &desc = state.pDescriptors[state.recordsExtracted];
     desc.lengthOfData = cperLen;
     desc.offset = state.aggregatedCperLen;
     desc.timestamp = parseTimestamp(line);
@@ -310,7 +317,7 @@ static std::string getTraceContext(struct tracefs_instance *instance, const std:
     return "instance '" + instanceName + "'";
 }
 
-LinuxInfoLogInstanceImp::LinuxInfoLogInstanceImp(TraceFsApi *pTraceFsApi, zes_intel_info_log_format_exp_t format,
+LinuxInfoLogInstanceImp::LinuxInfoLogInstanceImp(TraceFsApi *pTraceFsApi, zes_info_log_format_ext_t format,
                                                  struct tracefs_instance *pTraceFsInstance, const std::string &instanceName,
                                                  bool instanceWasPreExisting, bool eventWasAlreadyEnabled, bool tracingWasAlreadyOn,
                                                  int ownershipFd)
@@ -329,8 +336,12 @@ uint64_t LinuxInfoLogInstanceImp::getCurrentTimeInMs() {
     return SteadyClock::now().time_since_epoch().count();
 }
 
-ze_result_t LinuxInfoLogInstanceImp::applyBufferConfiguration(zes_intel_info_log_instance_exp_desc_t *pDesc) {
-    ze_result_t result = applyBufferSize(pDesc->pBufferSize);
+bool LinuxInfoLogInstanceImp::isDeadlineReached(uint64_t deadlineMs) {
+    return deadlineMs != UINT64_MAX && getCurrentTimeInMs() >= deadlineMs;
+}
+
+ze_result_t LinuxInfoLogInstanceImp::applyBufferConfiguration(zes_info_log_instance_ext_desc_t *pDesc) {
+    ze_result_t result = applyBufferSize(pDesc->pBufferSizeInKb);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -493,28 +504,38 @@ uint64_t LinuxInfoLogInstanceImp::readDroppedRecordTotal(bool &isComplete) {
     return droppedRecords;
 }
 
-// Records lost since the previous call, which is what a read or peek reports to the caller. The
-// total read back is remembered so each loss is reported exactly once. Returns whether the count is
-// the complete one for the interval, which is what the caller reports as isDroppedRecordCountValid.
-bool LinuxInfoLogInstanceImp::consumeDroppedRecordCount(uint32_t &droppedRecordCount) {
+// Records lost since the count was last reported to the caller. When 'isReported' is set the total
+// read back is remembered, so each loss is reported exactly once; otherwise the same loss is
+// counted again by the next read status, but only warned about once. Returns -1 when the loss could
+// not be counted.
+int64_t LinuxInfoLogInstanceImp::consumeDroppedRecordCount(bool isReported) {
     bool isComplete = true;
     uint64_t droppedRecordTotal = readDroppedRecordTotal(isComplete);
 
-    // An incomplete total says nothing about how many records were lost, so no count is reported and
-    // the baseline is left where it was. The loss is then reported in full by the first later call
-    // which can read all of the counters, instead of being lost or counted twice.
+    // An incomplete total says nothing about how many records were lost, so the count is reported as
+    // unknown and the baseline is left where it was. The loss is then reported in full by the first
+    // later call which can read all of the counters, instead of being lost.
     if (!isComplete) {
-        droppedRecordCount = 0;
-        return false;
+        return -1;
     }
 
     // Resizing a buffer, or clearing it through tracefs, restarts the kernel counters. The baseline
     // then just follows them back down instead of underflowing into a huge count.
-    uint64_t droppedRecords = (droppedRecordTotal > reportedDroppedRecordTotal) ? (droppedRecordTotal - reportedDroppedRecordTotal) : 0;
-    reportedDroppedRecordTotal = droppedRecordTotal;
+    if (droppedRecordTotal <= reportedDroppedRecordTotal) {
+        reportedDroppedRecordTotal = droppedRecordTotal;
+        warnedDroppedRecordTotal = droppedRecordTotal;
+        return 0;
+    }
 
-    droppedRecordCount = static_cast<uint32_t>(std::min<uint64_t>(droppedRecords, std::numeric_limits<uint32_t>::max()));
-    return true;
+    uint64_t droppedRecords = droppedRecordTotal - reportedDroppedRecordTotal;
+    if (isReported) {
+        reportedDroppedRecordTotal = droppedRecordTotal;
+    } else if (droppedRecordTotal <= warnedDroppedRecordTotal) {
+        return 0;
+    }
+    warnedDroppedRecordTotal = droppedRecordTotal;
+
+    return static_cast<int64_t>(std::min<uint64_t>(droppedRecords, std::numeric_limits<int64_t>::max()));
 }
 
 // Total size, in kilobytes, of the collection buffer of this instance. Getting with cpu -1 reports
@@ -580,6 +601,7 @@ ze_result_t LinuxInfoLogInstanceImp::startCollection() {
     // a loss as newer than it was, rather than not report it at all.
     bool isBaselineComplete = true;
     reportedDroppedRecordTotal = readDroppedRecordTotal(isBaselineComplete);
+    warnedDroppedRecordTotal = reportedDroppedRecordTotal;
 
     if (!eventWasAlreadyEnabled) {
         if (pTraceFsApi->traceFsEventEnable(pTraceFsInstance, "xe", "xe_error_cper") != 0) {
@@ -602,7 +624,7 @@ ze_result_t LinuxInfoLogInstanceImp::startCollection() {
 
     // Only the CPER format streams records out of 'trace_pipe'; the other formats just need
     // the tracepoint enabled.
-    if (infoLogFormat != ZES_INTEL_INFO_LOG_FORMAT_CPER) {
+    if (infoLogFormat != ZES_INFO_LOG_FORMAT_EXT_CPER) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -791,7 +813,16 @@ void LinuxInfoLogInstanceImp::closeTracePipe() {
     tracePipeFd = -1;
 }
 
-ze_result_t LinuxInfoLogInstanceImp::queryRecords(uint32_t *pSize, uint32_t *pRecordCount, bool &anyFound) {
+ze_result_t LinuxInfoLogInstanceImp::queryRecords(uint64_t deadlineMs, uint32_t *pSize, uint32_t *pRecordCount, bool &anyFound,
+                                                  StopReason &stopReason) {
+    *pSize = 0;
+    *pRecordCount = 0;
+    anyFound = false;
+    if (isDeadlineReached(deadlineMs)) {
+        stopReason = StopReason::deadline;
+        return ZE_RESULT_SUCCESS;
+    }
+
     auto traceData = std::unique_ptr<char, decltype(&free)>(
         pTraceFsApi->traceFsInstanceFileRead(pTraceFsInstance, "trace", nullptr), free);
     if (!traceData) {
@@ -803,7 +834,8 @@ ze_result_t LinuxInfoLogInstanceImp::queryRecords(uint32_t *pSize, uint32_t *pRe
 
     uint32_t cperCount = 0;
     uint32_t totalSize = 0;
-    countCperRecordsAndSize(traceData.get(), cperCount, totalSize);
+    bool searchedAll = countCperRecordsAndSize(traceData.get(), cperCount, totalSize, deadlineMs);
+    stopReason = searchedAll ? StopReason::drained : StopReason::deadline;
     *pSize = totalSize;
     *pRecordCount = cperCount;
     anyFound = (cperCount != 0);
@@ -827,8 +859,9 @@ ze_result_t LinuxInfoLogInstanceImp::queryRecords(uint32_t *pSize, uint32_t *pRe
 // 'lineBuffer' deliberately survives across calls, so that a line split by a short read is
 // completed by the next call instead of being lost.
 ze_result_t LinuxInfoLogInstanceImp::extractFromTracePipe(uint64_t deadlineMs, uint32_t *pSize, uint8_t *pBuffer,
-                                                          uint32_t *pRecordCount, zes_intel_info_log_metadata_exp *pDescriptors,
-                                                          StopReason &stopReason) {
+                                                          uint32_t *pRecordCount, zes_info_log_metadata_ext_t *pDescriptors,
+                                                          StopReason &stopReason, uint64_t &consumedDataSize) {
+    consumedDataSize = 0;
     int errorNum = 0;
     int dupedFd = SysmanSysCallsWrapper::dup(tracePipeFd, errorNum);
     if (dupedFd < 0) {
@@ -876,7 +909,7 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTracePipe(uint64_t deadlineMs, u
 
     while (state.recordsExtracted < state.maxRecords) {
         if (!endsWithNewline) {
-            if (deadlineMs != UINT64_MAX && getCurrentTimeInMs() >= deadlineMs) {
+            if (isDeadlineReached(deadlineMs)) {
                 stopReason = StopReason::deadline;
                 partialLineMayContinue = true;
                 break;
@@ -899,6 +932,7 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTracePipe(uint64_t deadlineMs, u
             }
 
             size_t len = strlen(readBuffer);
+            consumedDataSize += len;
             endsWithNewline = (len > 0 && readBuffer[len - 1] == '\n');
 
             accumulatedLine += readBuffer;
@@ -911,6 +945,7 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTracePipe(uint64_t deadlineMs, u
                 // Skip to next newline to resynchronize
                 while (SysmanSysCallsWrapper::fgets(readBuffer, sizeof(readBuffer), pTracePipeFile, errorNum) != nullptr) {
                     size_t skipLen = strlen(readBuffer);
+                    consumedDataSize += skipLen;
                     if (skipLen > 0 && readBuffer[skipLen - 1] == '\n') {
                         break; // Found newline, resynchronized
                     }
@@ -965,8 +1000,9 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTracePipe(uint64_t deadlineMs, u
 // Reads CPER records from the non-consuming 'trace' snapshot. Same stop rules as
 // extractFromTracePipe, but the records stay available to later calls.
 ze_result_t LinuxInfoLogInstanceImp::extractFromTraceSnapshot(uint64_t deadlineMs, uint32_t *pSize, uint8_t *pBuffer,
-                                                              uint32_t *pRecordCount, zes_intel_info_log_metadata_exp *pDescriptors,
-                                                              StopReason &stopReason) {
+                                                              uint32_t *pRecordCount, zes_info_log_metadata_ext_t *pDescriptors,
+                                                              StopReason &stopReason, uint64_t &consumedDataSize) {
+    consumedDataSize = 0;
     auto traceData = std::unique_ptr<char, decltype(&free)>(
         pTraceFsApi->traceFsInstanceFileRead(pTraceFsInstance, "trace", nullptr), free);
     if (!traceData) {
@@ -985,7 +1021,7 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTraceSnapshot(uint64_t deadlineM
     std::istringstream iss(traceData.get());
     std::string line;
     while (state.recordsExtracted < state.maxRecords) {
-        if (deadlineMs != UINT64_MAX && getCurrentTimeInMs() >= deadlineMs) {
+        if (isDeadlineReached(deadlineMs)) {
             stopReason = StopReason::deadline;
             break;
         }
@@ -994,6 +1030,7 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTraceSnapshot(uint64_t deadlineM
             stopReason = StopReason::drained;
             break;
         }
+        consumedDataSize += line.size() + (iss.eof() ? 0 : 1);
 
         bool bufferFull = false;
         processCperLine(line, state, bufferFull);
@@ -1009,34 +1046,37 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTraceSnapshot(uint64_t deadlineM
     return ZE_RESULT_SUCCESS;
 }
 
-void LinuxInfoLogInstanceImp::fillReadStatus(zes_intel_info_log_read_status_exp_t *pReadStatus, StopReason stopReason,
-                                             bool queryCall, bool anyRecordFound) {
-    if (pReadStatus == nullptr) {
-        return;
+ze_result_t LinuxInfoLogInstanceImp::reportReadStatus(zes_info_log_read_status_ext_t *pReadStatus, StopReason stopReason,
+                                                      bool queryCall, bool anyRecordFound, uint64_t consumedDataSize) {
+    int64_t droppedRecordCount = consumeDroppedRecordCount(pReadStatus != nullptr);
+
+    if (pReadStatus != nullptr) {
+        pReadStatus->droppedRecordCount = droppedRecordCount;
+        pReadStatus->consumedDataSize = consumedDataSize;
+        pReadStatus->hasDataToRead = (queryCall && stopReason == StopReason::drained) ? anyRecordFound : (stopReason != StopReason::drained);
     }
 
-    pReadStatus->isDroppedRecordCountValid = consumeDroppedRecordCount(pReadStatus->droppedRecordCount);
-    pReadStatus->hasDataToRead = queryCall ? anyRecordFound : (stopReason != StopReason::drained);
+    return (droppedRecordCount != 0) ? ZE_RESULT_WARNING_DROPPED_DATA : ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxInfoLogInstanceImp::collect(uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer, uint32_t *pRecordCount,
-                                             zes_intel_info_log_metadata_exp *pDescriptors,
-                                             zes_intel_info_log_read_status_exp_t *pReadStatus, bool consuming) {
+                                             zes_info_log_metadata_ext_t *pDescriptors,
+                                             zes_info_log_read_status_ext_t *pReadStatus, bool consuming) {
+    uint64_t deadlineMs = UINT64_MAX;
+    if (timeout != UINT64_MAX) {
+        uint64_t currentTime = getCurrentTimeInMs();
+        deadlineMs = (timeout > UINT64_MAX - currentTime) ? UINT64_MAX : currentTime + timeout;
+    }
+    StopReason stopReason = StopReason::drained;
+
     if (*pSize == 0 || *pRecordCount == 0) {
-        uint32_t totalSize = 0;
-        uint32_t totalCount = 0;
         bool anyFound = false;
-        ze_result_t result = queryRecords(&totalSize, &totalCount, anyFound);
+        ze_result_t result = queryRecords(deadlineMs, pSize, pRecordCount, anyFound, stopReason);
         if (result != ZE_RESULT_SUCCESS) {
-            *pSize = 0;
-            *pRecordCount = 0;
             return result;
         }
 
-        *pSize = totalSize;
-        *pRecordCount = totalCount;
-        fillReadStatus(pReadStatus, StopReason::drained, true, anyFound);
-        return ZE_RESULT_SUCCESS;
+        return reportReadStatus(pReadStatus, stopReason, true, anyFound, 0);
     }
 
     if (consuming && tracePipeFd < 0) {
@@ -1047,29 +1087,27 @@ ze_result_t LinuxInfoLogInstanceImp::collect(uint64_t timeout, uint32_t *pSize, 
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    uint64_t deadlineMs = (timeout == UINT64_MAX) ? UINT64_MAX : getCurrentTimeInMs() + timeout;
-    StopReason stopReason = StopReason::drained;
-
+    uint64_t consumedDataSize = 0;
     ze_result_t result = consuming
-                             ? extractFromTracePipe(deadlineMs, pSize, pBuffer, pRecordCount, pDescriptors, stopReason)
-                             : extractFromTraceSnapshot(deadlineMs, pSize, pBuffer, pRecordCount, pDescriptors, stopReason);
+                             ? extractFromTracePipe(deadlineMs, pSize, pBuffer, pRecordCount, pDescriptors, stopReason, consumedDataSize)
+                             : extractFromTraceSnapshot(deadlineMs, pSize, pBuffer, pRecordCount, pDescriptors, stopReason, consumedDataSize);
 
     // A record which did not fit is retained rather than dropped, so a size limited stop is a plain
     // success and is reported to the caller through 'hasDataToRead'.
-    fillReadStatus(pReadStatus, stopReason, false, *pRecordCount != 0);
+    ze_result_t statusResult = reportReadStatus(pReadStatus, stopReason, false, *pRecordCount != 0, consumedDataSize);
 
-    return result;
+    return (result != ZE_RESULT_SUCCESS) ? result : statusResult;
 }
 
 ze_result_t LinuxInfoLogInstanceImp::readWithMetadata(uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
-                                                      uint32_t *pRecordCount, zes_intel_info_log_metadata_exp *pDescriptors,
-                                                      zes_intel_info_log_read_status_exp_t *pReadStatus) {
+                                                      uint32_t *pRecordCount, zes_info_log_metadata_ext_t *pDescriptors,
+                                                      zes_info_log_read_status_ext_t *pReadStatus) {
     return collect(timeout, pSize, pBuffer, pRecordCount, pDescriptors, pReadStatus, true);
 }
 
 ze_result_t LinuxInfoLogInstanceImp::peekWithMetadata(uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
-                                                      uint32_t *pRecordCount, zes_intel_info_log_metadata_exp *pDescriptors,
-                                                      zes_intel_info_log_read_status_exp_t *pReadStatus) {
+                                                      uint32_t *pRecordCount, zes_info_log_metadata_ext_t *pDescriptors,
+                                                      zes_info_log_read_status_ext_t *pReadStatus) {
     return collect(timeout, pSize, pBuffer, pRecordCount, pDescriptors, pReadStatus, false);
 }
 

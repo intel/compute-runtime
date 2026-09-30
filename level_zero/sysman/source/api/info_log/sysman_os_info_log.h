@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <level_zero/zes_intel_gpu_sysman.h>
+#include <level_zero/zes_api.h>
 
 #include <memory>
 #include <vector>
@@ -22,12 +22,12 @@ class OsInfoLog {
   public:
     virtual ~OsInfoLog() = default;
 
-    virtual ze_result_t getProperties(zes_intel_info_log_properties_exp_t *pProperties) = 0;
+    virtual ze_result_t getProperties(zes_info_log_ext_properties_t *pProperties) = 0;
     virtual ze_result_t createInstance(const char *pInstanceName,
-                                       zes_intel_info_log_instance_exp_desc_t *pDesc,
+                                       zes_info_log_instance_ext_desc_t *pDesc,
                                        std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) = 0;
-    static std::unique_ptr<OsInfoLog> create(zes_intel_info_log_format_exp_t format);
-    static std::vector<zes_intel_info_log_format_exp_t> getSupportedInfoLogFormats();
+    static std::unique_ptr<OsInfoLog> create(zes_info_log_format_ext_t format);
+    static std::vector<zes_info_log_format_ext_t> getSupportedInfoLogFormats();
 };
 
 } // namespace Sysman

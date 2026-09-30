@@ -31,7 +31,7 @@ InfoLogHandleContext::~InfoLogHandleContext() {
     releaseInfoLogHandles();
 }
 
-void InfoLogHandleContext::createHandle(zes_intel_info_log_format_exp_t format) {
+void InfoLogHandleContext::createHandle(zes_info_log_format_ext_t format) {
     std::unique_ptr<InfoLog> pInfoLog = std::make_unique<InfoLogImp>(format);
     handleList.push_back(std::move(pInfoLog));
 }
@@ -42,7 +42,7 @@ void InfoLogHandleContext::init() {
     }
 }
 
-ze_result_t InfoLogHandleContext::infoLogGet(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
+ze_result_t InfoLogHandleContext::infoLogGet(uint32_t *pCount, zes_info_log_handle_t *phInfoLogs) {
     std::call_once(initInfoLogOnce, [this]() {
         this->init();
         this->infoLogInitDone = true;

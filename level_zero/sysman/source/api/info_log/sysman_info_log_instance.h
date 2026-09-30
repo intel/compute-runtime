@@ -7,34 +7,33 @@
 
 #pragma once
 
-#include <level_zero/zes_intel_gpu_sysman.h>
+#include "level_zero/api/sysman/zes_handles_struct.h"
+#include <level_zero/zes_api.h>
 
 namespace L0 {
 namespace Sysman {
 
-class InfoLogInstance {
+class InfoLogInstance : _zes_info_log_instance_handle_t {
   public:
     virtual ~InfoLogInstance() = default;
 
     virtual ze_result_t readWithMetadata(uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
                                          uint32_t *pRecordCount,
-                                         zes_intel_info_log_metadata_exp *pDescriptors,
-                                         zes_intel_info_log_read_status_exp_t *pReadStatus) = 0;
+                                         zes_info_log_metadata_ext_t *pDescriptors,
+                                         zes_info_log_read_status_ext_t *pReadStatus) = 0;
     virtual ze_result_t peekWithMetadata(uint64_t timeout, uint32_t *pSize, uint8_t *pBuffer,
                                          uint32_t *pRecordCount,
-                                         zes_intel_info_log_metadata_exp *pDescriptors,
-                                         zes_intel_info_log_read_status_exp_t *pReadStatus) = 0;
+                                         zes_info_log_metadata_ext_t *pDescriptors,
+                                         zes_info_log_read_status_ext_t *pReadStatus) = 0;
 
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t teardown() = 0;
 
-    static InfoLogInstance *fromHandle(zes_intel_info_log_instance_handle_t handle) {
-        return reinterpret_cast<InfoLogInstance *>(handle);
+    static InfoLogInstance *fromHandle(zes_info_log_instance_handle_t handle) {
+        return static_cast<InfoLogInstance *>(handle);
     }
 
-    inline zes_intel_info_log_instance_handle_t toHandle() {
-        return reinterpret_cast<zes_intel_info_log_instance_handle_t>(this);
-    }
+    inline zes_info_log_instance_handle_t toHandle() { return this; }
 };
 
 } // namespace Sysman

@@ -81,6 +81,9 @@ constexpr DdiEntryExpectation entries[] = {
     DDI_ENTRY(pfnGet, ZE_API_VERSION_1_5),
     DDI_ENTRY(pfnGetExtensionProperties, ZE_API_VERSION_1_8),
     DDI_ENTRY(pfnGetExtensionFunctionAddress, ZE_API_VERSION_1_8),
+    DDI_ENTRY(pfnEventRegisterExt, ZE_API_VERSION_1_19),
+    DDI_ENTRY(pfnEventListenExt, ZE_API_VERSION_1_19),
+    DDI_ENTRY(pfnEnumInfoLogsExt, ZE_API_VERSION_1_19),
     DDI_ENTRY(pfnGetProperties, ZE_API_VERSION_1_19),
 };
 } // namespace zesDriver
@@ -324,6 +327,23 @@ constexpr DdiEntryExpectation entries[] = {
 };
 } // namespace zesOverclock
 
+namespace zesInfoLog {
+using Table = zes_info_log_dditable_t;
+constexpr DdiEntryExpectation entries[] = {
+    DDI_ENTRY(pfnGetPropertiesExt, ZE_API_VERSION_1_19),
+    DDI_ENTRY(pfnCreateInstanceExt, ZE_API_VERSION_1_19),
+};
+} // namespace zesInfoLog
+
+namespace zesInfoLogInstance {
+using Table = zes_info_log_instance_dditable_t;
+constexpr DdiEntryExpectation entries[] = {
+    DDI_ENTRY(pfnReadWithMetadataExt, ZE_API_VERSION_1_19),
+    DDI_ENTRY(pfnPeekWithMetadataExt, ZE_API_VERSION_1_19),
+    DDI_ENTRY(pfnDeleteExt, ZE_API_VERSION_1_19),
+};
+} // namespace zesInfoLogInstance
+
 constexpr DdiTableExpectation ddiTables[] = {
     DDI_TABLE(zesDevice, zesGetDeviceProcAddrTable),
     DDI_TABLE(zesGlobal, zesGetGlobalProcAddrTable),
@@ -349,6 +369,8 @@ constexpr DdiTableExpectation ddiTables[] = {
     DDI_TABLE(zesStandby, zesGetStandbyProcAddrTable),
     DDI_TABLE(zesTemperature, zesGetTemperatureProcAddrTable),
     DDI_TABLE(zesOverclock, zesGetOverclockProcAddrTable),
+    DDI_TABLE(zesInfoLog, zesGetInfoLogProcAddrTable),
+    DDI_TABLE(zesInfoLogInstance, zesGetInfoLogInstanceProcAddrTable),
 };
 
 } // namespace ZesDdiTableManifest

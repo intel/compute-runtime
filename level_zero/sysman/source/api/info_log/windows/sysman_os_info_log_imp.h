@@ -18,9 +18,9 @@ class WddmInfoLogImp : public OsInfoLog {
     WddmInfoLogImp();
     ~WddmInfoLogImp() override = default;
 
-    ze_result_t getProperties(zes_intel_info_log_properties_exp_t *pProperties) override;
+    ze_result_t getProperties(zes_info_log_ext_properties_t *pProperties) override;
     ze_result_t createInstance(const char *pInstanceName,
-                               zes_intel_info_log_instance_exp_desc_t *pDesc,
+                               zes_info_log_instance_ext_desc_t *pDesc,
                                std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) override;
 };
 

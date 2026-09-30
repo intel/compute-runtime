@@ -212,7 +212,7 @@ TEST_F(SysmanEventsFixture, GivenLiveAndStaleTracePipeDescriptorsWhenUpdatingCpe
         {{mockStaleTracePipeFd, POLLIN, 0}, PollSourceType::tracefs}};
 
     bool cperRegistered = false;
-    eventsUtil->updateCperPollSource(ZES_INTEL_CPER_DATA_AVAILABLE, pollSources, cperRegistered);
+    eventsUtil->updateCperPollSource(ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT, pollSources, cperRegistered);
 
     EXPECT_TRUE(cperRegistered);
     ASSERT_EQ(3u, pollSources.size());

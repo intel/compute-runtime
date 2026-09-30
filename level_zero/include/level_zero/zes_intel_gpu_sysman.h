@@ -551,12 +551,15 @@ typedef struct _zes_intel_mem_page_offline_properties_exp_t {
 /// @brief Driver info logs extension name
 #define ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME "ZES_intel_experimental_driver_info_logs"
 #endif // ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME
+/// @deprecated This extension is no longer implemented and all of its functions return
+///             ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE. Use the standard zesDriverEnumInfoLogsExt
+///             and zesInfoLog*Ext APIs instead.
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Driver info logs extension Version(s)
 typedef enum _zes_intel_driver_info_logs_exp_version_t {
     ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                          ///< version 1.0, no longer implemented
-    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0 = ZE_MAKE_VERSION(2, 0),                          ///< version 2.0, collection instances. Not backward compatible with version 1.0.
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0 = ZE_MAKE_VERSION(2, 0),                          ///< version 2.0, collection instances, no longer implemented
     ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0, ///< latest known version
     ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_driver_info_logs_exp_version_t;
@@ -573,6 +576,8 @@ typedef struct _zes_intel_info_log_instance_handle_t *zes_intel_info_log_instanc
 /// @brief Get handles for Info Logs
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesDriverEnumInfoLogsExt instead.
 ///     - This function retrieves the list of available info logs.
 ///     - The caller should first call this function with count pointer set to 0 to retrieve the total number of available logs.
 ///     - Subsequent calls with a non-zero count will return the info log handles.
@@ -701,6 +706,8 @@ typedef struct _zes_intel_info_log_metadata_exp {
 /// @brief Get Info Log Properties
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogGetPropertiesExt instead.
 ///     - This function retrieves the properties of an info log handle.
 ///     - This API is NOT thread-safe. It must be called from a single thread or process.
 ///
@@ -724,6 +731,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(
 /// @brief Create a collection instance for an info log
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogCreateInstanceExt instead.
 ///     - Creating a collection instance starts the collection of records into a buffer owned by
 ///       that instance. Collection continues until the instance is deleted with
 ///       ::zesIntelInfoLogInstanceDeleteExp.
@@ -771,6 +780,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogCreateInstanceExp(
 /// @brief Read collected info log records and their metadata
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogInstanceReadWithMetadataExt instead.
 ///     - A call in which `*pSize` is zero or `*pRecordCount` is zero on input is a query call. A
 ///       query call reports the total size in bytes of the record data and the total number of
 ///       records found, writes to neither pBuffer nor pDescriptors, and consumes nothing. pBuffer
@@ -815,6 +826,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstanceReadWithMetadataExp(
 /// @brief Read collected info log records and their metadata without consuming them
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogInstancePeekWithMetadataExt instead.
 ///     - Equivalent to ::zesIntelInfoLogInstanceReadWithMetadataExp except that the records
 ///       returned are not consumed and remain available to subsequent calls to either function.
 ///     - Only supported when zes_intel_info_log_properties_exp_t.isPeekSupported is true.
@@ -842,6 +855,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstancePeekWithMetadataExp(
 /// @brief Delete a collection instance of an info log
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogInstanceDeleteExt instead.
 ///     - Stops collection into the instance and releases the resources it allocated.
 ///     - The application must ensure that no other function is using the handle when calling this
 ///       function, must not call it from simultaneous threads with the same handle, and must not
@@ -861,11 +876,14 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(
 /// @brief Driver scoped event extension name
 #define ZES_INTEL_DRIVER_EVENT_EXP_NAME "ZES_intel_experimental_driver_event"
 #endif // ZES_INTEL_DRIVER_EVENT_EXP_NAME
+/// @deprecated This extension is no longer implemented and all of its functions return
+///             ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE. Use zesDriverEventRegisterExt and
+///             zesDriverEventListenExt instead.
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Driver scoped event extension Version(s)
 typedef enum _zes_intel_driver_event_exp_version_t {
-    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                      ///< version 1.0
+    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                      ///< version 1.0, no longer implemented
     ZES_INTEL_DRIVER_EVENT_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0, ///< latest known version
     ZES_INTEL_DRIVER_EVENT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_driver_event_exp_version_t;
@@ -878,6 +896,8 @@ typedef enum _zes_intel_driver_event_exp_version_t {
 /// @brief Register driver scoped events to be notified about
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesDriverEventRegisterExt instead.
 ///     - This function registers the driver scoped events the application wants to
 ///       be notified about. Unlike ::zesDeviceEventRegister the registration is not
 ///       tied to a device: the underlying data source is shared by all devices of
@@ -926,6 +946,8 @@ ze_result_t ZE_APICALL zesIntelDriverEventRegisterExp(
 /// @brief Listen for device scoped and driver scoped events
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesDriverEventListenExt instead.
 ///     - This function extends ::zesDriverEventListenEx with the ability to report the
 ///       driver scoped events registered with ::zesIntelDriverEventRegisterExp.
 ///     - The `hDriver`, `timeout`, `count`, `phDevices`, `pNumDeviceEvents` and `pEvents`

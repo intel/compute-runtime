@@ -12,10 +12,10 @@
 namespace L0 {
 namespace Sysman {
 
-LinuxInfoLogImp::LinuxInfoLogImp(zes_intel_info_log_format_exp_t format)
+LinuxInfoLogImp::LinuxInfoLogImp(zes_info_log_format_ext_t format)
     : infoLogFormat(format), pTraceFsApi(createTraceFsApi()) {}
 
-std::unique_ptr<OsInfoLog> OsInfoLog::create(zes_intel_info_log_format_exp_t format) {
+std::unique_ptr<OsInfoLog> OsInfoLog::create(zes_info_log_format_ext_t format) {
     return std::make_unique<LinuxInfoLogImp>(format);
 }
 

@@ -49,3 +49,9 @@ static_assert(IsCompliantWithDdiHandlesExt<_zes_fan_handle_t>);
 
 struct _zes_vf_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_zes_vf_handle_t>);
+
+struct _zes_info_log_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zes_info_log_handle_t>);
+
+struct _zes_info_log_instance_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zes_info_log_instance_handle_t>);

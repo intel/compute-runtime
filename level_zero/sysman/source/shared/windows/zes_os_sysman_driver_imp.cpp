@@ -50,7 +50,7 @@ WddmSysmanDriverImp::~WddmSysmanDriverImp() {
     }
 }
 
-ze_result_t WddmSysmanDriverImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
+ze_result_t WddmSysmanDriverImp::enumInfoLogs(uint32_t *pCount, zes_info_log_handle_t *phInfoLogs) {
     if (pInfoLogHandleContext == nullptr) {
         pInfoLogHandleContext = new InfoLogHandleContext();
     }

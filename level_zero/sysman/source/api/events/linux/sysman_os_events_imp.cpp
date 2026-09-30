@@ -139,7 +139,7 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
 }
 
 ze_result_t LinuxEventsUtil::driverEventRegister(zes_event_type_flags_t events) {
-    zes_event_type_flags_t supportedDriverEventMask = ZES_INTEL_CPER_DATA_AVAILABLE;
+    zes_event_type_flags_t supportedDriverEventMask = ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT;
 
     if (events & ~supportedDriverEventMask) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -486,7 +486,7 @@ bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &reg
 }
 
 static bool isCperEventRegistered(zes_event_type_flags_t driverRegisteredEvents) {
-    return (driverRegisteredEvents & ZES_INTEL_CPER_DATA_AVAILABLE) != 0;
+    return (driverRegisteredEvents & ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT) != 0;
 }
 
 void LinuxEventsUtil::updateCperPollSource(zes_event_type_flags_t driverRegisteredEvents, std::vector<PollDescriptor> &pollSources, bool &cperRegistered) {
@@ -634,7 +634,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
         }
 
         if (tracefsReady && (pDriverEvents != nullptr) && isCperEventRegistered(driverRegisteredEvents)) {
-            *pDriverEvents |= ZES_INTEL_CPER_DATA_AVAILABLE;
+            *pDriverEvents |= ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT;
             retval = true;
         }
 

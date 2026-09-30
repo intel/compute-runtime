@@ -386,7 +386,7 @@ ze_result_t SysmanDriverHandleImp::driverEventRegister(zes_event_type_flags_t ev
     return pOsSysmanDriver->driverEventRegister(events);
 }
 
-ze_result_t SysmanDriverHandleImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
+ze_result_t SysmanDriverHandleImp::enumInfoLogs(uint32_t *pCount, zes_info_log_handle_t *phInfoLogs) {
 
     if (pOsSysmanDriver == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,

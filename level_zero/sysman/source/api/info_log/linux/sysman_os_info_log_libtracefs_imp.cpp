@@ -35,13 +35,13 @@ std::unique_ptr<TraceFsApi> (*LinuxInfoLogImp::createTraceFsApi)() = []() {
 
 LinuxInfoLogImp::~LinuxInfoLogImp() = default;
 
-std::vector<zes_intel_info_log_format_exp_t> OsInfoLog::getSupportedInfoLogFormats() {
-    std::vector<zes_intel_info_log_format_exp_t> supportedFormats = {};
+std::vector<zes_info_log_format_ext_t> OsInfoLog::getSupportedInfoLogFormats() {
+    std::vector<zes_info_log_format_ext_t> supportedFormats = {};
     for (const auto &tracingDir : tracefsPaths) {
         std::string tracepointPath = tracingDir + "/" + xeErrorCperTracepointPath + "/enable";
         int errorNum = 0;
         if (SysmanSysCallsWrapper::access(tracepointPath, F_OK, errorNum) == 0) {
-            supportedFormats.push_back(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+            supportedFormats.push_back(ZES_INFO_LOG_FORMAT_EXT_CPER);
             break;
         }
     }
@@ -49,12 +49,12 @@ std::vector<zes_intel_info_log_format_exp_t> OsInfoLog::getSupportedInfoLogForma
     return supportedFormats;
 }
 
-ze_result_t LinuxInfoLogImp::getProperties(zes_intel_info_log_properties_exp_t *pProperties) {
+ze_result_t LinuxInfoLogImp::getProperties(zes_info_log_ext_properties_t *pProperties) {
 
-    pProperties->infoLogType = ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE;
+    pProperties->infoLogType = ZES_INFO_LOG_TYPE_EXT_DEVICE;
     pProperties->infoLogFormat = infoLogFormat;
-    pProperties->isNamedInstancedCollectionSupported = isNamedInstancedCollectionAvailable();
-    pProperties->isPeekSupported = isPeekAvailable();
+    pProperties->isNamedInstanceSupported = isNamedInstancedCollectionAvailable();
+    pProperties->isPeekDataSupported = isPeekAvailable();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -134,7 +134,7 @@ bool LinuxInfoLogImp::checkTracingOn(struct tracefs_instance *instance) {
 }
 
 ze_result_t LinuxInfoLogImp::createInstance(const char *pInstanceName,
-                                            zes_intel_info_log_instance_exp_desc_t *pDesc,
+                                            zes_info_log_instance_ext_desc_t *pDesc,
                                             std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) {
     struct tracefs_instance *pTraceFsInstance = nullptr;
     bool preExisting = false;

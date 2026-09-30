@@ -17,6 +17,8 @@ If installing to a local folder, `-DLIBGENL_INCLUDE_DIR=<local install folder pa
 
 To use Sysman events API, please build and/or install libudev-dev 
 
+To use Sysman info log APIs, please build and/or install [libtracefs](https://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git) version 1.8.0 or newer (e.g. libtracefs-dev on Ubuntu). If it is missing or older than 1.8.0, the info log APIs report unsupported.
+
 2. Install/build Level Zero loader and Level Zero headers
 
 Install Level Zero loader and headers from [https://github.com/oneapi-src/level-zero/releases](https://github.com/oneapi-src/level-zero/releases).
