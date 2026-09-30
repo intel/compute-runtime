@@ -32,7 +32,7 @@ bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeou
 }
 
 ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
-    if (0x7fff < events) {
+    if (0xffff < events) {
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
