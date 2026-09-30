@@ -136,6 +136,7 @@ bool queryPeerAccessDrm(Device &device, Device &peerDevice, GraphicsAllocation *
     if (importedAlloc == nullptr) {
         return false;
     }
+    importedAlloc->setIsImported();
 
     auto memoryOperationsInterface = peerDevice.getRootDeviceEnvironment().memoryOperationsInterface.get();
     if (memoryOperationsInterface != nullptr) {

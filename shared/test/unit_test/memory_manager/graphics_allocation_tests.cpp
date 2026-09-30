@@ -156,6 +156,14 @@ TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenUpdatingResidenc
     graphicsAllocation.updateResidencyTaskCount(1u, contextId);
 }
 
+TEST(GraphicsAllocationTest, givenImportedAllocationWhenCheckingAubWritableThenFalseIsReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(GraphicsAllocation::defaultBank));
+
+    graphicsAllocation.setIsImported();
+    EXPECT_FALSE(graphicsAllocation.isAubWritable(GraphicsAllocation::defaultBank));
+}
+
 TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingCpuAccessRequiredThenReturnTrue) {
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         auto allocType = static_cast<AllocationType>(i);

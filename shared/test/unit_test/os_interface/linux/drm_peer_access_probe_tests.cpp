@@ -155,12 +155,14 @@ class ConfigurableMakeResidentMemoryOps : public MockMemoryOperations {
         MockMemoryOperations::makeResident(device, gfxAllocations, isDummyExecNeeded, forcePagingFence);
         lastDeviceArg = device;
         lastAllocs.assign(gfxAllocations.begin(), gfxAllocations.end());
+        lastAllocImported = !gfxAllocations.empty() && gfxAllocations[0]->getIsImported();
         return makeResidentResult;
     }
 
     MemoryOperationsStatus makeResidentResult = MemoryOperationsStatus::success;
     Device *lastDeviceArg = nullptr;
     std::vector<GraphicsAllocation *> lastAllocs;
+    bool lastAllocImported = false;
 };
 
 struct PeerAccessProbeTest : public ::testing::Test {
@@ -296,6 +298,17 @@ TEST_F(PeerAccessProbeTest, givenMakeResidentReturnsSuccessWhenQueryingPeerAcces
     ASSERT_EQ(1u, peerOps->lastAllocs.size());
     EXPECT_EQ(memoryManager->lastImportedAllocation, peerOps->lastAllocs[0]);
     EXPECT_EQ(1u, memoryManager->countFrees(memoryManager->lastImportedAllocation));
+}
+
+TEST_F(PeerAccessProbeTest, givenDmaBufProbeWhenMakingImportedAllocationResidentThenItIsMarkedAsImported) {
+    auto peerOps = memoryOperationsHandlers[device1->getRootDeviceIndex()];
+
+    GraphicsAllocation *probeAllocation = nullptr;
+    uint64_t handle = std::numeric_limits<uint64_t>::max();
+    EXPECT_TRUE(queryPeerAccessDrm(*device0, *device1, &probeAllocation, &handle));
+
+    EXPECT_EQ(1, peerOps->makeResidentCalledCount.load());
+    EXPECT_TRUE(peerOps->lastAllocImported);
 }
 
 TEST_F(PeerAccessProbeTest, givenMakeResidentReturnsFailedWhenQueryingPeerAccessThenReturnsFalseAndImportedAllocationFreedExactlyOnce) {
