@@ -329,9 +329,6 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     auto imgInfo = getL0Object()->getImageInfo();
     size_t arraySize = imgInfo.imgDesc.imageArraySize * (imgInfo.imgDesc.imageType == ImageType::image1DArray ||
                                                          imgInfo.imgDesc.imageType == ImageType::image2DArray);
-    size_t slicePitch = imgInfo.slicePitch * !(imgInfo.imgDesc.imageType == ImageType::image2D ||
-                                               imgInfo.imgDesc.imageType == ImageType::image1D ||
-                                               imgInfo.imgDesc.imageType == ImageType::image1DBuffer);
     size_t elementSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
     cl_uint numSamples = static_cast<cl_uint>(imgInfo.imgDesc.numSamples);
     cl_uint numMipLevels = static_cast<cl_uint>(imgInfo.imgDesc.numMipLevels);
@@ -357,11 +354,24 @@ cl_int Image::getImageInfo(cl_image_info paramName,
         imageDepth = std::max(imageDepth, static_cast<size_t>(1));
     }
 
+    size_t hostRowPitch = hostPtrRowPitch ? hostPtrRowPitch : imgInfo.imgDesc.imageWidth * elementSize;
+
     size_t rowPitch;
     if (numSamples > 1) {
         rowPitch = imgInfo.imgDesc.imageWidth * elementSize * numSamples;
     } else {
-        rowPitch = imgInfo.rowPitch;
+        rowPitch = hostRowPitch;
+    }
+
+    size_t slicePitch = 0;
+    if (!(imgInfo.imgDesc.imageType == ImageType::image2D ||
+          imgInfo.imgDesc.imageType == ImageType::image1D ||
+          imgInfo.imgDesc.imageType == ImageType::image1DBuffer)) {
+        size_t hostImageHeight = (imgInfo.imgDesc.imageType == ImageType::image3D ||
+                                  imgInfo.imgDesc.imageType == ImageType::image2DArray)
+                                     ? imgInfo.imgDesc.imageHeight
+                                     : 1u;
+        slicePitch = hostPtrSlicePitch ? hostPtrSlicePitch : hostRowPitch * hostImageHeight;
     }
 
     cl_mem bufferMem = static_cast<cl_mem>(this->associatedMemObject);
