@@ -2578,7 +2578,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::unblockPagingFenceSemaphore(uint
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::submitLateMidThreadPreemptionStart() {
-    UNRECOVERABLE_IF(this->osContext->getEngineType() != aub_stream::EngineType::ENGINE_CCS || this->osContext->getEngineUsage() != EngineUsage::regular);
+    UNRECOVERABLE_IF(!this->osContext->isLatePreemptionStartTarget());
     PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Program LRI to enable mid thread preemption\n");
 
     auto lock = obtainUniqueOwnership();

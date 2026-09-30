@@ -37,6 +37,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     const aub_stream::EngineType &getEngineType() const { return engineType; }
     EngineUsage getEngineUsage() const { return engineUsage; }
+    bool isLatePreemptionStartTarget() const { return engineType == aub_stream::EngineType::ENGINE_CCS && engineUsage == EngineUsage::regular && !isPartOfContextGroup(); }
     void overrideEngineUsage(EngineUsage usage) { engineUsage = usage; }
     virtual void overridePriority(uint32_t newPriority) {
         if (!priorityLevel.has_value()) {

@@ -314,7 +314,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual void fillReusableAllocationsList();
     void releaseHeapAllocation(GraphicsAllocation *heapMemory);
     void releaseCommandBufferAllocation(GraphicsAllocation *commandBufferMemory);
-    virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
+    virtual void setupContext(OsContext &osContext);
     void setDevice(Device *device) { this->device = device; }
     Device *getDevice() const { return this->device; }
     OsContext &getOsContext() const { return *osContext; }

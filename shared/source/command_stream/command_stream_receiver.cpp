@@ -266,6 +266,11 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
     makeResident(*gfxAllocation);
 }
 
+void CommandStreamReceiver::setupContext(OsContext &osContext) {
+    this->osContext = &osContext;
+    this->skipPreemptionAllocation = this->skipPreemptionAllocation && osContext.isLatePreemptionStartTarget();
+}
+
 void CommandStreamReceiver::makeResidentPreemptionAllocation() {
     PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Try making preemption allocation resident\n");
 
