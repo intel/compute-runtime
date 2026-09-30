@@ -130,6 +130,20 @@ TEST_F(SVMLocalMemoryAllocatorTest, GivenTwoRootDevicesWhenAllocatingSharedMemor
     ASSERT_EQ(svmManager->getSVMAlloc(ptr), nullptr);
 }
 
+TEST(MapBasedAllocationTrackerTest, givenPointersAroundSingleAllocationWhenGettingThenOnlyPointersInsideAllocationAreFound) {
+    SVMAllocsManager::MapBasedAllocationTracker tracker;
+    SvmAllocationData allocData(1u);
+    allocData.size = MemoryConstants::pageSize;
+    tracker.allocations.insert(std::make_pair(reinterpret_cast<const void *>(0x10000), allocData));
+
+    EXPECT_EQ(nullptr, tracker.get(reinterpret_cast<const void *>(0x8000)));
+    EXPECT_EQ(nullptr, tracker.get(reinterpret_cast<const void *>(0x8010)));
+    EXPECT_NE(nullptr, tracker.get(reinterpret_cast<const void *>(0x10000)));
+    EXPECT_NE(nullptr, tracker.get(reinterpret_cast<const void *>(0x10010)));
+    EXPECT_EQ(nullptr, tracker.get(reinterpret_cast<const void *>(0x11000)));
+    EXPECT_EQ(nullptr, tracker.get(reinterpret_cast<const void *>(0x20000)));
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, whenMultipleFreeSVMAllocDeferredThenFreedSubsequently) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
