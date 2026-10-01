@@ -216,6 +216,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         commandQueue.isStallingCommandsOnNextFlushRequired(),                        // isStallingCommandsOnNextFlushRequired
         commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush()                // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
+    dispatchFlags.useBindlessImages = kernel->usesBindlessImages();
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(dispatchFlags.csrDependencies, commandStreamReceiver);
     }

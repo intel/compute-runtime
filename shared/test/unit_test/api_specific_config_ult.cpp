@@ -7,7 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
-
+#include "shared/source/device/device.h"
 #include <string>
 #include <vector>
 
@@ -129,6 +129,10 @@ bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &ro
     } else {
         return globalStatelessOcl;
     }
+}
+bool ApiSpecificConfig::createBindlessHeapsHelper(const Device &device) {
+    return getGlobalBindlessHeapConfiguration(device.getHardwareInfo()) &&
+           getBindlessMode(device);
 }
 
 } // namespace NEO

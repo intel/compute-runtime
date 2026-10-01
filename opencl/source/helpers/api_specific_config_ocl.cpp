@@ -20,11 +20,8 @@ namespace NEO {
 StackVec<const char *, 4> validClPrefixes;
 StackVec<NEO::DebugVarPrefix, 4> validClPrefixTypes;
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const HardwareInfo &hwInfo) {
-    if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
-        return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
-    }
-    return hwInfo.caps.globalBindlessAllocatorEnabled;
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const HardwareInfo &) {
+    return false;
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
@@ -96,6 +93,10 @@ bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &ro
 
 bool ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless() {
     return true;
+}
+
+bool ApiSpecificConfig::createBindlessHeapsHelper(const Device &) {
+    return false;
 }
 
 } // namespace NEO

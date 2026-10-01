@@ -282,6 +282,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "KERNEL_ISA_INTERNAL";
     case AllocationType::linearStream:
         return "LINEAR_STREAM";
+    case AllocationType::bindlessHeap:
+        return "BINDLESS_HEAP";
     case AllocationType::mapAllocation:
         return "MAP_ALLOCATION";
     case AllocationType::mcs:

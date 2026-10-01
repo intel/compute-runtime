@@ -57,6 +57,7 @@ cl_int Program::build(
             }
             const bool hasBindlessImages = CompilerOptions::extract(CompilerOptions::bindlessImages, options);
             const bool hasBindlessAdvancedMode = CompilerOptions::extract(CompilerOptions::bindlessAdvancedMode, options);
+
             if (hasBindlessImages) {
                 CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
             }
@@ -140,6 +141,9 @@ cl_int Program::build(
                 }
                 this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size, clDevice->getRootDeviceIndex());
                 phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::binaryCreation;
+
+                this->buildInfos[clDevice->getRootDeviceIndex()].useBindlessImages = hasBindlessImages; 
+
             }
             if (retVal != CL_SUCCESS) {
                 break;

@@ -443,6 +443,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         case AllocationType::kernelIsa:
         case AllocationType::kernelIsaInternal:
         case AllocationType::linearStream:
+        case AllocationType::bindlessHeap:
         case AllocationType::ringBuffer:
             return false;
         default:

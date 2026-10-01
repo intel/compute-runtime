@@ -159,7 +159,11 @@ const ProductHelper &RootDeviceEnvironment::getProductHelper() const {
 }
 
 void RootDeviceEnvironment::createBindlessHeapsHelper(Device *rootDevice, bool availableDevices) {
-    bindlessHeapsHelper = std::make_unique<BindlessHeapsHelper>(rootDevice, availableDevices);
+    std::lock_guard<std::mutex> lock(bindlessHeapsHelperMutex);
+
+    if (bindlessHeapsHelper == nullptr) {
+        bindlessHeapsHelper = std::make_unique<BindlessHeapsHelper>(rootDevice, availableDevices);
+    }
 }
 
 FrontEndController *RootDeviceEnvironment::getFrontEndController() const {

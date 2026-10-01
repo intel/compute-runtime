@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -65,13 +66,14 @@ BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsConte
             }
         }
 
-        auto heapAllocation = getHeapAllocation(size, MemoryConstants::pageSize64k, heapType == BindlesHeapType::specialSsh);
+        auto heapAllocation = getHeapAllocation(size, MemoryConstants::pageSize64k, heapType == BindlesHeapType::specialSsh,
+                                                static_cast<BindlesHeapType>(heapType));
         UNRECOVERABLE_IF(heapAllocation == nullptr);
         ssHeapsAllocations.push_back(heapAllocation);
         surfaceStateHeaps[heapType] = std::make_unique<IndirectHeap>(heapAllocation, true);
     }
 
-    borderColorStates = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, false);
+    borderColorStates = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, false, BindlesHeapType::specialSsh);
     UNRECOVERABLE_IF(borderColorStates == nullptr);
     float borderColorDefault[4] = {0, 0, 0, 0};
     memcpy_s(borderColorStates->getUnderlyingBuffer(), sizeof(borderColorDefault), borderColorDefault, sizeof(borderColorDefault));
@@ -105,6 +107,15 @@ bool BindlessHeapsHelper::tryReservingMemoryForSpecialSsh(const size_t size, siz
     return reservedRange.has_value();
 }
 
+AllocationType BindlessHeapsHelper::getHeapAllocationType(BindlesHeapType heapType) const {
+    if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::OCL &&
+        heapType == BindlesHeapType::globalSsh) {
+        return AllocationType::bindlessHeap;
+    }
+
+    return AllocationType::linearStream;
+}
+
 bool BindlessHeapsHelper::initializeReservedMemory() {
     if (reservedMemoryInitialized) {
         return true;
@@ -125,8 +136,8 @@ bool BindlessHeapsHelper::initializeReservedMemory() {
     heapFrontWindow = std::make_unique<HeapAllocator>(reservedRangeBase, heapFrontWindowSize, MemoryConstants::pageSize64k, 0);
     heapRegular = std::make_unique<HeapAllocator>(reservedRangeBase + heapFrontWindowSize, heapRegularSize, MemoryConstants::pageSize64k, 0);
 
-    memManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, rootDeviceIndex, {heapFrontWindow.get(), reservedRangeBase});
-    memManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, rootDeviceIndex, {heapRegular.get(), reservedRangeBase});
+    memManager->addCustomHeapAllocatorConfig(getHeapAllocationType(BindlesHeapType::specialSsh), true, rootDeviceIndex, {heapFrontWindow.get(), reservedRangeBase});
+    memManager->addCustomHeapAllocatorConfig(getHeapAllocationType(BindlesHeapType::specialSsh), false, rootDeviceIndex, {heapRegular.get(), reservedRangeBase});
 
     reservedMemoryInitialized = true;
     return true;
@@ -145,13 +156,13 @@ BindlessHeapsHelper::~BindlessHeapsHelper() {
     reservedRanges.clear();
 
     if (reservedMemoryInitialized) {
-        memManager->removeCustomHeapAllocatorConfig(AllocationType::linearStream, true, rootDeviceIndex);
-        memManager->removeCustomHeapAllocatorConfig(AllocationType::linearStream, false, rootDeviceIndex);
+        memManager->removeCustomHeapAllocatorConfig(getHeapAllocationType(BindlesHeapType::specialSsh), true, rootDeviceIndex);
+        memManager->removeCustomHeapAllocatorConfig(getHeapAllocationType(BindlesHeapType::specialSsh), false, rootDeviceIndex);
     }
 }
 
-GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow) {
-    auto allocationType = AllocationType::linearStream;
+GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow, BindlesHeapType heapType) {
+    auto allocationType = getHeapAllocationType(heapType);
     NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType, isMultiOsContextCapable, deviceBitfield};
     properties.flags.use32BitFrontWindow = allocInFrontWindow;
     properties.alignment = alignment;
@@ -278,7 +289,7 @@ IndirectHeap *BindlessHeapsHelper::getHeap(BindlesHeapType heapType) {
 bool BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
     auto heap = surfaceStateHeaps[heapType].get();
     auto allocInFrontWindow = false;
-    auto newAlloc = getHeapAllocation(globalSshAllocationSize, MemoryConstants::pageSize64k, allocInFrontWindow);
+    auto newAlloc = getHeapAllocation(globalSshAllocationSize, MemoryConstants::pageSize64k, allocInFrontWindow, heapType);
     DEBUG_BREAK_IF(newAlloc == nullptr);
     if (newAlloc == nullptr) {
         return false;

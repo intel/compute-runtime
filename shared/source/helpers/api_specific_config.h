@@ -44,5 +44,6 @@ struct ApiSpecificConfig {
     static std::string compilerCacheFileExtension();
     static int64_t compilerCacheDefaultEnabled();
     static bool isUpdateTagFromWaitEnabledForHeapless();
+    static bool createBindlessHeapsHelper(const Device &device);
 };
 } // namespace NEO

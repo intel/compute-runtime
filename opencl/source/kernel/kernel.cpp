@@ -18,6 +18,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -147,7 +148,7 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
             void *surfaceState = nullptr;
             auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
 
-            if (clDevice.getDevice().getBindlessHeapsHelper()) {
+            if (clDevice.getDevice().getBindlessHeapsHelper() &&  ApiSpecificConfig::getBindlessMode(clDevice.getDevice())) {
                 auto &ssInHeap = allocation.getBindlessInfo();
                 surfaceState = ssInHeap.ssPtr;
                 auto patchLocation = ptrOffset(crossThreadData, arg.bindless);
@@ -1531,6 +1532,10 @@ void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &al
             }
         }
     }
+}
+
+bool Kernel::usesBindlessImages() const {
+    return program->usesBindlessImages(clDevice.getRootDeviceIndex());
 }
 
 cl_int Kernel::setArgLocal(uint32_t argIndexIn,

@@ -302,6 +302,14 @@ Image *Image::create(Context *context,
     setImageProperties(image, *imageDesc, imgInfo, parentImage, parentBuffer, hostPtrRowPitch, hostPtrSlicePitch, imageCount, hostPtrMinSize);
 
     auto defaultRootDeviceEnv = defaultDevice->getExecutionEnvironment()->rootDeviceEnvironments[defaultRootDeviceIndex].get();
+
+    if (image && memoryProperties.flags.bindlessImage &&
+        defaultRootDeviceEnv->getBindlessHeapsHelper() == nullptr) {
+        auto *rootDevice = defaultDevice->getRootDevice();
+        defaultRootDeviceEnv->createBindlessHeapsHelper(
+            rootDevice, rootDevice->getNumGenericSubDevices() > 1);
+    }
+
     auto bindlessHelper = defaultRootDeviceEnv->getBindlessHeapsHelper();
     if (bindlessHelper && image && memoryProperties.flags.bindlessImage) {
         auto allocation = image->getGraphicsAllocation(defaultRootDeviceIndex);
