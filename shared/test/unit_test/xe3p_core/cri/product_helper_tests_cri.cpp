@@ -87,6 +87,10 @@ CRITEST_F(CriProductHelper, whenQueryingMaxNumSamplersThenReturnZero) {
     EXPECT_EQ(0u, productHelper->getMaxNumSamplers());
 }
 
+CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
+    EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
+}
+
 CRITEST_F(CriProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet) {
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::CRI_A0);
 }

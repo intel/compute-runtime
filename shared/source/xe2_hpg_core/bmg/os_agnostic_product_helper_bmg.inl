@@ -75,6 +75,11 @@ bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
+    return true;
+}
+
+template <>
 size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferType) const {
     size_t threshold = 0u;
 
