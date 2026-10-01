@@ -121,13 +121,3 @@ class DrmTipMock : public DrmMock {
         return -1;
     }
 };
-
-struct NonDefaultIoctlsSupported {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        if (productFamily == IGFX_DG1) {
-            return true;
-        }
-        return IsXeCore::isMatched<productFamily>();
-    }
-};
