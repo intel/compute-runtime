@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -89,6 +90,19 @@ TEST(ReleaseHelperPatIndexTests, givenMisalignedUserPtrWhenSelectingGmmUsageThen
               CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, productHelper, releaseHelper));
 
     releaseHelper.isAppTransientCoherentPatRequiredResult = true;
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
+              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, productHelper, releaseHelper));
+}
+
+TEST(ReleaseHelperPatIndexTests, givenCacheLineAlignedUserPtrWhenSelectingGmmUsageThenDoNotUse2WayCoherency) {
+    DebugManagerStateRestore restore;
+    MockProductHelperWithMisalignedUserPtr2WayCoherency productHelper;
+    MockReleaseHelper releaseHelper;
+    releaseHelper.isAppTransientCoherentPatRequiredResult = false;
+
+    const auto userPtr = reinterpret_cast<const void *>(MemoryConstants::cacheLineSize);
+    constexpr size_t size = MemoryConstants::cacheLineSize;
+
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
               CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, productHelper, releaseHelper));
 }
