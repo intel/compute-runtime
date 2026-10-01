@@ -106,6 +106,19 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         }
     }
 
+    bool mdapiPropertySet = false;
+    bool mdapiConfigurationSet = false;
+    cl_command_queue_mdapi_properties_intel mdapiProperties = NEO::LEO::CommandQueue::getCmdQueueProperties<cl_command_queue_mdapi_properties_intel>(properties, CL_QUEUE_MDAPI_PROPERTIES_INTEL, &mdapiPropertySet);
+    cl_uint mdapiConfiguration = NEO::LEO::CommandQueue::getCmdQueueProperties<cl_uint>(properties, CL_QUEUE_MDAPI_CONFIGURATION_INTEL, &mdapiConfigurationSet);
+
+    if (mdapiConfigurationSet && mdapiConfiguration != 0) {
+        err.set(CL_INVALID_OPERATION);
+        cl_command_queue tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
+
+    cl_command_queue tracingRetVal = nullptr;
     if (inputCmdList) {
         const auto profilingEnabled = NEO::LEO::CommandQueue::getCmdQueueProperties<cl_command_queue_properties>(properties) &
                                       static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE);
@@ -116,12 +129,21 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         const cl_queue_properties importProperties[5] = {CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, static_cast<cl_queue_properties>(inputCmdListHandle),
                                                          CL_QUEUE_PROPERTIES, profilingEnabled | outOfOrderEnabled,
                                                          0};
-        cl_command_queue tracingRetVal = new NEO::LEO::CommandQueue(pContext, pDevice, importProperties, cmdListHandle);
-        TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
-        return tracingRetVal;
+        tracingRetVal = new NEO::LEO::CommandQueue(pContext, pDevice, importProperties, cmdListHandle);
+    } else {
+        tracingRetVal = new NEO::LEO::CommandQueue(pContext, pDevice, properties);
     }
 
-    cl_command_queue tracingRetVal = new NEO::LEO::CommandQueue(pContext, pDevice, properties);
+    if (mdapiPropertySet && (mdapiProperties & CL_QUEUE_MDAPI_ENABLE_INTEL)) {
+        auto pCommandQueue = NEO::LEO::castToObject<NEO::LEO::CommandQueue>(tracingRetVal);
+
+        if (!pCommandQueue->setPerfCountersEnabled()) {
+            clReleaseCommandQueue(tracingRetVal);
+            tracingRetVal = nullptr;
+            err.set(CL_OUT_OF_RESOURCES);
+        }
+    }
+
     TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
     return tracingRetVal;
 }

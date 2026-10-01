@@ -360,6 +360,151 @@ TEST_F(MockPerfCountersFixture, givenDeferredImmediateCmdListInitializationAndNo
     clReleaseCommandQueue(queue);
 }
 
+TEST_F(MockPerfCountersFixture, givenNonZeroMdapiConfigurationWhenCreatingCommandQueueWithPropertiesThenInvalidOperationIsReturned) {
+    auto devicePerfCounters = setupDevicePerfCounters();
+
+    cl_queue_properties properties[] = {CL_QUEUE_MDAPI_PROPERTIES_INTEL, CL_QUEUE_MDAPI_ENABLE_INTEL,
+                                        CL_QUEUE_MDAPI_CONFIGURATION_INTEL, 1,
+                                        0};
+    cl_int errcode = CL_SUCCESS;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    EXPECT_EQ(nullptr, queue);
+    EXPECT_EQ(CL_INVALID_OPERATION, errcode);
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+}
+
+TEST_F(MockPerfCountersFixture, givenZeroMdapiConfigurationWithoutMdapiPropertiesWhenCreatingCommandQueueWithPropertiesThenQueueIsCreatedWithoutPerfCounters) {
+    cl_queue_properties properties[] = {CL_QUEUE_MDAPI_CONFIGURATION_INTEL, 0, 0};
+    cl_int errcode = CL_INVALID_VALUE;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    ASSERT_NE(nullptr, queue);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    auto leoQueue = NEO::LEO::castToObject<CommandQueue>(queue);
+    EXPECT_FALSE(leoQueue->isPerfCountersEnabled());
+
+    clReleaseCommandQueue(queue);
+}
+
+TEST_F(MockPerfCountersFixture, givenNoMdapiPropertiesAndDeviceWithPerformanceCountersWhenCreatingCommandQueueWithPropertiesThenPerfCountersAreNotEnabled) {
+    auto devicePerfCounters = setupDevicePerfCounters();
+
+    cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    cl_int errcode = CL_INVALID_VALUE;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    ASSERT_NE(nullptr, queue);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    auto leoQueue = NEO::LEO::castToObject<CommandQueue>(queue);
+    EXPECT_FALSE(leoQueue->isPerfCountersEnabled());
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+
+    clReleaseCommandQueue(queue);
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+}
+
+TEST_F(MockPerfCountersFixture, givenMdapiPropertiesWithoutEnableBitWhenCreatingCommandQueueWithPropertiesThenPerfCountersAreNotEnabled) {
+    auto devicePerfCounters = setupDevicePerfCounters();
+
+    cl_queue_properties properties[] = {CL_QUEUE_MDAPI_PROPERTIES_INTEL, 0, 0};
+    cl_int errcode = CL_INVALID_VALUE;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    ASSERT_NE(nullptr, queue);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    auto leoQueue = NEO::LEO::castToObject<CommandQueue>(queue);
+    EXPECT_FALSE(leoQueue->isPerfCountersEnabled());
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+
+    clReleaseCommandQueue(queue);
+}
+
+TEST_F(MockPerfCountersFixture, givenMdapiEnableAndDeviceWithoutPerformanceCountersWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesIsReturned) {
+    cl_queue_properties properties[] = {CL_QUEUE_MDAPI_PROPERTIES_INTEL, CL_QUEUE_MDAPI_ENABLE_INTEL, 0};
+    cl_int errcode = CL_SUCCESS;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    EXPECT_EQ(nullptr, queue);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, errcode);
+}
+
+TEST_F(MockPerfCountersFixture, givenMdapiEnableAndWorkingPerformanceCountersWhenCreatingCommandQueueWithPropertiesThenQueueIsCreatedWithPerfCountersEnabled) {
+    auto devicePerfCounters = setupDevicePerfCounters();
+
+    cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE,
+                                        CL_QUEUE_MDAPI_PROPERTIES_INTEL, CL_QUEUE_MDAPI_ENABLE_INTEL,
+                                        CL_QUEUE_MDAPI_CONFIGURATION_INTEL, 0,
+                                        0};
+    cl_int errcode = CL_INVALID_VALUE;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    ASSERT_NE(nullptr, queue);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    auto leoQueue = NEO::LEO::castToObject<CommandQueue>(queue);
+    EXPECT_TRUE(leoQueue->isPerfCountersEnabled());
+    EXPECT_EQ(1u, devicePerfCounters->getReferenceNumber());
+
+    clReleaseCommandQueue(queue);
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+}
+
+TEST_F(MockPerfCountersFixture, givenMdapiEnableAndMetricsLibraryFailingToOpenWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesIsReturnedAndCountersAreReleased) {
+    auto devicePerfCounters = setupDevicePerfCounters();
+    static_cast<MockMetricsLibrary *>(devicePerfCounters->getMetricsLibraryInterface())->validOpen = false;
+
+    cl_queue_properties properties[] = {CL_QUEUE_MDAPI_PROPERTIES_INTEL, CL_QUEUE_MDAPI_ENABLE_INTEL, 0};
+    cl_int errcode = CL_SUCCESS;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    EXPECT_EQ(nullptr, queue);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, errcode);
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+}
+
+TEST_F(MockPerfCountersFixture, givenMdapiEnableAndImportedCmdListWhenCreatingCommandQueueWithPropertiesThenQueueIsCreatedWithPerfCountersEnabled) {
+    auto devicePerfCounters = setupDevicePerfCounters();
+
+    cl_int errcode = CL_SUCCESS;
+    auto ownerQueue = clCreateCommandQueue(getClContext(), clDevice, 0, &errcode);
+    ASSERT_NE(nullptr, ownerQueue);
+    auto cmdListHandle = NEO::LEO::castToObject<CommandQueue>(ownerQueue)->getL0Object()->toHandle();
+
+    cl_queue_properties properties[] = {CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, reinterpret_cast<cl_queue_properties>(cmdListHandle),
+                                        CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE,
+                                        CL_QUEUE_MDAPI_PROPERTIES_INTEL, CL_QUEUE_MDAPI_ENABLE_INTEL,
+                                        0};
+    errcode = CL_INVALID_VALUE;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    ASSERT_NE(nullptr, queue);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    auto leoQueue = NEO::LEO::castToObject<CommandQueue>(queue);
+    EXPECT_EQ(cmdListHandle, leoQueue->getL0Object()->toHandle());
+    EXPECT_TRUE(leoQueue->isPerfCountersEnabled());
+    EXPECT_EQ(1u, devicePerfCounters->getReferenceNumber());
+
+    clReleaseCommandQueue(queue);
+    EXPECT_EQ(0u, devicePerfCounters->getReferenceNumber());
+    clReleaseCommandQueue(ownerQueue);
+}
+
+TEST_F(MockPerfCountersFixture, givenMdapiEnableAndImportedCmdListAndDeviceWithoutPerformanceCountersWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesIsReturned) {
+    cl_int errcode = CL_SUCCESS;
+    auto ownerQueue = clCreateCommandQueue(getClContext(), clDevice, 0, &errcode);
+    ASSERT_NE(nullptr, ownerQueue);
+    auto cmdListHandle = NEO::LEO::castToObject<CommandQueue>(ownerQueue)->getL0Object()->toHandle();
+
+    cl_queue_properties properties[] = {CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, reinterpret_cast<cl_queue_properties>(cmdListHandle),
+                                        CL_QUEUE_MDAPI_PROPERTIES_INTEL, CL_QUEUE_MDAPI_ENABLE_INTEL,
+                                        0};
+    errcode = CL_SUCCESS;
+    auto queue = clCreateCommandQueueWithProperties(getClContext(), clDevice, properties, &errcode);
+    EXPECT_EQ(nullptr, queue);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, errcode);
+
+    // Imported handle must survive the failed import.
+    EXPECT_EQ(CL_SUCCESS, clFinish(ownerQueue));
+    clReleaseCommandQueue(ownerQueue);
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO
