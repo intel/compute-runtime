@@ -1272,6 +1272,21 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEmptyListWhenAppendingBarriersA
     EXPECT_EQ(clientsBefore, csr->getNumClients());
 }
 
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenCommandsWrittenWithoutFlushWhenAppendingBarrierThenBarrierIsSubmitted) {
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    *cmdStream->getSpaceForCmd<typename FamilyType::MI_NOOP>() = FamilyType::cmdInitNoop;
+    const auto usedBefore = cmdStream->getUsed();
+
+    auto waitEventsParameters = getWaitEventParameters();
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+    EXPECT_GT(cmdStream->getUsed(), usedBefore);
+    EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
+}
+
 HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenEmptyListWhenAppendingBarrierWithSignalEventThenEventIsCompletedOnHost) {
     auto event = createEvent(eventPool.get(), ZE_EVENT_SCOPE_FLAG_HOST);
     getWhiteBoxCmdList()->dcFlushSupport = true;

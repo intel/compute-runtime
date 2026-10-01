@@ -716,7 +716,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     } else {
         const auto mainTaskCount = this->cmdQImmediate->getTaskCount();
         const auto copyOffloadTaskCount = dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0;
-        const bool redundantBarrier = this->lastBarrierTaskCounts.matches(mainTaskCount, copyOffloadTaskCount) && numWaitEvents == 0 &&
+        const bool pendingCommands = this->commandContainer.getCommandStream()->getUsed() != this->cmdListCurrentStartOffset;
+        const bool redundantBarrier = !pendingCommands && this->lastBarrierTaskCounts.matches(mainTaskCount, copyOffloadTaskCount) && numWaitEvents == 0 &&
                                       !this->isCopyOnly(false) && this->synchronizedDispatchMode == NEO::SynchronizedDispatchMode::disabled;
         if (redundantBarrier) {
             auto signalEvent = Event::fromHandle(hSignalEvent);
