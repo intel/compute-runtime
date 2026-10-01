@@ -52,21 +52,6 @@ XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimesta
     EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues());
 }
 
-XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
-    DebugManagerStateRestore restore;
-    auto &productHelper = getHelper<ProductHelper>();
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    debugManager.flags.EnableBlitterOperationsSupport.set(0);
-    productHelper.configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
-
-    debugManager.flags.EnableBlitterOperationsSupport.set(1);
-    productHelper.configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
-}
-
 using LriHelperTestsXeHpgCore = ::testing::Test;
 
 XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMmioRemapEnableCorrectlySet) {

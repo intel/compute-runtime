@@ -12,6 +12,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -247,4 +248,21 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenPlatformSupportsHdcUntypedCacheFlus
         }
     }
     EXPECT_TRUE(timestampPostSyncFound);
+}
+
+using ProductHelperDeviceTestDg2AndLater = Test<DeviceFixture>;
+
+HWTEST2_F(ProductHelperDeviceTestDg2AndLater, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag, IsAtLeastXeCore) {
+    DebugManagerStateRestore restore;
+    auto &productHelper = getHelper<ProductHelper>();
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    debugManager.flags.EnableBlitterOperationsSupport.set(0);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
+    EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
+
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
+    EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
