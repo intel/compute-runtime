@@ -47,7 +47,10 @@ template <>
 uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const;
 
 template <>
-void MemorySynchronizationCommands<Family>::setPipeControlRequiredFields(typename Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args);
+void MemorySynchronizationCommands<Family>::setPipeControlRequiredFields(typename Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+    pipeControl.setDataportFlush(true);
+    pipeControl.setUnTypedDataPortCacheFlush(true);
+}
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const {
