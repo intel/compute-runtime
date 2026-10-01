@@ -6461,5 +6461,67 @@ TEST_F(GraphTestApiPauseResume, GivenRootGraphWithSubgraphWhenPausingRootThenAll
     rootCmdlist.setGraphCaptureTarget(nullptr);
     childCmdlist.setGraphCaptureTarget(nullptr);
 }
+
+TEST_F(GraphTestApiCaptureBeginEnd, GivenStoppedGraphWithSubgraphWhenSignallingEventsAreReassignedBeforeGraphDestructionThenGraphDestructionDoesNotModifyEvents) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockCommandList rootCmdlist;
+    rootCmdlist.device = this->device;
+    MockCommandList childCmdlist;
+    childCmdlist.device = this->device;
+    MockCommandList unrelatedCmdlist;
+
+    auto rootGraph = std::make_unique<Graph>(&ctx, true);
+    rootGraph->startCapturingFrom(rootCmdlist, false);
+    rootCmdlist.setGraphCaptureTarget(rootGraph.get());
+
+    Mock<Event> forkEvent;
+    rootGraph->capture<CaptureApi::zeCommandListAppendBarrier>(rootCmdlist.toHandle(), forkEvent.toHandle(), 0U, nullptr);
+    rootGraph->registerSignallingEventFromPreviousCommand(forkEvent);
+
+    Graph *subGraph = nullptr;
+    rootGraph->forkTo(childCmdlist, subGraph, forkEvent);
+    ASSERT_NE(nullptr, subGraph);
+
+    Mock<Event> subGraphSignalEvent;
+    subGraph->capture<CaptureApi::zeCommandListAppendBarrier>(childCmdlist.toHandle(), subGraphSignalEvent.toHandle(), 0U, nullptr);
+    subGraph->registerSignallingEventFromPreviousCommand(subGraphSignalEvent);
+
+    rootGraph->stopCapturing();
+    EXPECT_EQ(nullptr, forkEvent.getRecordedSignalFrom());
+    EXPECT_EQ(nullptr, subGraphSignalEvent.getRecordedSignalFrom());
+
+    forkEvent.setRecordedSignalFrom(&unrelatedCmdlist);
+    subGraphSignalEvent.setRecordedSignalFrom(&unrelatedCmdlist);
+
+    rootGraph.reset();
+    EXPECT_EQ(&unrelatedCmdlist, forkEvent.getRecordedSignalFrom());
+    EXPECT_EQ(&unrelatedCmdlist, subGraphSignalEvent.getRecordedSignalFrom());
+
+    forkEvent.setRecordedSignalFrom(nullptr);
+    subGraphSignalEvent.setRecordedSignalFrom(nullptr);
+    childCmdlist.setGraphCaptureTarget(nullptr);
+}
+
+TEST_F(GraphTestApiCaptureBeginEnd, GivenGraphStillCapturingWhenGraphIsDestroyedThenSignallingEventsAreUnregistered) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockCommandList cmdlist;
+    cmdlist.device = this->device;
+
+    auto graph = std::make_unique<Graph>(&ctx, true);
+    graph->startCapturingFrom(cmdlist, false);
+
+    Mock<Event> signalEvent;
+    graph->capture<CaptureApi::zeCommandListAppendBarrier>(cmdlist.toHandle(), signalEvent.toHandle(), 0U, nullptr);
+    graph->registerSignallingEventFromPreviousCommand(signalEvent);
+    EXPECT_EQ(&cmdlist, signalEvent.getRecordedSignalFrom());
+
+    cmdlist.setGraphCaptureTarget(nullptr);
+    graph.reset();
+    EXPECT_EQ(nullptr, signalEvent.getRecordedSignalFrom());
+}
 } // namespace ult
 } // namespace L0

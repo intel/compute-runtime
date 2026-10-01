@@ -288,7 +288,9 @@ void Graph::setRecordedSignalsRecursively(bool attach) {
 }
 
 Graph::~Graph() {
-    this->unregisterSignallingEvents();
+    if (false == this->wasCapturingStopped) {
+        this->unregisterSignallingEvents();
+    }
     for (auto *sg : subGraphs) {
         if (false == sg->wasPreallocated()) {
             delete sg;
