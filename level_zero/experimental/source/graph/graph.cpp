@@ -380,8 +380,7 @@ void Graph::stopCapturing() {
     this->captureSrc = nullptr;
     StackVec<std::pair<L0::CommandList *, ForkInfo>, 1> neverJoinedForks; // should stay empty for valid graphs
     for (auto &unjFork : this->unjoinedForks) {
-        auto forkCmdId = unjFork.second.forkSignalCommandId;
-        auto potentialJoin = this->potentialJoins.find(forkCmdId);
+        auto potentialJoin = this->potentialJoins.find(unjFork.first);
         if (this->potentialJoins.end() == potentialJoin) {
             neverJoinedForks.push_back({unjFork.first, unjFork.second});
             continue; // no join-like sequences found
@@ -466,7 +465,7 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
     auto joinRecordedSignal = forkJoinInfo.forkDestiny->recordedSignals.find(&joinEvent);
     UNRECOVERABLE_IF(forkJoinInfo.forkDestiny->recordedSignals.end() == joinRecordedSignal);
     forkJoinInfo.joinSignalCommandId = joinRecordedSignal->second;
-    forkOwner->potentialJoins[forkInfo->second.forkSignalCommandId] = forkJoinInfo;
+    forkOwner->potentialJoins[&childCmdList] = forkJoinInfo;
 }
 
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {

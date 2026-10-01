@@ -273,7 +273,7 @@ struct Graph : _ze_graph_handle_t {
         return subGraphs;
     }
 
-    const std::unordered_map<CapturedCommandId, ForkJoinInfo> &getJoinedForks() const {
+    const std::unordered_map<L0::CommandList *, ForkJoinInfo> &getJoinedForks() const {
         return potentialJoins;
     }
 
@@ -287,14 +287,6 @@ struct Graph : _ze_graph_handle_t {
 
     const std::unordered_map<L0::CommandList *, ForkInfo> &getUnjoinedForks() const {
         return unjoinedForks;
-    }
-
-    Graph *getJoinedForkTarget(CapturedCommandId cmdId) {
-        auto it = potentialJoins.find(cmdId);
-        if (potentialJoins.end() == it) {
-            return nullptr;
-        }
-        return it->second.forkDestiny;
     }
 
     const StackVec<Graph *, 16> &getSubgraphs() {
@@ -477,7 +469,7 @@ struct Graph : _ze_graph_handle_t {
 
     std::unordered_map<L0::Event *, CapturedCommandId> recordedSignals;
     std::unordered_map<L0::CommandList *, ForkInfo> unjoinedForks;
-    std::unordered_map<CapturedCommandId, ForkJoinInfo> potentialJoins;
+    std::unordered_map<L0::CommandList *, ForkJoinInfo> potentialJoins; // keyed by forked command list, a single fork event can be awaited by many command lists
     std::unordered_map<Graph *, ForkJoinInfo> resolvedJoins;
 
     L0::CommandList *captureSrc = nullptr;

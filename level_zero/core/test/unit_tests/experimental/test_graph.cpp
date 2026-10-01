@@ -984,6 +984,58 @@ TEST_F(GraphInstantiationValidation, WhenJoinIsResolvedThenResolvedJoinTracksPar
     EXPECT_EQ(childGraph, joinInfoIt->second.forkDestiny);
 }
 
+TEST_F(GraphInstantiationValidation, WhenSingleForkEventIsAwaitedByMultipleCommandListsThenJoinsOfAllForkedCommandListsAreResolved) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext firstChildCmdlist{&ctx};
+    firstChildCmdlist.device = this->device;
+    MockGraphCmdListWithContext secondChildCmdlist{&ctx};
+    secondChildCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
+    Mock<Event> firstJoinEvent;
+    auto firstJoinEventHandle = firstJoinEvent.toHandle();
+    Mock<Event> secondJoinEvent;
+    auto secondJoinEventHandle = secondJoinEvent.toHandle();
+
+    Graph srcGraph(&ctx, true);
+    Graph *srcGraphPtr = &srcGraph;
+    Graph *firstChildGraph = nullptr;
+    Graph *secondChildGraph = nullptr;
+
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, forkEventHandle, 0U, nullptr);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(firstChildCmdlist, firstChildGraph, nullptr, &firstChildCmdlist, firstJoinEventHandle, 1U, &forkEventHandle);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(secondChildCmdlist, secondChildGraph, nullptr, &secondChildCmdlist, secondJoinEventHandle, 1U, &forkEventHandle);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 1U, &firstJoinEventHandle);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 1U, &secondJoinEventHandle);
+
+    srcGraph.stopCapturing();
+
+    EXPECT_TRUE(srcGraph.getUnjoinedForks().empty());
+    ASSERT_NE(nullptr, firstChildGraph);
+    ASSERT_NE(nullptr, secondChildGraph);
+
+    const auto &resolvedJoins = srcGraph.getResolvedJoins();
+    ASSERT_EQ(2u, resolvedJoins.size());
+
+    auto firstJoinInfoIt = resolvedJoins.find(firstChildGraph);
+    ASSERT_NE(resolvedJoins.end(), firstJoinInfoIt);
+    EXPECT_EQ(forkEventHandle, firstJoinInfoIt->second.forkEvent);
+    EXPECT_EQ(firstJoinEventHandle, firstJoinInfoIt->second.joinEvent);
+    EXPECT_EQ(1u, firstJoinInfoIt->second.joinWaitCommandId);
+
+    auto secondJoinInfoIt = resolvedJoins.find(secondChildGraph);
+    ASSERT_NE(resolvedJoins.end(), secondJoinInfoIt);
+    EXPECT_EQ(forkEventHandle, secondJoinInfoIt->second.forkEvent);
+    EXPECT_EQ(secondJoinEventHandle, secondJoinInfoIt->second.joinEvent);
+    EXPECT_EQ(2u, secondJoinInfoIt->second.joinWaitCommandId);
+}
+
 TEST_F(GraphInstantiationValidation, WhenChildHasAllowedPostJoinCommandThenResolvedJoinStillPointsToJoinSignalCommand) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
@@ -4376,6 +4428,56 @@ TEST_F(GraphExecution, GivenMonolithicGraphWithoutPostJoinCommandsWhenInstantiat
     EXPECT_TRUE(rootExecCmdList->waitedEvents.empty());
     EXPECT_EQ(0u, childExecCmdList->appendSignalEventCalled);
     EXPECT_TRUE(childExecCmdList->signaledEvents.empty());
+}
+
+TEST_F(GraphExecution, GivenMonolithicGraphWithSingleForkEventAwaitedByMultipleCommandListsWhenInstantiatedThenNoTrailingSynchronizationIsInserted) {
+    GraphsCleanupGuard graphCleanup;
+
+    DriverBackedGraphContextReturningSpecificCmdList ctx(context->getDriverHandle());
+    auto *rootExecCmdList = new CapturingInternalExecCmdList;
+    auto *firstChildExecCmdList = new CapturingInternalExecCmdList;
+    auto *secondChildExecCmdList = new CapturingInternalExecCmdList;
+    ctx.cmdListsToReturn.push_back(rootExecCmdList);
+    ctx.cmdListsToReturn.push_back(firstChildExecCmdList);
+    ctx.cmdListsToReturn.push_back(secondChildExecCmdList);
+
+    MockGraphCmdListWithContext rootRecordCmdList{&ctx};
+    MockGraphCmdListWithContext firstChildRecordCmdList{&ctx};
+    MockGraphCmdListWithContext secondChildRecordCmdList{&ctx};
+    rootRecordCmdList.device = this->device;
+    firstChildRecordCmdList.device = this->device;
+    secondChildRecordCmdList.device = this->device;
+
+    Mock<Event> forkEvent;
+    Mock<Event> firstJoinEvent;
+    Mock<Event> secondJoinEvent;
+    auto forkEventHandle = forkEvent.toHandle();
+    auto firstJoinEventHandle = firstJoinEvent.toHandle();
+    auto secondJoinEventHandle = secondJoinEvent.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    auto rootRecordCmdListHandle = rootRecordCmdList.toHandle();
+    auto firstChildRecordCmdListHandle = firstChildRecordCmdList.toHandle();
+    auto secondChildRecordCmdListHandle = secondChildRecordCmdList.toHandle();
+    rootRecordCmdList.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(rootRecordCmdList, false);
+    rootRecordCmdList.capture<CaptureApi::zeCommandListAppendBarrier>(rootRecordCmdListHandle, forkEventHandle, 0U, nullptr);
+    firstChildRecordCmdList.capture<CaptureApi::zeCommandListAppendBarrier>(firstChildRecordCmdListHandle, firstJoinEventHandle, 1U, &forkEventHandle);
+    secondChildRecordCmdList.capture<CaptureApi::zeCommandListAppendBarrier>(secondChildRecordCmdListHandle, secondJoinEventHandle, 1U, &forkEventHandle);
+    rootRecordCmdList.capture<CaptureApi::zeCommandListAppendBarrier>(rootRecordCmdListHandle, nullptr, 1U, &firstJoinEventHandle);
+    rootRecordCmdList.capture<CaptureApi::zeCommandListAppendBarrier>(rootRecordCmdListHandle, nullptr, 1U, &secondJoinEventHandle);
+    srcGraph.stopCapturing();
+    rootRecordCmdList.setGraphCaptureTarget(nullptr);
+
+    ExposedExecutableGraph execGraph;
+    GraphInstatiateSettings settings;
+    settings.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(srcGraph, settings));
+
+    EXPECT_EQ(nullptr, execGraph.trailingEventsPool);
+    EXPECT_EQ(0u, rootExecCmdList->appendWaitOnEventsCalled);
+    EXPECT_EQ(0u, firstChildExecCmdList->appendSignalEventCalled);
+    EXPECT_EQ(0u, secondChildExecCmdList->appendSignalEventCalled);
 }
 
 TEST_F(GraphExecution, GivenMonolithicGraphWithPostJoinCommandsWhenInstantiatedThenTrailingSynchronizationIsInserted) {

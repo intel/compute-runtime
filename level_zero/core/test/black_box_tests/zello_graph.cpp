@@ -1860,6 +1860,128 @@ bool testMultipleForkJoinsGraph(ze_context_handle_t &context,
     return validRet;
 }
 
+bool testSingleForkMultipleJoinsGraph(ze_context_handle_t &context,
+                                      ze_device_handle_t &device,
+                                      TestKernelsContainer &testKernels,
+                                      bool aubMode,
+                                      const GraphDumpSettings &dumpSettings,
+                                      uint32_t forkCount,
+                                      uint32_t executionCount) {
+    bool validRet = true;
+
+    constexpr size_t allocSize = 1024;
+    constexpr size_t elemCount = allocSize / sizeof(uint32_t);
+
+    // root: addVal(srcBuffer, addValue, stageBuffer, fork) -> wait join[0] -> ... -> wait join[forkCount - 1]
+    // fork[i]: wait fork -> mulVal(stageBuffer, i + 2, dstBuffer[i], join[i])
+    // a single fork event is awaited by all forked command lists, graph is executed multiple times
+
+    const uint32_t initialValue = 4;
+    const uint32_t addValue = 5;
+    const uint32_t stageValue = initialValue + addValue;
+
+    std::vector<ze_event_handle_t> events(forkCount + 1, nullptr);
+    ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
+                                                     eventPool, 0u,
+                                                     true, &counterBasedDesc,
+                                                     forkCount + 1, events.data(), 0u, 0u);
+    ze_event_handle_t forkEvent = events[0];
+    ze_event_handle_t *joinEvents = &events[1];
+
+    ze_kernel_handle_t kernelAddValDst = testKernels["add_constant_output"];
+    ze_kernel_handle_t kernelMulValDst = testKernels["mul_constant_output"];
+
+    ze_command_list_handle_t cmdListRoot;
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, cmdListRoot);
+    std::vector<ze_command_list_handle_t> cmdListsFork(forkCount, nullptr);
+    for (auto &cmdListFork : cmdListsFork) {
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                               false, false, cmdListFork);
+    }
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    void *srcBuffer = nullptr;
+    void *stageBuffer = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stageBuffer));
+    for (size_t i = 0; i < elemCount; i++) {
+        reinterpret_cast<uint32_t *>(srcBuffer)[i] = initialValue;
+    }
+    std::vector<void *> dstBuffers(forkCount, nullptr);
+    for (auto &dstBuffer : dstBuffers) {
+        SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &dstBuffer));
+        memset(dstBuffer, 0, allocSize);
+    }
+
+    uint32_t groupSizeX = std::min(64u, static_cast<uint32_t>(elemCount));
+    ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelAddValDst, groupSizeX, 1u, 1u));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelMulValDst, groupSizeX, 1u, 1u));
+
+    ze_graph_handle_t virtualGraph = nullptr;
+    SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
+    SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(cmdListRoot, virtualGraph, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 0, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 1, sizeof(stageBuffer), &stageBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddValDst, 2, sizeof(addValue), &addValue));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListRoot, kernelAddValDst, &groupCount, forkEvent, 0, nullptr));
+
+    for (uint32_t i = 0; i < forkCount; i++) {
+        uint32_t mulValue = i + 2;
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulValDst, 0, sizeof(stageBuffer), &stageBuffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulValDst, 1, sizeof(dstBuffers[i]), &dstBuffers[i]));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulValDst, 2, sizeof(mulValue), &mulValue));
+        // all forked command lists wait for the same fork event
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListsFork[i], kernelMulValDst, &groupCount, joinEvents[i], 1, &forkEvent));
+    }
+    for (uint32_t i = 0; i < forkCount; i++) {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdListRoot, 1, &joinEvents[i]));
+    }
+
+    SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(cmdListRoot, nullptr, nullptr));
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualGraph, nullptr, &physicalGraph));
+
+    // hang of graph executions is reported as synchronization timeout
+    constexpr uint64_t hangTimeoutNs = 60ull * 1000 * 1000 * 1000;
+    const uint64_t syncTimeout = aubMode ? std::numeric_limits<uint64_t>::max() : hangTimeoutNs;
+    for (uint32_t execution = 0; execution < executionCount; execution++) {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
+        // synchronize before next execution until ordering of overlapping graph executions is fixed
+        SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListRoot, syncTimeout));
+    }
+
+    if (aubMode == false) {
+        for (uint32_t i = 0; i < forkCount; i++) {
+            uint32_t expectedValue = stageValue * (i + 2);
+            validRet &= LevelZeroBlackBoxTests::validateToValue(expectedValue, dstBuffers[i], elemCount);
+        }
+    }
+
+    dumpGraphToDotIfEnabled(virtualGraph, __func__, dumpSettings);
+    SUCCESS_OR_TERMINATE(zeExecutableGraphDestroyExt(physicalGraph));
+    SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stageBuffer));
+    for (auto dstBuffer : dstBuffers) {
+        SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    }
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListRoot));
+    for (auto cmdListFork : cmdListsFork) {
+        SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListFork));
+    }
+    for (auto event : events) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+    }
+    return validRet;
+}
+
 bool testForkedGraphMultipleExecutionEventSync(ze_context_handle_t &context,
                                                ze_device_handle_t &device,
                                                TestKernelsContainer &testKernels,
@@ -2662,11 +2784,24 @@ int main(int argc, char *argv[]) {
             reuseValuesSize = 1;
         }
 
-        for (size_t i = 0; i < reuseValuesSize; i++) {
-            bool reuse = reuseValues[i];
-            currentTest = getCaseName(reuse);
+        if (testSubMask.test(0)) {
+            for (size_t i = 0; i < reuseValuesSize; i++) {
+                bool reuse = reuseValues[i];
+                currentTest = getCaseName(reuse);
+                LevelZeroBlackBoxTests::printTestHeader(currentTest);
+                casePass = testMultipleForkJoinsGraph(context, device0, kernelsMap, aubMode, graphDumpSettings, reuse);
+                LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+                boxPass &= casePass;
+            }
+        }
+        if (testSubMask.test(1)) {
+            uint32_t forkCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-fc", "--fork_count", 3u);
+            uint32_t executionCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-e", "--execution_count", 2u);
+            std::ostringstream caseName;
+            caseName << "Single Fork Multiple Joins Graph fork count: " << forkCount << " execution count: " << executionCount << ".";
+            currentTest = caseName.str();
             LevelZeroBlackBoxTests::printTestHeader(currentTest);
-            casePass = testMultipleForkJoinsGraph(context, device0, kernelsMap, aubMode, graphDumpSettings, reuse);
+            casePass = testSingleForkMultipleJoinsGraph(context, device0, kernelsMap, aubMode, graphDumpSettings, forkCount, executionCount);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }

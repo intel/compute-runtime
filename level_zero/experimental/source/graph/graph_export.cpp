@@ -146,7 +146,7 @@ void GraphDotExporter::writeForkJoinEdges(std::ostringstream &dot, const Graph &
 
     const auto visibleCommands = collectVisibleCommands(graph);
 
-    for (const auto &[forkCmdId, forkJoinInfo] : potentialJoins) {
+    for (const auto &[forkedCmdList, forkJoinInfo] : potentialJoins) {
         const auto subgraphIndex = findSubgraphIndex(subGraphs, forkJoinInfo.forkDestiny);
         if (false == subgraphIndex.has_value()) {
             continue;
