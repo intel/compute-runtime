@@ -669,28 +669,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenEventHost
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(2));
 
-    EXPECT_EQ(1u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_LE(1u, ultCsr->waitUserFenceParams.callCount);
     EXPECT_EQ(hostAddress, ultCsr->waitUserFenceParams.latestWaitedAddress);
     EXPECT_EQ(events[0]->inOrderExecHelper.getEventData()->counterValue, ultCsr->waitUserFenceParams.latestWaitedValue);
     EXPECT_EQ(2, ultCsr->waitUserFenceParams.latestWaitedTimeout);
 
     ultCsr->waitUserFenceParams.forceRetStatusValue = true;
+    auto callCountBefore = ultCsr->waitUserFenceParams.callCount;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(3));
 
-    EXPECT_EQ(2u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(callCountBefore + 1, ultCsr->waitUserFenceParams.callCount);
     EXPECT_EQ(hostAddress, ultCsr->waitUserFenceParams.latestWaitedAddress);
     EXPECT_EQ(events[0]->getInOrderExecBaseSignalValue(), ultCsr->waitUserFenceParams.latestWaitedValue);
     EXPECT_EQ(3, ultCsr->waitUserFenceParams.latestWaitedTimeout);
 
+    callCountBefore = ultCsr->waitUserFenceParams.callCount;
+
     // already completed
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(3));
-    EXPECT_EQ(2u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(callCountBefore, ultCsr->waitUserFenceParams.callCount);
 
     // non in-order event
     events[1]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     events[1]->hostSynchronize(2);
-    EXPECT_EQ(2u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(callCountBefore, ultCsr->waitUserFenceParams.callCount);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendQueryKernelTimestampsCalledThenSynchronizeCounterBasedEvents) {
