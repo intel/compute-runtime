@@ -1782,6 +1782,8 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
         auto mapOperation = svmAllocsManager->getSvmMapOperation(svmPtr);
         if (mapOperation && !mapOperation->readOnlyMap) {
             auto cpuAllocation = svmData->cpuAllocation;
+            cpuAllocation->setAubWritable(true, NEO::GraphicsAllocation::defaultBank);
+            cpuAllocation->setTbxWritable(true, NEO::GraphicsAllocation::defaultBank);
             L0::CmdListMemoryCopyParams memoryCopyParams{};
             memoryCopyParams.srcAllocInfo.explicitAlloc = cpuAllocation;
             auto srcPtr = reinterpret_cast<const void *>(cpuAllocation->getGpuAddress() + mapOperation->offset);

@@ -307,6 +307,20 @@ TEST_F(ClEnqueueSvmMapTest, givenWriteMapWhenClEnqueueSVMUnmapThenMigratesHostTo
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 }
 
+TEST_F(ClEnqueueSvmMapTest, givenWriteMapWhenClEnqueueSVMUnmapThenCpuAllocationIsMarkedAubAndTbxWritable) {
+    registerDeviceStorageAlloc();
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMap(commandQueue, CL_FALSE, CL_MAP_WRITE, &svmStorage, sizeof(svmStorage), 0, nullptr, nullptr));
+
+    cpuAllocation->setAubWritable(false, GraphicsAllocation::defaultBank);
+    cpuAllocation->setTbxWritable(false, GraphicsAllocation::defaultBank);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMUnmap(commandQueue, &svmStorage, 0, nullptr, nullptr));
+
+    EXPECT_TRUE(cpuAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+    EXPECT_TRUE(cpuAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
+}
+
 TEST_F(ClEnqueueSvmMapTest, givenBlockingDeviceStorageMapThenQueueIsSynchronizedAfterMigration) {
     registerDeviceStorageAlloc();
 
