@@ -13,6 +13,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation_cpu_access_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation_mem_advise_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_bind_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests.cpp
@@ -21,11 +22,14 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_1.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_data_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_surface_allocation_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_device_pool_allocation_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_fabric_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_bindless_heap_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_local_memory_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_meminfo_parsing_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind_tests.cpp
@@ -35,10 +39,12 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_pci_speed_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_topology_upstream_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_shared_handle_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_special_heap_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_system_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation_view_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_unified_memory_allocation_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_version_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_virtual_memory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_vm_bind_tests.cpp
@@ -62,7 +68,6 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_tests.cpp
 )
 
 if(${NEO_TARGET_PROCESSOR} STREQUAL "x86_64")
