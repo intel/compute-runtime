@@ -125,6 +125,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::isPerDssBackedBufferSent;
     using BaseClass::isPerQueuePrologueEnabled;
     using BaseClass::isWalkerWithProfilingEnqueued;
+    using BaseClass::lateMidThreadPreemptionStartSubmissionPending;
     using BaseClass::makeResident;
     using BaseClass::pageTableManagerInitialized;
     using BaseClass::pollForCompletion;

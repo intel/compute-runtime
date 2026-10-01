@@ -671,6 +671,25 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void makeResidentHostFunctionAllocation();
 
     virtual void submitLateMidThreadPreemptionStart() {}
+    bool isLateMidThreadPreemptionStartRequired(bool hasMidThreadPreemptionKernel) const {
+        return hasMidThreadPreemptionKernel && skipPreemptionAllocation;
+    }
+    size_t getCmdSizeForLateMidThreadPreemptionStart(bool hasMidThreadPreemptionKernel) const {
+        return isLateMidThreadPreemptionStartRequired(hasMidThreadPreemptionKernel) ? lateMidThreadPreemptionStartCmdSize : 0;
+    }
+    void programLateMidThreadPreemptionStart(LinearStream &cmdStream, bool hasMidThreadPreemptionKernel) {
+        if (isLateMidThreadPreemptionStartRequired(hasMidThreadPreemptionKernel)) {
+            dispatchLateMidThreadPreemptionStart(cmdStream);
+            skipPreemptionAllocation = false;
+            lateMidThreadPreemptionStartSubmissionPending = true;
+        }
+    }
+    void handleLateMidThreadPreemptionStartSubmission(SubmissionStatus submissionStatus) {
+        if (lateMidThreadPreemptionStartSubmissionPending) {
+            lateMidThreadPreemptionStartSubmissionPending = false;
+            skipPreemptionAllocation = submissionStatus != SubmissionStatus::success;
+        }
+    }
 
     void initializeResourcesAndDirectSubmission(const PreemptionMode preemptionMode) {
         this->initializeResources(preemptionMode);
@@ -683,6 +702,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
   protected:
     MOCKABLE_VIRTUAL void startHostFunctionWorker(HostFunctionAllocator *allocator);
+    virtual void dispatchLateMidThreadPreemptionStart(LinearStream &cmdStream) = 0;
 
     virtual CompletionStamp flushTaskHeapless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
@@ -742,6 +762,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     L1CachePolicy l1CachePolicyData{};
 
     uint64_t totalMemoryUsed = 0u;
+    size_t lateMidThreadPreemptionStartCmdSize = 0;
 
     volatile TagAddressType *tagAddress = nullptr;
     volatile TagAddressType *ucTagAddress = nullptr;
@@ -805,6 +826,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool isPreambleSent = false;
     bool isStateSipSent = false;
     bool skipPreemptionAllocation = false;
+    bool lateMidThreadPreemptionStartSubmissionPending = false;
     bool isEnginePrologueSent = false;
     bool areExceptionsSent = false;
     bool isPerDssBackedBufferSent = false;

@@ -189,6 +189,7 @@ SubmissionStatus CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuff
     this->latestSentTaskCount = taskCount + 1;
 
     SubmissionStatus retVal = this->flush(batchBuffer, allocationsForResidency);
+    handleLateMidThreadPreemptionStartSubmission(retVal);
 
     if (retVal != NEO::SubmissionStatus::success) {
         return retVal;

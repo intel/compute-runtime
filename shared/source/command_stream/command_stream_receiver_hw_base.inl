@@ -92,6 +92,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
 
     this->dcFlushSupport = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
     this->dshSupported = hwInfo.capabilityTable.supportsImages;
+    this->lateMidThreadPreemptionStartCmdSize = PreemptionHelper::getRequiredCmdStreamSizeForLateStart<GfxFamily>();
 }
 
 template <typename GfxFamily>
@@ -925,11 +926,19 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags) {
     PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, getPreemptionAllocation());
     this->lastPreemptionMode = dispatchFlags.preemptionMode;
+    programLateMidThreadPreemptionStart(csr, dispatchFlags.hasMidThreadPreemptionKernel);
 }
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const {
-    return PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode);
+    return PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode) +
+           getCmdSizeForLateMidThreadPreemptionStart(dispatchFlags.hasMidThreadPreemptionKernel);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchLateMidThreadPreemptionStart(LinearStream &cmdStream) {
+    PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Program LRI to enable mid thread preemption\n");
+    PreemptionHelper::programCmdStreamForLateStart<GfxFamily>(cmdStream);
 }
 
 template <typename GfxFamily>
@@ -1368,6 +1377,7 @@ template <typename GfxFamily>
 inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     this->latestFlushIsTaskCountUpdateOnly = batchBuffer.taskCountUpdateOnly;
     auto status = flush(batchBuffer, allocationsForResidency);
+    handleLateMidThreadPreemptionStartSubmission(status);
     makeSurfacePackNonResident(allocationsForResidency, true);
     return status;
 }
@@ -2023,6 +2033,10 @@ inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleFlushTaskSubmis
     }
 
     if (this->dispatchMode == DispatchMode::batchedDispatch) {
+        if (this->lateMidThreadPreemptionStartSubmissionPending) {
+            auto submissionStatus = this->flushBatchedSubmissions() ? SubmissionStatus::success : SubmissionStatus::failed;
+            handleLateMidThreadPreemptionStartSubmission(submissionStatus);
+        }
         handleBatchedDispatchImplicitFlush(device.getDeviceInfo().globalMemSize, implicitFlush);
     }
 
@@ -2587,21 +2601,23 @@ inline void CommandStreamReceiverHw<GfxFamily>::unblockPagingFenceSemaphore(uint
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::submitLateMidThreadPreemptionStart() {
     UNRECOVERABLE_IF(!this->osContext->isLatePreemptionStartTarget());
-    PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Program LRI to enable mid thread preemption\n");
 
     auto lock = obtainUniqueOwnership();
 
+    if (!this->skipPreemptionAllocation) {
+        PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Mid thread preemption already enabled\n");
+        return;
+    }
     this->skipPreemptionAllocation = false;
 
-    auto dispatchSize = PreemptionHelper::getRequiredCmdStreamSizeForLateStart<GfxFamily>();
-    auto &commandStream = getCS(dispatchSize);
+    this->lateMidThreadPreemptionStartSubmissionPending = true;
+    auto &commandStream = getCS(this->lateMidThreadPreemptionStartCmdSize);
     auto commandStreamStart = commandStream.getUsed();
-    PreemptionHelper::programCmdStreamForLateStart<GfxFamily>(commandStream);
+    dispatchLateMidThreadPreemptionStart(commandStream);
     makeResident(*commandStream.getGraphicsAllocation());
     makeResidentPreemptionAllocation();
 
-    auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
-    UNRECOVERABLE_IF(submissionStatus != NEO::SubmissionStatus::success);
+    this->flushSmallTask(commandStream, commandStreamStart);
 }
 
 template <typename GfxFamily>

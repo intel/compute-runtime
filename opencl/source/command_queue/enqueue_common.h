@@ -980,6 +980,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         dispatchFlags.implicitFlush = true;
     }
 
+    dispatchFlags.hasMidThreadPreemptionKernel = dispatchFlags.preemptionMode == PreemptionMode::MidThread;
     PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "preemption = %d.\n", static_cast<int>(dispatchFlags.preemptionMode));
 
     CompletionStamp completionStamp = csr.flushTask(

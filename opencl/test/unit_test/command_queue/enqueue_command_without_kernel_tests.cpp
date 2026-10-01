@@ -248,6 +248,29 @@ HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
     EXPECT_EQ(mockCmdQ->flushStamp->getStampReference(), mockCsr->passedDispatchFlags.flushStampReference);
 }
 
+HWTEST_F(DispatchFlagsTests, givenMidThreadDevicePreemptionWhenEnqueueCommandWithoutKernelThenHasMidThreadPreemptionKernelIsNotSet) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    setUpImpl<CsrType>();
+    device->setPreemptionMode(PreemptionMode::MidThread);
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+    mockCsr->passedDispatchFlags.hasMidThreadPreemptionKernel = true;
+
+    auto blocking = true;
+    TimestampPacketDependencies timestampPacketDependencies;
+    CsrDependencies csrDeps;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+
+    EnqueueProperties enqueueProperties(false, false, false, true, false, false, nullptr);
+    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
+                                          eventsRequest, eventBuilder, 0, csrDeps, nullptr, false);
+
+    EXPECT_EQ(PreemptionMode::MidThread, mockCsr->passedDispatchFlags.preemptionMode);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.hasMidThreadPreemptionKernel);
+}
+
 HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectThrottleHint) {
     using CsrType = MockCsrHw2<FamilyType>;
     setUpImpl<CsrType>();

@@ -211,6 +211,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void submitLateMidThreadPreemptionStart() override;
 
   protected:
+    void dispatchLateMidThreadPreemptionStart(LinearStream &cmdStream) override;
     CompletionStamp flushTaskHeapful(LinearStream &commandStream, size_t commandStreamStart,
                                      const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                                      TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;

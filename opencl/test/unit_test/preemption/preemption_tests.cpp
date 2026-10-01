@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_preemption_helper.h"
@@ -78,4 +79,27 @@ HWTEST_F(MidThreadPreemptionTests, GivenValueArgWhenOverrideMidThreadPreemptionS
     value = false;
     ClPreemptionHelper::overrideMidThreadPreemptionSupport(*context.get(), value);
     EXPECT_EQ(PreemptionMode::ThreadGroup, device->getPreemptionMode());
+}
+
+HWTEST_F(MidThreadPreemptionEnqueueKernelTest, givenKernelAllowingMidThreadPreemptionWhenEnqueuingKernelThenHasMidThreadPreemptionKernelIsSetInDispatchFlags) {
+    auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ->getGpgpuCommandStreamReceiver());
+    auto &kernelAttributes = const_cast<KernelInfo &>(pKernel->getKernelInfo()).kernelDescriptor.kernelAttributes;
+    kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
+
+    EXPECT_EQ(CL_SUCCESS, callOneWorkItemNDRKernel());
+
+    EXPECT_EQ(PreemptionMode::MidThread, csr.recordedDispatchFlags.preemptionMode);
+    EXPECT_TRUE(csr.recordedDispatchFlags.hasMidThreadPreemptionKernel);
+}
+
+HWTEST_F(MidThreadPreemptionEnqueueKernelTest, givenKernelRequiringDisabledMidThreadPreemptionWhenEnqueuingKernelThenHasMidThreadPreemptionKernelIsNotSetInDispatchFlags) {
+    auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ->getGpgpuCommandStreamReceiver());
+    auto &kernelAttributes = const_cast<KernelInfo &>(pKernel->getKernelInfo()).kernelDescriptor.kernelAttributes;
+    kernelAttributes.flags.requiresDisabledMidThreadPreemption = true;
+
+    EXPECT_EQ(CL_SUCCESS, callOneWorkItemNDRKernel());
+    kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
+
+    EXPECT_NE(PreemptionMode::MidThread, csr.recordedDispatchFlags.preemptionMode);
+    EXPECT_FALSE(csr.recordedDispatchFlags.hasMidThreadPreemptionKernel);
 }

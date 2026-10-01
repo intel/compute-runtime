@@ -3856,7 +3856,7 @@ struct LatePreemptionStartCsrTest : public CommandStreamReceiverHwTest {
     std::unique_ptr<MockDevice> ccsDevice;
 };
 
-HWTEST2_F(LatePreemptionStartCsrTest, givenOutOfMemoryFailureOnFlushWhenSubmittingLatePreemptionStartThenExceptionIsThrown, IsAtLeastXe2HpgCore) {
+HWTEST2_F(LatePreemptionStartCsrTest, givenOutOfMemoryFailureOnFlushWhenSubmittingLatePreemptionStartThenLateStartStaysPending, IsAtLeastXe2HpgCore) {
     auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
     if (!ccsCsr) {
         GTEST_SKIP();
@@ -3864,11 +3864,17 @@ HWTEST2_F(LatePreemptionStartCsrTest, givenOutOfMemoryFailureOnFlushWhenSubmitti
 
     auto &commandStreamReceiver = *ccsCsr;
     commandStreamReceiver.skipPreemptionAllocation = true;
+    commandStreamReceiver.taskCount = 5u;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_NO_THROW(commandStreamReceiver.submitLateMidThreadPreemptionStart());
+    EXPECT_TRUE(commandStreamReceiver.skipPreemptionAllocation);
+    EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
+    EXPECT_EQ(5u, commandStreamReceiver.peekTaskCount());
+
+    commandStreamReceiver.flushReturnValue.reset();
     commandStreamReceiver.submitLateMidThreadPreemptionStart();
     EXPECT_FALSE(commandStreamReceiver.skipPreemptionAllocation);
-
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
-    EXPECT_ANY_THROW(commandStreamReceiver.submitLateMidThreadPreemptionStart());
+    EXPECT_EQ(6u, commandStreamReceiver.peekTaskCount());
 }
 
 HWTEST2_F(LatePreemptionStartCsrTest, givenPendingTaskCountWhenSubmittingLatePreemptionStartThenLatestFlushedTaskCountIsNotUpdated, IsAtLeastXe2HpgCore) {
@@ -3878,6 +3884,7 @@ HWTEST2_F(LatePreemptionStartCsrTest, givenPendingTaskCountWhenSubmittingLatePre
     }
 
     auto &commandStreamReceiver = *ccsCsr;
+    commandStreamReceiver.skipPreemptionAllocation = true;
     commandStreamReceiver.taskCount = 5u;
     commandStreamReceiver.latestFlushedTaskCount = 2u;
 
@@ -3910,6 +3917,258 @@ HWTEST2_F(LatePreemptionStartCsrTest, givenSkippedPreemptionAllocationWhenSubmit
 
     EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(preemptionAllocation));
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenMidThreadPreemptionAlreadyEnabledWhenSubmittingLatePreemptionStartThenNothingIsSubmitted, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    commandStreamReceiver.skipPreemptionAllocation = false;
+    commandStreamReceiver.taskCount = 5u;
+    auto usedBefore = commandStreamReceiver.commandStream.getUsed();
+
+    commandStreamReceiver.submitLateMidThreadPreemptionStart();
+
+    EXPECT_FALSE(commandStreamReceiver.skipPreemptionAllocation);
+    EXPECT_EQ(5u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(usedBefore, commandStreamReceiver.commandStream.getUsed());
+}
+
+template <typename FamilyType>
+size_t countLatePreemptionStartLris(LinearStream &commandStream, size_t startOffset = 0) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream, startOffset);
+    size_t count = 0;
+    for (auto &it : findAll<MI_LOAD_REGISTER_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end())) {
+        auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        if (lri->getRegisterOffset() == PreemptionConfig<FamilyType>::mmioAddress &&
+            lri->getDataDword() == (PreemptionConfig<FamilyType>::mask | PreemptionConfig<FamilyType>::midThreadVal)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenLatePreemptionStartPendingWhenFlushingTaskWithMidThreadPreemptionKernelThenLriIsProgrammedAndPreemptionAllocationIsMadeResident, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    if (!commandStreamReceiver.getPreemptionAllocation()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    auto preemptionAllocation = commandStreamReceiver.getPreemptionAllocation();
+    if (!preemptionAllocation) {
+        GTEST_SKIP();
+    }
+
+    commandStreamReceiver.skipPreemptionAllocation = true;
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.makeResidentAllocations.clear();
+
+    flushTaskFlags.preemptionMode = PreemptionMode::MidThread;
+    flushTaskFlags.hasMidThreadPreemptionKernel = true;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+
+    EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(preemptionAllocation));
+    EXPECT_EQ(1u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
+
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+
+    EXPECT_EQ(1u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenLatePreemptionStartPendingWhenFlushingTaskWithoutMidThreadPreemptionKernelThenLriIsNotProgrammed, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.skipPreemptionAllocation = true;
+
+    flushTaskFlags.preemptionMode = PreemptionMode::MidThread;
+    flushTaskFlags.hasMidThreadPreemptionKernel = false;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_EQ(0u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenLatePreemptionStartPendingWhenGettingCmdSizeForLateStartThenLriSizeIsReturnedOnlyForMidThreadPreemptionKernel, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    commandStreamReceiver.skipPreemptionAllocation = true;
+    EXPECT_EQ(PreemptionHelper::getRequiredCmdStreamSizeForLateStart<FamilyType>(), commandStreamReceiver.getCmdSizeForLateMidThreadPreemptionStart(true));
+    EXPECT_EQ(0u, commandStreamReceiver.getCmdSizeForLateMidThreadPreemptionStart(false));
+
+    commandStreamReceiver.skipPreemptionAllocation = false;
+    EXPECT_EQ(0u, commandStreamReceiver.getCmdSizeForLateMidThreadPreemptionStart(true));
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenFailedSubmissionWhenFlushingTaskWithMidThreadPreemptionKernelThenLateStartIsProgrammedAgainOnNextFlush, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.overrideDispatchPolicy(DispatchMode::immediateDispatch);
+    commandStreamReceiver.skipPreemptionAllocation = true;
+    flushTaskFlags.preemptionMode = PreemptionMode::MidThread;
+    flushTaskFlags.hasMidThreadPreemptionKernel = true;
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+    EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
+
+    commandStreamReceiver.flushReturnValue.reset();
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+    EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
+    EXPECT_EQ(2u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenBatchedDispatchWhenFlushingTaskWithLateStartThenQueuedCommandBuffersAreSubmittedRightAway, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    commandStreamReceiver.skipPreemptionAllocation = true;
+    flushTaskFlags.preemptionMode = PreemptionMode::MidThread;
+    auto &commandBufferList = commandStreamReceiver.submissionAggregator->peekCmdBufferList();
+
+    flushTaskFlags.hasMidThreadPreemptionKernel = false;
+    commandStreamReceiver.newResources = false;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+    EXPECT_FALSE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
+
+    flushTaskFlags.hasMidThreadPreemptionKernel = true;
+    commandStreamReceiver.newResources = false;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
+    EXPECT_EQ(1u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
+
+    commandStream.getSpace(4);
+    commandStreamReceiver.newResources = false;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+    EXPECT_FALSE(commandBufferList.peekIsEmpty());
+    EXPECT_EQ(1u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
+
+    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenBatchedDispatchAndFailedLateStartSubmissionWhenFlushingNextTaskWithMidThreadPreemptionKernelThenLateStartIsProgrammedAgain, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    commandStreamReceiver.skipPreemptionAllocation = true;
+    flushTaskFlags.preemptionMode = PreemptionMode::MidThread;
+    flushTaskFlags.hasMidThreadPreemptionKernel = true;
+    auto &commandBufferList = commandStreamReceiver.submissionAggregator->peekCmdBufferList();
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    commandStreamReceiver.newResources = false;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
+
+    commandStreamReceiver.flushReturnValue.reset();
+    commandStreamReceiver.newResources = false;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_EQ(2u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenBatchedDispatchAndFailedEarlierBatchWhenFlushingTaskWithLateStartThenNoErrorIsReturnedAndTaskStaysQueued, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    commandStreamReceiver.skipPreemptionAllocation = true;
+    flushTaskFlags.preemptionMode = PreemptionMode::MidThread;
+    auto &commandBufferList = commandStreamReceiver.submissionAggregator->peekCmdBufferList();
+
+    flushTaskFlags.hasMidThreadPreemptionKernel = false;
+    flushTaskFlags.throttle = QueueThrottle::LOW;
+    commandStreamReceiver.newResources = false;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+
+    flushTaskFlags.hasMidThreadPreemptionKernel = true;
+    flushTaskFlags.throttle = QueueThrottle::MEDIUM;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    commandStreamReceiver.newResources = false;
+    auto completionStamp = commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
+    EXPECT_EQ(commandStreamReceiver.peekTaskCount(), completionStamp.taskCount);
+    EXPECT_FALSE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
+
+    commandStreamReceiver.flushReturnValue.reset();
+    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
+    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPendingLateMidThreadPreemptionStartWhenSubmittingBatchBufferThenPreemptionAllocationIsSkippedAgainOnlyOnFailure) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = commandStreamReceiver.getCS();
+
+    for (auto submissionStatus : {SubmissionStatus::outOfMemory, SubmissionStatus::success}) {
+        commandStreamReceiver.skipPreemptionAllocation = false;
+        commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending = true;
+        commandStreamReceiver.flushReturnValue = submissionStatus;
+
+        BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(csrStream.getGraphicsAllocation(), &csrStream, csrStream.getUsed());
+        EXPECT_EQ(submissionStatus, commandStreamReceiver.submitBatchBuffer(batchBuffer, commandStreamReceiver.getResidencyAllocations()));
+
+        EXPECT_EQ(submissionStatus != SubmissionStatus::success, commandStreamReceiver.skipPreemptionAllocation);
+        EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
+    }
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag) {

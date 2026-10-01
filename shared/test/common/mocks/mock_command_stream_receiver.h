@@ -316,6 +316,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         submitLateMidThreadPreemptionStartCounter++;
     }
 
+    void dispatchLateMidThreadPreemptionStart(LinearStream &cmdStream) override {}
+
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;

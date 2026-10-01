@@ -301,6 +301,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandMapUnmapWhenSubmitThenPassCorrectDispat
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.epilogueRequired);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.hasMidThreadPreemptionKernel);
 }
 
 HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectDispatchFlags) {
@@ -347,6 +348,32 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.epilogueRequired);
+}
+
+HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenHasMidThreadPreemptionKernelMatchesPreemptionMode) {
+    using CsrType = MockCsr1<FamilyType>;
+    setUpImpl<CsrType>();
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+    MockKernelWithInternals kernel(*context);
+
+    for (auto preemptionMode : {PreemptionMode::MidThread, PreemptionMode::ThreadGroup}) {
+        IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
+        mockCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
+        mockCmdQ->allocateHeapMemory(IndirectHeap::Type::indirectObject, 1, ih2);
+        mockCmdQ->allocateHeapMemory(IndirectHeap::Type::surfaceState, 1, ih3);
+
+        auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, AllocationType::commandBuffer, device->getDeviceBitfield()}));
+        std::vector<Surface *> surfaces;
+        auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+        kernelOperation->setHeaps(ih1, ih2, ih3);
+
+        std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, false, false, false, nullptr, preemptionMode, kernel, 1, nullptr));
+        command->submit(20, false);
+
+        EXPECT_EQ(preemptionMode, mockCsr->passedDispatchFlags.preemptionMode);
+        EXPECT_EQ(preemptionMode == PreemptionMode::MidThread, mockCsr->passedDispatchFlags.hasMidThreadPreemptionKernel);
+    }
 }
 
 HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCacheHasProperValue) {

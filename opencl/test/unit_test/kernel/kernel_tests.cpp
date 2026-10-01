@@ -784,6 +784,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     bool isMultiOsContextCapable() const override { return false; }
     bool submitDependencyUpdate(TagNodeBase *tag) override { return true; }
+    void dispatchLateMidThreadPreemptionStart(LinearStream &cmdStream) override {}
 
     MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
         return MemoryCompressionState::notApplicable;
