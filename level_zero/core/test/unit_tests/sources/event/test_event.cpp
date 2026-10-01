@@ -4280,6 +4280,31 @@ HWTEST_F(HostMappedEventTests, givenEventTimestampRefreshIntervalInMilliSecIsSet
     EXPECT_EQ(resetReferenceTs->gpuTimeStamp, 1u);
 }
 
+HWTEST_F(HostMappedEventTests, givenMappedTimestampEventWhenResettingAllPacketsThenReferenceTimestampIsNotOverwritten) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 2;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    auto event = std::unique_ptr<EventImp<uint64_t>>(static_cast<EventImp<uint64_t> *>(L0::Event::create<uint64_t>(eventPool.get(), &eventDesc, device, result)));
+    ASSERT_NE(nullptr, event);
+    ASSERT_LT(event->getMaxPacketsCount(), NEO::TimestampPacketConstants::preferredPacketCount);
+
+    NEO::TimeStampData *referenceTs = event->peekReferenceTs();
+    referenceTs->cpuTimeinNS = 0;
+    referenceTs->gpuTimeStamp = 0;
+
+    event->resetDeviceCompletionData(true);
+
+    EXPECT_EQ(0u, referenceTs->cpuTimeinNS);
+    EXPECT_EQ(0u, referenceTs->gpuTimeStamp);
+}
+
 HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
     typename MockTimestampPackets32::Packet data = {};
     data.contextStart = 1u;

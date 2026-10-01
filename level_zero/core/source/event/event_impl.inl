@@ -750,7 +750,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventSt
 
     auto hostAddress = getHostAddress();
 
-    const size_t writeRegionSize = totalEventSize ? totalEventSize : static_cast<size_t>(maxPacketCount) * singlePacketSize;
+    const size_t writeRegionSize = static_cast<size_t>(maxPacketCount) * singlePacketSize;
 
     const std::array<TagSizeT, 4> copyData = {{timestampStart, timestampStart, timestampEnd, timestampEnd}};
     constexpr size_t copySize = copyData.size() * sizeof(TagSizeT);
