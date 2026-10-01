@@ -17,6 +17,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
@@ -37,6 +38,10 @@
 #include <array>
 #include <list>
 #include <memory>
+
+namespace ContextGroup {
+extern uint32_t maxContextCount;
+}
 
 using namespace NEO;
 
@@ -67,6 +72,7 @@ struct EnqueueFixtureXe3pCore : public ::testing::Test {
         return std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), clDevice.get(), nullptr);
     }
 
+    VariableBackup<uint32_t> maxContextCountBackup{&ContextGroup::maxContextCount, 8u};
     DebugManagerStateRestore restore;
     HardwareInfo hwInfo;
     std::unique_ptr<MockClDevice> clDevice;

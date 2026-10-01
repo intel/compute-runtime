@@ -10,14 +10,20 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 
 #include "gtest/gtest.h"
 
+namespace ContextGroup {
+extern uint32_t maxContextCount;
+}
+
 using namespace NEO;
 
 struct SecondaryContextsTest : ::testing::Test {
+    VariableBackup<uint32_t> maxContextCountBackup{&ContextGroup::maxContextCount, 8u};
     ExecutionEnvironment *execEnv;
     std::unique_ptr<MockDevice> device;
 

@@ -31,5 +31,5 @@ const char *sysFsSystemCpuPathPrefix = "/linux/devices/system/cpu";
 } // namespace Os
 
 namespace ContextGroup {
-uint32_t maxContextCount = 8;
+uint32_t maxContextCount = 4;
 }

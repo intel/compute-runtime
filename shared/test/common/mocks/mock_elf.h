@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,6 +69,7 @@ struct MockElf : public NEO::Elf::Elf<numBits> {
 
 template <NEO::Elf::ElfIdentifierClass numBits = NEO::Elf::EI_CLASS_64>
 struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
+    using NEO::Elf::ElfEncoder<numBits>::data;
     using NEO::Elf::ElfEncoder<numBits>::sectionHeaders;
 
     uint32_t getLastSectionHeaderIndex() {

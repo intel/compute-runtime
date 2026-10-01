@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,6 @@ ElfSectionHeader<numBits> &ElfEncoder<numBits>::appendSection(const ElfSectionHe
         auto sectionDataAlignment = std::min<uint64_t>(defaultDataAlignment, 8U);
         auto alignedOffset = alignUp(this->data.size(), static_cast<size_t>(sectionDataAlignment));
         auto alignedSize = alignUp(sectionData.size(), static_cast<size_t>(sectionDataAlignment));
-        this->data.reserve(alignedOffset + alignedSize);
         this->data.resize(alignedOffset, 0U);
         this->data.insert(this->data.end(), sectionData.begin(), sectionData.end());
         this->data.resize(alignedOffset + alignedSize, 0U);
@@ -53,7 +52,6 @@ ElfProgramHeader<numBits> &ElfEncoder<numBits>::appendSegment(const ElfProgramHe
         UNRECOVERABLE_IF(programHeader.align == 0);
         auto alignedOffset = alignUp(this->data.size(), static_cast<size_t>(programHeader.align));
         auto alignedSize = alignUp(segmentData.size(), static_cast<size_t>(programHeader.align));
-        this->data.reserve(alignedOffset + alignedSize);
         this->data.resize(alignedOffset, 0U);
         this->data.insert(this->data.end(), segmentData.begin(), segmentData.end());
         this->data.resize(alignedOffset + alignedSize, 0U);

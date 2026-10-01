@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <span>
@@ -267,6 +268,34 @@ TEST(ElfEncoder, WhenAppendingSegmentWithDataThenOffsetsAreProperlyUpdated) {
     EXPECT_EQ(0U, segLoad.memSz);
     EXPECT_EQ(8U, segLoad.align);
     EXPECT_EQ(0, memcmp(data, segLoadBitsData, sizeof(data)));
+}
+
+TEST(ElfEncoder, WhenAppendingManySectionsThenDataIsNotReallocatedOnEveryAppend) {
+    MockElfEncoder<EI_CLASS_64> elfEncoder64;
+    const uint8_t data[64] = {};
+    constexpr uint32_t numAppends = 64;
+    uint32_t reallocations = 0;
+    for (uint32_t i = 0; i < numAppends; i++) {
+        auto dataBefore = elfEncoder64.data.data();
+        elfEncoder64.appendSection(SHT_PROGBITS, ".data", data);
+        reallocations += (dataBefore != elfEncoder64.data.data()) ? 1 : 0;
+    }
+    EXPECT_EQ(numAppends * sizeof(data), elfEncoder64.data.size());
+    EXPECT_LT(reallocations, numAppends / 4);
+}
+
+TEST(ElfEncoder, WhenAppendingManySegmentsThenDataIsNotReallocatedOnEveryAppend) {
+    MockElfEncoder<EI_CLASS_64> elfEncoder64;
+    const uint8_t data[64] = {};
+    constexpr uint32_t numAppends = 64;
+    uint32_t reallocations = 0;
+    for (uint32_t i = 0; i < numAppends; i++) {
+        auto dataBefore = elfEncoder64.data.data();
+        elfEncoder64.appendSegment(PT_LOAD, data);
+        reallocations += (dataBefore != elfEncoder64.data.data()) ? 1 : 0;
+    }
+    EXPECT_EQ(numAppends * sizeof(data), elfEncoder64.data.size());
+    EXPECT_LT(reallocations, numAppends / 4);
 }
 
 TEST(ElfEncoder, WhenAppendingSegmentWithoutDataThenOffsetsAreLeftIntact) {
