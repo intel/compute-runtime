@@ -777,6 +777,34 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSubmitIndirectAllocationsAsPackCalledBut
     svmManager->freeSVMAlloc(ptr);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenTbxCsrWhenSubmitIndirectAllocationsAsPackCalledThenDontMakeResident) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr->setupContext(*device->getDefaultEngine().osContext);
+    csr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    void *cmdQ = reinterpret_cast<void *>(0x12345);
+    auto mockPageFaultManager = new MockPageFaultManager();
+    memoryManager->pageFaultManager.reset(mockPageFaultManager);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+
+    ASSERT_NE(nullptr, ptr);
+    auto graphicsAllocation = svmManager->getSVMAlloc(ptr);
+
+    EXPECT_FALSE(svmManager->submitIndirectAllocationsAsPack(*csr));
+
+    EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(csr->getOsContext().getContextId()));
+    EXPECT_EQ(0u, svmManager->indirectAllocationsResidency.size());
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenInternalAllocationWhenItIsMadeResidentThenSubsequentCallsDoNotCallResidency) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];

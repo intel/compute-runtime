@@ -1509,7 +1509,7 @@ void SVMAllocsManager::makeResidentForAllocationsWithId(uint32_t allocationId, C
 }
 
 bool SVMAllocsManager::submitIndirectAllocationsAsPack(CommandStreamReceiver &csr) {
-    auto submitAsPack = memoryManager->allowIndirectAllocationsAsPack(csr.getRootDeviceIndex());
+    auto submitAsPack = memoryManager->allowIndirectAllocationsAsPack(csr.getRootDeviceIndex()) && !csr.isTbxMode();
     if (debugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
         submitAsPack = !!NEO::debugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
     }
