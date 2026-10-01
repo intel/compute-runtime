@@ -1101,6 +1101,49 @@ HWTEST_F(DeviceTest, givenTsAllocatorWhenGettingNewTagThenDoInitialize) {
     EXPECT_EQ(256u, tagCount);
 }
 
+HWTEST_F(DeviceTest, givenTbxCsrWhenCreatingInOrderTagAllocatorsThenInitialPoolsAreFullyUploadedToSimulation) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    for (auto allocator : {device->getDeviceInOrderCounterAllocator(),
+                           device->getHostInOrderCounterAllocator(),
+                           device->getInOrderTimestampAllocator(),
+                           device->getInOrderSharableEventDataAllocator()}) {
+        ASSERT_EQ(1u, allocator->getGfxAllocations().size());
+        auto allocation = allocator->getGfxAllocations()[0]->getGraphicsAllocation(rootDeviceIndex);
+        EXPECT_TRUE(allocation->isSimulationInitialUploadDone());
+    }
+    EXPECT_EQ(4u, csr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(DeviceTest, givenAubCsrWhenCreatingInOrderTagAllocatorsThenPoolsAreNotUploadedToSimulation) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+
+    for (auto allocator : {device->getDeviceInOrderCounterAllocator(),
+                           device->getHostInOrderCounterAllocator(),
+                           device->getInOrderTimestampAllocator(),
+                           device->getInOrderSharableEventDataAllocator()}) {
+        auto allocation = allocator->getGfxAllocations()[0]->getGraphicsAllocation(rootDeviceIndex);
+        EXPECT_FALSE(allocation->isSimulationInitialUploadDone());
+    }
+    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(DeviceTest, givenHwCsrWhenCreatingInOrderTagAllocatorsThenPoolsAreNotUploadedToSimulation) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+
+    for (auto allocator : {device->getDeviceInOrderCounterAllocator(),
+                           device->getHostInOrderCounterAllocator(),
+                           device->getInOrderTimestampAllocator(),
+                           device->getInOrderSharableEventDataAllocator()}) {
+        auto allocation = allocator->getGfxAllocations()[0]->getGraphicsAllocation(rootDeviceIndex);
+        EXPECT_FALSE(allocation->isSimulationInitialUploadDone());
+    }
+    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+}
+
 TEST_F(DeviceTest, givenMoreThanOneExtendedPropertiesStructuresWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {
     ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
     schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;

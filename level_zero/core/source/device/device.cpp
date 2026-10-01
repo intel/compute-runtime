@@ -2425,6 +2425,13 @@ NEO::DebuggerL0 *Device::getL0Debugger() {
     return getNEODevice()->getL0Debugger();
 }
 
+static void setupTagAllocatorForSimulation(NEO::TagAllocatorBase &allocator, NEO::Device &neoDevice) {
+    auto csr = neoDevice.getDefaultEngine().commandStreamReceiver;
+    if (csr->isTbxMode()) {
+        csr->setupTagAllocatorForSimulation(allocator);
+    }
+}
+
 template <typename NodeT>
 NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAllocatorBase> &allocator, std::mutex &inOrderAllocatorMutex, NEO::Device &neoDevice, uint32_t immediateWritePostSyncOffset) {
     if (!allocator.get()) {
@@ -2441,6 +2448,7 @@ NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAlloca
 
             allocator = std::make_unique<NEO::TagAllocator<NodeT>>(rootDeviceIndices, neoDevice.getMemoryManager(), NodeT::defaultAllocatorTagCount,
                                                                    MemoryConstants::cacheLineSize, nodeSize, 0, false, false, neoDevice.getDeviceBitfield());
+            setupTagAllocatorForSimulation(*allocator, neoDevice);
         }
     }
 
@@ -2463,6 +2471,7 @@ NEO::TagAllocatorBase *Device::getInOrderSharableEventDataAllocator() {
             size_t nodeSize = alignUp(sizeof(NEO::InOrderExecEventData), MemoryConstants::cacheLineSize);
             inOrderSharableEventDataAllocator = std::make_unique<NEO::TagAllocator<NEO::InOrderExecEventDataNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), 128,
                                                                                                                        MemoryConstants::cacheLineSize, nodeSize, 0, false, false, getNEODevice()->getDeviceBitfield());
+            setupTagAllocatorForSimulation(*inOrderSharableEventDataAllocator, *getNEODevice());
         }
     }
     return inOrderSharableEventDataAllocator.get();
@@ -2479,6 +2488,7 @@ NEO::TagAllocatorBase *Device::getInOrderTimestampAllocator() {
             size_t alignment = getGfxCoreHelper().getTimestampPacketAllocatorAlignment();
 
             inOrderTimestampAllocator = getL0GfxCoreHelper().getInOrderTimestampAllocator(rootDeviceIndices, getNEODevice()->getMemoryManager(), 256, packetsCountPerElement, alignment, getNEODevice()->getDeviceBitfield());
+            setupTagAllocatorForSimulation(*inOrderTimestampAllocator, *getNEODevice());
         }
     }
 
