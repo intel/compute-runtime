@@ -186,6 +186,8 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_command_buffer ";
     }
 
+    deviceExtensions += "cl_intel_level_zero_interop ";
+
     // LEO does not implement cl_intel_driver_diagnostics performance hints
     const std::string driverDiagnosticsExtension = "cl_intel_driver_diagnostics ";
     if (auto pos = deviceExtensions.find(driverDiagnosticsExtension); pos != std::string::npos) {

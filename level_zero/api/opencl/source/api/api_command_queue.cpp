@@ -64,6 +64,9 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         return tracingRetVal;
     }
 
+    bool inputCmdList = false;
+    auto inputCmdListHandle = NEO::LEO::CommandQueue::getCmdQueueProperties<uintptr_t>(properties, CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, &inputCmdList);
+
     if (properties) [[likely]] {
         auto propertiesAddress = properties;
         while (*propertiesAddress != 0) {
@@ -77,7 +80,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             case CL_QUEUE_INDEX_INTEL:
             case CL_QUEUE_MDAPI_PROPERTIES_INTEL:
             case CL_QUEUE_MDAPI_CONFIGURATION_INTEL:
-            case CL_L0_IMMEDIATE_CMD_LIST_HANDLE:
+            case CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL:
                 break;
             default:
                 err.set(CL_INVALID_VALUE);
@@ -103,13 +106,17 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         }
     }
 
-    bool inputCmdList = false;
-    auto inputCmdListHandle = NEO::LEO::CommandQueue::getCmdQueueProperties<uintptr_t>(properties, CL_L0_IMMEDIATE_CMD_LIST_HANDLE, &inputCmdList);
     if (inputCmdList) {
-        if (errcodeRet) {
-            *errcodeRet = CL_SUCCESS;
-        }
-        cl_command_queue tracingRetVal = new NEO::LEO::CommandQueue(pContext, pDevice, properties, reinterpret_cast<ze_command_list_handle_t>(inputCmdListHandle));
+        const auto profilingEnabled = NEO::LEO::CommandQueue::getCmdQueueProperties<cl_command_queue_properties>(properties) &
+                                      static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE);
+        const auto cmdListHandle = reinterpret_cast<ze_command_list_handle_t>(inputCmdListHandle);
+        const auto outOfOrderEnabled = L0::CommandList::fromHandle(cmdListHandle)->isInOrderExecutionRequested()
+                                           ? static_cast<cl_command_queue_properties>(0)
+                                           : static_cast<cl_command_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+        const cl_queue_properties importProperties[5] = {CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, static_cast<cl_queue_properties>(inputCmdListHandle),
+                                                         CL_QUEUE_PROPERTIES, profilingEnabled | outOfOrderEnabled,
+                                                         0};
+        cl_command_queue tracingRetVal = new NEO::LEO::CommandQueue(pContext, pDevice, importProperties, cmdListHandle);
         TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
         return tracingRetVal;
     }

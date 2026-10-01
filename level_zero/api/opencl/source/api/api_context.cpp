@@ -59,7 +59,7 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
     ze_driver_handle_t l0Driver = L0::Device::fromHandle(l0Devices[0])->getDriverHandle();
 
     bool inputContext = false;
-    auto inputContextHandle = NEO::LEO::Context::getContextProperties<uintptr_t>(properties, CL_L0_CONTEXT_HANDLE, &inputContext);
+    auto inputContextHandle = NEO::LEO::Context::getContextProperties<uintptr_t>(properties, CL_CONTEXT_L0_HANDLE_INTEL, &inputContext);
 
     ze_context_handle_t context{};
     cl_int ret = CL_SUCCESS;

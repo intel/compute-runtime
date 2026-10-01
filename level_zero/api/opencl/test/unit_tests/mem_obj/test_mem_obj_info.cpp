@@ -264,7 +264,7 @@ TEST_F(MemObjInfoFixture, givenBufferWhenQueryingL0HandleThenUsmPointerIsReturne
 
     void *queried = nullptr;
     size_t retSize = 0;
-    EXPECT_EQ(CL_SUCCESS, asMemObj(buffer)->getMemObjectInfo(CL_L0_MEM_OBJ_HANDLE, sizeof(queried), &queried, &retSize));
+    EXPECT_EQ(CL_SUCCESS, asMemObj(buffer)->getMemObjectInfo(CL_MEM_L0_HANDLE_INTEL, sizeof(queried), &queried, &retSize));
     EXPECT_EQ(sizeof(void *), retSize);
     EXPECT_EQ(pBuffer->getUsmPtr(), queried);
 }

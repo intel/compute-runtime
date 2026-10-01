@@ -140,7 +140,7 @@ cl_int Context::initialize() {
                 break;
             }
             case CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL:
-            case CL_L0_CONTEXT_HANDLE:
+            case CL_CONTEXT_L0_HANDLE_INTEL:
                 break;
             case CL_CONTEXT_INTEROP_USER_SYNC:
                 if (propertyValue != CL_FALSE && propertyValue != CL_TRUE) {
@@ -195,7 +195,7 @@ cl_int Context::getInfo(cl_context_info paramName, size_t paramValueSize,
         pValue = &refCount;
         break;
 
-    case CL_L0_CONTEXT_HANDLE: {
+    case CL_CONTEXT_L0_HANDLE_INTEL: {
         pValue = &this->contextHandle;
         valueSize = sizeof(this->contextHandle);
         break;

@@ -27,8 +27,19 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     std::vector<NEO::Device *> devices;
 
     if (properties != nullptr) {
-        for (int i = 0; properties[i] != 0; i += 2) {
-            switch (properties[i]) {
+        size_t i = 0;
+        while (properties[i] != 0) {
+            const auto propertyName = properties[i];
+
+            if (MemObj::isHandleListProperty(propertyName)) {
+                if ((propertyName == CL_IMAGE_L0_HANDLE_INTEL) && (objectType != ClMemoryPropertiesHelper::ObjType::image)) {
+                    return false;
+                }
+                i = MemObj::getHandleListEnd(properties, i) + 1;
+                continue;
+            }
+
+            switch (propertyName) {
             case CL_MEM_FLAGS:
                 flags |= static_cast<cl_mem_flags>(properties[i + 1]);
                 break;
@@ -41,16 +52,20 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
             case CL_MEM_ALLOC_USE_HOST_PTR_INTEL:
                 hostptr = static_cast<uintptr_t>(properties[i + 1]);
                 break;
+            case CL_MEM_L0_HANDLE_INTEL:
+                if (objectType != ClMemoryPropertiesHelper::ObjType::buffer) {
+                    return false;
+                }
+                break;
             case CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR:
             case CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR:
-            case CL_MEM_DEVICE_HANDLE_LIST_KHR:
             case CL_MEM_DEVICE_ID_INTEL_DEPRECATED:
             case CL_MEM_DEVICE_ID_INTEL:
-            case CL_L0_MEM_OBJ_HANDLE:
                 break;
             default:
                 return false;
             }
+            i += 2;
         }
     }
 

@@ -11,12 +11,16 @@
 
 #include <array>
 #include <map>
+#include <vector>
 
 namespace NEO {
 namespace LEO {
 
 class Image : public MemObj {
   public:
+    constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
+    constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x01;
+
     Image(Context *context, MemoryProperties &properties, cl_mem_flags flags, ze_image_handle_t imageHandle, void *cpuPtr, ze_image_handle_t baseImageHandle, bool externalHandle, cl_image_format originalFormat, cl_mem memObject);
     Image() = delete;
     ~Image() override;
@@ -52,10 +56,10 @@ class Image : public MemObj {
         return it == this->perDeviceImageHandles.end() ? this->imageHandle : it->second;
     }
     void addPerDeviceHandle(uint32_t rootDeviceIndex, ze_image_handle_t handle) { this->perDeviceImageHandles[rootDeviceIndex] = handle; }
+    std::vector<ze_image_handle_t> getL0Handles() const;
     L0::ImageImp *getL0Object() const { return static_cast<L0::ImageImp *>(L0::Image::fromHandle(this->imageHandle)); }
     L0::ImageImp *getL0Object(uint32_t rootDeviceIndex) const { return static_cast<L0::ImageImp *>(L0::Image::fromHandle(this->getL0Handle(rootDeviceIndex))); }
     cl_image_format getOriginalFormat() const { return this->originalFormat; }
-    ze_image_handle_t *getL0HandleRef() { return &this->imageHandle; }
 
     bool isMultiDevice() const { return !this->perDeviceImageHandles.empty(); }
     void setOwnerRootDeviceIndex(uint32_t rootDeviceIndex) { this->currentOwnerRootDeviceIndex = rootDeviceIndex; }

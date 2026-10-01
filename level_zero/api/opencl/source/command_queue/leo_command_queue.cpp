@@ -186,7 +186,7 @@ cl_int CommandQueue::getCmdQInfo(cl_device_info paramName, size_t paramValueSize
     case CL_QUEUE_INDEX_INTEL:
         retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(this->getQueueIndexWithinFamily()));
         break;
-    case CL_L0_IMMEDIATE_CMD_LIST_HANDLE: {
+    case CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL: {
         auto source = &this->cmdListHandle;
         auto sourceSize = sizeof(this->cmdListHandle);
         auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, source, sourceSize);

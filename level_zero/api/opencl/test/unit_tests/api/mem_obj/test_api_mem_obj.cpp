@@ -1079,7 +1079,7 @@ TEST_F(CreateBufferWithCopyHostPtrTest, givenInputMemObjHandleAndInternalCopyCmd
     ze_device_mem_alloc_desc_t deviceAllocDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     ASSERT_EQ(ZE_RESULT_SUCCESS, zeMemAllocDevice(context->toHandle(), &deviceAllocDesc, bufferSize, 0, device->toHandle(), &inputAllocation));
 
-    cl_mem_properties properties[] = {CL_L0_MEM_OBJ_HANDLE, reinterpret_cast<cl_mem_properties>(inputAllocation), 0};
+    cl_mem_properties properties[] = {CL_MEM_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(inputAllocation), 0};
     {
         CommandListCreateImmediateHook createImmediateHook;
         createImmediateHook.resultToReturn = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;

@@ -175,7 +175,7 @@ const cl_device_info unconditionalParams[] = {
     CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT,
     CL_DRIVER_UUID_KHR,
     CL_DRIVER_VERSION,
-    CL_L0_DEVICE_HANDLE};
+    CL_DEVICE_L0_HANDLE_INTEL};
 
 const cl_device_info imageParams[] = {
     CL_DEVICE_IMAGE2D_MAX_HEIGHT,
@@ -250,7 +250,7 @@ TEST_F(ClDeviceInfoTest, givenPlatformParamWhenGetDeviceInfoThenReturnsOwningPla
 
 TEST_F(ClDeviceInfoTest, givenL0HandleParamWhenGetDeviceInfoThenReturnsUnderlyingL0Device) {
     ze_device_handle_t queried = nullptr;
-    EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_L0_DEVICE_HANDLE, sizeof(queried), &queried, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_L0_HANDLE_INTEL, sizeof(queried), &queried, nullptr));
     EXPECT_EQ(clDevice->getL0Handle(), queried);
 }
 

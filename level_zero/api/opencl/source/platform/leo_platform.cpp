@@ -138,7 +138,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
         getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &unloadable, paramSize);
         break;
     }
-    case CL_L0_DRIVER_HANDLE: {
+    case CL_PLATFORM_L0_DRIVER_HANDLE_INTEL: {
         paramSize = sizeof(ze_driver_handle_t);
         getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &this->driverHandle, paramSize);
         break;

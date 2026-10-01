@@ -231,7 +231,7 @@ TEST_F(ContextImplFixture, givenNegativeInteropUserSyncWhenInitializingThenRetur
 }
 
 TEST_F(ContextImplFixture, givenAcceptedPassThroughPropertiesWhenInitializingThenSucceeds) {
-    cl_context_properties properties[] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, 0, CL_L0_CONTEXT_HANDLE, 0, 0};
+    cl_context_properties properties[] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, 0, CL_CONTEXT_L0_HANDLE_INTEL, 0, 0};
     auto context = createContext(properties);
     EXPECT_EQ(CL_SUCCESS, context->initialize());
 }
@@ -294,7 +294,7 @@ TEST_F(ContextImplFixture, givenContextWhenQueryingL0HandleThenReturnsUnderlying
 
     ze_context_handle_t queried = nullptr;
     size_t retSize = 0;
-    EXPECT_EQ(CL_SUCCESS, context->getInfo(CL_L0_CONTEXT_HANDLE, sizeof(queried), &queried, &retSize));
+    EXPECT_EQ(CL_SUCCESS, context->getInfo(CL_CONTEXT_L0_HANDLE_INTEL, sizeof(queried), &queried, &retSize));
     EXPECT_EQ(sizeof(ze_context_handle_t), retSize);
     EXPECT_EQ(context->getL0ContextHandle(), queried);
 }

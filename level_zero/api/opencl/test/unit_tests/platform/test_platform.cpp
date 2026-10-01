@@ -161,7 +161,7 @@ TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoExternalMemoryImportHandleT
 TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoL0DriverHandleThenReturnsOwningDriver) {
     ze_driver_handle_t queried = nullptr;
     size_t retSize = 0;
-    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_L0_DRIVER_HANDLE, sizeof(queried), &queried, &retSize));
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_L0_DRIVER_HANDLE_INTEL, sizeof(queried), &queried, &retSize));
     EXPECT_EQ(sizeof(ze_driver_handle_t), retSize);
     EXPECT_EQ(driverHandle->toHandle(), queried);
 }
@@ -169,7 +169,7 @@ TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoL0DriverHandleThenReturnsOw
 TEST_F(PlatformGetInfoTests, givenTooSmallBufferWhenGetInfoThenReturnsCLInvalidValue) {
     const cl_platform_info params[] = {CL_PLATFORM_VERSION, CL_PLATFORM_PROFILE, CL_PLATFORM_NAME,
                                        CL_PLATFORM_VENDOR, CL_PLATFORM_NUMERIC_VERSION,
-                                       CL_PLATFORM_HOST_TIMER_RESOLUTION, CL_L0_DRIVER_HANDLE};
+                                       CL_PLATFORM_HOST_TIMER_RESOLUTION, CL_PLATFORM_L0_DRIVER_HANDLE_INTEL};
 
     std::vector<uint8_t> storage(4096);
     for (auto paramName : params) {

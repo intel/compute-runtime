@@ -198,7 +198,7 @@ cl_int Event::getEventInfo(cl_event_info paramName, size_t paramValueSize, void 
     switch (paramName) {
     default:
         return retVal;
-    case CL_L0_EVENT_HANDLE: {
+    case CL_EVENT_L0_HANDLE_INTEL: {
         auto source = &this->eventHandle;
         auto sourceSize = sizeof(this->eventHandle);
         auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, source, sourceSize);
