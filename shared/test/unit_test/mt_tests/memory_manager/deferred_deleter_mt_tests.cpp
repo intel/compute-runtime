@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using namespace NEO;
 struct DeferredDeleterTest : public ::testing::Test {
 
     void SetUp() override {
-        MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
+        MemoryManagement::pendingDetachedThreadCleanup = true;
         deleter.reset(new MockDeferredDeleter());
     }
 
