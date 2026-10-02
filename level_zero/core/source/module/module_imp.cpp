@@ -217,10 +217,11 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     return internalOptions;
 }
 
-bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize) {
+bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize,
+                                                    IGC::CodeType::CodeType_t srcCodeType) {
     if (pConstants) {
         NEO::SpecConstantInfo specConstInfo;
-        auto retVal = compilerInterface->getSpecConstantsInfo(*device->getNEODevice(), ArrayRef<const char>(input, inputSize), specConstInfo);
+        auto retVal = compilerInterface->getSpecConstantsInfo(*device->getNEODevice(), ArrayRef<const char>(input, inputSize), specConstInfo, srcCodeType);
         if (retVal != NEO::TranslationErrorCode::success) {
             return false;
         }
@@ -419,7 +420,7 @@ ze_result_t ModuleTranslationUnit::buildFromIntermediate(IGC::CodeType::CodeType
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
-    auto specConstantResult = this->processSpecConstantInfo(compilerInterface, pConstants, input, inputSize);
+    auto specConstantResult = this->processSpecConstantInfo(compilerInterface, pConstants, input, inputSize, intermediateType);
     if (!specConstantResult) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
@@ -1054,7 +1055,7 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
                                                                 static_cast<uint32_t>(desc->inputSize),
                                                                 buildOptions.c_str(),
                                                                 internalBuildOptions.c_str(),
-                                                                nullptr);
+                                                                desc->pConstants);
         } else {
             return ZE_RESULT_ERROR_INVALID_ENUMERATION;
         }

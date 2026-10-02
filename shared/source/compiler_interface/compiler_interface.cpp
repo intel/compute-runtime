@@ -304,15 +304,16 @@ TranslationErrorCode CompilerInterface::link(
     return TranslationErrorCode::success;
 }
 
-TranslationErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) {
+TranslationErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> src, SpecConstantInfo &output,
+                                                             IGC::CodeType::CodeType_t srcCodeType) {
     if (false == isIgcAvailable(&device)) {
         return TranslationErrorCode::compilerNotAvailable;
     }
 
-    auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
+    auto igcTranslationCtx = createIgcTranslationCtx(device, srcCodeType, IGC::CodeType::oclGenBin);
 
     auto *igcMain = getIgc(&device)->entryPoint.get();
-    auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain, srcSpirV.begin(), srcSpirV.size());
+    auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain, src.begin(), src.size());
     output.idsBuffer = CIF::Builtins::CreateConstBuffer(igcMain, nullptr, 0);
     output.sizesBuffer = CIF::Builtins::CreateConstBuffer(igcMain, nullptr, 0);
 

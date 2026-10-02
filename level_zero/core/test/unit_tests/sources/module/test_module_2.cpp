@@ -712,5 +712,65 @@ TEST_F(PisaInputTest, GivenPisaInputWhenCreatingModuleThenProperIntermediateCode
     EXPECT_EQ(NEO::pisaCodeType, mockTranslationUnit->intermediateTypeUsed);
 }
 
+TEST_F(PisaInputTest, GivenPisaInputWithSpecializationConstantsWhenCreatingModuleThenConstantsAreForwardedToTheBuild) {
+    struct MockTU : ModuleTranslationUnit {
+        using ModuleTranslationUnit::ModuleTranslationUnit;
+
+        ze_result_t buildFromIntermediate(IGC::CodeType::CodeType_t intermediateType, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
+                                          const ze_module_constants_t *pConstants) override {
+            constantsReceived = pConstants;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        const ze_module_constants_t *constantsReceived = nullptr;
+    } *mockTranslationUnit = nullptr;
+
+    MockModule mod{this->device, nullptr, L0::ModuleType::user};
+    {
+        auto mtu = std::make_unique<MockTU>(this->device);
+        mockTranslationUnit = mtu.get();
+        mod.translationUnit = std::move(mtu);
+    }
+
+    uint32_t constantId = 0u;
+    uint64_t constantValue = 42u;
+    const void *constantValuePtr = &constantValue;
+    ze_module_constants_t specConstants = {};
+    specConstants.numConstants = 1u;
+    specConstants.pConstantIds = &constantId;
+    specConstants.pConstantValues = &constantValuePtr;
+
+    ze_module_desc_t desc = {.stype = ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.pInputModule = reinterpret_cast<const uint8_t *>(pisaSample.data());
+    desc.inputSize = pisaSample.size();
+    desc.format = ZE_MODULE_FORMAT_PISA;
+    desc.pConstants = &specConstants;
+
+    auto res = mod.initialize(&desc, this->device->getNEODevice());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(&specConstants, mockTranslationUnit->constantsReceived);
+}
+
+TEST_F(PisaInputTest, GivenPisaInputWithSpecializationConstantsWhenBuildingThenConstantsAreDiscoveredUsingPisaCodeType) {
+    auto neoDevice = this->device->getNEODevice();
+    auto mockCompiler = new MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(1u);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+
+    MockModuleTranslationUnit translationUnit{this->device};
+    translationUnit.processUnpackedBinaryCallBase = false;
+
+    uint32_t constantId = mockCompiler->moduleSpecConstantsIds[0];
+    uint64_t constantValue = 42u;
+    const void *constantValuePtr = &constantValue;
+    ze_module_constants_t specConstants = {};
+    specConstants.numConstants = 1u;
+    specConstants.pConstantIds = &constantId;
+    specConstants.pConstantValues = &constantValuePtr;
+
+    translationUnit.buildFromIntermediate(NEO::pisaCodeType, pisaSample.data(), static_cast<uint32_t>(pisaSample.size()), "", "", &specConstants);
+    EXPECT_EQ(NEO::pisaCodeType, mockCompiler->receivedSpecConstantsCodeType);
+    EXPECT_EQ(constantValue, translationUnit.specConstantsValues[constantId]);
+}
+
 } // namespace ult
 } // namespace L0
