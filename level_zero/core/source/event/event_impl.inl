@@ -172,6 +172,25 @@ EventImp<TagSizeT>::EventImp(int index, Device *device, bool tbxMode)
     singlePacketSize = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
 }
 
+inline uint64_t getEndTimestamp(bool &isOverflowed, const std::pair<uint64_t, uint64_t> &currTs, uint64_t end) {
+    const auto &[currStartTs, currEndTs] = currTs;
+
+    if (isOverflowed == false) {
+        if (currEndTs < currStartTs) {
+            isOverflowed = true;
+            return currEndTs;
+        } else {
+            return std::max(end, currEndTs);
+        }
+    } else {
+        // if already overflowed, then track the endTs of new overflowing ones
+        if (currEndTs < currStartTs) {
+            return std::max(end, currEndTs);
+        }
+    }
+    return end;
+}
+
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
     globalStartTS = kernelEventCompletionData.getGlobalStartValue(0);
@@ -179,34 +198,16 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
     contextStartTS = kernelEventCompletionData.getContextStartValue(0);
     contextEndTS = kernelEventCompletionData.getContextEndValue(0);
 
-    auto getEndTS = [](bool &isOverflowed, const std::pair<uint64_t, uint64_t> &currTs, const uint64_t &end) {
-        auto &[currStartTs, currEndTs] = currTs;
-
-        if (isOverflowed == false) {
-            if (currEndTs < currStartTs) {
-                isOverflowed = true;
-                return currEndTs;
-            } else {
-                return std::max(end, currEndTs);
-            }
-        } else {
-            // if already overflowed, then track the endTs of new overflowing ones
-            if (currEndTs < currStartTs) {
-                return std::max(end, currEndTs);
-            }
-        }
-        return end;
-    };
-
     bool isGlobalTsOverflowed = false;
     bool isContextTsOverflowed = false;
 
-    auto numPackets = kernelEventCompletionData.getPacketsUsed();
-    if (inOrderExecHelper.getIncrementValue() > 0) {
-        numPackets *= static_cast<uint32_t>(inOrderExecHelper.getTimestampNodesCount());
+    // Aggregated storage folds every node and packet into a single packet (slot 0).
+    // Otherwise the additional timestamp nodes are kept as separate packets.
+    uint32_t numPackets = 1;
+    if (!isAggregatedEvent(this)) {
+        numPackets = kernelEventCompletionData.getPacketsUsed() +
+                     static_cast<uint32_t>(inOrderExecHelper.getAdditionalTimestampNodesCount());
     }
-
-    numPackets += static_cast<uint32_t>(inOrderExecHelper.getAdditionalTimestampNodesCount());
 
     for (auto packetId = 0u; packetId < numPackets; packetId++) {
         const std::pair<uint64_t, uint64_t> currentGlobal(kernelEventCompletionData.getGlobalStartValue(packetId),
@@ -214,8 +215,8 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
         const std::pair<uint64_t, uint64_t> currentContext(kernelEventCompletionData.getContextStartValue(packetId),
                                                            kernelEventCompletionData.getContextEndValue(packetId));
 
-        auto calculatedGlobalEndTs = getEndTS(isGlobalTsOverflowed, currentGlobal, globalEndTS);
-        auto calculatedContextEndTs = getEndTS(isContextTsOverflowed, currentContext, contextEndTS);
+        auto calculatedGlobalEndTs = getEndTimestamp(isGlobalTsOverflowed, currentGlobal, globalEndTS);
+        auto calculatedContextEndTs = getEndTimestamp(isContextTsOverflowed, currentContext, contextEndTS);
         PRINT_STRING(NEO::debugManager.flags.PrintTimestampPacketContents.get(), stdout, "packet: %d, globalStartTS: %llu, globalEndTS: %llu, contextStartTS: %llu, contextEndTS: %llu\n",
                      packetId, currentGlobal.first, calculatedGlobalEndTs, currentContext.first, calculatedContextEndTs);
 
@@ -255,40 +256,27 @@ void EventImp<TagSizeT>::clearTimestampTagData(uint32_t partitionCount, NEO::Tag
 
 template <typename TagSizeT>
 void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
-    const uint32_t packetsUsed = kernelEventCompletionData.getPacketsUsed();
-
-    uint32_t packetsToCopy = packetsUsed;
-    if (inOrderExecHelper.getIncrementValue() > 0) {
-        packetsToCopy *= static_cast<uint32_t>(inOrderExecHelper.getTimestampNodesCount());
+    if (isAggregatedEvent(this)) {
+        assignAggregatedEventCompletionData();
+        return;
     }
 
-    uint32_t nodeId = 0;
+    const uint32_t packetsUsed = kernelEventCompletionData.getPacketsUsed();
 
-    for (uint32_t packetId = 0; packetId < packetsToCopy; packetId++) {
-        if (inOrderExecHelper.getIncrementValue() > 0 && (packetId % packetsUsed == 0)) {
-            address = inOrderExecHelper.getTimestampNode(nodeId++)->getCpuBase();
-        }
-
+    for (uint32_t packetId = 0; packetId < packetsUsed; packetId++) {
         kernelEventCompletionData.assignDataToAllTimestamps(packetId, address);
         address = ptrOffset(address, singlePacketSize);
     }
 
     // Account for additional timestamp nodes
-    uint32_t remainingPackets = 0;
-    if (inOrderExecHelper.hasAdditionalTimestampNodes()) {
-        remainingPackets = packetsUsed;
-        if (inOrderExecHelper.getIncrementValue() > 0) {
-            remainingPackets *= static_cast<uint32_t>(inOrderExecHelper.getAdditionalTimestampNodesCount());
-        }
-    }
-
+    const uint32_t remainingPackets = packetsUsed * static_cast<uint32_t>(inOrderExecHelper.getAdditionalTimestampNodesCount());
     if (remainingPackets == 0) {
         return;
     }
 
-    nodeId = 0;
+    uint32_t nodeId = 0;
     uint32_t normalizedPacketId = 0;
-    for (uint32_t packetId = packetsToCopy; packetId < packetsToCopy + remainingPackets; packetId++) {
+    for (uint32_t packetId = packetsUsed; packetId < packetsUsed + remainingPackets; packetId++) {
         if (normalizedPacketId % packetsUsed == 0) {
             address = inOrderExecHelper.getAdditionalTimestampNode(nodeId++)->getCpuBase();
         }
@@ -297,6 +285,54 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
         address = ptrOffset(address, singlePacketSize);
         normalizedPacketId++;
     }
+}
+
+template <typename TagSizeT>
+void EventImp<TagSizeT>::assignAggregatedEventCompletionData() {
+    const uint32_t packetsPerNode = kernelEventCompletionData.getPacketsUsed();
+    uint64_t globalStart = 0;
+    uint64_t contextStart = 0;
+    uint64_t globalEnd = 0;
+    uint64_t contextEnd = 0;
+    bool isGlobalTsOverflowed = false;
+    bool isContextTsOverflowed = false;
+    bool initialized = false;
+
+    auto foldNode = [&](NEO::TagNodeBase *node) {
+        for (uint32_t packetId = 0; packetId < packetsPerNode; packetId++) {
+            const void *packetAddress = ptrOffset(node->getCpuBase(), packetId * this->singlePacketSize);
+            const uint64_t currentGlobalStart = *static_cast<const TagSizeT *>(ptrOffset(packetAddress, this->getGlobalStartOffset()));
+            const uint64_t currentContextStart = *static_cast<const TagSizeT *>(ptrOffset(packetAddress, this->getContextStartOffset()));
+            const uint64_t currentGlobalEnd = *static_cast<const TagSizeT *>(ptrOffset(packetAddress, this->getGlobalEndOffset()));
+            const uint64_t currentContextEnd = *static_cast<const TagSizeT *>(ptrOffset(packetAddress, this->getContextEndOffset()));
+
+            if (!initialized) {
+                globalStart = currentGlobalStart;
+                contextStart = currentContextStart;
+                globalEnd = currentGlobalEnd;
+                contextEnd = currentContextEnd;
+                initialized = true;
+            }
+            globalEnd = getEndTimestamp(isGlobalTsOverflowed, {currentGlobalStart, currentGlobalEnd}, globalEnd);
+            contextEnd = getEndTimestamp(isContextTsOverflowed, {currentContextStart, currentContextEnd}, contextEnd);
+            globalStart = std::min<uint64_t>(globalStart, currentGlobalStart);
+            contextStart = std::min<uint64_t>(contextStart, currentContextStart);
+        }
+    };
+
+    const uint32_t timestampNodesCount = static_cast<uint32_t>(inOrderExecHelper.getTimestampNodesCount());
+    for (uint32_t nodeId = 0; nodeId < timestampNodesCount; nodeId++) {
+        foldNode(inOrderExecHelper.getTimestampNode(nodeId));
+    }
+
+    const uint32_t additionalNodesCount = static_cast<uint32_t>(inOrderExecHelper.getAdditionalTimestampNodesCount());
+    for (uint32_t nodeId = 0; nodeId < additionalNodesCount; nodeId++) {
+        foldNode(inOrderExecHelper.getAdditionalTimestampNode(nodeId));
+    }
+
+    const std::array<TagSizeT, 4> folded = {static_cast<TagSizeT>(contextStart), static_cast<TagSizeT>(globalStart),
+                                            static_cast<TagSizeT>(contextEnd), static_cast<TagSizeT>(globalEnd)};
+    kernelEventCompletionData.assignDataToAllTimestamps(0, folded.data());
 }
 
 template <typename TagSizeT>
@@ -725,6 +761,10 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventState) {
     if (isCounterBased() && !getAllocation(this->device)) {
         return ZE_RESULT_SUCCESS;
+    }
+
+    if (isAggregatedEvent(this)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     auto baseHostAddr = getHostAddress();
@@ -1242,12 +1282,21 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *cou
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    uint32_t numPacketsUsed = this->getPacketsInUse();
+    uint32_t numPacketsUsed = 0u;
+    if (isAggregatedEvent(this)) {
+        numPacketsUsed = 1u;
+    } else {
+        numPacketsUsed = this->getPacketsInUse();
+    }
 
     if ((*count == 0) ||
         (*count > numPacketsUsed)) {
         *count = numPacketsUsed;
         return ZE_RESULT_SUCCESS;
+    }
+
+    if (isAggregatedEvent(this)) {
+        assignAggregatedEventCompletionData();
     }
 
     for (auto i = 0u; i < *count; i++) {

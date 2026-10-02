@@ -265,7 +265,6 @@ class InOrderExecEventHelper : public NonCopyableClass {
 
     NEO::TagNodeBase *getAdditionalTimestampNode(size_t index) const { return additionalTimestampNodes[index]; }
     void addAdditionalTimestampNode(NEO::TagNodeBase *node) { additionalTimestampNodes.push_back(node); }
-    bool hasAdditionalTimestampNodes() const { return !additionalTimestampNodes.empty(); }
     size_t getAdditionalTimestampNodesCount() const { return additionalTimestampNodes.size(); }
 
     void releaseNotUsedTempTimestampNodes();

@@ -6667,6 +6667,248 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendThenAggregate
     context->freeMem(devAddress);
 }
 
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWithMoreThanPreferredPacketCountNodesWhenQueryKernelTimestampThenAllNodesAreFoldedWithoutOverflow) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    constexpr uint32_t nodeCount = NEO::TimestampPacketConstants::preferredPacketCount + 4;
+    constexpr uint64_t counterValue = 100;
+    constexpr uint64_t incValue = 1;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    for (uint32_t i = 0; i < nodeCount; i++) {
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
+    }
+    ASSERT_EQ(nodeCount, eventObj->inOrderExecHelper.getTimestampNodesCount());
+
+    eventObj->setPacketsInUse(1);
+
+    TagSizeT expectedContextStartMin = std::numeric_limits<TagSizeT>::max();
+    TagSizeT expectedGlobalStartMin = std::numeric_limits<TagSizeT>::max();
+    TagSizeT expectedContextEndMax = 0;
+    TagSizeT expectedGlobalEndMax = 0;
+
+    for (uint32_t i = 0; i < nodeCount; i++) {
+        const TagSizeT contextStart = static_cast<TagSizeT>(500 + (i * 7) % 50);
+        const TagSizeT globalStart = static_cast<TagSizeT>(1500 + (i * 11) % 70);
+        const TagSizeT contextEnd = static_cast<TagSizeT>(2500 + (i * 13) % 90);
+        const TagSizeT globalEnd = static_cast<TagSizeT>(3500 + (i * 17) % 110);
+
+        const TagSizeT packet[4] = {contextStart, globalStart, contextEnd, globalEnd};
+        auto node = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(i)->getCpuBase());
+        node->assignDataToAllTimestamps(0, packet);
+
+        expectedContextStartMin = std::min(expectedContextStartMin, contextStart);
+        expectedGlobalStartMin = std::min(expectedGlobalStartMin, globalStart);
+        expectedContextEndMax = std::max(expectedContextEndMax, contextEnd);
+        expectedGlobalEndMax = std::max(expectedGlobalEndMax, globalEnd);
+    }
+
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->queryKernelTimestamp(&result));
+
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+
+    EXPECT_EQ(static_cast<uint64_t>(expectedGlobalStartMin), result.global.kernelStart);
+    EXPECT_EQ(static_cast<uint64_t>(expectedGlobalEndMax), result.global.kernelEnd);
+
+    if (gfxCoreHelper.useOnlyGlobalTimestamps()) {
+        EXPECT_EQ(static_cast<uint64_t>(expectedGlobalStartMin), result.context.kernelStart);
+        EXPECT_EQ(static_cast<uint64_t>(expectedGlobalEndMax), result.context.kernelEnd);
+    } else {
+        EXPECT_EQ(static_cast<uint64_t>(expectedContextStartMin), result.context.kernelStart);
+        EXPECT_EQ(static_cast<uint64_t>(expectedContextEndMax), result.context.kernelEnd);
+    }
+
+    context->freeMem(devAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWithOverflowingEndTimestampWhenQueryKernelTimestampThenWrappedEndIsSelected) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    constexpr uint64_t counterValue = 100;
+    constexpr uint64_t incValue = 1;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
+    ASSERT_EQ(2u, eventObj->inOrderExecHelper.getTimestampNodesCount());
+
+    eventObj->setPacketsInUse(1);
+
+    auto node0 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(0)->getCpuBase());
+    auto node1 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(1)->getCpuBase());
+
+    const TagSizeT packet0[4] = {10, 10, 20, 20};
+    const TagSizeT packet1[4] = {30, 100, 40, 50};
+    node0->assignDataToAllTimestamps(0, packet0);
+    node1->assignDataToAllTimestamps(0, packet1);
+
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->queryKernelTimestamp(&result));
+
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+
+    EXPECT_EQ(10u, result.global.kernelStart);
+    EXPECT_EQ(50u, result.global.kernelEnd);
+
+    if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
+        EXPECT_EQ(10u, result.context.kernelStart);
+        EXPECT_EQ(40u, result.context.kernelEnd);
+    }
+
+    context->freeMem(devAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWithAdditionalTimestampNodesWhenQueryKernelTimestampThenAdditionalNodesAreFolded) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    constexpr uint64_t counterValue = 100;
+    constexpr uint64_t incValue = 1;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
+    ASSERT_EQ(1u, eventObj->inOrderExecHelper.getTimestampNodesCount());
+
+    eventObj->resetAdditionalTimestampNode(device->getInOrderTimestampAllocator()->getTag(), 1, false);
+    eventObj->resetAdditionalTimestampNode(device->getInOrderTimestampAllocator()->getTag(), 1, false);
+    ASSERT_EQ(2u, eventObj->inOrderExecHelper.getAdditionalTimestampNodesCount());
+
+    eventObj->setPacketsInUse(1);
+
+    auto node = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(0)->getCpuBase());
+    auto additionalNode0 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getAdditionalTimestampNode(0)->getCpuBase());
+    auto additionalNode1 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getAdditionalTimestampNode(1)->getCpuBase());
+
+    // MIN start comes from the first additional node and MAX end from the second one.
+    const TagSizeT packet[4] = {20, 120, 30, 130};
+    const TagSizeT additionalPacket0[4] = {10, 110, 25, 125};
+    const TagSizeT additionalPacket1[4] = {22, 122, 40, 140};
+    node->assignDataToAllTimestamps(0, packet);
+    additionalNode0->assignDataToAllTimestamps(0, additionalPacket0);
+    additionalNode1->assignDataToAllTimestamps(0, additionalPacket1);
+
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->queryKernelTimestamp(&result));
+
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+
+    EXPECT_EQ(110u, result.global.kernelStart);
+    EXPECT_EQ(140u, result.global.kernelEnd);
+
+    if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
+        EXPECT_EQ(10u, result.context.kernelStart);
+        EXPECT_EQ(40u, result.context.kernelEnd);
+    }
+
+    context->freeMem(devAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenAggregatedStorageEventWhenCallingQueryTimestampsExpThenSingleFoldedResultIsReturned) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    constexpr uint64_t counterValue = 100;
+    constexpr uint64_t incValue = 1;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    constexpr uint32_t nodeCount = 3;
+    for (uint32_t i = 0; i < nodeCount; i++) {
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
+    }
+    ASSERT_EQ(nodeCount, eventObj->inOrderExecHelper.getTimestampNodesCount());
+
+    eventObj->setPacketsInUse(1);
+
+    const TagSizeT packet0[4] = {30, 130, 41, 141};
+    const TagSizeT packet1[4] = {10, 110, 40, 140};
+    const TagSizeT packet2[4] = {20, 120, 99, 199};
+    static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(0)->getCpuBase())->assignDataToAllTimestamps(0, packet0);
+    static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(1)->getCpuBase())->assignDataToAllTimestamps(0, packet1);
+    static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(2)->getCpuBase())->assignDataToAllTimestamps(0, packet2);
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->queryTimestampsExp(device, &count, nullptr));
+    EXPECT_EQ(1u, count);
+
+    ze_kernel_timestamp_result_t results[1] = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->queryTimestampsExp(device, &count, results));
+    EXPECT_EQ(1u, count);
+
+    EXPECT_EQ(110u, results[0].global.kernelStart);
+    EXPECT_EQ(199u, results[0].global.kernelEnd);
+    EXPECT_EQ(10u, results[0].context.kernelStart);
+    EXPECT_EQ(99u, results[0].context.kernelEnd);
+
+    context->freeMem(devAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenHostEventSetValueTimestampsCalledThenTimestampNodeIsNotOverwritten) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    constexpr uint64_t counterValue = 100;
+    constexpr uint64_t incValue = 1;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventObj->toHandle(), 0, nullptr, launchParams);
+    ASSERT_EQ(1u, eventObj->inOrderExecHelper.getTimestampNodesCount());
+    ASSERT_TRUE(Event::isAggregatedEvent(eventObj.get()));
+
+    ASSERT_NE(nullptr, eventObj->getAllocation(device));
+
+    eventObj->setPacketsInUse(1);
+
+    const TagSizeT seededPacket[4] = {11, 22, 33, 44};
+    auto node = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderExecHelper.getTimestampNode(0)->getCpuBase());
+    node->assignDataToAllTimestamps(0, seededPacket);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, eventObj->hostSignal(true));
+    EXPECT_FALSE(eventObj->isAlreadyCompleted());
+
+    EXPECT_EQ(11u, node->getContextStartValue(0));
+    EXPECT_EQ(22u, node->getGlobalStartValue(0));
+    EXPECT_EQ(33u, node->getContextEndValue(0));
+    EXPECT_EQ(44u, node->getGlobalEndValue(0));
+
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->queryKernelTimestamp(&result));
+    EXPECT_EQ(22u, result.global.kernelStart);
+    EXPECT_EQ(44u, result.global.kernelEnd);
+
+    context->freeMem(devAddress);
+}
+
 HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendThenHandleResidency) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
 

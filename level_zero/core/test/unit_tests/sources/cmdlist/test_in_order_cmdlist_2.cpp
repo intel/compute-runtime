@@ -4465,6 +4465,45 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventWhenCallingAppendThe
     context->freeMem(devAddress);
 }
 
+HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventWithMultiplePacketsPerNodeWhenQueryKernelTimestampThenPacketsUsedCountIsNotCollapsed, IsAtLeastXeHpcCore) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    constexpr uint64_t counterValue = 100;
+    constexpr uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createMultiTileImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams);
+    ASSERT_EQ(1u, eventObj->inOrderExecHelper.getTimestampNodesCount());
+
+    eventObj->setPacketsInUse(partitionCount);
+
+    auto nodeBase = eventObj->inOrderExecHelper.getTimestampNode(0)->getCpuBase();
+    auto packet0 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(nodeBase);
+    auto packet1 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(ptrOffset(nodeBase, eventObj->getSinglePacketSize()));
+
+    const TagSizeT packet0Data[4] = {5, 6, 7, 8};
+    const TagSizeT packet1Data[4] = {1, 2, 30, 40};
+    packet0->assignDataToAllTimestamps(0, packet0Data);
+    packet1->assignDataToAllTimestamps(0, packet1Data);
+
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->queryKernelTimestamp(&result));
+
+    EXPECT_EQ(2u, result.global.kernelStart);
+    EXPECT_EQ(40u, result.global.kernelEnd);
+
+    EXPECT_EQ(partitionCount, eventObj->getPacketsInUse());
+
+    context->freeMem(devAddress);
+}
+
 HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeCore) {
     uint64_t counterValue = 2;
     auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
