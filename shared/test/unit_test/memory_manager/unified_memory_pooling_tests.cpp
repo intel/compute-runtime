@@ -289,6 +289,40 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockDevice]);
 }
 
+TEST_F(UnifiedMemoryPoolingTest, givenPoolMakeResidentFailsWhenMakingChunkResidentThenResidencyIsNotRecordedAndNextCallRetries) {
+    MockUsmMemAllocPool usmMemAllocPool;
+    const auto pooledPtr = addrToPtr(0xFF00u);
+    MockDevice mockDevice;
+    usmMemAllocPool.allocations.insert(pooledPtr, UsmMemAllocPool::AllocationInfo{
+                                                      .address = castToUint64(pooledPtr),
+                                                      .size = MemoryConstants::pageSize,
+                                                      .requestedSize = MemoryConstants::pageSize,
+                                                      .isResident = {}});
+    usmMemAllocPool.pool = pooledPtr;
+    usmMemAllocPool.poolInfo.poolSize = MemoryConstants::pageSize;
+    usmMemAllocPool.poolEnd = ptrOffset(usmMemAllocPool.pool, usmMemAllocPool.poolInfo.poolSize);
+    usmMemAllocPool.device = &mockDevice;
+    MockGraphicsAllocation mockGfxAlloc;
+    usmMemAllocPool.allocation = &mockGfxAlloc;
+    usmMemAllocPool.enableResidencyTracking();
+    auto chunkInfo = usmMemAllocPool.allocations.get(pooledPtr);
+    ASSERT_NE(nullptr, chunkInfo);
+    auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(mockDevice.getRootDeviceEnvironment().memoryOperationsInterface.get());
+    const auto initialMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount.load();
+    using Op = UsmMemAllocPool::ResidencyOperationType;
+
+    mockMemoryOperationsHandler->makeResidentResult = MemoryOperationsStatus::outOfMemory;
+    EXPECT_EQ(MemoryOperationsStatus::outOfMemory, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtr));
+    EXPECT_FALSE(chunkInfo->isResident[&mockDevice]);
+    EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockDevice]);
+
+    mockMemoryOperationsHandler->makeResidentResult = MemoryOperationsStatus::success;
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtr));
+    EXPECT_EQ(initialMakeResidentCount + 2, mockMemoryOperationsHandler->makeResidentCalledCount);
+    EXPECT_TRUE(chunkInfo->isResident[&mockDevice]);
+    EXPECT_EQ(1u, usmMemAllocPool.residencyCounts[&mockDevice]);
+}
+
 template <InternalMemoryType poolMemoryType, bool failAllocation>
 class InitializedUnifiedMemoryPoolingTest : public UnifiedMemoryPoolingTest {
   public:

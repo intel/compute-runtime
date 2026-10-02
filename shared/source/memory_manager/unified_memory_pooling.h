@@ -107,8 +107,17 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         auto allocationInfo = allocations.get(ptr);
         if (allocationInfo) {
             if constexpr (ResidencyOperationType::makeResident == op) {
-                if (false == std::exchange(allocationInfo->isResident[targetDevice], true) && 0u == this->residencyCounts[targetDevice]++) {
-                    return makePoolResident(targetDevice);
+                auto &chunkIsResident = allocationInfo->isResident[targetDevice];
+                if (false == chunkIsResident) {
+                    auto &residencyCount = this->residencyCounts[targetDevice];
+                    if (0u == residencyCount) {
+                        auto status = makePoolResident(targetDevice);
+                        if (MemoryOperationsStatus::success != status) {
+                            return status;
+                        }
+                    }
+                    chunkIsResident = true;
+                    ++residencyCount;
                 }
             } else { // evict
                 if (true == std::exchange(allocationInfo->isResident[targetDevice], false) && 1u == this->residencyCounts[targetDevice]--) {

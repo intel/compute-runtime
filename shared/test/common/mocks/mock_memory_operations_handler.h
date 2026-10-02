@@ -49,6 +49,9 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override {
         makeResidentCalledCount++;
         makeResidentForcePagingFenceValue = forcePagingFence;
+        if (MemoryOperationsStatus::success != makeResidentResult) {
+            return makeResidentResult;
+        }
         if (captureGfxAllocationsForMakeResident) {
             for (auto &gfxAllocation : gfxAllocations) {
                 if (!gfxAllocation->getAubInfo().writeMemoryOnly) {
@@ -132,6 +135,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     std::atomic<uint32_t> lockCalledCount{0};
     uint32_t makeResidentContextId = std::numeric_limits<uint32_t>::max();
     bool captureGfxAllocationsForMakeResident = false;
+    MemoryOperationsStatus makeResidentResult = MemoryOperationsStatus::success;
 };
 
 } // namespace NEO
