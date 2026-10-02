@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
     testFiles = nTestFiles;
     binaryNameSuffix.append(devicePrefix);
 
-#ifdef WIN32
+#if defined(_WIN32)
 #include <direct.h>
     if (_chdir(devicePrefix.c_str())) {
         std::cout << "chdir into " << devicePrefix << " directory failed.\nThis might cause test failures." << std::endl;
