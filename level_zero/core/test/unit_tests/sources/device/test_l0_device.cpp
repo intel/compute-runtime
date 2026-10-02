@@ -1101,6 +1101,49 @@ HWTEST_F(DeviceTest, givenTsAllocatorWhenGettingNewTagThenDoInitialize) {
     EXPECT_EQ(256u, tagCount);
 }
 
+HWTEST_F(DeviceTest, givenTbxCsrWhenCreatingInOrderTagAllocatorsThenInitialPoolsAreFullyUploadedToSimulation) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    for (auto allocator : {device->getDeviceInOrderCounterAllocator(),
+                           device->getHostInOrderCounterAllocator(),
+                           device->getInOrderTimestampAllocator(),
+                           device->getInOrderSharableEventDataAllocator()}) {
+        ASSERT_EQ(1u, allocator->getGfxAllocations().size());
+        auto allocation = allocator->getGfxAllocations()[0]->getGraphicsAllocation(rootDeviceIndex);
+        EXPECT_TRUE(allocation->isSimulationInitialUploadDone());
+    }
+    EXPECT_EQ(4u, csr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(DeviceTest, givenAubCsrWhenCreatingInOrderTagAllocatorsThenPoolsAreNotUploadedToSimulation) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+
+    for (auto allocator : {device->getDeviceInOrderCounterAllocator(),
+                           device->getHostInOrderCounterAllocator(),
+                           device->getInOrderTimestampAllocator(),
+                           device->getInOrderSharableEventDataAllocator()}) {
+        auto allocation = allocator->getGfxAllocations()[0]->getGraphicsAllocation(rootDeviceIndex);
+        EXPECT_FALSE(allocation->isSimulationInitialUploadDone());
+    }
+    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(DeviceTest, givenHwCsrWhenCreatingInOrderTagAllocatorsThenPoolsAreNotUploadedToSimulation) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+
+    for (auto allocator : {device->getDeviceInOrderCounterAllocator(),
+                           device->getHostInOrderCounterAllocator(),
+                           device->getInOrderTimestampAllocator(),
+                           device->getInOrderSharableEventDataAllocator()}) {
+        auto allocation = allocator->getGfxAllocations()[0]->getGraphicsAllocation(rootDeviceIndex);
+        EXPECT_FALSE(allocation->isSimulationInitialUploadDone());
+    }
+    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+}
+
 TEST_F(DeviceTest, givenMoreThanOneExtendedPropertiesStructuresWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {
     ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
     schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;
@@ -1202,7 +1245,7 @@ HWTEST_F(DeviceTest, whenPassingSchedulingHintExpStructToGetPropertiesThenProper
     }
 }
 
-HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned, MatchAny) {
     const uint32_t rootDeviceIndex = 0u;
     auto hwInfo = *NEO::defaultHwInfo;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
@@ -1233,7 +1276,7 @@ HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHint
     EXPECT_EQ(expected, schedulingHintProperties.schedulingHintFlags);
 }
 
-HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned, MatchAny) {
     const uint32_t rootDeviceIndex = 0u;
     auto hwInfo = *NEO::defaultHwInfo;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
@@ -1971,10 +2014,10 @@ TEST_F(GetGlobalTimestampTest, whenTbxModeThenSetGlobalTimestampViaSubmission) {
 TEST_F(GetGlobalTimestampTest, givenTbxModeAndTimestampPtrWhenGettingGlobalTimestampThenOsInterfaceIsUsed) {
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
-    uint64_t timestampValue = 0x500001234u;
+    uint32_t timestampDwords[2] = {0x1234u, 0x5u};
 
     auto osTime = std::make_unique<NEO::MockOSTime>();
-    osTime->deviceTime->timestampPtr = &timestampValue;
+    osTime->deviceTime->mmioTimestampPtrHelper = NEO::MmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
 
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     rootDeviceEnvironment.osTime = std::move(osTime);
@@ -2395,7 +2438,7 @@ TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithNonNullPtrThenPro
     EXPECT_EQ(0u, memProperties.flags);
 }
 
-HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
     const std::array<ze_device_memory_ext_type_t, 11> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
@@ -2443,7 +2486,7 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
     }
 }
 
-HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnextForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnextForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
     const std::array<ze_device_memory_ext_type_t, 11> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
@@ -2872,7 +2915,7 @@ TEST_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledWhe
     EXPECT_EQ((gtSysInfo.SliceCount * numSubDevices), deviceProperties.numSlices);
 }
 
-HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledDeviceWhenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledDeviceWhenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
     const std::array<ze_device_memory_ext_type_t, 10> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
@@ -4771,9 +4814,7 @@ TEST_F(DevicePowerHintCsrTest, givenCreateImmediateWithCsrWrapperWhenPowerHintIs
     ASSERT_NE(nullptr, csr);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::createImmediate(
-        neoDevice->getHardwareInfo().platform.eProductFamily,
-        device, &desc, false, NEO::EngineGroupType::renderCompute, csr, result));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, csr, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, commandList.get());
 }
@@ -6389,7 +6430,7 @@ TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmT
     debugManager.flags.EnableRecoverablePageFaults.set(1u);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     auto &hwInfo = *device1->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -6397,16 +6438,39 @@ TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmT
 
     sharedSystemMemCapabilities = 0; // enables return false for Device::areSharedSystemAllocationsAllowed()
 
-    size_t size = 10;
-    void *ptr = nullptr;
+    uint8_t data{};
 
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
-
-    auto res = commandList->executeMemAdvise(device1, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    auto res = commandList->executeMemAdvise(device1, &data, sizeof(data), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+}
 
-    free(ptr);
+TEST_F(MultipleDeviceMemAdviseTests, givenAllocationNotPresentOnAdvisedDeviceThenExecuteMemAdviseIsIgnored) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    constexpr size_t size = MemoryConstants::pageSize;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto res = context->allocDeviceMem(device0->toHandle(), &deviceDesc, size, 0u, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    ASSERT_EQ(nullptr, allocData->gpuAllocations.getGraphicsAllocation(device1->getRootDeviceIndex()));
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device0->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gfxAlloc);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device0, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    res = commandList->executeMemAdvise(device1, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(NEO::MemAdviseFlags{}.allFlags, gfxAlloc->getMemAdviseFlags().allFlags);
+
+    res = context->freeMem(ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST(L0DeviceTest, givenXeLinkModelWhenFabricEdgeModelSupportsBandwidthAndLatencyThenReturnTrue) {

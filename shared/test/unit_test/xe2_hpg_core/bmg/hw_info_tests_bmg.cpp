@@ -8,7 +8,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
 #include "shared/source/xe2_hpg_core/hw_info_bmg.h"
@@ -28,8 +27,6 @@ BMGTEST_F(BmgHwInfoTest, WhenGettingHardwareInfoThenBmgIsReturned) {
 
 BMGTEST_F(BmgHwInfoTest, givenBoolWhenCallBmgHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -39,7 +36,7 @@ BMGTEST_F(BmgHwInfoTest, givenBoolWhenCallBmgHardwareInfoSetupThenFeatureTableAn
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool);
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrLocalMemory);
@@ -76,11 +73,9 @@ BMGTEST_F(BmgHwInfoTest, givenBoolWhenCallBmgHardwareInfoSetupThenFeatureTableAn
 
 BMGTEST_F(BmgHwInfoTest, whenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiTileInfoAreSet) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    hardwareInfoSetup[productFamily](&hwInfo, false, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
+    hardwareInfoSetup[productFamily](&hwInfo, false);
     EXPECT_FALSE(gtSystemInfo.MultiTileArchInfo.IsValid);
 
     EXPECT_TRUE(gtSystemInfo.CCSInfo.IsValid);

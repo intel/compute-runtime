@@ -28,8 +28,7 @@ inline uint32_t getValidDeviceIdForProduct() {
     // Search deviceDescriptorTable for any device ID matching this product
     auto targetProductFamily = NEO::defaultHwInfo->platform.eProductFamily;
     for (size_t i = 0; NEO::deviceDescriptorTable[i].deviceId != 0; i++) {
-        if (NEO::deviceDescriptorTable[i].pHwInfo &&
-            NEO::deviceDescriptorTable[i].pHwInfo->platform.eProductFamily == targetProductFamily) {
+        if (NEO::deviceDescriptorTable[i].productFamily == targetProductFamily) {
             return NEO::deviceDescriptorTable[i].deviceId;
         }
     }

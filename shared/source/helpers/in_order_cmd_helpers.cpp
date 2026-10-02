@@ -13,8 +13,10 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/utilities/tag_allocator.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 namespace NEO {
@@ -119,6 +121,23 @@ void InOrderExecInfo::resetLastWaitedCounterValue() {
     for (auto &cachedValue : lastWaitedCounterValue) {
         cachedValue.store(initialValue);
     }
+}
+
+bool InOrderExecInfo::isCounterDone(uint64_t waitValue, uint32_t allocationOffset) const {
+    return this->isCounterAlreadyDone(waitValue, allocationOffset) || this->pollCounterCompletion(waitValue, allocationOffset, 0, false);
+}
+
+bool InOrderExecInfo::pollCounterCompletion(uint64_t waitValue, uint32_t allocationOffset, int64_t timeSinceWaitStartedInMicroSeconds, bool blockOnMiss) const {
+    const uint64_t *pollAddress = ptrOffset(this->hostAddress, allocationOffset);
+    for (uint32_t i = 0; i < this->numHostPartitionsToWait; i++) {
+        if (!WaitUtils::pollFunctionWithPredicate<const uint64_t>(pollAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWaitStartedInMicroSeconds,
+                                                                  WaitUtils::waitpkgCounterValue, WaitUtils::waitPkgThresholdInMicroSeconds, blockOnMiss)) {
+            return false;
+        }
+        pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
+    }
+
+    return true;
 }
 
 void InOrderExecInfo::initializeAllocationsFromHost(bool shouldUploadToSimulation) {

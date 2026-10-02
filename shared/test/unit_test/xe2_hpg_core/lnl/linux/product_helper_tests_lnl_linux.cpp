@@ -86,7 +86,7 @@ LNLTEST_F(LnlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &LnlHwConfig::hwInfo, &LnlHwConfig::setupHardwareInfo};
+    DeviceDescriptor device = {0, IGFX_LUNARLAKE};
     drm.overrideDeviceDescriptor = &device;
 
     int ret = drm.setupHardwareInfo(0, false);

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/device/device_group_sort_key.h"
 #include "shared/source/helpers/device_hierarchy_mode.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
@@ -22,6 +23,7 @@ class UnifiedMemoryReuseCleaner;
 class UsmReusePerfLogger;
 class GfxCoreHelper;
 class MemoryManager;
+struct HardwareInfo;
 struct OsEnvironment;
 struct RootDeviceEnvironment;
 
@@ -64,6 +66,9 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         devicePermissionError = value;
     }
     bool isDevicePermissionError() const { return devicePermissionError; }
+    void addLeoPlatformKey(const HardwareInfo &hwInfo);
+    const std::vector<DeviceGroupSortKey> &getLeoPlatformKeys() const { return leoPlatformKeys; }
+    bool isLeoRootDeviceDetected() const { return !leoPlatformKeys.empty(); }
     bool isResourceDecompressionEnabled() const { return resourceDecompressionEnabled; };
     void setResourceDecompressionEnabled(bool value) { resourceDecompressionEnabled = value; };
 
@@ -111,5 +116,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::mutex initializeDirectSubmissionControllerMutex;
     std::mutex initializeUnifiedMemoryReuseCleanerMutex;
     std::vector<std::tuple<std::string, uint32_t>> deviceCcsModeVec;
+    std::vector<DeviceGroupSortKey> leoPlatformKeys;
 };
 } // namespace NEO

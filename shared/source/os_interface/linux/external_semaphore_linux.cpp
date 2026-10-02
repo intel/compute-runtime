@@ -38,7 +38,6 @@ std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInte
 std::unique_ptr<ExternalSemaphoreLinux> ExternalSemaphoreLinux::create(OSInterface *osInterface) {
     auto externalSemaphoreLinux = std::make_unique<ExternalSemaphoreLinux>();
     externalSemaphoreLinux->osInterface = osInterface;
-    externalSemaphoreLinux->state = SemaphoreState::Initial;
 
     return externalSemaphoreLinux;
 }
@@ -83,15 +82,9 @@ bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
         struct SyncObjTimelineWait args = {};
         args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
         args.points = reinterpret_cast<uintptr_t>(fenceValue);
-        args.timeoutNs = 0;
+        args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
         args.countHandles = 1u;
-        args.flags = 0;
-
-        if (debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
-            // Make the IOCTL call blocking
-            args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
-            args.flags |= 0x2; // DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT
-        }
+        args.flags = 0x2; // DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT
 
         PRINT_STRING(debugManager.flags.PrintExternalSemaphoreTimeline.get() == 1, stdout,
                      "ExternalSemaphore timeline wait: handle=0x%x, value=%" PRIu64 "\n",
@@ -105,23 +98,15 @@ bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
     } else {
         struct SyncObjWait args = {};
         args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
-        args.timeoutNs = 0;
+        args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
         args.countHandles = 1u;
-        args.flags = 0;
-
-        if (debugManager.flags.EnableHostFunctionBasedExternalSemaphores.get() == 1) {
-            // Make the IOCTL call blocking
-            args.timeoutNs = std::numeric_limits<decltype(args.timeoutNs)>::max();
-            args.flags |= 0x2; // DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT
-        }
+        args.flags = 0x2; // DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT
 
         int ret = ioctlHelper->ioctl(DrmIoctl::syncObjWait, &args);
         if (ret != 0) {
             return false;
         }
     }
-
-    this->state = SemaphoreState::Signaled;
 
     return true;
 }

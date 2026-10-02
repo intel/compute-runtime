@@ -200,6 +200,7 @@ struct DebugSessionImp : DebugSession {
     virtual void readStateSaveAreaHeader() {};
     MOCKABLE_VIRTUAL ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention);
     MOCKABLE_VIRTUAL ze_result_t isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node);
+    ze_result_t writeFifoTail(uint64_t vmHandle, uint64_t tailGpuVa, uint32_t fifoTailIndex);
     void getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa);
 
     virtual uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) = 0;
@@ -279,6 +280,14 @@ struct DebugSessionImp : DebugSession {
     int32_t fifoPollInterval = 150;
     int64_t interruptTimeout = 2000;
     std::unordered_map<uint64_t, AttentionEventFields> attentionEventContext{};
+    static constexpr uint32_t maxTailWriteAttempts = 3;
+    // A tail written by the debugger has been observed to revert to its previous value while the SIP updates
+    // the head, which shares the tail's cache line. Remember the last tail written per VM to detect that.
+    struct FifoTailState {
+        uint32_t previousTail;
+        uint32_t writtenTail;
+    };
+    std::unordered_map<uint64_t, FifoTailState> fifoTailStates{};
     std::chrono::milliseconds lastFifoReadTime = std::chrono::milliseconds(0);
     virtual ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) = 0;
 

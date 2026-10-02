@@ -16,6 +16,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <cstring>
@@ -26,7 +27,7 @@ namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> sfenceCounter;
 } // namespace CpuIntrinsicsTests
 
-using StreamCopyFn = void (*)(void *, const void *, size_t);
+using StreamCopyFn = void (*)(void *, const void *, size_t, bool);
 
 struct AlignmentCase {
     size_t srcOffset;
@@ -56,6 +57,11 @@ constexpr size_t streamingSizes[] = {
 constexpr size_t dispatchSizes[] = {
     0u, 15u, 16u, 31u, 32u, 127u, 4096u};
 
+// Every value is a non-multiple of the narrowest block width, so the head
+// branch is taken on all three paths.
+constexpr size_t sourceMisalignments[] = {
+    1u, 3u, 7u, 15u};
+
 constexpr AlignmentCase streamingAlignmentCases[] = {
     {0u, 0u},
     {NEO::streamCopySseWidth, 0u},
@@ -82,6 +88,15 @@ struct GuardedBuffer {
     uint8_t *data;
 };
 
+// A misaligned head costs one block load only when the whole block around it
+// is readable; otherwise the head bytes are copied byte-wise.
+size_t expectedStreamLoadCount(size_t dataSize, size_t srcOffset, size_t blockWidth, bool srcHeadBlockReadable) {
+    const size_t headOffset = srcOffset % blockWidth;
+    const size_t headBytes = (headOffset == 0u) ? 0u : std::min(blockWidth - headOffset, dataSize);
+    const size_t headLoads = ((headOffset != 0u) && srcHeadBlockReadable) ? 1u : 0u;
+    return headLoads + (dataSize - headBytes) / blockWidth;
+}
+
 GuardedBuffer allocateGuardedBuffer(size_t dataSize, size_t offset) {
     const size_t totalSize = bufferGuardSize + offset + dataSize + bufferGuardSize;
     auto allocation = allocateAlignedMemory(totalSize, bufferGuardSize);
@@ -90,7 +105,7 @@ GuardedBuffer allocateGuardedBuffer(size_t dataSize, size_t offset) {
     return {std::move(allocation), data};
 }
 
-void runCopyTest(StreamCopyFn copyFn, size_t dataSize, AlignmentCase alignment) {
+void runCopyTest(StreamCopyFn copyFn, size_t dataSize, AlignmentCase alignment, bool srcHeadBlockReadable) {
     auto source = allocateGuardedBuffer(dataSize, alignment.srcOffset);
     auto destination = allocateGuardedBuffer(dataSize, alignment.dstOffset);
 
@@ -98,7 +113,9 @@ void runCopyTest(StreamCopyFn copyFn, size_t dataSize, AlignmentCase alignment) 
         source.data[i] = static_cast<uint8_t>(i);
     }
 
-    copyFn(destination.data, source.data, dataSize);
+    NEO::StreamCopyBlocksUlt::setSourceRange(source.data, dataSize);
+
+    copyFn(destination.data, source.data, dataSize, srcHeadBlockReadable);
 
     EXPECT_EQ(0, std::memcmp(destination.data, source.data, dataSize))
         << "data mismatch, size=" << dataSize
@@ -154,7 +171,7 @@ using StreamCopyStreamingPathTest = ::testing::TestWithParam<std::tuple<HwPath, 
 
 TEST_P(StreamCopyStreamingPathTest, givenWriteCombinedHintThenDataCopiedCorrectly) {
     const auto &[path, size, alignment] = GetParam();
-    runCopyTest(path.copyFn, size, alignment);
+    runCopyTest(path.copyFn, size, alignment, false);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -168,7 +185,7 @@ using StreamCopyTailTest = ::testing::TestWithParam<std::tuple<HwPath, size_t, A
 
 TEST_P(StreamCopyTailTest, givenStreamingPathAndSubBlockSizeThenDataCopiedCorrectly) {
     const auto &[path, size, alignment] = GetParam();
-    runCopyTest(path.copyFn, size, alignment);
+    runCopyTest(path.copyFn, size, alignment, false);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -177,6 +194,92 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(::testing::ValuesIn(hwPaths),
                        ::testing::ValuesIn(tailSizes),
                        ::testing::ValuesIn(streamingAlignmentCases)));
+
+using StreamCopySourceRangeTest = ::testing::TestWithParam<std::tuple<HwPath, size_t, size_t>>;
+
+TEST_P(StreamCopySourceRangeTest, givenMisalignedSourceWhenCopyingThenNoBlockIsLoadedFromOutsideSourceBuffer) {
+    const auto &[path, size, srcMisalignment] = GetParam();
+    resetStreamBlockCounters();
+
+    runCopyTest(path.copyFn, size, {srcMisalignment, 0u}, false);
+
+    EXPECT_EQ(0u, NEO::StreamCopyBlocksUlt::outOfSourceRangeLoadCount)
+        << "block load reached outside the source buffer, size=" << size
+        << ", srcMisalignment=" << srcMisalignment
+        << ", blockWidth=" << path.blockWidth;
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamCopy,
+    StreamCopySourceRangeTest,
+    ::testing::Combine(::testing::ValuesIn(hwPaths),
+                       ::testing::ValuesIn(streamingSizes),
+                       ::testing::ValuesIn(sourceMisalignments)));
+
+using StreamCopySourceRangeTailTest = ::testing::TestWithParam<std::tuple<HwPath, size_t, size_t>>;
+
+TEST_P(StreamCopySourceRangeTailTest, givenMisalignedSourceAndSubBlockSizeWhenCopyingThenNoBlockIsLoadedFromOutsideSourceBuffer) {
+    const auto &[path, size, srcMisalignment] = GetParam();
+    resetStreamBlockCounters();
+
+    runCopyTest(path.copyFn, size, {srcMisalignment, 0u}, false);
+
+    EXPECT_EQ(0u, NEO::StreamCopyBlocksUlt::outOfSourceRangeLoadCount)
+        << "block load reached outside the source buffer, size=" << size
+        << ", srcMisalignment=" << srcMisalignment
+        << ", blockWidth=" << path.blockWidth;
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamCopy,
+    StreamCopySourceRangeTailTest,
+    ::testing::Combine(::testing::ValuesIn(hwPaths),
+                       ::testing::ValuesIn(tailSizes),
+                       ::testing::ValuesIn(sourceMisalignments)));
+
+using StreamCopyOutOfSourceRangeCounterTest = ::testing::TestWithParam<HwPath>;
+
+TEST_P(StreamCopyOutOfSourceRangeCounterTest, givenSourceRangeStartingAfterCopySourceWhenCopyingThenBlockLoadIsCountedAsOutOfSourceRange) {
+    const auto &path = GetParam();
+    resetStreamBlockCounters();
+
+    constexpr size_t dataSize = 2u * MemoryConstants::cacheLineSize;
+    auto source = allocateGuardedBuffer(dataSize, 0u);
+    auto destination = allocateGuardedBuffer(dataSize, 0u);
+    NEO::StreamCopyBlocksUlt::setSourceRange(source.data + 1u, dataSize - 1u);
+
+    path.copyFn(destination.data, source.data, dataSize, false);
+
+    EXPECT_LT(0u, NEO::StreamCopyBlocksUlt::outOfSourceRangeLoadCount);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamCopy,
+    StreamCopyOutOfSourceRangeCounterTest,
+    ::testing::ValuesIn(hwPaths));
+
+using StreamCopyReadableHeadBlockTest = ::testing::TestWithParam<std::tuple<HwPath, size_t, size_t>>;
+
+TEST_P(StreamCopyReadableHeadBlockTest, givenReadableSourceHeadBlockAndMisalignedSourceWhenCopyingThenOnlyHeadBlockIsLoadedFromOutsideSourceBuffer) {
+    const auto &[path, size, srcMisalignment] = GetParam();
+    resetStreamBlockCounters();
+
+    runCopyTest(path.copyFn, size, {srcMisalignment, 0u}, true);
+
+    EXPECT_EQ(1u, NEO::StreamCopyBlocksUlt::outOfSourceRangeLoadCount)
+        << "size=" << size
+        << ", srcMisalignment=" << srcMisalignment
+        << ", blockWidth=" << path.blockWidth;
+    EXPECT_EQ(expectedStreamLoadCount(size, srcMisalignment, path.blockWidth, true),
+              NEO::StreamCopyBlocksUlt::streamLoadCount);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamCopy,
+    StreamCopyReadableHeadBlockTest,
+    ::testing::Combine(::testing::ValuesIn(hwPaths),
+                       ::testing::ValuesIn(streamingSizes),
+                       ::testing::ValuesIn(sourceMisalignments)));
 
 struct StreamCopyDispatchTest : public ::testing::TestWithParam<std::tuple<uint64_t, size_t>>,
                                 public StreamCopyDispatchFixture {
@@ -187,13 +290,13 @@ struct StreamCopyDispatchTest : public ::testing::TestWithParam<std::tuple<uint6
 TEST_P(StreamCopyDispatchTest, givenDestinationCanBeWriteCombinedThenDataCopiedCorrectly) {
     const auto &[features, size] = GetParam();
     forceFeatures(features);
-    runCopyTest([](void *dst, const void *src, size_t bytes) { NEO::streamCopy<true>(dst, src, bytes); }, size, {0u, 3u});
+    runCopyTest([](void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) { NEO::streamCopy<true>(dst, src, bytes, srcHeadBlockReadable); }, size, {0u, 3u}, false);
 }
 
 TEST_P(StreamCopyDispatchTest, givenDestinationCannotBeWriteCombinedThenDataCopiedCorrectly) {
     const auto &[features, size] = GetParam();
     forceFeatures(features);
-    runCopyTest([](void *dst, const void *src, size_t bytes) { NEO::streamCopy<false>(dst, src, bytes); }, size, {1u, 1u});
+    runCopyTest([](void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) { NEO::streamCopy<false>(dst, src, bytes, srcHeadBlockReadable); }, size, {1u, 1u}, false);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -201,6 +304,29 @@ INSTANTIATE_TEST_SUITE_P(
     StreamCopyDispatchTest,
     ::testing::Combine(::testing::ValuesIn(possibleFeatures),
                        ::testing::ValuesIn(dispatchSizes)));
+
+struct StreamCopyDispatchHeadBlockTest : public ::testing::TestWithParam<std::tuple<uint64_t, bool>>,
+                                         public StreamCopyDispatchFixture {
+    void SetUp() override { StreamCopyDispatchFixture::setUp(); }
+    void TearDown() override { StreamCopyDispatchFixture::tearDown(); }
+};
+
+TEST_P(StreamCopyDispatchHeadBlockTest, givenMisalignedSourceWhenStreamCopyThenHeadBlockIsLoadedOnlyIfReadableAndSimdIsSupported) {
+    const auto &[features, headBlockReadable] = GetParam();
+    forceFeatures(features);
+    resetStreamBlockCounters();
+
+    runCopyTest([](void *dst, const void *src, size_t bytes, bool srcHeadBlockReadable) { NEO::streamCopy<false>(dst, src, bytes, srcHeadBlockReadable); }, 4096u, {1u, 0u}, headBlockReadable);
+
+    const bool expectHeadBlockLoad = headBlockReadable && (features != NEO::CpuInfo::featureNone);
+    EXPECT_EQ(expectHeadBlockLoad ? 1u : 0u, NEO::StreamCopyBlocksUlt::outOfSourceRangeLoadCount);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    StreamCopy,
+    StreamCopyDispatchHeadBlockTest,
+    ::testing::Combine(::testing::ValuesIn(possibleFeatures),
+                       ::testing::Bool()));
 
 struct StreamCopyCacheSizeFixture {
     void setUp(size_t lastLevelCacheSize) {
@@ -223,13 +349,14 @@ TEST_P(StreamCopyNonTemporalPathTest, givenSizeAboveCacheBypassLimitThenDataCopi
     cacheSize.setUp(2u * NEO::streamCopyAvx512Width);
     resetStreamBlockCounters();
 
-    runCopyTest(path.copyFn, size, alignment);
+    runCopyTest(path.copyFn, size, alignment, false);
 
     const bool sourceIsBlockAligned = (alignment.srcOffset % path.blockWidth) == 0u;
     const bool destinationIsBlockAligned = (alignment.dstOffset % path.blockWidth) == 0u;
 
     EXPECT_EQ(0u, NEO::StreamCopyBlocksUlt::misalignedAccessCount);
-    EXPECT_LE(size / path.blockWidth,
+    EXPECT_EQ(0u, NEO::StreamCopyBlocksUlt::outOfSourceRangeLoadCount);
+    EXPECT_EQ(expectedStreamLoadCount(size, alignment.srcOffset, path.blockWidth, false),
               NEO::StreamCopyBlocksUlt::streamLoadCount);
     if (sourceIsBlockAligned) {
         const bool expectNonTemporalStores = (size >= NEO::cacheBypassLimit()) && destinationIsBlockAligned;
@@ -252,11 +379,12 @@ TEST_P(StreamCopyUnknownCacheSizeTest, givenUnknownLastLevelCacheSizeThenDataCop
     cacheSize.setUp(0u);
     resetStreamBlockCounters();
 
-    runCopyTest(path.copyFn, size, {0u, 0u});
+    runCopyTest(path.copyFn, size, {0u, 0u}, false);
 
     EXPECT_EQ(0u, NEO::StreamCopyBlocksUlt::streamStoreCount);
-    EXPECT_LE(size / path.blockWidth, NEO::StreamCopyBlocksUlt::streamLoadCount);
+    EXPECT_EQ(expectedStreamLoadCount(size, 0u, path.blockWidth, false), NEO::StreamCopyBlocksUlt::streamLoadCount);
     EXPECT_EQ(0u, NEO::StreamCopyBlocksUlt::misalignedAccessCount);
+    EXPECT_EQ(0u, NEO::StreamCopyBlocksUlt::outOfSourceRangeLoadCount);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -277,7 +405,7 @@ TEST_P(StreamCopyNonTemporalStoreTest, givenBlockAlignedBuffersAndSizeAboveCache
 
     CpuIntrinsicsTests::sfenceCounter.store(0u);
 
-    runCopyTest(path.copyFn, copySize, {0u, 0u});
+    runCopyTest(path.copyFn, copySize, {0u, 0u}, false);
 
     EXPECT_EQ(1u, CpuIntrinsicsTests::sfenceCounter.load());
 }

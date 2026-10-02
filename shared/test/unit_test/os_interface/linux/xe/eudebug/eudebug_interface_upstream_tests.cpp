@@ -133,7 +133,7 @@ TEST(EuDebugInterfaceUpstreamTest, givenValidDrmVmBindWhenConvertingToInterfaceT
     drm_xe_eudebug_event_vm_bind drmVmBind = {};
     drmVmBind.vm_handle = 0x64;
     drmVmBind.flags = 0x0F;
-    drmVmBind.num_binds = 0x128;
+    drmVmBind.num_bind_ops = 0x128;
 
     auto event = euDebugInterface.toEuDebugEventVmBind(&drmVmBind);
     EXPECT_EQ(0x64u, event.vmHandle);
@@ -214,13 +214,12 @@ TEST(EuDebugInterfaceUpstreamTest, givenValidDrmConnectwhenConvertingToInterface
     drm_xe_eudebug_connect drmConnect = {};
     drmConnect.extensions = 1;
     drmConnect.flags = 3;
-    drmConnect.version = 4;
 
     auto connect = euDebugInterface.toEuDebugConnect(&drmConnect);
 
     EXPECT_EQ(1u, connect.extensions);
     EXPECT_EQ(3u, connect.flags);
-    EXPECT_EQ(4u, connect.version);
+    EXPECT_EQ(0u, connect.version);
 }
 
 TEST(EuDebugInterfaceUpstreamTest, givenValidDrmVmBindOpDebugDataWhenConvertingToInterfaceVmBindOpDebugDataThenFieldsAreCorrect) {
@@ -317,9 +316,10 @@ TEST(EuDebugInterfaceUpstreamTest, givenInterfaceAckEventWhenConvertingToDrmAckE
     ackEvent.seqno = 3;
 
     auto wrappedDrmAckEvent = euDebugInterface.toDrmEuDebugAckEvent(ackEvent);
-    auto drmAckEvent = static_cast<drm_xe_eudebug_ack_event *>(wrappedDrmAckEvent.get());
+    auto drmAckEvent = static_cast<drm_xe_eudebug_ack *>(wrappedDrmAckEvent.get());
 
-    EXPECT_EQ(1u, drmAckEvent->type);
-    EXPECT_EQ(2u, drmAckEvent->flags);
     EXPECT_EQ(3u, drmAckEvent->seqno);
+    EXPECT_EQ(0u, drmAckEvent->type);
+    EXPECT_EQ(0u, drmAckEvent->flags);
+    EXPECT_EQ(0u, drmAckEvent->reserved);
 }

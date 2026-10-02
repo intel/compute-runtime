@@ -39,6 +39,7 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenNewSu
 
     controller.registerDirectSubmission(&csr1);
     controller.registerDirectSubmission(&csr2);
+    controller.timeout = std::chrono::microseconds(0);
 
     controller.startThread();
     controller.waitTillSleep();
@@ -120,6 +121,7 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerInSleepWh
     controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
 
     controller.registerDirectSubmission(&csr);
+    controller.timeout = std::chrono::microseconds(0);
     controller.startThread();
     controller.waitTillSleep();
 

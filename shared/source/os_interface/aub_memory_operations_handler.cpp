@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -27,6 +28,18 @@ namespace NEO {
 
 AubMemoryOperationsHandler::AubMemoryOperationsHandler(aub_stream::AubManager *aubManager) {
     this->aubManager = aubManager;
+}
+
+AubMemoryOperationsHandler::AubMemoryOperationsHandler(AubCenter &aubCenter) {
+    this->aubManager = aubCenter.getAubManager();
+    this->aubCenter = &aubCenter;
+}
+
+std::unique_lock<std::mutex> AubMemoryOperationsHandler::obtainPageTablesLock() {
+    if (this->aubCenter) {
+        return this->aubCenter->obtainPageTablesLock();
+    }
+    return {};
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) {
@@ -77,7 +90,10 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinDevice(Arra
             params.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType());
         }
 
-        aubManager->writeMemory2(params);
+        {
+            auto pageTablesLock = obtainPageTablesLock();
+            aubManager->writeMemory2(params);
+        }
 
         if (!allocation->getAubInfo().writeMemoryOnly) {
             auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), allocation);

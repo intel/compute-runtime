@@ -47,7 +47,6 @@ enum class CacheRegion : uint16_t;
 enum class SubmissionStatus : uint32_t;
 
 class BufferObject;
-class CompilerReleaseHelper;
 class DeviceFactory;
 class MemoryInfo;
 class OsContext;
@@ -62,8 +61,7 @@ struct SystemInfo;
 
 struct DeviceDescriptor {
     unsigned short deviceId;
-    const HardwareInfo *pHwInfo;
-    void (*setupHardwareInfo)(HardwareInfo *, bool, const CompilerReleaseHelper *);
+    PRODUCT_FAMILY productFamily;
     const char *devName;
 };
 
@@ -82,7 +80,6 @@ class Drm : public DriverModel {
     ~Drm() override;
 
     virtual int ioctl(DrmIoctl request, void *arg);
-    int ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName);
 
     unsigned int getDeviceHandle() const override {
         return 0;
@@ -370,6 +367,7 @@ class Drm : public DriverModel {
     std::once_flag checkSetPairOnce;
     std::once_flag checkChunkingOnce;
     std::once_flag checkCompletionFenceOnce;
+    std::once_flag contextHealthQueryFailedOnce;
 
     RootDeviceEnvironment &rootDeviceEnvironment;
 

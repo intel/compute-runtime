@@ -21,9 +21,6 @@ using Family = NEO::Xe3pCoreFamily;
 
 namespace NEO {
 template <>
-const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::none;
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
     return 16u;
 }
@@ -69,12 +66,6 @@ uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t sim
     numThreadsPerThreadGroup = std::min(numThreadsPerThreadGroup, maxThreadsPerThreadGroup);
     DEBUG_BREAK_IF(numThreadsPerThreadGroup * simd > CommonConstants::maxWorkgroupSize);
     return numThreadsPerThreadGroup;
-}
-
-template <>
-void MemorySynchronizationCommands<Family>::setPipeControlRequiredFields(typename Family::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
-    pipeControl.setDataportFlush(true);
-    pipeControl.setUnTypedDataPortCacheFlush(true);
 }
 
 } // namespace NEO

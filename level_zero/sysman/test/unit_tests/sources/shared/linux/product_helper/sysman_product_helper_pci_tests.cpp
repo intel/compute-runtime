@@ -72,8 +72,8 @@ static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
 
 static int mockOpenSuccess(const char *pathname, int flags) {
     std::string strPathName(pathname);
-    if (telem3FileAndFdMap.find(strPathName) != telem3FileAndFdMap.end()) {
-        return telem3FileAndFdMap.at(strPathName);
+    if (auto it = telem3FileAndFdMap.find(strPathName); it != telem3FileAndFdMap.end()) {
+        return it->second;
     }
     return -1;
 }
@@ -207,7 +207,8 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
             errno = ENOENT;
             return -1;
         }
-        return (telem3FileAndFdMap.find(strPathName) != telem3FileAndFdMap.end()) ? telem3FileAndFdMap.at(strPathName) : -1;
+        auto it = telem3FileAndFdMap.find(strPathName);
+        return it != telem3FileAndFdMap.end() ? it->second : -1;
     });
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
@@ -226,7 +227,8 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
             errno = ENOENT;
             return -1;
         }
-        return (telem3FileAndFdMap.find(strPathName) != telem3FileAndFdMap.end()) ? telem3FileAndFdMap.at(strPathName) : -1;
+        auto it = telem3FileAndFdMap.find(strPathName);
+        return it != telem3FileAndFdMap.end() ? it->second : -1;
     });
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);

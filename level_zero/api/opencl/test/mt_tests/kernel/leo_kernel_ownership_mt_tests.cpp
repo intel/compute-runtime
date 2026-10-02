@@ -16,6 +16,7 @@
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
@@ -47,10 +48,11 @@ inline bool isLocked(std::recursive_mutex &mtx) {
 
 struct OwnershipProbingCommandList : public CapturingCommandList {
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters) override {
+                              ze_event_handle_t *phWaitEvents, L0::CmdListWaitEventParameters &waitEventsParameters,
+                              L0::CmdListSignalEventParameters &signalEventParameters) override {
         UNRECOVERABLE_IF(nullptr == clKernelMutex);
         clKernelOwnedDuringBarrier = isLocked(*clKernelMutex);
-        return CapturingCommandList::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
+        return CapturingCommandList::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParameters);
     }
 
     std::recursive_mutex *clKernelMutex = nullptr;
@@ -123,6 +125,8 @@ struct KernelOwnershipMtTests : public Test<OclFixture> {
         context = std::make_unique<Context>(nullptr, nullptr, 1, &clDevice, true);
         commandQueue = std::make_unique<CommandQueue>(context.get(), device, nullptr, capturingCmdList.toHandle());
         l0Kernel = std::make_unique<OwnershipProbingKernel>();
+        l0Module = std::make_unique<L0::ult::Mock<L0::ult::Module>>(device->getL0Object(), nullptr);
+        l0Kernel->setModule(l0Module.get());
         program = std::make_unique<Program>(context.get());
         std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
         kernel = std::make_unique<KernelExposingOwnershipMutex>(std::move(kernelHandles), program.get());
@@ -134,6 +138,7 @@ struct KernelOwnershipMtTests : public Test<OclFixture> {
         kernel.reset();
         program.reset();
         l0Kernel.release();
+        l0Module.reset();
         commandQueue.reset();
         context.reset();
         Test<OclFixture>::TearDown();
@@ -144,6 +149,7 @@ struct KernelOwnershipMtTests : public Test<OclFixture> {
     std::unique_ptr<Context> context;
     std::unique_ptr<CommandQueue> commandQueue;
     std::unique_ptr<OwnershipProbingKernel> l0Kernel;
+    std::unique_ptr<L0::ult::Mock<L0::ult::Module>> l0Module;
     std::unique_ptr<Program> program;
     std::unique_ptr<KernelExposingOwnershipMutex> kernel;
 };
@@ -232,12 +238,13 @@ TEST_F(KernelOwnershipMtTests, givenNullGlobalWorkSizeWhenEnqueueNDRangeKernelTh
 TEST_F(KernelOwnershipMtTests, givenGetKernelSuggestedLocalWorkSizeWhenGroupSizeIsSuggestedOnSharedKernelThenClKernelIsOwned) {
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t suggestedLocalWorkSize[3] = {0, 0, 0};
+    l0Kernel->resetDescriptorProbe();
 
     auto retVal = clGetKernelSuggestedLocalWorkSizeKHR(commandQueue.get(), kernel.get(), 1, nullptr, globalWorkSize, suggestedLocalWorkSize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(l0Kernel->suggestGroupSizeCalled);
-    EXPECT_TRUE(l0Kernel->clKernelOwnedDuringSuggestGroupSize);
+    EXPECT_NE(0u, l0Kernel->descriptorReadCount);
+    EXPECT_TRUE(l0Kernel->allDescriptorReadsOwned);
 }
 
 } // namespace ult

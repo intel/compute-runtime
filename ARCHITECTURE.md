@@ -259,7 +259,10 @@ the heart of submission and synchronization:
    tag (with an optional kernel-mode notify fallback).
 
 `CommandContainer` owns the command buffer and the indirect heaps (surface
-state, dynamic state) for a sequence of commands. The `Encode*` structs (e.g.
+state, dynamic state) for a sequence of commands. A cached command buffer is
+eligible for reuse only after every context recorded on its allocation has
+completed, including copy-engine work submitted through copy offload.
+The `Encode*` structs (e.g.
 `EncodeDispatchKernel`, `EncodeStateBaseAddress`, `EncodeSemaphore`) are the
 single place where hardware command bits are written, which keeps command
 generation consistent across both APIs.

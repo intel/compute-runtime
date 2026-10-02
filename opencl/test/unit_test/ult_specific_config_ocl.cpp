@@ -18,6 +18,7 @@ using namespace NEO;
 
 void applyWorkarounds() {
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
+    leoPlatformEntries = new std::vector<LeoPlatformEntry>;
     platformsImpl->reserve(8);
 }
 

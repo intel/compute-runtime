@@ -8,6 +8,8 @@
 #pragma once
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/sysman/source/api/info_log/sysman_info_log.h"
+#include "level_zero/sysman/source/api/info_log/sysman_info_log_instance.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
@@ -78,6 +80,14 @@ ze_result_t ZE_APICALL zesDriverGetExtensionFunctionAddress(
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+}
+
+ze_result_t ZE_APICALL zesDriverGetProperties(
+    zes_driver_handle_t hDriver,
+    zes_driver_properties_t *pDriverProperties) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getDriverProperties(pDriverProperties); });
 }
 
 ze_result_t ZE_APICALL zesDeviceGetProperties(
@@ -1076,6 +1086,27 @@ ze_result_t ZE_APICALL zesDriverEventListenEx(
         [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents); });
 }
 
+ze_result_t ZE_APICALL zesDriverEventRegisterExt(
+    zes_driver_handle_t hDriver,
+    zes_event_type_flags_t events) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->driverEventRegister(events); });
+}
+
+ze_result_t ZE_APICALL zesDriverEventListenExt(
+    zes_driver_handle_t hDriver,
+    uint64_t timeout,
+    uint32_t count,
+    zes_device_handle_t *phDevices,
+    uint32_t *pNumDeviceEvents,
+    zes_event_type_flags_t *pEvents,
+    zes_event_type_flags_t *pDriverEvents) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanDriverEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents, pDriverEvents); });
+}
+
 ze_result_t ZE_APICALL zesDeviceEnumDiagnosticTestSuites(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
@@ -1336,6 +1367,66 @@ ze_result_t ZE_APICALL zesFabricPortGetMultiPortThroughput(
         [&]() { return L0::Sysman::SysmanDevice::fabricPortGetMultiPortThroughput(hDevice, numPorts, phPort, pThroughput); });
 }
 
+ze_result_t ZE_APICALL zesDriverEnumInfoLogsExt(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_info_log_handle_t *phInfoLogs) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->enumInfoLogs(pCount, phInfoLogs); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogGetPropertiesExt(
+    zes_info_log_handle_t hInfoLog,
+    zes_info_log_ext_properties_t *pProperties) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogGetProperties(pProperties); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogCreateInstanceExt(
+    zes_info_log_handle_t hInfoLog,
+    const char *pInstanceName,
+    zes_info_log_instance_ext_desc_t *pDesc,
+    zes_info_log_instance_handle_t *phInfoLogInstance) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogCreateInstance(pInstanceName, pDesc, phInfoLogInstance); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogInstanceReadWithMetadataExt(
+    zes_info_log_instance_handle_t hInfoLogInstance,
+    uint64_t timeout,
+    uint32_t *pSize,
+    uint8_t *pBuffer,
+    uint32_t *pRecordCount,
+    zes_info_log_metadata_ext_t *pDescriptors,
+    zes_info_log_read_status_ext_t *pReadStatus) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLogInstance::fromHandle(hInfoLogInstance)->readWithMetadata(timeout, pSize, pBuffer, pRecordCount, pDescriptors, pReadStatus); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogInstancePeekWithMetadataExt(
+    zes_info_log_instance_handle_t hInfoLogInstance,
+    uint64_t timeout,
+    uint32_t *pSize,
+    uint8_t *pBuffer,
+    uint32_t *pRecordCount,
+    zes_info_log_metadata_ext_t *pDescriptors,
+    zes_info_log_read_status_ext_t *pReadStatus) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLogInstance::fromHandle(hInfoLogInstance)->peekWithMetadata(timeout, pSize, pBuffer, pRecordCount, pDescriptors, pReadStatus); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogInstanceDeleteExt(
+    zes_info_log_instance_handle_t hInfoLogInstance) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLogInstance::fromHandle(hInfoLogInstance)->destroy(); });
+}
+
 } // namespace L0
 
 extern "C" {
@@ -1552,6 +1643,32 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverEventListenEx(
         phDevices,
         pNumDeviceEvents,
         pEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverEventRegisterExt(
+    zes_driver_handle_t hDriver,
+    zes_event_type_flags_t events) {
+    return L0::zesDriverEventRegisterExt(
+        hDriver,
+        events);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverEventListenExt(
+    zes_driver_handle_t hDriver,
+    uint64_t timeout,
+    uint32_t count,
+    zes_device_handle_t *phDevices,
+    uint32_t *pNumDeviceEvents,
+    zes_event_type_flags_t *pEvents,
+    zes_event_type_flags_t *pDriverEvents) {
+    return L0::zesDriverEventListenExt(
+        hDriver,
+        timeout,
+        count,
+        phDevices,
+        pNumDeviceEvents,
+        pEvents,
+        pDriverEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumFabricPorts(
@@ -2625,6 +2742,14 @@ zesDriverGetExtensionFunctionAddress(
         ppFunctionAddress);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGetProperties(
+    zes_driver_handle_t hDriver,
+    zes_driver_properties_t *pDriverProperties) {
+    return L0::zesDriverGetProperties(
+        hDriver,
+        pDriverProperties);
+}
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceSetOverclockWaiver(
     zes_device_handle_t hDevice) {
     return L0::zesDeviceSetOverclockWaiver(
@@ -2735,5 +2860,76 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesFabricPortGetMultiPortThroughput(
         numPorts,
         phPort,
         pThroughput);
+}
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverEnumInfoLogsExt(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_info_log_handle_t *phInfoLogs) {
+    return L0::zesDriverEnumInfoLogsExt(
+        hDriver,
+        pCount,
+        phInfoLogs);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogGetPropertiesExt(
+    zes_info_log_handle_t hInfoLog,
+    zes_info_log_ext_properties_t *pProperties) {
+    return L0::zesInfoLogGetPropertiesExt(
+        hInfoLog,
+        pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogCreateInstanceExt(
+    zes_info_log_handle_t hInfoLog,
+    const char *pInstanceName,
+    zes_info_log_instance_ext_desc_t *pDesc,
+    zes_info_log_instance_handle_t *phInfoLogInstance) {
+    return L0::zesInfoLogCreateInstanceExt(
+        hInfoLog,
+        pInstanceName,
+        pDesc,
+        phInfoLogInstance);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogInstanceReadWithMetadataExt(
+    zes_info_log_instance_handle_t hInfoLogInstance,
+    uint64_t timeout,
+    uint32_t *pSize,
+    uint8_t *pBuffer,
+    uint32_t *pRecordCount,
+    zes_info_log_metadata_ext_t *pDescriptors,
+    zes_info_log_read_status_ext_t *pReadStatus) {
+    return L0::zesInfoLogInstanceReadWithMetadataExt(
+        hInfoLogInstance,
+        timeout,
+        pSize,
+        pBuffer,
+        pRecordCount,
+        pDescriptors,
+        pReadStatus);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogInstancePeekWithMetadataExt(
+    zes_info_log_instance_handle_t hInfoLogInstance,
+    uint64_t timeout,
+    uint32_t *pSize,
+    uint8_t *pBuffer,
+    uint32_t *pRecordCount,
+    zes_info_log_metadata_ext_t *pDescriptors,
+    zes_info_log_read_status_ext_t *pReadStatus) {
+    return L0::zesInfoLogInstancePeekWithMetadataExt(
+        hInfoLogInstance,
+        timeout,
+        pSize,
+        pBuffer,
+        pRecordCount,
+        pDescriptors,
+        pReadStatus);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogInstanceDeleteExt(
+    zes_info_log_instance_handle_t hInfoLogInstance) {
+    return L0::zesInfoLogInstanceDeleteExt(
+        hInfoLogInstance);
 }
 }

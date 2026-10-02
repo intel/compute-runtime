@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -99,6 +100,20 @@ TEST_F(SoftwareTagsManagerTests, whenSWTagsManagerIsInitializedThenHeapAllocatio
     memoryMgr->unlockResource(tagHeap);
 }
 
+TEST_F(SoftwareTagsManagerTests, whenIncrementAndGetCurrentCallCountIsCalledThenMonotonicallyIncreasingIdsAreReturned) {
+    auto first = tagsManager->incrementAndGetCurrentCallCount();
+    auto second = tagsManager->incrementAndGetCurrentCallCount();
+
+    EXPECT_EQ(first + 1, second);
+}
+
+TEST_F(SoftwareTagsManagerTests, whenBXMLIsGeneratedThenSWTagHeaderMagicNumberFieldMatchesSpecification) {
+    SWTagBXML bxml;
+
+    EXPECT_NE(std::string::npos, bxml.str.find("<BitField Name=\"MagicNumber\" HighBit=\"31\" LowBit=\"31\" Format=\"OpCode\">"));
+    EXPECT_NE(std::string::npos, bxml.str.find("<ValidValue Value=\"1h\" IsDefault=\"true\" Name=\"SWTAG_MAGIC_NUMBER\" />"));
+}
+
 HWTEST_F(SoftwareTagsManagerTests, whenHeapsAddressesAreInsertedThenCmdStreamHasCorrectContents) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -140,7 +155,7 @@ HWTEST_F(SoftwareTagsManagerTests, whenTestTagIsInsertedThenItIsSuccessful) {
     uint32_t firstTagOffset = sizeof(SWTagHeapInfo); // SWTagHeapInfo is always on offset 0, first tag is inserted immediately after.
 
     EXPECT_EQ(BaseTag::getOffsetNoopID(firstTagOffset), offsetNoop->getIdentificationNumber());
-    EXPECT_EQ(false, offsetNoop->getIdentificationNumberRegisterWriteEnable());
+    EXPECT_EQ(true, offsetNoop->getIdentificationNumberRegisterWriteEnable());
 
     auto memoryMgr = pDevice->getMemoryManager();
     auto tagHeap = tagsManager->getSWTagHeapAllocation();
@@ -218,6 +233,8 @@ struct SoftwareTagsParametrizedTests : public ::testing::TestWithParam<SWTags::O
         tagMap.emplace(OpCode::kernelName, std::make_unique<KernelNameTag>("", 0u));
         tagMap.emplace(OpCode::pipeControlReason, std::make_unique<PipeControlReasonTag>("", 0u));
         tagMap.emplace(OpCode::arbitraryString, std::make_unique<ArbitraryStringTag>(""));
+        tagMap.emplace(OpCode::callNameBegin, std::make_unique<CallNameBeginTag>("", 0u));
+        tagMap.emplace(OpCode::callNameEnd, std::make_unique<CallNameEndTag>("", 0u));
     }
 
     std::map<OpCode, std::unique_ptr<BaseTag>> tagMap;
@@ -229,7 +246,9 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         OpCode::kernelName,
         OpCode::pipeControlReason,
-        OpCode::arbitraryString));
+        OpCode::arbitraryString,
+        OpCode::callNameBegin,
+        OpCode::callNameEnd));
 
 TEST_P(SoftwareTagsParametrizedTests, whenGetOpCodeIsCalledThenCorrectValueIsReturned) {
     auto opcode = GetParam();
@@ -280,4 +299,95 @@ TEST(SoftwareTagsBXMLTests, givenDumpSWTagsBXMLWhenConstructingBXMLThenAFileIsDu
     EXPECT_EQ(IoFunctions::mockFopenCalled, mockFopenCalledBefore + 2);
     EXPECT_EQ(IoFunctions::mockFwriteCalled, mockFwriteCalledBefore + 1);
     EXPECT_EQ(IoFunctions::mockFcloseCalled, mockFcloseCalledBefore + 1);
+}
+
+TEST(SoftwareTagsCounterTests, whenGetCounterRegisterOffsetIsCalledThenValuesMatchSpecification) {
+    EXPECT_EQ(RegisterOffsets::csGprR10, getCounterRegisterOffset(CounterType::dispatch));
+    EXPECT_EQ(RegisterOffsets::csGprR11, getCounterRegisterOffset(CounterType::rop));
+    EXPECT_EQ(RegisterOffsets::csGprR12 + sizeof(uint32_t), static_cast<size_t>(getCounterRegisterOffset(CounterType::flush)));
+}
+
+TEST(SoftwareTagsCounterTests, givenCounterTypeNoneWhenGetCounterRegisterOffsetIsCalledThenAbortIsThrown) {
+    EXPECT_THROW(getCounterRegisterOffset(CounterType::none), std::exception);
+}
+
+TEST(SoftwareTagsCounterTests, whenCounterContextIsIncrementedThenOnlySelectedCounterChanges) {
+    CounterContext counters{};
+
+    EXPECT_EQ(1u, counters.incrementAndGet(CounterType::dispatch));
+    EXPECT_EQ(2u, counters.incrementAndGet(CounterType::dispatch));
+    EXPECT_EQ(1u, counters.incrementAndGet(CounterType::rop));
+    EXPECT_EQ(1u, counters.incrementAndGet(CounterType::flush));
+    EXPECT_EQ(0u, counters.incrementAndGet(CounterType::none));
+
+    EXPECT_EQ(2u, counters.dispatch);
+    EXPECT_EQ(1u, counters.rop);
+    EXPECT_EQ(1u, counters.flush);
+
+    counters.reset();
+
+    EXPECT_EQ(0u, counters.dispatch);
+    EXPECT_EQ(0u, counters.rop);
+    EXPECT_EQ(0u, counters.flush);
+}
+
+TEST_F(SoftwareTagsManagerTests, givenEnableExtendedSoftwareTagsWhenCountersEnabledIsQueriedThenBothFlagsAreRequired) {
+    EXPECT_FALSE(SWTagsManager::countersEnabled());
+
+    debugManager.flags.EnableExtendedSoftwareTags.set(true);
+    EXPECT_TRUE(SWTagsManager::countersEnabled());
+
+    debugManager.flags.EnableSWTags.set(false);
+    EXPECT_FALSE(SWTagsManager::countersEnabled());
+}
+
+HWTEST_F(SoftwareTagsManagerTests, givenExtendedSoftwareTagsDisabledWhenCounterUpdateIsInsertedThenNothingIsProgrammed) {
+    initializeTestCmdStream<FamilyType>();
+
+    tagsManager->insertCounterUpdate<FamilyType>(*testCmdStream.get(), CounterType::dispatch, 1u, false);
+
+    EXPECT_EQ(0u, testCmdStream->getUsed());
+
+    freeTestCmdStream();
+}
+
+HWTEST_F(SoftwareTagsManagerTests, givenExtendedSoftwareTagsWhenCounterUpdateIsInsertedThenLoadRegisterImmIsProgrammed) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    debugManager.flags.EnableExtendedSoftwareTags.set(true);
+    initializeTestCmdStream<FamilyType>();
+
+    tagsManager->insertCounterUpdate<FamilyType>(*testCmdStream.get(), CounterType::rop, 42u, false);
+
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), testCmdStream->getUsed());
+
+    auto lri = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(testCmdStream->getCpuBase());
+
+    EXPECT_EQ(RegisterOffsets::csGprR11, lri->getRegisterOffset());
+    EXPECT_EQ(42u, lri->getDataDword());
+    EXPECT_TRUE(lri->getMmioRemapEnable());
+
+    freeTestCmdStream();
+}
+
+HWTEST_F(SoftwareTagsManagerTests, givenCounterTypeNoneWhenCounterUpdateIsInsertedThenNothingIsProgrammed) {
+    debugManager.flags.EnableExtendedSoftwareTags.set(true);
+    initializeTestCmdStream<FamilyType>();
+
+    tagsManager->insertCounterUpdate<FamilyType>(*testCmdStream.get(), CounterType::none, 1u, false);
+
+    EXPECT_EQ(0u, testCmdStream->getUsed());
+
+    freeTestCmdStream();
+}
+
+HWTEST_F(SoftwareTagsManagerTests, givenExtendedSoftwareTagsWhenEstimatingSpaceForSWTagsThenCounterCommandsAreIncluded) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto sizeWithoutCounters = SWTagsManager::estimateSpaceForSWTags<FamilyType>();
+
+    debugManager.flags.EnableExtendedSoftwareTags.set(true);
+
+    EXPECT_EQ(sizeWithoutCounters + SWTagsManager::maxTagCount * sizeof(MI_LOAD_REGISTER_IMM),
+              SWTagsManager::estimateSpaceForSWTags<FamilyType>());
 }

@@ -216,7 +216,7 @@ CommandStreamReceiver *createWddmDeviceCommandStreamReceiver(bool withAubDump,
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::setupContext(OsContext &osContext) {
-    this->osContext = &osContext;
+    CommandStreamReceiver::setupContext(osContext);
 }
 
 template <typename GfxFamily>

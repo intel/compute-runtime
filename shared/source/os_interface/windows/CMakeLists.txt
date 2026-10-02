@@ -46,6 +46,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/${BRANCH_DIR_SUFFIX}/perf_wddm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/${BRANCH_DIR_SUFFIX}/timestamp_page_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/elements_struct.h
 )
 
@@ -153,6 +154,7 @@ if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
        ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback_stub.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper_drm_or_wddm.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm/perf_wddm.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm/timestamp_page_wddm.cpp
   )
 endif()
 

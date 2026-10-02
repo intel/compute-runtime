@@ -215,6 +215,95 @@ TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenFirmwareFlashIsCalledForG
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+static uint32_t mockOpromImageType = 0;
+static int mockOpromDataUpdateResult = IGSC_SUCCESS;
+static int mockOpromCodeUpdateResult = IGSC_SUCCESS;
+
+static int mockIgscImageOpromInit(struct igsc_oprom_image **img,
+                                  const uint8_t *buffer,
+                                  uint32_t bufferLen) {
+    return IGSC_SUCCESS;
+}
+
+static int mockIgscImageOpromType(struct igsc_oprom_image *img,
+                                  uint32_t *opromType) {
+    *opromType = mockOpromImageType;
+    return IGSC_SUCCESS;
+}
+
+static int mockIgscDeviceOpromUpdate(struct igsc_device_handle *handle,
+                                     uint32_t opromType,
+                                     struct igsc_oprom_image *img,
+                                     igsc_progress_func_t progressFunc,
+                                     void *ctx) {
+    return (opromType == IGSC_OPROM_DATA) ? mockOpromDataUpdateResult : mockOpromCodeUpdateResult;
+}
+
+class FwUtilOpromFlashTestFixture : public FwUtilTestFixture {
+  protected:
+    void SetUp() override {
+        FwUtilTestFixture::SetUp();
+        mockOpromImageType = 0;
+        mockOpromDataUpdateResult = IGSC_SUCCESS;
+        mockOpromCodeUpdateResult = IGSC_SUCCESS;
+    }
+
+    ze_result_t flashOprom() {
+        auto opromIt = std::find(fwTypes.begin(), fwTypes.end(), std::string("OptionROM"));
+        EXPECT_NE(opromIt, fwTypes.end());
+
+        uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+        memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+        return pFwUtilImp->flashFirmware(*opromIt, (void *)testImage, ZES_STRING_PROPERTY_SIZE);
+    }
+
+    VariableBackup<decltype(L0::Sysman::imageOpromInit)> backupImageOpromInit{&L0::Sysman::imageOpromInit, &mockIgscImageOpromInit};
+    VariableBackup<decltype(L0::Sysman::imageOpromType)> backupImageOpromType{&L0::Sysman::imageOpromType, &mockIgscImageOpromType};
+    VariableBackup<decltype(L0::Sysman::deviceOpromUpdate)> backupDeviceOpromUpdate{&L0::Sysman::deviceOpromUpdate, &mockIgscDeviceOpromUpdate};
+};
+
+TEST_F(FwUtilOpromFlashTestFixture, GivenDataOnlyOpromImageWhenDataUpdateFailsThenFlashingFails) {
+    mockOpromImageType = IGSC_OPROM_DATA;
+    mockOpromDataUpdateResult = IGSC_ERROR_BAD_IMAGE;
+
+    EXPECT_EQ(flashOprom(), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST_F(FwUtilOpromFlashTestFixture, GivenCodeOnlyOpromImageWhenCodeUpdateFailsThenFlashingFails) {
+    mockOpromImageType = IGSC_OPROM_CODE;
+    mockOpromCodeUpdateResult = IGSC_ERROR_BAD_IMAGE;
+
+    EXPECT_EQ(flashOprom(), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST_F(FwUtilOpromFlashTestFixture, GivenOpromImageWithBothPartitionsWhenOnlyDataUpdateFailsThenDataErrorIsReturned) {
+    mockOpromImageType = IGSC_OPROM_DATA | IGSC_OPROM_CODE;
+    mockOpromDataUpdateResult = IGSC_ERROR_BAD_IMAGE;
+
+    EXPECT_EQ(flashOprom(), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST_F(FwUtilOpromFlashTestFixture, GivenOpromImageWithBothPartitionsWhenOnlyCodeUpdateFailsThenCodeErrorIsReturned) {
+    mockOpromImageType = IGSC_OPROM_DATA | IGSC_OPROM_CODE;
+    mockOpromCodeUpdateResult = IGSC_ERROR_PERMISSION_DENIED;
+
+    EXPECT_EQ(flashOprom(), ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+}
+
+TEST_F(FwUtilOpromFlashTestFixture, GivenOpromImageWithBothPartitionsWhenBothUpdatesFailThenFirstErrorIsReturned) {
+    mockOpromImageType = IGSC_OPROM_DATA | IGSC_OPROM_CODE;
+    mockOpromDataUpdateResult = IGSC_ERROR_BAD_IMAGE;
+    mockOpromCodeUpdateResult = IGSC_ERROR_PERMISSION_DENIED;
+
+    EXPECT_EQ(flashOprom(), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST_F(FwUtilOpromFlashTestFixture, GivenOpromImageWithBothPartitionsWhenBothUpdatesSucceedThenFlashingIsSuccessful) {
+    mockOpromImageType = IGSC_OPROM_DATA | IGSC_OPROM_CODE;
+
+    EXPECT_EQ(flashOprom(), ZE_RESULT_SUCCESS);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

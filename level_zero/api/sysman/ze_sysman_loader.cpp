@@ -99,6 +99,10 @@ zesGetDriverProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGet, L0::globalDriverDispatch.sysmanDriver.pfnGet, version, ZE_API_VERSION_1_5);
     fillDdiEntry(pDdiTable->pfnGetExtensionProperties, L0::globalDriverDispatch.sysmanDriver.pfnGetExtensionProperties, version, ZE_API_VERSION_1_8);
     fillDdiEntry(pDdiTable->pfnGetExtensionFunctionAddress, L0::globalDriverDispatch.sysmanDriver.pfnGetExtensionFunctionAddress, version, ZE_API_VERSION_1_8);
+    fillDdiEntry(pDdiTable->pfnEventRegisterExt, L0::globalDriverDispatch.sysmanDriver.pfnEventRegisterExt, version, ZE_API_VERSION_1_19);
+    fillDdiEntry(pDdiTable->pfnEventListenExt, L0::globalDriverDispatch.sysmanDriver.pfnEventListenExt, version, ZE_API_VERSION_1_19);
+    fillDdiEntry(pDdiTable->pfnEnumInfoLogsExt, L0::globalDriverDispatch.sysmanDriver.pfnEnumInfoLogsExt, version, ZE_API_VERSION_1_19);
+    fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.sysmanDriver.pfnGetProperties, version, ZE_API_VERSION_1_19);
     return result;
 }
 
@@ -397,6 +401,43 @@ ZE_DLLEXPORT ze_result_t ZE_APICALL zesGetDriverExpProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     fillDdiEntry(pDdiTable->pfnGetDeviceByUuidExp, L0::globalDriverDispatch.sysmanDriverExp.pfnGetDeviceByUuidExp, version, ZE_API_VERSION_1_9);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zesGetInfoLogProcAddrTable(
+    ze_api_version_t version,
+    zes_info_log_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.sysman.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnGetPropertiesExt, L0::globalDriverDispatch.sysmanInfoLog.pfnGetPropertiesExt, version, ZE_API_VERSION_1_19);
+    fillDdiEntry(pDdiTable->pfnCreateInstanceExt, L0::globalDriverDispatch.sysmanInfoLog.pfnCreateInstanceExt, version, ZE_API_VERSION_1_19);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zesGetInfoLogInstanceProcAddrTable(
+    ze_api_version_t version,
+    zes_info_log_instance_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.sysman.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnReadWithMetadataExt, L0::globalDriverDispatch.sysmanInfoLogInstance.pfnReadWithMetadataExt, version, ZE_API_VERSION_1_19);
+    fillDdiEntry(pDdiTable->pfnPeekWithMetadataExt, L0::globalDriverDispatch.sysmanInfoLogInstance.pfnPeekWithMetadataExt, version, ZE_API_VERSION_1_19);
+    fillDdiEntry(pDdiTable->pfnDeleteExt, L0::globalDriverDispatch.sysmanInfoLogInstance.pfnDeleteExt, version, ZE_API_VERSION_1_19);
 
     return result;
 }

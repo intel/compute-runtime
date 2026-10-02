@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,41 @@
 #include "shared/source/utilities/software_tags.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/register_offsets.h"
 
 #include <sstream>
 
 namespace NEO {
 namespace SWTags {
+
+uint32_t getCounterRegisterOffset(CounterType type) {
+    switch (type) {
+    case CounterType::dispatch:
+        return RegisterOffsets::csGprR10;
+    case CounterType::rop:
+        return RegisterOffsets::csGprR11;
+    case CounterType::flush:
+        return RegisterOffsets::csGprR12 + sizeof(uint32_t);
+    default:
+        UNRECOVERABLE_IF(true);
+        return 0;
+    }
+}
+
+uint32_t CounterContext::incrementAndGet(CounterType type) {
+    switch (type) {
+    case CounterType::dispatch:
+        return ++dispatch;
+    case CounterType::rop:
+        return ++rop;
+    case CounterType::flush:
+        return ++flush;
+    default:
+        return 0;
+    }
+}
 
 void BXMLHeapInfo::bxml(std::ostream &os) {
     os << "<Structure Name=\"SWTAG_BXML_HEAP_INFO\" Source=\"Driver\" Project=\"All\">\n";
@@ -77,9 +106,9 @@ uint32_t BaseTag::getOffsetNoopID(uint32_t offset) {
 
 void BaseTag::bxml(std::ostream &os, OpCode opcode, size_t size, const char *name) {
     os << "  <DWord Name=\"0\">\n";
-    os << "    <BitField Name=\"DriverDebug\" HighBit=\"31\" LowBit=\"31\" Format=\"OpCode\">\n";
+    os << "    <BitField Name=\"MagicNumber\" HighBit=\"31\" LowBit=\"31\" Format=\"OpCode\">\n";
     os << "      <Description>Specifies this is a SW driver debug tag.</Description>\n";
-    os << "      <ValidValue Value=\"1\" IsDefault=\"true\" Name=\"DRIVER_DEBUG\" />\n";
+    os << "      <ValidValue Value=\"1h\" IsDefault=\"true\" Name=\"SWTAG_MAGIC_NUMBER\" />\n";
     os << "    </BitField>\n";
     os << "    <BitField Name=\"Component\" HighBit=\"30\" LowBit=\"24\" Format=\"OpCode\">\n";
     os << "      <Description>Specifies the component type.</Description>\n";
@@ -104,7 +133,7 @@ void KernelNameTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::kernelName, sizeof(KernelNameTag), "KERNEL_NAME");
 
-    unsigned int stringDWORDSize = kenelNameStrLength / sizeof(uint32_t);
+    constexpr uint32_t stringDWORDSize = kenelNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"KernelName\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Name of the kernel.</Description>\n";
@@ -120,7 +149,7 @@ void ArbitraryStringTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::arbitraryString, sizeof(ArbitraryStringTag), "ARBITRARY_STRING");
 
-    constexpr unsigned int stringDWORDSize = tagStringLength / sizeof(uint32_t);
+    constexpr uint32_t stringDWORDSize = tagStringLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"ArbitraryString\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Name of the arbitrary string.</Description>\n";
@@ -136,7 +165,7 @@ void PipeControlReasonTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::pipeControlReason, sizeof(PipeControlReasonTag), "PIPE_CONTROL_REASON");
 
-    unsigned int stringDWORDSize = reasonStrLength / sizeof(uint32_t);
+    constexpr uint32_t stringDWORDSize = reasonStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"PipeControlReason\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Reason of the PIPE_CONTROL.</Description>\n";
@@ -152,7 +181,7 @@ void CallNameBeginTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::callNameBegin, sizeof(CallNameBeginTag), "ZE_CALL_NAME_BEGIN");
 
-    unsigned int stringDWORDSize = zeCallNameStrLength / sizeof(uint32_t);
+    constexpr uint32_t stringDWORDSize = zeCallNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"CallNameBegin\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Entry of ZE Call where the GPU originated from.</Description>\n";
@@ -173,7 +202,7 @@ void CallNameEndTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::callNameEnd, sizeof(CallNameEndTag), "ZE_CALL_NAME_END");
 
-    unsigned int stringDWORDSize = zeCallNameStrLength / sizeof(uint32_t);
+    constexpr uint32_t stringDWORDSize = zeCallNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"CallNameEnd\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Exit of ZE Call where the GPU originated from.</Description>\n";

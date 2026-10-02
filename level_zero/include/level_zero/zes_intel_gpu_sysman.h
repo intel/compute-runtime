@@ -79,6 +79,52 @@ typedef struct _zes_intel_pci_link_speed_downgrade_exp_properties_t {
 } zes_intel_pci_link_speed_downgrade_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_PCI_CONFIG_EXP_PROPERTY_NAME
+/// @brief PCI configuration space property extension name
+#define ZES_INTEL_PCI_CONFIG_EXP_PROPERTY_NAME "ZES_intel_experimental_pci_config_property"
+#endif // ZES_INTEL_PCI_CONFIG_EXP_PROPERTY_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query pci configuration space extension Version(s)
+typedef enum _zes_intel_pci_config_exp_properties_version_t {
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_pci_config_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported link speeds reported by ::zes_intel_pci_config_exp_properties_t
+typedef uint32_t zes_intel_pci_link_speed_exp_flags_t;
+typedef enum _zes_intel_pci_link_speed_exp_flag_t {
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN1 = ZE_BIT(0), ///< gen 1, 2.5 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN2 = ZE_BIT(1), ///< gen 2, 5 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN3 = ZE_BIT(2), ///< gen 3, 8 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN4 = ZE_BIT(3), ///< gen 4, 16 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN5 = ZE_BIT(4), ///< gen 5, 32 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN6 = ZE_BIT(5), ///< gen 6, 64 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN7 = ZE_BIT(6), ///< gen 7, 128 GT/s, is supported
+    ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
+} zes_intel_pci_link_speed_exp_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query identification and link capability registers from the PCI configuration space.
+/// This structure can be passed in the 'pNext' of zes_pci_properties_t
+typedef struct _zes_intel_pci_config_exp_properties_t {
+    zes_structure_type_ext_t stype;                           ///< [in] type of this structure
+    void *pNext;                                              ///< [in][optional] must be null or a pointer to an extension-specific
+                                                              ///< structure (i.e. contains stype and pNext).
+    uint16_t vendorId;                                        ///< [out] Returns the PCIe vendor id.
+    uint16_t deviceId;                                        ///< [out] Returns the PCIe device id.
+    uint16_t subsystemVendorId;                               ///< [out] Returns the PCIe subsystem vendor id.
+    uint16_t subsystemDeviceId;                               ///< [out] Returns the PCIe subsystem device id.
+    uint32_t pcieCapabilityVersion;                           ///< [out] Returns the PCI Express capability version. Zero if the
+                                                              ///< capability could not be read.
+    zes_intel_pci_link_speed_exp_flags_t supportedLinkSpeeds; ///< [out] Returns the supported link speeds, a
+                                                              ///< combination of ::zes_intel_pci_link_speed_exp_flag_t. Zero if the
+                                                              ///< capability could not be read.
+} zes_intel_pci_config_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME
 /// @brief PCI link speed update extension name
 #define ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME "ZES_intel_experimental_pci_link_speed_update"
@@ -465,6 +511,19 @@ ze_result_t ZE_APICALL zesIntelDeviceGetPowerOffReasonExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Intel experimental extension to the standard ::zes_event_type_flag_t
+///
+/// @details
+///     - This flag extends the standard event flags (bits 0-15 defined by
+///       ::zes_event_type_flag_t). It is a device scoped event, so it is
+///       registered with ::zesDeviceEventRegister and reported in the `pEvents`
+///       argument of the listen calls, like any standard event flag.
+///     - Bit 16 is taken by the driver scoped ::ZES_INTEL_CPER_DATA_AVAILABLE
+///       event, hence bit 17 is used here.
+#define ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING ZE_BIT(17) ///< Event is triggered when the device is about to be powered off (use
+                                                                          ///< ::zesIntelDeviceGetPowerOffReasonExp() to determine the reason).
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME
 /// @brief  Memory Page Offline Property extension name
 #define ZES_INTEL_MEMORY_PAGE_OFFLINE_PROPERTY_EXP_NAME "ZES_intel_memory_page_offline_property"
@@ -492,12 +551,15 @@ typedef struct _zes_intel_mem_page_offline_properties_exp_t {
 /// @brief Driver info logs extension name
 #define ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME "ZES_intel_experimental_driver_info_logs"
 #endif // ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME
+/// @deprecated This extension is no longer implemented and all of its functions return
+///             ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE. Use the standard zesDriverEnumInfoLogsExt
+///             and zesInfoLog*Ext APIs instead.
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Driver info logs extension Version(s)
 typedef enum _zes_intel_driver_info_logs_exp_version_t {
     ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                          ///< version 1.0, no longer implemented
-    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0 = ZE_MAKE_VERSION(2, 0),                          ///< version 2.0, collection instances. Not backward compatible with version 1.0.
+    ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0 = ZE_MAKE_VERSION(2, 0),                          ///< version 2.0, collection instances, no longer implemented
     ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_2_0, ///< latest known version
     ZES_INTEL_DRIVER_INFO_LOGS_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_driver_info_logs_exp_version_t;
@@ -514,6 +576,8 @@ typedef struct _zes_intel_info_log_instance_handle_t *zes_intel_info_log_instanc
 /// @brief Get handles for Info Logs
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesDriverEnumInfoLogsExt instead.
 ///     - This function retrieves the list of available info logs.
 ///     - The caller should first call this function with count pointer set to 0 to retrieve the total number of available logs.
 ///     - Subsequent calls with a non-zero count will return the info log handles.
@@ -642,6 +706,8 @@ typedef struct _zes_intel_info_log_metadata_exp {
 /// @brief Get Info Log Properties
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogGetPropertiesExt instead.
 ///     - This function retrieves the properties of an info log handle.
 ///     - This API is NOT thread-safe. It must be called from a single thread or process.
 ///
@@ -665,6 +731,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(
 /// @brief Create a collection instance for an info log
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogCreateInstanceExt instead.
 ///     - Creating a collection instance starts the collection of records into a buffer owned by
 ///       that instance. Collection continues until the instance is deleted with
 ///       ::zesIntelInfoLogInstanceDeleteExp.
@@ -712,6 +780,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogCreateInstanceExp(
 /// @brief Read collected info log records and their metadata
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogInstanceReadWithMetadataExt instead.
 ///     - A call in which `*pSize` is zero or `*pRecordCount` is zero on input is a query call. A
 ///       query call reports the total size in bytes of the record data and the total number of
 ///       records found, writes to neither pBuffer nor pDescriptors, and consumes nothing. pBuffer
@@ -756,6 +826,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstanceReadWithMetadataExp(
 /// @brief Read collected info log records and their metadata without consuming them
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogInstancePeekWithMetadataExt instead.
 ///     - Equivalent to ::zesIntelInfoLogInstanceReadWithMetadataExp except that the records
 ///       returned are not consumed and remain available to subsequent calls to either function.
 ///     - Only supported when zes_intel_info_log_properties_exp_t.isPeekSupported is true.
@@ -783,6 +855,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstancePeekWithMetadataExp(
 /// @brief Delete a collection instance of an info log
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogInstanceDeleteExt instead.
 ///     - Stops collection into the instance and releases the resources it allocated.
 ///     - The application must ensure that no other function is using the handle when calling this
 ///       function, must not call it from simultaneous threads with the same handle, and must not
@@ -802,11 +876,14 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(
 /// @brief Driver scoped event extension name
 #define ZES_INTEL_DRIVER_EVENT_EXP_NAME "ZES_intel_experimental_driver_event"
 #endif // ZES_INTEL_DRIVER_EVENT_EXP_NAME
+/// @deprecated This extension is no longer implemented and all of its functions return
+///             ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE. Use zesDriverEventRegisterExt and
+///             zesDriverEventListenExt instead.
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Driver scoped event extension Version(s)
 typedef enum _zes_intel_driver_event_exp_version_t {
-    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                      ///< version 1.0
+    ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                      ///< version 1.0, no longer implemented
     ZES_INTEL_DRIVER_EVENT_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_EVENT_EXP_VERSION_1_0, ///< latest known version
     ZES_INTEL_DRIVER_EVENT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_driver_event_exp_version_t;
@@ -819,6 +896,8 @@ typedef enum _zes_intel_driver_event_exp_version_t {
 /// @brief Register driver scoped events to be notified about
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesDriverEventRegisterExt instead.
 ///     - This function registers the driver scoped events the application wants to
 ///       be notified about. Unlike ::zesDeviceEventRegister the registration is not
 ///       tied to a device: the underlying data source is shared by all devices of
@@ -867,6 +946,8 @@ ze_result_t ZE_APICALL zesIntelDriverEventRegisterExp(
 /// @brief Listen for device scoped and driver scoped events
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesDriverEventListenExt instead.
 ///     - This function extends ::zesDriverEventListenEx with the ability to report the
 ///       driver scoped events registered with ::zesIntelDriverEventRegisterExp.
 ///     - The `hDriver`, `timeout`, `count`, `phDevices`, `pNumDeviceEvents` and `pEvents`
@@ -924,56 +1005,33 @@ ze_result_t ZE_APICALL zesIntelDriverEventListenExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME
-/// @brief Driver properties extension name
-#define ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME "ZES_intel_experimental_driver_properties"
-#endif // ZES_INTEL_DRIVER_PROPERTIES_EXP_NAME
+#ifndef ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME
+/// @brief Device compute property extension name
+#define ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME "ZES_intel_experimental_device_compute_property"
+#endif // ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Driver properties extension Version(s)
-typedef enum _zes_intel_driver_properties_exp_version_t {
-    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                           ///< version 1.0
-    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_1_0, ///< latest known version
-    ZES_INTEL_DRIVER_PROPERTIES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-} zes_intel_driver_properties_exp_version_t;
+/// @brief Query device compute properties extension Version(s)
+typedef enum _zes_intel_device_compute_exp_properties_version_t {
+    ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_compute_exp_properties_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Driver properties structure
-typedef struct _zes_intel_driver_properties_exp_t {
-    zes_structure_type_ext_t stype; ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP
-    void *pNext;                    ///< [in,out][optional] must be null or a pointer to an extension-specific
+/// @brief Query the compute topology of a device.
+/// This structure can be passed in the 'pNext' of zes_device_properties_t
+typedef struct _zes_intel_device_compute_exp_properties_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
                                     ///< structure (i.e. contains stype and pNext).
-    zes_uuid_t uuid;                ///< [out] universal unique identifier of the driver instance.
-    uint32_t driverVersion;         ///< [out] sysman driver version
-                                    ///< The driver version is a monotonically increasing value where higher
-                                    ///< values always indicate a more recent version. It is an opaque value
-                                    ///< and must not be interpreted as a packed major/minor/patch triple.
-                                    ///< A value of 0 means that this version could not be retrieved.
-} zes_intel_driver_properties_exp_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Get driver properties
-///
-/// @details
-///     - This function retrieves the properties of the sysman driver instance.
-///     - The properties are driver scoped, they do not describe any single device of
-///       the driver.
-///     - The application must initialize the stype member of pProperties.
-///     - The application may call this function from simultaneous threads.
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
-///     - ::ZE_RESULT_ERROR_UNKNOWN
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hDriver`
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `nullptr == pProperties`
-ze_result_t ZE_APICALL zesIntelDriverGetPropertiesExp(
-    zes_driver_handle_t hDriver,                   ///< [in] handle of the driver instance
-    zes_intel_driver_properties_exp_t *pProperties ///< [in,out] pointer to the driver properties
-);
+    uint32_t numSlices;             ///< [out] Total number of slices.
+    uint32_t numCores;              ///< [out] Total number of cores.
+    uint32_t numVectorEngines;      ///< [out] Total number of vector engines.
+    uint32_t numMatrixEngines;      ///< [out] Total number of matrix engines.
+    uint32_t numEUs;                ///< [out] Total number of EUs.
+    uint32_t numThreads;            ///< [out] Total number of hardware threads.
+} zes_intel_device_compute_exp_properties_t;
 
 #if defined(__cplusplus)
 } // extern "C"

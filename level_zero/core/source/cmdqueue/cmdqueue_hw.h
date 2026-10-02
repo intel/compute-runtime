@@ -9,7 +9,9 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_mapper.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
@@ -38,6 +40,7 @@ struct CommandQueueHw : public CommandQueue {
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties);
     size_t estimateStateBaseAddressCmdSize();
+    size_t estimatePatchPreambleCrossSyncSize(size_t numberCrossSyncs);
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
     size_t estimateFrontEndCmdSize();
@@ -55,6 +58,8 @@ struct CommandQueueHw : public CommandQueue {
     bool getPreemptionCmdProgramming() override;
     void patchCommands(CommandList &commandList, uint64_t scratchAddress, bool patchNewScratchController,
                        bool patchPreambleEnabled, void **patchPreambleBuffer);
+    COLD_SECTION NEO::PauseOnGpuProperties::PauseSelection patchDebugPauses(ze_command_list_handle_t *phCommandLists, uint32_t numCommandLists);
+    COLD_SECTION void programDebugPause(NEO::LinearStream &commandStream, bool isBlit, bool beforeWorkload);
 
   protected:
     struct EstimateRegularHeapfulPerCmdlistData {
@@ -111,6 +116,7 @@ struct CommandQueueHw : public CommandQueue {
     inline void dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList);
     inline void dispatchPatchPreambleAsyncPatchElems(CommandListExecutionContext &ctx, CommandList *commandList);
     inline void dispatchPatchPreambleCommandListWaitSync(CommandListExecutionContext &ctx, CommandList *commandList);
+    inline void dispatchPatchPreambleCrossSync(CommandListExecutionContext &ctx, CommandList *commandList, NEO::LinearStream &commandStream);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
     inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);
@@ -235,10 +241,7 @@ struct CommandQueueHw : public CommandQueue {
             UNRECOVERABLE_IF(true);
         }
 
-        void operator()(PatchPauseOnEnqueueSemaphoreStart &patchElem);
-        void operator()(PatchPauseOnEnqueueSemaphoreEnd &patchElem);
-        void operator()(PatchPauseOnEnqueuePipeControlStart &patchElem);
-        void operator()(PatchPauseOnEnqueuePipeControlEnd &patchElem);
+        void operator()(PatchDebugPause &) {}
 
         void operator()(PatchFrontEndState &patchElem);
         void operator()(PatchComputeWalkerInlineDataScratch &patchElem);

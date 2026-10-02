@@ -97,17 +97,15 @@ void ADLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = ADLS::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = ADLS::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = ADLS::maxSubslicesSupported;
     gtSysInfo->MaxDualSubSlicesSupported = ADLS::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);
@@ -118,26 +116,21 @@ void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo AdlsHwConfig::hwInfo = {
+const HardwareInfo ADLS::hwInfo = {
     &ADLS::platform,
     &ADLS::featureTable,
     &ADLS::workaroundTable,
-    &AdlsHwConfig::gtSystemInfo,
+    &ADLS::gtSystemInfo,
     ADLS::capabilityTable};
 
-GT_SYSTEM_INFO AdlsHwConfig::gtSystemInfo = {0};
-void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO ADLS::gtSystemInfo = {0};
+void ADLS::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
     gtSysInfo->L3CacheSizeInKb = 1920;
     gtSysInfo->L3BankCount = 4;
-    gtSysInfo->MaxFillRate = 8;
-    gtSysInfo->TotalVsThreads = 0;
-    gtSysInfo->TotalHsThreads = 0;
-    gtSysInfo->TotalDsThreads = 0;
-    gtSysInfo->TotalGsThreads = 0;
     if (gtSysInfo->MaxSubSlicesSupported < 1) {
         gtSysInfo->MaxSubSlicesSupported = 1;
     }
@@ -150,11 +143,5 @@ void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo ADLS::hwInfo = AdlsHwConfig::hwInfo;
-
-void setupADLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    AdlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*ADLS::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupADLSHardwareInfoImpl;
+void (*ADLS::setupHardwareInfo)(HardwareInfo *, bool) = ADLS::setupHardwareInfoImpl;
 } // namespace NEO

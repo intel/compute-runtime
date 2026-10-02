@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenBarriersWhenCal
 
 PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize) {
     usedSlm = 64 * MemoryConstants::kiloByte;
-    auto expected = availableSlm / usedSlm;
+    auto expected = dssCount * (availableSlmPerDss / usedSlm);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 

@@ -38,7 +38,62 @@ TEST(BlitPropertiesTest, givenBlitParamsToConstructWhenSrcAndDstPtrPassedThenAll
         {0, 0, 0}, {0, 0, 0}, {64, 64, 1},
         64, 4096,
         64, 4096,
-        nullptr);
+        nullptr, false);
     EXPECT_EQ(0x2000u, props.srcGpuAddress);
     EXPECT_EQ(0x1000u, props.dstGpuAddress);
+}
+
+TEST(BlitPropertiesTest, givenDstInLocalMemoryAndNotRemoteWhenConstructingPropertiesForCopyThenDstIsNotSystemOrRemoteMemory) {
+    NEO::MockGraphicsAllocation srcAlloc;
+    srcAlloc.overrideMemoryPool(MemoryPool::system4KBPages);
+    NEO::MockGraphicsAllocation dstAlloc;
+    dstAlloc.overrideMemoryPool(MemoryPool::localMemory);
+
+    auto props = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0x1000, &srcAlloc, 0x2000,
+                                                            {0, 0, 0}, {0, 0, 0}, {64, 1, 1}, 0, 0, 0, 0, nullptr, false);
+    EXPECT_FALSE(props.isDstSystemOrRemoteMemory);
+}
+
+TEST(BlitPropertiesTest, givenDstInLocalMemoryAndRemoteWhenConstructingPropertiesForCopyThenDstIsSystemOrRemoteMemory) {
+    NEO::MockGraphicsAllocation srcAlloc;
+    srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
+    NEO::MockGraphicsAllocation dstAlloc;
+    dstAlloc.overrideMemoryPool(MemoryPool::localMemory);
+
+    auto props = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0x1000, &srcAlloc, 0x2000,
+                                                            {0, 0, 0}, {0, 0, 0}, {64, 1, 1}, 0, 0, 0, 0, nullptr, true);
+    EXPECT_TRUE(props.isDstSystemOrRemoteMemory);
+}
+
+TEST(BlitPropertiesTest, givenDstInSystemMemoryWhenConstructingPropertiesForCopyThenDstIsSystemOrRemoteMemory) {
+    NEO::MockGraphicsAllocation srcAlloc;
+    srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
+    for (auto pool : {MemoryPool::system4KBPages, MemoryPool::system64KBPages, MemoryPool::system4KBPagesWith32BitGpuAddressing, MemoryPool::system64KBPagesWith32BitGpuAddressing}) {
+        NEO::MockGraphicsAllocation dstAlloc;
+        dstAlloc.overrideMemoryPool(pool);
+
+        auto props = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0x1000, &srcAlloc, 0x2000,
+                                                                {0, 0, 0}, {0, 0, 0}, {64, 1, 1}, 0, 0, 0, 0, nullptr, false);
+        EXPECT_TRUE(props.isDstSystemOrRemoteMemory);
+        EXPECT_FALSE(props.isSystemMemoryPoolUsed);
+    }
+}
+
+TEST(BlitPropertiesTest, givenNoDstAllocationWhenConstructingPropertiesForCopyThenDstIsSystemOrRemoteMemory) {
+    NEO::MockGraphicsAllocation srcAlloc;
+    srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
+
+    auto props = BlitProperties::constructPropertiesForCopy(nullptr, 0x1000, &srcAlloc, 0x2000,
+                                                            {0, 0, 0}, {0, 0, 0}, {64, 1, 1}, 0, 0, 0, 0, nullptr, false);
+    EXPECT_TRUE(props.isDstSystemOrRemoteMemory);
+}
+
+TEST(BlitPropertiesTest, givenDstInLocalMemoryAndSrcInSystemMemoryWhenConstructingPropertiesForCopyThenDstIsNotSystemOrRemoteMemory) {
+    NEO::MockGraphicsAllocation dstAlloc;
+    dstAlloc.overrideMemoryPool(MemoryPool::localMemory);
+
+    auto props = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0x1000, nullptr, 0x2000,
+                                                            {0, 0, 0}, {0, 0, 0}, {64, 1, 1}, 0, 0, 0, 0, nullptr, false);
+    EXPECT_TRUE(props.isSystemMemoryPoolUsed);
+    EXPECT_FALSE(props.isDstSystemOrRemoteMemory);
 }

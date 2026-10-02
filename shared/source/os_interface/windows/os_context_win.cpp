@@ -110,7 +110,7 @@ bool OsContextWin::isDirectSubmissionSupported() const {
 
 bool OsContextWin::checkLatePreemptionStartSupport() {
     auto &hwInfo = *wddm.getRootDeviceEnvironment().getHardwareInfo();
-    return wddm.isLatePreemptionStartSupported(hwInfo) && engineType == aub_stream::EngineType::ENGINE_CCS && engineUsage == EngineUsage::regular;
+    return wddm.isLatePreemptionStartSupported(hwInfo) && isLatePreemptionStartTarget();
 }
 
 OsContextWin::~OsContextWin() {

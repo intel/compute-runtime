@@ -23,12 +23,12 @@ class LinuxInfoLogImp : public OsInfoLog {
   public:
     static std::unique_ptr<TraceFsApi> (*createTraceFsApi)();
 
-    LinuxInfoLogImp(zes_intel_info_log_format_exp_t format);
+    LinuxInfoLogImp(zes_info_log_format_ext_t format);
     ~LinuxInfoLogImp() override;
 
-    ze_result_t getProperties(zes_intel_info_log_properties_exp_t *pProperties) override;
+    ze_result_t getProperties(zes_info_log_ext_properties_t *pProperties) override;
     ze_result_t createInstance(const char *pInstanceName,
-                               zes_intel_info_log_instance_exp_desc_t *pDesc,
+                               zes_info_log_instance_ext_desc_t *pDesc,
                                std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) override;
 
   private:
@@ -40,7 +40,7 @@ class LinuxInfoLogImp : public OsInfoLog {
     bool checkTracingOn(struct tracefs_instance *instance);
 
   protected:
-    zes_intel_info_log_format_exp_t infoLogFormat = ZES_INTEL_INFO_LOG_FORMAT_CPER;
+    zes_info_log_format_ext_t infoLogFormat = ZES_INFO_LOG_FORMAT_EXT_CPER;
     std::unique_ptr<TraceFsApi> pTraceFsApi;
 };
 

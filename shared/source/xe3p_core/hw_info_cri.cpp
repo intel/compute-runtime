@@ -11,7 +11,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
 
@@ -88,7 +87,7 @@ void CRI::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->ftrBcsInfo = maxNBitValue(9);
 }
 
-void CRI::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void CRI::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
@@ -108,23 +107,17 @@ void CRI::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 FeatureTable CRI::featureTable{};
 WorkaroundTable CRI::workaroundTable{};
 
-const HardwareInfo CriHwConfig::hwInfo = {
+const HardwareInfo CRI::hwInfo = {
     &CRI::platform,
     &CRI::featureTable,
     &CRI::workaroundTable,
-    &CriHwConfig::gtSystemInfo,
+    &CRI::gtSystemInfo,
     CRI::capabilityTable};
 
-GT_SYSTEM_INFO CriHwConfig::gtSystemInfo = {0};
-void CriHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO CRI::gtSystemInfo = {0};
+void CRI::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 
-const HardwareInfo CRI::hwInfo = CriHwConfig::hwInfo;
-
-void setupCRIHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    CriHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*CRI::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupCRIHardwareInfoImpl;
+void (*CRI::setupHardwareInfo)(HardwareInfo *, bool) = CRI::setupHardwareInfoImpl;
 } // namespace NEO

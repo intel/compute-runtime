@@ -49,7 +49,6 @@ class HostPointerManager;
 struct FabricVertex;
 struct FabricEdge;
 struct Image;
-class ExternalSemaphoreController;
 
 struct BaseDriver : _ze_driver_handle_t {
     virtual ~BaseDriver() = default;
@@ -123,7 +122,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     void createHostPointerManager();
 
     bool isRemoteImageNeeded(Image *image, Device *device);
-    bool isRemoteResourceNeeded(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device);
+    bool isRemoteResourceNeeded(const NEO::SvmAllocationData &allocData, Device *device);
     ze_result_t fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
                                  uint32_t *pCount, ze_fabric_edge_handle_t *phEdges);
     MOCKABLE_VIRTUAL uint32_t getEventMaxPacketCount(uint32_t numDevices, ze_device_handle_t *deviceHandles) const;
@@ -161,7 +160,9 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     void initDeviceUsmAllocPoolOnce();
     void initUsmPooling();
     NEO::UsmMemAllocPool::CustomCleanupFn getPoolCleanupFn();
+    NEO::UsmMemAllocPool::PeerAllocationsFn getPoolPeerAllocationsFn();
     NEO::UsmPoolLookupResult getHostUsmPoolOwningPtr(const void *ptr);
+    NEO::UsmPoolLookupResult getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
 
     void shutdownIpcSocketServer();
     bool unregisterIpcHandleWithServer(uint64_t handleId);
@@ -194,9 +195,6 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;
-
-    std::unique_ptr<ExternalSemaphoreController> externalSemaphoreController;
-    std::mutex externalSemaphoreControllerMutex;
 
     uint32_t numDevices = 0;
 

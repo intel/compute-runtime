@@ -50,6 +50,7 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrXe2PlusTiling = 1;
         refFtrTable.FtrPml5Support = 1;
         refFtrTable.FtrL3TransientDataFlush = 1;
+        refFtrTable.FtrAppTransientCaching = 1;
         refFtrTable.FtrEfficient64BitAddressing = 1;
     }
 

@@ -202,14 +202,15 @@ ze_result_t MetricOaExporter01::getEquationOperation(zet_intel_metric_df_gpu_equ
         {MetricsDiscovery::EQUATION_OPER_FMAX, ZET_INTEL_METRIC_DF_EQUATION_OPER_FMAX},
     };
 
-    if (equationOperationMap.find(mdEquationOperation) == equationOperationMap.end()) {
+    auto it = equationOperationMap.find(mdEquationOperation);
+    if (it == equationOperationMap.end()) {
         METRICS_LOG_ERR("Unknown Equation Operation 0x%x, returning 0x%x",
                         static_cast<uint32_t>(mdEquationOperation),
                         ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
-    assignUnaligned(&equationOperation, &equationOperationMap[mdEquationOperation]);
+    assignUnaligned(&equationOperation, &it->second);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -349,13 +350,14 @@ ze_result_t MetricOaExporter01::getDeltaFunction(zet_intel_metric_df_gpu_delta_f
         {MetricsDiscovery::DELTA_NS_TIME, ZET_INTEL_METRIC_DF_DELTA_NS_TIME},
     };
 
-    if (deltaFunctionMap.find(mdDeltaFunction.FunctionType) == deltaFunctionMap.end()) {
+    auto it = deltaFunctionMap.find(mdDeltaFunction.FunctionType);
+    if (it == deltaFunctionMap.end()) {
         METRICS_LOG_ERR("Error: Unknown Delta Function Type 0x%x returning 0x%x",
                         static_cast<uint32_t>(mdDeltaFunction.FunctionType), ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
     assignUnaligned(&deltaFunction.bitsCount, &mdDeltaFunction.BitsCount);
-    assignUnaligned(&deltaFunction.functionType, &deltaFunctionMap[mdDeltaFunction.FunctionType]);
+    assignUnaligned(&deltaFunction.functionType, &it->second);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -370,13 +372,14 @@ ze_result_t MetricOaExporter01::getInformationType(zet_intel_metric_df_gpu_infor
         {MetricsDiscovery::INFORMATION_TYPE_SAMPLE_PHASE, ZET_INTEL_METRIC_DF_INFORMATION_TYPE_SAMPLE_PHASE},
         {MetricsDiscovery::INFORMATION_TYPE_GPU_NODE, ZET_INTEL_METRIC_DF_INFORMATION_TYPE_GPU_NODE}};
 
-    if (informationTypeMap.find(mdInfoType) == informationTypeMap.end()) {
+    auto it = informationTypeMap.find(mdInfoType);
+    if (it == informationTypeMap.end()) {
         METRICS_LOG_ERR("Error: Unknown Information Type 0x%x returning 0x%x",
                         static_cast<uint32_t>(mdInfoType), ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
-    assignUnaligned(&infoType, &informationTypeMap[mdInfoType]);
+    assignUnaligned(&infoType, &it->second);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -493,13 +496,14 @@ ze_result_t MetricOaExporter01::getMetricType(zet_intel_metric_df_gpu_metric_typ
         {MetricsDiscovery::METRIC_TYPE_RAW, ZET_INTEL_METRIC_DF_METRIC_TYPE_RAW},
     };
 
-    if (metricTypeMap.find(mdMetricType) == metricTypeMap.end()) {
+    auto it = metricTypeMap.find(mdMetricType);
+    if (it == metricTypeMap.end()) {
         METRICS_LOG_ERR("Error: Unknown Metric Type 0x%x returning 0x%x",
                         static_cast<uint32_t>(mdMetricType), ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
-    assignUnaligned(&metricType, &metricTypeMap[mdMetricType]);
+    assignUnaligned(&metricType, &it->second);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -511,13 +515,14 @@ ze_result_t MetricOaExporter01::getMetricResultType(zet_intel_metric_df_gpu_metr
         {MetricsDiscovery::RESULT_FLOAT, ZET_INTEL_METRIC_DF_RESULT_FLOAT},
     };
 
-    if (resultTypeMap.find(mdResultType) == resultTypeMap.end()) {
+    auto it = resultTypeMap.find(mdResultType);
+    if (it == resultTypeMap.end()) {
         METRICS_LOG_ERR("Error: Unknown Metric Result Type 0x%x returning 0x%x",
                         static_cast<uint32_t>(mdResultType), ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
-    assignUnaligned(&resltType, &resultTypeMap[mdResultType]);
+    assignUnaligned(&resltType, &it->second);
     return ZE_RESULT_SUCCESS;
 }
 

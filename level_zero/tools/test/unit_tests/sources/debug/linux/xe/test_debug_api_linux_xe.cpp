@@ -644,7 +644,7 @@ TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenInterfaceIsUpstreamThenDefaultC
 
     session->initialize();
     EXPECT_EQ(1u, session->clientHandleToConnection.size());
-    EXPECT_NE(session->clientHandleToConnection.end(), session->clientHandleToConnection.find(EuDebugInterfaceUpstream::defaultClientHandle));
+    EXPECT_TRUE(session->clientHandleToConnection.contains(EuDebugInterfaceUpstream::defaultClientHandle));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionInitializationWhenNoValidEventsAreReadThenResultNotReadyIsReturned) {
@@ -776,10 +776,10 @@ TEST_F(DebugApiLinuxTestXe, GivenOneEuDebugOpenEventAndOneIncorrectEventWhenHand
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client2));
     EXPECT_EQ(session->clientHandleToConnection.size(), 1ul);
-    EXPECT_NE(session->clientHandleToConnection.find(client1.clientHandle), session->clientHandleToConnection.end());
+    EXPECT_TRUE(session->clientHandleToConnection.contains(client1.clientHandle));
 
     uint64_t wrongClientHandle = 34;
-    EXPECT_EQ(session->clientHandleToConnection.find(wrongClientHandle), session->clientHandleToConnection.end());
+    EXPECT_FALSE(session->clientHandleToConnection.contains(wrongClientHandle));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventCreateFlagWhenHandleEventThenNewClientConnectionIsCreated) {
@@ -803,11 +803,11 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventCreateFlagWhenHandleEv
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client2));
     EXPECT_EQ(session->clientHandleToConnection.size(), 2ul);
-    EXPECT_NE(session->clientHandleToConnection.find(client1.clientHandle), session->clientHandleToConnection.end());
-    EXPECT_NE(session->clientHandleToConnection.find(client2.clientHandle), session->clientHandleToConnection.end());
+    EXPECT_TRUE(session->clientHandleToConnection.contains(client1.clientHandle));
+    EXPECT_TRUE(session->clientHandleToConnection.contains(client2.clientHandle));
 
     uint64_t wrongClientHandle = 34;
-    EXPECT_EQ(session->clientHandleToConnection.find(wrongClientHandle), session->clientHandleToConnection.end());
+    EXPECT_FALSE(session->clientHandleToConnection.contains(wrongClientHandle));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventDestroyFlagWhenHandleEventThenClientConnectionIsDestroyed) {
@@ -824,7 +824,7 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventDestroyFlagWhenHandleE
     client1.clientHandle = 0x123456789;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
     EXPECT_EQ(session->clientHandleToConnection.size(), 1ul);
-    EXPECT_NE(session->clientHandleToConnection.find(client1.clientHandle), session->clientHandleToConnection.end());
+    EXPECT_TRUE(session->clientHandleToConnection.contains(client1.clientHandle));
 
     NEO::EuDebugEventClient client2;
     client2.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
@@ -951,7 +951,7 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventCreateFlagWhenHan
     execQueue->width = 3;
     memcpy(lrcHandle, lrcHandleTemp, sizeof(lrcHandleTemp));
     session->handleEvent(&execQueue->base);
-    EXPECT_NE(session->clientHandleToConnection.find(execQueue->clientHandle), session->clientHandleToConnection.end());
+    EXPECT_TRUE(session->clientHandleToConnection.contains(execQueue->clientHandle));
     EXPECT_EQ(session->clientHandleToConnection[execQueue->clientHandle]->execQueues[execQueue->execQueueHandle].vmHandle,
               execQueue->vmHandle);
     EXPECT_EQ(session->clientHandleToConnection[execQueue->clientHandle]->execQueues[execQueue->execQueueHandle].engineClass,
@@ -998,7 +998,7 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     execQueue->width = 3;
     memcpy(lrcHandle, lrcHandleTemp, sizeof(lrcHandleTemp));
     session->handleEvent(&execQueue->base);
-    EXPECT_NE(session->clientHandleToConnection.find(execQueue->clientHandle), session->clientHandleToConnection.end());
+    EXPECT_TRUE(session->clientHandleToConnection.contains(execQueue->clientHandle));
     EXPECT_EQ(session->clientHandleToConnection[execQueue->clientHandle]->execQueues[execQueue->execQueueHandle].vmHandle,
               execQueue->vmHandle);
     EXPECT_EQ(session->clientHandleToConnection[execQueue->clientHandle]->execQueues[execQueue->execQueueHandle].engineClass,
@@ -1232,11 +1232,11 @@ TEST_F(DebugApiLinuxTestXe, GivenMetadataEventWhenHandlingAndMetadataLengthIsZer
     session->handleEvent(&metadata.base);
 
     EXPECT_EQ(1u, session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.size());
-    EXPECT_NE(session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.end(), session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.find(metadata.metadataHandle));
+    EXPECT_TRUE(session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.contains(metadata.metadataHandle));
 
     metadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitDestroy)));
     session->handleEvent(&metadata.base);
-    EXPECT_NE(session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.end(), session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.find(metadata.metadataHandle));
+    EXPECT_TRUE(session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.contains(metadata.metadataHandle));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenMetadataCreateEventWhenHandlingAndIoctlFailsThenEventHandlingCallImmediatelyReturns) {
@@ -1264,11 +1264,11 @@ TEST_F(DebugApiLinuxTestXe, GivenMetadataCreateEventWhenHandlingAndIoctlFailsThe
     session->handleEvent(&metadata.base);
 
     EXPECT_EQ(0u, session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.size());
-    EXPECT_EQ(session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.end(), session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.find(metadata.metadataHandle));
+    EXPECT_FALSE(session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.contains(metadata.metadataHandle));
 
     metadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitDestroy)));
     session->handleEvent(&metadata.base);
-    EXPECT_NE(session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.end(), session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.find(metadata.metadataHandle));
+    EXPECT_TRUE(session->clientHandleToConnection[metadata.clientHandle]->metaDataMap.contains(metadata.metadataHandle));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenMetadataCreateEventForL0ZebinModuleWhenHandlingEventThenKernelCountFromReadMetadataIsRead) {
@@ -1299,8 +1299,7 @@ TEST_F(DebugApiLinuxTestXe, GivenMetadataCreateEventForL0ZebinModuleWhenHandling
     handler->returnMetadata = &readMetadata;
     session->handleEvent(&metadata.base);
 
-    EXPECT_NE(session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.end(),
-              session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.find(metadata.metadataHandle));
+    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.contains(metadata.metadataHandle));
 
     EXPECT_EQ(kernelCount, session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule[metadata.metadataHandle].segmentCount);
 
@@ -1318,8 +1317,7 @@ TEST_F(DebugApiLinuxTestXe, GivenMetadataCreateEventForL0ZebinModuleWhenHandling
     metadata.len = 0;
     session->handleEvent(&metadata.base);
 
-    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.end(),
-              session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.find(metadata.metadataHandle));
+    EXPECT_FALSE(session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.contains(metadata.metadataHandle));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenMetadataEventWhenHandlingEventThenGpuAddressIsSavedFromReadMetadata) {
@@ -4486,8 +4484,7 @@ TEST_F(DebugApiLinuxTestXe, GivenExecQueuePlacementEventWhenHandlingThenVmToTile
     session->handleEvent(&execQueuePlacements->base);
     alignedFree(memory);
 
-    EXPECT_NE(session->clientHandleToConnection[client1.clientHandle]->vmToTile.end(),
-              session->clientHandleToConnection[client1.clientHandle]->vmToTile.find(vmHandle));
+    EXPECT_TRUE(session->clientHandleToConnection[client1.clientHandle]->vmToTile.contains(vmHandle));
     EXPECT_EQ(1u, session->clientHandleToConnection[client1.clientHandle]->vmToTile[vmHandle]);
 }
 

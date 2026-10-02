@@ -23,7 +23,6 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
-#include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -66,7 +65,10 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         rootDeviceEnvironment.setHwInfo(hwInfoConst);
 
         rootDeviceEnvironment.initProductHelper();
-        quitOclInitIfLeoEnabled(rootDeviceEnvironment);
+        if (isLeoRootDevice(rootDeviceEnvironment)) {
+            executionEnvironment.addLeoPlatformKey(*rootDeviceEnvironment.getHardwareInfo());
+            return false;
+        }
         rootDeviceEnvironment.initGfxCoreHelper();
         rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper(true);
         rootDeviceEnvironment.initApiGfxCoreHelper();
@@ -112,10 +114,9 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         }
         hardwareInfo->ipVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
         rootDeviceEnvironment.initReleaseHelper();
-        rootDeviceEnvironment.initCompilerReleaseHelper();
 
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
-        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, &rootDeviceEnvironment.getCompilerReleaseHelper());
+        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true);
 
         if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
@@ -130,7 +131,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             rootDeviceEnvironment.initGmm();
             rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", csrType);
             auto aubCenter = rootDeviceEnvironment.aubCenter.get();
-            auto opsHandler = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+            auto opsHandler = std::make_unique<AubMemoryOperationsHandler>(*aubCenter);
             opsHandler->setAddressWidth(rootDeviceEnvironment.getGmmHelper()->getAddressWidth());
             rootDeviceEnvironment.memoryOperationsInterface = std::move(opsHandler);
 
@@ -254,6 +255,21 @@ static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
     return true;
 }
 
+void dropLeoRootDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
+    std::vector<std::unique_ptr<RootDeviceEnvironment>> nativeEnvironments;
+    nativeEnvironments.reserve(executionEnvironment.rootDeviceEnvironments.size());
+
+    for (auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
+        if (isLeoRootDevice(*rootDeviceEnvironment)) {
+            executionEnvironment.addLeoPlatformKey(*rootDeviceEnvironment->getHardwareInfo());
+            continue;
+        }
+        nativeEnvironments.emplace_back(rootDeviceEnvironment.release());
+    }
+
+    executionEnvironment.rootDeviceEnvironments.swap(nativeEnvironments);
+}
+
 bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     executionEnvironment.configureCcsMode();
 
@@ -272,8 +288,6 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
             continue;
         }
 
-        quitOclInitIfLeoEnabled(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
-
         rootDeviceIndex++;
     }
 
@@ -286,6 +300,11 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
     executionEnvironment.setDeviceHierarchyMode(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment.sortNeoDevices();
     executionEnvironment.parseAffinityMask();
+    const bool hadDevicesBeforeLeoDrop = !executionEnvironment.rootDeviceEnvironments.empty();
+    dropLeoRootDeviceEnvironments(executionEnvironment);
+    if (hadDevicesBeforeLeoDrop && executionEnvironment.rootDeviceEnvironments.empty()) {
+        return false;
+    }
     executionEnvironment.adjustRootDeviceEnvironments();
     if (!executionEnvironment.adjustCcsCount()) {
         return false;
@@ -331,23 +350,21 @@ std::unique_ptr<Device> DeviceFactory::createDevice(ExecutionEnvironment &execut
     return device;
 }
 
-void quitOclInitIfLeoEnabled(RootDeviceEnvironment &rootDeviceEnvironment) {
+bool isLeoRootDevice(const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (!isLeoDetectionEnabled()) {
-        return;
+        return false;
     }
 
     if (ApiSpecificConfig::getApiType() != ApiSpecificConfig::OCL) {
-        return;
+        return false;
     }
 
     const auto enableLeoFlag = debugManager.flags.EnableLEO.get();
     if (enableLeoFlag == 0 || enableLeoFlag == 1) {
-        return;
+        return false;
     }
 
-    if (rootDeviceEnvironment.getProductHelper().isLEOSupported()) {
-        throw LeoSupportedException{};
-    }
+    return rootDeviceEnvironment.getProductHelper().isLEOSupported();
 }
 
 std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvironment &executionEnvironment) {
@@ -357,11 +374,19 @@ std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvir
         return devices;
     }
 
+    if (executionEnvironment.rootDeviceEnvironments.empty()) {
+        return devices;
+    }
+
     if (!DeviceFactory::createMemoryManagerFunc(executionEnvironment)) {
         return devices;
     }
 
     for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        if (isLeoRootDevice(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex])) {
+            executionEnvironment.addLeoPlatformKey(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo());
+            continue;
+        }
         auto device = createRootDeviceFunc(executionEnvironment, rootDeviceIndex);
         if (device) {
             devices.push_back(std::move(device));

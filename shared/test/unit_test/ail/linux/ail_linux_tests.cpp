@@ -16,13 +16,13 @@ namespace SysCalls {
 extern bool isInvalidAILTest;
 }
 
-HWTEST2_F(AILTests, givenValidPathWhenAILinitProcessExecutableNameThenSuccessIsReturned, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenValidPathWhenAILinitProcessExecutableNameThenSuccessIsReturned, MatchAny) {
     AILConfigurationHw<productFamily> ail;
 
     EXPECT_EQ(ail.initProcessExecutableName(), true);
 }
 
-HWTEST2_F(AILTests, givenInvalidPathWhenAILinitProcessExecutableNameThenFailIsReturned, MatchAny) {
+HWTEST2_PRODUCT_F(AILTests, givenInvalidPathWhenAILinitProcessExecutableNameThenFailIsReturned, MatchAny) {
     VariableBackup<bool> isAILTestBackup(&SysCalls::isInvalidAILTest);
     SysCalls::isInvalidAILTest = true;
 

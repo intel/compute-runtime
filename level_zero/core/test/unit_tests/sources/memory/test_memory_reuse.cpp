@@ -10,7 +10,8 @@
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
@@ -100,14 +101,16 @@ TEST_F(SingleDeviceReuseWithoutPoolingTest, givenMemAdvisedAllocationWhenAllocat
 
     auto allocData = svmAllocsManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, allocData);
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gfxAlloc);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     result = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_UNCACHED);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_EQ(1u, device->memAdviseSharedAllocations.count(allocData));
+    ASSERT_EQ(0, gfxAlloc->getMemAdviseFlags().cachedMemory);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -116,10 +119,48 @@ TEST_F(SingleDeviceReuseWithoutPoolingTest, givenMemAdvisedAllocationWhenAllocat
     result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &reusedPtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_EQ(allocData, svmAllocsManager->getSVMAlloc(reusedPtr));
+    ASSERT_EQ(gfxAlloc, allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex()));
 
-    EXPECT_EQ(0u, device->memAdviseSharedAllocations.count(allocData));
+    EXPECT_EQ(NEO::MemAdviseFlags{}.allFlags, gfxAlloc->getMemAdviseFlags().allFlags);
 
     result = context->freeMem(reusedPtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+struct SingleDeviceWithPoolingTest : public UsmReuseMemoryTest<2, 8, 1> {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+        UsmReuseMemoryTest<2, 8, 1>::SetUp();
+    }
+};
+
+TEST_F(SingleDeviceWithPoolingTest, givenPooledAllocationWhenExecuteMemAdviseIsCalledThenAdviseIsIgnored) {
+    constexpr size_t size = MemoryConstants::pageSize;
+    auto device = driverHandle->devices[0];
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    ASSERT_NE(nullptr, context->getUsmPoolOwningPtr(ptr, allocData).pool);
+    auto gfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gfxAlloc);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    result = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_UNCACHED);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::MemAdviseFlags{}.allFlags, gfxAlloc->getMemAdviseFlags().allFlags);
+
+    result = context->freeMem(ptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 } // namespace ult

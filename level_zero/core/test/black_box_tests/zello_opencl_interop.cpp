@@ -15,21 +15,35 @@
 #include <cstring>
 #include <string>
 
+constexpr std::string_view blackBoxName = "Zello OpenCL Interop";
+
 std::tuple<cl_platform_id, cl_device_id, cl_context> initOCL(ze_context_handle_t context) {
     cl_uint numPlatforms{};
     clGetPlatformIDs(0, nullptr, &numPlatforms);
+    if (numPlatforms == 0) {
+        printf("No OpenCL platform found, check OCL_ICD_FILENAMES\n");
+        return {nullptr, nullptr, nullptr};
+    }
     std::vector<cl_platform_id> platforms(numPlatforms);
     clGetPlatformIDs(numPlatforms, platforms.data(), &numPlatforms);
     auto platform = platforms[0];
 
     cl_uint numDevices{};
     clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
+    if (numDevices == 0) {
+        printf("No OpenCL GPU device found\n");
+        return {nullptr, nullptr, nullptr};
+    }
     std::vector<cl_device_id> devices(numDevices);
     clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices.data(), &numDevices);
     auto device = devices[0];
 
-    cl_context_properties properties[3] = {CL_L0_CONTEXT_HANDLE, reinterpret_cast<intptr_t>(context), 0};
+    cl_context_properties properties[3] = {CL_CONTEXT_L0_HANDLE_INTEL, reinterpret_cast<intptr_t>(context), 0};
     auto clContext = clCreateContext(properties, 1, &device, nullptr, nullptr, nullptr);
+    if (clContext == nullptr) {
+        printf("Failed to create OpenCL context from L0 context\n");
+        return {nullptr, nullptr, nullptr};
+    }
 
     return {platform, device, clContext};
 }
@@ -48,8 +62,90 @@ ze_command_list_handle_t createImmIoqCmdList(ze_context_handle_t context, ze_dev
 }
 
 cl_command_queue createOclCmdQFromL0(ze_command_list_handle_t cmdList, cl_device_id device, cl_context context) {
-    cl_queue_properties properties[5] = {CL_L0_IMMEDIATE_CMD_LIST_HANDLE, reinterpret_cast<cl_properties>(cmdList), CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    cl_queue_properties properties[5] = {CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, reinterpret_cast<cl_properties>(cmdList), CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     return clCreateCommandQueueWithProperties(context, device, properties, nullptr);
+}
+
+std::string getInfoString(cl_platform_id platform, cl_platform_info paramName) {
+    size_t size{};
+    clGetPlatformInfo(platform, paramName, 0, nullptr, &size);
+    std::string value(size, '\0');
+    clGetPlatformInfo(platform, paramName, size, value.data(), nullptr);
+    return value;
+}
+
+std::string getInfoString(cl_device_id device, cl_device_info paramName) {
+    size_t size{};
+    clGetDeviceInfo(device, paramName, 0, nullptr, &size);
+    std::string value(size, '\0');
+    clGetDeviceInfo(device, paramName, size, value.data(), nullptr);
+    return value;
+}
+
+bool verifyExtensionAdvertised(cl_platform_id platform, cl_device_id device) {
+    const std::string extensionName{"cl_intel_level_zero_interop"};
+    const bool onPlatform = getInfoString(platform, CL_PLATFORM_EXTENSIONS).find(extensionName) != std::string::npos;
+    const bool onDevice = getInfoString(device, CL_DEVICE_EXTENSIONS).find(extensionName) != std::string::npos;
+
+    if (onPlatform && onDevice) {
+        printf("CL L0 INTEROP EXTENSION ADVERTISED CORRECT\n");
+    } else {
+        printf("CL L0 INTEROP EXTENSION ADVERTISED ERROR\n");
+        std::cout << "platform: " << onPlatform << ", device: " << onDevice << "\n";
+    }
+    return onPlatform && onDevice;
+}
+
+bool verifyImportedCmdQIgnoresProperties(ze_command_list_handle_t cmdList, cl_device_id device, cl_context context) {
+    cl_queue_properties properties[] = {CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, reinterpret_cast<cl_properties>(cmdList),
+                                        CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
+                                        CL_QUEUE_FAMILY_INTEL, 0x7,
+                                        CL_QUEUE_INDEX_INTEL, 0x7,
+                                        CL_QUEUE_THROTTLE_KHR, CL_QUEUE_THROTTLE_LOW_KHR,
+                                        0};
+
+    cl_int errcode = CL_SUCCESS;
+    auto queue = clCreateCommandQueueWithProperties(context, device, properties, &errcode);
+
+    cl_command_queue_properties reportedProperties = 0;
+    ze_command_list_handle_t reportedCmdList{};
+    if (queue != nullptr) {
+        clGetCommandQueueInfo(queue, CL_QUEUE_PROPERTIES, sizeof(reportedProperties), &reportedProperties, nullptr);
+        clGetCommandQueueInfo(queue, CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, sizeof(reportedCmdList), &reportedCmdList, nullptr);
+    }
+
+    const bool propertiesCorrect = errcode == CL_SUCCESS && queue != nullptr && reportedCmdList == cmdList &&
+                                   reportedProperties == static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE);
+    if (propertiesCorrect) {
+        printf("CL L0 IMPORTED CMDQ PROPERTIES CORRECT\n");
+    } else {
+        printf("CL L0 IMPORTED CMDQ PROPERTIES ERROR\n");
+        std::cout << "errcode: " << errcode << ", properties: " << reportedProperties << "\n";
+    }
+
+    if (queue != nullptr) {
+        clReleaseCommandQueue(queue);
+    }
+    return propertiesCorrect;
+}
+
+bool verifyImportedProperties(cl_mem memObj, const std::vector<cl_mem_properties> &expected, const char *label) {
+    cl_mem_properties storedProperties[8]{};
+    size_t storedSize{};
+    auto ret = clGetMemObjectInfo(memObj, CL_MEM_PROPERTIES, sizeof(storedProperties), storedProperties, &storedSize);
+
+    bool matches = (ret == CL_SUCCESS) && (storedSize == expected.size() * sizeof(cl_mem_properties));
+    for (size_t i = 0; matches && i < expected.size(); ++i) {
+        matches = (storedProperties[i] == expected[i]);
+    }
+
+    if (matches) {
+        printf("CL L0 %s IMPORTED PROPERTIES CORRECT\n", label);
+    } else {
+        printf("CL L0 %s IMPORTED PROPERTIES ERROR\n", label);
+        std::cout << "ret: " << ret << ", size: " << storedSize << "\n";
+    }
+    return matches;
 }
 
 const char *kernelSource =
@@ -70,8 +166,6 @@ const char *kernelSource =
     "}                                                     \n";
 
 const char *imageKernelSource =
-    "#pragma OPENCL EXTENSION __opencl_c_read_write_images : enable \n"
-    "\n"
     "__kernel void increment_and_sum_image(                \n"
     "    __read_write image2d_t a,                         \n"
     "    __read_write image2d_t b,                         \n"
@@ -178,9 +272,10 @@ ze_event_handle_t createCbEvent(ze_driver_handle_t driverHandle, ze_device_handl
     return e;
 }
 
-void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driverHandle, ze_device_handle_t device,
+bool runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driverHandle, ze_device_handle_t device,
                           cl_device_id clDevice, cl_context clContext,
                           ze_command_list_handle_t cmdList, cl_command_queue clCmdQL0) {
+    bool outputValidationSuccessful = true;
 
     auto [module, kernel] = createL0Kernel(context, device);
     auto [clProgram, clKernel] = createOCLKernel(clContext, clDevice);
@@ -196,17 +291,39 @@ void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driver
 
     auto memA = clCreateBufferWithProperties(clContext, 0, CL_MEM_COPY_HOST_PTR, gws * sizeof(int), dataA.data(), nullptr);
     void *ptrA = nullptr;
-    clGetMemObjectInfo(memA, CL_L0_MEM_OBJ_HANDLE, sizeof(void *), &ptrA, nullptr);
+    size_t bufferHandleSize = 0;
+    clGetMemObjectInfo(memA, CL_MEM_L0_HANDLE_INTEL, sizeof(void *), &ptrA, &bufferHandleSize);
+
+    if (bufferHandleSize == sizeof(void *) && ptrA != nullptr) {
+        printf("CL L0 BUFFER HANDLE QUERY CORRECT\n");
+    } else {
+        printf("CL L0 BUFFER HANDLE QUERY ERROR\n");
+        std::cout << "size: " << bufferHandleSize << "\n";
+        outputValidationSuccessful = false;
+    }
 
     auto memB = clCreateBufferWithProperties(clContext, 0, CL_MEM_COPY_HOST_PTR, gws * sizeof(int), dataB.data(), nullptr);
     void *ptrB = nullptr;
-    clGetMemObjectInfo(memB, CL_L0_MEM_OBJ_HANDLE, sizeof(void *), &ptrB, nullptr);
+    clGetMemObjectInfo(memB, CL_MEM_L0_HANDLE_INTEL, sizeof(void *), &ptrB, nullptr);
 
     ze_device_mem_alloc_desc_t deviceDescC{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, 0, 0};
     void *ptrC = nullptr;
     zeMemAllocDevice(context, &deviceDescC, gws * sizeof(int), 0u, device, &ptrC);
-    cl_mem_properties memObjHandleProperties[] = {CL_L0_MEM_OBJ_HANDLE, reinterpret_cast<cl_mem_properties>(ptrC), 0};
+    cl_mem_properties memObjHandleProperties[] = {CL_MEM_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(ptrC), 0};
     auto memC = clCreateBufferWithProperties(clContext, memObjHandleProperties, 0, gws * sizeof(int), nullptr, nullptr);
+
+    outputValidationSuccessful &= verifyImportedProperties(memC, {CL_MEM_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(ptrC), 0}, "BUFFER");
+
+    cl_mem_properties wrongKeyProperties[] = {CL_IMAGE_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(ptrC), CL_IMAGE_L0_HANDLE_LIST_END_INTEL, 0};
+    cl_int wrongKeyErrcode = CL_SUCCESS;
+    auto rejectedBuffer = clCreateBufferWithProperties(clContext, wrongKeyProperties, 0, gws * sizeof(int), nullptr, &wrongKeyErrcode);
+    if (rejectedBuffer == nullptr && wrongKeyErrcode == CL_INVALID_VALUE) {
+        printf("CL L0 BUFFER IMPORT KEY SPLIT CORRECT\n");
+    } else {
+        printf("CL L0 BUFFER IMPORT KEY SPLIT ERROR\n");
+        std::cout << "errcode: " << wrongKeyErrcode << "\n";
+        outputValidationSuccessful = false;
+    }
 
     zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &ptrA);
     zeKernelSetArgumentValue(kernel, 1, sizeof(void *), &ptrB);
@@ -241,6 +358,7 @@ void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driver
         if (!errorFound) {
             printf("CL L0 DATA INTEROP CORRECT\n");
         }
+        outputValidationSuccessful &= !errorFound;
 
         clEnqueueUnmapMemObject(clCmdQL0, memA, clIntPtrA, 0, nullptr, nullptr);
         clEnqueueUnmapMemObject(clCmdQL0, memB, clIntPtrB, 0, nullptr, nullptr);
@@ -263,19 +381,7 @@ void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driver
         } else {
             printf("CL L0 IOQ INTEROP ERROR\n");
             std::cout << "CL TS: " << clStart << ", L0 TS: " << l0end << "\n";
-        }
-
-        // verify TS
-        ze_event_handle_t l0ClEventHandle{};
-        clGetEventInfo(clEvent, CL_L0_EVENT_HANDLE, sizeof(ze_event_handle_t), &l0ClEventHandle, nullptr);
-        zeEventQueryKernelTimestamp(l0ClEventHandle, &timestamps);
-        uint64_t l0ClStart = timestamps.global.kernelStart * deviceProperties.timerResolution;
-
-        if (l0ClStart == clStart) {
-            printf("CL L0 TS INTEROP CORRECT\n");
-        } else {
-            printf("CL L0 TS INTEROP ERROR\n");
-            std::cout << "CL TS: " << clStart << ", L0 TS: " << l0ClStart << "\n";
+            outputValidationSuccessful = false;
         }
 
         zeEventDestroy(event);
@@ -287,11 +393,14 @@ void runBufferInteropTest(ze_context_handle_t context, ze_driver_handle_t driver
 
     zeModuleDestroy(module);
     clReleaseProgram(clProgram);
+
+    return outputValidationSuccessful;
 }
 
-void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverHandle, ze_device_handle_t device,
+bool runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverHandle, ze_device_handle_t device,
                          cl_device_id clDevice, cl_context clContext,
                          ze_command_list_handle_t cmdList, cl_command_queue clCmdQL0) {
+    bool outputValidationSuccessful = true;
 
     auto [module, kernel] = createL0ImageKernel(context, device);
     auto [clProgram, clKernel] = createOCLImageKernel(clContext, clDevice);
@@ -318,11 +427,28 @@ void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverH
 
     auto imgA = clCreateImage(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, &clFormat, &clImageDesc, dataA.data(), nullptr);
     ze_image_handle_t l0ImgA = nullptr;
-    clGetMemObjectInfo(imgA, CL_L0_MEM_OBJ_HANDLE, sizeof(ze_image_handle_t), &l0ImgA, nullptr);
+    size_t imageHandleSize = 0;
+    clGetImageInfo(imgA, CL_IMAGE_L0_HANDLE_INTEL, sizeof(ze_image_handle_t), &l0ImgA, &imageHandleSize);
+
+    if (imageHandleSize == sizeof(ze_image_handle_t) && l0ImgA != nullptr) {
+        printf("CL L0 IMAGE HANDLE QUERY CORRECT\n");
+    } else {
+        printf("CL L0 IMAGE HANDLE QUERY ERROR\n");
+        std::cout << "size: " << imageHandleSize << "\n";
+        outputValidationSuccessful = false;
+    }
+
+    void *notAnImageHandle = nullptr;
+    if (clGetMemObjectInfo(imgA, CL_MEM_L0_HANDLE_INTEL, sizeof(void *), &notAnImageHandle, nullptr) != CL_SUCCESS) {
+        printf("CL L0 IMAGE HANDLE QUERY SPLIT CORRECT\n");
+    } else {
+        printf("CL L0 IMAGE HANDLE QUERY SPLIT ERROR\n");
+        outputValidationSuccessful = false;
+    }
 
     auto imgB = clCreateImage(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, &clFormat, &clImageDesc, dataB.data(), nullptr);
     ze_image_handle_t l0ImgB = nullptr;
-    clGetMemObjectInfo(imgB, CL_L0_MEM_OBJ_HANDLE, sizeof(ze_image_handle_t), &l0ImgB, nullptr);
+    clGetImageInfo(imgB, CL_IMAGE_L0_HANDLE_INTEL, sizeof(ze_image_handle_t), &l0ImgB, nullptr);
 
     ze_image_desc_t l0ImageDesc{ZE_STRUCTURE_TYPE_IMAGE_DESC};
     l0ImageDesc.type = ZE_IMAGE_TYPE_2D;
@@ -337,8 +463,21 @@ void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverH
     l0ImageDesc.depth = 1;
     ze_image_handle_t l0ImgC = nullptr;
     zeImageCreate(context, device, &l0ImageDesc, &l0ImgC);
-    cl_mem_properties imgObjHandleProperties[] = {CL_L0_MEM_OBJ_HANDLE, reinterpret_cast<cl_mem_properties>(l0ImgC), 0};
+    cl_mem_properties imgObjHandleProperties[] = {CL_IMAGE_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(l0ImgC), CL_IMAGE_L0_HANDLE_LIST_END_INTEL, 0};
     auto imgC = clCreateImageWithProperties(clContext, imgObjHandleProperties, CL_MEM_READ_WRITE, &clFormat, &clImageDesc, nullptr, nullptr);
+
+    outputValidationSuccessful &= verifyImportedProperties(imgC, {CL_IMAGE_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(l0ImgC), CL_IMAGE_L0_HANDLE_LIST_END_INTEL, 0}, "IMAGE");
+
+    cl_mem_properties wrongKeyProperties[] = {CL_MEM_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(l0ImgC), 0};
+    cl_int wrongKeyErrcode = CL_SUCCESS;
+    auto rejectedImage = clCreateImageWithProperties(clContext, wrongKeyProperties, CL_MEM_READ_WRITE, &clFormat, &clImageDesc, nullptr, &wrongKeyErrcode);
+    if (rejectedImage == nullptr && wrongKeyErrcode == CL_INVALID_PROPERTY) {
+        printf("CL L0 IMAGE IMPORT KEY SPLIT CORRECT\n");
+    } else {
+        printf("CL L0 IMAGE IMPORT KEY SPLIT ERROR\n");
+        std::cout << "errcode: " << wrongKeyErrcode << "\n";
+        outputValidationSuccessful = false;
+    }
 
     zeKernelSetArgumentValue(kernel, 0, sizeof(ze_image_handle_t), &l0ImgA);
     zeKernelSetArgumentValue(kernel, 1, sizeof(ze_image_handle_t), &l0ImgB);
@@ -379,6 +518,7 @@ void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverH
         if (!errorFound) {
             printf("CL L0 IMAGE DATA INTEROP CORRECT\n");
         }
+        outputValidationSuccessful &= !errorFound;
 
         // verify IOQ
         zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max());
@@ -397,19 +537,7 @@ void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverH
         } else {
             printf("CL L0 IMAGE IOQ INTEROP ERROR\n");
             std::cout << "CL TS: " << clStart << ", L0 TS: " << l0end << "\n";
-        }
-
-        // verify TS
-        ze_event_handle_t l0ClEventHandle{};
-        clGetEventInfo(clEvent, CL_L0_EVENT_HANDLE, sizeof(ze_event_handle_t), &l0ClEventHandle, nullptr);
-        zeEventQueryKernelTimestamp(l0ClEventHandle, &timestamps);
-        uint64_t l0ClStart = timestamps.global.kernelStart * deviceProperties.timerResolution;
-
-        if (l0ClStart == clStart) {
-            printf("CL L0 IMAGE TS INTEROP CORRECT\n");
-        } else {
-            printf("CL L0 IMAGE TS INTEROP ERROR\n");
-            std::cout << "CL TS: " << clStart << ", L0 TS: " << l0ClStart << "\n";
+            outputValidationSuccessful = false;
         }
 
         zeEventDestroy(event);
@@ -425,52 +553,73 @@ void runImageInteropTest(ze_context_handle_t context, ze_driver_handle_t driverH
     clReleaseMemObject(imgA);
     clReleaseMemObject(imgB);
     clReleaseMemObject(imgC);
+
+    return outputValidationSuccessful;
 }
 
 int main(int argc, char *argv[]) {
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
     auto [clPlatform, clDevice, clContext] = initOCL(context);
+    if (clContext == nullptr) {
+        LevelZeroBlackBoxTests::printResult(false, false, blackBoxName);
+        return 1;
+    }
+
+    bool outputValidationSuccessful = true;
+
     auto cmdList = createImmIoqCmdList(context, device);
     auto clCmdQL0 = createOclCmdQFromL0(cmdList, clDevice, clContext);
 
     ze_context_handle_t contextCheck{};
-    clGetContextInfo(clContext, CL_L0_CONTEXT_HANDLE, sizeof(ze_context_handle_t), &contextCheck, nullptr);
+    clGetContextInfo(clContext, CL_CONTEXT_L0_HANDLE_INTEL, sizeof(ze_context_handle_t), &contextCheck, nullptr);
     if (contextCheck == context) {
         printf("CL L0 CONTEXT HANDLE INTEROP CORRECT\n");
     } else {
         printf("CL L0 CONTEXT HANDLE INTEROP ERROR\n");
+        outputValidationSuccessful = false;
     }
 
     ze_device_handle_t deviceCheck{};
-    clGetDeviceInfo(clDevice, CL_L0_DEVICE_HANDLE, sizeof(ze_device_handle_t), &deviceCheck, nullptr);
+    clGetDeviceInfo(clDevice, CL_DEVICE_L0_HANDLE_INTEL, sizeof(ze_device_handle_t), &deviceCheck, nullptr);
     if (deviceCheck == device) {
         printf("CL L0 DEVICE HANDLE INTEROP CORRECT\n");
     } else {
         printf("CL L0 DEVICE HANDLE INTEROP ERROR\n");
+        outputValidationSuccessful = false;
     }
 
     ze_driver_handle_t driverHandleCheck{};
-    clGetPlatformInfo(clPlatform, CL_L0_DRIVER_HANDLE, sizeof(ze_driver_handle_t), &driverHandleCheck, nullptr);
+    clGetPlatformInfo(clPlatform, CL_PLATFORM_L0_DRIVER_HANDLE_INTEL, sizeof(ze_driver_handle_t), &driverHandleCheck, nullptr);
     if (driverHandleCheck == driverHandle) {
         printf("CL L0 DRIVER HANDLE INTEROP CORRECT\n");
     } else {
         printf("CL L0 DRIVER HANDLE INTEROP ERROR\n");
+        outputValidationSuccessful = false;
     }
 
     ze_command_list_handle_t cmdListCheck{};
-    clGetCommandQueueInfo(clCmdQL0, CL_L0_IMMEDIATE_CMD_LIST_HANDLE, sizeof(ze_command_list_handle_t), &cmdListCheck, nullptr);
+    clGetCommandQueueInfo(clCmdQL0, CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, sizeof(ze_command_list_handle_t), &cmdListCheck, nullptr);
     if (cmdListCheck == cmdList) {
         printf("CL L0 CMD LIST HANDLE INTEROP CORRECT\n");
     } else {
         printf("CL L0 CMD LIST HANDLE INTEROP ERROR\n");
+        outputValidationSuccessful = false;
     }
 
-    runBufferInteropTest(context, driverHandle, device, clDevice, clContext, cmdList, clCmdQL0);
-    runImageInteropTest(context, driverHandle, device, clDevice, clContext, cmdList, clCmdQL0);
+    outputValidationSuccessful &= verifyExtensionAdvertised(clPlatform, clDevice);
+    outputValidationSuccessful &= verifyImportedCmdQIgnoresProperties(cmdList, clDevice, clContext);
+
+    outputValidationSuccessful &= runBufferInteropTest(context, driverHandle, device, clDevice, clContext, cmdList, clCmdQL0);
+    if (LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false, false)) {
+        outputValidationSuccessful &= runImageInteropTest(context, driverHandle, device, clDevice, clContext, cmdList, clCmdQL0);
+    }
 
     zeCommandListDestroy(cmdList);
     clReleaseCommandQueue(clCmdQL0);
@@ -478,5 +627,7 @@ int main(int argc, char *argv[]) {
     clReleaseContext(clContext);
     clReleaseDevice(clDevice);
 
-    return 0;
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return outputValidationSuccessful ? 0 : 1;
 }

@@ -1070,10 +1070,9 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     this->initializeResourcesAndDirectSubmission(device.getPreemptionMode());
 
-    if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
-                                                                  DebugPauseState::waitingForUserStartConfirmation,
-                                                                  DebugPauseState::hasUserStartConfirmation, *rootDeviceEnvironment.get());
+    const auto blitPauses = PauseOnGpuProperties::selectPauses(debugManager.flags.PauseOnBlitCopy.get(), taskCount);
+    if (blitPauses.beforeWorkload) {
+        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), true, *rootDeviceEnvironment.get());
     }
 
     bool isRelaxedOrderingDispatch = false;
@@ -1183,10 +1182,8 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
     }
-    if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
-                                                                  DebugPauseState::waitingForUserEndConfirmation,
-                                                                  DebugPauseState::hasUserEndConfirmation, *rootDeviceEnvironment.get());
+    if (blitPauses.afterWorkload) {
+        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), false, *rootDeviceEnvironment.get());
     }
 
     void *endingCmdPtr = nullptr;
@@ -2600,7 +2597,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::unblockPagingFenceSemaphore(uint
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::submitLateMidThreadPreemptionStart() {
-    UNRECOVERABLE_IF(this->osContext->getEngineType() != aub_stream::EngineType::ENGINE_CCS || this->osContext->getEngineUsage() != EngineUsage::regular);
+    UNRECOVERABLE_IF(!this->osContext->isLatePreemptionStartTarget());
     PRINT_STRING(debugManager.flags.PrintLateMidThreadPreemptionStartInfo.get(), stdout, "Late Mid Thread Preemption Start: Program LRI to enable mid thread preemption\n");
 
     auto lock = obtainUniqueOwnership();

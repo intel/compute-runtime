@@ -13,8 +13,6 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "neo_aot_platforms.h"
-
 using namespace NEO;
 
 using L3ControlTests = ::testing::Test;

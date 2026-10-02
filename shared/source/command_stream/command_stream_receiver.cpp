@@ -41,7 +41,6 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/hw_timestamps.h"
@@ -265,6 +264,11 @@ SubmissionStatus CommandStreamReceiver::processResidency(ResidencyContainer &all
 
 void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation) {
     makeResident(*gfxAllocation);
+}
+
+void CommandStreamReceiver::setupContext(OsContext &osContext) {
+    this->osContext = &osContext;
+    this->skipPreemptionAllocation = this->skipPreemptionAllocation && osContext.isLatePreemptionStartTarget();
 }
 
 void CommandStreamReceiver::makeResidentPreemptionAllocation() {
@@ -750,6 +754,11 @@ GraphicsAllocation *CommandStreamReceiver::getScratchAllocation() {
     return scratchSpaceController->getScratchSpaceSlot0Allocation();
 }
 
+uint32_t CommandStreamReceiver::getPerThreadScratchSizeSlot0Allocated() const {
+    auto primaryScratchSpaceController = getPrimaryScratchSpaceController();
+    return primaryScratchSpaceController != nullptr ? primaryScratchSpaceController->getPerThreadScratchSpaceSizeSlot0() : 0u;
+}
+
 void CommandStreamReceiver::overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) {
     flatBatchBufferHelper.reset(newHelper);
 }
@@ -890,7 +899,7 @@ void CommandStreamReceiver::createHostFunctionStreamer(HostFunctionAllocator *al
     UNRECOVERABLE_IF(chunk.cpuPtr == nullptr);
     auto hostFunctionIdAddress = chunk.cpuPtr;
 
-    auto useSemaphore64bCmd = peekRootDeviceEnvironment().getCompilerReleaseHelper().isAvailableSemaphore64(peekHwInfo());
+    auto useSemaphore64bCmd = peekRootDeviceEnvironment().getHelper<CompilerProductHelper>().isAvailableSemaphore64(peekHwInfo());
 
     auto dcFlushRequired = this->getDcFlushSupport();
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,

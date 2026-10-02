@@ -52,7 +52,10 @@ bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(c
     const bool inOrderRequired = !this->duplicatedInOrderCounterStorageEnabled &&
                                  (event->isEventTimestampFlagSet() || !event->isCounterBased());
 
-    return flushRequired || inOrderRequired;
+    const bool profilingCounterBasedEvent = event->isCounterBased() && event->isEventTimestampFlagSet() &&
+                                            !event->isExternalEvent() && !Event::isAggregatedEvent(event) && !event->isIpcImported();
+
+    return flushRequired || inOrderRequired || profilingCounterBasedEvent;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -353,6 +356,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     setupFlushL3Flags(isFlushL3ForExternalAllocationRequired, isFlushL3ForHostUsmRequired, isFlushL3AfterPostSync, isKernelUsingExternalAllocation, isKernelUsingSystemAllocation);
 
     NEO::EncodeKernelArgsExt dispatchKernelArgsExt = {};
+    const auto pauseOnEnqueue = launchParams.makeKernelCommandView ? NEO::PauseOnGpuProperties::PauseSelection{} : NEO::PauseOnGpuProperties::selectPauseSpace(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), !this->isImmediateType());
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         .device = neoDevice,
@@ -389,6 +393,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .isTimestampEvent = isTimestampEvent,
             .isUsingSystemAllocation = isKernelUsingSystemAllocation,
         },
+        .pauseOnEnqueue = pauseOnEnqueue,
         .preemptionMode = kernelPreemptionMode,
         .requiredPartitionDim = launchParams.requiredPartitionDim,
         .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,
@@ -486,8 +491,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (event->isCounterBased()) {
-                this->latestOperationHasHeapfullCbEventWithProfiling = true;
-                event->setHeapfullCbEventWithProfiling(true);
+                this->latestOperationHasCbEventWithProfiling = true;
+                event->setCbEventWithProfiling(true);
             } else {
                 appendWaitOnSingleEvent<PatchCbEventTimestampPostSyncSemaphoreWait>(event, launchParams.outListCommands, false, false);
                 appendSignalInOrderDependencyCounter(event, false, false, false, false);
@@ -562,22 +567,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
 
-    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-
-        commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlStart{.pCommand = additionalCommands.front()});
-        additionalCommands.pop_front();
-
-        commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreStart{.pCommand = additionalCommands.front()});
-        additionalCommands.pop_front();
-    }
-
-    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-
-        commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlEnd{.pCommand = additionalCommands.front()});
-        additionalCommands.pop_front();
-
-        commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreEnd{.pCommand = additionalCommands.front()});
-        additionalCommands.pop_front();
+    if (pauseOnEnqueue.beforeWorkload || pauseOnEnqueue.afterWorkload) [[unlikely]] {
+        programPauseOnEnqueueCommands(additionalCommands, pauseOnEnqueue);
     }
 
     return ZE_RESULT_SUCCESS;

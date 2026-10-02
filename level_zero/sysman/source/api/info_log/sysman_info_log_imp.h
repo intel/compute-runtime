@@ -22,13 +22,13 @@ namespace Sysman {
 
 class InfoLogImp : public InfoLog {
   public:
-    InfoLogImp(zes_intel_info_log_format_exp_t format);
+    InfoLogImp(zes_info_log_format_ext_t format);
     ~InfoLogImp() override;
 
-    ze_result_t infoLogGetProperties(zes_intel_info_log_properties_exp_t *pProperties) override;
+    ze_result_t infoLogGetProperties(zes_info_log_ext_properties_t *pProperties) override;
     ze_result_t infoLogCreateInstance(const char *pInstanceName,
-                                      zes_intel_info_log_instance_exp_desc_t *pDesc,
-                                      zes_intel_info_log_instance_handle_t *phInfoLogInstance) override;
+                                      zes_info_log_instance_ext_desc_t *pDesc,
+                                      zes_info_log_instance_handle_t *phInfoLogInstance) override;
     ze_result_t destroyInstance(InfoLogInstance *pInstance) override;
     void destroyAllInstances() override;
 
@@ -39,7 +39,7 @@ class InfoLogImp : public InfoLog {
     // Captured once at construction. Nothing changes these afterwards, so every query is served
     // from here, and a failed capture is reported to every caller.
     ze_result_t initResult = ZE_RESULT_ERROR_UNINITIALIZED;
-    zes_intel_info_log_properties_exp_t infoLogProperties = {};
+    zes_info_log_ext_properties_t infoLogProperties = {};
 
     std::mutex instancesMutex;
     std::vector<std::unique_ptr<InfoLogInstance>> instances;

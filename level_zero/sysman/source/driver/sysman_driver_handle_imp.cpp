@@ -48,7 +48,6 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverRescanDevicesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceGetPowerOffReasonExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEnumInfoLogsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverGetPropertiesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogGetPropertiesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogCreateInstanceExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogInstanceReadWithMetadataExp);
@@ -387,7 +386,7 @@ ze_result_t SysmanDriverHandleImp::driverEventRegister(zes_event_type_flags_t ev
     return pOsSysmanDriver->driverEventRegister(events);
 }
 
-ze_result_t SysmanDriverHandleImp::enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) {
+ze_result_t SysmanDriverHandleImp::enumInfoLogs(uint32_t *pCount, zes_info_log_handle_t *phInfoLogs) {
 
     if (pOsSysmanDriver == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -409,7 +408,7 @@ ze_result_t SysmanDriverHandleImp::getDeviceRescan(uint32_t *pCount, zes_device_
     return pOsSysmanDriver->rescanDevices(this, pCount, phDevices);
 }
 
-ze_result_t SysmanDriverHandleImp::getDriverProperties(zes_intel_driver_properties_exp_t *pProperties) {
+ze_result_t SysmanDriverHandleImp::getDriverProperties(zes_driver_properties_t *pProperties) {
     uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD);
     if (NEO::debugManager.flags.OverrideVersionBuild.get() > -1) {
         versionBuild = static_cast<uint32_t>(NEO::debugManager.flags.OverrideVersionBuild.get());

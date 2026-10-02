@@ -94,8 +94,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettin
 TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAndDebugVarSetThenInvalidArgValueErrorIsReturned) {
     pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
-    void *ptrHost = malloc(256);
-    EXPECT_NE(nullptr, ptrHost);
+    uint8_t data{};
 
     DebugManagerStateRestore restore;
     debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(1);
@@ -103,7 +102,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAn
     cl_int retVal = clSetKernelArgSVMPointer(
         pMockMultiDeviceKernel, // cl_kernel kernel
         0,                      // cl_uint arg_index
-        ptrHost                 // const void *arg_value
+        &data                   // const void *arg_value
     );
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
 
@@ -114,18 +113,15 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAn
     retVal = clSetKernelArgSVMPointer(
         pMockMultiDeviceKernel, // cl_kernel kernel
         0,                      // cl_uint arg_index
-        ptrHost                 // const void *arg_value
+        &data                   // const void *arg_value
     );
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
-
-    free(ptrHost);
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAndDebugVarNotSetThenSuccessIsReturned) {
     pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
-    void *ptrHost = malloc(256);
-    EXPECT_NE(nullptr, ptrHost);
+    uint8_t data{};
 
     DebugManagerStateRestore restore;
     debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(-1);
@@ -133,18 +129,15 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAn
     auto retVal = clSetKernelArgSVMPointer(
         pMockMultiDeviceKernel, // cl_kernel kernel
         0,                      // cl_uint arg_index
-        ptrHost                 // const void *arg_value
+        &data                   // const void *arg_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    free(ptrHost);
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAndDebugVarSetAndSharedSystemCapabilitiesNonZeroThenSuccessIsReturned) {
     pDevice->deviceInfo.sharedSystemMemCapabilities = 0xF;
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0xF;
-    void *ptrHost = malloc(256);
-    EXPECT_NE(nullptr, ptrHost);
+    uint8_t data{};
 
     DebugManagerStateRestore restore;
     debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(1);
@@ -153,11 +146,9 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAn
     auto retVal = clSetKernelArgSVMPointer(
         pMockMultiDeviceKernel, // cl_kernel kernel
         0,                      // cl_uint arg_index
-        ptrHost                 // const void *arg_value
+        &data                   // const void *arg_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    free(ptrHost);
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndNullArgValueWhenSettingKernelArgThenSuccessIsReturned) {

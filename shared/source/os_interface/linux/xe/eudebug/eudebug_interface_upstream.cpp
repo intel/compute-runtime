@@ -212,7 +212,7 @@ EuDebugEventVmBind EuDebugInterfaceUpstream::toEuDebugEventVmBind(const void *dr
     vmBindEvent.base.seqno = event->base.seqno;
     vmBindEvent.base.reserved = event->base.reserved;
     vmBindEvent.flags = event->flags;
-    vmBindEvent.numBinds = event->num_binds;
+    vmBindEvent.numBinds = event->num_bind_ops;
     vmBindEvent.vmHandle = event->vm_handle;
     vmBindEvent.clientHandle = defaultClientHandle;
 
@@ -309,7 +309,7 @@ EuDebugEventVmBindOpDebugData EuDebugInterfaceUpstream::toEuDebugEventVmBindOpDe
     vmBindDebugDataEvent.flags = event->flags;
     vmBindDebugDataEvent.offset = event->offset;
     vmBindDebugDataEvent.reserved = event->reserved;
-    memcpy(vmBindDebugDataEvent.pathName, event->pathname, PATH_MAX);
+    memcpy(vmBindDebugDataEvent.pathName, event->pathname, sizeof(event->pathname));
 
     return vmBindDebugDataEvent;
 }
@@ -320,7 +320,7 @@ EuDebugConnect EuDebugInterfaceUpstream::toEuDebugConnect(const void *drmType) {
 
     connectEvent.extensions = event->extensions;
     connectEvent.flags = event->flags;
-    connectEvent.version = event->version;
+    connectEvent.version = 0;
 
     return connectEvent;
 }
@@ -330,7 +330,6 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugCo
 
     pDrmConnect->extensions = connect.extensions;
     pDrmConnect->flags = connect.flags;
-    pDrmConnect->version = connect.version;
     pDrmConnect->fd = connect.pid;
 
     auto deleter = [](void *ptr) {
@@ -371,17 +370,20 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugVm
 }
 
 std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugAckEvent(const EuDebugAckEvent &ackEvent) {
-    struct drm_xe_eudebug_ack_event *pDrmAckEvent = new drm_xe_eudebug_ack_event();
+    struct drm_xe_eudebug_ack *pDrmAckEvent = new drm_xe_eudebug_ack();
 
-    pDrmAckEvent->type = ackEvent.type;
-    pDrmAckEvent->flags = ackEvent.flags;
+    pDrmAckEvent->type = 0;
+    pDrmAckEvent->flags = 0;
     pDrmAckEvent->seqno = ackEvent.seqno;
 
     auto deleter = [](void *ptr) {
-        delete static_cast<drm_xe_eudebug_ack_event *>(ptr);
+        delete static_cast<drm_xe_eudebug_ack *>(ptr);
     };
     return std::unique_ptr<void, void (*)(void *)>(pDrmAckEvent, deleter);
 }
+
+static_assert(sizeof(EuDebugEventVmBindOpDebugData::pathName) ==
+              sizeof(drm_xe_eudebug_event_vm_bind_op_debug_data::pathname));
 
 static_assert(offsetof(EuDebugEvent, len) == offsetof(drm_xe_eudebug_event, len));
 static_assert(offsetof(EuDebugEvent, type) == offsetof(drm_xe_eudebug_event, type));

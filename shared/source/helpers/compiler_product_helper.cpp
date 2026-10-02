@@ -22,6 +22,18 @@ uint32_t CompilerProductHelper::getHwIpVersion(const HardwareInfo &hwInfo) const
     return getProductConfigFromHwInfo(hwInfo);
 }
 
+bool CompilerProductHelper::isAvailableSemaphore64(const HardwareInfo &hwInfo) const {
+    if (debugManager.flags.Enable64BitSemaphore.get() != -1) {
+        return debugManager.flags.Enable64BitSemaphore.get() == 1;
+    }
+
+    if (!hwInfo.featureTable.flags.ftrHwSemaphore64) {
+        return false;
+    }
+
+    return hwInfo.caps.availableSemaphore64;
+}
+
 std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions = "cl_khr_byte_addressable_store "
                              "cl_khr_device_uuid "
@@ -164,7 +176,8 @@ StackVec<OclCVersion, 5> CompilerProductHelper::getDeviceOpenCLCVersions(OclCVer
         {OclCVersion{1, 0}, true},
         {OclCVersion{1, 1}, true},
         {OclCVersion{1, 2}, true},
-        {OclCVersion{3, 0}, true}};
+        {OclCVersion{3, 0}, true},
+        {OclCVersion{3, 1}, true}};
 
     StackVec<OclCVersion, 5> ret;
     for (const auto &version : supportedVersionsMatrix) {

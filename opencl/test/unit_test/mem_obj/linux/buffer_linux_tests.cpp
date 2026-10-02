@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -225,4 +225,26 @@ HWTEST_F(BufferCreateLinuxTests, givenClMemCopyHostPointerPassedToBufferCreateWh
         EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
         EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
     }
+}
+
+using ExportBufferMultiRootDeviceTests = MultiRootDeviceFixture;
+
+TEST_F(ExportBufferMultiRootDeviceTests, givenDeviceHandleListWhenValidatingInputAndCreatingBufferThenHandleIsImportedOnlyForListedDevices) {
+    cl_mem_properties properties[] = {
+        CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x1234,
+        CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties>(static_cast<cl_device_id>(device2)),
+        CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
+        0};
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto clBuffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, CL_MEM_READ_WRITE, 0,
+                                                                  MemoryConstants::pageSize, nullptr, retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    auto buffer = castToObject<Buffer>(clBuffer);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(nullptr, buffer->getGraphicsAllocation(device1->getRootDeviceIndex()));
+    EXPECT_NE(nullptr, buffer->getGraphicsAllocation(device2->getRootDeviceIndex()));
+
+    clReleaseMemObject(clBuffer);
 }

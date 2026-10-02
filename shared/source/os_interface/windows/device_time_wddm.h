@@ -20,7 +20,7 @@ class DeviceTimeWddm : public DeviceTime {
   public:
     DeviceTimeWddm(Wddm *wddm);
     TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
-    volatile uint64_t *getTimestampPtr() override;
+    MmioTimestampPtrHelper getMmioTimestampPtrHelper(OsContext &osContext) override;
     double getDynamicDeviceTimerResolution() const override;
     uint64_t getDynamicDeviceTimerClock() const override;
 

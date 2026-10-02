@@ -30,7 +30,7 @@ void getCpuFlagsLinux(std::string &cpuFlags) {
     std::ifstream cpuinfo(std::string(Os::sysFsProcPathPrefix) + "/cpuinfo");
     std::string line;
     while (std::getline(cpuinfo, line)) {
-        if (line.substr(0, 8) == "Features") {
+        if (line.starts_with("Features")) {
             cpuFlags = line;
             break;
         }

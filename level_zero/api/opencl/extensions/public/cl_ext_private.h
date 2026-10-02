@@ -135,14 +135,6 @@ using cl_unified_shared_memory_type_intel = cl_uint;
 
 #endif
 
-// cl l0 interop
-#define CL_L0_CONTEXT_HANDLE 0x42B0
-#define CL_L0_IMMEDIATE_CMD_LIST_HANDLE 0x42B1
-#define CL_L0_EVENT_HANDLE 0x42B2
-#define CL_L0_MEM_OBJ_HANDLE 0x42B3
-#define CL_L0_DEVICE_HANDLE 0x42B4
-#define CL_L0_DRIVER_HANDLE 0x42B5
-
 /* cl_mem_alloc_flags_intel - bitfield */
 #define CL_MEM_ALLOC_DEFAULT_INTEL 0
 
@@ -151,6 +143,34 @@ using cl_unified_shared_memory_type_intel = cl_uint;
 
 /* cl_command_type */
 #define CL_COMMAND_MEMSET_INTEL 0x4204
+
+/*************************************************
+ *   cl_intel_level_zero_interop extension        *
+ *************************************************/
+
+/* clGetPlatformInfo */
+#define CL_PLATFORM_L0_DRIVER_HANDLE_INTEL 0x42B5
+
+/* clGetDeviceInfo */
+#define CL_DEVICE_L0_HANDLE_INTEL 0x42B4
+
+/* clCreateContext and clGetContextInfo */
+#define CL_CONTEXT_L0_HANDLE_INTEL 0x42B0
+
+/* clCreateCommandQueueWithProperties and clGetCommandQueueInfo */
+#define CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL 0x42B1
+
+/* clGetEventInfo */
+#define CL_EVENT_L0_HANDLE_INTEL 0x42B2
+
+/* clCreateBufferWithProperties and clGetMemObjectInfo */
+#define CL_MEM_L0_HANDLE_INTEL 0x42B3
+
+/* clCreateImageWithProperties and clGetImageInfo, one handle per device */
+#define CL_IMAGE_L0_HANDLE_INTEL 0x42B6
+
+/* terminates the per-device handle list of CL_IMAGE_L0_HANDLE_INTEL */
+#define CL_IMAGE_L0_HANDLE_LIST_END_INTEL 0
 
 /******************************
  *  THREAD ARBITRATION POLICY  *

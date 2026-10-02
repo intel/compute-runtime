@@ -51,11 +51,12 @@ NTSTATUS MockDebugSessionWindows::runEscape(KM_ESCAPE_INFO &escapeInfo) {
 
 void MockDebugSessionWindows::ensureThreadStopped(ze_device_thread_t thread, uint64_t context) {
     auto threadId = convertToThreadId(thread);
-    if (allThreads.find(threadId) == allThreads.end()) {
-        allThreads[threadId] = std::make_unique<EuThread>(threadId);
+    auto it = allThreads.find(threadId);
+    if (it == allThreads.end()) {
+        it = allThreads.emplace(threadId, std::make_unique<EuThread>(threadId)).first;
     }
-    allThreads[threadId]->stopThread(context);
-    allThreads[threadId]->reportAsStopped();
+    it->second->stopThread(context);
+    it->second->reportAsStopped();
 }
 
 bool MockDebugSessionWindows::readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) {

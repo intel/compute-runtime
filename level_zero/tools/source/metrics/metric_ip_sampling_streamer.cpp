@@ -374,12 +374,26 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    // An empty buffer holds no raw report to process, whatever the scope of the raw data it would carry,
+    // so it is only meaningful on a last call, which calculates whatever is still cached from the raw
+    // data of the previous calls without consuming any more of it.
+    if ((rawDataSize == 0) && !lastCall) {
+        METRICS_LOG_ERR("%s", "Raw data is empty on a call that is not the last one of the calculation");
+        *pTotalMetricReportCount = 0;
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
     if (areAllCachesEmpty()) {
+        if (rawDataSize == 0) {
+            *pTotalMetricReportCount = 0;
+            return ZE_RESULT_SUCCESS;
+        }
+
         // All data is new: user asked to calculate all results available in the raw data. So, all caches are empty
         newData = true;
     } else if (rawDataSize > processedSize) {
         // Previous call user requested fewer results than available. So, algo cached pending results and
-        // processed size = input size - rawReportSize  because returned used size = rawReportSize.
+        // processed size = input size - rawReportSize because returned used size = rawReportSize.
         // Then user is expected to move pRawData by rawReportSize. If data gets appended user must update
         // new size accordingly.
         newData = true;
@@ -394,6 +408,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
     if (!isMultiDevice) {
         if (isMultiDeviceData) {
             METRICS_LOG_ERR("%s", "Cannot use root device raw data in a sub-device calculation operation handle");
+            *pTotalMetricReportCount = 0;
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
@@ -405,6 +420,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
         if (status != ZE_RESULT_SUCCESS) {
             clearScopesCaches();
             METRICS_LOG_ERR("%s", "Failed to update stall data");
+            *pTotalMetricReportCount = 0;
             return status;
         }
 
@@ -413,6 +429,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
     } else {
         if (!isMultiDeviceData) {
             METRICS_LOG_ERR("%s", "Cannot use sub-device raw data in a root device calculation operation handle");
+            *pTotalMetricReportCount = 0;
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
@@ -420,6 +437,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
         if (status != ZE_RESULT_SUCCESS) {
             clearScopesCaches();
             METRICS_LOG_ERR("%s", "Failed to update stall data map");
+            *pTotalMetricReportCount = 0;
             return status;
         }
 

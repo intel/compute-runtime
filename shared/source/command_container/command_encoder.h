@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
@@ -88,6 +89,10 @@ struct EncodePostSyncArgs {
     bool isRegularEvent() const {
         return (eventAddress != 0) && (inOrderExecInfo == nullptr);
     }
+
+    bool hasHostWaitablePostSync() const {
+        return (isHostScopeSignalEvent && (eventAddress != 0)) || (inOrderExecInfo != nullptr);
+    }
 };
 
 template <typename GfxFamily>
@@ -142,6 +147,7 @@ struct EncodeDispatchKernelArgs {
     std::list<void *> *additionalCommands = nullptr;
     EncodeKernelArgsExt *extendedArgs = nullptr;
     NEO::EncodePostSyncArgs postSyncArgs{};
+    PauseOnGpuProperties::PauseSelection pauseOnEnqueue{};
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
@@ -314,7 +320,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static size_t getDefaultIOHAlignment(bool isLocalMemory, const HardwareInfo &hwInfo);
 
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
-    static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args);
+    static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args, uint32_t &scratchSlot0SizeAllocated);
     static void patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);
@@ -750,6 +756,7 @@ struct EncodeWA {
 template <typename GfxFamily>
 struct EncodeEnableRayTracing {
     static void programEnableRayTracing(LinearStream &commandStream, uint64_t backBuffer);
+    static size_t getCmdSizeFor3dStateBtd();
     static void append3dStateBtd(void *ptr3dStateBtd);
     static bool is48bResourceNeededForRayTracing();
 };
@@ -833,6 +840,13 @@ struct EncodeMemoryFence {
 template <typename GfxFamily>
 struct EncodeUserInterrupt {
     static void encode(LinearStream &commandStream);
+};
+
+template <typename GfxFamily>
+struct EncodeDebugPause {
+    static size_t getSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool isBcs);
+    static void encode(LinearStream &commandStream, uint64_t debugPauseStateAddress, bool beforeWorkload, bool isBcs, bool dcFlushEnable,
+                       bool useSemaphore64bCmd, RootDeviceEnvironment &rootDeviceEnvironment);
 };
 
 template <typename GfxFamily>

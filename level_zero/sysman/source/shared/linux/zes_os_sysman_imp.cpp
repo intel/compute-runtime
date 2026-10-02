@@ -536,8 +536,8 @@ uint32_t LinuxSysmanImp::getMemoryType() {
 
 ze_result_t LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &offset) {
 
-    if (mapOfSubDeviceIdToTelemData.find(subDeviceId) != mapOfSubDeviceIdToTelemData.end()) {
-        auto pTelemData = mapOfSubDeviceIdToTelemData[subDeviceId].get();
+    if (auto it = mapOfSubDeviceIdToTelemData.find(subDeviceId); it != mapOfSubDeviceIdToTelemData.end()) {
+        auto pTelemData = it->second.get();
         telemDir = pTelemData->telemDir;
         guid = pTelemData->guid;
         offset = pTelemData->offset;
@@ -698,8 +698,7 @@ static NEO::PhysicalDevicePciBusInfo getPciBufInfo(const char *bdfString) {
 PRODUCT_FAMILY LinuxSysmanImp::getProductFamilyFromDeviceId(uint32_t deviceId) {
     for (size_t i = 0; NEO::deviceDescriptorTable[i].deviceId != 0; i++) {
         if (deviceId == NEO::deviceDescriptorTable[i].deviceId) {
-            DEBUG_BREAK_IF(nullptr == NEO::deviceDescriptorTable[i].pHwInfo);
-            return NEO::deviceDescriptorTable[i].pHwInfo->platform.eProductFamily;
+            return NEO::deviceDescriptorTable[i].productFamily;
         }
     }
     return IGFX_UNKNOWN;

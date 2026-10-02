@@ -31,7 +31,7 @@ struct alignas(32) ImplicitArgsV2 {
     uint32_t groupCountX;
     uint32_t groupCountY;
     uint32_t groupCountZ;
-    uint32_t padding1;
+    uint32_t scratch0SizeAllocated;
     uint64_t rtGlobalBufferPtr;
     uint64_t assertBufferPtr;
     uint64_t syncBufferPtr;
@@ -63,7 +63,7 @@ struct alignas(32) ImplicitArgsV2 {
                "uint32_t groupCountX;\n"
                "uint32_t groupCountY;\n"
                "uint32_t groupCountZ;\n"
-               "uint32_t padding1;\n"
+               "uint32_t scratch0SizeAllocated;\n"
                "uint64_t rtGlobalBufferPtr;\n"
                "uint64_t assertBufferPtr;\n"
                "uint64_t syncBufferPtr;\n"
@@ -293,6 +293,12 @@ struct alignas(32) ImplicitArgs {
         }
     }
 
+    void setScratch0SizeAllocated(uint32_t scratch0SizeAllocated) {
+        if (v2.header.structVersion == 2) {
+            v2.scratch0SizeAllocated = scratch0SizeAllocated;
+        }
+    }
+
     void setEnqueuedLocalSize(uint32_t x, uint32_t y, uint32_t z) {
         if (v1.header.structVersion == 1) {
             v1.enqueuedLocalSizeX = x;
@@ -320,6 +326,13 @@ struct alignas(32) ImplicitArgs {
     std::optional<size_t> getScratchPtrOffset() const {
         if (v1.header.structVersion == 1) {
             return offsetof(ImplicitArgsV1, scratchPtr);
+        }
+        return std::nullopt;
+    }
+
+    std::optional<size_t> getScratch0SizeAllocatedOffset() const {
+        if (v2.header.structVersion == 2) {
+            return offsetof(ImplicitArgsV2, scratch0SizeAllocated);
         }
         return std::nullopt;
     }

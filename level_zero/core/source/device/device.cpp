@@ -129,7 +129,6 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
 
     NEO::EngineGroupType engineGroupType = getEngineGroupTypeForOrdinal(commandQueueGroupOrdinal);
 
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
     Device::CmdListCreateFunPtrT createCommandList = &CommandList::create;
@@ -154,7 +153,7 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
         pNext = reinterpret_cast<const ze_base_desc_t *>(pNext->pNext);
     }
 
-    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, false, estimatedNumberOfCommands);
+    *commandList = createCommandList(this, engineGroupType, desc->flags, returnValue, false, estimatedNumberOfCommands);
 
     if (returnValue != ZE_RESULT_SUCCESS) {
         return returnValue;
@@ -195,10 +194,9 @@ ze_result_t Device::createInternalCommandList(const ze_command_list_desc_t *desc
                                               ze_command_list_handle_t *commandList) {
     NEO::EngineGroupType engineGroupType = getInternalEngineGroupType();
 
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
-    *commandList = CommandList::create(productFamily, this, engineGroupType, desc->flags, returnValue, true);
+    *commandList = CommandList::create(this, engineGroupType, desc->flags, returnValue, true);
     return returnValue;
 }
 
@@ -216,9 +214,8 @@ ze_result_t Device::createCommandListImmediate(const ze_command_queue_desc_t *de
 
     NEO::EngineGroupType engineGroupType = getEngineGroupTypeForOrdinal(commandQueueDesc.ordinal);
 
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *phCommandList = CommandList::createImmediate(productFamily, this, &commandQueueDesc, false, engineGroupType, returnValue, powerHint);
+    *phCommandList = CommandList::createImmediate(this, &commandQueueDesc, false, engineGroupType, returnValue, powerHint);
     if (returnValue == ZE_RESULT_SUCCESS) {
         CommandList::fromHandle(*phCommandList)->setOrdinal(commandQueueDesc.ordinal);
     }
@@ -258,8 +255,6 @@ void Device::adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index) {
 ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
                                        ze_command_queue_handle_t *commandQueue,
                                        uint8_t powerHint) {
-    auto &platform = neoDevice->getHardwareInfo().platform;
-
     NEO::CommandStreamReceiver *csr = nullptr;
 
     ze_command_queue_desc_t commandQueueDesc = *desc;
@@ -273,7 +268,8 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     auto queueProperties = CommandQueue::extractQueueProperties(*desc);
 
-    auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, powerHint);
+    bool queueOwnershipTaken = false;
+    auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, powerHint, &queueOwnershipTaken);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -281,14 +277,19 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
     UNRECOVERABLE_IF(csr == nullptr);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, &commandQueueDesc, isCopyOnly, false, false, returnValue);
+    *commandQueue = CommandQueue::create(this, csr, &commandQueueDesc, isCopyOnly, false, false, returnValue);
+    if (queueOwnershipTaken) {
+        if (*commandQueue != nullptr) {
+            CommandQueue::fromHandle(*commandQueue)->takeCsrQueueOwnership();
+        } else {
+            csr->releaseQueueOwnership();
+        }
+    }
     return returnValue;
 }
 
 ze_result_t Device::createInternalCommandQueue(const ze_command_queue_desc_t *desc,
                                                ze_command_queue_handle_t *commandQueue) {
-    auto &platform = neoDevice->getHardwareInfo().platform;
-
     auto internalEngine = this->getActiveDevice()->getInternalEngine();
     auto csr = internalEngine.commandStreamReceiver;
     auto engineGroupType = getInternalEngineGroupType();
@@ -297,7 +298,7 @@ ze_result_t Device::createInternalCommandQueue(const ze_command_queue_desc_t *de
     UNRECOVERABLE_IF(csr == nullptr);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, desc, isCopyOnly, true, false, returnValue);
+    *commandQueue = CommandQueue::create(this, csr, desc, isCopyOnly, true, false, returnValue);
     return returnValue;
 }
 
@@ -427,7 +428,6 @@ ze_result_t Device::getCommandQueueGroupProperties(uint32_t *pCount,
 }
 
 ze_result_t Device::createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) {
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     Image *pImage = nullptr;
 
     if (neoDevice->getDeviceInfo().imageSupport == false) {
@@ -435,7 +435,7 @@ ze_result_t Device::createImage(const ze_image_desc_t *desc, ze_image_handle_t *
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    auto result = Image::create(productFamily, this, desc, &pImage);
+    auto result = Image::create(this, desc, &pImage);
     if (result == ZE_RESULT_SUCCESS) {
         *phImage = pImage->toHandle();
     }
@@ -445,9 +445,7 @@ ze_result_t Device::createImage(const ze_image_desc_t *desc, ze_image_handle_t *
 
 ze_result_t Device::createSampler(const ze_sampler_desc_t *desc,
                                   ze_sampler_handle_t *sampler) {
-    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-
-    *sampler = Sampler::create(productFamily, this, desc);
+    *sampler = Sampler::create(this, desc);
     if (*sampler == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     } else {
@@ -756,6 +754,50 @@ ze_result_t Device::getMemoryAccessProperties(ze_device_memory_access_properties
     pMemAccessProperties->sharedSystemAllocCapabilities =
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getSharedSystemMemCapabilities(&hwInfo));
 
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Device::getCompilerInfo(ze_device_compiler_info_t paramName, const void *pNext, size_t *pSize, void *pData) {
+    if (paramName < ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES || paramName > ZE_DEVICE_COMPILER_INFO_DRIVER_OPTIONS) {
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    }
+    if (paramName != ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES && paramName != ZE_DEVICE_COMPILER_INFO_SPIRV_EXTENSIONS) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+    }
+    if (pNext != nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    if (pSize == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    this->neoDevice->initializeSpirvQueries();
+    const auto &deviceInfo = this->neoDevice->getDeviceInfo();
+    const bool queryCapabilities = paramName == ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES;
+    const size_t requiredSize = queryCapabilities ? deviceInfo.spirvCapabilities.size() * sizeof(uint32_t)
+                                                  : deviceInfo.spirvExtensions.size() * ZE_MAX_EXTENSION_NAME;
+
+    const size_t providedSize = *pSize;
+    *pSize = requiredSize;
+    if (pData == nullptr || providedSize < requiredSize || requiredSize == 0) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    if (queryCapabilities) {
+        memcpy_s(pData, providedSize, deviceInfo.spirvCapabilities.data(), requiredSize);
+    } else {
+        for (const auto &extension : deviceInfo.spirvExtensions) {
+            if (extension.size() >= ZE_MAX_EXTENSION_NAME) {
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+        }
+        memset(pData, 0, requiredSize);
+        auto *names = static_cast<char *>(pData);
+        for (const auto &extension : deviceInfo.spirvExtensions) {
+            memcpy_s(names, ZE_MAX_EXTENSION_NAME, extension.data(), extension.size());
+            names += ZE_MAX_EXTENSION_NAME;
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1599,8 +1641,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         }
 
         device->pageFaultCommandList =
-            CommandList::createImmediate(
-                device->neoDevice->getHardwareInfo().platform.eProductFamily, pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::copy, resultValue, 0u);
+            CommandList::createImmediate(pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::copy, resultValue, 0u);
     }
 
     if (osInterface) {
@@ -1861,7 +1902,83 @@ bool Device::isQueueGroupOrdinalValid(uint32_t ordinal) {
     return true;
 }
 
-ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint) {
+bool Device::adjustOrdinalAndIndexForForcedBcsEngine(uint32_t &ordinal, uint32_t &index) {
+    if ((NEO::debugManager.flags.ForceBcsEngineIndex.get() == -1) || !NEO::EngineHelper::isCopyOnlyEngineType(getEngineGroupTypeForOrdinal(ordinal))) {
+        return true;
+    }
+
+    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
+    uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
+
+    index = static_cast<uint32_t>(NEO::debugManager.flags.ForceBcsEngineIndex.get());
+
+    constexpr uint32_t invalidOrdinal = std::numeric_limits<uint32_t>::max();
+
+    auto findOrdinal = [&](NEO::EngineGroupType type) -> uint32_t {
+        bool subDeviceCopyEngines = (ordinal >= numEngineGroups);
+        auto &lookupGroup = subDeviceCopyEngines ? this->subDeviceCopyEngineGroups : engineGroups;
+
+        uint32_t foundOrdinal = invalidOrdinal;
+
+        for (uint32_t i = 0; i < lookupGroup.size(); i++) {
+            if (lookupGroup[i].engineGroupType == type) {
+                foundOrdinal = (i + (subDeviceCopyEngines ? numEngineGroups : 0));
+                break;
+            }
+        }
+
+        return foundOrdinal;
+    };
+
+    if (index == 0 && getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::copy) {
+        ordinal = findOrdinal(NEO::EngineGroupType::copy);
+    } else if (index > 0) {
+        if (getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::linkedCopy) {
+            ordinal = findOrdinal(NEO::EngineGroupType::linkedCopy);
+        }
+        index--;
+    }
+
+    return (ordinal != invalidOrdinal);
+}
+
+bool Device::isQueueGroupOrdinalAndIndexValid(uint32_t ordinal, uint32_t index) {
+    if (!isQueueGroupOrdinalValid(ordinal)) {
+        return false;
+    }
+
+    if (!adjustOrdinalAndIndexForForcedBcsEngine(ordinal, index)) {
+        return false;
+    }
+
+    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
+    uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
+
+    if (ordinal < numEngineGroups) {
+        return index < engineGroups[ordinal].engines.size();
+    }
+
+    return index < this->subDeviceCopyEngineGroups[ordinal - numEngineGroups].engines.size();
+}
+
+ze_command_queue_priority_t Device::getEffectiveQueuePriority(ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool copyOnly) {
+    if (priorityLevel.has_value()) {
+        priority = (priorityLevel.value() < 0) ? ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH : ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    }
+
+    if (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
+        return ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
+    }
+
+    if (isSuitableForLowPriority(priority, copyOnly)) {
+        return ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+    }
+
+    return ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+}
+
+ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint, bool *queueOwnershipTaken) {
+    *queueOwnershipTaken = false;
     auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
@@ -1869,39 +1986,8 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if ((NEO::debugManager.flags.ForceBcsEngineIndex.get() != -1) && NEO::EngineHelper::isCopyOnlyEngineType(getEngineGroupTypeForOrdinal(ordinal))) {
-        index = static_cast<uint32_t>(NEO::debugManager.flags.ForceBcsEngineIndex.get());
-
-        constexpr uint32_t invalidOrdinal = std::numeric_limits<uint32_t>::max();
-
-        auto findOrdinal = [&](NEO::EngineGroupType type) -> uint32_t {
-            bool subDeviceCopyEngines = (ordinal >= numEngineGroups);
-            auto &lookupGroup = subDeviceCopyEngines ? this->subDeviceCopyEngineGroups : engineGroups;
-
-            uint32_t ordinal = invalidOrdinal;
-
-            for (uint32_t i = 0; i < lookupGroup.size(); i++) {
-                if (lookupGroup[i].engineGroupType == type) {
-                    ordinal = (i + (subDeviceCopyEngines ? numEngineGroups : 0));
-                    break;
-                }
-            }
-
-            return ordinal;
-        };
-
-        if (index == 0 && getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::copy) {
-            ordinal = findOrdinal(NEO::EngineGroupType::copy);
-        } else if (index > 0) {
-            if (getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::linkedCopy) {
-                ordinal = findOrdinal(NEO::EngineGroupType::linkedCopy);
-            }
-            index--;
-        }
-
-        if (ordinal == invalidOrdinal) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+    if (!adjustOrdinalAndIndexForForcedBcsEngine(ordinal, index)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     const NEO::GfxCoreHelper &gfxCoreHelper = neoDevice->getGfxCoreHelper();
@@ -1911,17 +1997,11 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
     auto engineGroupType = getEngineGroupTypeForOrdinal(ordinal);
     bool copyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
-    if (priorityLevel.has_value()) {
-        if (priorityLevel.value() < 0) {
-            priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
-        } else {
-            priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        }
-    }
+    auto effectivePriority = getEffectiveQueuePriority(priority, priorityLevel, copyOnly);
 
-    if (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
+    if (effectivePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
         contextPriority = NEO::EngineUsage::highPriority;
-    } else if (isSuitableForLowPriority(priority, copyOnly)) {
+    } else if (effectivePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW) {
         contextPriority = NEO::EngineUsage::lowPriority;
     }
 
@@ -1969,27 +2049,31 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
 
     auto &osContext = (*csr)->getOsContext();
 
-    if (secondaryContextsEnabled) {
+    if (secondaryContextsEnabled &&
+        neoDevice->areSecondaryEnginesAvailable() &&
+        neoDevice->isSecondaryContextEngineType(osContext.getEngineType())) {
         std::optional<uint32_t> hwPriority = std::nullopt;
         if (priorityLevel.has_value()) {
             hwPriority = gfxCoreHelper.getHwQueuePriority(priorityLevel.value());
         }
-        selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr);
+        if (!selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr)) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+        *queueOwnershipTaken = true;
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
 bool Device::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> hwPriority, NEO::CommandStreamReceiver **csr) {
-    if (neoDevice->isSecondaryContextEngineType(engineType)) {
-        NEO::EngineTypeUsage engineTypeUsage;
-        engineTypeUsage.first = engineType;
-        engineTypeUsage.second = engineUsage;
-        auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority);
-        if (engine) {
-            *csr = engine->commandStreamReceiver;
-            return true;
-        }
+
+    NEO::EngineTypeUsage engineTypeUsage;
+    engineTypeUsage.first = engineType;
+    engineTypeUsage.second = engineUsage;
+    auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority);
+    if (engine) {
+        *csr = engine->commandStreamReceiver;
+        return true;
     }
 
     return false;
@@ -2101,14 +2185,15 @@ bool Device::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &sl
         UNRECOVERABLE_IF(!deviceBitfield.any());
         uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
 
-        if (topologyMap.find(subDeviceIndex) != topologyMap.end()) {
-            if (slice < topologyMap.at(subDeviceIndex).sliceIndices.size()) {
+        if (auto it = topologyMap.find(subDeviceIndex); it != topologyMap.end()) {
+            const auto &mapping = it->second;
+            if (slice < mapping.sliceIndices.size()) {
                 deviceIndex = subDeviceIndex;
-                slice = topologyMap.at(subDeviceIndex).sliceIndices[slice];
+                slice = mapping.sliceIndices[slice];
 
-                if (topologyMap.at(subDeviceIndex).sliceIndices.size() == 1) {
+                if (mapping.sliceIndices.size() == 1) {
                     uint32_t subsliceId = subslice;
-                    subslice = topologyMap.at(subDeviceIndex).subsliceIndices[subsliceId];
+                    subslice = mapping.subsliceIndices[subsliceId];
                 }
                 return true;
             }
@@ -2126,7 +2211,8 @@ bool Device::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, 
         deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
     }
 
-    if (topologyMap.find(deviceIndex) != topologyMap.end()) {
+    if (auto it = topologyMap.find(deviceIndex); it != topologyMap.end()) {
+        const auto &mapping = it->second;
         uint32_t apiSliceId = 0;
         if (!isSubdevice) {
             for (uint32_t devId = 0; devId < deviceIndex; devId++) {
@@ -2136,13 +2222,13 @@ bool Device::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, 
             }
         }
 
-        for (uint32_t i = 0; i < topologyMap.at(deviceIndex).sliceIndices.size(); i++) {
-            if (static_cast<uint32_t>(topologyMap.at(deviceIndex).sliceIndices[i]) == slice) {
+        for (uint32_t i = 0; i < mapping.sliceIndices.size(); i++) {
+            if (static_cast<uint32_t>(mapping.sliceIndices[i]) == slice) {
                 apiSliceId += i;
                 slice = apiSliceId;
-                if (topologyMap.at(deviceIndex).sliceIndices.size() == 1) {
-                    for (uint32_t subsliceApiId = 0; subsliceApiId < topologyMap.at(deviceIndex).subsliceIndices.size(); subsliceApiId++) {
-                        if (static_cast<uint32_t>(topologyMap.at(deviceIndex).subsliceIndices[subsliceApiId]) == subslice) {
+                if (mapping.sliceIndices.size() == 1) {
+                    for (uint32_t subsliceApiId = 0; subsliceApiId < mapping.subsliceIndices.size(); subsliceApiId++) {
+                        if (static_cast<uint32_t>(mapping.subsliceIndices[subsliceApiId]) == subslice) {
                             subslice = subsliceApiId;
                         }
                     }
@@ -2339,6 +2425,13 @@ NEO::DebuggerL0 *Device::getL0Debugger() {
     return getNEODevice()->getL0Debugger();
 }
 
+static void setupTagAllocatorForSimulation(NEO::TagAllocatorBase &allocator, NEO::Device &neoDevice) {
+    auto csr = neoDevice.getDefaultEngine().commandStreamReceiver;
+    if (csr->isTbxMode()) {
+        csr->setupTagAllocatorForSimulation(allocator);
+    }
+}
+
 template <typename NodeT>
 NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAllocatorBase> &allocator, std::mutex &inOrderAllocatorMutex, NEO::Device &neoDevice, uint32_t immediateWritePostSyncOffset) {
     if (!allocator.get()) {
@@ -2355,6 +2448,7 @@ NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAlloca
 
             allocator = std::make_unique<NEO::TagAllocator<NodeT>>(rootDeviceIndices, neoDevice.getMemoryManager(), NodeT::defaultAllocatorTagCount,
                                                                    MemoryConstants::cacheLineSize, nodeSize, 0, false, false, neoDevice.getDeviceBitfield());
+            setupTagAllocatorForSimulation(*allocator, neoDevice);
         }
     }
 
@@ -2377,6 +2471,7 @@ NEO::TagAllocatorBase *Device::getInOrderSharableEventDataAllocator() {
             size_t nodeSize = alignUp(sizeof(NEO::InOrderExecEventData), MemoryConstants::cacheLineSize);
             inOrderSharableEventDataAllocator = std::make_unique<NEO::TagAllocator<NEO::InOrderExecEventDataNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), 128,
                                                                                                                        MemoryConstants::cacheLineSize, nodeSize, 0, false, false, getNEODevice()->getDeviceBitfield());
+            setupTagAllocatorForSimulation(*inOrderSharableEventDataAllocator, *getNEODevice());
         }
     }
     return inOrderSharableEventDataAllocator.get();
@@ -2393,6 +2488,7 @@ NEO::TagAllocatorBase *Device::getInOrderTimestampAllocator() {
             size_t alignment = getGfxCoreHelper().getTimestampPacketAllocatorAlignment();
 
             inOrderTimestampAllocator = getL0GfxCoreHelper().getInOrderTimestampAllocator(rootDeviceIndices, getNEODevice()->getMemoryManager(), 256, packetsCountPerElement, alignment, getNEODevice()->getDeviceBitfield());
+            setupTagAllocatorForSimulation(*inOrderTimestampAllocator, *getNEODevice());
         }
     }
 

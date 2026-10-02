@@ -36,7 +36,6 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/print_formatter.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -145,7 +144,6 @@ void RootDeviceEnvironment::initGmm() {
 void RootDeviceEnvironment::initOsTime() {
     if (!osTime) {
         osTime = OSTime::create(osInterface.get());
-        osTime->initTimestampPtr();
         osTime->setDeviceTimerResolution();
     }
 }
@@ -206,7 +204,6 @@ void RootDeviceEnvironment::initHelpers() {
     initApiGfxCoreHelper();
     initCompilerProductHelper();
     initReleaseHelper();
-    initCompilerReleaseHelper();
     initAilConfigurationHelper();
     initWaitUtils();
 }
@@ -246,12 +243,6 @@ void RootDeviceEnvironment::initReleaseHelper() {
     }
 }
 
-void RootDeviceEnvironment::initCompilerReleaseHelper() {
-    if (compilerReleaseHelper == nullptr) {
-        compilerReleaseHelper = CompilerReleaseHelper::create(this->getHardwareInfo()->ipVersion);
-    }
-}
-
 void RootDeviceEnvironment::initAilConfigurationHelper() {
     if (ailConfiguration == nullptr && debugManager.flags.EnableAIL.get()) {
         ailConfiguration = AILConfiguration::create(this->getHardwareInfo()->platform.eProductFamily);
@@ -261,11 +252,6 @@ void RootDeviceEnvironment::initAilConfigurationHelper() {
 const ReleaseHelper &RootDeviceEnvironment::getReleaseHelper() const {
     UNRECOVERABLE_IF(releaseHelper == nullptr);
     return *releaseHelper;
-}
-
-const CompilerReleaseHelper &RootDeviceEnvironment::getCompilerReleaseHelper() const {
-    UNRECOVERABLE_IF(compilerReleaseHelper == nullptr);
-    return *compilerReleaseHelper;
 }
 
 AILConfiguration *RootDeviceEnvironment::getAILConfigurationHelper() const {
@@ -365,14 +351,11 @@ HelperType &RootDeviceEnvironment::getHelper() const {
     if constexpr (std::is_same_v<HelperType, CompilerProductHelper>) {
         UNRECOVERABLE_IF(compilerProductHelper == nullptr);
         return *compilerProductHelper;
-    } else if constexpr (std::is_same_v<HelperType, CompilerReleaseHelper>) {
-        UNRECOVERABLE_IF(compilerReleaseHelper == nullptr);
-        return *compilerReleaseHelper;
     } else if constexpr (std::is_same_v<HelperType, ProductHelper>) {
         UNRECOVERABLE_IF(productHelper == nullptr);
         return *productHelper;
     } else {
-        static_assert(std::is_same_v<HelperType, GfxCoreHelper>, "Only CompilerProductHelper, CompilerReleaseHelper, ProductHelper and GfxCoreHelper are supported");
+        static_assert(std::is_same_v<HelperType, GfxCoreHelper>, "Only CompilerProductHelper, ProductHelper and GfxCoreHelper are supported");
         UNRECOVERABLE_IF(gfxCoreHelper == nullptr);
         return *gfxCoreHelper;
     }
@@ -380,7 +363,6 @@ HelperType &RootDeviceEnvironment::getHelper() const {
 
 template ProductHelper &RootDeviceEnvironment::getHelper() const;
 template CompilerProductHelper &RootDeviceEnvironment::getHelper() const;
-template CompilerReleaseHelper &RootDeviceEnvironment::getHelper() const;
 template GfxCoreHelper &RootDeviceEnvironment::getHelper() const;
 
 } // namespace NEO

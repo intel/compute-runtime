@@ -151,7 +151,7 @@ std::unique_ptr<MutableCommandList> MutableCommandListFixtureInit::createMutable
     }
 
     std::unique_ptr<MutableCommandList> mutableCommandListPtr(
-        MutableCommandList::whiteboxCast(::L0::MCL::MutableCommandList::fromHandle(::L0::MCL::MutableCommandList::create(productFamily, this->device, this->engineGroupType, flags, returnValue, false))));
+        MutableCommandList::whiteboxCast(::L0::MCL::MutableCommandList::fromHandle(::L0::MCL::MutableCommandList::create(this->device, this->engineGroupType, flags, returnValue, false))));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     return mutableCommandListPtr;
@@ -434,7 +434,8 @@ bool MutableCommandListFixtureInit::isAllocationInMutableResidency(MutableComman
 
 void MutableCommandListFixtureInit::mutableWaitEventsOnAppendBarrierCallback(MutableWaitEventsOnAppendOperationsData *callbackData) {
     L0::CmdListWaitEventParameters waitEventParams;
-    callbackData->result = this->mutableCommandList->appendBarrier(callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams;
+    callbackData->result = this->mutableCommandList->appendBarrier(callbackData->signalEvent, callbackData->numWaitEvents, callbackData->waitEvents, waitEventParams, signalEventParams);
     callbackData->outWaitCmds = waitEventParams.outWaitCmds;
     callbackData->skipAddingWaitEventsToResidency = waitEventParams.skipAddingWaitEventsToResidency;
 }
@@ -524,7 +525,7 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemory
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtr));
     callbackData->dstImageHandle = imagePtr->toHandle();
 
     L0::CmdListMemoryCopyParams memoryParams{};
@@ -546,7 +547,7 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyFromMemory
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtr));
     callbackData->dstImageHandle = imagePtr->toHandle();
 
     L0::CmdListMemoryCopyParams memoryParams{};
@@ -571,7 +572,7 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryCa
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtr));
     callbackData->srcImageHandle = imagePtr->toHandle();
 
     L0::CmdListMemoryCopyParams memoryParams{};
@@ -593,7 +594,7 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyToMemoryEx
     zeDesc.depth = 2;
 
     L0::Image *imagePtr = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtr));
     callbackData->srcImageHandle = imagePtr->toHandle();
 
     L0::CmdListMemoryCopyParams memoryParams{};
@@ -616,11 +617,11 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyCallback(M
     zeDesc.depth = 2;
 
     L0::Image *imagePtrSrc = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtrSrc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtrSrc));
     callbackData->srcImageHandle = imagePtrSrc->toHandle();
 
     L0::Image *imagePtrDst = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtrDst));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtrDst));
     callbackData->dstImageHandle = imagePtrDst->toHandle();
 
     L0::CmdListMemoryCopyParams memoryParams{};
@@ -639,11 +640,11 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendImageCopyRegionCall
     zeDesc.depth = 2;
 
     L0::Image *imagePtrSrc = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtrSrc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtrSrc));
     callbackData->srcImageHandle = imagePtrSrc->toHandle();
 
     L0::Image *imagePtrDst = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device->getNEODevice()->getHardwareInfo().platform.eProductFamily, device, &zeDesc, &imagePtrDst));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::Image::create(device, &zeDesc, &imagePtrDst));
     callbackData->dstImageHandle = imagePtrDst->toHandle();
 
     L0::CmdListMemoryCopyParams memoryParams{};

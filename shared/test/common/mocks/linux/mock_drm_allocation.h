@@ -73,7 +73,6 @@ class MockBufferObject : public BufferObject {
 class MockDrmAllocation : public DrmAllocation {
   public:
     using DrmAllocation::bufferObjects;
-    using DrmAllocation::enabledMemAdviseFlags;
     using DrmAllocation::memoryPool;
     using DrmAllocation::memoryToUnmap;
     using DrmAllocation::registeredBoBindHandles;

@@ -312,8 +312,8 @@ HWTEST_P(PreemptionHwTest, WhenProgrammingCmdStreamThenProperMiLoadRegisterImmCo
     uint32_t defaultRegValue = hwDetails.defaultRegValue;
 
     uint32_t expectedRegValue = defaultRegValue;
-    if (hwDetails.modeToRegValueMap.find(mode) != hwDetails.modeToRegValueMap.end()) {
-        expectedRegValue = hwDetails.modeToRegValueMap[mode];
+    if (auto it = hwDetails.modeToRegValueMap.find(mode); it != hwDetails.modeToRegValueMap.end()) {
+        expectedRegValue = it->second;
     }
 
     size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode, differentPreemptionMode);

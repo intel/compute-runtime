@@ -159,11 +159,12 @@ class MetricOaExporter01Logger {
             {ZET_INTEL_METRIC_DF_EQUATION_OPER_FMAX, "ZET_INTEL_METRIC_DF_EQUATION_OPER_FMAX  "},
         };
 
-        if (equationOperationMap.find(equationOperation) == equationOperationMap.end()) {
+        auto it = equationOperationMap.find(equationOperation);
+        if (it == equationOperationMap.end()) {
             EXPECT(0);
             return;
         }
-        SHOW(indent) << "equationOperation : " << equationOperationMap[equationOperation];
+        SHOW(indent) << "equationOperation : " << it->second;
     }
 
     void showEquation(zet_intel_metric_df_gpu_equation_0_1_t &equation, uint32_t indent = 1) {
@@ -521,11 +522,12 @@ static void showExportHeader(zet_intel_metric_df_gpu_header_t &header, uint32_t 
         {
             {ZET_INTEL_METRIC_DF_SOURCE_TYPE_OA, "ZET_INTEL_METRIC_DF_SOURCE_TYPE_OA"}};
 
-    if (sourceTypeMap.find(header.type) == sourceTypeMap.end()) {
+    auto sourceTypeIt = sourceTypeMap.find(header.type);
+    if (sourceTypeIt == sourceTypeMap.end()) {
         EXPECT(0);
         return;
     }
-    SHOW(indent) << "sourcetype : " << sourceTypeMap[header.type] << "\n";
+    SHOW(indent) << "sourcetype : " << sourceTypeIt->second << "\n";
     SHOW_UINT32_T(header.version.major, indent);
     SHOW_UINT32_T(header.version.minor, indent);
     SHOW_UINT32_T(header.rawDataOffset, indent);

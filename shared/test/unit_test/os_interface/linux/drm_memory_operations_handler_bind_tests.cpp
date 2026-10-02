@@ -18,26 +18,46 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper_with_capture.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/os_interface/linux/device_command_stream_fixture_prelim.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include <memory>
 #include <set>
 
 using namespace NEO;
+
+class DrmMockForBindHandler : public DrmMockWithCaptureHelper {
+  public:
+    DrmMockForBindHandler(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockWithCaptureHelper(rootDeviceEnvironment) {
+        callBaseIsVmBindAvailable = true;
+
+        auto &multiTileArchInfo = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.MultiTileArchInfo;
+        auto numLocalMemories = multiTileArchInfo.IsValid ? multiTileArchInfo.TileCount : 0u;
+        std::vector<MemoryRegion> regions(1u + numLocalMemories);
+        regions[0].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem)), 1};
+        regions[0].probedSize = 2 * MemoryConstants::gigaByte;
+        for (auto tile = 0u; tile < numLocalMemories; tile++) {
+            regions[1 + tile].region = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice)), DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
+            regions[1 + tile].probedSize = 2 * MemoryConstants::gigaByte;
+        }
+        memoryInfo.reset(new MemoryInfo(regions, *this));
+    }
+};
 
 struct MockDrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandlerBind {
     using DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind;
@@ -76,7 +96,7 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
         }
         executionEnvironment->calculateMaxOsContextCount();
         for (uint32_t i = 0u; i < numRootDevices; i++) {
-            auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
+            auto mock = new DrmMockForBindHandler(*executionEnvironment->rootDeviceEnvironments[i]);
             mock->setBindAvailable();
             if (setPerContextVms) {
                 mock->setPerContextVMRequired(setPerContextVms);
@@ -91,7 +111,7 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
         }
         memoryManager = std::make_unique<TestedDrmMemoryManager>(*executionEnvironment);
         device = devices[0].get();
-        mock = executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmQueryMock>();
+        mock = executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmMockForBindHandler>();
         operationHandler = static_cast<MockDrmMemoryOperationsHandlerBind *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
         memoryManagerBackup = executionEnvironment->memoryManager.release();
         executionEnvironment->memoryManager.reset(memoryManager.get());
@@ -116,7 +136,7 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager;
     MockDrmMemoryOperationsHandlerBind *operationHandler = nullptr;
     DebugManagerStateRestore restorer;
-    DrmQueryMock *mock;
+    DrmMockForBindHandler *mock;
     MemoryManager *memoryManagerBackup;
 };
 
@@ -145,7 +165,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
         EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
     }
 
-    auto mock2 = executionEnvironment->rootDeviceEnvironments[1u]->osInterface->getDriverModel()->as<DrmQueryMock>();
+    auto mock2 = executionEnvironment->rootDeviceEnvironments[1u]->osInterface->getDriverModel()->as<DrmMockForBindHandler>();
     BufferObject mockBo2(devices[1]->getRootDeviceIndex(), mock, 3, 1, 0, 1);
     mock2->setNewResourceBoundToVM(&mockBo2, 0u);
 
@@ -199,7 +219,7 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
         }
         executionEnvironment->calculateMaxOsContextCount();
         for (uint32_t i = 0u; i < numRootDevices; i++) {
-            auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
+            auto mock = new DrmMockForBindHandler(*executionEnvironment->rootDeviceEnvironments[i]);
             mock->setBindAvailable();
             if (setPerContextVms) {
                 mock->setPerContextVMRequired(setPerContextVms);
@@ -219,8 +239,8 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
         memoryManager = std::make_unique<TestedDrmMemoryManager>(*executionEnvironment);
         deviceDefault = devices[0].get();
         device = devices[1].get();
-        mockDefault = executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmQueryMock>();
-        mock = executionEnvironment->rootDeviceEnvironments[1]->osInterface->getDriverModel()->as<DrmQueryMock>();
+        mockDefault = executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmMockForBindHandler>();
+        mock = executionEnvironment->rootDeviceEnvironments[1]->osInterface->getDriverModel()->as<DrmMockForBindHandler>();
         operationHandlerDefault = static_cast<DrmMemoryOperationsHandlerDefault *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
         operationHandler = static_cast<MockDrmMemoryOperationsHandlerBind *>(executionEnvironment->rootDeviceEnvironments[1]->memoryOperationsInterface.get());
         memoryManagerBackup = executionEnvironment->memoryManager.release();
@@ -248,8 +268,8 @@ struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
     DrmMemoryOperationsHandlerDefault *operationHandlerDefault = nullptr;
     MockDrmMemoryOperationsHandlerBind *operationHandler = nullptr;
     DebugManagerStateRestore restorer;
-    DrmQueryMock *mock = nullptr;
-    DrmQueryMock *mockDefault = nullptr;
+    DrmMockForBindHandler *mock = nullptr;
+    DrmMockForBindHandler *mockDefault = nullptr;
     MemoryManager *memoryManagerBackup = nullptr;
 };
 
@@ -283,7 +303,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, givenOperationHandler
 TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, whenNoSpaceLeftOnDeviceThenEvictUnusedAllocations) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto allocationDefault = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{deviceDefault->getRootDeviceIndex(), MemoryConstants::pageSize});
-    mock->context.vmBindReturn = -1;
+    mock->getMockIoctlHelper()->vmBindResult = -1;
     mock->baseErrno = false;
     mock->errnoRetVal = ENOSPC;
     operationHandler->useBaseEvictUnused = true;
@@ -323,11 +343,11 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenObjectAlwaysResidentAndNotUsedWh
         EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true, false, true), MemoryOperationsStatus::success);
     }
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
     operationHandler->evictUnusedAllocations(false, true);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
-    EXPECT_EQ(mock->context.vmUnbindCalled, 1u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmUnbindCalled, 1u);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -336,11 +356,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeEachAllocationResidentWhen
     DebugManagerStateRestore restorer;
     debugManager.flags.MakeEachAllocationResident.set(1);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 0u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 0u);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.makeResident(*allocation);
@@ -354,15 +374,15 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeEachAllocationResidentWhen
     DebugManagerStateRestore restorer;
     debugManager.flags.MakeEachAllocationResident.set(2);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 0u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 0u);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
-    EXPECT_EQ(mock->context.vmBindCalled, 0u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 0u);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     ResidencyContainer residency;
     operationHandler->mergeWithResidencyContainer(&csr.getOsContext(), residency);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
 
     csr.makeResident(*allocation);
     EXPECT_EQ(csr.getResidencyAllocations().size(), 0u);
@@ -435,12 +455,12 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenRunningOutOfMemoryThenUnusedAlloc
     }
     *device->getSubDevice(1u)->getDefaultEngine().commandStreamReceiver->getTagAddress() = 5;
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
 
     operationHandler->evictUnusedAllocations(false, true);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
-    EXPECT_EQ(mock->context.vmUnbindCalled, 1u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmUnbindCalled, 1u);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -464,12 +484,12 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsedAllocationInBothSubdevicesWh
         EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true, false, true), MemoryOperationsStatus::success);
     }
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
 
     operationHandler->evictUnusedAllocations(false, true);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
-    EXPECT_EQ(mock->context.vmUnbindCalled, 0u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmUnbindCalled, 0u);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -681,11 +701,11 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenIoctlFailDuringEvictingThenUnreco
     EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false), MemoryOperationsStatus::success);
     EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::success);
 
-    mock->context.vmUnbindReturn = -1;
+    mock->getMockIoctlHelper()->vmUnbindResult = -1;
 
     EXPECT_NE(operationHandler->evict(device, *allocation), MemoryOperationsStatus::success);
 
-    mock->context.vmUnbindReturn = 0;
+    mock->getMockIoctlHelper()->vmUnbindResult = 0;
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -696,7 +716,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenMakeResidentTwiceThenAllocIsBound
     EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false), MemoryOperationsStatus::success);
     EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::success);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -710,11 +730,11 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenNoVmBindSupportInDrmWhenCheckFor
     mock->bindAvailable = false;
     auto handler = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
-    mock->context.vmBindCalled = 0u;
+    mock->getMockIoctlHelper()->vmBindCalled = 0u;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     handler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false);
-    EXPECT_FALSE(mock->context.vmBindCalled);
+    EXPECT_FALSE(mock->getMockIoctlHelper()->vmBindCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -725,25 +745,25 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndNoMultiTileWhenC
 
     auto handler = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
-    mock->context.vmBindCalled = 0u;
+    mock->getMockIoctlHelper()->vmBindCalled = 0u;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     handler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false);
-    EXPECT_FALSE(mock->context.vmBindCalled);
+    EXPECT_FALSE(mock->getMockIoctlHelper()->vmBindCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenDisabledVmBindWhenCreateDrmHandlerThenVmBindIsNotUsed) {
-    mock->context.vmBindReturn = 0;
+    mock->getMockIoctlHelper()->vmBindResult = 0;
     mock->bindAvailable = false;
     auto handler = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
-    mock->context.vmBindCalled = false;
+    mock->getMockIoctlHelper()->vmBindCalled = false;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     handler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false);
-    EXPECT_FALSE(mock->context.vmBindCalled);
+    EXPECT_FALSE(mock->getMockIoctlHelper()->vmBindCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -758,7 +778,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 
     pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 2u);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
@@ -772,7 +792,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 1u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 1u);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
@@ -787,15 +807,15 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, vmHandleId, 0u);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 1u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 1u);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
-    EXPECT_EQ(mock->context.receivedVmBind->vmId, mock->getVirtualMemoryAddressSpace(vmHandleId));
+    EXPECT_EQ(mock->getMockIoctlHelper()->receivedVmBind->vmId, mock->getVirtualMemoryAddressSpace(vmHandleId));
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdeviceWhenValidateMultipleBOsAndFirstBindFailsThenOnlyOneBindCalledAndErrorReturned) {
     debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
-    mock->context.vmBindReturn = -1;
+    mock->getMockIoctlHelper()->vmBindResult = -1;
 
     BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
     BufferObject boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
@@ -806,7 +826,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 
     EXPECT_EQ(ret, -1);
 
-    EXPECT_EQ(mock->context.receivedVmBind->handle, 2u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->receivedVmBind->handle, 2u);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
@@ -869,10 +889,10 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleSub
 
     memoryManager->freeGraphicsMemory(allocation);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 1u);
-    EXPECT_EQ(vmIdForRootContext, mock->context.receivedVmBind->vmId);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 1u);
+    EXPECT_EQ(vmIdForRootContext, mock->getMockIoctlHelper()->receivedVmBind->vmId);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
-    auto vmBindCalledBefore = mock->context.vmBindCalled;
+    auto vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
 
     allocationData.storageInfo.subDeviceBitfield = device->getSubDevice(0)->getDeviceBitfield();
     allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
@@ -881,10 +901,10 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleSub
 
     memoryManager->freeGraphicsMemory(allocation);
 
-    EXPECT_EQ(vmBindCalledBefore + 1, mock->context.vmBindCalled);
-    EXPECT_EQ(vmIdForContext0, mock->context.receivedVmBind->vmId);
+    EXPECT_EQ(vmBindCalledBefore + 1, mock->getMockIoctlHelper()->vmBindCalled);
+    EXPECT_EQ(vmIdForContext0, mock->getMockIoctlHelper()->receivedVmBind->vmId);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
-    vmBindCalledBefore = mock->context.vmBindCalled;
+    vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
 
     allocationData.storageInfo.subDeviceBitfield = device->getSubDevice(1)->getDeviceBitfield();
     allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
@@ -893,8 +913,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleSub
 
     memoryManager->freeGraphicsMemory(allocation);
 
-    EXPECT_EQ(vmBindCalledBefore + 1, mock->context.vmBindCalled);
-    EXPECT_EQ(vmIdForContext1, mock->context.receivedVmBind->vmId);
+    EXPECT_EQ(vmBindCalledBefore + 1, mock->getMockIoctlHelper()->vmBindCalled);
+    EXPECT_EQ(vmIdForContext1, mock->getMockIoctlHelper()->receivedVmBind->vmId);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
@@ -903,7 +923,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
     mock->incrementVmId = true;
 
     auto device1 = devices[1].get();
-    auto mock1 = executionEnvironment->rootDeviceEnvironments[1]->osInterface->getDriverModel()->as<DrmQueryMock>();
+    auto mock1 = executionEnvironment->rootDeviceEnvironments[1]->osInterface->getDriverModel()->as<DrmMockForBindHandler>();
     mock1->bindAvailable = true;
     mock1->incrementVmId = true;
 
@@ -968,19 +988,19 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
     allocationData.rootDeviceIndex = device1->getRootDeviceIndex();
     allocationData.storageInfo.subDeviceBitfield = device1->getDeviceBitfield();
 
-    mock->context.vmBindCalled = 0;
-    mock1->context.vmBindCalled = 0;
+    mock->getMockIoctlHelper()->vmBindCalled = 0;
+    mock1->getMockIoctlHelper()->vmBindCalled = 0;
 
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
     EXPECT_NE(nullptr, allocation);
 
     memoryManager->freeGraphicsMemory(allocation);
 
-    EXPECT_EQ(mock->context.vmBindCalled, 0u);
-    EXPECT_EQ(mock1->context.vmBindCalled, 1u);
-    EXPECT_EQ(vmIdForDevice1, mock1->context.receivedVmBind->vmId);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 0u);
+    EXPECT_EQ(mock1->getMockIoctlHelper()->vmBindCalled, 1u);
+    EXPECT_EQ(vmIdForDevice1, mock1->getMockIoctlHelper()->receivedVmBind->vmId);
 
-    auto vmBindCalledBefore = mock1->context.vmBindCalled;
+    auto vmBindCalledBefore = mock1->getMockIoctlHelper()->vmBindCalled;
 
     allocationData.storageInfo.subDeviceBitfield = device->getSubDevice(0)->getDeviceBitfield();
     allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
@@ -989,10 +1009,10 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
 
     memoryManager->freeGraphicsMemory(allocation);
 
-    EXPECT_EQ(vmBindCalledBefore + 1, mock1->context.vmBindCalled);
+    EXPECT_EQ(vmBindCalledBefore + 1, mock1->getMockIoctlHelper()->vmBindCalled);
 
-    EXPECT_FALSE(mock->context.receivedVmBind.has_value());
-    EXPECT_EQ(vmIdForDevice1Subdevice0, mock1->context.receivedVmBind->vmId);
+    EXPECT_FALSE(mock->getMockIoctlHelper()->receivedVmBind.has_value());
+    EXPECT_EQ(vmIdForDevice1Subdevice0, mock1->getMockIoctlHelper()->receivedVmBind->vmId);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenVmBindIsCalledInsteadOfExec) {
@@ -1006,7 +1026,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenV
 
     pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
 
-    EXPECT_TRUE(mock->context.vmBindCalled);
+    EXPECT_TRUE(mock->getMockIoctlHelper()->vmBindCalled);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
@@ -1021,7 +1041,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionAndValidateHos
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
 
-    EXPECT_TRUE(mock->context.vmBindCalled);
+    EXPECT_TRUE(mock->getMockIoctlHelper()->vmBindCalled);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
@@ -1050,7 +1070,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOAndVmBin
     };
     debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
-    mock->context.vmBindReturn = -1;
+    mock->getMockIoctlHelper()->vmBindResult = -1;
 
     BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
     MockBO boToPin(device->getRootDeviceIndex(), mock, 3, 2, 0, 1);
@@ -1079,7 +1099,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenCsrTagAllocatorsWhenDestructin
 
     csr.reset();
 
-    EXPECT_EQ(mock->context.vmBindCalled, mock->context.vmUnbindCalled);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, mock->getMockIoctlHelper()->vmUnbindCalled);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhenVmBindCalledThenSetPatIndexExtension) {
@@ -1092,6 +1112,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     auto &releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
+    const bool usesTwoWayCoherentPat = productHelper.isL3FlushAfterPostSyncSupported() &&
+                                       !debugManager.flags.Disable2WayCoherencyOverride.get() &&
+                                       !releaseHelper.isAppTransientCoherentPatRequired();
+    const auto expectedGmmPatIndex = usesTwoWayCoherentPat ? MockGmmClientContextBase::MockPatIndex::twoWayCoherent
+                                                           : MockGmmClientContextBase::MockPatIndex::cached;
 
     bool closSupported = (productHelper.getNumCacheRegions() > 0);
     bool patIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
@@ -1110,36 +1135,36 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 
         debugManager.flags.ClosEnabled.set(debugFlag);
 
-        mock->context.receivedVmBindPatIndex.reset();
-        mock->context.receivedVmUnbindPatIndex.reset();
+        mock->getMockIoctlHelper()->receivedVmBindPatIndex.reset();
+        mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.reset();
 
         bo.setPatIndex(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, (debugFlag == 1 && closSupported), true, false));
 
         operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false, false);
 
         if (!patIndexProgrammingSupported) {
-            EXPECT_FALSE(mock->context.receivedVmBindPatIndex);
+            EXPECT_FALSE(mock->getMockIoctlHelper()->receivedVmBindPatIndex);
 
             operationHandler->evict(device, allocation);
-            EXPECT_FALSE(mock->context.receivedVmUnbindPatIndex);
+            EXPECT_FALSE(mock->getMockIoctlHelper()->receivedVmUnbindPatIndex);
 
             continue;
         }
 
         if (debugFlag == 0 || !closSupported || debugFlag == -1) {
-            auto expectedIndex = productHelper.overridePatIndex(false, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), allocation.getAllocationType());
+            auto expectedIndex = productHelper.overridePatIndex(false, static_cast<uint64_t>(expectedGmmPatIndex), allocation.getAllocationType());
             expectedIndex = releaseHelper.overrideSystemMemoryPatIndex(expectedIndex);
 
-            EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
+            EXPECT_EQ(expectedIndex, mock->getMockIoctlHelper()->receivedVmBindPatIndex.value());
 
             operationHandler->evict(device, allocation);
-            EXPECT_EQ(expectedIndex, mock->context.receivedVmUnbindPatIndex.value());
+            EXPECT_EQ(expectedIndex, mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.value());
         } else {
             auto expectedPatIndex = productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack);
-            EXPECT_EQ(expectedPatIndex, mock->context.receivedVmBindPatIndex.value());
+            EXPECT_EQ(expectedPatIndex, mock->getMockIoctlHelper()->receivedVmBindPatIndex.value());
 
             operationHandler->evict(device, allocation);
-            EXPECT_EQ(expectedPatIndex, mock->context.receivedVmUnbindPatIndex.value());
+            EXPECT_EQ(expectedPatIndex, mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.value());
         }
     }
 }
@@ -1183,18 +1208,18 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
         GTEST_SKIP();
     }
 
-    mock->context.receivedVmBindPatIndex.reset();
-    mock->context.receivedVmUnbindPatIndex.reset();
+    mock->getMockIoctlHelper()->receivedVmBindPatIndex.reset();
+    mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.reset();
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false);
 
     auto expectedIndex = productHelper.overridePatIndex(true, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached), allocation->getAllocationType());
 
-    EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
+    EXPECT_EQ(expectedIndex, mock->getMockIoctlHelper()->receivedVmBindPatIndex.value());
 
     operationHandler->evict(device, *allocation);
-    EXPECT_EQ(expectedIndex, mock->context.receivedVmUnbindPatIndex.value());
+    EXPECT_EQ(expectedIndex, mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.value());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -1219,11 +1244,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1), false, false);
 
-    EXPECT_EQ(1u, mock->context.receivedVmBindPatIndex.value());
+    EXPECT_EQ(1u, mock->getMockIoctlHelper()->receivedVmBindPatIndex.value());
 
     operationHandler->evict(device, *timestampStorageAlloc);
 
-    EXPECT_EQ(1u, mock->context.receivedVmUnbindPatIndex.value());
+    EXPECT_EQ(1u, mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.value());
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndexForDeviceMem) {
@@ -1250,11 +1275,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
 
-    EXPECT_EQ(2u, mock->context.receivedVmBindPatIndex.value());
+    EXPECT_EQ(2u, mock->getMockIoctlHelper()->receivedVmBindPatIndex.value());
 
     operationHandler->evict(device, allocation);
 
-    EXPECT_EQ(2u, mock->context.receivedVmUnbindPatIndex.value());
+    EXPECT_EQ(2u, mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.value());
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndexForSystemMem) {
@@ -1281,11 +1306,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
 
-    EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
+    EXPECT_EQ(3u, mock->getMockIoctlHelper()->receivedVmBindPatIndex.value());
 
     operationHandler->evict(device, allocation);
 
-    EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
+    EXPECT_EQ(3u, mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.value());
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndexForAllocationsMatchingBitmask) {
@@ -1311,11 +1336,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
 
-    EXPECT_EQ(7u, mock->context.receivedVmBindPatIndex.value());
+    EXPECT_EQ(7u, mock->getMockIoctlHelper()->receivedVmBindPatIndex.value());
 
     operationHandler->evict(device, allocation);
 
-    EXPECT_EQ(7u, mock->context.receivedVmUnbindPatIndex.value());
+    EXPECT_EQ(7u, mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.value());
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenDoNotOverridePatIndexForAllocationsNotMatchingBitmask) {
@@ -1346,6 +1371,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
     l3CacheParameters.maxSize = 64 * MemoryConstants::kiloByte;
     l3CacheParameters.maxNumRegions = 2;
     l3CacheParameters.maxNumWays = 32;
+    mock->getMockIoctlHelper()->closSupported = true;
     mock->cacheInfo.reset(new CacheInfo(*mock->getIoctlHelper(), l2CacheParameters, l3CacheParameters));
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
@@ -1359,17 +1385,17 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
     for (auto cacheRegion : {CacheRegion::defaultRegion, CacheRegion::region1, CacheRegion::region2}) {
         EXPECT_TRUE(static_cast<DrmAllocation *>(allocation)->setCacheAdvice(mock, 32 * MemoryConstants::kiloByte, cacheRegion, false));
 
-        mock->context.receivedVmBindPatIndex.reset();
+        mock->getMockIoctlHelper()->receivedVmBindPatIndex.reset();
         operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false);
 
         auto patIndex = productHelper.getPatIndex(cacheRegion, CachePolicy::writeBack);
 
-        EXPECT_EQ(patIndex, mock->context.receivedVmBindPatIndex.value());
+        EXPECT_EQ(patIndex, mock->getMockIoctlHelper()->receivedVmBindPatIndex.value());
 
-        mock->context.receivedVmUnbindPatIndex.reset();
+        mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.reset();
         operationHandler->evict(device, *allocation);
 
-        EXPECT_EQ(patIndex, mock->context.receivedVmUnbindPatIndex.value());
+        EXPECT_EQ(patIndex, mock->getMockIoctlHelper()->receivedVmUnbindPatIndex.value());
     }
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -1378,7 +1404,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
 TEST_F(DrmMemoryOperationsHandlerBindTest, whenIoctlFailDuringLockingThenOutOfMemoryIsThrown) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    mock->context.vmBindReturn = -1;
+    mock->getMockIoctlHelper()->vmBindResult = -1;
     EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::memoryNotFound);
     EXPECT_EQ(operationHandler->lock(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::outOfMemory);
     memoryManager->freeGraphicsMemory(allocation);
@@ -1396,7 +1422,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenLockingDrmAllocationThenBosRequir
     mockDrmAllocation->storageInfo.memoryBanks = 3;
     EXPECT_EQ(2u, mockDrmAllocation->storageInfo.getNumBanks());
 
-    mock->context.vmBindReturn = 0;
+    mock->getMockIoctlHelper()->vmBindResult = 0;
     EXPECT_EQ(operationHandler->isResident(device, *mockDrmAllocation), MemoryOperationsStatus::memoryNotFound);
 
     EXPECT_EQ(operationHandler->lock(device, ArrayRef<GraphicsAllocation *>(&mockDrmAllocation, 1)), MemoryOperationsStatus::success);
@@ -1416,8 +1442,8 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenPreviouslyLockedMemoryWhenCallin
     bos.push_back(&mockBo);
     GraphicsAllocation *mockDrmAllocation = new MockDrmAllocation(AllocationType::unknown, MemoryPool::localMemory, bos);
 
-    mock->context.vmBindReturn = 0;
-    mock->context.vmUnbindReturn = 0;
+    mock->getMockIoctlHelper()->vmBindResult = 0;
+    mock->getMockIoctlHelper()->vmUnbindResult = 0;
     EXPECT_EQ(operationHandler->isResident(device, *mockDrmAllocation), MemoryOperationsStatus::memoryNotFound);
 
     EXPECT_EQ(operationHandler->lock(device, ArrayRef<GraphicsAllocation *>(&mockDrmAllocation, 1)), MemoryOperationsStatus::success);
@@ -1553,12 +1579,12 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationSharedAcrossEnginesW
     }
     ASSERT_LT(expectedVmIds.size(), preFixBindCount);
 
-    auto vmBindCalledBefore = mock->context.vmBindCalled;
+    auto vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
 
     auto status = operationHandler->decompress(device, *allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, status);
 
-    EXPECT_EQ(vmBindCalledBefore + expectedVmIds.size(), mock->context.vmBindCalled);
+    EXPECT_EQ(vmBindCalledBefore + expectedVmIds.size(), mock->getMockIoctlHelper()->vmBindCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1595,12 +1621,12 @@ HWTEST_F(DrmMemoryOperationsHandlerBindPerContextVmDecompressTest, givenPerConte
     }
     ASSERT_EQ(expectedVmIds.size(), preFixBindCount);
 
-    auto vmBindCalledBefore = mock->context.vmBindCalled;
+    auto vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
 
     auto status = operationHandler->decompress(device, *allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, status);
 
-    EXPECT_EQ(vmBindCalledBefore + expectedVmIds.size(), mock->context.vmBindCalled);
+    EXPECT_EQ(vmBindCalledBefore + expectedVmIds.size(), mock->getMockIoctlHelper()->vmBindCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1638,455 +1664,30 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDecompressCalledThenPagingFenceI
 
     ASSERT_EQ(MemoryOperationsStatus::success, operationHandler->decompress(device, *allocation));
 
-    auto vmBindCalledBefore = mock->context.vmBindCalled;
-    auto waitUserFenceCalledBefore = mock->context.waitUserFenceCalled;
+    auto vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
+    auto waitUserFenceCalledBefore = mock->getMockIoctlHelper()->waitUserFenceCalled;
 
     auto status = operationHandler->decompress(device, *allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, status);
 
-    auto vmBindIssued = mock->context.vmBindCalled - vmBindCalledBefore;
+    auto vmBindIssued = mock->getMockIoctlHelper()->vmBindCalled - vmBindCalledBefore;
     ASSERT_GT(vmBindIssued, 0u);
 
-    EXPECT_EQ(waitUserFenceCalledBefore + vmBindIssued, mock->context.waitUserFenceCalled);
+    EXPECT_EQ(waitUserFenceCalledBefore + vmBindIssued, mock->getMockIoctlHelper()->waitUserFenceCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
-}
-
-using DrmResidencyHandlerTests = ::testing::Test;
-
-HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue, IsXeCore) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    if (productHelper.getNumCacheRegions() == 0) {
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
-    } else {
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_EQ(1u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeCombined));
-        EXPECT_EQ(2u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeThrough));
-        EXPECT_EQ(3u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
-
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region1, CachePolicy::uncached));
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeCombined));
-        EXPECT_EQ(4u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeThrough));
-        EXPECT_EQ(5u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeBack));
-
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region2, CachePolicy::uncached));
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeCombined));
-        EXPECT_EQ(6u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeThrough));
-        EXPECT_EQ(7u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeBack));
-    }
-}
-
-HWTEST2_F(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForPatIndexThenReturnCorrectValue, IsXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForceAllResourcesUncached.set(1);
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    if (productHelper.getNumCacheRegions() == 0) {
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
-    } else {
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
-
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::uncached));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeBack));
-
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::uncached));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeBack));
-    }
-}
-
-HWTEST2_F(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenBindAvailableIsInitializedOnce, IsXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseVmBind.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.vmBindQueryValue = 1;
-    EXPECT_FALSE(drm.bindAvailable);
-
-    EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_TRUE(drm.isVmBindAvailable());
-    EXPECT_TRUE(drm.bindAvailable);
-    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
-
-    EXPECT_TRUE(drm.isVmBindAvailable());
-    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
-}
-
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenSupportIsOverridden, IsXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseVmBind.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    EXPECT_FALSE(drm.bindAvailable);
-    drm.context.vmBindQueryReturn = -1;
-
-    EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_TRUE(drm.isVmBindAvailable());
-    EXPECT_TRUE(drm.bindAvailable);
-    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
-
-    EXPECT_TRUE(drm.isVmBindAvailable());
-    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
-}
-
-namespace NEO {
-extern bool disableBindDefaultInTests;
-}
-
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailableInDrmWhenQueryingIsVmBindAvailableThenBindIsAvailableWhenSupported, IsXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseVmBind.set(-1);
-    VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.vmBindQueryValue = 1;
-    drm.context.vmBindQueryReturn = 0;
-    EXPECT_FALSE(drm.bindAvailable);
-    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-
-    EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_EQ(drm.isVmBindAvailable(), productHelper.isNewResidencyModelSupported());
-    EXPECT_EQ(drm.bindAvailable, productHelper.isNewResidencyModelSupported());
-    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
-}
-
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVmBindAvailableFailedThenBindIsNot, IsXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseVmBind.set(-1);
-    VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.vmBindQueryValue = 1;
-    drm.context.vmBindQueryReturn = -1;
-    EXPECT_FALSE(drm.bindAvailable);
-
-    EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_FALSE(drm.isVmBindAvailable());
-    EXPECT_FALSE(drm.bindAvailable);
-    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
-}
-
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVmBindAvailableSuccedAndReportNoBindAvailableInDrmThenBindIsNotAvailable, IsXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseVmBind.set(-1);
-    VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.vmBindQueryValue = 0;
-    drm.context.vmBindQueryReturn = 0;
-    EXPECT_FALSE(drm.bindAvailable);
-
-    EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_FALSE(drm.isVmBindAvailable());
-    EXPECT_FALSE(drm.bindAvailable);
-    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
-}
-
-TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndNoDebugKeyThenFalseIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.setPairQueryValue = 0;
-    drm.context.setPairQueryReturn = 0;
-    EXPECT_FALSE(drm.setPairAvailable);
-
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-    drm.callBaseIsSetPairAvailable = true;
-    EXPECT_FALSE(drm.isSetPairAvailable());
-    EXPECT_FALSE(drm.setPairAvailable);
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-}
-
-TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndDefaultDebugVariableThenTrueIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseKmdMigration.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    drm.context.chunkingQueryValue = 1;
-    drm.context.chunkingQueryReturn = 0;
-    EXPECT_FALSE(drm.chunkingAvailable);
-
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    drm.callBaseIsChunkingAvailable = true;
-    EXPECT_TRUE(drm.isChunkingAvailable());
-    EXPECT_TRUE(drm.getChunkingAvailable());
-    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
-    EXPECT_EQ(2u, drm.getChunkingMode());
-}
-
-TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndDisableDebugVariableThenFalseIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableBOChunking.set(0);
-    debugManager.flags.UseKmdMigration.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    drm.context.chunkingQueryValue = 1;
-    drm.context.chunkingQueryReturn = 0;
-    EXPECT_FALSE(drm.chunkingAvailable);
-
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    drm.callBaseIsChunkingAvailable = true;
-    EXPECT_FALSE(drm.isChunkingAvailable());
-    EXPECT_FALSE(drm.getChunkingAvailable());
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    EXPECT_EQ(0u, drm.getChunkingMode());
-}
-
-TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeySetAndNoSupportAvailableThenFalseIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableSetPair.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.setPairQueryValue = 0;
-    drm.context.setPairQueryReturn = 0;
-    EXPECT_FALSE(drm.setPairAvailable);
-
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-    drm.callBaseIsSetPairAvailable = true;
-    EXPECT_FALSE(drm.isSetPairAvailable());
-    EXPECT_FALSE(drm.setPairAvailable);
-    EXPECT_EQ(1u, drm.context.setPairQueryCalled);
-}
-
-TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeyNotSetThenNoSupportIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableSetPair.set(0);
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.setPairQueryValue = 0;
-    drm.context.setPairQueryReturn = 0;
-    EXPECT_FALSE(drm.setPairAvailable);
-
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-    drm.callBaseIsSetPairAvailable = true;
-    EXPECT_FALSE(drm.isSetPairAvailable());
-    EXPECT_FALSE(drm.setPairAvailable);
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-}
-
-HWTEST2_F(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailableThenBothExpectedValueIsReturned, IsXeCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseVmBind.set(-1);
-    debugManager.flags.EnableSetPair.set(1);
-    VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-
-    drm.context.setPairQueryValue = 1;
-    drm.context.setPairQueryReturn = 0;
-    EXPECT_FALSE(drm.setPairAvailable);
-    drm.callBaseIsSetPairAvailable = true;
-
-    drm.context.vmBindQueryValue = 1;
-    drm.context.vmBindQueryReturn = 0;
-    EXPECT_FALSE(drm.bindAvailable);
-    drm.callBaseIsVmBindAvailable = true;
-
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-    EXPECT_TRUE(drm.isSetPairAvailable());
-    EXPECT_TRUE(drm.setPairAvailable);
-    EXPECT_EQ(1u, drm.context.setPairQueryCalled);
-
-    EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_EQ(drm.isVmBindAvailable(), productHelper.isNewResidencyModelSupported());
-    EXPECT_EQ(drm.bindAvailable, productHelper.isNewResidencyModelSupported());
-    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndSupportAvailableThenExpectedValueIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableSetPair.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.setPairQueryValue = 1;
-    drm.context.setPairQueryReturn = 0;
-    EXPECT_FALSE(drm.setPairAvailable);
-
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-    drm.callBaseIsSetPairAvailable = true;
-    EXPECT_TRUE(drm.isSetPairAvailable());
-    EXPECT_TRUE(drm.setPairAvailable);
-    EXPECT_EQ(1u, drm.context.setPairQueryCalled);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndFailureInQueryThenFalseIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableSetPair.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.setPairQueryValue = 1;
-    drm.context.setPairQueryReturn = 1;
-    EXPECT_FALSE(drm.setPairAvailable);
-
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-    drm.callBaseIsSetPairAvailable = true;
-    EXPECT_FALSE(drm.isSetPairAvailable());
-    EXPECT_FALSE(drm.setPairAvailable);
-    EXPECT_EQ(1u, drm.context.setPairQueryCalled);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableWithDebugKeySetToZeroThenFalseIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableSetPair.set(0);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.setPairQueryValue = 1;
-    drm.context.setPairQueryReturn = 1;
-    EXPECT_FALSE(drm.setPairAvailable);
-
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-    drm.callBaseIsSetPairAvailable = true;
-    EXPECT_FALSE(drm.isSetPairAvailable());
-    EXPECT_FALSE(drm.setPairAvailable);
-    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndSupportAvailableThenExpectedValueIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableBOChunking.set(1);
-    debugManager.flags.UseKmdMigration.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.chunkingQueryValue = 1;
-    drm.context.chunkingQueryReturn = 0;
-    EXPECT_FALSE(drm.chunkingAvailable);
-
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    drm.callBaseIsChunkingAvailable = true;
-    EXPECT_TRUE(drm.isChunkingAvailable());
-    EXPECT_TRUE(drm.chunkingAvailable);
-    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableKmdMigrationDisabledAndDefaultEnableBOChunkingThenReturnTrue) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseKmdMigration.set(0);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.chunkingQueryValue = 1;
-    drm.context.chunkingQueryReturn = 0;
-    EXPECT_FALSE(drm.chunkingAvailable);
-
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    drm.callBaseIsChunkingAvailable = true;
-    EXPECT_TRUE(drm.isChunkingAvailable());
-    EXPECT_TRUE(drm.chunkingAvailable);
-    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableKmdMigrationDisabledAndDefaultEnableBOChunkingSharedThenReturnFalse) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseKmdMigration.set(0);
-    debugManager.flags.EnableBOChunking.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.chunkingQueryValue = 1;
-    drm.context.chunkingQueryReturn = 0;
-    EXPECT_FALSE(drm.chunkingAvailable);
-
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    drm.callBaseIsChunkingAvailable = true;
-    EXPECT_FALSE(drm.isChunkingAvailable());
-    EXPECT_FALSE(drm.chunkingAvailable);
-    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndChangingMinimalSizeForChunkingAndSupportAvailableThenExpectedValuesAreReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableBOChunking.set(1);
-    debugManager.flags.UseKmdMigration.set(1);
-    const uint64_t minimalSizeForChunking = 65536;
-    debugManager.flags.MinimalAllocationSizeForChunking.set(minimalSizeForChunking);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.chunkingQueryValue = 1;
-    drm.context.chunkingQueryReturn = 0;
-    EXPECT_FALSE(drm.chunkingAvailable);
-
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    drm.callBaseIsChunkingAvailable = true;
-    EXPECT_TRUE(drm.isChunkingAvailable());
-    EXPECT_TRUE(drm.chunkingAvailable);
-    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
-
-    EXPECT_EQ(minimalSizeForChunking, drm.minimalChunkingSize);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndFailureInQueryThenFalseIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableBOChunking.set(1);
-    debugManager.flags.UseKmdMigration.set(1);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.chunkingQueryValue = 1;
-    drm.context.chunkingQueryReturn = 1;
-    EXPECT_FALSE(drm.chunkingAvailable);
-
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    drm.callBaseIsChunkingAvailable = true;
-    EXPECT_FALSE(drm.isChunkingAvailable());
-    EXPECT_FALSE(drm.chunkingAvailable);
-    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
-}
-
-TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableWithDebugKeySetToZeroThenFalseIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableBOChunking.set(0);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.chunkingQueryValue = 1;
-    drm.context.chunkingQueryReturn = 1;
-    EXPECT_FALSE(drm.chunkingAvailable);
-
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
-    drm.callBaseIsChunkingAvailable = true;
-    EXPECT_FALSE(drm.isChunkingAvailable());
-    EXPECT_FALSE(drm.chunkingAvailable);
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
 }
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWhenMakeResidentAsyncThenAllocationIsBoundAndMarkedAsAlwaysResident) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     auto osContext = device->getDefaultEngine().osContext;
-    EXPECT_EQ(mock->context.vmBindCalled, 0u);
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmBindCalled, 0u);
 
     auto result = operationHandler->makeResidentAsync(osContext, allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, result);
 
-    EXPECT_TRUE(mock->context.vmBindCalled > 0u);
+    EXPECT_TRUE(mock->getMockIoctlHelper()->vmBindCalled > 0u);
     EXPECT_TRUE(allocation->isAlwaysResident(osContext->getContextId()));
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
@@ -2119,7 +1720,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindFailureWhenMakeResidentAsy
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     operationHandler->useBaseEvictUnused = false;
 
-    mock->context.vmBindReturn = -1;
+    mock->getMockIoctlHelper()->vmBindResult = -1;
     mock->baseErrno = false;
     mock->errnoRetVal = ENOSPC;
 
@@ -2138,24 +1739,24 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindFailureThenSuccessOnRetryW
         using DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind;
 
         uint32_t evictUnusedCalled = 0;
-        DrmMockPrelimContext *mockContext = nullptr;
+        MockIoctlHelperWithCapture *mockIoctlHelper = nullptr;
 
         MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override {
             evictUnusedCalled++;
-            if (mockContext) {
-                mockContext->vmBindReturn = 0;
+            if (mockIoctlHelper) {
+                mockIoctlHelper->vmBindResult = 0;
             }
             return MemoryOperationsStatus::success;
         }
     };
 
     auto retryHandler = new MockDrmMemoryOperationsHandlerBindRetry(*executionEnvironment->rootDeviceEnvironments[0].get(), 0);
-    retryHandler->mockContext = &mock->context;
+    retryHandler->mockIoctlHelper = mock->getMockIoctlHelper();
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(retryHandler);
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    mock->context.vmBindReturn = -1;
+    mock->getMockIoctlHelper()->vmBindResult = -1;
     mock->baseErrno = false;
     mock->errnoRetVal = ENOSPC;
 
@@ -2164,7 +1765,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindFailureThenSuccessOnRetryW
     EXPECT_EQ(MemoryOperationsStatus::success, result);
     EXPECT_GT(retryHandler->evictUnusedCalled, 0u);
 
-    mock->context.vmBindReturn = 0;
+    mock->getMockIoctlHelper()->vmBindResult = 0;
     mock->baseErrno = true;
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -2196,19 +1797,19 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWhenWaitForAsyncReside
     auto result = operationHandler->makeResidentAsync(osContext, allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, result);
 
-    auto initialWaitUserFenceCalls = mock->context.waitUserFenceCalled;
+    auto initialWaitUserFenceCalls = mock->getMockIoctlHelper()->waitUserFenceCalled;
 
     result = operationHandler->waitForAsyncResidency(osContext, allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, result);
 
-    EXPECT_GT(mock->context.waitUserFenceCalled, initialWaitUserFenceCalls);
+    EXPECT_GT(mock->getMockIoctlHelper()->waitUserFenceCalled, initialWaitUserFenceCalls);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenWaitOnPagingFenceFailsWhenWaitForAsyncResidencyThenGpuHangIsReturned) {
-    struct MockDrmWaitFenceFail : public DrmQueryMock {
-        using DrmQueryMock::DrmQueryMock;
+    struct MockDrmWaitFenceFail : public DrmMockForBindHandler {
+        using DrmMockForBindHandler::DrmMockForBindHandler;
 
         int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
             return -1;
@@ -2293,10 +1894,10 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenSecondTileOsContextWhenMakeResid
     auto result = operationHandler->makeResidentAsync(osContext, allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, result);
 
-    auto initialWaitUserFenceCalls = mock->context.waitUserFenceCalled;
+    auto initialWaitUserFenceCalls = mock->getMockIoctlHelper()->waitUserFenceCalled;
     result = operationHandler->waitForAsyncResidency(osContext, allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, result);
-    EXPECT_GT(mock->context.waitUserFenceCalled, initialWaitUserFenceCalls);
+    EXPECT_GT(mock->getMockIoctlHelper()->waitUserFenceCalled, initialWaitUserFenceCalls);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

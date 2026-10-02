@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ XE3P_CORETEST_F(BlitXe3pHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
-                                                                     0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+                                                                     0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
@@ -106,7 +106,7 @@ XE3P_CORETEST_F(BlitXe3pHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
-                                                                     0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+                                                                     0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
@@ -137,7 +137,7 @@ XE3P_CORETEST_F(BlitXe3pHpgCoreTests, given2dBlitCommandWhenDispatchingThenSetVa
     {
         // 1D
         auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
-                                                                         0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+                                                                         0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
         flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
         HardwareParse hwParser;
@@ -157,7 +157,7 @@ XE3P_CORETEST_F(BlitXe3pHpgCoreTests, given2dBlitCommandWhenDispatchingThenSetVa
     {
         // 2D
         auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
-                                                                         0, 0, {(2 * BlitterConstants::maxBlitWidth) + 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+                                                                         0, 0, {(2 * BlitterConstants::maxBlitWidth) + 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc, false);
         flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
         HardwareParse hwParser;

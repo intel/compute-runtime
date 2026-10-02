@@ -18,6 +18,7 @@ namespace NEO {
 class BaseUltConfigListener : public ::testing::EmptyTestEventListener {
   protected:
     void OnTestIterationStart(const ::testing::UnitTest &, int) override;
+    void OnTestIterationEnd(const ::testing::UnitTest &, int) override;
     void OnTestStart(const ::testing::TestInfo &) override;
     void OnTestEnd(const ::testing::TestInfo &) override;
 

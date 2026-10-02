@@ -39,6 +39,11 @@ struct UsmPoolLookupResult {
     bool isAllocatedInPool() const { return nullptr != pooledAllocationBasePtr; }
 };
 
+struct UsmPoolFreeResult {
+    bool freeSucceeded{false};
+    bool poolNowEmpty{false};
+};
+
 class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   public:
     struct AllocationInfo {
@@ -61,6 +66,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     };
     using AllocationsInfoStorage = BaseSortedPointerWithValueVector<AllocationInfo>;
     using CustomCleanupFn = std::function<void(const void *)>;
+    using PeerAllocationsFn = std::function<StackVec<GraphicsAllocation *, 4>(const void *)>;
 
     UsmMemAllocPool() = default;
     MOCKABLE_VIRTUAL ~UsmMemAllocPool() = default;
@@ -78,7 +84,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
     bool isInPoolRange(const void *ptr) const;
     bool isEmpty() const;
-    MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
+    MOCKABLE_VIRTUAL UsmPoolFreeResult freeSVMAlloc(const void *ptr, FreePolicyType policy);
     void reclaimDeferredFreeChunks();
     UsmPoolLookupResult lookupAlloc(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
@@ -117,6 +123,10 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         this->customCleanup = std::move(customCleanup);
     }
 
+    void setPeerAllocationsFn(PeerAllocationsFn peerAllocationsFn) {
+        this->peerAllocationsFn = std::move(peerAllocationsFn);
+    }
+
     static constexpr auto chunkAlignment = 512u;
     static constexpr auto poolAlignment = MemoryConstants::pageSize2M;
 
@@ -124,10 +134,13 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MemoryOperationsStatus evictPool(Device *targetDevice);
     MemoryOperationsStatus makePoolResident(Device *targetDevice);
     // Caller must hold mtx.
+    bool isEmptyImpl() const;
+    // Caller must hold mtx.
     void drainDeferredFreeChunks();
     // Gives the chunk space back and drops the residency it held. Caller must hold mtx.
     void releaseChunk(const AllocationInfo &allocationInfo);
     CustomCleanupFn customCleanup = nullptr;
+    PeerAllocationsFn peerAllocationsFn = nullptr;
     std::unique_ptr<HeapAllocator> chunkAllocator;
     void *pool{};
     void *poolEnd{};
@@ -149,6 +162,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
 class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
   public:
     using CustomCleanupFn = UsmMemAllocPool::CustomCleanupFn;
+    using PeerAllocationsFn = UsmMemAllocPool::PeerAllocationsFn;
     static constexpr size_t maxEmptyPoolsPerBucket = 1u;
 
     UsmMemAllocPoolsManager(InternalMemoryType memoryType,
@@ -173,10 +187,14 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     void setCustomCleanup(CustomCleanupFn customCleanup) {
         this->customCleanup = std::move(customCleanup);
     }
+    void setPeerAllocationsFn(PeerAllocationsFn peerAllocationsFn) {
+        this->peerAllocationsFn = std::move(peerAllocationsFn);
+    }
 
   protected:
     bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
     CustomCleanupFn customCleanup = nullptr;
+    PeerAllocationsFn peerAllocationsFn = nullptr;
     SVMAllocsManager *svmMemoryManager{};
     MemoryManager *memoryManager{};
     Device *device{nullptr};
@@ -191,10 +209,12 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
 class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
   public:
     using CustomCleanupFn = UsmMemAllocPool::CustomCleanupFn;
+    using PeerAllocationsFn = UsmMemAllocPool::PeerAllocationsFn;
     struct InitParams {
         CustomCleanupFn customCleanup{};
         bool trackResidency{false};
         bool compressedHint{false};
+        PeerAllocationsFn peerAllocations{};
     };
     static bool poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault);
     static bool isPoolManagerSupported(InternalMemoryType memoryType, const Device *device);

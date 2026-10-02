@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,6 @@
 
 namespace L0 {
 
-KernelAllocatorFn kernelFactory[NEO::maxProductEnumValue] = {};
+KernelAllocatorFn kernelFactory[NEO::maxCoreEnumValue] = {};
 
 } // namespace L0

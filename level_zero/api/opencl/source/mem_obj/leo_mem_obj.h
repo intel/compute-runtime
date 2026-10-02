@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
@@ -15,6 +16,7 @@
 #include "CL/cl.h"
 
 #include <atomic>
+#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -26,6 +28,7 @@ struct OpenCLObjectMapper<_cl_mem> {
 
 class MemObj : public BaseObject<_cl_mem> {
   public:
+    constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFF00LL;
     constexpr static cl_ulong objectMagic = 0xAB2212340CACDD00LL;
 
     using CallbackT = void(CL_CALLBACK *)(cl_mem, void *);
@@ -46,19 +49,33 @@ class MemObj : public BaseObject<_cl_mem> {
 
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
 
+    static constexpr bool isHandleListProperty(cl_mem_properties propertyName) {
+        return (propertyName == CL_IMAGE_L0_HANDLE_INTEL) ||
+               (propertyName == CL_MEM_DEVICE_HANDLE_LIST_KHR);
+    }
+
+    static size_t getHandleListEnd(const cl_mem_properties *properties, size_t nameIndex) {
+        size_t entryIndex = nameIndex + 1;
+        while (properties[entryIndex] != CL_IMAGE_L0_HANDLE_LIST_END_INTEL) {
+            ++entryIndex;
+        }
+        return entryIndex;
+    }
+
     template <typename ReturnType>
     static ReturnType getMemObjProperties(const cl_mem_properties *properties,
                                           cl_mem_properties propertyName,
                                           bool *foundValue = nullptr) {
         if (properties != nullptr) {
-            while (*properties != 0) {
-                if (*properties == propertyName) {
+            size_t i = 0;
+            while (properties[i] != 0) {
+                if (properties[i] == propertyName) {
                     if (foundValue) {
                         *foundValue = true;
                     }
-                    return static_cast<ReturnType>(*(properties + 1));
+                    return static_cast<ReturnType>(properties[i + 1]);
                 }
-                properties += 2;
+                i = isHandleListProperty(properties[i]) ? getHandleListEnd(properties, i) + 1 : i + 2;
             }
         }
 
@@ -66,6 +83,42 @@ class MemObj : public BaseObject<_cl_mem> {
             *foundValue = false;
         }
         return 0;
+    }
+
+    static std::vector<uintptr_t> getMemObjHandleList(const cl_mem_properties *properties,
+                                                      cl_mem_properties propertyName,
+                                                      bool *foundValue = nullptr) {
+        std::vector<uintptr_t> handles{};
+        bool found = false;
+
+        if (properties != nullptr) {
+            size_t i = 0;
+            while (properties[i] != 0) {
+                const auto currentName = properties[i];
+                const bool matches = (currentName == propertyName);
+                found |= matches;
+
+                if (isHandleListProperty(currentName)) {
+                    const auto listEnd = getHandleListEnd(properties, i);
+                    if (matches) {
+                        for (size_t entry = i + 1; entry < listEnd; ++entry) {
+                            handles.push_back(static_cast<uintptr_t>(properties[entry]));
+                        }
+                    }
+                    i = listEnd + 1;
+                } else {
+                    if (matches) {
+                        handles.push_back(static_cast<uintptr_t>(properties[i + 1]));
+                    }
+                    i += 2;
+                }
+            }
+        }
+
+        if (foundValue) {
+            *foundValue = found;
+        }
+        return handles;
     }
 
     void storeProperties(const cl_mem_properties *properties);

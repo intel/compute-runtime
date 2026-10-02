@@ -251,6 +251,13 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         ++hostPtrSurfaceCreationMutexLockCount;
         return CommandStreamReceiver::obtainHostPtrSurfaceCreationLock();
     }
+    std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+        ++tryObtainUniqueOwnershipCalled;
+        if (tryObtainUniqueOwnershipFails) {
+            return std::unique_lock<CommandStreamReceiver::MutexType>();
+        }
+        return CommandStreamReceiver::tryObtainUniqueOwnership();
+    }
     bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
         bool status = CommandStreamReceiver::createAllocationForHostSurface(surface, requiresL3Flush);
         if (status) {
@@ -327,6 +334,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t submitLateMidThreadPreemptionStartCounter = 0;
     std::atomic<uint32_t> obtainUniqueOwnershipCalledTimes = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
+    uint32_t tryObtainUniqueOwnershipCalled = 0;
+    bool tryObtainUniqueOwnershipFails = false;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
     bool programHardwareContextCalled = false;

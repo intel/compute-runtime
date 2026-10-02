@@ -192,7 +192,7 @@ TEST_F(CommandQueueInfoFixture, givenQueueWhenQueryingImmediateCommandListHandle
 
     ze_command_list_handle_t queried = nullptr;
     size_t retSize = 0;
-    EXPECT_EQ(CL_SUCCESS, queue->getCmdQInfo(CL_L0_IMMEDIATE_CMD_LIST_HANDLE, sizeof(queried), &queried, &retSize));
+    EXPECT_EQ(CL_SUCCESS, queue->getCmdQInfo(CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, sizeof(queried), &queried, &retSize));
     EXPECT_EQ(sizeof(ze_command_list_handle_t), retSize);
     EXPECT_EQ(capturingCmdList.toHandle(), queried);
     EXPECT_EQ(queue->getL0Handle(), queried);
@@ -224,7 +224,7 @@ TEST_F(CommandQueueInfoFixture, givenSizeOnlyQueryWhenQueryingScalarParamsThenSi
         {CL_QUEUE_DEVICE_DEFAULT, sizeof(cl_command_queue)},
         {CL_QUEUE_FAMILY_INTEL, sizeof(cl_uint)},
         {CL_QUEUE_INDEX_INTEL, sizeof(cl_uint)},
-        {CL_L0_IMMEDIATE_CMD_LIST_HANDLE, sizeof(ze_command_list_handle_t)}};
+        {CL_QUEUE_L0_IMMEDIATE_CMD_LIST_HANDLE_INTEL, sizeof(ze_command_list_handle_t)}};
 
     for (const auto &[paramName, expectedSize] : scalarParams) {
         size_t retSize = 0;

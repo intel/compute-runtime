@@ -510,18 +510,8 @@ TEST_F(MemoryOpenIpcHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-struct HostUsmPoolMemoryOpenIpcHandleTest : public MemoryIPCTests {
-    void SetUp() override {
-        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
-        NEO::debugManager.flags.EnableUsmPoolLazyInit.set(-1);
-        MemoryIPCTests::SetUp();
-    }
-
-    DebugManagerStateRestore restorer;
-};
-
-TEST_F(HostUsmPoolMemoryOpenIpcHandleTest,
-       givenCallToOpenIpcMemHandleItIsSuccessfullyOpenedAndClosed) {
+TEST_F(MemoryOpenIpcHandleTest,
+       givenHostAllocationAndCallToOpenIpcMemHandleItIsSuccessfullyOpenedAndClosed) {
     size_t size = 1;
     size_t alignment = 0u;
     void *ptr = nullptr;
@@ -531,24 +521,48 @@ TEST_F(HostUsmPoolMemoryOpenIpcHandleTest,
                                                size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
-    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->getHostUsmPoolOwningPtr(ptr).pool);
-    ASSERT_NE(nullptr, mockHostMemAllocPool);
-    const auto pooledAllocationOffset = ptrDiff(mockHostMemAllocPool->allocations.get(ptr)->address, castToUint64(mockHostMemAllocPool->pool));
 
     ze_ipc_mem_handle_t ipcHandle = {};
     result = context->getIpcMemHandle(ptr, nullptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
-    EXPECT_EQ(pooledAllocationOffset, ipcData.poolOffset);
 
     ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ptrOffset(ptr, pooledAllocationOffset), ipcPtr);
+    EXPECT_NE(ipcPtr, nullptr);
 
     result = context->closeIpcMemHandle(ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportWinHandleTest,
+       givenCallToHostAllocWithExportDescriptorThenAllocationIsMarkedShareable) {
+    size_t size = 1;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    ze_external_memory_export_desc_t exportDesc = {};
+    exportDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
+    exportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    hostDesc.pNext = &exportDesc;
+
+    ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    EXPECT_EQ(1u, allocData->allocationFlagsProperty.flags.shareable);
+
+    auto &productHelper = device->getNEODevice()->getProductHelper();
+    EXPECT_EQ(productHelper.canShareMemoryWithoutNTHandle(),
+              allocData->allocationFlagsProperty.flags.ipcSupportedAllocationByDefault);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

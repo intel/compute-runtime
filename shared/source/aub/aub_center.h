@@ -12,6 +12,8 @@
 
 #include "aubstream/aub_manager.h"
 
+#include <mutex>
+
 namespace NEO {
 struct RootDeviceEnvironment;
 
@@ -38,6 +40,10 @@ class AubCenter {
         return aubManager.get();
     }
 
+    MOCKABLE_VIRTUAL std::unique_lock<std::mutex> obtainPageTablesLock() {
+        return std::unique_lock<std::mutex>(pageTablesMutex);
+    }
+
     static uint32_t getAubStreamMode(const std::string &aubFileName, CommandStreamReceiverType csrType);
 
     void addImplicitArgsInfoToAubComments(uint32_t implicitArgsVersion);
@@ -47,6 +53,7 @@ class AubCenter {
 
     std::unique_ptr<AubSubCaptureCommon> subCaptureCommon;
     std::unique_ptr<aub_stream::AubManager> aubManager;
+    std::mutex pageTablesMutex;
     uint32_t aubStreamMode = 0;
     uint32_t stepping = 0;
     std::once_flag addImplicitArgsInfoOnceFlag;

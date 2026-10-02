@@ -74,7 +74,8 @@ struct FeatureTableBase {
         uint32_t ftrBlitterRing : 1;
         uint32_t ftrHwSemaphore64 : 1;
         uint32_t ftrSelectiveWmtp : 1;
-        uint32_t reserved : 14;
+        uint32_t ftrAppTransientCaching : 1;
+        uint32_t reserved : 13;
     };
 
     BcsInfoMask ftrBcsInfo = 1;

@@ -167,12 +167,12 @@ TEST(ModuleBuildLog, WhenGettingStringThenLogIsParsedCorrectly) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, buildLogSize);
 
-    buildLog = reinterpret_cast<char *>(malloc(buildLogSize));
+    alignas(16) uint8_t stackBuffer[32] = {};
+    ASSERT_LE(buildLogSize, sizeof(stackBuffer));
+    buildLog = reinterpret_cast<char *>(stackBuffer);
     result = moduleBuildLog->getString(&buildLogSize, buildLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, buildLogSize);
-
-    free(buildLog);
 
     moduleBuildLog->appendString(errorLog, strlen(errorLog));
 
@@ -181,13 +181,11 @@ TEST(ModuleBuildLog, WhenGettingStringThenLogIsParsedCorrectly) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + 1), buildLogSize);
 
-    buildLog = reinterpret_cast<char *>(malloc(buildLogSize));
+    ASSERT_LE(buildLogSize, sizeof(stackBuffer));
     result = moduleBuildLog->getString(&buildLogSize, buildLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + 1), buildLogSize);
     EXPECT_STREQ("Error Log", buildLog);
-
-    free(buildLog);
 
     moduleBuildLog->appendString(warnLog, strlen(warnLog));
 
@@ -196,14 +194,12 @@ TEST(ModuleBuildLog, WhenGettingStringThenLogIsParsedCorrectly) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + strlen("\n") + strlen(warnLog) + 1), buildLogSize);
 
-    buildLog = reinterpret_cast<char *>(malloc(buildLogSize));
+    ASSERT_LE(buildLogSize, sizeof(stackBuffer));
     result = moduleBuildLog->getString(&buildLogSize, buildLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ((strlen(errorLog) + strlen("\n") + strlen(warnLog) + 1), buildLogSize);
     EXPECT_STREQ("Error Log\nWarn Log", buildLog);
     EXPECT_STREQ(buildLog, moduleBuildLog->getBuildLog());
-
-    free(buildLog);
 
     result = moduleBuildLog->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -286,7 +282,6 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenThreadGroupParametersAreCorrect) {
 
     ze_result_t res = ZE_RESULT_SUCCESS;
     auto kernel = std::unique_ptr<Kernel>(whiteboxCast(Kernel::create(
-        neoDevice->getHardwareInfo().platform.eProductFamily,
         module.get(), &kernelDesc, &res)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, kernel);
@@ -304,7 +299,6 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectPropertiesAreReturned) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto kernel = std::unique_ptr<Kernel>(whiteboxCast(Kernel::create(
-        neoDevice->getHardwareInfo().platform.eProductFamily,
         module.get(), &kernelDesc, &result)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, kernel);
@@ -345,7 +339,6 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto kernel = std::unique_ptr<Kernel>(whiteboxCast(Kernel::create(
-        neoDevice->getHardwareInfo().platform.eProductFamily,
         module.get(), &kernelDesc, &result)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, kernel);
@@ -362,12 +355,12 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(strlen(attributeString) + 1, strSize);
 
-    char *attributes = reinterpret_cast<char *>(malloc(sizeof(char) * strSize));
+    alignas(16) uint8_t stackBuffer[32] = {};
+    ASSERT_LE(sizeof(char) * strSize, sizeof(stackBuffer));
+    char *attributes = reinterpret_cast<char *>(stackBuffer);
     result = kernel->getSourceAttributes(&strSize, &attributes);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_STREQ(attributeString, attributes);
-
-    free(attributes);
 }
 
 TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {
@@ -608,6 +601,45 @@ TEST_F(ModuleTests, givenStaticLinkSpirVAndLlvmBcWithoutCreateLibraryOptionThenO
     EXPECT_EQ(1u, tu.compileGenBinaryCalled);
     EXPECT_EQ(IGC::CodeType::oclGenBin, tu.capturedOutType);
     EXPECT_TRUE(tu.capturedStaticLink);
+};
+
+TEST_F(ModuleTests, givenBuildFromSourceWithHeadersWithoutCreateLibraryOptionThenOutTypeIsUndefined) {
+    auto mockCompilerInterface = new MockCompilerInterface();
+    auto &rootDeviceEnv = *neoDevice->getExecutionEnvironment()
+                               ->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnv.compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnitCaptureCompileArgs tu(device);
+    tu.capturedOutType = IGC::CodeType::invalid;
+
+    const char source[] = "constant float foo = 9.6F;\n";
+    ze_result_t result = tu.buildFromSourceWithHeaders(ZE_MODULE_FORMAT_OCLC, source, sizeof(source),
+                                                       nullptr, nullptr,
+                                                       {}, {}, {});
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, tu.compileGenBinaryCalled);
+    EXPECT_EQ(IGC::CodeType::undefined, tu.capturedOutType);
+    EXPECT_FALSE(tu.capturedCreateLibrary);
+};
+
+TEST_F(ModuleTests, givenBuildFromSourceWithHeadersWithCreateLibraryOptionThenOutTypeIsLlvmBc) {
+    auto mockCompilerInterface = new MockCompilerInterface();
+    auto &rootDeviceEnv = *neoDevice->getExecutionEnvironment()
+                               ->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnv.compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnitCaptureCompileArgs tu(device);
+
+    const char source[] = "constant float foo = 9.6F;\n";
+    ze_result_t result = tu.buildFromSourceWithHeaders(ZE_MODULE_FORMAT_OCLC, source, sizeof(source),
+                                                       NEO::CompilerOptions::createLibrary.data(), nullptr,
+                                                       {}, {}, {});
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, tu.compileGenBinaryCalled);
+    EXPECT_EQ(IGC::CodeType::llvmBc, tu.capturedOutType);
+    EXPECT_TRUE(tu.capturedCreateLibrary);
 };
 
 TEST_F(ModuleTests, givenIsLlvmBcWhenFlagIsNotSetThenReturnsFalse) {

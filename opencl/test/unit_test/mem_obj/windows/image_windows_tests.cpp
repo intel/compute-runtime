@@ -7,8 +7,11 @@
 
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/source/sharings/unified/unified_image.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 
 using namespace NEO;
@@ -84,4 +87,59 @@ TEST_F(ImageWindowsTests, givenPropertiesWithNtHandleWhenValidateAndCreateImageT
     EXPECT_NE(image, nullptr);
 
     clReleaseMemObject(image);
+}
+
+using ImageMultiRootDeviceTests = MultiRootDeviceFixture;
+
+TEST_F(ImageMultiRootDeviceTests, givenDeviceHandleListWhenValidatingAndCreatingImageThenHandleIsImportedOnlyForListedDevices) {
+    cl_mem_properties properties[] = {
+        CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, 0x1234,
+        CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties>(static_cast<cl_device_id>(device2)),
+        CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
+        0};
+
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 64;
+    imageDesc.image_height = 64;
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto clImage = ImageFunctions::validateAndCreateImage(context.get(), properties, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    auto image = castToObject<Image>(clImage);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(nullptr, image->getGraphicsAllocation(device1->getRootDeviceIndex()));
+    EXPECT_NE(nullptr, image->getGraphicsAllocation(device2->getRootDeviceIndex()));
+
+    clReleaseMemObject(clImage);
+}
+
+TEST_F(ImageWindowsTests, givenSharedTextureWhenSwappingGmmThenImageTakesLayoutOfTheTexture) {
+    auto gmm = std::make_unique<MockGmm>(context->getDevice(0)->getGmmHelper());
+    auto mockGmmResourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    mockGmmResourceInfo->mockResourceCreateParams.Type = RESOURCE_2D;
+    mockGmmResourceInfo->mockResourceCreateParams.BaseWidth = 64u;
+    mockGmmResourceInfo->mockResourceCreateParams.BaseHeight = 32u;
+    mockGmmResourceInfo->overrideReturnedRenderPitch(512u);
+    mockGmmResourceInfo->overrideReturnedQPitch(48u);
+
+    MockGraphicsAllocation allocation;
+    allocation.setDefaultGmm(gmm.get());
+
+    ImageInfo imgInfo = {};
+    imgInfo.imgDesc.imageType = ImageType::image2DArray;
+    imgInfo.imgDesc.imageWidth = 16u;
+    imgInfo.imgDesc.imageHeight = 16u;
+    imgInfo.imgDesc.imageArraySize = 2u;
+
+    UnifiedImage::swapGmm(&allocation, context.get(), &imgInfo);
+
+    EXPECT_EQ(gmm.get(), allocation.getDefaultGmm());
+    EXPECT_EQ(64u, imgInfo.imgDesc.imageWidth);
+    EXPECT_EQ(512u, imgInfo.imgDesc.imageRowPitch);
+    EXPECT_EQ(48u, imgInfo.qPitch);
 }

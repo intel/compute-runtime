@@ -28,7 +28,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
+#include "shared/source/utilities/software_tags_manager.h"
 
 #include "create_direct_submission_hw.inl"
 
@@ -89,6 +89,13 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         relaxedOrderingEnabled = (debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
     }
 
+    if (relaxedOrderingEnabled && SWTagsManager::countersEnabled()) {
+        // Software tag counters are written to CS_GPR R10/R11, which the relaxed ordering scheduler owns.
+        relaxedOrderingEnabled = false;
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                     "WARNING: EnableExtendedSoftwareTags disables direct submission relaxed ordering\n");
+    }
+
     this->isSwitchOnUnsuccessful = false;
     if (!this->osContext.isExclusivelyHpContext()) {
         if (this->osContext.isHighPriority()) {
@@ -102,7 +109,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     }
 
     currentQueueWorkCount = getInitialSemaphoreValue();
-    this->useSemaphore64bCmd = inputParams.rootDeviceEnvironment.getCompilerReleaseHelper().isAvailableSemaphore64(*inputParams.rootDeviceEnvironment.getHardwareInfo());
+    this->useSemaphore64bCmd = inputParams.rootDeviceEnvironment.getHelper<CompilerProductHelper>().isAvailableSemaphore64(*inputParams.rootDeviceEnvironment.getHardwareInfo());
 }
 
 template <typename GfxFamily, typename Dispatcher>

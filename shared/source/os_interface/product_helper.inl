@@ -964,6 +964,11 @@ bool ProductHelperHw<gfxProduct>::isL3FlushAfterPostSyncSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isWalkerPreemptionFallbackRequired(PreemptionMode preemptionMode, bool hostWaitablePostSync) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     return maxThreadsPerThreadGroup;
 }
@@ -1076,6 +1081,18 @@ bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties(const BlitProperti
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
     return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const {
+    switch (debugManager.flags.OverrideBcsWriteSplit.get()) {
+    case 1:
+        return isDstSystemOrRemoteMemory;
+    case 2:
+        return true;
+    default:
+        return false;
+    }
 }
 
 template <PRODUCT_FAMILY gfxProduct>

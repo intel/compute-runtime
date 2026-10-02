@@ -73,17 +73,11 @@ HWTEST_F(CommandListMultiDeviceMemAdviseTest, givenMultiDeviceMemAdviseWithSucce
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(driverHandle->devices[0], NEO::EngineGroupType::renderCompute, 0u);
 
-    size_t size = 10;
-    void *ptr = nullptr;
+    uint8_t data{};
 
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
-
-    auto res = commandList->appendMemAdvise(driverHandle->devices[1], ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    auto res = commandList->appendMemAdvise(driverHandle->devices[1], &data, sizeof(data), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(1u, commandList->getMemAdviseOperations().size());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    free(ptr);
 }
 
 HWTEST_F(CommandListMultiDeviceMemAdviseTest, givenMultiDeviceMemAdviseWithUnsuccessfulCanAccessPeerTestThenAppendMemAdviseFails) {
@@ -92,17 +86,11 @@ HWTEST_F(CommandListMultiDeviceMemAdviseTest, givenMultiDeviceMemAdviseWithUnsuc
 
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0u);
-    size_t size = 10;
-    void *ptr = nullptr;
+    uint8_t data{};
 
-    ptr = malloc(size);
-    EXPECT_NE(nullptr, ptr);
-
-    auto res = commandList->appendMemAdvise(driverHandle->devices[1], ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    auto res = commandList->appendMemAdvise(driverHandle->devices[1], &data, sizeof(data), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(0u, commandList->getMemAdviseOperations().size());
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
-
-    free(ptr);
 }
 
 } // namespace ult

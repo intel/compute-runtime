@@ -44,11 +44,13 @@ class ReleaseHelper {
     virtual uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize) const = 0;
     virtual uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const = 0;
     virtual bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const = 0;
-    virtual uint64_t overrideSystemMemoryPatIndexBase(uint64_t patIndex) const = 0;
+    virtual bool is2WayCoherentPatSupported() const = 0;
+    virtual bool isAppTransientCoherentPatRequired() const = 0;
     uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const;
     virtual uint32_t getIpVersionForGmm() const = 0;
 
   protected:
+    virtual uint64_t overrideSystemMemoryPatIndexBase(uint64_t patIndex) const = 0;
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
     HardwareIpVersion hardwareIpVersion{};
 };
@@ -71,6 +73,8 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint32_t alignSlmSizePerThreadGroup(uint32_t slmSize) const override;
     uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const override;
     bool isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const override;
+    bool is2WayCoherentPatSupported() const override;
+    bool isAppTransientCoherentPatRequired() const override;
     uint64_t overrideSystemMemoryPatIndexBase(uint64_t patIndex) const override;
     uint32_t getIpVersionForGmm() const override;
 };

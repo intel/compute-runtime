@@ -23,47 +23,14 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "metrics_library_api_1_0.h"
 
 using GfxCoreHelperTestsXe3pCore = GfxCoreHelperTest;
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenGfxCoreHelperWhenAskingForTimestampPacketAlignmentThenReturnCachelineSize) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    constexpr auto expectedAlignment = MemoryConstants::cacheLineSize;
-
-    EXPECT_EQ(expectedAlignment, gfxCoreHelper.getTimestampPacketAllocatorAlignment());
-}
-
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenAskedForMinimialSimdThen16IsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnValueDependsOnLocalMemory) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    hwInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));
-
-    hwInfo.featureTable.flags.ftrLocalMemory = false;
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagSetWhenCallCopyThroughLockedPtrEnabledThenReturnCorrectValue) {
-    DebugManagerStateRestore restorer;
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    debugManager.flags.ExperimentalCopyThroughLock.set(0);
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
-
-    debugManager.flags.ExperimentalCopyThroughLock.set(1);
-    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGettingMetricsLibraryGenIdThenXe3pIsReturned) {
@@ -291,46 +258,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEngin
     EXPECT_TRUE(allEnginesChecked());
 }
 
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenGroupContextWhenCreatingDeviceThenCreateBcsLpContexts) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ContextGroupSize.set(2);
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
-    hwInfo.featureTable.ftrBcsInfo.set(0, false);
-    hwInfo.featureTable.ftrBcsInfo.set(2, false);
-    hwInfo.featureTable.ftrBcsInfo.set(7, false);
-    hwInfo.featureTable.ftrBcsInfo.set(8, false);
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-
-    uint32_t bcsLpContextsCount = 0;
-    for (auto &engine : device->getAllEngines()) {
-        if (EngineHelpers::isBcs(engine.getEngineType()) && engine.getEngineUsage() == EngineUsage::lowPriority) {
-            EXPECT_EQ(1u, EngineHelpers::getBcsIndex(engine.getEngineType()));
-            bcsLpContextsCount++;
-        }
-    }
-
-    EXPECT_EQ(1u, bcsLpContextsCount);
-
-    bcsLpContextsCount = 0;
-    for (auto &engine : engines) {
-        if (EngineHelpers::isBcs(engine.first) && engine.second == EngineUsage::lowPriority) {
-            EXPECT_EQ(1u, EngineHelpers::getBcsIndex(engine.first));
-            bcsLpContextsCount++;
-        }
-    }
-
-    EXPECT_EQ(1u, bcsLpContextsCount);
-}
-
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenOneBcsEnabledWhenGetEnginesCalledThenCreateOnlyOneBcs) {
     const size_t numEngines = 8;
 
@@ -369,81 +296,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenOneBcsEnabledWhenGetEnginesCall
         EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
         EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
     }
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenBcsDisabledWhenGetEnginesCalledThenDontCreateAnyBcs) {
-    const size_t numEngines = 6;
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = 0;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(numEngines, engines.size());
-
-    struct EnginePropertiesMap {
-        aub_stream::EngineType engineType;
-        bool isCcs;
-        bool isBcs;
-    };
-
-    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS1, true, false},
-        {aub_stream::ENGINE_CCS2, true, false},
-        {aub_stream::ENGINE_CCS3, true, false},
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS, true, false},
-    }};
-
-    for (size_t i = 0; i < numEngines; i++) {
-        EXPECT_EQ(enginePropertiesMap[i].engineType, engines[i].first);
-        EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
-        EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
-    }
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenCcsDisabledAndNumberOfCcsEnabledWhenGetGpgpuEnginesThenReturnCcsAndCccsEngines) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = false;
-    hwInfo.featureTable.ftrBcsInfo = 0;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(6u, device->allEngines.size());
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(6u, engines.size());
-
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[1].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[2].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[3].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[4].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[5].first);
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenCcsDisabledWhenGetGpgpuEnginesThenReturnCccsEngines) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = false;
-    hwInfo.featureTable.ftrBcsInfo = 0;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 0;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(2u, device->allEngines.size());
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(2u, engines.size());
-
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[1].first);
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagDisablingContextGroupWhenQueryingEnginesThenLowPriorityAndInternalEngineIsReturned) {
@@ -582,104 +434,14 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingInterna
     }
 }
 
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenNonBcsEngineIsVerifiedThenReturnFalse) {
-    EXPECT_FALSE(EngineHelpers::isBcs(static_cast<aub_stream::EngineType>(aub_stream::ENGINE_BCS8 + 1)));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenGfxCoreHelperWhenAskedIfFenceAllocationRequiredThenReturnCorrectValue) {
-    DebugManagerStateRestore dbgRestore;
-
-    const auto hwInfo = *defaultHwInfo;
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
-    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
-    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
-    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(-1);
-    EXPECT_EQ(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper), !hwInfo.capabilityTable.isIntegratedDevice);
-
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
-    EXPECT_FALSE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
-
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
-    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
-
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
-    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
-
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
-    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
-
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
-    EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * 2 * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-
-    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
-
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDefaultMemorySynchronizationCommandsWhenAddingAdditionalSynchronizationThenMemoryFenceIsReleased) {
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDefaultMemorySynchronizationCommandsWhenAddingReleaseSynchronizationThenNothingIsProgrammed) {
     auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    auto &hardwareInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    if (hardwareInfo.capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP();
-    }
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
+
     uint8_t buffer[128] = {};
     LinearStream commandStream(buffer, 128);
 
     MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream);
-    EXPECT_EQ(1u, hwParser.cmdList.size());
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
+    EXPECT_EQ(0u, commandStream.getUsed());
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenAddingAdditionalSynchronizationThenSemaphoreWaitIsCalled) {
@@ -707,64 +469,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDontProgramGlobalFenceAsMiMemFe
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 }
 
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenAddingAdditionalSynchronizationThenMemoryFenceIsReleased) {
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
-
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    auto &hardwareInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    uint8_t buffer[128] = {};
-    LinearStream commandStream(buffer, 128);
-
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream);
-    EXPECT_EQ(1u, hwParser.cmdList.size());
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenIntegratedDeviceWhenGettingSizeForAcquireAdditionalSynchronizationThenZeroIsReturned) {
-    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-
-    EXPECT_EQ(0u, MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::acquire, rootDeviceEnvironment));
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenIntegratedDeviceWhenAddingAcquireAdditionalSynchronizationThenNoCommandIsProgrammed) {
-    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-    uint8_t buffer[128] = {};
-    LinearStream commandStream(buffer, 128);
-
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x1000, NEO::FenceType::acquire, rootDeviceEnvironment);
-
-    EXPECT_EQ(0u, commandStream.getUsed());
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDiscreteDeviceWhenAddingAcquireAdditionalSynchronizationThenMemoryFenceIsProgrammed) {
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
-    uint8_t buffer[128] = {};
-    LinearStream commandStream(buffer, 128);
-
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x1000, NEO::FenceType::acquire, rootDeviceEnvironment);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream);
-    EXPECT_EQ(1u, hwParser.cmdList.size());
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE, fenceCmd->getFenceType());
-}
-
 using ProductHelperTestXe3pCore = Test<DeviceFixture>;
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenXe3pProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
@@ -785,43 +489,6 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCheckTimestampW
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isTimestampWaitSupportedForEvents());
-}
-
-XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 2u);
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(3);
-    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 3u);
-}
-
-XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenDefaultGfxCoreHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
-    auto &productHelper = getHelper<ProductHelper>();
-    MockGraphicsAllocation allocation;
-    allocation.overrideMemoryPool(MemoryPool::localMemory);
-    allocation.setAllocationType(AllocationType::bufferHostMemory);
-    EXPECT_FALSE(productHelper.isBlitCopyRequiredForLocalMemory(pDevice->getRootDeviceEnvironment(), allocation));
-}
-
-XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCallUseGemCreateExtInAllocateMemoryByKMDThenTrueIsReturned) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.useGemCreateExtInAllocateMemoryByKMD());
-}
-
-XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
-    DebugManagerStateRestore restore;
-    auto &productHelper = getHelper<ProductHelper>();
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    debugManager.flags.EnableBlitterOperationsSupport.set(0);
-    productHelper.configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
-
-    debugManager.flags.EnableBlitterOperationsSupport.set(1);
-    productHelper.configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenMultitileConfigWhenConfiguringHwInfoThenBlitterIsEnabled) {
@@ -863,9 +530,9 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenIsBlitterForIma
     EXPECT_TRUE(productHelper.isBlitterForImagesSupported());
 }
 
-XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForGlobalFenceSupportThenReturnTrue) {
+XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForGlobalFenceInPostSyncThenReturnFalse) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.isReleaseGlobalFenceInCommandStreamRequired(*defaultHwInfo), !defaultHwInfo->capabilityTable.isIntegratedDevice);
+    EXPECT_FALSE(productHelper.isGlobalFenceInPostSyncRequired(*defaultHwInfo));
 }
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForCooperativeEngineSupportThenReturnFalse) {

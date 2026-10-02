@@ -27,6 +27,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_blit.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_fill.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_host_functions.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_immediate_deferred_init.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_api.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_memory_extension.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_throttle.cpp

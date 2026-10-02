@@ -29,6 +29,7 @@ void globalDriverSetup() {
 
     if (!NEO::LEO::platformsImpl) {
         NEO::LEO::platformsImpl = new std::vector<std::unique_ptr<NEO::LEO::Platform>>;
+        NEO::LEO::platformsInitAttempted = false;
     }
 }
 
@@ -49,6 +50,7 @@ void globalDriverTeardown() {
         delete NEO::LEO::platformsImpl;
     }
     NEO::LEO::platformsImpl = nullptr;
+    NEO::LEO::platformsInitAttempted = false;
     NEO::LEO::SharingFactory::clearSharingBuilders();
 
     if (levelZeroDriverInitialized) {

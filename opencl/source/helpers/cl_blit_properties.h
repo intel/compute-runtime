@@ -50,7 +50,7 @@ struct ClBlitProperties {
                 {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
                 builtinOpParams.size,
                 builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
-                builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
+                builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation, false);
             if (BlitterConstants::BlitDirection::imageToImage == blitDirection) {
                 blitProperties.blitDirection = blitDirection;
                 setBlitPropertiesForImage(blitProperties, builtinOpParams);

@@ -172,13 +172,12 @@ std::optional<std::vector<VmBindOpExtDebugData>> IoctlHelperXe::addDebugDataAndC
     if (resourceClass == DrmResourceClass::moduleHeapDebugArea || resourceClass == DrmResourceClass::contextSaveArea || resourceClass == DrmResourceClass::sbaTrackingBuffer) {
         VmBindOpExtDebugData debugData = {};
         debugData.base.name = euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionDebugDataName);
-        debugData.base.nextExtension = 0;
-        debugData.base.pad = 0;
         debugData.addr = bo->peekAddress();
         debugData.range = bo->peekSize();
-        debugData.flags = euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
-        debugData.offset = 0u;
-        debugData.pseudopath = convertDrmResourceClassToXeDebugPseudoPath(resourceClass);
+        if (isAdd) {
+            debugData.flags = euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
+            debugData.pseudopath = convertDrmResourceClassToXeDebugPseudoPath(resourceClass);
+        }
         debugDataVec.push_back(debugData);
 
     } else if (resourceClass == DrmResourceClass::isa) {
@@ -197,13 +196,11 @@ std::optional<std::vector<VmBindOpExtDebugData>> IoctlHelperXe::addDebugDataAndC
             for (auto bindInfo : isaDebugData.bindInfoMap[vmId]) {
                 VmBindOpExtDebugData debugData = {};
                 debugData.base.name = euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionDebugDataName);
-                debugData.base.nextExtension = 0;
-                debugData.base.pad = 0;
                 debugData.addr = bindInfo.address;
                 debugData.range = bindInfo.size;
-                debugData.flags = 0;
-                debugData.offset = 0u;
-                memcpy(debugData.pathname, isaDebugData.elfPath, PATH_MAX);
+                if (isAdd) {
+                    memcpy(debugData.pathname, isaDebugData.elfPath, PATH_MAX);
+                }
                 debugDataVec.push_back(debugData);
             }
         }
@@ -234,6 +231,14 @@ int IoctlHelperXe::bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataV
     bind.num_binds = static_cast<uint32_t>(debugDataVec.size());
     std::vector<drm_xe_vm_bind_op> bindOps;
     for (auto &debugData : debugDataVec) {
+        if (debugData.flags == euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag)) {
+            PRINT_DEBUGGER_INFO_LOG("drm_xe_vm_bind_op_ext_debug_data: add=%u addr=0x%llx range=0x%llx flags=%d offset=0x%llx pseudopath=%llu\n",
+                                    isAdd, debugData.addr, debugData.range, debugData.flags, debugData.offset, debugData.pseudopath);
+        } else {
+            PRINT_DEBUGGER_INFO_LOG("drm_xe_vm_bind_op_ext_debug_data: add=%u addr=0x%llx range=0x%llx flags=%d offset=0x%llx pathname=%s",
+                                    isAdd, debugData.addr, debugData.range, debugData.flags, debugData.offset, debugData.pathname);
+        }
+
         drm_xe_vm_bind_op op = {};
         op.obj_offset = 0;
         op.range = 0;
@@ -245,13 +250,6 @@ int IoctlHelperXe::bindAddDebugData(std::vector<VmBindOpExtDebugData> debugDataV
             op.op = euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsRemoveDebugData);
         }
         op.extensions = (uintptr_t)&debugData;
-        if (debugData.flags == euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag)) {
-            PRINT_DEBUGGER_INFO_LOG("drm_xe_vm_bind_op_ext_debug_data: add=%u addr=0x%llx range=0x%llx flags=%d offset=0x%llx pseudopath=%llu\n",
-                                    isAdd, debugData.addr, debugData.range, debugData.flags, debugData.offset, debugData.pseudopath);
-        } else {
-            PRINT_DEBUGGER_INFO_LOG("drm_xe_vm_bind_op_ext_debug_data: add=%u addr=0x%llx range=0x%llx flags=%d offset=0x%llx pathname=%s",
-                                    isAdd, debugData.addr, debugData.range, debugData.flags, debugData.offset, debugData.pathname);
-        }
 
         bindOps.push_back(op);
     }

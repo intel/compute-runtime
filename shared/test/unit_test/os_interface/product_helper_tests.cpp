@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/blit_properties.h"
@@ -52,7 +53,6 @@ ProductHelperTest::ProductHelperTest() {
     productHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     compilerProductHelper = &executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     releaseHelper = &executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
-    compilerReleaseHelper = &executionEnvironment->rootDeviceEnvironments[0]->getCompilerReleaseHelper();
 }
 
 ProductHelperTest::~ProductHelperTest() = default;
@@ -642,6 +642,11 @@ HWTEST2_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnNonZero, I
     EXPECT_NE(0u, productHelper->getNumCacheRegions());
 }
 
+HWTEST2_F(ProductHelperTest, givenClosUnsupportedWhenGettingPatIndexThenAbortIsThrown, IsClosUnsupported) {
+    EXPECT_ANY_THROW(productHelper->getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
+    EXPECT_ANY_THROW(productHelper->getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
+}
+
 HWTEST_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters) {
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
 
@@ -1137,6 +1142,35 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForSharingWith3dOrMediaS
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceFalseReturned) {
     EXPECT_FALSE(productHelper->isDeviceToHostCopySignalingFenceRequired());
+}
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIfWriteSplitIsRequiredThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(true));
+}
+
+HWTEST_F(ProductHelperTest, givenOverrideBcsWriteSplitDebugFlagWhenAskingIfWriteSplitIsRequiredThenDebugFlagIsHonored) {
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.OverrideBcsWriteSplit.set(0);
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(true));
+
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+    EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
+    EXPECT_TRUE(productHelper->isWriteSplitRequired(true));
+
+    debugManager.flags.OverrideBcsWriteSplit.set(2);
+    EXPECT_TRUE(productHelper->isWriteSplitRequired(false));
+    EXPECT_TRUE(productHelper->isWriteSplitRequired(true));
+}
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenFalseReturned) {
+    for (auto preemptionMode : {PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread}) {
+        for (bool hostWaitablePostSync : {true, false}) {
+            EXPECT_FALSE(productHelper->isWalkerPreemptionFallbackRequired(preemptionMode, hostWaitablePostSync));
+        }
+    }
 }
 
 HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnNullopt, IsAtMostPVC) {

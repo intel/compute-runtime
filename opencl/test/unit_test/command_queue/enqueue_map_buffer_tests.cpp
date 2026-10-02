@@ -126,9 +126,9 @@ TEST_F(EnqueueMapBufferTest, GivenCmdqAndValidArgsWhenMappingBufferThenSuccessIs
 
 TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChangesArePropagatedToDeviceMemory) {
     // size not aligned to cacheline size
-    int bufferSize = 20;
-    void *ptrHost = malloc(bufferSize);
-    char *charHostPtr = static_cast<char *>(ptrHost);
+    constexpr int bufferSize = 20;
+    alignas(64) char hostStorage[bufferSize] = {};
+    char *charHostPtr = hostStorage;
 
     // first fill with data
     for (int i = 0; i < bufferSize; i++) {
@@ -195,14 +195,13 @@ TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChange
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    free(ptrHost);
 }
 
 TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWithOffsetWhenMappingBufferThenChangesArePropagatedToDeviceMemory) {
     // size not aligned to cacheline size
-    int bufferSize = 20;
-    void *ptrHost = malloc(bufferSize);
-    char *charHostPtr = static_cast<char *>(ptrHost);
+    constexpr int bufferSize = 20;
+    alignas(64) char hostStorage[bufferSize] = {};
+    char *charHostPtr = hostStorage;
     size_t offset = 4;
 
     // first fill with data
@@ -250,7 +249,6 @@ TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWithOffsetWhenMappingBuffer
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    free(ptrHost);
 }
 
 TEST_F(EnqueueMapBufferTest, GivenValidArgsWhenMappingBufferThenSuccessIsReturned) {

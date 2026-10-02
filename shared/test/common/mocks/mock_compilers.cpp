@@ -55,6 +55,37 @@ void clearIgcDebugVars() {
     igcDebugVars.reset();
 }
 
+std::vector<MockCompilerDebugVars> fclDebugVarStack;
+std::vector<MockCompilerDebugVars> igcDebugVarStack;
+
+void fclPushDebugVars(MockCompilerDebugVars &newDebugVars) {
+    fclDebugVarStack.push_back(newDebugVars);
+    setFclDebugVars(newDebugVars);
+}
+
+void fclPopDebugVars() {
+    fclDebugVarStack.pop_back();
+    if (fclDebugVarStack.empty()) {
+        clearFclDebugVars();
+    } else {
+        setFclDebugVars(fclDebugVarStack.back());
+    }
+}
+
+void igcPushDebugVars(MockCompilerDebugVars &newDebugVars) {
+    igcDebugVarStack.push_back(newDebugVars);
+    setIgcDebugVars(newDebugVars);
+}
+
+void igcPopDebugVars() {
+    igcDebugVarStack.pop_back();
+    if (igcDebugVarStack.empty()) {
+        clearIgcDebugVars();
+    } else {
+        setIgcDebugVars(igcDebugVarStack.back());
+    }
+}
+
 MockCompilerEnableGuard::MockCompilerEnableGuard(bool autoEnable) {
     if (autoEnable) {
         Enable();

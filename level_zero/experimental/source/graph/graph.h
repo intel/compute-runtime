@@ -10,6 +10,7 @@
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/cmdqueue/patch_preamble_cross_sync_definitions.h"
 #include "level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/ze_api.h"
@@ -34,6 +35,16 @@ static_assert(IsCompliantWithDdiHandlesExt<_ze_executable_graph_handle_t>);
 typedef void(ZE_CALLBACK *zex_mem_graph_free_callback_fn_t)(void *pUserData);
 
 namespace L0 {
+
+enum class GraphExportStyle : std::uint8_t {
+    detailed,
+    simple
+};
+
+enum class GraphExportEventNodes : std::uint8_t {
+    hideInternal, // event operations used only for tracking dependencies between graph nodes are not dumped
+    show          // all captured event operations are dumped as graph nodes
+};
 
 inline std::atomic<bool> processUsesGraphs{false};
 inline void enabledGraphs() {
@@ -71,12 +82,13 @@ struct ForkInfo {
 };
 
 struct ForkJoinInfo {
-    CapturedCommandId forkSignalCommandId = 0; // parent
-    CapturedCommandId joinWaitCommandId = 0;   // parent
+    CapturedCommandId forkSignalCommandId = 0; // parent (fork owner)
+    CapturedCommandId joinWaitCommandId = 0;   // command in the joining graph (== fork owner for direct joins)
     CapturedCommandId joinSignalCommandId = 0; // child
     ze_event_handle_t forkEvent = nullptr;
     ze_event_handle_t joinEvent = nullptr;
-    Graph *forkDestiny = nullptr; // child
+    Graph *forkDestiny = nullptr;  // child
+    Graph *joiningGraph = nullptr; // graph that owns joinWaitCommandId (the command list that joined the fork)
 };
 
 // Contigous commands in the order of recording (i.e. in the order of host API invocations)
@@ -186,7 +198,7 @@ struct RecordedApiCommands {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }
         auto capturedArgs = ApiArgsT{apiArgs...};
-        commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
+        commands.emplace_back(Closure<api>{capturedArgs, externalStorage});
         if (externalStorage.lastResult != ZE_RESULT_SUCCESS) {
             Closure<CaptureApi::NoopedCommandListFailedFunction>::ApiArgs noopedArgs{capturedArgs.hCommandList, CaptureApiStrings::names[static_cast<size_t>(api)]};
             *commands.rbegin() = CapturedCommand{Closure<CaptureApi::NoopedCommandListFailedFunction>(noopedArgs, externalStorage)};
@@ -207,8 +219,9 @@ struct RecordedApiCommands {
 
 struct Graph : _ze_graph_handle_t {
     Graph(L0::Context *ctx, bool preallocated, WeaklyShared<OrderedCommandsRegistry> &&orderedCommandsRegistry)
-        : ctx(ctx), preallocated(preallocated),
-          orderedCommands(std::move(orderedCommandsRegistry)) {
+        : ctx(ctx),
+          orderedCommands(std::move(orderedCommandsRegistry)),
+          preallocated(preallocated) {
         if (orderedCommands.empty()) {
             orderedCommands = WeaklyShared<OrderedCommandsRegistry>(new OrderedCommandsRegistry);
         }
@@ -348,7 +361,11 @@ struct Graph : _ze_graph_handle_t {
     }
 
     bool hasUnjoinedForks() const {
-        return false == unjoinedForks.empty();
+        // Reports unjoined forks in this graph and, recursively, in the whole capture subtree below
+        // it. Transitive joins let any command list in the session join a fork (even a sibling's),
+        // so a wait is a potential join whenever any fork anywhere in the session is still unjoined.
+        return (false == unjoinedForks.empty()) ||
+               std::any_of(subGraphs.begin(), subGraphs.end(), [](const auto *subGraph) { return subGraph->hasUnjoinedForks(); });
     }
 
     ze_result_t pauseCapturing();
@@ -415,6 +432,29 @@ struct Graph : _ze_graph_handle_t {
         return primaryCaptureSrc;
     }
 
+    static ze_result_t obtainGraphDumpSettings(const ze_base_desc_t *desc,
+                                               GraphExportStyle &exportStyle,
+                                               GraphExportEventNodes &exportEventNodes);
+
+    bool isInOrderGraph() const {
+        return inOrderGraph;
+    }
+
+    void enableInOrderGraph() {
+        inOrderGraph = true;
+        if (getParentGraph()) {
+            getParentGraph()->enableInOrderGraph();
+        }
+    }
+
+    bool getPatchPreambleCrossSync() const {
+        return patchPreambleCrossSync;
+    }
+
+    void enablePatchPreambleCrossSync() {
+        patchPreambleCrossSync = true;
+    }
+
   protected:
     template <typename GraphT>
     static GraphT *findRootGraph(GraphT *graph) {
@@ -448,11 +488,6 @@ struct Graph : _ze_graph_handle_t {
 
     const uint64_t id = getNextGraphId();
 
-    bool preallocated = false;
-    bool wasCapturingStopped = false;
-    bool multiEngineGraph = false;
-    bool mutableCmdlist = false;
-
     WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
 
     struct DestructorCallbackEntry {
@@ -461,6 +496,13 @@ struct Graph : _ze_graph_handle_t {
     };
     std::mutex destructorCallbacksMutex;
     std::vector<DestructorCallbackEntry> destructorCallbacks;
+
+    bool preallocated = false;
+    bool wasCapturingStopped = false;
+    bool multiEngineGraph = false;
+    bool mutableCmdlist = false;
+    bool inOrderGraph = false;
+    bool patchPreambleCrossSync = false;
 };
 
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);
@@ -471,7 +513,7 @@ bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
 bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events);
 bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent);
-bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents);
+bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents, bool apiRequiredCurrentFlag);
 
 template <CaptureApi api, typename... TArgs>
 ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarget, RecordedApiCommands *flatCaptureTarget, TArgs... apiArgs) {
@@ -489,6 +531,7 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
 
     auto eventsWaitList = getCommandsWaitEventsList<api>(apiArgs...);
     const auto signalEvent = getCommandsSignalEvent<api>(apiArgs...);
+    const bool apiExternalGraphFlag = (false == eventsWaitList.empty()) && getCommandsGraphExternalWaitFlag<api>(apiArgs...);
     if (false == isGraphCapturingAllowed(srcCmdList)) {
         if (usesForkEvents(eventsWaitList)) {
             // it's an error to try and fork to a cmdlist that doesn't support capturing
@@ -504,11 +547,11 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
             return ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT;
         }
         // a non-external counter-based event bound outside the graph cannot be re-resolved per replay
-        if (waitsOnCbEventSignalledOutsideGraph(eventsWaitList)) {
+        if (waitsOnCbEventSignalledOutsideGraph(eventsWaitList, apiExternalGraphFlag)) {
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
     }
-    if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation
+    if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->getRootGraph()->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation (against any unjoined fork in the whole capture session)
         recordHandleWaitEventsFromNextCommand(srcCmdList, graphCaptureTarget, eventsWaitList);
     }
 
@@ -523,9 +566,14 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     if (ZE_RESULT_SUCCESS != ret) {
         return ret;
     }
-    for (const auto &event : eventsWaitList) {
-        if (L0::Event::fromHandle(event)->isExternalEvent()) {
-            graphCaptureTarget->enableMutableCommandList();
+
+    if (apiExternalGraphFlag) {
+        graphCaptureTarget->enableMutableCommandList();
+    } else {
+        for (const auto &event : eventsWaitList) {
+            if (L0::Event::fromHandle(event)->isExternalEvent()) {
+                graphCaptureTarget->enableMutableCommandList();
+            }
         }
     }
 
@@ -539,11 +587,12 @@ struct ExecutableGraph;
 using GraphSubmissionSegment = std::variant<L0::CommandList *, ExecutableGraph *>;
 using GraphSubmissionChain = std::vector<GraphSubmissionSegment>;
 
-void handleExternalCbEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext);
+void handleExternalCbSignalEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext);
 void handleExternalCbWaitEvents(uint32_t numWaitEvents,
                                 ze_event_handle_t *phWaitEvents,
                                 CbExternalEventInstantiateContext &cbEventContext,
-                                L0::CommandList *executionTarget);
+                                L0::CommandList *executionTarget,
+                                bool apiRequiredExternalFlag);
 
 struct GraphInstatiateSettings {
     GraphInstatiateSettings() = default;
@@ -643,7 +692,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     ze_result_t instantiateFrom(Graph &rootSrc, const GraphInstatiateSettings &settings);
     ze_result_t instantiateFrom(Graph &rootSrc) {
-        return this->instantiateFrom(rootSrc, {});
+        GraphInstatiateSettings settings{nullptr, rootSrc.isMultiEngineGraph()};
+        return this->instantiateFrom(rootSrc, settings);
     }
 
     ~ExecutableGraph();
@@ -670,7 +720,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     }
 
     ze_result_t execute(L0::CommandList *executionTarget, const void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
-    ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, PatchPreambleDataContainer *patchPreambleCrossSyncs);
 
     WeaklyShared<ExternalCbEventInfoContainer> getExternalCbEventInfoContainer() {
         return externalCbEventStorage;
@@ -692,6 +742,10 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
         return src;
     }
 
+    L0::CommandList *getExecutionTarget() const {
+        return executionTarget;
+    }
+
   protected:
     ze_result_t instantiateFrom(const OrderedCommandsSegment &segment, ExecGraphBuilder &builder, const GraphInstatiateSettings &settings);
 
@@ -709,6 +763,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
+    PatchPreambleCountersCrossSyncContainer internalPatchPreambleCrossSyncs;
+    PatchPreambleDataContainer graphWidePatchPreambleCrossSync;
 
     GraphInternalEvents internalEvents;
 

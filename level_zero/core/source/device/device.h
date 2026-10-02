@@ -116,6 +116,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t getComputeProperties(ze_device_compute_properties_t *pComputeProperties);
     MOCKABLE_VIRTUAL ze_result_t getP2PProperties(ze_device_handle_t hPeerDevice,
                                                   ze_device_p2p_properties_t *pP2PProperties);
+    ze_result_t getCompilerInfo(ze_device_compiler_info_t paramName, const void *pNext, size_t *pSize, void *pData);
     MOCKABLE_VIRTUAL ze_result_t getKernelProperties(ze_device_module_properties_t *pKernelProperties);
     MOCKABLE_VIRTUAL ze_result_t getPciProperties(ze_pci_ext_properties_t *pPciProperties);
     MOCKABLE_VIRTUAL ze_result_t getRootDevice(ze_device_handle_t *phRootDevice);
@@ -194,9 +195,14 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void setSysmanHandle(SysmanDevice *pSysmanDevice);
     MOCKABLE_VIRTUAL SysmanDevice *getSysmanHandle();
     ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel) {
-        return getCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, 0u);
+        bool queueOwnershipTaken = false;
+        return getCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, 0u, &queueOwnershipTaken);
     }
-    MOCKABLE_VIRTUAL ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint);
+    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint) {
+        bool queueOwnershipTaken = false;
+        return getCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, powerHint, &queueOwnershipTaken);
+    }
+    MOCKABLE_VIRTUAL ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint, bool *queueOwnershipTaken);
     MOCKABLE_VIRTUAL ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
     ze_result_t getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
     ze_result_t getCsrForPowerHint(NEO::CommandStreamReceiver **csr, bool copyOnly);
@@ -232,10 +238,13 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void populateSubDeviceCopyEngineGroups();
     const NEO::EngineGroupsT &getSubDeviceCopyEngineGroups() const { return subDeviceCopyEngineGroups; }
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
+    bool isQueueGroupOrdinalAndIndexValid(uint32_t ordinal, uint32_t index);
+    bool adjustOrdinalAndIndexForForcedBcsEngine(uint32_t &ordinal, uint32_t &index);
+    ze_command_queue_priority_t getEffectiveQueuePriority(ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool copyOnly);
     void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
     NEO::HostFunctionAllocator *getHostFunctionAllocator(NEO::CommandStreamReceiver *csr);
 
-    using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool, uint32_t);
+    using CmdListCreateFunPtrT = L0::CommandList *(*)(Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool, uint32_t);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_base_desc_t *desc);
     void getAdditionalExtProperties(ze_base_properties_t *extendedProperties);
 
@@ -248,7 +257,8 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void releaseResources();
 
     MOCKABLE_VIRTUAL Module *getRequiredLibModule(const std::string &libName, ModuleBuildLog *moduleBuildLog);
-
+    void setFirstImmCmdlistCreated() { firstImmCmdlistCreated = true; }
+    bool getFirstImmCmdlistCreated() { return firstImmCmdlistCreated; }
     ze_command_list_handle_t globalTimestampCommandList = nullptr;
     void *globalTimestampAllocation = nullptr;
 
@@ -262,8 +272,6 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     std::mutex printfKernelMutex;
 
     NEO::SpinLock peerImageAllocationsMutex;
-    NEO::SpinLock memAdviseAllocationsMutex;
-    std::map<NEO::SvmAllocationData *, NEO::MemAdviseFlags> memAdviseSharedAllocations;
     std::map<NEO::SvmAllocationData *, ze_memory_atomic_attr_exp_flags_t> atomicAccessAllocations;
     std::vector<Device *> subDevices;
 
@@ -326,6 +334,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     int32_t queuePriorityHigh = 0;
     int32_t queuePriorityLow = 1;
     bool implicitScalingCapable = false;
+    std::atomic<bool> firstImmCmdlistCreated = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Device>);

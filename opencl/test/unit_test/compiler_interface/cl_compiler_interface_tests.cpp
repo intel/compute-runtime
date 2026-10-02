@@ -9,8 +9,8 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -38,18 +38,18 @@ class ClCompilerInterfaceTestMockedBinaryFilesTest : public ClDeviceFixture,
         igcDebugVars.binaryToReturnSize = sizeof(fakeBinFile);
         igcDebugVars.debugDataToReturn = fakeBinFile;
         igcDebugVars.debugDataToReturnSize = sizeof(fakeBinFile);
-        gEnvironment->igcPushDebugVars(igcDebugVars);
+        NEO::igcPushDebugVars(igcDebugVars);
 
         fclDebugVars.binaryToReturn = fakeBinFile;
         fclDebugVars.binaryToReturnSize = sizeof(fakeBinFile);
         fclDebugVars.debugDataToReturn = fakeBinFile;
         fclDebugVars.debugDataToReturnSize = sizeof(fakeBinFile);
-        gEnvironment->fclPushDebugVars(fclDebugVars);
+        NEO::fclPushDebugVars(fclDebugVars);
     }
 
     void TearDown() override {
-        gEnvironment->fclPopDebugVars();
-        gEnvironment->igcPopDebugVars();
+        NEO::fclPopDebugVars();
+        NEO::igcPopDebugVars();
         ClDeviceFixture::tearDown();
     }
 
@@ -71,28 +71,28 @@ TEST_F(ClCompilerInterfaceTestMockedBinaryFilesTest, WhenBuildIsInvokedThenFclRe
     std::string receivedInternalOptions;
 
     fclDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
     igcDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_TRUE(hasSubstr(receivedInternalOptions, pClDevice->peekCompilerExtensions()));
-    gEnvironment->igcPopDebugVars();
-    gEnvironment->fclPopDebugVars();
+    NEO::igcPopDebugVars();
+    NEO::fclPopDebugVars();
 }
 
 TEST_F(ClCompilerInterfaceTestMockedBinaryFilesTest, WhenCompileIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {
     std::string receivedInternalOptions;
 
     fclDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
     igcDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_TRUE(hasSubstr(receivedInternalOptions, pClDevice->peekCompilerExtensions()));
-    gEnvironment->igcPopDebugVars();
-    gEnvironment->fclPopDebugVars();
+    NEO::igcPopDebugVars();
+    NEO::fclPopDebugVars();
 }

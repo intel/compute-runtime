@@ -84,12 +84,14 @@ bool GfxCoreHelperHw<Family>::isEngineTypeRemappingToHwSpecificRequired() const 
     return true;
 }
 
+constexpr size_t defaultIsaPaddingPvcAndLater = 0xE00;
+
 template <typename Family>
 size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
     if (debugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
-        return 0xE00 + (MemoryConstants::pageSize * debugManager.flags.ForceExtendedKernelIsaSize.get());
+        return defaultIsaPaddingPvcAndLater + (MemoryConstants::pageSize * debugManager.flags.ForceExtendedKernelIsaSize.get());
     }
-    return 0xE00;
+    return defaultIsaPaddingPvcAndLater;
 }
 
 template <typename Family>

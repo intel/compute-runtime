@@ -6,7 +6,7 @@
  */
 
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/test/unit_tests/sources/debug/windows/debug_session_fixtures_windows.h"
 

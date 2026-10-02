@@ -21,8 +21,10 @@
 
 namespace L0 {
 
+static constexpr auto gfxCoreFamily = IGFX_XE3P_CORE;
+
 template <>
-size_t CommandListCoreFamily<IGFX_XE3P_CORE>::getReserveSshSize() {
+size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
     constexpr size_t maxPtssSteps = 16;
     constexpr size_t maxExtednedPtssSteps = 19;
     constexpr size_t numSlotsPerStep = 2;
@@ -38,7 +40,10 @@ size_t CommandListCoreFamily<IGFX_XE3P_CORE>::getReserveSshSize() {
     return (maxPtssSteps * numSlotsPerStep + startSlotIndex) * numSteps * sizeof(RENDER_SURFACE_STATE);
 }
 
-template struct CommandListCoreFamily<IGFX_XE3P_CORE>;
-template struct CommandListCoreFamilyImmediate<IGFX_XE3P_CORE>;
+template struct CommandListCoreFamily<gfxCoreFamily>;
+template struct CommandListCoreFamilyImmediate<gfxCoreFamily>;
+
+static CommandListPopulateFactory<gfxCoreFamily, CommandListCoreFamily<gfxCoreFamily>> populateXe3pCore;
+static CommandListImmediatePopulateFactory<gfxCoreFamily, CommandListCoreFamilyImmediate<gfxCoreFamily>> populateXe3pCoreImmediate;
 
 } // namespace L0

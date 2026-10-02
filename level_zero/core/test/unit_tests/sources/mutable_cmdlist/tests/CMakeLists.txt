@@ -7,6 +7,7 @@
 target_sources(${TARGET_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/mcl_program_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_kernels_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_hw_command_tests.cpp

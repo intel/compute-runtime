@@ -423,8 +423,7 @@ TEST_F(FenceTest, givenFenceWhenResettingThenTaskCountIsReset) {
 HWTEST_F(FenceTest, givenPrintfKernelWhenSynchronizingFenceThenPrintPrintfOutputIsCalled) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -465,8 +464,7 @@ HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPr
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -503,8 +501,7 @@ HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPr
 HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroTimeoutThenPrintfOutputIsNotFlushed) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -539,8 +536,7 @@ HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroT
 HWTEST_F(FenceTest, givenFenceCreatedFromSingleCommandQueueWhenExecutedOnAnotherQueueThenExpectSynchronizationObjectError) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -548,8 +544,7 @@ HWTEST_F(FenceTest, givenFenceCreatedFromSingleCommandQueueWhenExecutedOnAnother
                                                           false,
                                                           returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto otherCommandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                               device,
+    auto otherCommandQueue = whiteboxCast(CommandQueue::create(device,
                                                                neoDevice->getDefaultEngine().commandStreamReceiver,
                                                                &desc,
                                                                false,
@@ -557,8 +552,7 @@ HWTEST_F(FenceTest, givenFenceCreatedFromSingleCommandQueueWhenExecutedOnAnother
                                                                false,
                                                                returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto cmdList = whiteboxCast(CommandList::create(productFamily,
-                                                    device,
+    auto cmdList = whiteboxCast(CommandList::create(device,
                                                     NEO::EngineGroupType::compute,
                                                     0u,
                                                     returnValue,

@@ -56,6 +56,7 @@ Variable *Variable::create(ze_command_list_handle_t hCmdList, const InterfaceVar
     desc.isStageCommit = ifaceVarDesc->isStageCommit;
     desc.immediateValueChunks = ifaceVarDesc->immediateValueChunks;
     desc.asyncMutation = ifaceVarDesc->asyncMutation;
+    desc.eventValue.apiRequiredExternal = desc.eventValue.isExternalFlag = ifaceVarDesc->apiRequestEventGraphExternal;
 
     var->setDescExperimentalValues(ifaceVarDesc);
 
@@ -136,6 +137,8 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
     this->desc.eventValue.packetCount = event->getPacketsInUse();
     this->desc.eventValue.waitPackets = event->getPacketsToWait();
     this->desc.eventValue.hasStandaloneProfilingNode = event->hasInOrderTimestampNode();
+    // captured after the append, so it reflects the signaling mode the recorded walker was programmed with
+    this->desc.eventValue.cbEventWithProfiling = event->isCbEventWithProfiling();
     if (this->desc.eventValue.counterBasedEvent) {
         this->desc.eventValue.inOrderExecBaseSignalValue = event->getInOrderExecBaseSignalValue();
         this->desc.eventValue.inOrderAllocationOffset = event->getInOrderAllocationOffset();
@@ -157,9 +160,13 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     this->desc.eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
     this->desc.eventValue.counterBasedEvent = event->isCounterBased();
     this->desc.eventValue.packetCount = event->getPacketsInUse();
+
+    this->desc.eventValue.qwordInUse = cmdList->isQwordInOrderCounter();
+    this->desc.eventValue.useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
+    this->desc.eventValue.qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->desc.eventValue.qwordInUse, this->desc.eventValue.useSemaphore64bCmd);
+
     if (this->desc.eventValue.counterBasedEvent) {
-        const bool lriUsed = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), cmdList->isSemaphore64bCmdSupported());
-        uint32_t lriMultiplier = lriUsed ? 2 : 0;
+        uint32_t lriMultiplier = this->desc.eventValue.qwordIndirect ? 2 : 0;
 
         auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
         this->desc.eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
@@ -167,16 +174,20 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
         this->desc.eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
         this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event) || !event->getInOrderExecEventHelper().isDataAssigned();
         this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
-        this->desc.eventValue.isExternalFlag = event->isExternalEvent();
-        if (this->desc.eventValue.isExternalFlag) {
-            semWaitReserve += this->desc.eventValue.waitPackets;
-            this->desc.eventValue.patchPreambleCounterValue = event->getInOrderExecEventHelper().getPatchPreambleCounter();
-            this->desc.eventValue.patchPreambleCounterDeviceAllocation = event->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation();
-            this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
-            this->desc.eventValue.patchPreambleNoopState = this->desc.eventValue.patchPreambleCounterValue == 0;
+        this->desc.eventValue.isExternalFlag |= event->isExternalEvent();
 
-            lriMultiplier += lriUsed ? 2 : 0;
+        // standard CB events that are not external, but for that append upon requirement to assign patch preamble, can act as external - save the patch preamble values for the variable
+        this->desc.eventValue.patchPreambleCounterValue = event->getInOrderExecEventHelper().getPatchPreambleCounter();
+        this->desc.eventValue.patchPreambleNoopState = this->desc.eventValue.patchPreambleCounterValue == 0;
+
+        this->desc.eventValue.patchPreambleCounterDeviceAllocation = event->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation();
+        this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
+
+        if (this->desc.eventValue.isExternalFlag || this->desc.eventValue.patchPreambleNoopState == false) {
+            semWaitReserve += this->desc.eventValue.waitPackets;
+            lriMultiplier += this->desc.eventValue.qwordIndirect ? 2 : 0;
         }
+
         if (lriMultiplier > 0) {
             this->desc.eventValue.loadRegImmCmds.reserve(lriMultiplier * this->desc.eventValue.waitPackets);
         }
@@ -186,9 +197,6 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     semWaitReserve += this->desc.eventValue.waitPackets;
     this->desc.eventValue.semWaitCmds.reserve(semWaitReserve);
     this->desc.size = 0;
-    this->desc.eventValue.qwordInUse = cmdList->isQwordInOrderCounter();
-    this->desc.eventValue.useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
-    this->desc.eventValue.qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->desc.eventValue.qwordInUse, this->desc.eventValue.useSemaphore64bCmd);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -659,11 +667,13 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     updateAllocationResidency(oldEventAllocation, newEventAllocation);
 
     if (this->desc.eventValue.counterBasedEvent && !this->desc.eventValue.inOrderIncrementEvent) {
-        this->cmdList->switchCounterBasedEvents(this->desc.eventValue.inOrderExecBaseSignalValue, this->desc.eventValue.inOrderAllocationOffset, newEvent);
+        this->cmdList->switchCounterBasedEvents(this->desc.eventValue.inOrderExecBaseSignalValue,
+                                                this->desc.eventValue.inOrderAllocationOffset,
+                                                newEvent,
+                                                this->desc.eventValue.apiRequiredExternal);
 
-        if (this->desc.eventValue.hasStandaloneProfilingNode &&
-            !device->getGfxCoreHelper().duplicatedInOrderCounterStorageEnabled()) {
-            newEvent->setHeapfullCbEventWithProfiling(true);
+        if (this->desc.eventValue.hasStandaloneProfilingNode) {
+            newEvent->setCbEventWithProfiling(this->desc.eventValue.cbEventWithProfiling);
         }
     }
 
@@ -743,12 +753,10 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
                 auto deviceCounterAlloc = newInOrderEventHelper->getDeviceCounterAllocation();
                 newInOrderAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
             }
-            if (this->desc.eventValue.isExternalFlag) {
-                newPatchPreambleCounterAllocation = newInOrderEventHelper->getPatchPreambleDeviceAllocation();
-                newPatchPreambleCounterValue = newInOrderEventHelper->getPatchPreambleCounter();
-                newPatchPreambleCounterGpuAddress = newInOrderEventHelper->getPatchPreambleDeviceGpuAddress();
-                newPatchPreambleNooped = newInOrderEventHelper->getPatchPreambleCounter() == 0;
-            }
+            newPatchPreambleCounterAllocation = newInOrderEventHelper->getPatchPreambleDeviceAllocation();
+            newPatchPreambleCounterValue = newInOrderEventHelper->getPatchPreambleCounter();
+            newPatchPreambleCounterGpuAddress = newInOrderEventHelper->getPatchPreambleDeviceGpuAddress();
+            newPatchPreambleNooped = newInOrderEventHelper->getPatchPreambleCounter() == 0;
         }
     }
 
@@ -757,9 +765,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
         oldEventAllocation = this->desc.eventValue.eventPoolAllocation;
         if (this->desc.eventValue.counterBasedEvent) {
             oldInOrderAllocation = this->desc.eventValue.cbEventDeviceCounterAllocation;
-            if (this->desc.eventValue.isExternalFlag) {
-                oldPatchPreambleCounterAllocation = this->desc.eventValue.patchPreambleCounterDeviceAllocation;
-            }
+            oldPatchPreambleCounterAllocation = this->desc.eventValue.patchPreambleCounterDeviceAllocation;
         }
     }
 
@@ -767,7 +773,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     updateAllocationResidency(oldInOrderAllocation, newInOrderAllocation);
     updateAllocationResidency(oldPatchPreambleCounterAllocation, newPatchPreambleCounterAllocation);
 
-    if (this->desc.eventValue.counterBasedEvent && (this->cmdList->getBase()->isHeaplessModeEnabled() || !(newEvent ? newEvent->hasInOrderTimestampNode() : false))) {
+    if (this->desc.eventValue.counterBasedEvent && this->cmdList->getBase()->isInOrderCounterWaitRequired(newEvent)) {
         if (oldNooped) {
             if (!newNooped) {
                 // was nooped, needs programming - restore
@@ -822,12 +828,10 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     if (this->desc.eventValue.counterBasedEvent) {
         this->desc.eventValue.isCbEventBoundToCmdList = newCbEventBoundToCmdList;
         this->desc.eventValue.cbEventDeviceCounterAllocation = newInOrderAllocation;
-        if (this->desc.eventValue.isExternalFlag) {
-            this->desc.eventValue.patchPreambleCounterDeviceAllocation = newPatchPreambleCounterAllocation;
-            this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = newPatchPreambleCounterGpuAddress;
-            this->desc.eventValue.patchPreambleCounterValue = newPatchPreambleCounterValue;
-            this->desc.eventValue.patchPreambleNoopState = newPatchPreambleNooped;
-        }
+        this->desc.eventValue.patchPreambleCounterDeviceAllocation = newPatchPreambleCounterAllocation;
+        this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = newPatchPreambleCounterGpuAddress;
+        this->desc.eventValue.patchPreambleCounterValue = newPatchPreambleCounterValue;
+        this->desc.eventValue.patchPreambleNoopState = newPatchPreambleNooped;
     }
     desc.state = State::initialized;
     return ZE_RESULT_SUCCESS;

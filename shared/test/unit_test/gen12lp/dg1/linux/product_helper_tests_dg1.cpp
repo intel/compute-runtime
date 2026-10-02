@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ DG1TEST_F(Dg1ProductHelperLinux, GivenDG1WhenConfigureHardwareCustomThenKmdNotif
 
 template <typename T>
 class Dg1HwInfoLinux : public ::testing::Test {};
-using dg1TestTypes = ::testing::Types<Dg1HwConfig>;
+using dg1TestTypes = ::testing::Types<DG1>;
 TYPED_TEST_SUITE(Dg1HwInfoLinux, dg1TestTypes);
 TYPED_TEST(Dg1HwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
@@ -48,7 +48,7 @@ TYPED_TEST(Dg1HwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &TypeParam::hwInfo, &TypeParam::setupHardwareInfo};
+    DeviceDescriptor device = {0, IGFX_DG1};
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
     drm.overrideDeviceDescriptor = &device;

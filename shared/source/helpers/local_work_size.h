@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,28 @@
 #pragma once
 
 #include "shared/source/helpers/vec.h"
+#include "shared/source/program/work_size_info.h"
 
 #include <algorithm>
 
 namespace NEO {
-struct WorkSizeInfo;
+class Device;
+struct KernelDescriptor;
+
+WorkSizeInfo createWorkSizeInfoForKernel(
+    const KernelDescriptor &kernelDescriptor,
+    uint32_t maxWorkGroupSize,
+    uint32_t slmTotalSizePerThreadGroup,
+    const Device &device);
+
+void computeWorkgroupSizeForKernel(
+    const KernelDescriptor &kernelDescriptor,
+    uint32_t maxWorkGroupSize,
+    uint32_t slmTotalSizePerThreadGroup,
+    const Device &device,
+    uint32_t workDim,
+    const size_t workItems[3],
+    size_t workGroupSize[3]);
 
 void computeWorkgroupSize1D(
     uint32_t maxWorkGroupSize,

@@ -34,7 +34,6 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/query_peer_access.h"
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
@@ -169,6 +168,10 @@ bool Device::createSubDevices() {
 }
 
 bool Device::createDeviceImpl() {
+    if (getRootDeviceEnvironment().isWddmOnLinux()) {
+        deferredImmediateCmdListEnabled = false;
+    }
+
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(getHardwareInfo());
 
     auto &productHelper = getProductHelper();
@@ -329,6 +332,7 @@ bool Device::initDeviceFully() {
     }
 
     getDefaultEngine().osContext->setDefaultContext(true);
+    getOSTime()->initTimestampPtr(*getDefaultEngine().osContext);
 
     for (auto &engine : allEngines) {
         auto commandStreamReceiver = engine.commandStreamReceiver;
@@ -690,13 +694,18 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
 }
 
 EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority) {
-    if (secondaryEngines.find(engineTypeUsage.first) == secondaryEngines.end()) {
+    auto secondaryEnginesIt = secondaryEngines.find(engineTypeUsage.first);
+    if (secondaryEnginesIt == secondaryEngines.end()) {
         return nullptr;
     }
 
-    auto &secondaryEnginesForType = secondaryEngines[engineTypeUsage.first];
+    auto &secondaryEnginesForType = secondaryEnginesIt->second;
 
     auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, hwPriority);
+
+    if (engineControl == nullptr) {
+        return nullptr;
+    }
 
     bool isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
 
@@ -713,11 +722,9 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, st
 
             EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
 
-            if (!commandStreamReceiver->initializeResources(this->getPreemptionMode())) {
-                return nullptr;
-            }
-
-            if (!commandStreamReceiver->initializeTagAllocation()) {
+            if (!commandStreamReceiver->initializeResources(this->getPreemptionMode()) ||
+                !commandStreamReceiver->initializeTagAllocation()) {
+                commandStreamReceiver->releaseQueueOwnership();
                 return nullptr;
             }
         }
@@ -1143,10 +1150,6 @@ const ReleaseHelper &Device::getReleaseHelper() const {
     return getRootDeviceEnvironment().getReleaseHelper();
 }
 
-const CompilerReleaseHelper &Device::getCompilerReleaseHelper() const {
-    return getRootDeviceEnvironment().getCompilerReleaseHelper();
-}
-
 AILConfiguration *Device::getAilConfigurationHelper() const {
     return getRootDeviceEnvironment().getAILConfigurationHelper();
 }
@@ -1325,10 +1328,33 @@ const EngineGroupT *Device::tryGetRegularEngineGroup(EngineGroupType engineGroup
     return nullptr;
 }
 
+static bool isPriorityLevelUsable(const OsContext &osContext, std::optional<uint32_t> hwPriority) {
+    if (!osContext.hasPriorityLevel() || osContext.isPriorityChangeSupported()) {
+        return true;
+    }
+    const auto requestedPriority = hwPriority.has_value() ? hwPriority : osContext.getDefaultPriorityLevel();
+    return requestedPriority.has_value() && osContext.getPriorityLevel() == requestedPriority.value();
+}
+
 EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uint32_t> hwPriority) {
     auto secondaryEngineIndex = 0;
 
     std::lock_guard<std::mutex> guard(mutex);
+
+    std::optional<int32_t> reusableIndex;
+    if (usage == EngineUsage::regular || usage == EngineUsage::highPriority) {
+        const auto &assignedIndices = usage == EngineUsage::highPriority ? hpIndices : npIndices;
+        for (auto index : assignedIndices) {
+            auto &engine = engines[index];
+            if (engine.commandStreamReceiver->getOwningQueueCount() > 0 || !engine.commandStreamReceiver->isInitialized()) {
+                continue;
+            }
+            if (isPriorityLevelUsable(*engine.osContext, hwPriority)) {
+                reusableIndex = index;
+                break;
+            }
+        }
+    }
 
     auto findMatchingPriority = [&](const std::vector<int32_t> &indices, uint32_t requested, int fallback) -> uint32_t {
         for (uint32_t i = 0; i < indices.size(); i++) {
@@ -1341,7 +1367,9 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
         return fallback;
     };
 
-    if (usage == EngineUsage::highPriority) {
+    if (reusableIndex.has_value()) {
+        secondaryEngineIndex = reusableIndex.value();
+    } else if (usage == EngineUsage::highPriority) {
         if (highPriorityEnginesTotal == 0) {
             return nullptr;
         }
@@ -1405,9 +1433,14 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
         DEBUG_BREAK_IF(true);
     }
 
+    auto &selectedEngine = engines[secondaryEngineIndex];
     if (hwPriority.has_value()) {
-        engines[secondaryEngineIndex].osContext->overridePriority(hwPriority.value());
+        selectedEngine.osContext->overridePriority(hwPriority.value());
+    } else if (reusableIndex.has_value() && selectedEngine.osContext->getDefaultPriorityLevel().has_value()) {
+        selectedEngine.osContext->overridePriority(selectedEngine.osContext->getDefaultPriorityLevel().value());
     }
+    selectedEngine.commandStreamReceiver->retainQueueOwnership();
+
     if (debugManager.flags.PrintSecondaryContextEngineInfo.get()) {
         std::stringstream contextEngineInfo;
         contextEngineInfo << "SecondaryContexts::getEngine-> engineType: " << EngineHelpers::engineTypeToString(engines[secondaryEngineIndex].getEngineType()).c_str() << " engineUsage: " << EngineHelpers::engineUsageToString(usage).c_str() << " index: " << secondaryEngineIndex << " osContextId: " << engines[secondaryEngineIndex].osContext->getContextId() << " osContext->priorityLevel: " << (engines[secondaryEngineIndex].osContext->hasPriorityLevel() ? std::to_string(engines[secondaryEngineIndex].osContext->getPriorityLevel()) : "std::nullopt") << " \n";
@@ -1449,10 +1482,8 @@ std::vector<DeviceVector> Device::groupDevices(DeviceVector devices) {
     std::sort(outDevices.begin(), outDevices.end(), [](DeviceVector &lhs, DeviceVector &rhs) -> bool {
         auto &leftHwInfo = lhs[0]->getHardwareInfo();  // NOLINT(clang-analyzer-cplusplus.Move) - MSVC assumes usage of moved vector
         auto &rightHwInfo = rhs[0]->getHardwareInfo(); // NOLINT(clang-analyzer-cplusplus.Move)
-        if (leftHwInfo.capabilityTable.isIntegratedDevice != rightHwInfo.capabilityTable.isIntegratedDevice) {
-            return rightHwInfo.capabilityTable.isIntegratedDevice;
-        }
-        return leftHwInfo.platform.eProductFamily > rightHwInfo.platform.eProductFamily;
+        return compareDeviceGroups({leftHwInfo.platform.eProductFamily, leftHwInfo.capabilityTable.isIntegratedDevice},
+                                   {rightHwInfo.platform.eProductFamily, rightHwInfo.capabilityTable.isIntegratedDevice});
     });
     return outDevices;
 }
@@ -1518,12 +1549,12 @@ void Device::initializePeerAccessForDevices(const std::vector<NEO::Device *> &de
             }
 
             bool canAccess = false;
-            if (device->crossAccessEnabledDevices.find(peerRootIndex) == device->crossAccessEnabledDevices.end()) {
+            if (auto it = device->crossAccessEnabledDevices.find(peerRootIndex); it == device->crossAccessEnabledDevices.end()) {
                 auto lock = device->getExecutionEnvironment()->obtainPeerAccessQueryLock();
                 canAccess = device->queryPeerAccess(*peerDevice, &probeAllocation, &handle);
                 device->updatePeerAccessCache(peerDevice, canAccess);
             } else {
-                canAccess = device->crossAccessEnabledDevices[peerRootIndex];
+                canAccess = it->second;
             }
 
             if (canAccess) {

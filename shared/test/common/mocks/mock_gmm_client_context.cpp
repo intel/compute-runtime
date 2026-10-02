@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject
 uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable) {
     passedCompressedSettingForGetPatIndexQuery = compressed;
     passedCacheableSettingForGetPatIndexQuery = cacheable;
+    passedUsageTypeForGetPatIndexQuery = usage;
 
     if (returnErrorOnPatIndexQuery) {
         return MockPatIndex::error;
@@ -48,7 +49,8 @@ uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmm
         return MockPatIndex::uncached;
     }
 
-    if (usage == GMM_RESOURCE_USAGE_HW_CONTEXT) {
+    if (usage == GMM_RESOURCE_USAGE_HW_CONTEXT ||
+        usage == GMM_RESOURCE_USAGE_FINE_GRAINED_COHERENT) {
         return MockPatIndex::twoWayCoherent;
     }
 

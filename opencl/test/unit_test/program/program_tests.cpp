@@ -23,6 +23,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -33,12 +34,14 @@
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/instruction_cache_flush_test_engines.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
-#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -59,6 +62,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
@@ -1067,11 +1071,11 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     {
         MockCompilerDebugVars failDebugVars;
         failDebugVars.forceBuildFailure = true;
-        gEnvironment->igcPushDebugVars(failDebugVars);
-        gEnvironment->fclPushDebugVars(failDebugVars);
+        NEO::igcPushDebugVars(failDebugVars);
+        NEO::fclPushDebugVars(failDebugVars);
         retVal = pProgram->build(pProgram->getDevices(), nullptr);
-        gEnvironment->fclPopDebugVars();
-        gEnvironment->igcPopDebugVars();
+        NEO::fclPopDebugVars();
+        NEO::igcPopDebugVars();
     }
     EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
@@ -1090,15 +1094,15 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
 
     auto debugVars = NEO::getFclDebugVars();
     debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->fclPushDebugVars(debugVars);
+    NEO::fclPushDebugVars(debugVars);
     auto igcDebugVars = NEO::getIgcDebugVars();
     igcDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(receivedInternalOptions, pPlatform->getClDevice(0)->peekCompilerExtensions())) << receivedInternalOptions;
-    gEnvironment->igcPopDebugVars();
-    gEnvironment->fclPopDebugVars();
+    NEO::igcPopDebugVars();
+    NEO::fclPopDebugVars();
 
     // get build log
     size_t paramValueSizeRet = 0u;
@@ -1239,6 +1243,30 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
 }
 
+TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC31ThenFeaturesAreAdded) {
+    zebinPtr->setAsMockCompilerReturnedBinary();
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = pContext->getDevice(0);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
+    pProgram->sourceCode = "__kernel mock() {}";
+    pProgram->createdFrom = Program::CreatedFrom::source;
+
+    MockProgram::getInternalOptionsCalled = 0;
+
+    auto extensionsOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensionsWithFeatures();
+    EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsOption));
+    EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
+
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.1");
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, "-ocl-version=310"));
+    EXPECT_FALSE(hasSubstr(cip->buildInternalOptions, extensionsOption));
+    EXPECT_TRUE(hasSubstr(cip->buildInternalOptions, extensionsWithFeaturesOption));
+    EXPECT_EQ(1, MockProgram::getInternalOptionsCalled);
+}
+
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAddedOnlyOnce) {
     zebinPtr->setAsMockCompilerReturnedBinary();
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
@@ -1336,6 +1364,26 @@ TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesAreAd
     EXPECT_TRUE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsWithFeaturesOption));
 }
 
+TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC31ThenFeaturesAreAdded) {
+    auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = pContext->getDevice(0);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+    auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
+    pProgram->sourceCode = "__kernel mock() {}";
+    pProgram->createdFrom = Program::CreatedFrom::source;
+
+    auto extensionsOption = pClDevice->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
+    EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsOption));
+    EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsWithFeaturesOption));
+
+    retVal = pProgram->compile(pProgram->getDevices(), "-cl-std=CL3.1", 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(CompilerOptions::contains(pCompilerInterface->buildInternalOptions, "-ocl-version=310"));
+    EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsOption));
+    EXPECT_TRUE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsWithFeaturesOption));
+}
+
 TEST_F(ProgramFromSourceTest, GivenDumpZEBinWhenBuildingProgramFromSourceThenZebinIsDumped) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DumpZEBin.set(1);
@@ -1375,8 +1423,8 @@ class Callback {
   private:
     void (*oldCallback)(void *);
     static void thisCallback(void *p) {
-        if (watchList.find(p) != watchList.end()) {
-            watchList[p]++;
+        if (auto it = watchList.find(p); it != watchList.end()) {
+            it->second++;
         }
     }
     static std::map<const void *, uint32_t> watchList;
@@ -1518,11 +1566,11 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     {
         MockCompilerDebugVars failDebugVars;
         failDebugVars.forceBuildFailure = true;
-        gEnvironment->igcPushDebugVars(failDebugVars);
-        gEnvironment->fclPushDebugVars(failDebugVars);
+        NEO::igcPushDebugVars(failDebugVars);
+        NEO::fclPushDebugVars(failDebugVars);
         retVal = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
-        gEnvironment->fclPopDebugVars();
-        gEnvironment->igcPopDebugVars();
+        NEO::fclPopDebugVars();
+        NEO::igcPopDebugVars();
     }
     EXPECT_EQ(CL_COMPILE_PROGRAM_FAILURE, retVal);
 
@@ -1599,6 +1647,51 @@ TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied
     EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::finiteMathOnly)) << cip->buildOptions;
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
+}
+
+TEST_F(ProgramTests, givenIsaUsedOnlyBySecondaryWhenCleaningKernelInfoThenComputeGroupRequiresInstructionCacheFlush) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ReuseKernelBinaries.set(0);
+
+    VariableBackup<uint32_t> maxOsContextCountBackup{&MemoryManager::maxOsContextCount};
+
+    auto &neoDevice = pClDevice->getDevice();
+    auto rootDeviceIndex = neoDevice.getRootDeviceIndex();
+    auto memoryManager = neoDevice.getMemoryManager();
+
+    InstructionCacheFlushTestEngines engines(
+        *neoDevice.getExecutionEnvironment(), rootDeviceIndex);
+
+    for (const auto &engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+        MemoryManager::maxOsContextCount = std::max(
+            MemoryManager::maxOsContextCount, engine.osContext->getContextId() + 1u);
+    }
+
+    MockProgram program(toClDeviceVector(*pClDevice));
+
+    AllocationProperties properties{
+        rootDeviceIndex, MemoryConstants::pageSize,
+        AllocationType::kernelIsa, neoDevice.getDeviceBitfield()};
+    auto isaAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(nullptr, isaAllocation);
+
+    auto kernelInfo = new KernelInfo{};
+    kernelInfo->setIsaPerKernelAllocation(isaAllocation);
+    program.addKernelInfo(kernelInfo, rootDeviceIndex);
+
+    isaAllocation->updateTaskCount(1u, engines.secondary->getOsContext().getContextId());
+
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.primary->getOsContext().getContextId()));
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.sibling->getOsContext().getContextId()));
+
+    program.cleanCurrentKernelInfo(rootDeviceIndex);
+
+    EXPECT_TRUE(program.getKernelInfoArray(rootDeviceIndex).empty());
+    EXPECT_TRUE(engines.primary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.secondary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.sibling->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedPrimary->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedSecondary->isInstructionCacheFlushRequired());
 }
 
 TEST_F(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccessIsReturned) {
@@ -1708,11 +1801,11 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     {
         MockCompilerDebugVars failDebugVars;
         failDebugVars.forceBuildFailure = true;
-        gEnvironment->igcPushDebugVars(failDebugVars);
-        gEnvironment->fclPushDebugVars(failDebugVars);
+        NEO::igcPushDebugVars(failDebugVars);
+        NEO::fclPushDebugVars(failDebugVars);
         retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &program);
-        gEnvironment->fclPopDebugVars();
-        gEnvironment->igcPopDebugVars();
+        NEO::fclPopDebugVars();
+        NEO::igcPopDebugVars();
     }
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
@@ -1747,11 +1840,11 @@ TEST_F(ProgramFromSourceTest, GivenLinkFailureWhenCreatingLibraryThenCorrectErro
     {
         MockCompilerDebugVars failDebugVars;
         failDebugVars.forceBuildFailure = true;
-        gEnvironment->igcPushDebugVars(failDebugVars);
-        gEnvironment->fclPushDebugVars(failDebugVars);
+        NEO::igcPushDebugVars(failDebugVars);
+        NEO::fclPushDebugVars(failDebugVars);
         retVal = pProgram->link(pProgram->getDevices(), CompilerOptions::createLibrary.data(), 1, &program);
-        gEnvironment->fclPopDebugVars();
-        gEnvironment->igcPopDebugVars();
+        NEO::fclPopDebugVars();
+        NEO::igcPopDebugVars();
     }
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
@@ -1863,13 +1956,13 @@ TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
 
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=300")) << internalOptions;
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=310")) << internalOptions;
 }
 
 TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclOptionIsPresent) {
     MockProgram program{pContext, false, toClDeviceVector(*pClDevice)};
     auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=300"));
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=310"));
 }
 
 TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredOptionIsSet) {
@@ -2477,10 +2570,10 @@ TEST_F(ProgramTests, givenProgramCreatedFromILWhenCompileIsCalledThenReuseTheILI
     ASSERT_NE(nullptr, pProgram);
     auto debugVars = NEO::getIgcDebugVars();
     debugVars.forceBuildFailure = true;
-    gEnvironment->fclPushDebugVars(debugVars);
+    NEO::fclPushDebugVars(debugVars);
     auto compilerErr = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, compilerErr);
-    gEnvironment->fclPopDebugVars();
+    NEO::fclPopDebugVars();
 }
 
 TEST_F(ProgramTests, givenProgramCreatedFromIntermediateBinaryRepresentationWhenCompileIsCalledThenReuseTheILInsteadOfCallingCompilerInterface) {
@@ -2492,10 +2585,10 @@ TEST_F(ProgramTests, givenProgramCreatedFromIntermediateBinaryRepresentationWhen
     ASSERT_NE(nullptr, pProgram);
     auto debugVars = NEO::getIgcDebugVars();
     debugVars.forceBuildFailure = true;
-    gEnvironment->fclPushDebugVars(debugVars);
+    NEO::fclPushDebugVars(debugVars);
     auto compilerErr = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, compilerErr);
-    gEnvironment->fclPopDebugVars();
+    NEO::fclPopDebugVars();
     pProgram->release();
 }
 
@@ -2612,8 +2705,8 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     MockCompilerDebugVars debugVars = {};
     debugVars.receivedInput = &receivedInput;
     debugVars.forceBuildFailure = true;
-    gEnvironment->igcPushDebugVars(debugVars);
-    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) -> void { gEnvironment->igcPopDebugVars(); }};
+    NEO::igcPushDebugVars(debugVars);
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{this, [](void *) -> void { NEO::igcPopDebugVars(); }};
 
     auto program = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
@@ -2718,8 +2811,8 @@ TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
     char binaryToReturn[] = "abcdfghijklmnop";
     debugVars.binaryToReturn = binaryToReturn;
     debugVars.binaryToReturnSize = sizeof(binaryToReturn);
-    gEnvironment->igcPushDebugVars(debugVars);
-    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) -> void { gEnvironment->igcPopDebugVars(); }};
+    NEO::igcPushDebugVars(debugVars);
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{this, [](void *) -> void { NEO::igcPopDebugVars(); }};
 
     auto program = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     uint32_t ir[16] = {0x03022307, 0x23471113, 0x17192329};
@@ -3240,7 +3333,7 @@ TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramT
         nullptr);
 
     auto output = capture.getCapturedStdout();
-    EXPECT_FALSE(output.compare(0, 14, "Elapsed time: "));
+    EXPECT_TRUE(output.starts_with("Elapsed time: "));
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 

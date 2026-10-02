@@ -220,7 +220,6 @@ struct Event : _ze_event_handle_t {
     MOCKABLE_VIRTUAL void resetPackets(bool resetAllPackets);
     virtual void resetPacketsUsedCount() = 0;
     void *getHostAddress() const;
-    uint32_t getPoolIndex() const { return totalEventSize ? static_cast<uint32_t>(eventPoolOffset / totalEventSize) : 0; }
     virtual void setPacketsInUse(uint32_t value) = 0;
     MOCKABLE_VIRTUAL void setGpuStartTimestamp();
     MOCKABLE_VIRTUAL void setGpuEndTimestamp();
@@ -407,8 +406,12 @@ struct Event : _ze_event_handle_t {
         this->recordedSignalFrom = cmdlist;
     }
 
-    void setHeapfullCbEventWithProfiling(bool value) {
-        this->heapfullCbEventWithProfiling = value;
+    void setCbEventWithProfiling(bool value) {
+        this->cbEventWithProfiling = value;
+    }
+
+    bool isCbEventWithProfiling() const {
+        return this->cbEventWithProfiling;
     }
 
     bool isExternalEvent() const {
@@ -429,11 +432,12 @@ struct Event : _ze_event_handle_t {
     NEO::TagNodeBase *getPerfCounterNode() const { return this->perfCounterNode; }
 
     bool isActiveExternalCbEvent() const {
-        return externalEvent && (inOrderExecHelper.getPatchPreambleCounter() > 0);
+        return inOrderExecHelper.getPatchPreambleCounter() > 0;
     }
 
     bool isCapturedGraphInternalEvent() const {
-        return (nullptr != getRecordedSignalFrom()) && isCounterBased() && (false == externalEvent);
+        return (nullptr != getRecordedSignalFrom()) &&
+               isCounterBased() && (false == (isExternalEvent() || getApiRequiredGraphExternalEvent()));
     }
 
     virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) = 0;
@@ -444,10 +448,18 @@ struct Event : _ze_event_handle_t {
         return isSignalledAsGraphInternalEvent;
     }
 
+    bool getApiRequiredGraphExternalEvent() const {
+        return apiRequiredGraphExternalEvent;
+    }
+
+    void setApiRequiredGraphExternalEvent(bool value) {
+        apiRequiredGraphExternalEvent = value;
+    }
+
     void setIsSignalledAsGraphInternalEvent(bool signalledFromGraph) {
         isSignalledAsGraphInternalEvent = signalledFromGraph &&
                                           isCounterBasedExplicitlyEnabled() &&
-                                          !isExternalEvent() &&
+                                          !(isExternalEvent() || getApiRequiredGraphExternalEvent()) &&
                                           !isAggregatedEvent(this);
     }
 
@@ -534,10 +546,11 @@ struct Event : _ze_event_handle_t {
     bool linuxUserFenceKmdWaitEnabled = false;
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
-    bool heapfullCbEventWithProfiling = false;
+    bool cbEventWithProfiling = false;
     bool externalEvent = false;
     bool isDualCopyOffloadEvent = false;
     bool isSignalledAsGraphInternalEvent = false;
+    bool apiRequiredGraphExternalEvent = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {

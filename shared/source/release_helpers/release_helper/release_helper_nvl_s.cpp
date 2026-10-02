@@ -8,7 +8,6 @@
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper_base.inl"
 
-#include "neo_aot_platforms.h"
 #include "release_definitions.h"
 
 namespace NEO {

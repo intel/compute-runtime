@@ -13,6 +13,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -21,7 +22,6 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -35,7 +35,6 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/default_descriptors.h"
 #include "level_zero/core/source/image/image.h"
-#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/driver_experimental/zex_common.h"
 
 #include "driver_version.h"
@@ -251,9 +250,6 @@ DriverHandle::~DriverHandle() {
         L0::Context::fromHandle(this->defaultContext)->destroy();
         this->defaultContext = nullptr;
     }
-    if (this->externalSemaphoreController) {
-        this->externalSemaphoreController.reset();
-    }
 
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
@@ -395,6 +391,27 @@ NEO::UsmMemAllocPool::CustomCleanupFn DriverHandle::getPoolCleanupFn() {
     return [this](const void *ptr) { Context::fromHandle(this->defaultContext)->freePeerAllocationsFromAll(ptr, false); };
 }
 
+namespace {
+void collectPeerAllocations(DriverHandle &driverHandle, Device *device, const void *ptr, StackVec<NEO::GraphicsAllocation *, 4> &peerAllocations) {
+    if (auto peerAllocation = driverHandle.findPeerAllocation(device, ptr)) {
+        peerAllocations.push_back(peerAllocation);
+    }
+    for (auto &subDevice : device->subDevices) {
+        collectPeerAllocations(driverHandle, subDevice, ptr, peerAllocations);
+    }
+}
+} // namespace
+
+NEO::UsmMemAllocPool::PeerAllocationsFn DriverHandle::getPoolPeerAllocationsFn() {
+    return [this](const void *ptr) {
+        StackVec<NEO::GraphicsAllocation *, 4> peerAllocations;
+        for (auto device : this->devices) {
+            collectPeerAllocations(*this, device, ptr, peerAllocations);
+        }
+        return peerAllocations;
+    };
+}
+
 void DriverHandle::initDeviceUsmAllocPoolOnce() {
     std::call_once(this->deviceUsmPoolOnceFlag, [this]() {
         for (auto &device : this->devices) {
@@ -439,7 +456,7 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
     if (enabled) {
         device.getDeviceUsmMemAllocPoolFacade().initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields,
                                                            &device, this->svmAllocsManager,
-                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault});
+                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault, getPoolPeerAllocationsFn()});
     }
 }
 
@@ -455,6 +472,16 @@ void DriverHandle::initUsmPooling() {
 
 NEO::UsmPoolLookupResult DriverHandle::getHostUsmPoolOwningPtr(const void *ptr) {
     return usmHostMemAllocPoolFacade.getPoolContainingAlloc(ptr);
+}
+
+NEO::UsmPoolLookupResult DriverHandle::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData) {
+    if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType) {
+        return this->getHostUsmPoolOwningPtr(ptr);
+    } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
+        return svmData->device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr);
+    }
+
+    return {};
 }
 
 void DriverHandle::setupDevicesToExpose() {
@@ -658,8 +685,8 @@ NEO::GraphicsAllocation *DriverHandle::getDriverSystemMemoryAllocation(void *ptr
     return allocation;
 }
 
-bool DriverHandle::isRemoteResourceNeeded(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device) {
-    return this->getMemoryManager()->isRemoteResourceNeeded(alloc, allocData, device->getNEODevice());
+bool DriverHandle::isRemoteResourceNeeded(const NEO::SvmAllocationData &allocData, Device *device) {
+    return this->getMemoryManager()->isRemoteResourceNeeded(allocData, device->getNEODevice());
 }
 
 void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
@@ -710,8 +737,8 @@ ze_result_t DriverHandle::getPeerImage(Device *device, Image *image, Image **pee
 
     std::unique_lock<NEO::SpinLock> lock(device->peerImageAllocationsMutex);
 
-    if (device->peerImageAllocations.find(imageAllocPtr) != device->peerImageAllocations.end()) {
-        *peerImage = device->peerImageAllocations[imageAllocPtr];
+    if (auto it = device->peerImageAllocations.find(imageAllocPtr); it != device->peerImageAllocations.end()) {
+        *peerImage = it->second;
     } else {
         uint64_t handle = 0;
 
@@ -729,8 +756,7 @@ ze_result_t DriverHandle::getPeerImage(Device *device, Image *image, Image **pee
         externalMemoryImportDesc.pNext = nullptr;
         desc.pNext = &externalMemoryImportDesc;
 
-        auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-        ze_result_t result = Image::create(productFamily, device, &desc, peerImage);
+        ze_result_t result = Image::create(device, &desc, peerImage);
 
         if (result != ZE_RESULT_SUCCESS) {
             return result;

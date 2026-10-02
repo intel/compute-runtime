@@ -1,17 +1,21 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper_with_capture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -231,9 +235,147 @@ TEST(EngineInfoTest, whenEmptyEngineInfoCreatedThen0TileReturned) {
     EXPECT_EQ(0u, engineInfo->getEngineTileIndex({static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 1}));
 }
 
+TEST(EngineInfoTest, givenIoctlHelperReturningEnginesWhenQueryingEngineInfoThenDrmStoresReturnedEngineInfo) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
+
+    auto renderClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender));
+    auto copyClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
+    ioctlHelper->enginesToReturn = std::vector<EngineCapabilities>{{{renderClass, 0}, {}}, {{copyClass, 0}, {}}};
+
+    EXPECT_TRUE(drm->queryEngineInfo(false));
+    EXPECT_EQ(1u, ioctlHelper->createEngineInfoCalled);
+
+    auto engineInfo = drm->getEngineInfo();
+    ASSERT_NE(nullptr, engineInfo);
+    EXPECT_TRUE(engineInfo->hasEngines());
+    EXPECT_EQ(2u, engineInfo->getEngineInfos().size());
+}
+
+TEST(EngineInfoTest, givenIoctlHelperReturningNoEngineInfoWhenQueryingEngineInfoThenEngineInfoIsNotSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
+
+    EXPECT_FALSE(drm->queryEngineInfo(false));
+    EXPECT_EQ(1u, ioctlHelper->createEngineInfoCalled);
+    EXPECT_EQ(nullptr, drm->getEngineInfo());
+}
+
+TEST(EngineInfoTest, givenIoctlHelperReturningEngineInfoWithoutEnginesWhenQueryingEngineInfoThenErrorIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = new MockIoctlHelperWithCapture(*drm);
+    drm->ioctlHelper.reset(ioctlHelper);
+    ioctlHelper->enginesToReturn = std::vector<EngineCapabilities>{};
+
+    StreamCapture capture;
+    capture.captureStderr();
+    EXPECT_TRUE(drm->queryEngineInfo(false));
+    auto output = capture.getCapturedStderr();
+
+    ASSERT_NE(nullptr, drm->getEngineInfo());
+    EXPECT_FALSE(drm->getEngineInfo()->hasEngines());
+    EXPECT_NE(std::string::npos, output.find("FATAL: Engine info size is equal to 0."));
+}
+
+TEST(EngineInfoTest, givenEnginesWithoutComputeEngineWhenQueryingEngineInfoThenCcsInfoIsResetAndRcsIsDefaultEngine) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockWithCaptureHelper drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto ioctlHelper = drm.getMockIoctlHelper();
+    auto renderClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender));
+    auto copyClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
+    ioctlHelper->enginesToReturn = std::vector<EngineCapabilities>{{{renderClass, 0}, {}}, {{copyClass, 0}, {}}};
+
+    auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.CCSInfo.IsValid = true;
+    hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+    hwInfo->gtSystemInfo.CCSInfo.Instances.CCSEnableMask = 0b1111;
+    hwInfo->capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCS;
+
+    EXPECT_TRUE(drm.queryEngineInfo(false));
+    EXPECT_NE(nullptr, drm.getEngineInfo());
+
+    EXPECT_FALSE(hwInfo->gtSystemInfo.CCSInfo.IsValid);
+    EXPECT_EQ(0u, hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+    EXPECT_EQ(0u, hwInfo->gtSystemInfo.CCSInfo.Instances.CCSEnableMask);
+    EXPECT_EQ(EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, drm.getRootDeviceEnvironment()),
+              hwInfo->capabilityTable.defaultEngineType);
+}
+
+TEST(EngineInfoTest, whenQueryingEngineInfoThenMultiTileArchInfoIsUnchanged) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockWithCaptureHelper drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto ioctlHelper = drm.getMockIoctlHelper();
+    auto renderClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender));
+    ioctlHelper->enginesToReturn = std::vector<EngineCapabilities>{{{renderClass, 0}, {}}};
+
+    auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
+    auto originalMultiTileArchInfo = hwInfo->gtSystemInfo.MultiTileArchInfo;
+
+    EXPECT_TRUE(drm.queryEngineInfo(false));
+    EXPECT_NE(nullptr, drm.getEngineInfo());
+
+    EXPECT_EQ(originalMultiTileArchInfo.IsValid, hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid);
+    EXPECT_EQ(originalMultiTileArchInfo.TileCount, hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount);
+    EXPECT_EQ(originalMultiTileArchInfo.TileMask, hwInfo->gtSystemInfo.MultiTileArchInfo.TileMask);
+}
+
+struct MockEngineInfo : EngineInfo {
+    using EngineInfo::EngineInfo;
+    using EngineInfo::getBaseCopyEngineType;
+};
+
+TEST(EngineInfoTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsIntegratedGpuThenBcs0AlwaysIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockWithCaptureHelper drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    StackVec<std::vector<EngineCapabilities>, 2> engineInfosPerTile{std::vector<EngineCapabilities>(1)};
+    auto engineInfo = std::make_unique<MockEngineInfo>(&drm, engineInfosPerTile);
+    bool isIntegratedGpu = true;
+
+    EngineCapabilities::Flags capabilities{};
+    capabilities.copyClassSaturateLink = true;
+    capabilities.copyClassSaturatePCIE = false;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm.getIoctlHelper(), capabilities, isIntegratedGpu));
+
+    capabilities.copyClassSaturateLink = false;
+    capabilities.copyClassSaturatePCIE = true;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm.getIoctlHelper(), capabilities, isIntegratedGpu));
+
+    capabilities.copyClassSaturateLink = false;
+    capabilities.copyClassSaturatePCIE = false;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm.getIoctlHelper(), capabilities, isIntegratedGpu));
+}
+
+TEST(EngineInfoTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsNotIntegratedGpuThenProperBcsIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockWithCaptureHelper drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    StackVec<std::vector<EngineCapabilities>, 2> engineInfosPerTile{std::vector<EngineCapabilities>(1)};
+    auto engineInfo = std::make_unique<MockEngineInfo>(&drm, engineInfosPerTile);
+    bool isIntegratedGpu = false;
+
+    EngineCapabilities::Flags capabilities{};
+    capabilities.copyClassSaturateLink = false;
+    capabilities.copyClassSaturatePCIE = true;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engineInfo->getBaseCopyEngineType(drm.getIoctlHelper(), capabilities, isIntegratedGpu));
+
+    capabilities.copyClassSaturateLink = true;
+    capabilities.copyClassSaturatePCIE = false;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, engineInfo->getBaseCopyEngineType(drm.getIoctlHelper(), capabilities, isIntegratedGpu));
+
+    capabilities.copyClassSaturateLink = false;
+    capabilities.copyClassSaturatePCIE = false;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm.getIoctlHelper(), capabilities, isIntegratedGpu));
+}
+
 using DisabledBCSEngineInfoTest = ::testing::Test;
 
-HWTEST2_F(DisabledBCSEngineInfoTest, whenBCS0IsNotEnabledThenSkipMappingItAndSetProperBcsInfoMask, MatchAny) {
+HWTEST2_PRODUCT_F(DisabledBCSEngineInfoTest, whenBCS0IsNotEnabledThenSkipMappingItAndSetProperBcsInfoMask, MatchAny) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
     auto drm = std::make_unique<DrmMockEngine>(rootDeviceEnvironment);

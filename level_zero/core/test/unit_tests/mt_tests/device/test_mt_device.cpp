@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
@@ -22,6 +24,36 @@ namespace L0 {
 namespace ult {
 
 using DeviceMtTest = Test<DeviceFixture>;
+TEST_F(DeviceMtTest, givenConcurrentCompilerInfoQueriesWhenInitializingSpirvInfoThenCompilerIsQueriedOnceAndResultsAreConsistent) {
+    auto compiler = std::make_unique<NEO::MockCompilerInterface>();
+    auto *compilerPtr = compiler.get();
+    compiler->spirvExtensionsYAMLOverride = NEO::spirvExtensionsYamlIgcSample;
+    neoDevice->getRootDeviceEnvironmentRef().compilerInterface = std::move(compiler);
+    std::atomic_bool started = false;
+    std::vector<std::thread> threads;
+    for (uint32_t i = 0; i < 8; ++i) {
+        threads.emplace_back([&, i]() {
+            while (!started.load()) {
+                std::this_thread::yield();
+            }
+            const auto param = i % 2 ? ZE_DEVICE_COMPILER_INFO_SPIRV_CAPABILITIES : ZE_DEVICE_COMPILER_INFO_SPIRV_EXTENSIONS;
+            size_t size = 0;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetCompilerInfo(device->toHandle(), param, nullptr, &size, nullptr));
+            EXPECT_GT(size, 0u);
+            std::vector<uint8_t> first(size);
+            std::vector<uint8_t> second(size);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetCompilerInfo(device->toHandle(), param, nullptr, &size, first.data()));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetCompilerInfo(device->toHandle(), param, nullptr, &size, second.data()));
+            EXPECT_EQ(first, second);
+        });
+    }
+    started = true;
+    for (auto &thread : threads) {
+        thread.join();
+    }
+    EXPECT_EQ(1u, compilerPtr->getSpirvExtensionsYAMLCalled);
+}
+
 HWTEST_F(DeviceMtTest, givenMultiThreadsExecutingCmdListAndSynchronizingDeviceWhenSynchronizeIsCalledThenTaskCountAndFlushStampAreTakenWithinSingleCriticalSection) {
     L0::Device *device = driverHandle->devices[0];
 
@@ -37,8 +69,7 @@ HWTEST_F(DeviceMtTest, givenMultiThreadsExecutingCmdListAndSynchronizingDeviceWh
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(defaultHwInfo->platform.eProductFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           csr,
                                                           &desc,
                                                           false,
@@ -52,7 +83,7 @@ HWTEST_F(DeviceMtTest, givenMultiThreadsExecutingCmdListAndSynchronizingDeviceWh
     kernel.module = &module;
     kernel.immutableData.device = device;
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
 
     ze_group_count_t dispatchKernelArguments{1, 1, 1};
@@ -225,7 +256,7 @@ HWTEST2_F(AggregatedBcsSplitMtTests, givenAggregatedModeOutOfOrderCopyWithPendin
         ze_command_queue_desc_t desc = {};
         desc.ordinal = queryCopyOrdinal();
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        cmdLists[i] = DestroyableZeUniquePtr<L0::CommandList>(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
+        cmdLists[i] = DestroyableZeUniquePtr<L0::CommandList>(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::copy, returnValue));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
         ASSERT_FALSE(cmdLists[i]->isInOrderExecutionEnabled());
         hostPtrs[i] = allocHostMem();

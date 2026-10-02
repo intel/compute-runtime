@@ -3389,6 +3389,31 @@ HWTEST_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerfor
     EXPECT_FALSE(scratchController->setRequiredScratchSpaceCalled);
 }
 
+struct MockAllocatedScratchSizeController : public ScratchSpaceControllerBase {
+    using ScratchSpaceControllerBase::perThreadScratchSpaceSlot0Size;
+    using ScratchSpaceControllerBase::ScratchSpaceControllerBase;
+};
+
+HWTEST_F(CommandStreamReceiverHwTest, givenScratchSpaceControllerWhenGettingAllocatedPerThreadScratchSizeSlot0ThenSizeFromControllerIsReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto scratchController = new MockAllocatedScratchSizeController(pDevice->getRootDeviceIndex(),
+                                                                    *pDevice->getExecutionEnvironment(),
+                                                                    *pDevice->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    constexpr uint32_t expectedPerThreadScratchSizeSlot0 = 0x400u;
+    scratchController->perThreadScratchSpaceSlot0Size = expectedPerThreadScratchSizeSlot0;
+
+    auto originalScratchController = commandStreamReceiver.scratchSpaceController.release();
+    commandStreamReceiver.scratchSpaceController.reset(scratchController);
+
+    EXPECT_EQ(expectedPerThreadScratchSizeSlot0, commandStreamReceiver.getPerThreadScratchSizeSlot0Allocated());
+
+    commandStreamReceiver.scratchSpaceController.reset(nullptr);
+
+    EXPECT_EQ(0u, commandStreamReceiver.getPerThreadScratchSizeSlot0Allocated());
+
+    commandStreamReceiver.scratchSpaceController.reset(originalScratchController);
+}
+
 TEST(CommandStreamReceiverSimpleTest, whenTranslatingSubmissionStatusToTaskCountValueThenProperValueIsReturned) {
     EXPECT_EQ(0u, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::success));
     EXPECT_EQ(CompletionStamp::outOfHostMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::outOfHostMemory));
@@ -3565,7 +3590,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
     {
         mockAllocation.memoryPool = MemoryPool::localMemory;
 
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(&mockAllocation, 0, &mockAllocation, 0, {0, 0, 0}, {0, 0, 0}, {1, 1, 1}, 0, 0, 0, 0, nullptr);
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(&mockAllocation, 0, &mockAllocation, 0, {0, 0, 0}, {0, 0, 0}, {1, 1, 1}, 0, 0, 0, 0, nullptr, false);
         blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
 
         BlitPropertiesContainer blitPropertiesContainer;
@@ -3731,13 +3756,84 @@ TEST(CommandStreamReceiverSimpleTest, givenNoOsContextWhenCsrIsCreatedThenPreemp
     }
 }
 
-HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenSubmittingLatePreemptionStartThenExceptionIsThrown) {
-    auto *engineControl = pDevice->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular);
-    if (!engineControl) {
+TEST(CommandStreamReceiverSimpleTest, givenLatePreemptionStartSupportedWhenSettingUpContextThenPreemptionAllocationIsSkippedOnlyForLatePreemptionStartTarget) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::make_unique<MockDriverModel>());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::move(osInterface);
+    static_cast<MockDriverModel *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel())->isLatePreemptionStartSupportedResult = true;
+
+    struct Case {
+        aub_stream::EngineType engineType;
+        EngineUsage engineUsage;
+        uint32_t contextGroupCount;
+        bool expectedSkip;
+    };
+    for (auto &testCase : {Case{aub_stream::ENGINE_CCS, EngineUsage::regular, 0u, true},
+                           Case{aub_stream::ENGINE_CCS, EngineUsage::regular, 2u, false},
+                           Case{aub_stream::ENGINE_CCS, EngineUsage::lowPriority, 0u, false},
+                           Case{aub_stream::ENGINE_CCS, EngineUsage::internal, 0u, false},
+                           Case{aub_stream::ENGINE_CCS1, EngineUsage::regular, 0u, false},
+                           Case{aub_stream::ENGINE_BCS, EngineUsage::regular, 0u, false}}) {
+        std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({testCase.engineType, testCase.engineUsage})));
+        osContext->setContextGroupCount(testCase.contextGroupCount);
+
+        MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+        EXPECT_TRUE(csr.getSkipPreemptionAllocation());
+        csr.setupContext(*osContext);
+        EXPECT_EQ(testCase.expectedSkip, csr.getSkipPreemptionAllocation());
+    }
+}
+
+struct LatePreemptionStartCsrTest : public CommandStreamReceiverHwTest {
+    void SetUp() override {
+        debugManager.flags.ContextGroupSize.set(0);
+        CommandStreamReceiverHwTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    UltCommandStreamReceiver<FamilyType> *getCcsCsr(EngineUsage engineUsage) {
+        if (auto *csr = getCcsCsr<FamilyType>(pDevice, engineUsage)) {
+            return csr;
+        }
+        if (!ccsDevice) {
+            HardwareInfo hwInfo = *defaultHwInfo;
+            hwInfo.featureTable.flags.ftrCCSNode = true;
+            hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+            hwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
+            ccsDevice.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        }
+        return getCcsCsr<FamilyType>(ccsDevice.get(), engineUsage);
+    }
+
+    template <typename FamilyType>
+    UltCommandStreamReceiver<FamilyType> *getCcsCsr(Device *device, EngineUsage engineUsage) {
+        auto *engineControl = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, engineUsage);
+        if (!engineControl || engineControl->getEngineType() != aub_stream::EngineType::ENGINE_CCS || engineControl->getEngineUsage() != engineUsage ||
+            !engineControl->osContext->isLatePreemptionStartTarget()) {
+            return nullptr;
+        }
+        ccsCsrDevice = device;
+        return static_cast<UltCommandStreamReceiver<FamilyType> *>(engineControl->commandStreamReceiver);
+    }
+
+    DebugManagerStateRestore restorer;
+    Device *ccsCsrDevice = nullptr;
+
+    std::unique_ptr<MockDevice> ccsDevice;
+};
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenOutOfMemoryFailureOnFlushWhenSubmittingLatePreemptionStartThenExceptionIsThrown, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
         GTEST_SKIP();
     }
 
-    auto &commandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*engineControl->commandStreamReceiver);
+    auto &commandStreamReceiver = *ccsCsr;
     commandStreamReceiver.skipPreemptionAllocation = true;
     commandStreamReceiver.submitLateMidThreadPreemptionStart();
     EXPECT_FALSE(commandStreamReceiver.skipPreemptionAllocation);
@@ -3746,13 +3842,13 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenSubmitti
     EXPECT_ANY_THROW(commandStreamReceiver.submitLateMidThreadPreemptionStart());
 }
 
-HWTEST_F(CommandStreamReceiverHwTest, givenPendingTaskCountWhenSubmittingLatePreemptionStartThenLatestFlushedTaskCountIsNotUpdated) {
-    auto *engineControl = pDevice->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular);
-    if (!engineControl) {
+HWTEST2_F(LatePreemptionStartCsrTest, givenPendingTaskCountWhenSubmittingLatePreemptionStartThenLatestFlushedTaskCountIsNotUpdated, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
         GTEST_SKIP();
     }
 
-    auto &commandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*engineControl->commandStreamReceiver);
+    auto &commandStreamReceiver = *ccsCsr;
     commandStreamReceiver.taskCount = 5u;
     commandStreamReceiver.latestFlushedTaskCount = 2u;
 
@@ -3762,13 +3858,13 @@ HWTEST_F(CommandStreamReceiverHwTest, givenPendingTaskCountWhenSubmittingLatePre
     EXPECT_EQ(6u, commandStreamReceiver.peekTaskCount());
 }
 
-HWTEST_F(CommandStreamReceiverHwTest, givenSkippedPreemptionAllocationWhenSubmittingLatePreemptionStartThenPreemptionAllocationIsMadeResidentInSameSubmission) {
-    auto *engineControl = pDevice->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular);
-    if (!engineControl) {
+HWTEST2_F(LatePreemptionStartCsrTest, givenSkippedPreemptionAllocationWhenSubmittingLatePreemptionStartThenPreemptionAllocationIsMadeResidentInSameSubmission, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
         GTEST_SKIP();
     }
 
-    auto &commandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*engineControl->commandStreamReceiver);
+    auto &commandStreamReceiver = *ccsCsr;
     if (!commandStreamReceiver.getPreemptionAllocation()) {
         commandStreamReceiver.createPreemptionAllocation();
     }

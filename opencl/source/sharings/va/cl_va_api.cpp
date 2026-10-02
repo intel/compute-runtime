@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/get_info.h"
 
 #include "opencl/source/api/api_enter.h"
+#include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
@@ -26,6 +27,7 @@ using namespace NEO;
 cl_mem CL_API_CALL
 clCreateFromVA_APIMediaSurfaceINTEL(cl_context context, cl_mem_flags flags, VASurfaceID *surface,
                                     cl_uint plane, cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::Context, context, clCreateFromVA_APIMediaSurfaceINTEL, context, flags, surface, plane, errcodeRet);
 
     cl_int returnCode = CL_SUCCESS;
     API_ENTER(&returnCode);
@@ -59,6 +61,7 @@ cl_int CL_API_CALL
 clGetDeviceIDsFromVA_APIMediaAdapterINTEL(cl_platform_id platform, cl_va_api_device_source_intel mediaAdapterType,
                                           void *mediaAdapter, cl_va_api_device_set_intel mediaAdapterSet, cl_uint numEntries,
                                           cl_device_id *devices, cl_uint *numDevices) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::Platform, platform, clGetDeviceIDsFromVA_APIMediaAdapterINTEL, platform, mediaAdapterType, mediaAdapter, mediaAdapterSet, numEntries, devices, numDevices);
     cl_int status = CL_SUCCESS;
     API_ENTER(&status);
     DBG_LOG_INPUTS("platform", platform,
@@ -92,6 +95,7 @@ clEnqueueAcquireVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
                                          cl_uint numEventsInWaitList,
                                          const cl_event *eventWaitList,
                                          cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::CommandQueue, commandQueue, clEnqueueAcquireVA_APIMediaSurfacesINTEL, commandQueue, numObjects, memObjects, numEventsInWaitList, eventWaitList, event);
     cl_int status = CL_SUCCESS;
     API_ENTER(&status);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
@@ -119,6 +123,7 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
                                          cl_uint numEventsInWaitList,
                                          const cl_event *eventWaitList,
                                          cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::CommandQueue, commandQueue, clEnqueueReleaseVA_APIMediaSurfacesINTEL, commandQueue, numObjects, memObjects, numEventsInWaitList, eventWaitList, event);
     cl_int status = CL_SUCCESS;
     API_ENTER(&status);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
@@ -150,6 +155,7 @@ cl_int CL_API_CALL clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
     cl_uint numEntries,
     VAImageFormat *vaApiFormats,
     cl_uint *numImageFormats) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::Context, context, clGetSupportedVA_APIMediaSurfaceFormatsINTEL, context, flags, imageType, plane, numEntries, vaApiFormats, numImageFormats);
 
     if (numImageFormats) {
         *numImageFormats = 0;

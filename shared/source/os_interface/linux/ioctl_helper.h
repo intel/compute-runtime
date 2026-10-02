@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/user_fence.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -132,7 +133,6 @@ class IoctlHelper {
     static std::unique_ptr<IoctlHelper> getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm);
     virtual int ioctl(DrmIoctl request, void *arg);
     virtual int ioctl(int fd, DrmIoctl request, void *arg);
-    virtual int ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName);
     virtual void setExternalContext(ExternalCtx *ctx);
     virtual bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) = 0;
 
@@ -182,7 +182,6 @@ class IoctlHelper {
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLockedMemory, bool readOnlyResource, bool resolveResource) = 0;
-    virtual int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
     virtual int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
@@ -239,7 +238,7 @@ class IoctlHelper {
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool requiresUserFenceSetup(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
-    virtual void *getTimestampPtr() { return nullptr; };
+    virtual MmioTimestampPtrHelper getMmioTimestampPtrHelper() { return {}; };
     void setupIpVersion();
     virtual bool isImmediateVmBindRequired() const { return false; }
 
@@ -348,6 +347,7 @@ class IoctlHelperI915 : public IoctlHelper {
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
     bool overrideMaxSlicesSupported() const override { return true; }
     bool requireBoChunksForLargeHostPtrs() const override { return true; }
+    virtual int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

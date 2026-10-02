@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,7 +142,7 @@ TEST_F(UnifiedSharingTestsWithMemoryManager, givenUnifiedSharingHandlerWhenAcqui
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::win32Nt;
     cl_int retVal{};
-    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, {}));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     UnifiedSharingFunctions sharingFunctions;
@@ -199,7 +199,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsNtHandleWhenCreateGraphi
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::win32Nt;
     AllocationType allocationType = AllocationType::sharedImage;
-    MockSharingHandler::createMultiGraphicsAllocation(this->context.get(), desc, nullptr, allocationType, nullptr);
+    MockSharingHandler::createMultiGraphicsAllocation(this->context.get(), desc, nullptr, allocationType, nullptr, {});
 
     EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
     EXPECT_EQ(toOsHandle(desc.handle), memoryManager->handle);
@@ -210,7 +210,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsSharedHandleWhenCreateGr
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::win32Shared;
     AllocationType allocationType = AllocationType::sharedImage;
-    MockSharingHandler::createMultiGraphicsAllocation(this->context.get(), desc, nullptr, allocationType, nullptr);
+    MockSharingHandler::createMultiGraphicsAllocation(this->context.get(), desc, nullptr, allocationType, nullptr, {});
 
     EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
     EXPECT_EQ(toOsHandle(desc.handle), memoryManager->handle);
@@ -223,7 +223,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenLinuxSharedHandleWhenCreateGrap
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::linuxFd;
     AllocationType allocationType = AllocationType::sharedImage;
-    MockSharingHandler::createMultiGraphicsAllocation(this->context.get(), desc, nullptr, allocationType, nullptr);
+    MockSharingHandler::createMultiGraphicsAllocation(this->context.get(), desc, nullptr, allocationType, nullptr, {});
 
     EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
     EXPECT_EQ(toOsHandle(desc.handle), memoryManager->handle);

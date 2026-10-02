@@ -6,12 +6,12 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -150,9 +150,7 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapter
 TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenHardwareInfoIsCorrectlyPopulated) {
 
     const HardwareInfo *hwInfo = defaultHwInfo.get();
-    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
-                                                         &hwInfo->gtSystemInfo,
-                                                         hwInfo->capabilityTable.gpuAddressSpace));
+    setAdapterInfo(hwInfo);
 
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
@@ -164,26 +162,10 @@ TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenHardwareInfoIsCorrectlyPopu
     EXPECT_EQ(rootDeviceEnvironment.getHardwareInfo()->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
 }
 
-TEST(Wddm20EnumAdaptersTest, WhenInitializingWddmThenCompilerReleaseHelperIsCreated) {
-
-    const HardwareInfo *hwInfo = defaultHwInfo.get();
-    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
-                                                         &hwInfo->gtSystemInfo,
-                                                         hwInfo->capabilityTable.gpuAddressSpace));
-
-    MockExecutionEnvironment executionEnvironment;
-    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    auto wddm = Wddm::createWddm(nullptr, rootDeviceEnvironment);
-    EXPECT_TRUE(wddm->init());
-    EXPECT_NE(nullptr, rootDeviceEnvironment.compilerReleaseHelper.get());
-}
-
 TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFalseIsReturnedAndOutputIsEmpty) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.platform.eProductFamily = IGFX_UNKNOWN;
-    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
-                                                         &hwInfo.gtSystemInfo,
-                                                         hwInfo.capabilityTable.gpuAddressSpace));
+    setAdapterInfo(&hwInfo);
 
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
@@ -193,9 +175,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
 
     // reset mock gdi
     hwInfo = *defaultHwInfo;
-    mockGdiDll.reset(setAdapterInfo(&hwInfo.platform,
-                                    &hwInfo.gtSystemInfo,
-                                    hwInfo.capabilityTable.gpuAddressSpace));
+    setAdapterInfo(&hwInfo);
 }
 
 TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
@@ -225,7 +205,7 @@ TEST_F(Wddm20Tests, whenInitPrivateDataThenDefaultValuesAreSet) {
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, whenInitPrivateDataWithPowerHintThenPowerHintIsSet) {
     init();
     auto newContext = osContext.get();
-    const auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getCompilerReleaseHelper().isAvailableSemaphore64(*wddm->rootDeviceEnvironment.getHardwareInfo()) ? 1u : 0u;
+    const auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getHelper<CompilerProductHelper>().isAvailableSemaphore64(*wddm->rootDeviceEnvironment.getHardwareInfo()) ? 1u : 0u;
 
     newContext->setUmdPowerHintValue(1);
     EXPECT_EQ(1, newContext->getUmdPowerHintValue());
@@ -252,7 +232,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenWddmUseHw64bTokenSetWhenIn
     debugManager.flags.Enable64BitSemaphore.set(true);
     hwInfo->featureTable.flags.ftrHwSemaphore64 = true;
     CREATECONTEXT_PVTDATA privateData = initPrivateData(*newContext);
-    auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getCompilerReleaseHelper().isAvailableSemaphore64(*wddm->rootDeviceEnvironment.getHardwareInfo()) ? 1u : 0u;
+    auto expectedUseHw64bToken = wddm->rootDeviceEnvironment.getHelper<CompilerProductHelper>().isAvailableSemaphore64(*wddm->rootDeviceEnvironment.getHardwareInfo()) ? 1u : 0u;
     EXPECT_EQ(privateData.UseHw64bToken, expectedUseHw64bToken);
 
     debugManager.flags.WddmUseHw64bToken.set(false);
@@ -2163,7 +2143,7 @@ TEST_F(WddmTestWithMockGdiDll, givenNoMaxDualSubSlicesSupportedWhenQueryAdapterI
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = maxSS;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 0u;
 
-    mockGdiDll.reset(setAdapterInfo(&hwInfo.platform, &hwInfo.gtSystemInfo, hwInfo.capabilityTable.gpuAddressSpace));
+    setAdapterInfo(&hwInfo);
     EXPECT_TRUE(wddm->queryAdapterInfo());
     EXPECT_EQ(0u, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
 }
@@ -2175,7 +2155,7 @@ TEST_F(WddmTestWithMockGdiDll, givenNonZeroMaxDualSubSlicesSupportedWhenQueryAda
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = maxSS;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = expectedMaxDSS;
 
-    mockGdiDll.reset(setAdapterInfo(&hwInfo.platform, &hwInfo.gtSystemInfo, hwInfo.capabilityTable.gpuAddressSpace));
+    setAdapterInfo(&hwInfo);
     EXPECT_TRUE(wddm->queryAdapterInfo());
     EXPECT_EQ(expectedMaxDSS, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
     EXPECT_NE(maxSS / 2, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);

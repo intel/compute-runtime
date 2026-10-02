@@ -391,7 +391,7 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfacePrelim::toDrmEuDebugConn
 
     pDrmConnect->extensions = connect.extensions;
     pDrmConnect->pid = connect.pid;
-    pDrmConnect->flags = connect.flags;
+    pDrmConnect->flags = static_cast<uint32_t>(connect.flags);
     pDrmConnect->version = connect.version;
 
     auto deleter = [](void *ptr) { delete static_cast<prelim_drm_xe_eudebug_connect *>(ptr); };

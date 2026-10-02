@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
 
-    auto ptr2 = malloc(1024);
+    uint8_t data{};
 
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
 
@@ -52,11 +52,11 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
     EXPECT_EQ(1u, prefetchContext.allocations.size());
 
     debugManager.flags.EnableRecoverablePageFaults.set(0);
-    prefetchManager->insertAllocation(prefetchContext, *svmManager.get(), *device, ptr2, 1024);
+    prefetchManager->insertAllocation(prefetchContext, *svmManager.get(), *device, &data, sizeof(data));
     EXPECT_EQ(1u, prefetchContext.allocations.size());
 
     debugManager.flags.EnableRecoverablePageFaults.set(1);
-    prefetchManager->insertAllocation(prefetchContext, *svmManager.get(), *device, ptr2, 1024);
+    prefetchManager->insertAllocation(prefetchContext, *svmManager.get(), *device, &data, sizeof(data));
     EXPECT_EQ(2u, prefetchContext.allocations.size());
 
     prefetchManager->migrateAllocationsToGpu(prefetchContext, *svmManager.get(), *device, *csr.get());
@@ -66,7 +66,6 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
     EXPECT_EQ(0u, prefetchContext.allocations.size());
 
     svmManager->freeSVMAlloc(ptr);
-    free(ptr2);
 }
 
 TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThenNoUpdateAllocationsInPrefetchContextForInvalidAllocations) {

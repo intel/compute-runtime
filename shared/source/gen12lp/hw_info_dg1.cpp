@@ -98,21 +98,15 @@ void DG1::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalVsThreads = 672;
-    gtSysInfo->TotalHsThreads = 672;
-    gtSysInfo->TotalDsThreads = 672;
-    gtSysInfo->TotalGsThreads = 672;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = DG1::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = DG1::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = DG1::maxSubslicesSupported;
     gtSysInfo->MaxDualSubSlicesSupported = DG1::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);
@@ -123,41 +117,29 @@ void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo Dg1HwConfig::hwInfo = {
+const HardwareInfo DG1::hwInfo = {
     &DG1::platform,
     &DG1::featureTable,
     &DG1::workaroundTable,
-    &Dg1HwConfig::gtSystemInfo,
+    &DG1::gtSystemInfo,
     DG1::capabilityTable};
 
-GT_SYSTEM_INFO Dg1HwConfig::gtSystemInfo = {0};
-void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO DG1::gtSystemInfo = {0};
+void DG1::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->DualSubSliceCount = 6;
+    if (gtSysInfo->SliceCount == 0) {
+        gtSysInfo->SliceCount = 1;
+        gtSysInfo->DualSubSliceCount = 6;
+    }
     gtSysInfo->L3CacheSizeInKb = 16384;
     gtSysInfo->L3BankCount = 8;
-    gtSysInfo->MaxFillRate = 16;
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo DG1::hwInfo = Dg1HwConfig::hwInfo;
-
-void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    if (hwInfoConfig == 0x100060010) {
-        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else if (hwInfoConfig == 0x0) {
-        // Default config
-        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else {
-        UNRECOVERABLE_IF(true);
-    }
-}
-
-void (*DG1::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupDG1HardwareInfoImpl;
+void (*DG1::setupHardwareInfo)(HardwareInfo *, bool) = DG1::setupHardwareInfoImpl;
 } // namespace NEO

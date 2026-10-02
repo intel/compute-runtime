@@ -464,6 +464,15 @@ TEST(HwInfoTest, givenNodeOrdinalSetWhenChosenEngineTypeQueriedThenSetValueIsRet
     EXPECT_EQ(aub_stream::ENGINE_VECS, engineType);
 }
 
+HWTEST_F(GfxCoreHelperTest, givenDefaultSettingsWhenGettingScratchSurfaceStateSizeThen64ByteAlignedRenderSurfaceStateSizeIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    auto scratchSurfaceStateSize = gfxCoreHelper.getScratchSurfaceStateSize(rootDeviceEnvironment);
+    EXPECT_EQ(gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment), scratchSurfaceStateSize);
+    EXPECT_TRUE(isAligned<64u>(scratchSurfaceStateSize));
+}
+
 HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThenUseArgumentsasInput) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
@@ -532,7 +541,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -576,7 +585,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvide
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompressionEnabledAnNonAuxDisabledThenSetCoherencyToGpuAndAuxModeToCompression, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompressionEnabledAnNonAuxDisabledThenSetCoherencyToGpuAndAuxModeToCompression, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
@@ -612,7 +621,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationC
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledAndAllocationEnabledAnNonAuxDisabledThenSetCoherencyToIaAndAuxModeToNone, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledAndAllocationEnabledAnNonAuxDisabledThenSetCoherencyToIaAndAuxModeToNone, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -685,7 +694,7 @@ HWTEST_F(GfxCoreHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceStat
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompressionEnabledAnNonAuxEnabledThenSetCoherencyToIaAndAuxModeToNone, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompressionEnabledAnNonAuxEnabledThenSetCoherencyToIaAndAuxModeToNone, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -1120,30 +1129,6 @@ HWTEST_F(GfxCoreHelperTest, givenResourceDenyCompressionEnabledWhenRenderAndMedi
 
     // Even though Render and Media compression are enabled, the deny compression should override it
     EXPECT_FALSE(gfxCoreHelper.isCompressionAppliedForImportedResource(mockGmm));
-}
-
-HWTEST_F(GfxCoreHelperTest, whenAdjustPreemptionSurfaceSizeIsCalledThenCsrSizeDoesntChange) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    size_t csrSize = 1024;
-    size_t oldCsrSize = csrSize;
-    gfxCoreHelper.adjustPreemptionSurfaceSize(csrSize, pDevice->getRootDeviceEnvironment());
-    EXPECT_EQ(oldCsrSize, csrSize);
-}
-
-HWTEST_F(GfxCoreHelperTest, whenSetSipKernelDataIsCalledThenSipKernelDataDoesntChange) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    uint32_t *sipKernelBinary = nullptr;
-    uint32_t *oldSipKernelBinary = sipKernelBinary;
-    size_t kernelBinarySize = 1024;
-    size_t oldKernelBinarySize = kernelBinarySize;
-    gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize, pDevice->getRootDeviceEnvironment());
-    EXPECT_EQ(oldKernelBinarySize, kernelBinarySize);
-    EXPECT_EQ(oldSipKernelBinary, sipKernelBinary);
-}
-
-HWTEST_F(GfxCoreHelperTest, whenIsSipKernelAsHexadecimalArrayPreferredIsCalledThenReturnFalse) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred());
 }
 
 using isXeHpCoreOrBelow = IsAtMostProduct<IGFX_XE_HP_SDV>;

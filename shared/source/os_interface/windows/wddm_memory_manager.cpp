@@ -354,8 +354,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
                                                            1u, // numGmms
                                                            allocationData.type, nullptr, 0,
                                                            sizeAligned, nullptr, allowLargePages ? MemoryPool::system64KBPages : MemoryPool::system4KBPages,
-                                                           0u, // shareable
+                                                           allocationData.flags.shareable,
                                                            maxOsContextCount);
+    wddmAllocation->setipcSupportedAllocationByDefault(allocationData.flags.ipcSupportedAllocationByDefault);
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper()->getHardwareInfo();
@@ -382,7 +383,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
     wddmAllocation->storageInfo = storageInfo;
 
-    if (!getWddm(allocationData.rootDeviceIndex).createAllocation(gmm, wddmAllocation->getHandleToModify(0u))) {
+    if (!createGpuAllocationsWithRetry(wddmAllocation.get())) {
         delete gmm;
         return nullptr;
     }
@@ -593,7 +594,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     wddmAllocation->setAllocationOffset(offsetInPage);
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -604,7 +607,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     }
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), alignedPtr, alignedSize, 0u,
-                       CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, productHelper), allocationData.storageInfo, gmmRequirements);
+                       CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, productHelper, releaseHelper), allocationData.storageInfo, gmmRequirements);
 
     wddmAllocation->setDefaultGmm(gmm);
     wddmAllocation->storageInfo = allocationData.storageInfo;

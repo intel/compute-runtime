@@ -24,6 +24,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
@@ -396,7 +397,7 @@ ze_result_t ModuleTranslationUnit::buildFromSourceWithHeaders(ze_module_format_t
         elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_HEADER, NEO::ConstStringRef(headerNames[i], strlen(headerNames[i])), ArrayRef<const char>(headers[i], headerSizes[i]).toArrayRef<const uint8_t>());
     }
     std::vector<uint8_t> compileData = elfEncoder.encode();
-    NEO::TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::spirV};
+    NEO::TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
     inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(compileData.data()), compileData.size());
     inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
@@ -475,15 +476,16 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
         if (productHelper.isL1PolicyMissmatchCheckNeeded()) {
             const bool debuggerActive = device->getNEODevice()->getDebugger() != nullptr;
-            if (singleDeviceBinary.l1CachePolicy != NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown) {
-                if (NEO::checkL1CachePolicyMismatch(singleDeviceBinary.l1CachePolicy, productHelper.getL1CachePolicy(debuggerActive))) {
+            const auto zebinL1CachePolicy = NEO::Zebin::ZeInfo::decodeZeInfoL1CachePolicyValue(singleDeviceBinary.zeInfo);
+            if (zebinL1CachePolicy != NEO::Zebin::ZeInfo::Types::L1CachePolicy::L1CachePolicyUnknown) {
+                if (NEO::checkL1CachePolicyMismatch(zebinL1CachePolicy, productHelper.getL1CachePolicy(debuggerActive))) {
                     if (irBinarySize != 0) {
                         rebuild = true;
                         NEO::replaceL1CachePolicyInBuildOptions(
                             this->options,
                             rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(debuggerActive));
                     } else {
-                        this->l1CachePolicyOverride = NEO::getL1CacheControlForZebinPolicy(singleDeviceBinary.l1CachePolicy);
+                        this->l1CachePolicyOverride = NEO::getL1CacheControlForZebinPolicy(zebinL1CachePolicy);
                     }
                 }
             } else {
@@ -647,7 +649,7 @@ void ModuleTranslationUnit::processDebugData() {
             kernelName = reinterpret_cast<const char *>(ptrOffset(kernelDebugHeader, sizeof(iOpenCL::SKernelDebugDataHeaderIGC)));
 
             auto kernelInfo = programInfo.kernelInfos[i];
-            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName.compare(0, kernelInfo->kernelDescriptor.kernelMetadata.kernelName.size(), kernelName) != 0);
+            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName != kernelName);
 
             kernelDebugData = ptrOffset(kernelName, kernelDebugHeader->KernelNameSize);
 
@@ -679,8 +681,6 @@ NEO::GraphicsAllocation *ModuleTranslationUnit::getGlobalVarBufferGA() const {
 ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type)
     : device(device), translationUnit(std::make_unique<ModuleTranslationUnit>(device)),
       moduleBuildLog(moduleBuildLog), type(type) {
-    auto &hwInfo = device->getHwInfo();
-    this->productFamily = hwInfo.platform.eProductFamily;
     this->metadataGeneration = std::make_unique<NEO::MetadataGeneration>();
     this->isaAllocationPageSize = getIsaAllocationPageSize();
 }
@@ -1285,7 +1285,7 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED;
     }
-    auto kernel = Kernel::create(productFamily, this, desc, &res);
+    auto kernel = Kernel::create(this, desc, &res);
 
     if (res == ZE_RESULT_SUCCESS) {
         *kernelHandle = kernel->toHandle();
@@ -1942,16 +1942,21 @@ ze_result_t ModuleImp::destroy() {
     auto tempHandle = debugModuleHandle;
     auto tempDevice = device;
 
-    auto rootDeviceIndex = getDevice()->getNEODevice()->getRootDeviceIndex();
-    auto &executionEnvironment = getDevice()->getNEODevice()->getRootDeviceEnvironment().executionEnvironment;
+    auto neoDevice = getDevice()->getNEODevice();
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto memoryManager = neoDevice->getMemoryManager();
 
-    for (const auto &data : this->kernelImmData) {
-        if (data->getIsaGraphicsAllocation()) {
-            for (auto &engine : executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-                auto contextId = engine.osContext->getContextId();
-                if (data->getIsaGraphicsAllocation()->isUsedByOsContext(contextId)) {
-                    engine.commandStreamReceiver->registerInstructionCacheFlush();
-                }
+    // Register before the ISA allocation or pooled ISA region is released.
+    if (auto isaAllocation = getKernelsIsaParentAllocation()) {
+        memoryManager->registerInstructionCacheFlushForAllocation(rootDeviceIndex, *isaAllocation);
+    } else {
+        for (const auto &data : this->kernelImmData) {
+            if (data == nullptr) {
+                continue;
+            }
+
+            if (auto isaAllocation = data->getIsaGraphicsAllocation()) {
+                memoryManager->registerInstructionCacheFlushForAllocation(rootDeviceIndex, *isaAllocation);
             }
         }
     }

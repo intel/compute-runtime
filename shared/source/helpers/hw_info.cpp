@@ -31,11 +31,11 @@ bool familyEnabled[NEO::maxCoreEnumValue] = {
 };
 
 const HardwareInfo *hardwareInfoTable[NEO::maxProductEnumValue] = {};
-void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = {
+void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool) = {
     0x0,
 };
 
-void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, const CompilerReleaseHelper *) = {
+void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool) = {
     0x0,
 };
 

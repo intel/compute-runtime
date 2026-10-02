@@ -11,7 +11,6 @@ set(OCLOC_FOLDER_NAME "offline_compiler")
 
 append_sources_from_properties(RELEASE_HELPER_SOURCES
                                NEO_CORE_COMPILER_RELEASE_HELPER
-                               NEO_CORE_ENABLE_COMPILER_RELEASE_HELPER
 )
 
 set(CLOC_LIB_SRCS_LIB
@@ -30,7 +29,6 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/igc_platform_helper.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/igc_platform_helper.cpp
-    ${NEO_SHARED_DIRECTORY}/device_binary_format/aot_platforms/neo_aot_platforms.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.h
@@ -81,6 +79,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX}sku_info.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/directory.h
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.h
+    ${NEO_SHARED_DIRECTORY}/utilities/kernel_dispatch_stats.cpp
+    ${NEO_SHARED_DIRECTORY}/utilities/kernel_dispatch_stats.h
     ${NEO_SHARED_DIRECTORY}/utilities/logger.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/logger.h
     ${OCLOC_DIRECTORY}/source/default_cache_config.cpp

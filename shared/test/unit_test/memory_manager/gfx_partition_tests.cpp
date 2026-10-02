@@ -1181,6 +1181,84 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
     }
 }
 
+struct GfxPartition57bExtendedHeapTest : public ::testing::Test {
+    void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+    }
+
+    void initPartition(bool alignTo2MB) {
+        productHelper.is2MBLocalMemAlignmentEnabledResult = alignTo2MB;
+        ASSERT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, 0, 1, false, MemoryConstants::teraByte, maxNBitValue(57) + 1, &productHelper));
+        ASSERT_TRUE(gfxPartition.heapInitialized(HeapIndex::heapExtended));
+        ASSERT_TRUE(gfxPartition.heapInitialized(HeapIndex::heapExtendedHost));
+    }
+
+    CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo{57, "la57"};
+    VariableBackup<bool> backupAllowExtendedPointers{&SysCalls::mmapAllowExtendedPointers, true};
+    MockProductHelper productHelper;
+    MockGfxPartition gfxPartition;
+};
+
+TEST_F(GfxPartition57bExtendedHeapTest, given2MBLocalMemAlignmentEnabledWhenGpuAddressSpaceIs57BitThenExtendedHeapsHave2MBAllocationAlignment) {
+    initPartition(true);
+
+    EXPECT_EQ(MemoryConstants::pageSize2M, gfxPartition.getHeapAllocationAlignment(HeapIndex::heapExtended));
+    EXPECT_EQ(MemoryConstants::pageSize2M, gfxPartition.getHeapAllocationAlignment(HeapIndex::heapExtendedHost));
+}
+
+TEST_F(GfxPartition57bExtendedHeapTest, given2MBLocalMemAlignmentDisabledWhenGpuAddressSpaceIs57BitThenExtendedHeapsKeepPageSizeAllocationAlignment) {
+    initPartition(false);
+
+    EXPECT_EQ(MemoryConstants::pageSize, gfxPartition.getHeapAllocationAlignment(HeapIndex::heapExtended));
+    EXPECT_EQ(MemoryConstants::pageSize, gfxPartition.getHeapAllocationAlignment(HeapIndex::heapExtendedHost));
+    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapExtended) + GfxPartition::heapGranularity,
+              gfxPartition.getHeapMinimalAddress(HeapIndex::heapExtended));
+}
+
+TEST_F(GfxPartition57bExtendedHeapTest, given2MBLocalMemAlignmentEnabledWhenAllocatingFromExtendedHeapsThenAddressesAre2MBAlignedAndSizeIsRoundedUp) {
+    initPartition(true);
+
+    for (auto heap : {HeapIndex::heapExtended, HeapIndex::heapExtendedHost}) {
+        size_t size = MemoryConstants::pageSize;
+        auto address = gfxPartition.heapAllocate(heap, size);
+        EXPECT_NE(0ull, address);
+        EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(address));
+        EXPECT_EQ(MemoryConstants::pageSize2M, size);
+
+        size_t nextSize = MemoryConstants::pageSize;
+        auto nextAddress = gfxPartition.heapAllocate(heap, nextSize);
+        EXPECT_NE(0ull, nextAddress);
+        EXPECT_NE(address, nextAddress);
+        EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(nextAddress));
+        EXPECT_EQ(MemoryConstants::pageSize2M, nextSize);
+    }
+}
+
+TEST_F(GfxPartition57bExtendedHeapTest, givenHeapInitializedWith2MBAlignmentWhenReinitializedWithPageSizeAlignmentThenGranularityFollowsTheNewAlignment) {
+    initPartition(true);
+
+    auto base = gfxPartition.getHeapBase(HeapIndex::heapExtended);
+    gfxPartition.initHeap(HeapIndex::heapExtended, base, gfxPartition.getHeapSize(HeapIndex::heapExtended), MemoryConstants::pageSize);
+
+    EXPECT_EQ(MemoryConstants::pageSize, gfxPartition.getHeapAllocationAlignment(HeapIndex::heapExtended));
+    EXPECT_EQ(base + GfxPartition::heapGranularity, gfxPartition.getHeapMinimalAddress(HeapIndex::heapExtended));
+
+    size_t size = 8 * MemoryConstants::megaByte;
+    EXPECT_EQ(base + GfxPartition::heapGranularity, gfxPartition.heapAllocate(HeapIndex::heapExtended, size));
+}
+
+TEST_F(GfxPartition57bExtendedHeapTest, given2MBLocalMemAlignmentEnabledWhenAllocatingAboveSizeThresholdThenHeapExtendedAllocationStartsAtMinimalAddress) {
+    initPartition(true);
+
+    auto minimalAddress = gfxPartition.getHeapMinimalAddress(HeapIndex::heapExtended);
+    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapExtended) + GfxPartition::heapGranularity2MB, minimalAddress);
+
+    size_t size = 8 * MemoryConstants::megaByte;
+    EXPECT_EQ(minimalAddress, gfxPartition.heapAllocate(HeapIndex::heapExtended, size));
+}
+
 TEST(GfxPartitionTest, givenHeapIndexWhenCheckingIsAnyHeap32ThenTrueIsReturnedFor32BitHeapsOnly) {
 
     HeapIndex heaps32[] = {HeapIndex::heapInternalDeviceMemory,

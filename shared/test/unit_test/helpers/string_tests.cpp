@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,4 +191,22 @@ TEST(StringHelpers, GivenParamsWhenUsingSnprintfsThenReturnIsCorrect) {
 
     int retVal4 = snprintf_s(nullptr, sizeof(buffer), sizeof(buffer), nullptr, fmtStr);
     ASSERT_EQ(-EINVAL, retVal4);
+}
+
+TEST(StringHelpers, givenNonEmptyDataWhenMakingCopyThenCopyWithSameContentInSeparateMemoryIsReturned) {
+    const char source[] = "HelloWorld";
+
+    auto copiedData = makeCopy<char>(source, sizeof(source));
+
+    ASSERT_NE(nullptr, copiedData);
+    EXPECT_NE(source, copiedData.get());
+    EXPECT_EQ(0, memcmp(source, copiedData.get(), sizeof(source)));
+}
+
+TEST(StringHelpers, givenZeroSizeWhenMakingCopyThenNullptrIsReturned) {
+    const char source[] = "HelloWorld";
+
+    auto copiedData = makeCopy<char>(source, 0u);
+
+    EXPECT_EQ(nullptr, copiedData);
 }

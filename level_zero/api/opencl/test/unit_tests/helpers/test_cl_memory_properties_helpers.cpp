@@ -336,10 +336,10 @@ TEST_F(ParseMemoryPropertiesFixture, givenNoUseHostPtrPropertyWhenParsingThenHos
 TEST_F(ParseMemoryPropertiesFixture, givenAcceptedButUnusedPropertiesWhenParsingThenTheyAreSkippedWithoutFailing) {
     cl_mem_properties_intel properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x10,
                                             CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, 0x20,
-                                            CL_MEM_DEVICE_HANDLE_LIST_KHR, 0x30,
+                                            CL_MEM_DEVICE_HANDLE_LIST_KHR, 0x30, CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
                                             CL_MEM_DEVICE_ID_INTEL_DEPRECATED, 0x40,
                                             CL_MEM_DEVICE_ID_INTEL, 0x50,
-                                            CL_L0_MEM_OBJ_HANDLE, 0x60,
+                                            CL_MEM_L0_HANDLE_INTEL, 0x60,
                                             0};
 
     EXPECT_TRUE(parse(properties));

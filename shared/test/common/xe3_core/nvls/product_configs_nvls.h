@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 namespace AOT_NVLS {
 inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {

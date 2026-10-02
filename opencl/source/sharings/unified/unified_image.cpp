@@ -7,6 +7,8 @@
 
 #include "unified_image.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/surface_format_info.h"
@@ -21,25 +23,34 @@
 namespace NEO {
 
 Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription description,
-                                              const cl_image_format *imageFormat, const cl_image_desc *imageDesc, cl_int *errcodeRet) {
+                                              const cl_image_format *imageFormat, const cl_image_desc *imageDesc, cl_int *errcodeRet,
+                                              const RootDeviceIndicesContainer &targetRootDeviceIndices) {
 
     auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
     ImageInfo imgInfo = {};
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
-    auto multiGraphicsAllocation = createMultiGraphicsAllocation(context, description, &imgInfo, AllocationType::sharedImage, errcodeRet);
+    auto multiGraphicsAllocation = createMultiGraphicsAllocation(context, description, &imgInfo, AllocationType::sharedImage, errcodeRet,
+                                                                 targetRootDeviceIndices);
     if (!multiGraphicsAllocation) {
         return nullptr;
     }
 
+    auto &executionEnvironment = *context->getDevice(0)->getExecutionEnvironment();
+
     for (auto graphicsAllocation : multiGraphicsAllocation->getGraphicsAllocations()) {
+        if (graphicsAllocation == nullptr) {
+            continue;
+        }
+
         swapGmm(graphicsAllocation, context, &imgInfo);
 
         auto &memoryManager = *context->getMemoryManager();
         if (graphicsAllocation->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-            const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-            const auto &productHelper = context->getDevice(0)->getProductHelper();
+            auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()];
+            const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+            const auto &productHelper = rootDeviceEnvironment.getProductHelper();
             graphicsAllocation->getDefaultGmm()->setCompressionEnabled(productHelper.isPageTableManagerSupported(hwInfo) ? memoryManager.mapAuxGpuVA(graphicsAllocation) : true);
         }
     }

@@ -18,9 +18,13 @@ int setAbrt(bool enableAbrt);
 
 void cleanupSignals();
 
-void resetAlarm();
+void resetAlarm(bool enableAlarm);
+
+void pauseAlarm(bool enableAlarm);
 
 void handleTestsTimeout(std::string_view testName, uint32_t elapsedTime);
+
+void markIterationStart();
 
 constexpr size_t maxTestNameLength = 256;
 extern std::string lastTest;

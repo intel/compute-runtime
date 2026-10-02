@@ -193,6 +193,7 @@ class ProductHelperHw : public ProductHelper {
     bool useSharedSystemUsm() const override;
     bool isSharingWith3dOrMediaAllowed() const override;
     bool isL3FlushAfterPostSyncSupported() const override;
+    bool isWalkerPreemptionFallbackRequired(PreemptionMode preemptionMode, bool hostWaitablePostSync) const override;
     void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const override;
     bool isMisalignedUserPtr2WayCoherent() const override;
     bool isSvmHeapReservationSupported() const override;
@@ -202,6 +203,7 @@ class ProductHelperHw : public ProductHelper {
     bool useAdditionalBlitProperties() const override;
     bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const override;
     bool isFlushBetweenBlitsRequired() const override;
+    bool isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const override;
     bool isNonCoherentTimestampsModeEnabled() const override;
     bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const override;
     bool checkBcsForDirectSubmissionStop() const override;

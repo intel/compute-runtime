@@ -340,8 +340,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
     csr.programHardwareContextParentCall = true;
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -350,7 +349,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
     CommandListExecutionInternalOptions internalOptions = {};
@@ -392,8 +391,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           false,
@@ -402,7 +400,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandList->close();
 
     auto commandListHandle = commandList->toHandle();
@@ -459,8 +457,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     }
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           false,
@@ -469,7 +466,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -524,8 +521,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     }
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           false,
@@ -534,7 +530,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -587,8 +583,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &desc,
                                                                               false,
                                                                               NEO::EngineGroupType::compute,
@@ -638,16 +633,14 @@ HWTEST_F(CommandQueueIndirectAllocations,
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily,
-                                                                                       device,
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(device,
                                                                                        &desc,
                                                                                        false,
                                                                                        NEO::EngineGroupType::compute,
                                                                                        returnValue));
     ASSERT_NE(nullptr, commandListImmediate);
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily,
-                                                                            device,
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device,
                                                                             NEO::EngineGroupType::compute,
                                                                             0u,
                                                                             returnValue, false));
@@ -700,8 +693,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &desc,
                                                                               false,
                                                                               NEO::EngineGroupType::compute,
@@ -751,7 +743,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecutin
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<FamilyType::gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto cmdListHandle = commandList->toHandle();
     commandList->close();
 
@@ -780,7 +772,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecut
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<FamilyType::gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
@@ -812,7 +804,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenHandleIndirectAll
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<FamilyType::gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     std::unique_lock<std::mutex> lock;
 
     commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
@@ -828,8 +820,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenMakeResidentAndMigrateWithEmptyR
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -848,8 +839,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenMakeResidentAndMigrateWithTwoAll
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -873,8 +863,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsFalseThenTrans
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -897,8 +886,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -922,8 +910,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -947,8 +934,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -1400,8 +1386,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenRegisterCsrClientCalledMultipleT
 
     ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           false,

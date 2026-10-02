@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -20,8 +21,10 @@
 #include "shared/test/common/fixtures/memory_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/instruction_cache_flush_test_engines.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -49,6 +52,9 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
+#include <initializer_list>
+
 namespace NEO {
 enum class AtomicAccessMode : uint32_t;
 }
@@ -60,6 +66,19 @@ TEST(MemoryManagerTest, WhenCallingSetSharedSystemAtomicAccessThenReturnTrue) {
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto subDeviceId = SubDeviceIdsVec{0};
     EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, AtomicAccessMode::none, subDeviceId, 0u));
+}
+
+TEST(MemoryManagerTest, givenMemAdviseFlagsWhenCallingSetMemAdviseThenFlagsAreStoredOnAllocation) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    MockGraphicsAllocation allocation{nullptr, MemoryConstants::pageSize};
+
+    MemAdviseFlags flags{};
+    flags.devicePreferredLocation = 1;
+    flags.cachedMemory = 0;
+
+    EXPECT_TRUE(memoryManager.setMemAdvise(&allocation, flags, 0u));
+    EXPECT_EQ(flags.allFlags, allocation.getMemAdviseFlags().allFlags);
 }
 
 TEST(MemoryManagerTest, WhenCallingGetSharedSystemAtomicAccessThenReturnTrue) {
@@ -1016,6 +1035,30 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandle
     EXPECT_TRUE(mockManager1->freeMemoryCalled);
 }
 
+TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandlesAreCleanedThenAubManagerFreeMemoryIsCalledUnderPageTablesLock) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get(), true, 1);
+    MockMemoryManager mockMemoryManager(mockExecutionEnvironment);
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+    uint32_t lockCallsAtFree = 0u;
+    mockManager->freeMemoryCallback = [&] { lockCallsAtFree = mockAubCenter->obtainPageTablesLockCalled; };
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
+    mockMemoryManager.populateOsHandles(storage, rootDeviceIndex);
+    mockMemoryManager.getHostPtrManager()->releaseHandleStorage(rootDeviceIndex, storage);
+    mockMemoryManager.cleanOsHandles(storage, rootDeviceIndex);
+    mockManager->freeMemoryCallback = nullptr;
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+    EXPECT_EQ(1u, lockCallsAtFree);
+}
+
 HWTEST_F(MemoryAllocatorTest, givenAllocationUsedByContextWhenFreeingThenHandleCompletionIsCalled) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableFreeMemory.set(true);
@@ -1034,6 +1077,52 @@ HWTEST_F(MemoryAllocatorTest, givenAllocationUsedByContextWhenFreeingThenHandleC
 
     EXPECT_TRUE(mockManager0->freeMemoryCalled);
     EXPECT_TRUE(static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->pollForCompletionCalled);
+}
+
+TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenFreeingGraphicsMemoryThenAubManagerFreeMemoryIsCalledUnderPageTablesLock) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+    uint32_t lockCallsAtFree = 0u;
+    mockManager->freeMemoryCallback = [&] { lockCallsAtFree = mockAubCenter->obtainPageTablesLockCalled; };
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+    mockManager->freeMemoryCallback = nullptr;
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+    EXPECT_EQ(1u, lockCallsAtFree);
+}
+
+TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenFreeingGraphicsMemoryThenAubManagerFreeMemoryIsCalledBeforeGpuAddressRangeIsFreed) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, MemoryConstants::pageSize, nullptr, AllocationType::buffer);
+    ASSERT_NE(nullptr, allocation);
+
+    auto gfxPartition = new MockGfxPartition();
+    NonCopyableVariableBackup<std::unique_ptr<GfxPartition>> gfxPartitionBackup(&memoryManager->gfxPartitions[rootDeviceIndex], std::unique_ptr<GfxPartition>(gfxPartition));
+    uint32_t gpuAddressRangeFreesAtFree = 0u;
+    mockManager->freeMemoryCallback = [&] { gpuAddressRangeFreesAtFree = gfxPartition->freeGpuAddressRangeCalled; };
+
+    memoryManager->freeGraphicsMemory(allocation);
+    mockManager->freeMemoryCallback = nullptr;
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+    EXPECT_EQ(0u, gpuAddressRangeFreesAtFree);
+    EXPECT_EQ(1u, gfxPartition->freeGpuAddressRangeCalled);
 }
 
 TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeSizeWhenAskedForHostPtrAllocationThenGraphicsAllocationIsBeignCreatedWithAllFragmentsPresent) {
@@ -3883,6 +3972,53 @@ TEST(MemoryManagerTest, WhenAddingCustomHeapAllocatorConfigsThenCanRetrieveAndMa
     EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false, mockRootDeviceIndex).has_value());
 }
 
+TEST(MemoryManagerTest, givenPendingSecondaryPartitionOrMissingContextTagWhenAllocInUseCalledThenExistingCleanupPolicyIsPreserved) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2);
+    executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(false, false, executionEnvironment);
+    auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment.memoryManager.get());
+    memoryManager->callBaseAllocInUse = true;
+    MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
+    const auto osContext = memoryManager->createAndRegisterOsContext(&csr, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    constexpr TaskCountType taskCount = 7;
+    MockGraphicsAllocation allocation;
+    allocation.updateTaskCount(taskCount, osContext->getContextId());
+    TagAddressType tags[] = {taskCount, 0};
+    VariableBackup<volatile TagAddressType *> tagBackup(&csr.tagAddress, tags);
+    csr.setActivePartitions(2);
+    csr.immWritePostSyncWriteOffset = sizeof(TagAddressType);
+
+    EXPECT_FALSE(memoryManager->allocInUse(allocation));
+    tags[0] = taskCount - 1;
+    EXPECT_TRUE(memoryManager->allocInUse(allocation));
+    csr.tagAddress = nullptr;
+    EXPECT_FALSE(memoryManager->allocInUse(allocation));
+    csr.tagAddress = tags;
+    memoryManager->unregisterEngineForCsr(&csr);
+    EXPECT_FALSE(memoryManager->allocInUse(allocation));
+}
+
+TEST(MemoryManagerTest, givenSnapshotWhenCheckingCompletionThenActivePartitionCountAndStrideAreUsedAndMissingTagsAreSkipped) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
+    constexpr TaskCountType taskCount = 7;
+    TagAddressType tags[] = {taskCount, 0, taskCount - 1};
+    VariableBackup<volatile TagAddressType *> tagBackup(&csr.tagAddress, tags);
+    csr.immWritePostSyncWriteOffset = 2 * sizeof(TagAddressType);
+    EngineCompletionSnapshot snapshot;
+    EXPECT_TRUE(isEngineCompletionSnapshotReady(snapshot));
+    snapshot.push_back({&csr, taskCount});
+
+    csr.setActivePartitions(1);
+    EXPECT_TRUE(isEngineCompletionSnapshotReady(snapshot));
+    csr.setActivePartitions(2);
+    EXPECT_FALSE(isEngineCompletionSnapshotReady(snapshot));
+    tags[2] = taskCount;
+    EXPECT_TRUE(isEngineCompletionSnapshotReady(snapshot));
+    csr.tagAddress = nullptr;
+    EXPECT_TRUE(isEngineCompletionSnapshotReady(snapshot));
+}
+
 TEST(MemoryManagerTest, givenGpuHangWhenAllocInUseCalledThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2);
     auto mockMemoryManager = new MockMemoryManager(false, false, executionEnvironment);
@@ -3901,4 +4037,147 @@ TEST(MemoryManagerTest, givenGpuHangWhenAllocInUseCalledThenReturnFalse) {
     csr->isGpuHangDetectedReturnValue = true;
     csr->gpuHangCheckPeriod = std::chrono::microseconds::zero();
     EXPECT_FALSE(mockMemoryManager->allocInUse(allocation));
+}
+
+class InstructionCacheFlushRegistrationTests : public testing::Test {
+  protected:
+    void SetUp() override {
+        constexpr uint32_t requiredContextCount = 10u;
+        maxOsContextCountBackup = std::max(MemoryManager::maxOsContextCount, requiredContextCount);
+
+        executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        engines = std::make_unique<InstructionCacheFlushTestEngines>(executionEnvironment, 0u);
+    }
+
+    void markUsed(GraphicsAllocation &allocation, MockCommandStreamReceiver *csr) {
+        allocation.updateTaskCount(1u, csr->getOsContext().getContextId());
+    }
+
+    void registerFlush(const GraphicsAllocation &allocation) {
+        executionEnvironment.memoryManager->registerInstructionCacheFlushForAllocation(0u, allocation);
+    }
+
+    void expectPendingFlushes(std::initializer_list<MockCommandStreamReceiver *> expectedCsrs) {
+        for (const auto &csr : engines->csrs) {
+            const bool expected = std::find(expectedCsrs.begin(), expectedCsrs.end(), csr.get()) != expectedCsrs.end();
+            EXPECT_EQ(expected, csr->isInstructionCacheFlushRequired())
+                << "Context ID: " << csr->getOsContext().getContextId();
+        }
+    }
+
+    VariableBackup<uint32_t> maxOsContextCountBackup{&MemoryManager::maxOsContextCount};
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), true, 2u};
+    std::unique_ptr<InstructionCacheFlushTestEngines> engines;
+};
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenUnusedAllocationWhenRegisteringFlushThenNoCsrIsMarked) {
+    MockGraphicsAllocation allocation;
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByPrimaryWhenRegisteringFlushThenAllComputeGroupMembersAreMarked) {
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->primary);
+
+    ASSERT_FALSE(allocation.isUsedByOsContext(engines->secondary->getOsContext().getContextId()));
+    ASSERT_FALSE(allocation.isUsedByOsContext(engines->sibling->getOsContext().getContextId()));
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedOnlyBySecondaryWhenRegisteringFlushThenPrimaryAndUnusedSiblingAreMarked) {
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+
+    ASSERT_FALSE(allocation.isUsedByOsContext(engines->primary->getOsContext().getContextId()));
+    ASSERT_FALSE(allocation.isUsedByOsContext(engines->sibling->getOsContext().getContextId()));
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByTwoGroupsWhenRegisteringFlushThenBothGroupsAreMarked) {
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+    markUsed(allocation, engines->unrelatedSecondary);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling,
+                          engines->unrelatedPrimary, engines->unrelatedSecondary});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByUngroupedCsrWhenRegisteringFlushThenOnlyHistoricalUserIsMarked) {
+    auto ungrouped = engines->createEngine(aub_stream::ENGINE_CCS);
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, ungrouped);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({ungrouped});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByCopyGroupWhenRegisteringFlushThenOnlyHistoricalCopyUserIsMarked) {
+    auto copyPrimary = engines->createEngine(aub_stream::ENGINE_BCS);
+    copyPrimary->getOsContext().setContextGroupCount(2u);
+    auto copySecondary = engines->createEngine(aub_stream::ENGINE_BCS, copyPrimary);
+
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, copySecondary);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({copySecondary});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenIsaUsedByComputeAndCopyCsrsWhenRegisteringFlushThenHistoricalCopyUserIsPreserved) {
+    auto copyCsr = engines->createEngine(aub_stream::ENGINE_BCS);
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+    markUsed(allocation, copyCsr);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling, copyCsr});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenCsrsOnAnotherRootDeviceWhenRegisteringFlushThenOtherRootDeviceIsNotMarked) {
+    InstructionCacheFlushTestEngines otherRootEngines(executionEnvironment, 1u);
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
+    for (const auto &csr : otherRootEngines.csrs) {
+        EXPECT_FALSE(csr->isInstructionCacheFlushRequired());
+    }
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenExistingPendingFlushWhenRegisteringUnusedAllocationThenPendingFlushIsPreserved) {
+    engines->unrelatedPrimary->registerInstructionCacheFlush();
+    MockGraphicsAllocation allocation;
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->unrelatedPrimary});
+}
+
+TEST_F(InstructionCacheFlushRegistrationTests, givenOneCsrClearsItsFlushWhenRegisteringAgainThenAllAffectedCsrsAreMarked) {
+    MockGraphicsAllocation allocation;
+    markUsed(allocation, engines->secondary);
+    registerFlush(allocation);
+
+    engines->secondary->setInstructionCacheFlushed();
+    expectPendingFlushes({engines->primary, engines->sibling});
+
+    registerFlush(allocation);
+
+    expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
 }

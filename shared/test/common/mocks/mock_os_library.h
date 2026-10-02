@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,8 +50,8 @@ class MockOsLibraryCustom : public MockOsLibrary {
     using MockOsLibrary::MockOsLibrary;
     std::unordered_map<std::string, void *> procMap;
     void *getProcAddress(const std::string &procName) override {
-        if (procMap.find(procName) != procMap.end()) {
-            return procMap[procName];
+        if (auto it = procMap.find(procName); it != procMap.end()) {
+            return it->second;
         } else {
             return getProcAddressReturn;
         }

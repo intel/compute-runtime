@@ -35,12 +35,6 @@ class ExternalSemaphore {
         Invalid
     };
 
-    enum SemaphoreState {
-        Initial,
-        Waiting,
-        Signaled
-    };
-
     enum class ImportResult {
         success,
         unsupported,
@@ -63,14 +57,11 @@ class ExternalSemaphore {
 
     OSInterface *osInterface = nullptr;
 
-    SemaphoreState getState() { return state; }
-
     virtual uint64_t acquireWaitFenceValue(uint64_t fenceValue) { return fenceValue; }
     virtual uint64_t acquireSignalFenceValue(uint64_t fenceValue) { return fenceValue; }
 
   protected:
     Type type = Type::Invalid;
-    SemaphoreState state = SemaphoreState::Initial;
 };
 
 } // namespace NEO

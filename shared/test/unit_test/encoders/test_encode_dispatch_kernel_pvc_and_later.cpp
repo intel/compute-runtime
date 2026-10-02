@@ -558,6 +558,7 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenDualSubSliceCountNotEqualToMa
     auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     mutableHwInfo->gtSystemInfo.MaxSubSlicesSupported = 64u;
     mutableHwInfo->gtSystemInfo.SubSliceCount = 32u;
+    mutableHwInfo->gtSystemInfo.EUCount = 256u;
     mutableHwInfo->gtSystemInfo.ThreadCount = 2048u;
     auto hwInfo = pDevice->getHardwareInfo();
 

@@ -35,7 +35,6 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_cache.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_product_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_release_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cpu_page_fault_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_debugger.h
@@ -118,6 +117,7 @@ else()
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_wrappers.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_wrappers.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_ioctl_helper.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_ioctl_helper_with_capture.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_os_time_linux.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/debug_mock_drm_xe.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_os_context_linux.h

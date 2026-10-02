@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
@@ -56,8 +57,8 @@ bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() const {
-    return true;
+bool ProductHelperHw<gfxProduct>::isWalkerPreemptionFallbackRequired(PreemptionMode preemptionMode, bool hostWaitablePostSync) const {
+    return hostWaitablePostSync && (preemptionMode == PreemptionMode::MidThread);
 }
 
 template <>
@@ -182,6 +183,18 @@ uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const
         return std::min(isaSize, static_cast<uint32_t>(debugManager.flags.LimitIsaPrefetchSize.get()));
     }
     return isaSize;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const {
+    switch (debugManager.flags.OverrideBcsWriteSplit.get()) {
+    case 0:
+        return false;
+    case 2:
+        return true;
+    default:
+        return isDstSystemOrRemoteMemory;
+    }
 }
 
 } // namespace NEO

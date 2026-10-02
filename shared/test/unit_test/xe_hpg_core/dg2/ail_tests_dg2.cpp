@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 
 using AILTestsDg2 = ::testing::Test;
 
-HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCalledThenReturnCorrectResults, IsDG2) {
+HWTEST2_PRODUCT_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCalledThenReturnCorrectResults, IsDG2) {
 
     class AILMock : public AILConfigurationHw<productFamily> {
       public:
@@ -105,7 +105,7 @@ HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCall
     }
 }
 
-HWTEST2_F(AILTestsDg2, givenApplicationNameRequiringCrossTargetCompabilityWhenCallingUseValidationLogicThenReturnProperValue, IsDG2) {
+HWTEST2_PRODUCT_F(AILTestsDg2, givenApplicationNameRequiringCrossTargetCompabilityWhenCallingUseValidationLogicThenReturnProperValue, IsDG2) {
     AILWhitebox<productFamily> ail;
     ail.processName = "unknown";
     EXPECT_FALSE(ail.useLegacyValidationLogic());

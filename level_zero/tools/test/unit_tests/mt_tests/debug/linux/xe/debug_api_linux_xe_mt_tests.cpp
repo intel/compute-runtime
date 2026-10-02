@@ -58,10 +58,10 @@ TEST_F(DebugApiLinuxTestXe, GivenEventInInternalEventQueueWhenAsyncThreadFunctio
     EXPECT_FALSE(session->asyncThread.threadActive);
     EXPECT_TRUE(session->asyncThreadFinished);
     EXPECT_EQ(session->clientHandleToConnection.size(), 1ul);
-    EXPECT_NE(session->clientHandleToConnection.find(client->clientHandle), session->clientHandleToConnection.end());
+    EXPECT_TRUE(session->clientHandleToConnection.contains(client->clientHandle));
 
     uint64_t wrongClientHandle = 34;
-    EXPECT_EQ(session->clientHandleToConnection.find(wrongClientHandle), session->clientHandleToConnection.end());
+    EXPECT_FALSE(session->clientHandleToConnection.contains(wrongClientHandle));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenNoEventInInternalEventQueueWhenAsyncThreadFunctionIsExecutedThenEventsAreCheckedForAvailability) {

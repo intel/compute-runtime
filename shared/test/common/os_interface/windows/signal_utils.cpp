@@ -59,6 +59,7 @@ int setAbrt(bool enableAbrt) {
 }
 
 std::atomic<bool> abortOnTimeout = false;
+std::atomic<bool> alarmPaused = false;
 static unsigned int resolvedAlarmTimeInS = 0;
 static std::atomic<int64_t> iterationStartMs{0};
 
@@ -103,6 +104,9 @@ int setAlarm(bool enableAlarm) {
                 if (!abortOnTimeout) {
                     return;
                 }
+                while (alarmPaused) {
+                    std::this_thread::yield();
+                }
                 elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                                 std::chrono::high_resolution_clock::now().time_since_epoch())
                                 .count() -
@@ -130,13 +134,25 @@ int setSegv(bool enableSegv) {
 void cleanupSignals() {
     if (alarmThread) {
         abortOnTimeout = false;
+        alarmPaused = false;
         alarmThread->join();
         alarmThread.reset();
     }
 }
 
-void resetAlarm() {
+void resetAlarm(bool enableAlarm) {
+    if (!enableAlarm) {
+        return;
+    }
     iterationStartMs.store(std::chrono::duration_cast<std::chrono::milliseconds>(
                                std::chrono::high_resolution_clock::now().time_since_epoch())
                                .count());
+    alarmPaused = false;
+}
+
+void pauseAlarm(bool enableAlarm) {
+    if (!enableAlarm) {
+        return;
+    }
+    alarmPaused = true;
 }

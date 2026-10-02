@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,21 @@ TEST(SkuInfoTransferTest, givenFeatureTableWhenFillingStructureForGmmThenCopyOnl
     SkuInfoBaseReference::fillReferenceFtrForTransfer(refFtrTable);
 
     EXPECT_TRUE(memcmp(&requestedFtrTable, &refFtrTable, sizeof(_SKU_FEATURE_TABLE)) == 0);
+}
+
+TEST(SkuInfoTransferTest, givenAppTransientCachingSupportWhenFillingStructureForGmmThenFlagIsCopied) {
+    FeatureTable featureTable;
+    EXPECT_FALSE(featureTable.flags.ftrAppTransientCaching);
+
+    for (const bool enabled : {false, true}) {
+        featureTable.flags.ftrAppTransientCaching = enabled;
+        _SKU_FEATURE_TABLE requestedFtrTable = {};
+        requestedFtrTable.FtrAppTransientCaching = !enabled;
+
+        SkuInfoTransfer::transferFtrTableForGmm(&requestedFtrTable, &featureTable);
+
+        EXPECT_EQ(enabled, requestedFtrTable.FtrAppTransientCaching);
+    }
 }
 
 TEST(SkuInfoTransferTest, givenWaTableWhenFillingStructureForGmmThenCopyOnlySelectedValues) {

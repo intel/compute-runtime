@@ -80,7 +80,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                               uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override;
+                              ze_event_handle_t *phWaitEvents,
+                              CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters) override;
 
     ze_result_t appendMemoryCopy(void *dstptr,
                                  const void *srcptr,
@@ -107,7 +108,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                  uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override;
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) override;
 
     ze_result_t appendEventReset(ze_event_handle_t hEvent) override;
 
@@ -188,13 +189,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                     uint64_t data) override;
 
-    ze_result_t appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
-                                             const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
-                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
-    ze_result_t appendSignalExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
-                                               const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
-                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
-
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
     ze_result_t close() override {
@@ -231,7 +225,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void handleHeapsAndResidencyForImmediateRegularTask(void *&sshCpuBaseAddress);
     void handleDebugSurfaceStateUpdate(NEO::IndirectHeap *ssh);
 
-    void checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem);
+    ze_result_t checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem);
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
 
     MOCKABLE_VIRTUAL ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
@@ -252,6 +246,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     TransferType getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo);
     size_t getCpuCopyThreshold(TransferType transferType);
     bool isBarrierRequired();
+    bool hasPendingInOrderWork() const;
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override;
     void handlePostSyncPrintfAndAssert(bool hangDetected) final;
 
@@ -271,7 +266,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies);
     MOCKABLE_VIRTUAL ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
     ze_result_t stagingStatusToL0(const NEO::StagingTransferStatus &status) const;
-    size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists);
+    size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, CommandListExecutionInternalOptions &internalOptions);
     void tryResetKernelWithAssertFlag();
     void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload);
     size_t estimateCommandSizeForImageCopyBlit(ze_image_handle_t hImage, const ze_image_region_t *pRegion) const;
@@ -297,8 +292,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     SynchronizationTaskCounts lastHostSynchronizeTaskCounts;
     bool latestFlushIsHostVisible = false;
     bool keepRelaxedOrderingEnabled = false;
+    bool copyOffloadTagUpdateRequired = false;
 };
 
-template <PRODUCT_FAMILY gfxProductFamily>
-struct CommandListImmediateProductFamily;
 } // namespace L0

@@ -24,6 +24,16 @@
 namespace NEO {
 
 template <typename Family>
+void appendTdlRowArbitrationPolicy(typename Family::STATE_COMPUTE_MODE &stateComputeMode, uint32_t &maskBits2) {
+    using TDL_ROW_ARBITRATION_POLICY = typename Family::STATE_COMPUTE_MODE::TDL_ROW_ARBITRATION_POLICY;
+
+    if (debugManager.flags.ScmTdlRowArbitrationPolicyOverride.get() != -1) {
+        stateComputeMode.setTdlRowArbitrationPolicy(static_cast<TDL_ROW_ARBITRATION_POLICY>(debugManager.flags.ScmTdlRowArbitrationPolicyOverride.get()));
+        maskBits2 |= Family::stateComputeModeTdlRowArbitrationPolicyMask;
+    }
+}
+
+template <typename Family>
 void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }
@@ -149,21 +159,21 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
     const uint64_t data = args.inOrderCounterValue;
 
     uint32_t postSyncId = 0;
-    const bool deviceInterrupt = (args.interruptEvent && !args.inOrderExecInfo->isHostStorageDuplicated());
+    // COMPUTE_WALKER_2 reads the interrupt enable only from PostSync0
 
     if (args.inOrderExecInfo->isAtomicDeviceSignalling()) {
         setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_ATOMIC_OPN, deviceGpuVa, args.inOrderAtomicSignallingValue,
-                        static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, deviceInterrupt, requiresSystemMemoryFence);
+                        static_cast<uint32_t>(POSTSYNC_DATA_TYPE::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B), mocs, args.interruptEvent, requiresSystemMemoryFence);
     } else {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, mocs, deviceInterrupt, requiresSystemMemoryFence);
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, deviceGpuVa, data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
     }
 
     if (args.inOrderExecInfo->isHostStorageDuplicated()) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(), data, 0, mocs, false, requiresSystemMemoryFence);
     }
 
     if (args.inOrderExecInfo->getInterruptFence()) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getInterruptFence()->getGpuAddress(), data, 0, mocs, args.interruptEvent, requiresSystemMemoryFence);
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getInterruptFence()->getGpuAddress(), data, 0, mocs, false, requiresSystemMemoryFence);
     }
 
     if (args.eventAddress) {

@@ -139,15 +139,17 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingSysfsFileNameIfB
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNamesThenProperNamesAreReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    EXPECT_STREQ("xe_amc_alert_reason", pSysmanKmdInterface->getNodeFileName(NodeName::nodeNameAmcAlertReason).c_str());
-    EXPECT_STREQ("temp2_emergency", pSysmanKmdInterface->getNodeFileName(NodeName::nodeNameTemperatureEmergency).c_str());
+    EXPECT_STREQ("xe_amc_alert_reason", pSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).c_str());
+    EXPECT_STREQ("temp2_emergency", pSysmanKmdInterface->getNodeFileName(NodeName::temperatureEmergency).c_str());
+    EXPECT_STREQ("temp3_input", pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).c_str());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNameForUnmappedNodeThenEmptyNameIsReturned) {
     auto pMockSysmanKmdInterface = std::make_unique<MockSysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
     pMockSysmanKmdInterface->nodeNameToFileMap.clear();
-    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::nodeNameAmcAlertReason).empty());
-    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::nodeNameTemperatureEmergency).empty());
+    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).empty());
+    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::temperatureEmergency).empty());
+    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).empty());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCallingGetPowerLimitFilePathsThenProperPathsAreReturned) {

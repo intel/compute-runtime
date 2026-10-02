@@ -57,6 +57,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
         getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
         getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
     }
+    this->deferredImmediateCmdListEnabled = false;
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
     UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
@@ -197,13 +198,6 @@ const ReleaseHelper &MockDevice::getReleaseHelper() const {
     return Device::getReleaseHelper();
 }
 
-const CompilerReleaseHelper &MockDevice::getCompilerReleaseHelper() const {
-    if (mockCompilerReleaseHelper) {
-        return *mockCompilerReleaseHelper;
-    }
-    return Device::getCompilerReleaseHelper();
-}
-
 AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     if (mockAilConfigurationHelper) {
         return mockAilConfigurationHelper;
@@ -211,11 +205,32 @@ AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     return Device::getAilConfigurationHelper();
 }
 
+bool MockDevice::areSecondaryEnginesAvailable() const {
+    if (disableSecondaryEngines) {
+        return false;
+    }
+    return Device::areSecondaryEnginesAvailable();
+}
+
 EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel) {
     if (disableSecondaryEngines) {
         return nullptr;
     }
     return RootDevice::getSecondaryEngineCsr(engineTypeUsage, priorityLevel);
+}
+
+bool MockDevice::isDeferredImmediateCmdListEnabled() const {
+    if (NEO::debugManager.flags.DeferCmdQGpgpuInitialization.get() != -1 || NEO::debugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
+        return true;
+    }
+    return deferredImmediateCmdListEnabled;
+}
+
+bool MockSubDevice::isDeferredImmediateCmdListEnabled() const {
+    if (NEO::debugManager.flags.DeferCmdQGpgpuInitialization.get() != -1 || NEO::debugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
+        return true;
+    }
+    return deferredImmediateCmdListEnabled;
 }
 
 std::unique_ptr<CommandStreamReceiver> MockDevice::createCommandStreamReceiver() const {

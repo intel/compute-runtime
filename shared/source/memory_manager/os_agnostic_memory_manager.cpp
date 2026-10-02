@@ -359,6 +359,15 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     auto sizeToFree = memoryAllocation->sizeToFree;
     auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
 
+    if (executionEnvironment.rootDeviceEnvironments.size() > rootDeviceIndex) {
+        auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
+        if (aubCenter && aubCenter->getAubManager() && debugManager.flags.EnableFreeMemory.get() && gfxAllocation->getAllocationType() != AllocationType::externalHostPtr) {
+            auto pageTablesLock = aubCenter->obtainPageTablesLock();
+            aubCenter->getAubManager()->freeMemory(
+                peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()].get()->gmmHelper.get()->decanonize(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
+        }
+    }
+
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
     if (gfxAllocation->getReservedAddressPtr()) {
         releaseReservedCpuAddressRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
@@ -370,12 +379,6 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
             auto gpuAddressToFree = gmmHelper->decanonize(memoryAllocation->getGpuAddress()) & ~MemoryConstants::pageMask;
             auto gfxPartition = getGfxPartition(memoryAllocation->getRootDeviceIndex());
             gfxPartition->freeGpuAddressRange(gpuAddressToFree, sizeToFree);
-        }
-
-        auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
-        if (aubCenter && aubCenter->getAubManager() && debugManager.flags.EnableFreeMemory.get() && gfxAllocation->getAllocationType() != AllocationType::externalHostPtr) {
-            aubCenter->getAubManager()->freeMemory(
-                peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()].get()->gmmHelper.get()->decanonize(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
         }
     }
     delete gfxAllocation;
@@ -419,6 +422,7 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
             auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
             if (aubCenter && aubCenter->getAubManager() && debugManager.flags.EnableFreeMemory.get()) {
+                auto pageTablesLock = aubCenter->obtainPageTablesLock();
                 aubCenter->getAubManager()->freeMemory((uint64_t)handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize);
             }
             delete handleStorage.fragmentStorageData[i].osHandleStorage;

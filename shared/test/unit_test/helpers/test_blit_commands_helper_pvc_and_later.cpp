@@ -63,11 +63,12 @@ HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithBlitThenCommandIsProg
 HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithSystemMemoryBlitThenCommandIsProgrammed, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
     uint32_t pattern = 1;
-    void *dstPtr = malloc(4);
+    // dstPtr is only ever used as a numeric GPU address, never dereferenced.
+    uint8_t dstData{};
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(dstPtr), sizeof(uint32_t), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(&dstData), sizeof(uint32_t), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -75,7 +76,6 @@ HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithSystemMemoryBlitThenC
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
     auto itor = find<MEM_SET *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    free(dstPtr);
 }
 
 HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForFillBufferThenDstCompressionDisabled, IsPVC) {
@@ -303,7 +303,7 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
 
     auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                      dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                     dstRowPitch, dstSlicePitch, &clearColorAlloc);
+                                                                     dstRowPitch, dstSlicePitch, &clearColorAlloc, false);
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));

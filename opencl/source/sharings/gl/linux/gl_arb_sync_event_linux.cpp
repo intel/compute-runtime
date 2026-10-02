@@ -11,6 +11,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/base_object.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "opencl/source/sharings/gl/linux/gl_sharing_linux.h"
 
@@ -88,7 +89,7 @@ extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue,
                                    cl_event *event,
                                    cl_context *context) {
-    if (NEO::isLEOEnabled()) {
+    if (nullptr == NEO::castToObject<NEO::CommandQueue>(commandQueue) && NEO::hasLeoPlatforms()) {
         return NEO::forwardClEnqueueMarkerWithSyncObjectINTEL(commandQueue, event, context);
     }
     return CL_INVALID_OPERATION;
@@ -97,7 +98,7 @@ clEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue,
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clGetCLObjectInfoINTEL(cl_mem memObj,
                        void *pResourceInfo) {
-    if (NEO::isLEOEnabled()) {
+    if (nullptr == NEO::castToObject<NEO::MemObj>(memObj) && NEO::hasLeoPlatforms()) {
         return NEO::forwardClGetCLObjectInfoINTEL(memObj, pResourceInfo);
     }
     return CL_INVALID_OPERATION;
@@ -105,7 +106,7 @@ clGetCLObjectInfoINTEL(cl_mem memObj,
 
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_context *pClContextRet) {
-    if (NEO::isLEOEnabled()) {
+    if (nullptr == NEO::castToObject<NEO::Event>(event) && NEO::hasLeoPlatforms()) {
         return NEO::forwardClGetCLEventInfoINTEL(event, reinterpret_cast<void **>(pSyncInfoHandleRet), pClContextRet);
     }
     if ((nullptr == pSyncInfoHandleRet) || (nullptr == pClContextRet)) {
@@ -143,7 +144,7 @@ clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_c
 
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clReleaseGlSharedEventINTEL(cl_event event) {
-    if (NEO::isLEOEnabled()) {
+    if (nullptr == NEO::castToObject<NEO::Event>(event) && NEO::hasLeoPlatforms()) {
         return NEO::forwardClReleaseGlSharedEventINTEL(event);
     }
     auto neoEvent = NEO::castToObject<NEO::Event>(event);

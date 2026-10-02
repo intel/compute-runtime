@@ -199,6 +199,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     std::list<void *> additionalCommands;
+    const auto pauseOnEnqueue = NEO::PauseOnGpuProperties::selectPauseSpace(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), !this->isImmediateType());
 
     updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
 
@@ -236,6 +237,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .isTimestampEvent = false,
             .isUsingSystemAllocation = false,
         },
+        .pauseOnEnqueue = pauseOnEnqueue,
         .preemptionMode = commandListPreemptionMode,
         .requiredPartitionDim = launchParams.requiredPartitionDim,
         .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,
@@ -293,18 +295,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernelWithAssertAppended = true;
     }
 
-    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlStart{.pCommand = additionalCommands.front()});
-        additionalCommands.pop_front();
-        commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreStart{.pCommand = additionalCommands.front()});
-        additionalCommands.pop_front();
-    }
-
-    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlEnd{.pCommand = additionalCommands.front()});
-        additionalCommands.pop_front();
-        commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreEnd{.pCommand = additionalCommands.front()});
-        additionalCommands.pop_front();
+    if (pauseOnEnqueue.beforeWorkload || pauseOnEnqueue.afterWorkload) [[unlikely]] {
+        programPauseOnEnqueueCommands(additionalCommands, pauseOnEnqueue);
     }
 
     if (event != nullptr && kernel->getPrintfBufferAllocation() != nullptr) {
@@ -360,5 +352,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled() const {
 
 template struct CommandListCoreFamily<gfxCoreFamily>;
 template struct CommandListCoreFamilyImmediate<gfxCoreFamily>;
+
+static CommandListPopulateFactory<gfxCoreFamily, CommandListCoreFamily<gfxCoreFamily>> populateGen12Lp;
+static CommandListImmediatePopulateFactory<gfxCoreFamily, CommandListCoreFamilyImmediate<gfxCoreFamily>> populateGen12LpImmediate;
 
 } // namespace L0

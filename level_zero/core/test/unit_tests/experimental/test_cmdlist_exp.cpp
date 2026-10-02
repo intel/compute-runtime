@@ -81,7 +81,7 @@ HWTEST_F(CommandListExpTest, givenCmdListWithSimulatedCsrWhenVerifyMemoryCalledT
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     MockAubCsr<FamilyType> mockCommandStreamReceiver("", true, *neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -103,7 +103,7 @@ HWTEST_F(CommandListExpTest, givenCmdListWithSimulatedCsrWhenVerifyMemoryCalledW
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     MockAubCsr<FamilyType> mockCommandStreamReceiver("", true, *neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -125,7 +125,7 @@ HWTEST_F(CommandListExpTest, givenCmdListWithSimulatedCsrWhenVerifyMemoryCalledW
 
 HWTEST_F(CommandListExpTest, givenRegularCmdListWithSimulatedCsrWhenVerifyMemoryCalledThenExpectMemoryIsCalled) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
     void *ptr = reinterpret_cast<void *>(0x1000);
     char data[10] = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zexCommandListVerifyMemory(commandList->toHandle(), ptr, data, sizeof(data), zex_verify_memory_compare_type_t::ZEX_VERIFY_MEMORY_COMPARE_EQUAL));
@@ -137,14 +137,14 @@ HWTEST_F(CommandListExpTest, givenVisitExtWhenNullParametersArePassedThenErrorIs
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeCommandListVisitExt(nullptr, &desc));
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeCommandListVisitExt(commandList->toHandle(), nullptr));
 }
 
 HWTEST_F(CommandListExpTest, givenVisitExtWhenCalledForBaseCommandListThenItForwardsToVisitImplementation) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
 
     ze_visit_ext_desc_t desc = {};
     desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;

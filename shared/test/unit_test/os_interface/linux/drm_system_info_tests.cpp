@@ -12,16 +12,17 @@
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/linux/mock_hardware_info_setup.h"
 
 using namespace NEO;
 
@@ -64,9 +65,9 @@ struct DrmMockToQuerySystemInfo : public DrmMock {
 };
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystemInfoIsNotCreated) {
 
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
         uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
             return 0;
         }
@@ -79,9 +80,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
 
     drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
 
     StreamCapture capture;
     capture.captureStdout();
@@ -90,7 +89,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(true);
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
@@ -101,9 +100,9 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
 
 TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpVersion) {
 
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
         uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
             HardwareIpVersion ipVersion{};
             ipVersion.architecture = 12u;
@@ -117,11 +116,9 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     ASSERT_EQ(ret, 0);
 
@@ -139,9 +136,9 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
 
 TEST(DrmSystemInfoTest, givenQueriedIpVersionWhenSetupHardwareInfoThenCapsAreSetupBasedOnIt) {
 
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
         uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
             return this->queriedIpVersion;
         }
@@ -166,10 +163,9 @@ TEST(DrmSystemInfoTest, givenQueriedIpVersionWhenSetupHardwareInfoThenCapsAreSet
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
 
-    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-        hardwareInfoSetup[hwInfo->platform.eProductFamily](hwInfo, setupFeatureTableAndWorkaroundTable, 0u, compilerReleaseHelper);
-    };
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    VariableBackup<const HardwareInfo *> hwInfoBackup(&hardwareInfoTable[defaultHwInfo->platform.eProductFamily], static_cast<const HardwareInfo *>(&hwInfo));
+    VariableBackup<void (*)(HardwareInfo *, bool)> setupBackup(&hardwareInfoSetup[defaultHwInfo->platform.eProductFamily]);
+    DeviceDescriptor device{0, defaultHwInfo->platform.eProductFamily};
     drm.overrideDeviceDescriptor = &device;
 
     ASSERT_EQ(0, drm.setupHardwareInfo(0, false));
@@ -177,23 +173,6 @@ TEST(DrmSystemInfoTest, givenQueriedIpVersionWhenSetupHardwareInfoThenCapsAreSet
     const auto *setupHwInfo = rootDeviceEnvironment.getHardwareInfo();
     EXPECT_EQ(queriedIpVersion.value, setupHwInfo->ipVersion.value);
     EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, setupHwInfo->caps.dotProductAccumulateSystolicSupported);
-}
-
-TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenCompilerReleaseHelperIsCreated) {
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->releaseHelper.reset(nullptr);
-    executionEnvironment->rootDeviceEnvironments[0]->compilerReleaseHelper.reset(nullptr);
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
-
-    drm.overrideDeviceDescriptor = &device;
-    int ret = drm.setupHardwareInfo(0, false);
-    EXPECT_EQ(ret, 0);
-    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->compilerReleaseHelper.get());
 }
 
 TEST(DrmSystemInfoTest, givenInvalidDeviceIdWhenSetupHardwareInfoThenReturnsSuccessForValidIpVersion) {
@@ -212,12 +191,12 @@ TEST(DrmSystemInfoTest, givenInvalidDeviceIdWhenSetupHardwareInfoThenReturnsSucc
     ret = drm2.setupHardwareInfo(-1, false); // invalid device id, i915 kmd
     EXPECT_EQ(ret, -1);
 
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
         uint32_t revision;
         uint32_t release;
         uint32_t architecture;
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
         uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
             HardwareIpVersion ipVersion{};
             ipVersion.revision = this->revision;
@@ -352,9 +331,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.ioctlHelper = std::make_unique<IoctlHelperPrelim20>(drm);
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
 
     StreamCapture capture;
     capture.captureStdout();
@@ -364,7 +341,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
 
     drm.failQueryDeviceBlob = true;
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     debugManager.flags.PrintDebugMessages.set(false);
     EXPECT_EQ(ret, 0);
@@ -385,14 +362,10 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
 
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    MockHardwareInfoSetup mock;
+    mock.hwInfo.capabilityTable.maxProgrammableSlmSize = 0x1234678u;
 
-    hwInfo.capabilityTable.maxProgrammableSlmSize = 0x1234678u;
-
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
-
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -406,7 +379,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_GT(gtSystemInfo.MemoryType, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, drm.getSystemInfo()->getCsrSizeInMb());
     EXPECT_EQ(gtSystemInfo.SLMSizeInKb, drm.getSystemInfo()->getSlmSizePerDss());
-    EXPECT_EQ(newHwInfo.capabilityTable.maxProgrammableSlmSize, hwInfo.capabilityTable.maxProgrammableSlmSize);
+    EXPECT_EQ(newHwInfo.capabilityTable.maxProgrammableSlmSize, mock.hwInfo.capabilityTable.maxProgrammableSlmSize);
     EXPECT_NE(newHwInfo.capabilityTable.maxProgrammableSlmSize, drm.getSystemInfo()->getSlmSizePerDss());
 }
 
@@ -416,11 +389,10 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
 
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    hwInfo.gtSystemInfo.MaxSlicesSupported = 0u;
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 0u;
-    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 0u;
+    MockHardwareInfoSetup mock;
+    mock.hwInfo.gtSystemInfo.MaxSlicesSupported = 0u;
+    mock.hwInfo.gtSystemInfo.MaxSubSlicesSupported = 0u;
+    mock.hwInfo.gtSystemInfo.MaxEuPerSubSlice = 0u;
     drm.storedSVal = 0u;
     drm.storedSSVal = 1u;
     drm.storedEUVal = 1u;
@@ -428,10 +400,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     auto expectedMaxSubslicesSupported = dummyDeviceBlobData[5];
     auto expectedMaxEusPerSubsliceSupported = dummyDeviceBlobData[8];
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
-
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -450,14 +419,11 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsAndBlob
 
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
 
     drm.systemInfo.reset(new SystemInfo(inputBlobDataZeros));
     drm.systemInfoQueried = true;
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -473,13 +439,10 @@ TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubsl
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.dontQueryL3BankGroups = true;
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.L3BankCount = 0;
+    MockHardwareInfoSetup mock;
+    mock.hwInfo.gtSystemInfo.L3BankCount = 0;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
-
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -500,13 +463,10 @@ TEST(DrmSystemInfoTest, givenNonZeroBankCountWhenCreatingSystemInfoThenUseDualSu
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.dontQueryL3BankGroups = true;
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.L3BankCount = 5;
+    MockHardwareInfoSetup mock;
+    mock.hwInfo.gtSystemInfo.L3BankCount = 5;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
-
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -527,11 +487,9 @@ TEST(DrmSystemInfoTest, givenL3GroupsInfoWhenCreatingSystemInfoThenUseL3GroupsTo
 
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -544,10 +502,8 @@ TEST(DrmSystemInfoTest, givenL3GroupsInfoWhenCreatingSystemInfoThenUseL3GroupsTo
 }
 
 TEST(DrmSystemInfoTest, givenIncompleteL3GroupsInfoWhenCreatingSystemInfoThenDontUseL3GroupsToCalculateL3Size) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.L3BankCount = 5;
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfo.gtSystemInfo.L3BankCount = 5;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -556,14 +512,14 @@ TEST(DrmSystemInfoTest, givenIncompleteL3GroupsInfoWhenCreatingSystemInfoThenDon
             DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
             drm.dontQueryL3BankGroups = dontQueryL3BankGroups;
             drm.dontQueryL3BanksPerGroup = dontQueryL3BanksPerGroup;
-            drm.overrideDeviceDescriptor = &device;
+            drm.overrideDeviceDescriptor = &mock.device;
             int ret = drm.setupHardwareInfo(0, false);
             EXPECT_EQ(ret, 0);
             EXPECT_NE(nullptr, drm.getSystemInfo());
             const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
             uint64_t expectedL3SizeWithL3Groups = drm.getSystemInfo()->getL3BankSizeInKb() * drm.getSystemInfo()->getNumL3BanksPerGroup() * drm.getSystemInfo()->getNumL3BankGroups();
-            uint64_t expectedL3SizeWithL3BankCount = drm.getSystemInfo()->getL3BankSizeInKb() * hwInfo.gtSystemInfo.L3BankCount;
+            uint64_t expectedL3SizeWithL3BankCount = drm.getSystemInfo()->getL3BankSizeInKb() * mock.hwInfo.gtSystemInfo.L3BankCount;
             uint64_t calculatedL3Size = gtSystemInfo.L3CacheSizeInKb;
 
             ASSERT_NE(expectedL3SizeWithL3Groups, expectedL3SizeWithL3BankCount);
@@ -579,12 +535,12 @@ TEST(DrmSystemInfoTest, givenIncompleteL3GroupsInfoWhenCreatingSystemInfoThenDon
 TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopologyDataWhenCreatingSystemInfoThenRespectThatNumberOfL3Banks) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+    class MyMockIoctlHelper : public IoctlHelperUpstream {
       public:
-        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        using IoctlHelperUpstream::IoctlHelperUpstream;
 
         bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
-            IoctlHelperPrelim20::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+            IoctlHelperUpstream::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
             topologyData.numL3Banks = 7;
             return true;
         }
@@ -594,15 +550,12 @@ TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopologyDataWhenCreatingSystemInfoTh
     drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
     drm.dontQueryL3BankGroups = true;
 
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.L3BankCount = 5;
+    MockHardwareInfoSetup mock;
+    mock.hwInfo.gtSystemInfo.L3BankCount = 5;
 
     uint32_t expectedNumOfL3Banks = 7;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
-
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -630,10 +583,10 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoSuccee
     drm.storedEUVal = 0;
     drm.failRetTopology = true;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(&hwInfo);
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -660,9 +613,9 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoFailsT
     drm.failRetTopology = true;
     drm.failQueryDeviceBlob = true;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
-    drm.overrideDeviceDescriptor = &device;
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(&hwInfo);
+    drm.overrideDeviceDescriptor = &mock.device;
 
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, -1);
@@ -679,10 +632,10 @@ TEST(DrmSystemInfoTest, givenTopologyWithMoreEuPerDssThanInDeviceBlobWhenSetupHa
     drm.storedSSVal = 2;
     drm.storedEUVal = 200;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(&hwInfo);
 
-    drm.overrideDeviceDescriptor = &device;
+    drm.overrideDeviceDescriptor = &mock.device;
     int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
@@ -699,35 +652,35 @@ TEST(DrmSystemInfoTest, givenOverrideNumThreadsPerEuSetWhenSetupHardwareInfoThen
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    MockHardwareInfoSetup mock;
+    mock.hwInfoBackup = static_cast<const HardwareInfo *>(&hwInfo);
 
     uint32_t dummyBlobThreadCount = 90;
     uint32_t dummyBlobEuCount = 6;
     {
         DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm.overrideDeviceDescriptor = &device;
+        drm.overrideDeviceDescriptor = &mock.device;
         drm.setupHardwareInfo(0, false);
         EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobThreadCount);
     }
     {
         debugManager.flags.OverrideNumThreadsPerEu.set(7);
         DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm.overrideDeviceDescriptor = &device;
+        drm.overrideDeviceDescriptor = &mock.device;
         drm.setupHardwareInfo(0, false);
         EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 7);
     }
     {
         debugManager.flags.OverrideNumThreadsPerEu.set(8);
         DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm.overrideDeviceDescriptor = &device;
+        drm.overrideDeviceDescriptor = &mock.device;
         drm.setupHardwareInfo(0, false);
         EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 8);
     }
     {
         debugManager.flags.OverrideNumThreadsPerEu.set(10);
         DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm.overrideDeviceDescriptor = &device;
+        drm.overrideDeviceDescriptor = &mock.device;
         drm.setupHardwareInfo(0, false);
         EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 10);
     }

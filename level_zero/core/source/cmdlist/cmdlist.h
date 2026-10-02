@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
@@ -23,9 +24,11 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/software_tags.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_signal_event_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_wait_event_parameters.h"
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
 #include "level_zero/core/source/device/bcs_split_params.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
@@ -121,7 +124,9 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t destroy();
     virtual ze_result_t appendEventReset(ze_event_handle_t hEvent) = 0;
     virtual ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) = 0;
+                                      ze_event_handle_t *phWaitEvents,
+                                      CmdListWaitEventParameters &waitEventsParameters,
+                                      CmdListSignalEventParameters &signalEventParameters) = 0;
     virtual ze_result_t appendCustomOperation(const void *pNext,
                                               ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents,
@@ -217,7 +222,7 @@ struct CommandList : _ze_command_list_handle_t {
                                                        size_t patternSize, size_t size, const void *pNext, ze_event_handle_t hSignalEvent,
                                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
     virtual ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) = 0;
-    virtual ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) = 0;
+    virtual ze_result_t appendSignalEvent(ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters) = 0;
     virtual ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) = 0;
     virtual ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
@@ -289,33 +294,33 @@ struct CommandList : _ze_command_list_handle_t {
                                            ze_event_handle_t *phWaitEvents,
                                            CmdListHostFunctionParameters &parameters) = 0;
 
-    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+    static CommandList *create(Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue,
                                bool internalUsage) {
-        return create(productFamily, device, engineGroupType, flags, resultValue, internalUsage, 0u);
+        return create(device, engineGroupType, flags, resultValue, internalUsage, 0u);
     }
-    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+    static CommandList *create(Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue,
                                bool internalUsage, uint32_t estimatedNumberOfCommands);
-    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+    static CommandList *createImmediate(Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
                                         ze_result_t &resultValue) {
-        return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, resultValue, 0u);
+        return createImmediate(device, desc, internalUsage, engineGroupType, resultValue, 0u);
     }
-    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+    static CommandList *createImmediate(Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
                                         ze_result_t &resultValue,
                                         uint8_t powerHint);
 
-    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+    static CommandList *createImmediate(Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
                                         ze_result_t &resultValue) {
-        return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, csr, resultValue, 0u);
+        return createImmediate(device, desc, internalUsage, engineGroupType, csr, resultValue, 0u);
     }
-    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+    static CommandList *createImmediate(Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
                                         ze_result_t &resultValue,
@@ -334,6 +339,8 @@ struct CommandList : _ze_command_list_handle_t {
     static void freeClonedAppendKernelExtensions(void *pNext);
     static ze_result_t cloneAppendMemoryCopyExtensions(const ze_base_desc_t *desc, void *&outPnext);
     static void freeClonedAppendMemoryCopyExtensions(void *pNext);
+    static ze_result_t cloneAppendEventExtensions(const ze_base_desc_t *desc, void *&outPnext);
+    static void freeClonedAppendEventExtensions(void *pNext);
 
     inline ze_command_list_handle_t toHandle() { return this; }
 
@@ -490,6 +497,7 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
     NEO::CommandContainer &getCmdContainer() {
+        DEBUG_BREAK_IF(isImmediateType() && this->cmdQImmediate == nullptr);
         return this->commandContainer;
     }
 
@@ -498,6 +506,15 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
     NEO::CommandStreamReceiver *getCsr(bool copyOffload) const;
+    NEO::CommandStreamReceiver *getCsr(bool copyOffload, ze_result_t &returnValue);
+
+    ze_result_t ensureImmediateResourcesInitialized() {
+        if (!isImmediateType() || (this->cmdQImmediate != nullptr) || (this->immediateResourcesInitializationResult != ZE_RESULT_SUCCESS)) {
+            return this->immediateResourcesInitializationResult;
+        }
+        this->immediateResourcesInitializationResult = initializeImmediateResources();
+        return this->immediateResourcesInitializationResult;
+    }
 
     bool hasKernelWithAssert() {
         return kernelWithAssertAppended;
@@ -506,6 +523,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool isHeaplessModeEnabled() const {
         return heaplessModeEnabled;
     }
+
+    bool isInOrderCounterWaitRequired(const Event *event) const;
 
     bool getCmdListBatchBufferFlag() const {
         return dispatchCmdListBatchBufferAsPrimary;
@@ -554,6 +573,8 @@ struct CommandList : _ze_command_list_handle_t {
     ze_result_t obtainLaunchParamsFromExtensions(const ze_base_desc_t *desc, CmdListKernelLaunchParams &launchParams, ze_kernel_handle_t kernelHandle) const;
     ze_result_t obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams, bool writesOnly) const;
     ze_result_t obtainCustomOperationParamsFromExtensions(const ze_base_desc_t *desc, CmdListCustomOperationParams &customOperationParams) const;
+    static ze_result_t obtainWaitEventParamsFromExtensions(const ze_base_desc_t *desc, CmdListWaitEventParameters &waitEventParams);
+    static ze_result_t obtainSignalEventParamsFromExtensions(const ze_base_desc_t *desc, CmdListSignalEventParameters &signalEventParams);
 
     void setGraphCaptureTarget(Graph *graph) {
         this->graphCapture = graph;
@@ -620,6 +641,9 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t getActiveScratchPatchElements() const {
         return activeScratchPatchElements;
     }
+    uint32_t getActiveScratchSizePatchElements() const {
+        return activeScratchSizePatchElements;
+    }
     bool isDualStreamCopyOffloadOperation(bool offloadOperation) const { return (getCopyOffloadModeForOperation(offloadOperation) == CopyOffloadModes::dualStream); }
     void saveLatestTagAndTaskCount(NEO::GraphicsAllocation *tagGpuAllocation, TaskCountType submittedTaskCount) {
         this->latesTagGpuAllocation = tagGpuAllocation;
@@ -647,7 +671,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool verifyMemory(const void *allocationPtr,
                       const void *expectedData,
                       size_t sizeOfComparison,
-                      uint32_t comparisonMode) const;
+                      uint32_t comparisonMode);
 
     bool isBcsSplitEnabled() const { return (bcsSplitMode != BcsSplitParams::BcsSplitMode::disabled); }
     void setForSubCopyBcsSplit();
@@ -661,6 +685,7 @@ struct CommandList : _ze_command_list_handle_t {
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
     void enableInOrderExecution();
     bool isInOrderExecutionEnabled() const { return inOrderExecInfo.get(); }
+    bool isInOrderExecutionRequested() const { return NEO::isValueSet(flags, ZE_COMMAND_LIST_FLAG_IN_ORDER); }
     void storeReferenceTsToMappedEvents(bool clear);
     void addToMappedEventList(Event *event);
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
@@ -730,6 +755,9 @@ struct CommandList : _ze_command_list_handle_t {
 
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
+
+    ze_result_t initializeImmediateResources();
+    NEO::CommandStreamReceiver *obtainCsrForImmediateCmdList(ze_result_t &returnValue, bool &queueOwnershipTaken);
 
     virtual void dispatchHostFunction(ze_host_function_callback_t pHostFunction,
                                       void *pUserData,
@@ -827,6 +855,7 @@ struct CommandList : _ze_command_list_handle_t {
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
     CommandQueue *cmdQImmediateCopyOffload = nullptr;
+    NEO::CommandStreamReceiver *preassignedImmediateCsr = nullptr;
     Device *device = nullptr;
     NEO::ScratchSpaceController *usedScratchController = nullptr;
     Graph *graphCapture = nullptr;                    // immediate cmdlist graph capturing
@@ -849,6 +878,12 @@ struct CommandList : _ze_command_list_handle_t {
 
     uint32_t commandListPerThreadScratchSize[2]{};
 
+    ze_command_queue_desc_t immediateCmdListQueueDesc = {};
+    std::optional<int> immediateQueuePriorityLevel = std::nullopt;
+    ze_command_queue_priority_t immediateQueuePriority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    NEO::SynchronizedDispatchMode requestedSynchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
+    ze_result_t immediateResourcesInitializationResult = ZE_RESULT_SUCCESS;
+
     ze_command_list_flags_t flags = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     NEO::EngineGroupType engineGroupType = NEO::EngineGroupType::maxEngineGroups;
@@ -865,12 +900,14 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t maxLocalSubRegionSize = 0;
     uint32_t frontEndPatchListCount = 0;
     uint32_t activeScratchPatchElements = 0;
+    uint32_t activeScratchSizePatchElements = 0;
     uint32_t hostFunctionWithMemorySynchronizationCount = 0;
     uint32_t hostFunctionWithoutMemorySynchronizationCount = 0;
     uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
     uint32_t estimatedNumberOfCommands = 0;
     NEO::BuiltIn::AddressingMode defaultBuiltInMode;
     NEO::QueueThrottle queueThrottle = NEO::QueueThrottle::MEDIUM;
+    NEO::SWTags::CounterContext swTagCounters{};
 
     uint8_t powerHint = 0u;
     bool isSyncModeQueue = false;
@@ -911,24 +948,28 @@ struct CommandList : _ze_command_list_handle_t {
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
     bool inOrderWaitsDisabled = false;
     bool swTagsEnabled = false;
+    bool swTagScopeActive = false;
     bool patchPreambleEnabled = false;
+    bool frontEndControllerEnabled = false;
+    bool copyOffloadHintRequested = false;
+    bool useInternalCopyEngine = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);
 extern CommandListAllocatorFn commandListFactory[];
 extern CommandListAllocatorFn commandListFactoryImmediate[];
 
-template <uint32_t productFamily, typename CommandListType>
+template <uint32_t gfxCoreFamily, typename CommandListType>
 struct CommandListPopulateFactory {
     CommandListPopulateFactory() {
-        commandListFactory[productFamily] = CommandList::Allocator<CommandListType>::allocate;
+        commandListFactory[gfxCoreFamily] = CommandList::Allocator<CommandListType>::allocate;
     }
 };
 
-template <uint32_t productFamily, typename CommandListType>
+template <uint32_t gfxCoreFamily, typename CommandListType>
 struct CommandListImmediatePopulateFactory {
     CommandListImmediatePopulateFactory() {
-        commandListFactoryImmediate[productFamily] = CommandList::Allocator<CommandListType>::allocate;
+        commandListFactoryImmediate[gfxCoreFamily] = CommandList::Allocator<CommandListType>::allocate;
     }
 };
 

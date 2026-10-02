@@ -96,21 +96,15 @@ void RKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalVsThreads = 0;
-    gtSysInfo->TotalHsThreads = 0;
-    gtSysInfo->TotalDsThreads = 0;
-    gtSysInfo->TotalGsThreads = 0;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = RKL::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = RKL::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = 2;
     gtSysInfo->MaxDualSubSlicesSupported = 2;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);
@@ -121,33 +115,26 @@ void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo RklHwConfig::hwInfo = {
+const HardwareInfo RKL::hwInfo = {
     &RKL::platform,
     &RKL::featureTable,
     &RKL::workaroundTable,
-    &RklHwConfig::gtSystemInfo,
+    &RKL::gtSystemInfo,
     RKL::capabilityTable};
 
-GT_SYSTEM_INFO RklHwConfig::gtSystemInfo = {0};
-void RklHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    RKL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO RKL::gtSystemInfo = {0};
+void RKL::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    RKL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
     gtSysInfo->L3CacheSizeInKb = 1920;
     gtSysInfo->L3BankCount = 4;
-    gtSysInfo->MaxFillRate = 8;
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo RKL::hwInfo = RklHwConfig::hwInfo;
-
-void setupRKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    RklHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*RKL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupRKLHardwareInfoImpl;
+void (*RKL::setupHardwareInfo)(HardwareInfo *, bool) = RKL::setupHardwareInfoImpl;
 } // namespace NEO

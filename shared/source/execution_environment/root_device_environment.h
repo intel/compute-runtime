@@ -40,7 +40,6 @@ class ProductHelper;
 class GfxCoreHelper;
 class ApiGfxCoreHelper;
 class CompilerProductHelper;
-class CompilerReleaseHelper;
 class GraphicsAllocation;
 class ReleaseHelper;
 class AILConfiguration;
@@ -100,11 +99,9 @@ struct RootDeviceEnvironment : NonCopyableClass {
     void initializeGfxCoreHelperFromProductHelper(bool hwQueuesSupported);
     void initApiGfxCoreHelper();
     void initCompilerProductHelper();
-    void initCompilerReleaseHelper();
     void initReleaseHelper();
     void initAilConfigurationHelper();
     const ReleaseHelper &getReleaseHelper() const;
-    const CompilerReleaseHelper &getCompilerReleaseHelper() const;
     AILConfiguration *getAILConfigurationHelper() const;
     template <typename HelperType>
     HelperType &getHelper() const;
@@ -138,7 +135,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<GfxCoreHelper> gfxCoreHelper;
     std::unique_ptr<ProductHelper> productHelper;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
-    std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
     std::unique_ptr<ReleaseHelper> releaseHelper;
     std::unique_ptr<AILConfiguration> ailConfiguration;
     std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;

@@ -9,6 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -33,10 +34,11 @@ using MutableCommandListTest = Test<MutableCommandListFixture<false, -1>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
-            givenInvalidProductWhenCreatingCommandListThenNoObjectCreated) {
+            givenInvalidCoreFamilyWhenCreatingCommandListThenNoObjectCreated) {
     ze_result_t returnValue;
 
-    auto mcl = MutableCommandList::create(NEO::maxProductEnumValue, device, this->engineGroupType, 0, returnValue, false);
+    VariableBackup<GFXCORE_FAMILY> coreFamilyBackup(&device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->platform.eRenderCoreFamily, GFXCORE_FAMILY{NEO::maxCoreEnumValue});
+    auto mcl = MutableCommandList::create(device, this->engineGroupType, 0, returnValue, false);
     EXPECT_EQ(nullptr, mcl);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, returnValue);
 }
@@ -47,7 +49,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ze_result_t returnValue;
 
     constexpr uint32_t estimatedNumberOfCommands = 8u;
-    auto mcl = MutableCommandList::create(productFamily, device, this->engineGroupType, 0, returnValue, false, estimatedNumberOfCommands);
+    auto mcl = MutableCommandList::create(device, this->engineGroupType, 0, returnValue, false, estimatedNumberOfCommands);
     ASSERT_NE(nullptr, mcl);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -1833,8 +1835,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                                                 device,
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(device,
                                                                                  neoDevice->getDefaultEngine().commandStreamReceiver,
                                                                                  &queueDesc,
                                                                                  false,
@@ -2970,12 +2971,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto mutableSemWait = waitEventVar->getSemWaitList()[0];
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
-    uint64_t waitAddress = 0;
-    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
-        waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
-    } else {
-        waitAddress = event->getCompletionFieldGpuAddress(this->device);
-    }
+    uint64_t waitAddress = event->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
     result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
@@ -2984,11 +2980,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
-        waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
-    } else {
-        waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
-    }
+    waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 }
 
@@ -3796,8 +3788,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach wait events to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
-    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams, signalEventParams);
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     // assign them counters
@@ -3922,8 +3915,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach wait events to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
-    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams, signalEventParams);
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     // assign them counters
@@ -4060,11 +4054,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
     EXPECT_TRUE(event->getIsSignalledAsGraphInternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(false);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
     EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 }
 
@@ -4075,7 +4069,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_TRUE(event->isExternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event);
+    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
     EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 }
 
@@ -4099,7 +4093,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach new wait event to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(newEventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     // mutation point
@@ -4198,7 +4193,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach appending wait event to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     // mutation point
@@ -4364,7 +4360,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto otherCmdlist = createMutableCmdList();
     // attach new wait event to other command list
     L0::CmdListWaitEventParameters waitEventParams = {};
-    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    otherCmdlist->appendBarrier(eventHandle, 0, nullptr, waitEventParams, signalEventParams);
     otherCmdlist->close();
 
     uint64_t patchPreambleCounter = 4;
@@ -4496,6 +4493,143 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     whiteBoxCmdList->clearMutableAppendData();
 
     EXPECT_TRUE(whiteBoxCmdList->appendCmdsToPatch.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenRegularCbEventRequiredFromApiAsExternalWhenAppendWaitOnEventsThenWaitEventVariableRegisteredAsExternal) {
+    auto event = this->createTestEvent(true, false, false, false, false);
+    auto eventHandle = event->toHandle();
+
+    auto externalCmdList = this->createMutableCmdList();
+    // attach event to the external command list
+    auto result = externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = externalCmdList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // mutation point
+    this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::CmdListWaitEventParameters waitEventParams;
+    waitEventParams.apiRequestForGraphExternal = true;
+
+    result = this->mutableCommandList->appendWaitOnEvents(1, &eventHandle, waitEventParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = this->mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &eventMutation = mutableCommandList->eventMutations[this->commandId - 1];
+    ASSERT_EQ(1u, eventMutation.waitEvents.size());
+    auto waitExternalVariable = eventMutation.waitEvents[0].eventVariable;
+
+    EXPECT_TRUE(waitExternalVariable->getDesc().eventValue.apiRequiredExternal);
+    EXPECT_TRUE(waitExternalVariable->getDesc().eventValue.isExternalFlag);
+    ASSERT_EQ(2u, waitExternalVariable->getSemWaitList().size());
+
+    // 1st sem wait is for patch preamble, 2nd is for event wait
+    auto mutableSemWait = waitExternalVariable->getSemWaitList()[0];
+    EXPECT_EQ(L0::MCL::MutableSemaphoreWait::cbEventWaitPatchPreambleCounter, mutableSemWait->getType());
+    mutableSemWait = waitExternalVariable->getSemWaitList()[1];
+    EXPECT_EQ(L0::MCL::MutableSemaphoreWait::cbEventWait, mutableSemWait->getType());
+
+    if (this->lriRequired) {
+        ASSERT_EQ(4u, waitExternalVariable->getLoadRegImmList().size());
+
+        // 1st pair of lri is for patch preamble, 2nd pair is for event wait
+        auto mutableLri = waitExternalVariable->getLoadRegImmList()[0];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, mutableLri->getType());
+        mutableLri = waitExternalVariable->getLoadRegImmList()[1];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, mutableLri->getType());
+
+        mutableLri = waitExternalVariable->getLoadRegImmList()[2];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, mutableLri->getType());
+        mutableLri = waitExternalVariable->getLoadRegImmList()[3];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, mutableLri->getType());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenRegularCbEventSetWithPatchPreambleCounterWhenAppendWaitOnEventsThenPatchPreambleWaitMutableCommandsCaptured) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto event = this->createTestEvent(true, false, false, false, false);
+    auto eventHandle = event->toHandle();
+
+    auto externalCmdList = this->createMutableCmdList();
+    // attach event to the external command list
+    auto result = externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = externalCmdList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t cbDeviceGpuAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    uint64_t cbCounter = event->getInOrderExecBaseSignalValue();
+
+    constexpr uint64_t preambleDeviceGpuAddress = 0xCD000;
+    constexpr uint64_t preambleCounter = 4;
+
+    MockGraphicsAllocation patchPreambleDeviceAllocation(nullptr, preambleDeviceGpuAddress, sizeof(uint64_t));
+    event->getInOrderExecEventHelper().assignPatchPreambleData(preambleCounter, nullptr, 0, nullptr, preambleDeviceGpuAddress, &patchPreambleDeviceAllocation);
+
+    // mutation point
+    this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::CmdListWaitEventParameters waitEventParams;
+    waitEventParams.apiRequestForGraphExternal = false;
+
+    result = this->mutableCommandList->appendWaitOnEvents(1, &eventHandle, waitEventParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = this->mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, mutableCommandList->eventMutations.size());
+    auto &eventMutation = mutableCommandList->eventMutations[this->commandId - 1];
+    ASSERT_EQ(1u, eventMutation.waitEvents.size());
+    auto waitExternalVariable = eventMutation.waitEvents[0].eventVariable;
+
+    EXPECT_FALSE(waitExternalVariable->getDesc().eventValue.apiRequiredExternal);
+    EXPECT_FALSE(waitExternalVariable->getDesc().eventValue.isExternalFlag);
+    ASSERT_EQ(2u, waitExternalVariable->getSemWaitList().size());
+
+    // 1st sem wait is for patch preamble, 2nd is for event wait
+    auto mutableSemWait = waitExternalVariable->getSemWaitList()[0];
+    EXPECT_EQ(L0::MCL::MutableSemaphoreWait::cbEventWaitPatchPreambleCounter, mutableSemWait->getType());
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    EXPECT_EQ(preambleDeviceGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(mockMutableSemWait->semWait));
+
+    mutableSemWait = waitExternalVariable->getSemWaitList()[1];
+    EXPECT_EQ(L0::MCL::MutableSemaphoreWait::cbEventWait, mutableSemWait->getType());
+    mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    EXPECT_EQ(cbDeviceGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(mockMutableSemWait->semWait));
+
+    if (this->lriRequired) {
+        ASSERT_EQ(4u, waitExternalVariable->getLoadRegImmList().size());
+
+        // 1st pair of lri is for patch preamble, 2nd pair is for event wait
+        auto mutableLri = waitExternalVariable->getLoadRegImmList()[0];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, mutableLri->getType());
+        auto mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+        EXPECT_EQ(preambleCounter, lriCmd->getDataDword());
+        mutableLri = waitExternalVariable->getLoadRegImmList()[1];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, mutableLri->getType());
+
+        mutableLri = waitExternalVariable->getLoadRegImmList()[2];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, mutableLri->getType());
+        mockMutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri);
+        lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mockMutableLri->loadRegImm);
+        EXPECT_EQ(cbCounter, lriCmd->getDataDword());
+        mutableLri = waitExternalVariable->getLoadRegImmList()[3];
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, mutableLri->getType());
+    }
 }
 
 } // namespace ult

@@ -17,6 +17,7 @@ constexpr uint32_t handleComponentCountForSingleTileDevice = 3u;
 constexpr uint32_t handleComponentCountForNoSubDevices = 2u;
 constexpr uint32_t invalidMaxTemperature = 125;
 constexpr uint32_t invalidMinTemperature = 10;
+constexpr double expectedMemoryTemperature = 39.0;
 
 class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
@@ -301,6 +302,22 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
         pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     }
+
+    void setUpHwmonKmdInterfaceI915Upstream() {
+        pFsAccess = new MockTemperatureFsAccess();
+        pProcfsAccess = new MockTemperatureProcfsAccess();
+        pSysfsAccess = new MockTemperatureSysfsAccess();
+        pFsAccess->hwmonName0 = "i915";
+        auto pMockSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getSysmanProductHelper());
+        pMockSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+        pMockSysmanKmdInterface->pProcfsAccess.reset(pProcfsAccess);
+        pMockSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+        pSysmanKmdInterface = pMockSysmanKmdInterface;
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+        pLinuxSysmanImp->pFsAccess = pSysmanKmdInterface->getFsAccess();
+        pLinuxSysmanImp->pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
+        pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
+    }
 };
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonTemp2EmergencyFileWhenGettingPropertiesThenMaxTemperatureIsReadFromSysfs) {
@@ -404,6 +421,136 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonDirectoryIsSearchedWhenInitiali
     EXPECT_EQ(0u, pFsAccess->listDirectoryPathRequested.find("/sys/bus/pci/devices/"));
     EXPECT_EQ(std::string::npos, pFsAccess->listDirectoryPathRequested.find("/sys/class/drm/"));
     EXPECT_EQ(mockTemperatureHwmonDir, pFsAccess->listDirectoryPathRequested);
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->memoryTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_DOUBLE_EQ(expectedMemoryTemperature, temperature);
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureReadFailureWhenGettingMemoryTemperatureThenErrorIsReturned, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->memoryTemperatureExists = true;
+    pFsAccess->memoryTemperatureReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, temperatureImp.getSensorTemperature(&temperature));
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = true;
+    pFsAccess->memoryTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_DOUBLE_EQ(expectedMemoryTemperature, temperature);
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndMissingHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTelemetryIsUsed, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->memoryTemperatureExists = false;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingGpuAndGlobalTemperatureThenTelemetryIsUsed, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->memoryTemperatureExists = true;
+
+    PublicLinuxTemperatureImp gpuTemperatureImp(pOsSysman, false, 0u, 0u);
+    gpuTemperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
+    PublicLinuxTemperatureImp globalTemperatureImp(pOsSysman, false, 0u, 0u);
+    globalTemperatureImp.setSensorType(ZES_TEMP_SENSORS_GLOBAL);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, gpuTemperatureImp.getSensorTemperature(&temperature));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, globalTemperatureImp.getSensorTemperature(&temperature));
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->memoryTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    EXPECT_TRUE(temperatureImp.isTempModuleSupported());
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonMemoryTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = true;
+    pFsAccess->memoryTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    EXPECT_TRUE(temperatureImp.isTempModuleSupported());
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeAppearingAfterReInitWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+
+    pFsAccess->memoryTemperatureExists = true;
+    temperatureImp.reInit();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_DOUBLE_EQ(expectedMemoryTemperature, temperature);
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenSysfsTemperatureSupportedAndKmdInterfaceWithoutMemoryTemperatureFileNameWhenInitializingThenMemoryTemperatureNodeIsNotProbed, IsBMG) {
+    setUpHwmonKmdInterfaceI915Upstream();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->memoryTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_FALSE(temperatureImp.isTempModuleSupported());
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenProductWithoutSysfsTemperatureSupportAndNonPrivilegedUserWhenGettingMemoryTemperatureThenTelemetryIsUsed, IsDG2) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->memoryTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
 }
 
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumPowerHandleSucceeds, IsPVC) {

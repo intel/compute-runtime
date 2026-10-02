@@ -128,8 +128,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
         const std::string memTotalKey = "MemTotal";
         std::unordered_set<std::string> keys{memTotalKey};
         auto memInfoValues = LinuxMemoryImp::readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), keys);
-        if (memInfoValues.find(memTotalKey) != memInfoValues.end()) {
-            pProperties->physicalSize = memInfoValues[memTotalKey] * 1024;
+        if (auto it = memInfoValues.find(memTotalKey); it != memInfoValues.end()) {
+            pProperties->physicalSize = it->second * 1024;
         }
     } else {
         uint64_t physicalMemSize = 0;
@@ -171,6 +171,11 @@ bool SysmanProductHelperHw<gfxProduct>::isPerfFactorSupported() {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isTemperatureReadFromSysfsSupported() {
     return false;
 }
 
@@ -544,11 +549,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMaxMemoryOfflinePages(SysFsAcc
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isNetlinkEventSupported() {
     return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace Sysman

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_with_aub_dump.h"
-#include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_aub_memory_operations_handler.h"
@@ -80,7 +80,7 @@ TEST_F(DrmMemoryOperationsHandlerWithAubDumpTest, givenRegularAllocationWhenFree
 }
 
 TEST_F(DrmMemoryOperationsHandlerWithAubDumpTest, whenEvictingResidentAllocationThenAllocationIsNotResident) {
-    auto mock = new DrmQueryMock(*device->executionEnvironment->rootDeviceEnvironments[0]);
+    auto mock = new DrmMock(*device->executionEnvironment->rootDeviceEnvironments[0]);
     mock->setBindAvailable();
 
     BufferObjects bos;
@@ -106,7 +106,7 @@ TEST_F(DrmMemoryOperationsHandlerWithAubDumpTest, whenEvictingResidentAllocation
 }
 
 TEST_F(DrmMemoryOperationsHandlerWithAubDumpTest, whenEvictingLockedAllocationThenAllocationIsNotResident) {
-    auto mock = new DrmQueryMock(*device->executionEnvironment->rootDeviceEnvironments[0]);
+    auto mock = new DrmMock(*device->executionEnvironment->rootDeviceEnvironments[0]);
     mock->setBindAvailable();
 
     BufferObjects bos;

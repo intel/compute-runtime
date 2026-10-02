@@ -102,11 +102,11 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         return pciBarrierMmapReturnValue;
     }
 
-    void *timestampPtrReturnValue = nullptr;
-    bool getTimestampPtrCalled = false;
-    void *getTimestampPtr() override {
-        getTimestampPtrCalled = true;
-        return timestampPtrReturnValue;
+    MmioTimestampPtrHelper mmioTimestampPtrHelperReturnValue{};
+    uint32_t getMmioTimestampPtrHelperCalled = 0u;
+    MmioTimestampPtrHelper getMmioTimestampPtrHelper() override {
+        getMmioTimestampPtrHelperCalled++;
+        return mmioTimestampPtrHelperReturnValue;
     }
 };
 } // namespace NEO

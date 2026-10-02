@@ -317,10 +317,10 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemEnabledWhenEnque
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    void *systemPtr = malloc(256);
+    uint8_t data{};
 
     auto retVal = cmdQ->enqueueSVMMemFill(
-        systemPtr,   // void *svm_ptr
+        &data,       // void *svm_ptr
         pattern,     // const void *pattern
         patternSize, // size_t pattern_size
         256,         // size_t size
@@ -329,8 +329,6 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemEnabledWhenEnque
         nullptr      // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    free(systemPtr);
 }
 
 HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemNotEnabledWhenEnqueueSVMMemFillThenInvalidValueErrorIsReturned) {
@@ -343,10 +341,10 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemNotEnabledWhenEn
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    void *systemPtr = malloc(256);
+    uint8_t data{};
 
     auto retVal = cmdQ->enqueueSVMMemFill(
-        systemPtr,   // void *svm_ptr
+        &data,       // void *svm_ptr
         pattern,     // const void *pattern
         patternSize, // size_t pattern_size
         256,         // size_t size
@@ -355,6 +353,4 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemNotEnabledWhenEn
         nullptr      // cL_event *event
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    free(systemPtr);
 }

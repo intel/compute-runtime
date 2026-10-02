@@ -406,3 +406,42 @@ TEST(KernelDescriptor, GivenRuntimeAdjustedSlmAllocationModeWhenPatchingOffsetIn
     EXPECT_EQ(slmInlineSize, *reinterpret_cast<uint32_t *>(&crossThreadData[8u]));
     EXPECT_EQ(slmInlineSize, *reinterpret_cast<uint32_t *>(&crossThreadData[16u]));
 }
+
+TEST(KernelDescriptor, GivenSparseAndSharedSamplerIndicesWhenInitBindlessSamplerSlotsCalledThenDenseSlotsAreAssignedOnce) {
+    NEO::KernelDescriptor desc;
+
+    auto argDescriptorSampler = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorSampler.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
+    argDescriptorSampler.as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::DynamicStateHeapOffset>;
+    argDescriptorSampler.as<NEO::ArgDescSampler>().bindless = 0x0;
+    argDescriptorSampler.as<NEO::ArgDescSampler>().index = 3;
+    desc.payloadMappings.explicitArgs.push_back(argDescriptorSampler);
+
+    auto argDescriptorBindfulSampler = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorBindfulSampler.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
+    argDescriptorBindfulSampler.as<NEO::ArgDescSampler>().bindless = NEO::undefined<NEO::CrossThreadDataOffset>;
+    argDescriptorBindfulSampler.as<NEO::ArgDescSampler>().index = 0;
+    desc.payloadMappings.explicitArgs.push_back(argDescriptorBindfulSampler);
+
+    auto &inlineSamplerLow = desc.inlineSamplers.emplace_back();
+    inlineSamplerLow.bindless = 0x8;
+    inlineSamplerLow.samplerIndex = 1;
+
+    auto &inlineSamplerHigh = desc.inlineSamplers.emplace_back();
+    inlineSamplerHigh.bindless = 0x10;
+    inlineSamplerHigh.samplerIndex = 7;
+
+    desc.payloadMappings.samplerTable.numSamplers = 8;
+
+    desc.initBindlessSamplerSlots();
+
+    EXPECT_EQ(1u, desc.payloadMappings.explicitArgs[0].as<NEO::ArgDescSampler>().bindlessSlot);
+    EXPECT_EQ(0u, desc.inlineSamplers[0].bindlessSlot);
+    EXPECT_EQ(2u, desc.inlineSamplers[1].bindlessSlot);
+
+    EXPECT_EQ(NEO::undefined<uint8_t>, desc.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().bindlessSlot);
+
+    EXPECT_EQ(3u, desc.payloadMappings.explicitArgs[0].as<NEO::ArgDescSampler>().index);
+    EXPECT_EQ(1u, desc.inlineSamplers[0].samplerIndex);
+    EXPECT_EQ(7u, desc.inlineSamplers[1].samplerIndex);
+}

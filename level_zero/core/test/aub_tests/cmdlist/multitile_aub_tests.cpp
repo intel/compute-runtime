@@ -21,6 +21,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
+#include "multitile_matchers.h"
+
 #include <optional>
 
 extern std::optional<uint32_t> blitterMaskOverride;
@@ -53,11 +55,11 @@ struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
         kernel.reset(Kernel::fromHandle(hKernel));
 
         ze_result_t returnValue;
-        commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, NEO::EngineGroupType::compute, 0u, returnValue, false)));
+        commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(rootDevice, NEO::EngineGroupType::compute, 0u, returnValue, false)));
         ASSERT_NE(nullptr, commandList.get());
 
         ze_command_queue_desc_t queueDesc = {};
-        cmdQ.reset(CommandQueue::create(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, rootDevice->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
+        cmdQ.reset(CommandQueue::create(rootDevice, rootDevice->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
         ASSERT_NE(nullptr, cmdQ.get());
     }
 
@@ -80,10 +82,7 @@ struct SynchronizedDispatchMultiTileFixture : public SimpleMultiTileFixture {
 
 using SynchronizedDispatchMultiTileL0AubTests = Test<SynchronizedDispatchMultiTileFixture>;
 
-HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecutingThenDataIsCorrect) {
-    if (!rootDevice->isImplicitScalingCapable()) {
-        GTEST_SKIP();
-    }
+HWTEST2_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecutingThenDataIsCorrect, SupportsMultiTile) {
 
     constexpr uint8_t size = 3 * sizeof(uint32_t);
 
@@ -134,16 +133,13 @@ struct CopyOffloadMultiTileFixture : public SimpleMultiTileFixture {
 
 using CopyOffloadMultiTileL0AubTests = Test<CopyOffloadMultiTileFixture>;
 
-HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatchingThenDataIsCorrect, IsAtLeastXeCore) {
+HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatchingThenDataIsCorrect, SupportsMultiTile) {
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    if (!rootDevice->isImplicitScalingCapable()) {
-        GTEST_SKIP();
-    }
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
-    commandList.reset(ult::CommandList::whiteboxCast(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
+    commandList.reset(ult::CommandList::whiteboxCast(CommandList::createImmediate(rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
     ASSERT_TRUE(commandList->isCopyOffloadEnabled());
 
     commandList->getCsr(true)->overrideDispatchPolicy(NEO::DispatchMode::immediateDispatch);

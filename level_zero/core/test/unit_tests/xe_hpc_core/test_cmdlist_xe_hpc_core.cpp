@@ -59,16 +59,16 @@ HWTEST2_F(CommandListInOrderDependencyXeHpcCore, givenImplicitInOrderDependencyW
     ASSERT_FALSE(commandList->dcFlushSupport);
     ASSERT_FALSE(commandList->isInOrderCounterSignalPending());
 
-    commandList->latestOperationHasHeapfullCbEventWithProfiling = false;
+    commandList->latestOperationHasCbEventWithProfiling = false;
     EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
 
     EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(false, false, false));
     EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(true, true, false));
 
-    commandList->latestOperationHasHeapfullCbEventWithProfiling = true;
-    EXPECT_EQ(!commandList->heaplessModeEnabled, commandList->isResolveIoqDependencyWithBarrier(true, false, false));
+    commandList->latestOperationHasCbEventWithProfiling = true;
+    EXPECT_TRUE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
 
-    commandList->latestOperationHasHeapfullCbEventWithProfiling = false;
+    commandList->latestOperationHasCbEventWithProfiling = false;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     EXPECT_TRUE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
 
@@ -105,10 +105,10 @@ HWTEST2_F(CommandListAppendSignalEventXeHpcCore, givenInOrderImmediateCmdListWhe
     ze_command_queue_desc_t desc = {};
     desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -260,17 +260,12 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnSuppor
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnSupportedDeviceWhenPrefetchApiIsCalledThenRequestMemoryPrefetchCalledWithNoPrefetchManager, IsXeHpcCore) {
@@ -286,17 +281,12 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnSuppor
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnUnSupportedDeviceWhenPrefetchApiIsCalledThenRequestMemoryPrefetchNotCalled, IsXeHpcCore) {
@@ -307,17 +297,12 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationOnUnSupp
     DebugManagerStateRestore restore;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
-    size_t size = 10;
-    void *ptr = malloc(size);
+    uint8_t data{};
 
-    EXPECT_NE(nullptr, ptr);
-
-    result = pCommandList->appendMemoryPrefetch(ptr, size);
+    result = pCommandList->appendMemoryPrefetch(&data, sizeof(data));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     EXPECT_FALSE(pCommandList->isMemoryPrefetchRequested());
-
-    free(ptr);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsCalled, IsXeHpcCore) {
@@ -339,11 +324,11 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
 
-    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+    ze_command_list_handle_t commandListHandle = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
     commandList->close();
 
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.performMigration = true;
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
@@ -376,11 +361,11 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
 
-    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false)->toHandle();
+    ze_command_list_handle_t commandListHandle = CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
     commandList->close();
 
-    auto commandListImmediate = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, result);
+    auto commandListImmediate = CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     CommandListExecutionInternalOptions internalOptions = {};
@@ -415,11 +400,11 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchForKmdMig
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
 
-    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+    ze_command_list_handle_t commandListHandle = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
     commandList->close();
 
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.performMigration = true;
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
@@ -452,11 +437,11 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefetchWhenEx
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
 
-    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+    ze_command_list_handle_t commandListHandle = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
     commandList->close();
 
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.performMigration = true;
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions);
@@ -491,7 +476,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr);
@@ -515,17 +500,14 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationPrefetch
     mockMemoryManager->prefetchManager.reset(new MockPrefetchManager());
     auto prefetchManager = static_cast<MockPrefetchManager *>(mockMemoryManager->prefetchManager.get());
 
-    size_t size = 10;
-    void *ptr = malloc(size);
-
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
-    commandList->appendMemoryPrefetch(ptr, size);
+    commandList->appendMemoryPrefetch(&data, sizeof(data));
 
     result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -533,7 +515,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationPrefetch
     EXPECT_TRUE(prefetchManager->migrateAllocationsToGpuCalled);
     EXPECT_TRUE(prefetchManager->removeAllocationsCalled);
 
-    context->freeMem(ptr);
+    context->freeMem(&data);
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenPrefetchApiIsCalledThenRequestMemoryPrefetch, IsXeHpcCore) {
@@ -664,7 +646,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     createKernel();
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -711,7 +693,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     createKernel();
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
+    auto commandList = CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -761,9 +743,9 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
 
-    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+    ze_command_list_handle_t commandListHandle = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -830,10 +812,9 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
 
-    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false)->toHandle();
+    ze_command_list_handle_t commandListHandle = CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
-    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily,
-                                                                                       device,
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(device,
                                                                                        &queueDesc,
                                                                                        false,
                                                                                        NEO::EngineGroupType::compute,
@@ -905,9 +886,9 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_flags_t cmdListFlags = {};
 
-    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::copy, cmdListFlags, returnValue, false);
+    auto commandList = CommandList::create(device, NEO::EngineGroupType::copy, cmdListFlags, returnValue, false);
     auto commandListHandle = commandList->toHandle();
-    auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, commandList->isCopyOnly(false), false, true, returnValue);
+    auto commandQueue = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, commandList->isCopyOnly(false), false, true, returnValue);
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = 1;
@@ -1675,7 +1656,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandLis
     queueDesc.index = 0u;
 
     ze_result_t returnValue;
-    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, engineGroupType, returnValue)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
 }
@@ -1685,8 +1666,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThenGlobalA
     bool internalEngine = true;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &desc,
                                                                               internalEngine,
                                                                               NEO::EngineGroupType::renderCompute,
@@ -1703,8 +1683,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenFlagEnabledAndCreateImmediateCommandLi
     bool internalEngine = true;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &desc,
                                                                               internalEngine,
                                                                               NEO::EngineGroupType::renderCompute,
@@ -1718,8 +1697,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenCreateImmediateCommandListThenAllocati
     bool internalEngine = true;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
                                                                               &desc,
                                                                               internalEngine,
                                                                               NEO::EngineGroupType::renderCompute,

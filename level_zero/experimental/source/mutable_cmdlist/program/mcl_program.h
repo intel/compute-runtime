@@ -78,11 +78,11 @@ struct KernelSymbol {
     static constexpr uint8_t indirectOffsetBitShift = 3;
     KernelSymbol() = default;
     KernelSymbol(uint64_t symbolValue) : data(symbolValue) {}
-    KernelSymbol(uint32_t kernelDataId, uint16_t skipPerThreadDataLoad, uint8_t simdSize, uint8_t passInlineData, uint8_t indirectOffset)
+    KernelSymbol(uint32_t kernelDataId, uint16_t skipPerThreadDataLoad, uint8_t simdSize, uint8_t passInlineData, uint8_t indirectOffset, uint8_t numLocalIdChannels)
         : kernelDataId(kernelDataId), skipPerThreadDataLoad(skipPerThreadDataLoad), simdSize(simdSize),
-          passInlineData(passInlineData), indirectOffset(indirectOffset) {
-        reserve = 0;
-    };
+          passInlineData(passInlineData), indirectOffset(indirectOffset), numLocalIdChannels(numLocalIdChannels) {
+        hasNumLocalIdChannels = 1;
+    }
 
     union {
         struct {
@@ -93,7 +93,8 @@ struct KernelSymbol {
                 struct {
                     uint8_t passInlineData : 1;
                     uint8_t indirectOffset : 4;
-                    uint8_t reserve : 3;
+                    uint8_t hasNumLocalIdChannels : 1;
+                    uint8_t numLocalIdChannels : 2;
                 };
                 uint8_t flags;
             };

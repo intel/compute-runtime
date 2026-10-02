@@ -27,7 +27,7 @@ static constexpr const char *mockOtherInstanceName = "my_other_instance";
 
 struct MockOsSysmanDriver : public OsSysmanDriver {
     MockOsSysmanDriver() {
-        context.supportedFormats = {ZES_INTEL_INFO_LOG_FORMAT_CPER};
+        context.supportedFormats = {ZES_INFO_LOG_FORMAT_EXT_CPER};
     }
     ze_result_t eventsListen(uint64_t, uint32_t, zes_device_handle_t *, uint32_t *, zes_event_type_flags_t *) override {
         return ZE_RESULT_SUCCESS;
@@ -38,7 +38,7 @@ struct MockOsSysmanDriver : public OsSysmanDriver {
     ze_result_t driverEventRegister(zes_event_type_flags_t) override {
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t enumInfoLogs(uint32_t *pCount, zes_intel_info_log_handle_t *phInfoLogs) override {
+    ze_result_t enumInfoLogs(uint32_t *pCount, zes_info_log_handle_t *phInfoLogs) override {
         return context.infoLogGet(pCount, phInfoLogs);
     }
     ze_result_t rescanDevices(SysmanDriverHandleImp *, uint32_t *, zes_device_handle_t *) override {
@@ -48,11 +48,11 @@ struct MockOsSysmanDriver : public OsSysmanDriver {
 };
 
 struct MockInfoLog : public InfoLog {
-    ze_result_t infoLogGetProperties(zes_intel_info_log_properties_exp_t *) override {
+    ze_result_t infoLogGetProperties(zes_info_log_ext_properties_t *) override {
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t infoLogCreateInstance(const char *, zes_intel_info_log_instance_exp_desc_t *,
-                                      zes_intel_info_log_instance_handle_t *) override {
+    ze_result_t infoLogCreateInstance(const char *, zes_info_log_instance_ext_desc_t *,
+                                      zes_info_log_instance_handle_t *) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t destroyInstance(InfoLogInstance *pInstance) override {
@@ -70,15 +70,15 @@ struct MockInfoLog : public InfoLog {
 
 struct MockInfoLogInstance : public InfoLogInstance {
     ze_result_t readWithMetadata(uint64_t timeout, uint32_t *, uint8_t *, uint32_t *,
-                                 zes_intel_info_log_metadata_exp *,
-                                 zes_intel_info_log_read_status_exp_t *) override {
+                                 zes_info_log_metadata_ext_t *,
+                                 zes_info_log_read_status_ext_t *) override {
         readCallCount++;
         lastTimeout = timeout;
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t peekWithMetadata(uint64_t timeout, uint32_t *, uint8_t *, uint32_t *,
-                                 zes_intel_info_log_metadata_exp *,
-                                 zes_intel_info_log_read_status_exp_t *) override {
+                                 zes_info_log_metadata_ext_t *,
+                                 zes_info_log_read_status_ext_t *) override {
         peekCallCount++;
         lastTimeout = timeout;
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -101,15 +101,15 @@ struct MockInfoLogInstance : public InfoLogInstance {
 struct MockOsInfoLogInstance : public OsInfoLogInstance {
     MockOsInfoLogInstance(uint32_t *pTeardownCallCount) : pTeardownCallCount(pTeardownCallCount) {}
     ze_result_t readWithMetadata(uint64_t timeout, uint32_t *, uint8_t *, uint32_t *,
-                                 zes_intel_info_log_metadata_exp *,
-                                 zes_intel_info_log_read_status_exp_t *) override {
+                                 zes_info_log_metadata_ext_t *,
+                                 zes_info_log_read_status_ext_t *) override {
         readCallCount++;
         lastTimeout = timeout;
         return readResult;
     }
     ze_result_t peekWithMetadata(uint64_t timeout, uint32_t *, uint8_t *, uint32_t *,
-                                 zes_intel_info_log_metadata_exp *,
-                                 zes_intel_info_log_read_status_exp_t *) override {
+                                 zes_info_log_metadata_ext_t *,
+                                 zes_info_log_read_status_ext_t *) override {
         peekCallCount++;
         lastTimeout = timeout;
         return peekResult;
@@ -129,17 +129,17 @@ struct MockOsInfoLogInstance : public OsInfoLogInstance {
 };
 
 struct MockOsInfoLog : public OsInfoLog {
-    ze_result_t getProperties(zes_intel_info_log_properties_exp_t *pProperties) override {
+    ze_result_t getProperties(zes_info_log_ext_properties_t *pProperties) override {
         if (getPropertiesResult != ZE_RESULT_SUCCESS) {
             return getPropertiesResult;
         }
-        pProperties->infoLogType = ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE;
-        pProperties->infoLogFormat = ZES_INTEL_INFO_LOG_FORMAT_CPER;
-        pProperties->isNamedInstancedCollectionSupported = isNamedInstancedCollectionSupported;
-        pProperties->isPeekSupported = true;
+        pProperties->infoLogType = ZES_INFO_LOG_TYPE_EXT_DEVICE;
+        pProperties->infoLogFormat = ZES_INFO_LOG_FORMAT_EXT_CPER;
+        pProperties->isNamedInstanceSupported = isNamedInstanceSupported;
+        pProperties->isPeekDataSupported = true;
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t createInstance(const char *, zes_intel_info_log_instance_exp_desc_t *,
+    ze_result_t createInstance(const char *, zes_info_log_instance_ext_desc_t *,
                                std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) override {
         createInstanceCallCount++;
         if (createInstanceResult == ZE_RESULT_SUCCESS) {
@@ -152,7 +152,7 @@ struct MockOsInfoLog : public OsInfoLog {
     ze_result_t getPropertiesResult = ZE_RESULT_SUCCESS;
     ze_result_t createInstanceResult = ZE_RESULT_SUCCESS;
     ze_result_t instanceTeardownResult = ZE_RESULT_SUCCESS;
-    bool isNamedInstancedCollectionSupported = true;
+    bool isNamedInstanceSupported = true;
     uint32_t createInstanceCallCount = 0;
     uint32_t teardownCallCount = 0;
 };
@@ -172,27 +172,47 @@ class SysmanInfoLogFixture : public SysmanDriverHandleTest {
         driverHandle->pOsSysmanDriver = mockOsSysmanDriver.get();
     }
 
-    std::vector<zes_intel_info_log_handle_t> getInfoLogHandles(uint32_t count) {
-        std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, handles.data()));
+    std::vector<zes_info_log_handle_t> getInfoLogHandles(uint32_t count) {
+        std::vector<zes_info_log_handle_t> handles(count, nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, handles.data()));
         return handles;
     }
 
     std::unique_ptr<InfoLogImp> createInfoLogWithMockOsBackend(MockOsInfoLog **ppMockOsInfoLog,
                                                                bool namedCollectionSupported = true) {
-        auto pInfoLogImp = std::make_unique<InfoLogImp>(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+        auto pInfoLogImp = std::make_unique<InfoLogImp>(ZES_INFO_LOG_FORMAT_EXT_CPER);
         auto mockOsInfoLog = std::make_unique<MockOsInfoLog>();
-        mockOsInfoLog->isNamedInstancedCollectionSupported = namedCollectionSupported;
+        mockOsInfoLog->isNamedInstanceSupported = namedCollectionSupported;
         *ppMockOsInfoLog = mockOsInfoLog.get();
         pInfoLogImp->pOsInfoLog = std::move(mockOsInfoLog);
         pInfoLogImp->init();
         return pInfoLogImp;
     }
 
-    static zes_intel_info_log_instance_exp_desc_t makeInstanceDesc() {
-        zes_intel_info_log_instance_exp_desc_t desc = {};
-        desc.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC;
+    static zes_info_log_instance_ext_desc_t makeInstanceDesc() {
+        zes_info_log_instance_ext_desc_t desc = {ZES_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXT_DESC};
         return desc;
+    }
+
+    static void readAndPeekThroughEntryPoints(ze_result_t expectedResult, uint32_t size, uint8_t *pBuffer, uint32_t recordCount,
+                                              zes_info_log_metadata_ext_t *pDescriptors, zes_info_log_read_status_ext_t *pReadStatus) {
+        uint32_t teardownCallCount = 0;
+        auto osInstance = std::make_unique<MockOsInfoLogInstance>(&teardownCallCount);
+        auto *pOsInstance = osInstance.get();
+        InfoLogInstanceImp instance(nullptr, nullptr, std::move(osInstance));
+        const uint32_t expectedCallCount = (expectedResult == ZE_RESULT_SUCCESS) ? 1u : 0u;
+
+        uint32_t readSize = size;
+        uint32_t readRecordCount = recordCount;
+        EXPECT_EQ(expectedResult,
+                  zesInfoLogInstanceReadWithMetadataExt(instance.toHandle(), mockReadTimeout, &readSize, pBuffer, &readRecordCount, pDescriptors, pReadStatus));
+        EXPECT_EQ(expectedCallCount, pOsInstance->readCallCount);
+        EXPECT_EQ(expectedCallCount ? mockReadTimeout : 0u, pOsInstance->lastTimeout);
+
+        EXPECT_EQ(expectedResult,
+                  zesInfoLogInstancePeekWithMetadataExt(instance.toHandle(), mockPeekTimeout, &size, pBuffer, &recordCount, pDescriptors, pReadStatus));
+        EXPECT_EQ(expectedCallCount, pOsInstance->peekCallCount);
+        EXPECT_EQ(expectedCallCount ? mockPeekTimeout : 0u, pOsInstance->lastTimeout);
     }
 
     std::unique_ptr<MockOsSysmanDriver> mockOsSysmanDriver;
@@ -200,7 +220,7 @@ class SysmanInfoLogFixture : public SysmanDriverHandleTest {
 };
 
 TEST_F(SysmanInfoLogFixture, GivenInfoLogImpWhenDestroyingAnInstanceItDoesNotOwnThenInvalidNullHandleIsReturned) {
-    auto pInfoLogImp = std::make_unique<InfoLogImp>(ZES_INTEL_INFO_LOG_FORMAT_CPER);
+    auto pInfoLogImp = std::make_unique<InfoLogImp>(ZES_INFO_LOG_FORMAT_EXT_CPER);
     MockInfoLogInstance foreignInstance;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, pInfoLogImp->destroyInstance(&foreignInstance));
     EXPECT_EQ(0u, foreignInstance.teardownCallCount);
@@ -208,10 +228,10 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogImpWhenDestroyingAnInstanceItDoesNotOwn
 
 TEST_F(SysmanInfoLogFixture, GivenInfoLogContextAlreadyExistsWhenEnumeratingInfoLogsAgainThenSameContextIsReused) {
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     EXPECT_EQ(0u, count);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     EXPECT_EQ(0u, count);
 }
 
@@ -235,7 +255,7 @@ TEST_F(SysmanInfoLogFixture, GivenMultipleInfoLogHandlesWhenDestroyingAllInstanc
 
 TEST_F(SysmanInfoLogFixture, GivenInfoLogHandlesWhenReleasingInfoLogHandlesThenHandleListIsEmptied) {
     InfoLogHandleContext context;
-    context.supportedFormats = {ZES_INTEL_INFO_LOG_FORMAT_CPER};
+    context.supportedFormats = {ZES_INFO_LOG_FORMAT_EXT_CPER};
 
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, context.infoLogGet(&count, nullptr));
@@ -250,12 +270,12 @@ TEST_F(SysmanInfoLogFixture, GivenCountZeroOrGreaterThanAvailableWhenEnumerating
     installMockOsSysmanDriver();
 
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     EXPECT_EQ(expectedInfoLogHandleCount, count);
 
     count = 5;
-    std::vector<zes_intel_info_log_handle_t> handles(count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, handles.data()));
+    std::vector<zes_info_log_handle_t> handles(count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, handles.data()));
     EXPECT_EQ(expectedInfoLogHandleCount, count);
     EXPECT_NE(nullptr, handles[0]);
     EXPECT_EQ(nullptr, handles[1]);
@@ -265,7 +285,7 @@ TEST_F(SysmanInfoLogFixture, GivenNullOsSysmanDriverWhenEnumeratingInfoLogsThenE
     VariableBackup<decltype(driverHandle->pOsSysmanDriver)> osSysmanDriverBackup(&driverHandle->pOsSysmanDriver, nullptr);
 
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingGetPropertiesExpThenUnsupportedFeatureIsReturned) {
@@ -274,12 +294,11 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingGetPropertiesExpT
     auto handles = getInfoLogHandles(expectedInfoLogHandleCount);
     ASSERT_NE(nullptr, handles[0]);
 
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogGetPropertiesExp(handles[0], &properties));
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogGetPropertiesExt(handles[0], &properties));
 
-    EXPECT_FALSE(properties.isNamedInstancedCollectionSupported);
-    EXPECT_FALSE(properties.isPeekSupported);
+    EXPECT_FALSE(properties.isNamedInstanceSupported);
+    EXPECT_FALSE(properties.isPeekDataSupported);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingCreateInstanceExpThenUnsupportedFeatureIsReturned) {
@@ -289,8 +308,8 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingCreateInstanceExp
     ASSERT_NE(nullptr, handles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateInstanceExp(handles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogCreateInstanceExt(handles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
 }
 
@@ -301,16 +320,15 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCallingCreateNamedInstan
     ASSERT_NE(nullptr, handles[0]);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateInstanceExp(handles[0], "my_instance", &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogCreateInstanceExt(handles[0], "my_instance", &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenWddmBackendWhenAskedForPropertiesAndForAnInstanceThenUnsupportedFeatureIsReturnedAndNoOsInstanceIsProduced) {
     WddmInfoLogImp wddmInfoLog;
 
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, wddmInfoLog.getProperties(&properties));
 
     auto desc = makeInstanceDesc();
@@ -330,17 +348,16 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceHandleWhenCallingInstanceReadAndPeekWi
     uint32_t size = mockReadBufferSize;
     uint32_t recordCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    zes_intel_info_log_metadata_exp descriptor = {};
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    zes_info_log_metadata_ext_t descriptor = {};
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
-              zesIntelInfoLogInstanceReadWithMetadataExp(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, &readStatus));
+              zesInfoLogInstanceReadWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, &readStatus));
     EXPECT_EQ(1u, instance.readCallCount);
     EXPECT_EQ(mockReadTimeout, instance.lastTimeout);
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
-              zesIntelInfoLogInstancePeekWithMetadataExp(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, &readStatus));
+              zesInfoLogInstancePeekWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, &readStatus));
     EXPECT_EQ(1u, instance.peekCallCount);
     EXPECT_EQ(mockReadTimeout, instance.lastTimeout);
 }
@@ -348,7 +365,7 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceHandleWhenCallingInstanceReadAndPeekWi
 TEST_F(SysmanInfoLogFixture, GivenInstanceHandleWhenCallingInstanceDeleteExpThenCallIsForwardedToTheInstance) {
     MockInfoLogInstance instance;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(instance.toHandle()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(instance.toHandle()));
     EXPECT_EQ(1u, instance.destroyCallCount);
 }
 
@@ -362,27 +379,26 @@ TEST_F(SysmanInfoLogFixture, GivenSysmanInitFromCoreWhenCallingInfoLogEntryPoint
     VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
 
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     EXPECT_EQ(0u, count);
 
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogGetPropertiesExp(handles[0], &properties));
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogGetPropertiesExt(handles[0], &properties));
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateInstanceExp(handles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogCreateInstanceExt(handles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
 
     uint32_t size = mockReadBufferSize;
     uint32_t recordCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    zes_intel_info_log_metadata_exp descriptor = {};
+    zes_info_log_metadata_ext_t descriptor = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
-              zesIntelInfoLogInstanceReadWithMetadataExp(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+              zesInfoLogInstanceReadWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
-              zesIntelInfoLogInstancePeekWithMetadataExp(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogInstanceDeleteExp(instance.toHandle()));
+              zesInfoLogInstancePeekWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogInstanceDeleteExt(instance.toHandle()));
 
     EXPECT_EQ(0u, instance.readCallCount);
     EXPECT_EQ(0u, instance.peekCallCount);
@@ -400,27 +416,26 @@ TEST_F(SysmanInfoLogFixture, GivenNeitherInitFlagSetWhenCallingInfoLogEntryPoint
     VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
 
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverEnumInfoLogsExt(driverHandle->toHandle(), &count, nullptr));
     EXPECT_EQ(0u, count);
 
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogGetPropertiesExp(handles[0], &properties));
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogGetPropertiesExt(handles[0], &properties));
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogCreateInstanceExp(handles[0], nullptr, &desc, &hInstance));
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogCreateInstanceExt(handles[0], nullptr, &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
 
     uint32_t size = mockReadBufferSize;
     uint32_t recordCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    zes_intel_info_log_metadata_exp descriptor = {};
+    zes_info_log_metadata_ext_t descriptor = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED,
-              zesIntelInfoLogInstanceReadWithMetadataExp(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+              zesInfoLogInstanceReadWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED,
-              zesIntelInfoLogInstancePeekWithMetadataExp(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogInstanceDeleteExp(instance.toHandle()));
+              zesInfoLogInstancePeekWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogInstanceDeleteExt(instance.toHandle()));
 
     EXPECT_EQ(0u, instance.readCallCount);
     EXPECT_EQ(0u, instance.peekCallCount);
@@ -431,16 +446,15 @@ TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureSucceededWhenGettingPropertiesT
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP;
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogGetProperties(&properties));
 
-    EXPECT_EQ(ZES_INTEL_INFO_LOG_TYPE_EXP_DEVICE, properties.infoLogType);
-    EXPECT_EQ(ZES_INTEL_INFO_LOG_FORMAT_CPER, properties.infoLogFormat);
-    EXPECT_TRUE(properties.isNamedInstancedCollectionSupported);
-    EXPECT_TRUE(properties.isPeekSupported);
+    EXPECT_EQ(ZES_INFO_LOG_TYPE_EXT_DEVICE, properties.infoLogType);
+    EXPECT_EQ(ZES_INFO_LOG_FORMAT_EXT_CPER, properties.infoLogFormat);
+    EXPECT_TRUE(properties.isNamedInstanceSupported);
+    EXPECT_TRUE(properties.isPeekDataSupported);
 
-    EXPECT_EQ(ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_PROPERTIES_EXP, properties.stype);
+    EXPECT_EQ(ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES, properties.stype);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNamedCollectionUnsupportedWhenCreatingNamedInstanceThenUnsupportedFeatureIsReturned) {
@@ -448,7 +462,7 @@ TEST_F(SysmanInfoLogFixture, GivenNamedCollectionUnsupportedWhenCreatingNamedIns
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog, false);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    zes_info_log_instance_handle_t hInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
 
@@ -460,7 +474,7 @@ TEST_F(SysmanInfoLogFixture, GivenNoInstanceNameWhenCreatingInstanceThenTheInsta
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    zes_info_log_instance_handle_t hInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(nullptr, &desc, &hInstance));
     EXPECT_NE(nullptr, hInstance);
     EXPECT_EQ(1u, pMockOsInfoLog->createInstanceCallCount);
@@ -471,16 +485,16 @@ TEST_F(SysmanInfoLogFixture, GivenNamedCollectionSupportedWhenCreatingTheSameNam
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hFirstInstance = nullptr;
+    zes_info_log_instance_handle_t hFirstInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hFirstInstance));
     EXPECT_NE(nullptr, hFirstInstance);
 
-    zes_intel_info_log_instance_handle_t hSecondInstance = nullptr;
+    zes_info_log_instance_handle_t hSecondInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE,
               pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hSecondInstance));
     EXPECT_EQ(nullptr, hSecondInstance);
 
-    zes_intel_info_log_instance_handle_t hOtherInstance = nullptr;
+    zes_info_log_instance_handle_t hOtherInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockOtherInstanceName, &desc, &hOtherInstance));
     EXPECT_NE(nullptr, hOtherInstance);
     EXPECT_NE(hFirstInstance, hOtherInstance);
@@ -492,7 +506,7 @@ TEST_F(SysmanInfoLogFixture, GivenOsBackendFailsToCreateTheInstanceWhenCreatingA
     pMockOsInfoLog->createInstanceResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hInstance = nullptr;
+    zes_info_log_instance_handle_t hInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hInstance));
     EXPECT_EQ(nullptr, hInstance);
 
@@ -512,16 +526,16 @@ TEST_F(SysmanInfoLogFixture, GivenOwnedNamedAndUnnamedInstancesWhenDestroyingThe
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hNamedInstance = nullptr;
+    zes_info_log_instance_handle_t hNamedInstance = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hNamedInstance));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->destroyInstance(InfoLogInstance::fromHandle(hNamedInstance)));
     EXPECT_EQ(1u, pMockOsInfoLog->teardownCallCount);
 
-    zes_intel_info_log_instance_handle_t hReusedInstance = nullptr;
+    zes_info_log_instance_handle_t hReusedInstance = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hReusedInstance));
 
-    zes_intel_info_log_instance_handle_t hUnnamedInstance = nullptr;
+    zes_info_log_instance_handle_t hUnnamedInstance = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(nullptr, &desc, &hUnnamedInstance));
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->destroyInstance(InfoLogInstance::fromHandle(hUnnamedInstance)));
     EXPECT_EQ(2u, pMockOsInfoLog->teardownCallCount);
@@ -532,15 +546,15 @@ TEST_F(SysmanInfoLogFixture, GivenOwnedInstancesWhenDestroyingAllInstancesThenEv
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hNamedInstance = nullptr;
-    zes_intel_info_log_instance_handle_t hUnnamedInstance = nullptr;
+    zes_info_log_instance_handle_t hNamedInstance = nullptr;
+    zes_info_log_instance_handle_t hUnnamedInstance = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hNamedInstance));
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(nullptr, &desc, &hUnnamedInstance));
 
     pInfoLogImp->destroyAllInstances();
     EXPECT_EQ(2u, pMockOsInfoLog->teardownCallCount);
 
-    zes_intel_info_log_instance_handle_t hReusedInstance = nullptr;
+    zes_info_log_instance_handle_t hReusedInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hReusedInstance));
     EXPECT_NE(nullptr, hReusedInstance);
 }
@@ -551,8 +565,8 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceTeardownFailsWhenDestroyingAllInstance
     pMockOsInfoLog->instanceTeardownResult = ZE_RESULT_ERROR_UNKNOWN;
 
     auto desc = makeInstanceDesc();
-    zes_intel_info_log_instance_handle_t hNamedInstance = nullptr;
-    zes_intel_info_log_instance_handle_t hUnnamedInstance = nullptr;
+    zes_info_log_instance_handle_t hNamedInstance = nullptr;
+    zes_info_log_instance_handle_t hUnnamedInstance = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hNamedInstance));
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(nullptr, &desc, &hUnnamedInstance));
 
@@ -560,7 +574,7 @@ TEST_F(SysmanInfoLogFixture, GivenInstanceTeardownFailsWhenDestroyingAllInstance
     EXPECT_EQ(2u, pMockOsInfoLog->teardownCallCount);
 
     pMockOsInfoLog->instanceTeardownResult = ZE_RESULT_SUCCESS;
-    zes_intel_info_log_instance_handle_t hReusedInstance = nullptr;
+    zes_info_log_instance_handle_t hReusedInstance = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hReusedInstance));
     EXPECT_NE(nullptr, hReusedInstance);
 }
@@ -579,18 +593,17 @@ TEST_F(SysmanInfoLogFixture, GivenRealInfoLogInstanceWhenReadingAndPeekingThenBo
     uint32_t size = mockReadBufferSize;
     uint32_t recordCount = 1;
     std::vector<uint8_t> buffer(size, 0);
-    zes_intel_info_log_metadata_exp descriptor = {};
-    zes_intel_info_log_read_status_exp_t readStatus = {};
-    readStatus.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP;
+    zes_info_log_metadata_ext_t descriptor = {};
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
 
     EXPECT_EQ(ZE_RESULT_SUCCESS,
-              zesIntelInfoLogInstanceReadWithMetadataExp(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, &readStatus));
+              zesInfoLogInstanceReadWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, &descriptor, &readStatus));
     EXPECT_EQ(1u, pOsInstance->readCallCount);
     EXPECT_EQ(0u, pOsInstance->peekCallCount);
     EXPECT_EQ(mockReadTimeout, pOsInstance->lastTimeout);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY,
-              zesIntelInfoLogInstancePeekWithMetadataExp(instance.toHandle(), mockPeekTimeout, &size, buffer.data(), &recordCount, &descriptor, &readStatus));
+              zesInfoLogInstancePeekWithMetadataExt(instance.toHandle(), mockPeekTimeout, &size, buffer.data(), &recordCount, &descriptor, &readStatus));
     EXPECT_EQ(1u, pOsInstance->readCallCount);
     EXPECT_EQ(1u, pOsInstance->peekCallCount);
     EXPECT_EQ(mockPeekTimeout, pOsInstance->lastTimeout);
@@ -605,7 +618,7 @@ TEST_F(SysmanInfoLogFixture, GivenRealInfoLogInstanceWhenDeletingItThenTheOwning
     EXPECT_TRUE(instance.isNamed());
     EXPECT_EQ(mockInstanceName, instance.getInstanceName());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogInstanceDeleteExp(instance.toHandle()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(instance.toHandle()));
     EXPECT_EQ(1u, infoLog.destroyInstanceCallCount);
     EXPECT_EQ(&instance, infoLog.pLastDestroyedInstance);
 
@@ -635,6 +648,92 @@ TEST_F(SysmanInfoLogFixture, GivenOsInstanceTeardownFailsWhenTearingDownTheRealI
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, instance.teardown());
     EXPECT_EQ(1u, teardownCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPropertiesOrInstanceDescWithNonNullPNextWhenCallingInfoLogApisThenInvalidArgumentIsReturnedAndNothingIsWrittenOrCreated) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_info_log_ext_properties_t extension = {};
+    zes_info_log_ext_properties_t properties = {ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES};
+    properties.pNext = &extension;
+    properties.infoLogType = ZES_INFO_LOG_TYPE_EXT_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pInfoLogImp->infoLogGetProperties(&properties));
+    EXPECT_EQ(ZES_INFO_LOG_TYPE_EXT_FORCE_UINT32, properties.infoLogType);
+    EXPECT_FALSE(properties.isPeekDataSupported);
+
+    zes_info_log_instance_ext_desc_t descExtension = {};
+    auto desc = makeInstanceDesc();
+    desc.pNext = &descExtension;
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pInfoLogImp->infoLogCreateInstance(nullptr, &desc, &hInstance));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hInstance));
+    EXPECT_EQ(nullptr, hInstance);
+    EXPECT_EQ(0u, pMockOsInfoLog->createInstanceCallCount);
+
+    desc.pNext = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateInstance(mockInstanceName, &desc, &hInstance));
+    EXPECT_NE(nullptr, hInstance);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenReadStatusWithNonNullPNextWhenReadingAndPeekingWithOrWithoutDataThenInvalidArgumentIsReturnedAndOsInstanceIsNotReached) {
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t descriptor = {};
+    zes_info_log_read_status_ext_t extension = {};
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    readStatus.pNext = &extension;
+    readAndPeekThroughEntryPoints(ZE_RESULT_ERROR_INVALID_ARGUMENT, mockReadBufferSize, buffer.data(), 1, &descriptor, &readStatus);
+    readAndPeekThroughEntryPoints(ZE_RESULT_ERROR_INVALID_ARGUMENT, 0, nullptr, 1, &descriptor, &readStatus);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenDescriptorWithNonNullPNextWhenReadingAndPeekingThenInvalidArgumentIsReturnedAndOsInstanceIsNotReached) {
+    uint32_t teardownCallCount = 0;
+    auto osInstance = std::make_unique<MockOsInfoLogInstance>(&teardownCallCount);
+    auto *pOsInstance = osInstance.get();
+    InfoLogInstanceImp instance(nullptr, nullptr, std::move(osInstance));
+
+    uint32_t size = mockReadBufferSize;
+    uint32_t recordCount = 3;
+    std::vector<uint8_t> buffer(size, 0);
+    zes_info_log_metadata_ext_t extension = {};
+    std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
+    descriptors[recordCount - 1].pNext = &extension;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT,
+              zesInfoLogInstanceReadWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT,
+              zesInfoLogInstancePeekWithMetadataExt(instance.toHandle(), mockPeekTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(0u, pOsInstance->readCallCount);
+    EXPECT_EQ(0u, pOsInstance->peekCallCount);
+
+    recordCount = 2;
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              zesInfoLogInstanceReadWithMetadataExt(instance.toHandle(), mockReadTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(1u, pOsInstance->readCallCount);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNullDescriptorsWhenReadingAndPeekingThenCallsAreForwardedToTheOsInstance) {
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    readAndPeekThroughEntryPoints(ZE_RESULT_SUCCESS, mockReadBufferSize, buffer.data(), 1, nullptr, &readStatus);
+    readAndPeekThroughEntryPoints(ZE_RESULT_SUCCESS, mockReadBufferSize, buffer.data(), 1, nullptr, nullptr);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenZeroSizeOrZeroRecordCountWhenReadingAndPeekingWithDescriptorHavingNonNullPNextThenDescriptorsAreNotValidatedAndCallsAreForwardedToTheOsInstance) {
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t extension = {};
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.pNext = &extension;
+    readAndPeekThroughEntryPoints(ZE_RESULT_SUCCESS, 0, nullptr, 1, &descriptor, nullptr);
+    readAndPeekThroughEntryPoints(ZE_RESULT_SUCCESS, mockReadBufferSize, buffer.data(), 0, &descriptor, nullptr);
+    readAndPeekThroughEntryPoints(ZE_RESULT_SUCCESS, 0, nullptr, 0, &descriptor, nullptr);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNonZeroSizeAndRecordCountAndDescriptorsWithNullPNextWhenReadingAndPeekingThenAllDescriptorsAreValidatedAndCallsAreForwardedToTheOsInstance) {
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(3);
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    readAndPeekThroughEntryPoints(ZE_RESULT_SUCCESS, mockReadBufferSize, buffer.data(), 3, descriptors.data(), &readStatus);
 }
 
 } // namespace ult

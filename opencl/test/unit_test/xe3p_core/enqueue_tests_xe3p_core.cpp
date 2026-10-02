@@ -694,3 +694,39 @@ XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenL3FlushAfterPostSyncEnabledAndP
     EXPECT_TRUE(postSync.getL2TransientFlush());
     EXPECT_FALSE(postSync.getL2Flush());
 }
+
+XE3P_CORETEST_F(ProgramWalkerTestsXe3pCore, givenMidThreadPreemptionWhenProgrammingWalkerWithAndWithoutTimestampPacketThenThreadPreemptionIsSetAccordingToProductHelper) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    auto &productHelper = clDevice->getDevice().getProductHelper();
+
+    auto commandQueue = createCommandQueue<FamilyType>();
+    auto &commandStream = commandQueue->getCS(1024);
+
+    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::dynamicState, 1);
+    size_t workSize[] = {1, 1, 1};
+    Vec3<size_t> wgInfo = {1, 1, 1};
+
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(workSize, wgInfo, PreemptionMode::MidThread);
+
+    TimestampPacketContainer timestampPacketContainer;
+    timestampPacketContainer.add(clDevice->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+
+    for (bool timestampPacketUsed : {true, false}) {
+        walkerArgs.currentTimestampPacketNodes = timestampPacketUsed ? &timestampPacketContainer : nullptr;
+        auto commandsOffset = commandStream.getUsed();
+
+        HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue,
+                                                                          heap, heap, heap, dispatchInfo, walkerArgs);
+
+        HardwareParse hwParse;
+        hwParse.parseCommands<FamilyType>(commandStream, commandsOffset);
+        auto itorWalker = find<WalkerType *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+        ASSERT_NE(hwParse.cmdList.end(), itorWalker);
+        auto walkerCmd = genCmdCast<WalkerType *>(*itorWalker);
+        ASSERT_NE(nullptr, walkerCmd);
+
+        const bool downgradeRequired = productHelper.isWalkerPreemptionFallbackRequired(PreemptionMode::MidThread, timestampPacketUsed);
+        EXPECT_EQ(!downgradeRequired, walkerCmd->getInterfaceDescriptor().getThreadPreemption());
+    }
+}

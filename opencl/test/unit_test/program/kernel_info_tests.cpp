@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,10 +97,6 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateM
     executionEnvironment->memoryManager.reset(new MyMemoryManager(*executionEnvironment));
     if (executionEnvironment->memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
-    }
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
-    if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
-        useMockSip = true;
     }
     auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, mockRootDeviceIndex));
     auto retVal = kernelInfo.createKernelAllocation(*device, false);

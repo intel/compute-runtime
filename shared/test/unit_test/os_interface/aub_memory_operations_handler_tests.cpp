@@ -49,6 +49,21 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThe
     EXPECT_EQ(1u, memoryOperationsInterface->residentAllocations.size());
 }
 
+TEST_F(AubMemoryOperationsHandlerTests, givenHandlerCreatedFromAubCenterWhenMakeResidentCalledThenWriteMemoryIsCalledUnderPageTablesLock) {
+    MockAubCenter aubCenter;
+    auto aubManager = new MockAubManager();
+    aubCenter.aubManager.reset(aubManager);
+    uint32_t lockCallsAtWrite = 0u;
+    aubManager->writeMemory2Callback = [&] { lockCallsAtWrite = aubCenter.obtainPageTablesLockCalled; };
+    MockAubMemoryOperationsHandler memoryOperationsInterface(aubCenter);
+
+    auto result = memoryOperationsInterface.makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
+
+    EXPECT_EQ(MemoryOperationsStatus::success, result);
+    EXPECT_TRUE(aubManager->writeMemory2Called);
+    EXPECT_EQ(1u, lockCallsAtWrite);
+}
+
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenCallingLockThenTrueReturnedAndWriteCalled) {
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);

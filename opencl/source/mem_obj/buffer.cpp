@@ -170,7 +170,13 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
         if (validateHandleType(memoryProperties, extMem)) {
             extMem.handle = reinterpret_cast<void *>(memoryProperties.handle);
             extMem.size = size;
-            pBuffer = UnifiedBuffer::createSharedUnifiedBuffer(pContext, flags, extMem, &retVal);
+
+            RootDeviceIndicesContainer targetRootDeviceIndices{};
+            for (const auto &device : memoryProperties.associatedDevices) {
+                targetRootDeviceIndices.pushUnique(device->getRootDeviceIndex());
+            }
+
+            pBuffer = UnifiedBuffer::createSharedUnifiedBuffer(pContext, flags, extMem, &retVal, targetRootDeviceIndices);
         } else {
             retVal = CL_INVALID_PROPERTY;
             return nullptr;
@@ -621,8 +627,7 @@ Buffer *Buffer::create(Context *context,
 
 Buffer *Buffer::createSharedBuffer(Context *context, cl_mem_flags flags, SharingHandler *sharingHandler,
                                    MultiGraphicsAllocation multiGraphicsAllocation) {
-    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
-    auto size = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getUnderlyingBufferSize();
+    auto size = multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBufferSize();
     auto sharedBuffer = createBufferHw(
         context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags, 0, size, nullptr, nullptr, std::move(multiGraphicsAllocation),

@@ -30,7 +30,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
-#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -249,18 +248,6 @@ TEST(RootDeviceEnvironment, givenDefaultHardwareInfoWhenPrepareDeviceEnvironment
     EXPECT_NE(shouldRcsBeDisabled, isRcsDisabled);
 }
 
-TEST(RootDeviceEnvironment, givenCompilerReleaseHelperWhenGetHelperForCompilerReleaseHelperIsCalledThenSameInstanceIsReturned) {
-    MockExecutionEnvironment executionEnvironment;
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-
-    auto mockCompilerReleaseHelper = std::make_unique<MockCompilerReleaseHelper>();
-    auto mockCompilerReleaseHelperPtr = mockCompilerReleaseHelper.get();
-    rootDeviceEnvironment->compilerReleaseHelper = std::move(mockCompilerReleaseHelper);
-
-    auto &compilerReleaseHelper = rootDeviceEnvironment->getHelper<CompilerReleaseHelper>();
-    EXPECT_EQ(mockCompilerReleaseHelperPtr, &compilerReleaseHelper);
-}
-
 TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
@@ -376,64 +363,15 @@ TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetAndNotEn
 }
 
 TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {
-    const std::unordered_map<std::string, int32_t> config = {
-        {"UseKmdMigration", 0},
-        {"SplitBcsSize", 256}};
-
-#undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
-    EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_OPT
-#undef DECLARE_RELEASE_VARIABLE
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
-
     DebugManagerStateRestore restorer;
     debugManager.flags.NEO_CAL_ENABLED.set(1);
+    DebugVariables expected = debugManager.flags;
+    expected.UseKmdMigration.set(0);
+    expected.SplitBcsSize.set(256);
+
     ExecutionEnvironment exeEnv;
 
-#undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)      \
-    {                                                                                  \
-        if constexpr (std::is_same_v<bool, dataType>) {                                \
-            if (strcmp(#variableName, "NEO_CAL_ENABLED") == 0) {                       \
-                EXPECT_TRUE(debugManager.flags.variableName.getRef());                 \
-            } else {                                                                   \
-                EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());     \
-            }                                                                          \
-        } else {                                                                       \
-            if constexpr (std::is_same_v<int32_t, dataType>) {                         \
-                auto it = config.find(#variableName);                                  \
-                if (it != config.end()) {                                              \
-                    EXPECT_EQ(it->second, debugManager.flags.variableName.getRef());   \
-                } else {                                                               \
-                    EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef()); \
-                }                                                                      \
-            } else {                                                                   \
-                EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());     \
-            }                                                                          \
-        }                                                                              \
-    }
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
-#include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_OPT
-#undef DECLARE_RELEASE_VARIABLE
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
+    EXPECT_TRUE(expected == debugManager.flags);
 }
 
 TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecutionEnvironmentThenRespectAppSetting) {
@@ -444,6 +382,41 @@ TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecu
     ExecutionEnvironment exeEnv;
 
     EXPECT_EQ(debugManager.flags.ForceCommandBufferAlignment.get(), appCommandBufferAlignment);
+}
+
+TEST(ExecutionEnvironment, givenLeoPlatformKeysAddedInDiscoveryOrderThenTheyAreReportedInDeviceGroupOrder) {
+    MockExecutionEnvironment executionEnvironment{};
+
+    HardwareInfo integrated = *defaultHwInfo;
+    integrated.platform.eProductFamily = IGFX_ALDERLAKE_S;
+    integrated.capabilityTable.isIntegratedDevice = true;
+
+    HardwareInfo discrete = *defaultHwInfo;
+    discrete.platform.eProductFamily = IGFX_DG2;
+    discrete.capabilityTable.isIntegratedDevice = false;
+
+    executionEnvironment.addLeoPlatformKey(integrated);
+    executionEnvironment.addLeoPlatformKey(discrete);
+
+    const auto &keys = executionEnvironment.getLeoPlatformKeys();
+    ASSERT_EQ(2u, keys.size());
+    EXPECT_FALSE(keys[0].isIntegratedDevice);
+    EXPECT_EQ(IGFX_DG2, keys[0].productFamily);
+    EXPECT_TRUE(keys[1].isIntegratedDevice);
+    EXPECT_EQ(IGFX_ALDERLAKE_S, keys[1].productFamily);
+}
+
+TEST(ExecutionEnvironment, givenLeoPlatformKeyAddedTwiceForSameProductFamilyThenItIsRecordedOnce) {
+    MockExecutionEnvironment executionEnvironment{};
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.eProductFamily = IGFX_DG2;
+
+    executionEnvironment.addLeoPlatformKey(hwInfo);
+    executionEnvironment.addLeoPlatformKey(hwInfo);
+
+    EXPECT_EQ(1u, executionEnvironment.getLeoPlatformKeys().size());
+    EXPECT_TRUE(executionEnvironment.isLeoRootDeviceDetected());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitialized) {
@@ -477,6 +450,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::mutex) +
                                                   sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
                                                   sizeof(std::mutex) +
+                                                  sizeof(std::vector<DeviceGroupSortKey>) +
                                                   (is64bit ? 21 : 13),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 

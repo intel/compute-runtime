@@ -806,17 +806,8 @@ int IoctlHelperPrelim20::getContextHealth(ContextHealth &contextHealth) {
     prelim_drm_i915_reset_stats prelimResetStats{};
     prelimResetStats.ctx_id = contextHealth.contextId;
 
-    auto retVal = ioctlWithRequestValue(DrmIoctl::queryContextHealth, &prelimResetStats,
-                                        PRELIM_DRM_IOCTL_I915_GET_RESET_STATS, "PRELIM_DRM_IOCTL_I915_GET_RESET_STATS");
+    const auto retVal = ioctl(DrmIoctl::queryContextHealth, &prelimResetStats);
     if (retVal != 0) {
-        drm_i915_reset_stats resetStats{};
-        resetStats.ctx_id = contextHealth.contextId;
-        retVal = ioctl(DrmIoctl::queryContextHealth, &resetStats);
-        if (retVal == 0) {
-            contextHealth.banReason = ((resetStats.batch_active > 0) || (resetStats.batch_pending > 0))
-                                          ? ContextBanReason::gpuHang
-                                          : ContextBanReason::none;
-        }
         return retVal;
     }
     contextHealth.banned = (prelimResetStats.status & I915_RESET_STATS_BANNED) != 0;
@@ -912,6 +903,8 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
         return PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE;
     case DrmIoctl::gemCacheReserve:
         return PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE;
+    case DrmIoctl::queryContextHealth:
+        return PRELIM_DRM_IOCTL_I915_GET_RESET_STATS;
     case DrmIoctl::syncObjFdToHandle:
         return DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE;
     case DrmIoctl::syncObjDestroy:
@@ -982,6 +975,8 @@ std::string IoctlHelperPrelim20::getIoctlString(DrmIoctl ioctlRequest) const {
         return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
     case DrmIoctl::gemCacheReserve:
         return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
+    case DrmIoctl::queryContextHealth:
+        return "PRELIM_DRM_IOCTL_I915_GET_RESET_STATS";
     default:
         return IoctlHelperI915::getIoctlString(ioctlRequest);
     }

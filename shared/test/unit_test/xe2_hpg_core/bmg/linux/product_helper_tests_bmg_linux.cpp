@@ -76,7 +76,7 @@ BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo};
+    DeviceDescriptor device = {0, IGFX_BMG};
     drm.overrideDeviceDescriptor = &device;
 
     int ret = drm.setupHardwareInfo(0, false);

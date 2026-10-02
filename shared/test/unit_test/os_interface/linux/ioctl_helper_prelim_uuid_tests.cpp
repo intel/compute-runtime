@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -26,7 +27,7 @@ struct IoctlPrelimHelperUuidTests : ::testing::Test {
     MockIoctlHelperPrelimUuid ioctlHelper{*drm};
 };
 
-TEST_F(IoctlPrelimHelperUuidTests, GivenDrmWhenGeneratingUUIDThenCorrectStringsAreReturned) {
+HWTEST2_F(IoctlPrelimHelperUuidTests, GivenDrmWhenGeneratingUUIDThenCorrectStringsAreReturned, IsAtMostXeCore) {
 
     auto uuid1 = ioctlHelper.generateUUID();
     auto uuid2 = ioctlHelper.generateUUID();
@@ -41,7 +42,7 @@ TEST_F(IoctlPrelimHelperUuidTests, GivenDrmWhenGeneratingUUIDThenCorrectStringsA
     EXPECT_STREQ("00000000-0000-0000-0000-0000000000ff", uuidff.c_str());
 }
 
-TEST_F(IoctlPrelimHelperUuidTests, GivenDrmWhenGeneratingElfUUIDThenCorrectStringsAreReturned) {
+HWTEST2_F(IoctlPrelimHelperUuidTests, GivenDrmWhenGeneratingElfUUIDThenCorrectStringsAreReturned, IsAtMostXeCore) {
 
     std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::elf)].second;
     std::string uuid1stElfClass = elfClassUuid.substr(0, 18);
@@ -61,7 +62,7 @@ TEST_F(IoctlPrelimHelperUuidTests, GivenDrmWhenGeneratingElfUUIDThenCorrectStrin
     EXPECT_STREQ(uuidElf.c_str(), uuid3.c_str());
 }
 
-TEST_F(IoctlPrelimHelperUuidTests, whenResourceClassIsUsedToIndexClassNamesThenCorrectNamesAreReturned) {
+HWTEST2_F(IoctlPrelimHelperUuidTests, whenResourceClassIsUsedToIndexClassNamesThenCorrectNamesAreReturned, IsAtMostXeCore) {
     EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::elf)].first, "I915_UUID_CLASS_ELF_BINARY");
     EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::isa)].first, "I915_UUID_CLASS_ISA_BYTECODE");
     EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::contextSaveArea)].first, "I915_UUID_L0_SIP_AREA");
@@ -71,7 +72,7 @@ TEST_F(IoctlPrelimHelperUuidTests, whenResourceClassIsUsedToIndexClassNamesThenC
     EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::l0ZebinModule)].first, "L0_ZEBIN_MODULE");
 }
 
-TEST_F(IoctlPrelimHelperUuidTests, givenUuidStringWhenGettingClassIndexThenCorrectIndexForValidStringsIsReturned) {
+HWTEST2_F(IoctlPrelimHelperUuidTests, givenUuidStringWhenGettingClassIndexThenCorrectIndexForValidStringsIsReturned, IsAtMostXeCore) {
     uint32_t index = 100;
     auto validUuid = DrmUuid::getClassUuidIndex(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::contextSaveArea)].second, index);
 

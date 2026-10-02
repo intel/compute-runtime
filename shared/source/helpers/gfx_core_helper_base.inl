@@ -70,9 +70,14 @@ size_t GfxCoreHelperHw<Family>::getRenderSurfaceStateSize(const RootDeviceEnviro
 }
 
 template <typename Family>
-size_t GfxCoreHelperHw<Family>::getBindlessSurfaceStateSlotSize() const {
+bool GfxCoreHelperHw<Family>::isReducedSurfaceStateInUse(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
-    return sizeof(RENDER_SURFACE_STATE);
+    return getRenderSurfaceStateSize(rootDeviceEnvironment) < sizeof(RENDER_SURFACE_STATE);
+}
+
+template <typename Family>
+size_t GfxCoreHelperHw<Family>::getScratchSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    return getRenderSurfaceStateSize(rootDeviceEnvironment);
 }
 
 template <typename Family>
@@ -620,19 +625,6 @@ template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const {
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
     gmmResourceParams->Flags.Info.RenderCompressed = isCompressed;
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isSipKernelAsHexadecimalArrayPreferred() const {
-    return false;
-}
-
-template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-}
-
-template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
 }
 
 template <typename GfxFamily>

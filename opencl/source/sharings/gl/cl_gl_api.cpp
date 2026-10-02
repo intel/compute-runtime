@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/api/api_enter.h"
+#include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
@@ -319,6 +320,7 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     uint32_t propertyType = 0;
     uint32_t propertyValue = 0;
     Platform *platform = nullptr;
+    bool foreignPlatformGiven = false;
 
     if (properties != nullptr) {
         while (*properties != 0) {
@@ -326,7 +328,9 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
             propertyValue = static_cast<uint32_t>(properties[1]);
             switch (propertyType) {
             case CL_CONTEXT_PLATFORM: {
-                platform = castToObject<Platform>(reinterpret_cast<cl_platform_id>(properties[1]));
+                auto platformHandle = reinterpret_cast<cl_platform_id>(properties[1]);
+                platform = castToObject<Platform>(platformHandle);
+                foreignPlatformGiven = (platformHandle != nullptr) && (platform == nullptr);
             } break;
             case CL_GL_CONTEXT_KHR:
                 glHglrcHandle = propertyValue;
@@ -353,6 +357,14 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     }
 
     if (paramName == CL_DEVICES_FOR_GL_CONTEXT_KHR || paramName == CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR) {
+        if (foreignPlatformGiven) {
+            retVal = CL_INVALID_PLATFORM;
+            return retVal;
+        }
+        if (!platform && platformsImpl->empty()) {
+            retVal = CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR;
+            return retVal;
+        }
         if (!platform) {
             platform = (*platformsImpl)[0].get();
         }
@@ -384,6 +396,7 @@ cl_int CL_API_CALL clGetSupportedGLTextureFormatsINTEL(
     cl_uint numEntries,
     cl_GLenum *glFormats,
     cl_uint *numTextureFormats) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::Context, context, clGetSupportedGLTextureFormatsINTEL, context, flags, imageType, numEntries, glFormats, numTextureFormats);
 
     if (numTextureFormats) {
         *numTextureFormats = 0;

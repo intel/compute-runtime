@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -84,7 +85,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     bool usesSvm = false;
 
     bool inputMemObjFound = false;
-    auto inputMemObjHandle = NEO::LEO::MemObj::getMemObjProperties<uintptr_t>(properties, CL_L0_MEM_OBJ_HANDLE, &inputMemObjFound);
+    auto inputMemObjHandle = NEO::LEO::MemObj::getMemObjProperties<uintptr_t>(properties, CL_MEM_L0_HANDLE_INTEL, &inputMemObjFound);
     if (inputMemObjFound) {
         ptr = reinterpret_cast<void *>(inputMemObjHandle);
     } else {
@@ -97,7 +98,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
         }
 
         const bool preferHostMemory = memoryProperties.flags.forceHostMemory ||
-                                      pCtx->getClDevice()->getHardwareInfo().capabilityTable.isIntegratedDevice;
+                                      (debugManager.flags.LeoBufferMemory.get() == 1);
 
         auto allocData = pCtx->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(hostPtr);
         if (memoryProperties.flags.useHostPtr && allocData) {
@@ -140,6 +141,15 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
         cpuPtr = hostPtr;
     }
 
+    auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
+    ze_command_list_handle_t internalCopyCmdList = nullptr;
+    if (ret == ZE_RESULT_SUCCESS && copyFromHostPtr) {
+        ret = pContext->getInternalCopyCmdList(internalCopyCmdList);
+        if (ret != ZE_RESULT_SUCCESS && !inputMemObjFound) {
+            zeMemFree(pContext->getL0ContextHandle(), ptr);
+        }
+    }
+
     if (errcodeRet) {
         *errcodeRet = L0ToClResultMapper(ret);
     }
@@ -151,10 +161,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     }
 
     if (copyFromHostPtr) {
-        auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
         {
             auto lock = pContext->lockInternalCopy();
-            zeCommandListAppendMemoryCopy(pContext->getInternalCopyCmdList(),
+            zeCommandListAppendMemoryCopy(internalCopyCmdList,
                                           ptr,
                                           hostPtr,
                                           size,
@@ -162,9 +171,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                                           0,
                                           nullptr);
         }
-        zeCommandListHostSynchronize(pContext->getInternalCopyCmdList(), std::numeric_limits<uint64_t>::max());
+        zeCommandListHostSynchronize(internalCopyCmdList, std::numeric_limits<uint64_t>::max());
     }
-    auto buffer = new NEO::LEO::Buffer(NEO::LEO::castToObject<NEO::LEO::Context>(context), memoryProperties, flags, ptr, cpuPtr, size, inputMemObjFound);
+    auto buffer = new NEO::LEO::Buffer(pContext, memoryProperties, flags, ptr, cpuPtr, size, inputMemObjFound);
     buffer->storeProperties(properties);
     buffer->setUsesSvm(usesSvm);
     cl_mem tracingRetVal = buffer;
@@ -298,7 +307,14 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     cl_image_format resolvedFormat{};
 
     bool inputMemObjFound = false;
-    auto inputMemObjHandle = NEO::LEO::MemObj::getMemObjProperties<uintptr_t>(properties, CL_L0_MEM_OBJ_HANDLE, &inputMemObjFound);
+    auto inputImageHandles = NEO::LEO::MemObj::getMemObjHandleList(properties, CL_IMAGE_L0_HANDLE_INTEL, &inputMemObjFound);
+
+    if (inputMemObjFound && (inputImageHandles.size() != pContext->getRootDeviceIndices().size())) [[unlikely]] {
+        err.set(CL_INVALID_PROPERTY);
+        cl_mem tracingRetVal = nullptr;
+        TRACING_EXIT(ClCreateImageWithProperties, &tracingRetVal);
+        return tracingRetVal;
+    }
 
     if (!inputMemObjFound && imageDesc->mem_object == nullptr) {
         const auto validationResult = NEO::LEO::validateStandaloneImageDescriptor(*pContext->getClDevice(),
@@ -316,11 +332,16 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     }
 
     if (inputMemObjFound) {
-        imageHandle = reinterpret_cast<ze_image_handle_t>(inputMemObjHandle);
+        imageHandle = reinterpret_cast<ze_image_handle_t>(inputImageHandles[0]);
         auto l0Image = static_cast<L0::ImageImp *>(L0::Image::fromHandle(imageHandle));
         l0imageDesc = l0Image->getImageDesc();
         resolvedFormat.image_channel_data_type = L0::getClChannelDataType(l0imageDesc.format);
         resolvedFormat.image_channel_order = L0::getClChannelOrder(l0imageDesc.format, l0Image->isSrgb());
+
+        const auto &rootDeviceIndices = pContext->getRootDeviceIndices();
+        for (size_t handleIndex = 1; handleIndex < inputImageHandles.size(); ++handleIndex) {
+            extraImageHandles[rootDeviceIndices[handleIndex]] = reinterpret_cast<ze_image_handle_t>(inputImageHandles[handleIndex]);
+        }
     } else {
         auto parentMemObj = NEO::LEO::castToObject<NEO::LEO::MemObj>(imageDesc->mem_object);
         auto device = pContext->getL0Object()->getDevices().begin()->second;
@@ -432,7 +453,12 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         cpuPtr = hostPtr;
     }
 
+    ze_command_list_handle_t internalCopyCmdList = nullptr;
     if (memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr) {
+        ret = pContext->getInternalCopyCmdList(internalCopyCmdList);
+    }
+
+    if (internalCopyCmdList != nullptr) {
         {
             auto lock = pContext->lockInternalCopy();
             if (NEO::LEO::isNV12Image(imageFormat)) {
@@ -456,7 +482,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                     ze_image_handle_t planeHandle{};
                     if (zeImageViewCreateExp(pContext->getL0ContextHandle(), device, &planeDesc, imageHandle, &planeHandle) == ZE_RESULT_SUCCESS) {
                         ze_image_region_t planeRegion{0u, 0u, 0u, planeWidth, planeHeight, 1u};
-                        ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(), planeHandle, planePtr, &planeRegion, rowPitch, 0, nullptr, 0, nullptr);
+                        ret = zeCommandListAppendImageCopyFromMemoryExt(internalCopyCmdList, planeHandle, planePtr, &planeRegion, rowPitch, 0, nullptr, 0, nullptr);
                         zeImageDestroy(planeHandle);
                     }
                 };
@@ -473,7 +499,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                 }
                 ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
                                          regionHeight, regionDepth};
-                ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(),
+                ret = zeCommandListAppendImageCopyFromMemoryExt(internalCopyCmdList,
                                                                 imageHandle,
                                                                 hostPtr,
                                                                 &region,
@@ -482,15 +508,17 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                                                                 nullptr, 0, nullptr);
             }
         }
-        zeCommandListHostSynchronize(pContext->getInternalCopyCmdList(), std::numeric_limits<uint64_t>::max());
+        zeCommandListHostSynchronize(internalCopyCmdList, std::numeric_limits<uint64_t>::max());
     }
 
     if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
-        if (!inputMemObjFound && imageHandle) {
-            zeImageDestroy(imageHandle);
-        }
-        for (auto &extraImageHandle : extraImageHandles) {
-            zeImageDestroy(extraImageHandle.second);
+        if (!inputMemObjFound) {
+            if (imageHandle) {
+                zeImageDestroy(imageHandle);
+            }
+            for (auto &extraImageHandle : extraImageHandles) {
+                zeImageDestroy(extraImageHandle.second);
+            }
         }
         err.set(L0ToClResultMapper(ret));
         cl_mem tracingRetVal = nullptr;
@@ -500,7 +528,8 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
 
     cl_mem associatedMemObject = inputMemObjFound ? nullptr : imageDesc->mem_object;
     auto image = new NEO::LEO::Image(pContext, memoryProperties, flags, imageHandle, cpuPtr, nullptr, inputMemObjFound, resolvedFormat, associatedMemObject);
-    image->setOwnerRootDeviceIndex(pContext->getL0Object()->getDevices().begin()->first);
+    image->setOwnerRootDeviceIndex(inputMemObjFound ? pContext->getRootDeviceIndices()[0]
+                                                    : pContext->getL0Object()->getDevices().begin()->first);
     for (auto &[extraRootDeviceIndex, extraImageHandle] : extraImageHandles) {
         image->addPerDeviceHandle(extraRootDeviceIndex, extraImageHandle);
     }

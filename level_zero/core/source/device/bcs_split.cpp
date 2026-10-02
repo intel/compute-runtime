@@ -91,7 +91,6 @@ bool BcsSplit::setupQueues() {
 
     ze_command_queue_flags_t flags = events.isAggregatedEventMode() ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;
     ze_command_queue_desc_t splitDesc = {.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, .flags = flags, .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS};
-    auto productFamily = this->device.getHwInfo().platform.eProductFamily;
 
     for (const auto &csr : csrs) {
         ze_result_t result;
@@ -112,7 +111,7 @@ bool BcsSplit::setupQueues() {
             splitDesc.ordinal = static_cast<uint32_t>(std::distance(regularEngines.cbegin(), ordinalIt));
         }
 
-        auto cmdList = CommandList::createImmediate(productFamily, &device, &splitDesc, true, engineGroupType, csr, result, 0u);
+        auto cmdList = CommandList::createImmediate(&device, &splitDesc, true, engineGroupType, csr, result, 0u);
         UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
 
         cmdList->forceDisableInOrderWaits();

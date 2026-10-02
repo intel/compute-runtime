@@ -70,6 +70,7 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     enableForceExternalHaltAndForceException.set(properties.enableForceExternalHaltAndForceException.value);
     enableOutOfBoundariesInTranslationException.set(properties.enableOutOfBoundariesInTranslationException.value);
     lscSamplerBackingThreshold.set(properties.lscSamplerBackingThreshold.value);
+    l1CachePolicy.set(properties.l1CachePolicy.value);
 
     copyPropertiesExtra(properties);
 }
@@ -102,6 +103,7 @@ bool StateComputeModeProperties::isDirty() const {
            enableForceExternalHaltAndForceException.isDirty ||
            enableOutOfBoundariesInTranslationException.isDirty ||
            lscSamplerBackingThreshold.isDirty ||
+           l1CachePolicy.isDirty ||
            isDirtyExtra();
 }
 
@@ -128,6 +130,7 @@ void StateComputeModeProperties::clearIsDirtyPerContext() {
     enableForceExternalHaltAndForceException.isDirty = false;
     enableOutOfBoundariesInTranslationException.isDirty = false;
     lscSamplerBackingThreshold.isDirty = false;
+    l1CachePolicy.isDirty = false;
 
     clearIsDirtyExtraPerContext();
 }
@@ -176,6 +179,12 @@ void StateComputeModeProperties::initSupport(const RootDeviceEnvironment &rootDe
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     this->defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
+    if (this->scmPropertiesSupport.l1CachePolicy) {
+        this->defaultL1CachePolicy = static_cast<int32_t>(productHelper.getL1CachePolicy(false));
+        this->defaultL1CachePolicyDebuggerActive = static_cast<int32_t>(productHelper.getL1CachePolicy(true));
+    }
+
+    this->rootDeviceEnvironment = &rootDeviceEnvironment;
     this->propertiesSupportLoaded = true;
 }
 
@@ -199,6 +208,7 @@ void StateComputeModeProperties::resetState() {
     this->enableForceExternalHaltAndForceException.value = StreamProperty::initValue;
     this->enableOutOfBoundariesInTranslationException.value = StreamProperty::initValue;
     this->lscSamplerBackingThreshold.value = StreamProperty::initValue;
+    this->l1CachePolicy.value = StreamProperty::initValue;
 
     resetStateExtra();
 }
@@ -255,6 +265,12 @@ void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency,
             this->enableSystemMemoryReadFence.set(hasPeerAccess.value());
         }
     }
+
+    if (this->scmPropertiesSupport.l1CachePolicy) {
+        const bool isDebuggerActive = (this->rootDeviceEnvironment != nullptr) && (this->rootDeviceEnvironment->debugger != nullptr);
+        this->l1CachePolicy.set(isDebuggerActive ? this->defaultL1CachePolicyDebuggerActive : this->defaultL1CachePolicy);
+    }
+
     setPropertiesExtraPerContext();
     if (clearDirtyState) {
         clearIsDirtyPerContext();

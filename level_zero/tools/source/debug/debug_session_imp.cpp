@@ -2166,6 +2166,29 @@ ze_result_t DebugSessionImp::isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP:
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DebugSessionImp::writeFifoTail(uint64_t vmHandle, uint64_t tailGpuVa, uint32_t fifoTailIndex) {
+    for (uint32_t attempt = 1; attempt <= maxTailWriteAttempts; attempt++) {
+        auto retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(&fifoTailIndex), sizeof(uint32_t), tailGpuVa);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            PRINT_DEBUGGER_ERROR_LOG("Writing FIFO tail failed, error = %d\n", retVal);
+            return retVal;
+        }
+        uint32_t readBackTailIndex = 0;
+        retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(&readBackTailIndex), sizeof(uint32_t), tailGpuVa);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            PRINT_DEBUGGER_ERROR_LOG("Reading FIFO tail failed, error = %d\n", retVal);
+            return retVal;
+        }
+        if (readBackTailIndex == fifoTailIndex) {
+            return ZE_RESULT_SUCCESS;
+        }
+        PRINT_DEBUGGER_ERROR_LOG("FIFO tail write did not persist: written = %u read back = %u attempt = %u\n",
+                                 fifoTailIndex, readBackTailIndex, attempt);
+    }
+    // A later readFifo() detects the reverted tail and restores it.
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
     if (!stateSaveAreaHeader) {
@@ -2184,6 +2207,8 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
     uint64_t offsetFifo;
     getFifoOffsets(stateSaveAreaHeader, offsetTail, offsetFifoSize, offsetFifo, gpuVa);
 
+    const bool tailRevertWorkaroundEnabled = NEO::debugManager.flags.DebugUmdFifoTailRevertWorkaround.get() != 0;
+
     while (drainRetries--) {
         constexpr uint32_t failsafeTimeoutWait = 50;
         std::vector<uint32_t> fifoIndices(3);
@@ -2197,6 +2222,20 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
         fifoSize = fifoIndices[0];
         fifoHeadIndex = fifoIndices[1];
         fifoTailIndex = fifoIndices[2];
+
+        // Only the debugger writes the tail, so reading back the value it replaced means the write was reverted.
+        auto tailState = fifoTailStates.find(vmHandle);
+        if (tailRevertWorkaroundEnabled && tailState != fifoTailStates.end() &&
+            fifoTailIndex != tailState->second.writtenTail &&
+            fifoTailIndex == tailState->second.previousTail) {
+            PRINT_DEBUGGER_ERROR_LOG("FIFO tail reverted from %u to %u, restoring\n", tailState->second.writtenTail, fifoTailIndex);
+            fifoTailIndex = tailState->second.writtenTail;
+            retVal = writeFifoTail(vmHandle, gpuVa + offsetTail, fifoTailIndex);
+            if (retVal != ZE_RESULT_SUCCESS) {
+                return retVal;
+            }
+        }
+        const uint32_t initialTailIndex = fifoTailIndex;
 
         if (lastHead != fifoHeadIndex) {
             drainRetries++;
@@ -2261,10 +2300,18 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
         }
 
         if (updateTailIndex) {
-            retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(&fifoTailIndex), sizeof(uint32_t), gpuVa + offsetTail);
-            if (retVal != ZE_RESULT_SUCCESS) {
-                PRINT_DEBUGGER_ERROR_LOG("Writing FIFO failed, error = %d\n", retVal);
-                return retVal;
+            if (tailRevertWorkaroundEnabled) {
+                retVal = writeFifoTail(vmHandle, gpuVa + offsetTail, fifoTailIndex);
+                if (retVal != ZE_RESULT_SUCCESS) {
+                    return retVal;
+                }
+                fifoTailStates[vmHandle] = {initialTailIndex, fifoTailIndex};
+            } else {
+                retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(&fifoTailIndex), sizeof(uint32_t), gpuVa + offsetTail);
+                if (retVal != ZE_RESULT_SUCCESS) {
+                    PRINT_DEBUGGER_ERROR_LOG("Writing FIFO failed, error = %d\n", retVal);
+                    return retVal;
+                }
             }
             NEO::sleep(std::chrono::milliseconds(failsafeTimeoutWait));
         } else {

@@ -46,18 +46,4 @@ zeIntelKernelGetBinaryExp(
     return L0::Kernel::fromHandle(hKernel)->getKernelProgramBinary(pSize, pKernelBinary);
 }
 
-ze_result_t ZE_APICALL
-zeKernelGetModuleHandleExt(
-    ze_kernel_handle_t hKernel,
-    ze_module_handle_t *phModule) {
-    return L0::zeKernelGetModuleHandle(hKernel, phModule);
-}
-
-ze_result_t ZE_APICALL
-zeModuleGetDeviceHandleExt(
-    ze_module_handle_t hModule,
-    ze_device_handle_t *phDevice) {
-    return L0::zeModuleGetDeviceHandle(hModule, phDevice);
-}
-
 } // namespace L0

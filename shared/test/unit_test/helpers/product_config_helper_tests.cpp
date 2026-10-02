@@ -12,13 +12,13 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <algorithm>
 
 TEST_F(ProductConfigHelperTests, givenAotPlatformsWhenGettingCompatibilityMappingAndRtlIdAcronymsThenGlobalContainersAreReturned) {
-    EXPECT_EQ(&AOT::compatibilityMapping, &AOT::getCompatibilityMapping());
-    EXPECT_EQ(&AOT::rtlIdAcronyms, &AOT::getRtlIdAcronyms());
+    EXPECT_EQ(&AOT::compatibilityMapping, &AOT::compatibilityMapping);
+    EXPECT_EQ(&AOT::rtlIdAcronyms, &AOT::rtlIdAcronyms);
 }
 
 TEST_F(ProductConfigHelperTests, givenFamilyEnumWhenHelperSearchForAMatchThenCorrespondingAcronymIsReturned) {
@@ -212,7 +212,7 @@ TEST_F(ProductConfigHelperTests, GivenDifferentAotConfigsInDeviceAotInfosWhenCom
     DeviceAotInfo rhs{};
     ASSERT_TRUE(lhs == rhs);
 
-    lhs.aotConfig = {AOT::getConfixMaxPlatform()};
+    lhs.aotConfig = {AOT::CONFIG_MAX_PLATFORM};
     rhs.aotConfig = {AOT::UNKNOWN_ISA};
 
     EXPECT_FALSE(lhs == rhs);
@@ -260,7 +260,7 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenHelperSearchForAMatchThenCorre
         numSupportedAcronyms++;
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronym), value);
     }
-    for (const auto &[acronym, value] : AOT::getRtlIdAcronyms()) {
+    for (const auto &[acronym, value] : AOT::rtlIdAcronyms) {
         if (!productConfigHelper->isSupportedProductConfig(value)) {
             continue;
         }
@@ -285,7 +285,7 @@ TEST_F(AotDeviceInfoTests, givenProductIpVersionStringWhenHelperSearchForProduct
         ipVersion << deviceConfig.second;
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(ipVersion.str()), deviceConfig.second);
     }
-    for (const auto &deviceConfig : AOT::getRtlIdAcronyms()) {
+    for (const auto &deviceConfig : AOT::rtlIdAcronyms) {
         if (!productConfigHelper->isSupportedProductConfig(deviceConfig.second)) {
             continue;
         }
@@ -343,7 +343,7 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenRemoveDashesFromTheNameThenSti
 
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronymCopy), value);
     }
-    for (const auto &[acronym, value] : AOT::getRtlIdAcronyms()) {
+    for (const auto &[acronym, value] : AOT::rtlIdAcronyms) {
         if (!productConfigHelper->isSupportedProductConfig(value)) {
             continue;
         }
@@ -728,7 +728,7 @@ TEST_F(AotDeviceInfoTests, givenNonExistingIpVersionWhenGetDeviceIdFromIpVersion
 }
 
 TEST_F(AotDeviceInfoTests, givenLegacyProductConfigPresentOnlyInCompatibilityMappingWhenGetDeviceIdFromIpVersionCalledThenFallbackDeviceIdIsReturned) {
-    for (const auto &[legacyProductConfig, compatibleConfigs] : AOT::getCompatibilityMapping()) {
+    for (const auto &[legacyProductConfig, compatibleConfigs] : AOT::compatibilityMapping) {
         if (productConfigHelper->isSupportedProductConfig(legacyProductConfig)) {
             continue;
         }

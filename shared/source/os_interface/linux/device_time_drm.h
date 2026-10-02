@@ -18,7 +18,7 @@ class DeviceTimeDrm : public DeviceTime {
     double getDynamicDeviceTimerResolution() const override;
     uint64_t getDynamicDeviceTimerClock() const override;
     bool isTimestampsRefreshEnabled() const override;
-    volatile uint64_t *getTimestampPtr() override;
+    MmioTimestampPtrHelper getMmioTimestampPtrHelper(OsContext &osContext) override;
 
   protected:
     Drm *pDrm = nullptr;

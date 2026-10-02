@@ -22,7 +22,7 @@ TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenUnifiedBufferThenItCanBe
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::win32Nt;
     cl_int retVal{};
-    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, {}));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     UnifiedSharingFunctions sharingFunctions;
@@ -50,7 +50,7 @@ TEST_F(UnifiedSharingBufferTestsWithInvalidMemoryManager, givenValidContextAndAl
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::win32Nt;
     cl_int retVal{};
-    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, {}));
     ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
@@ -60,7 +60,7 @@ TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenUnsupportedHandleTypeWhe
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
 
-    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, {}));
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
@@ -70,7 +70,7 @@ TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenValidContextAndMemoryMan
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::win32Nt;
     cl_int retVal{};
-    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, {}));
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -82,8 +82,61 @@ TEST_F(UnifiedSharingBufferTestsWithMultiRootDevice, givenValidContextWithMultiR
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::win32Nt;
     cl_int retVal{};
-    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, {}));
     EXPECT_NE(nullptr, buffer->getGraphicsAllocation(device1->getRootDeviceIndex()));
     EXPECT_NE(nullptr, buffer->getGraphicsAllocation(device2->getRootDeviceIndex()));
     ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(UnifiedSharingBufferTestsWithMultiRootDevice, givenTargetRootDeviceIndicesWhenCreatingBufferFromSharedHandleThenAllocationIsCreatedOnlyForRequestedDevices) {
+    cl_mem_flags flags{};
+    UnifiedSharingMemoryDescription desc{};
+    desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::win32Nt;
+    cl_int retVal{};
+
+    ASSERT_EQ(device1->getRootDeviceIndex(), context->getDevice(0)->getRootDeviceIndex());
+    RootDeviceIndicesContainer targetRootDeviceIndices{};
+    targetRootDeviceIndices.pushUnique(device2->getRootDeviceIndex());
+
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, targetRootDeviceIndices));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(nullptr, buffer->getGraphicsAllocation(device1->getRootDeviceIndex()));
+    EXPECT_NE(nullptr, buffer->getGraphicsAllocation(device2->getRootDeviceIndex()));
+}
+
+TEST_F(UnifiedSharingBufferTestsWithMultiRootDevice, givenEmptyTargetRootDeviceIndicesWhenCreatingBufferFromSharedHandleThenAllContextDevicesAreUsed) {
+    cl_mem_flags flags{};
+    UnifiedSharingMemoryDescription desc{};
+    desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::win32Nt;
+    cl_int retVal{};
+
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, {}));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_NE(nullptr, buffer->getGraphicsAllocation(device1->getRootDeviceIndex()));
+    EXPECT_NE(nullptr, buffer->getGraphicsAllocation(device2->getRootDeviceIndex()));
+}
+
+TEST_F(UnifiedSharingBufferTestsWithMultiRootDevice, givenOneDeviceFailingToImportWhenCreatingBufferFromSharedHandleThenAlreadyOpenedAllocationsAreFreed) {
+    UnifiedSharingMockMemoryManager<true> failingMemoryManager{*device1->getExecutionEnvironment()};
+    failingMemoryManager.maxSuccessfulImports = 1;
+    VariableBackup<MemoryManager *> memoryManagerBackup{&context->memoryManager, &failingMemoryManager};
+
+    cl_mem_flags flags{};
+    UnifiedSharingMemoryDescription desc{};
+    desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::win32Nt;
+    cl_int retVal{};
+
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal, {}));
+
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+    EXPECT_EQ(nullptr, buffer);
+    EXPECT_EQ(2u, failingMemoryManager.createFromSharedHandleCalled);
+    EXPECT_EQ(1u, failingMemoryManager.freeGraphicsMemoryCalled);
 }

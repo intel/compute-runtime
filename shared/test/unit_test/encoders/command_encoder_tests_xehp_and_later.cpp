@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -193,7 +193,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
     ASSERT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
     EXPECT_EQ(cmdMem, storeRegMem);
-    EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR13, cmdMem->getRegisterAddress());
     EXPECT_EQ(dstAddress, cmdMem->getMemoryAddress());
     EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
 }

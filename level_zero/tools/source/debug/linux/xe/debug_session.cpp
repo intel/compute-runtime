@@ -362,13 +362,15 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
                                 (uint64_t)vm.clientHandle, (uint64_t)vm.vmHandle);
 
         if (event->flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate)) {
-            UNRECOVERABLE_IF(clientHandleToConnection.find(vm.clientHandle) == clientHandleToConnection.end());
-            clientHandleToConnection[vm.clientHandle]->vmIds.emplace(static_cast<uint64_t>(vm.vmHandle));
+            auto connectionIt = clientHandleToConnection.find(vm.clientHandle);
+            UNRECOVERABLE_IF(connectionIt == clientHandleToConnection.end());
+            connectionIt->second->vmIds.emplace(static_cast<uint64_t>(vm.vmHandle));
         }
 
         if (event->flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitDestroy)) {
-            UNRECOVERABLE_IF(clientHandleToConnection.find(vm.clientHandle) == clientHandleToConnection.end());
-            clientHandleToConnection[vm.clientHandle]->vmIds.erase(static_cast<uint64_t>(vm.vmHandle));
+            auto connectionIt = clientHandleToConnection.find(vm.clientHandle);
+            UNRECOVERABLE_IF(connectionIt == clientHandleToConnection.end());
+            connectionIt->second->vmIds.erase(static_cast<uint64_t>(vm.vmHandle));
         }
     } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeExecQueue)) {
         auto execQueue = euDebugInterface->toEuDebugEventExecQueue(event);
@@ -433,13 +435,14 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         }
     } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBind)) {
         NEO::EuDebugEventVmBind vmBind = euDebugInterface->toEuDebugEventVmBind(event);
-        UNRECOVERABLE_IF(clientHandleToConnection.find(vmBind.clientHandle) == clientHandleToConnection.end());
+        auto connectionIt = clientHandleToConnection.find(vmBind.clientHandle);
+        UNRECOVERABLE_IF(connectionIt == clientHandleToConnection.end());
 
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VM_BIND client_handle = %llu vm_handle = %llu num_binds = %llu vmBindflag=%lu\n",
                                 static_cast<uint64_t>(vmBind.clientHandle), static_cast<uint64_t>(vmBind.vmHandle),
                                 static_cast<uint64_t>(vmBind.numBinds), static_cast<uint32_t>(vmBind.flags));
 
-        auto &connection = clientHandleToConnection[vmBind.clientHandle];
+        auto &connection = connectionIt->second;
         UNRECOVERABLE_IF(connection->vmBindMap.contains(vmBind.base.seqno));
         auto &vmBindData = connection->vmBindMap[vmBind.base.seqno];
         vmBindData.vmBind = vmBind;
@@ -513,10 +516,11 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         UNRECOVERABLE_IF(vmBindOpMetadataOwner == nullptr);
         auto &vmBindMap = vmBindOpMetadataOwner->vmBindMap;
         auto &vmBindIdentifierMap = vmBindOpMetadataOwner->vmBindIdentifierMap;
-        UNRECOVERABLE_IF(vmBindIdentifierMap.find(vmBindOpMetadata.vmBindOpRefSeqno) == vmBindIdentifierMap.end());
-        VmBindSeqNo vmBindSeqNo = vmBindIdentifierMap[vmBindOpMetadata.vmBindOpRefSeqno];
-        UNRECOVERABLE_IF(vmBindMap.find(vmBindSeqNo) == vmBindMap.end());
-        auto &vmBindOpData = vmBindMap[vmBindSeqNo].vmBindOpMap[vmBindOpMetadata.vmBindOpRefSeqno];
+        auto vmBindIdentifierIt = vmBindIdentifierMap.find(vmBindOpMetadata.vmBindOpRefSeqno);
+        UNRECOVERABLE_IF(vmBindIdentifierIt == vmBindIdentifierMap.end());
+        auto vmBindIt = vmBindMap.find(vmBindIdentifierIt->second);
+        UNRECOVERABLE_IF(vmBindIt == vmBindMap.end());
+        auto &vmBindOpData = vmBindIt->second.vmBindOpMap[vmBindOpMetadata.vmBindOpRefSeqno];
         UNRECOVERABLE_IF(!vmBindOpData.pendingNumExtensions);
         vmBindOpData.vmBindOpMetadataVec.push_back(vmBindOpMetadata);
         vmBindOpData.pendingNumExtensions--;
@@ -540,10 +544,10 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         UNRECOVERABLE_IF(tileIndex < 0);
 
         auto &vmToTile = clientHandleToConnection[execQueuePlacements->clientHandle]->vmToTile;
-        if (vmToTile.find(execQueuePlacements->vmHandle) != vmToTile.end()) {
-            if (vmToTile[execQueuePlacements->vmHandle] != static_cast<uint32_t>(tileIndex)) {
+        if (auto vmToTileIt = vmToTile.find(execQueuePlacements->vmHandle); vmToTileIt != vmToTile.end()) {
+            if (vmToTileIt->second != static_cast<uint32_t>(tileIndex)) {
                 PRINT_DEBUGGER_ERROR_LOG("vmToTile map: For vm_handle = %lu tileIndex = %u already present. Attempt to overwrite with tileIndex = %d\n",
-                                         static_cast<uint64_t>(execQueuePlacements->vmHandle), vmToTile[execQueuePlacements->vmHandle], tileIndex);
+                                         static_cast<uint64_t>(execQueuePlacements->vmHandle), vmToTileIt->second, tileIndex);
                 DEBUG_BREAK_IF(true);
             }
         } else {
@@ -570,9 +574,10 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
 
         NEO::EuDebugEventVmBindOpDebugData eventVmBindDebugData = euDebugInterface->toEuDebugEventVmBindOpDebugData(event);
         auto &vmBindMap = clientHandleToConnection[eventVmBindDebugData.clientHandle]->vmBindMap;
-        UNRECOVERABLE_IF(vmBindMap.find(eventVmBindDebugData.vmBindRefSeqno) == vmBindMap.end());
+        auto vmBindIt = vmBindMap.find(eventVmBindDebugData.vmBindRefSeqno);
+        UNRECOVERABLE_IF(vmBindIt == vmBindMap.end());
 
-        auto &vmBindData = vmBindMap[eventVmBindDebugData.vmBindRefSeqno];
+        auto &vmBindData = vmBindIt->second;
         UNRECOVERABLE_IF(!vmBindData.pendingNumBinds);
 
         vmBindData.vmBindOpDebugDataVec.push_back(eventVmBindDebugData);
@@ -663,8 +668,8 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     uint32_t tileIndex = 0;
     auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
     if (numTiles > 0) {
-        if (connection->vmToTile.find(vmBindData.vmBind.vmHandle) != connection->vmToTile.end()) {
-            tileIndex = connection->vmToTile[vmBindData.vmBind.vmHandle];
+        if (auto vmToTileIt = connection->vmToTile.find(vmBindData.vmBind.vmHandle); vmToTileIt != connection->vmToTile.end()) {
+            tileIndex = vmToTileIt->second;
             PRINT_DEBUGGER_INFO_LOG("handleVmBind: tileIndex = %d for vmHandle = %" SCNx64 " \n", tileIndex, vmBindData.vmBind.vmHandle);
         } else {
             PRINT_DEBUGGER_ERROR_LOG("handleVmBind: tileIndex not found for vmHandle = %" SCNx64 " \n", vmBindData.vmBind.vmHandle);
@@ -764,9 +769,9 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
         }
 
         if (vmBindOp.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitDestroy)) {
-            if (connection->isaMap[tileIndex].count(vmBindOp.addr)) {
-                auto &isa = connection->isaMap[tileIndex][vmBindOp.addr];
-                if (isa->validVMs.count(vmBindData.vmBind.vmHandle)) {
+            if (auto isaIt = connection->isaMap[tileIndex].find(vmBindOp.addr); isaIt != connection->isaMap[tileIndex].end()) {
+                auto &isa = isaIt->second;
+                if (isa->validVMs.contains(vmBindData.vmBind.vmHandle)) {
                     isa->validVMs.erase(vmBindData.vmBind.vmHandle);
                     auto &module = connection->metaDataToModule[isa->moduleHandle];
                     module.segmentVmBindCounter[tileIndex]--;
@@ -973,7 +978,7 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
 
                 auto &isa = connection->isaMap[tileIndex][entry.addr];
 
-                if (isa->validVMs.count(vmBindData.vmBind.vmHandle)) {
+                if (isa->validVMs.contains(vmBindData.vmBind.vmHandle)) {
                     isa->validVMs.erase(vmBindData.vmBind.vmHandle);
 
                     if (&entry == &vmBindData.vmBindOpDebugDataVec.back() && isa->validVMs.size() == 0) {
@@ -1013,8 +1018,9 @@ void DebugSessionLinuxXe::handleMetadataEvent(NEO::EuDebugEventMetadata *metaDat
     bool destroy = metaData->base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitDestroy);
     bool create = metaData->base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate);
 
-    UNRECOVERABLE_IF(clientHandleToConnection.find(metaData->clientHandle) == clientHandleToConnection.end());
-    const auto &connection = clientHandleToConnection[metaData->clientHandle];
+    auto connectionIt = clientHandleToConnection.find(metaData->clientHandle);
+    UNRECOVERABLE_IF(connectionIt == clientHandleToConnection.end());
+    const auto &connection = connectionIt->second;
 
     if (destroy && connection->metaDataMap[metaData->metadataHandle].metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataProgramModule)) {
         DEBUG_BREAK_IF(connection->metaDataToModule[metaData->metadataHandle].segmentVmBindCounter[0] != 0 ||
@@ -1154,16 +1160,18 @@ int DebugSessionLinuxXe::flushVmCache(int vmfd) {
 
 uint64_t DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) {
 
-    if (clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end()) {
+    auto connectionIt = clientHandleToConnection.find(clientHandle);
+    if (connectionIt == clientHandleToConnection.end()) {
         return invalidHandle;
     }
 
-    auto &clientConnection = clientHandleToConnection[clientHandle];
-    if (clientConnection->lrcHandleToVmHandle.find(lrcHandle) == clientConnection->lrcHandleToVmHandle.end()) {
+    auto &clientConnection = connectionIt->second;
+    auto lrcIt = clientConnection->lrcHandleToVmHandle.find(lrcHandle);
+    if (lrcIt == clientConnection->lrcHandleToVmHandle.end()) {
         return invalidHandle;
     }
 
-    return clientConnection->lrcHandleToVmHandle[lrcHandle];
+    return lrcIt->second;
 }
 
 void DebugSessionLinuxXe::handleAttentionEvent(NEO::EuDebugEventEuAttention *attention) {

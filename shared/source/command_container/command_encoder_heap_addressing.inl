@@ -13,7 +13,8 @@ void EncodeDispatchKernel<Family>::programInlineDataHeapless(uint8_t *inlineData
 }
 
 template <typename Family>
-uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args) {
+uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args, uint32_t &scratchSlot0SizeAllocated) {
+    scratchSlot0SizeAllocated = 0u;
     return 0u;
 }
 

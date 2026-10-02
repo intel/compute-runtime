@@ -23,21 +23,8 @@ namespace L0 {
 using Family = NEO::Xe3pCoreFamily;
 static auto gfxCore = IGFX_XE3P_CORE;
 
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe3p_and_later_specializations.inl"
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"
-
-template <>
-uint32_t L0GfxCoreHelperHw<Family>::getGrfRegisterCount(uint32_t *regPtr) const {
-    return (regPtr[4] & 0x3FF);
-}
-
-template <>
-bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (rootDeviceEnvironment.getHardwareInfo()->capabilityTable.supportsImages) {
-        return false;
-    } else {
-        return true;
-    }
-}
 
 template <>
 NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
@@ -47,31 +34,6 @@ NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(con
     } else {
         return NEO::HeapAddressModel::globalStateless;
     }
-}
-
-template <>
-bool L0GfxCoreHelperHw<Family>::implicitSynchronizedDispatchForCooperativeKernelsAllowed() const {
-    return true;
-}
-
-template <>
-bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
-    return true;
-}
-
-template <>
-bool L0GfxCoreHelperHw<Family>::threadResumeRequiresUnlock() const {
-    return true;
-}
-
-template <>
-bool L0GfxCoreHelperHw<Family>::isThreadControlStoppedSupported() const {
-    return false;
-}
-
-template <>
-bool L0GfxCoreHelperHw<Family>::isCopyOffloadForOutOfOrderImmediateCmdListSupported() const {
-    return true;
 }
 
 template class L0GfxCoreHelperHw<Family>;

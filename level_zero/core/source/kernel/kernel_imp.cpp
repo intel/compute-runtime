@@ -33,9 +33,9 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/program/work_size_info.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 
@@ -113,7 +113,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
         auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getBindlessSurfaceStateSlotSize());
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment()));
 
         this->surfaceStateHeapSize = (kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful +
                                       kernelInfo->kernelDescriptor.kernelAttributes.numBindlessImages) *
@@ -574,19 +574,28 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
 ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
                                         uint32_t globalSizeZ, uint32_t *groupSizeX,
                                         uint32_t *groupSizeY, uint32_t *groupSizeZ) {
+    uint32_t dim = (globalSizeY > 1U) ? 2 : 1U;
+    dim = (globalSizeZ > 1U) ? 3 : dim;
+
+    return suggestGroupSize(globalSizeX, globalSizeY, globalSizeZ, dim, groupSizeX, groupSizeY, groupSizeZ);
+}
+
+ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
+                                        uint32_t globalSizeZ, uint32_t workDim,
+                                        uint32_t *groupSizeX, uint32_t *groupSizeY,
+                                        uint32_t *groupSizeZ) {
     size_t retGroupSize[3] = {};
     const auto &kernelDescriptor = this->getImmutableData()->getDescriptor();
     auto maxWorkGroupSize = module->getMaxGroupSize(kernelDescriptor);
-    auto simd = kernelDescriptor.kernelAttributes.simdSize;
+    auto slmTotalSizePerThreadGroup = this->getSlmTotalSizePerThreadGroup();
     size_t workItems[3] = {globalSizeX, globalSizeY, globalSizeZ};
-    uint32_t dim = (globalSizeY > 1U) ? 2 : 1U;
-    dim = (globalSizeZ > 1U) ? 3 : dim;
 
     auto cachedGroupSize = std::find_if(this->privateState.suggestGroupSizeCache.begin(),
                                         this->privateState.suggestGroupSizeCache.end(),
                                         [&](const auto &other) {
                                             return other.groupSize == workItems &&
-                                                   other.slmArgsTotalSize == this->getSlmTotalSizePerThreadGroup();
+                                                   other.slmArgsTotalSize == slmTotalSizePerThreadGroup &&
+                                                   other.workDim == workDim;
                                         });
     if (cachedGroupSize != this->privateState.suggestGroupSizeCache.end()) {
         *groupSizeX = static_cast<uint32_t>(cachedGroupSize->suggestedGroupSize.x);
@@ -595,40 +604,26 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         return ZE_RESULT_SUCCESS;
     }
 
-    if (NEO::debugManager.flags.EnableComputeWorkSizeND.get()) {
-        auto usesImages = kernelDescriptor.kernelAttributes.flags.usesImages;
-        auto neoDevice = module->getDevice()->getNEODevice();
-        const auto &deviceInfo = neoDevice->getDeviceInfo();
-        uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
-        uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
+    auto neoDevice = module->getDevice()->getNEODevice();
+    uint32_t localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
 
-        if (this->getSlmTotalSizePerThreadGroup() > 0 && localMemSize < this->getSlmTotalSizePerThreadGroup()) {
-            const auto device = module->getDevice();
-            const auto driverHandle = device->getDriverHandle();
+    if (slmTotalSizePerThreadGroup > 0 && localMemSize < slmTotalSizePerThreadGroup) {
+        const auto device = module->getDevice();
+        const auto driverHandle = device->getDriverHandle();
 
-            CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSizePerThreadGroup(), localMemSize);
-            driverHandle->setErrorDescription(std::string(str.get()));
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSizePerThreadGroup(), localMemSize);
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-        }
-
-        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelDescriptor.kernelAttributes.usesBarriers(), simd, this->getSlmTotalSizePerThreadGroup(),
-                                 neoDevice->getRootDeviceEnvironment(), numThreadsPerSubSlice, localMemSize,
-                                 usesImages, false, kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
-        NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
-    } else {
-        if (1U == dim) {
-            NEO::computeWorkgroupSize1D(maxWorkGroupSize, retGroupSize, workItems, simd);
-        } else if (NEO::debugManager.flags.EnableComputeWorkSizeSquared.get() && (2U == dim)) {
-            NEO::computeWorkgroupSizeSquared(maxWorkGroupSize, retGroupSize, workItems, simd, dim);
-        } else {
-            NEO::computeWorkgroupSize2D(maxWorkGroupSize, retGroupSize, workItems, simd);
-        }
+        CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", slmTotalSizePerThreadGroup, localMemSize);
+        driverHandle->setErrorDescription(std::string(str.get()));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSizePerThreadGroup, localMemSize);
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
+
+    NEO::computeWorkgroupSizeForKernel(kernelDescriptor, maxWorkGroupSize, slmTotalSizePerThreadGroup,
+                                       *neoDevice, workDim, workItems, retGroupSize);
+
     *groupSizeX = static_cast<uint32_t>(retGroupSize[0]);
     *groupSizeY = static_cast<uint32_t>(retGroupSize[1]);
     *groupSizeZ = static_cast<uint32_t>(retGroupSize[2]);
-    this->privateState.suggestGroupSizeCache.emplace_back(workItems, this->getSlmTotalSizePerThreadGroup(), retGroupSize);
+    this->privateState.suggestGroupSizeCache.emplace_back(workItems, slmTotalSizePerThreadGroup, workDim, retGroupSize);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -743,7 +738,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 
         NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
         auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-        const auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+        const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment());
         if (bindlessHeapsHelper) {
 
             if (image->allocateBindlessSlotWithMipmap(mipLevel) != ZE_RESULT_SUCCESS) {
@@ -774,6 +769,31 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
     privateState.argumentsResidencyContainer[argIndex] = image->getAllocation();
 
     return ZE_RESULT_SUCCESS;
+}
+
+std::optional<size_t> KernelImp::getPooledAllocationEndOffsetForSurfaceState(const void *address, const NEO::GraphicsAllocation *alloc) const {
+    auto neoDevice = this->module->getDevice()->getNEODevice();
+
+    auto poolLookup = this->module->getDevice()->getDriverHandle()->getHostUsmPoolOwningPtr(address);
+    if (false == poolLookup.isAllocatedInPool()) {
+        poolLookup = neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(address);
+    }
+    if (false == poolLookup.isAllocatedInPool()) {
+        return std::nullopt;
+    }
+
+    const auto pooledBaseAddress = reinterpret_cast<uint64_t>(poolLookup.pooledAllocationBasePtr);
+    const auto allocationBaseAddress = alloc->getGpuAddressToPatch();
+    if (pooledBaseAddress < allocationBaseAddress) {
+        return std::nullopt;
+    }
+
+    const auto pooledAllocationEnd = static_cast<size_t>(pooledBaseAddress - allocationBaseAddress) + poolLookup.pooledAllocationSize;
+    if (pooledAllocationEnd > alloc->getUnderlyingBufferSize()) {
+        return std::nullopt;
+    }
+
+    return pooledAllocationEnd;
 }
 
 ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *allocData) {
@@ -904,7 +924,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     }
 
     NEO::SvmAllocationData *peerAllocData = nullptr;
-    if (allocData && driverHandle->isRemoteResourceNeeded(alloc, allocData, device)) {
+    if (allocData && driverHandle->isRemoteResourceNeeded(*allocData, device)) {
 
         uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
         uint64_t offset = (uint64_t)requestedAddress - pbase;
@@ -962,7 +982,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 
         NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
         auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
-        auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment());
         if (bindlessHeapsHelper) {
 
             if (image->allocateBindlessSlot() != ZE_RESULT_SUCCESS) {
@@ -1051,7 +1071,7 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
         const auto offset = getImmutableData()->getDescriptor().payloadMappings.samplerTable.tableOffset;
         auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
         const auto stateSize = gfxCoreHelper.getSamplerStateSize();
-        auto heapOffset = offset + static_cast<uint32_t>(stateSize) * arg.index;
+        auto heapOffset = offset + static_cast<uint32_t>(stateSize) * arg.bindlessSlot;
 
         sampler->copySamplerStateToDSH(getDynamicStateHeapDataSpan(), heapOffset);
     }
@@ -1158,18 +1178,17 @@ void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocatio
 
 void KernelImp::setInlineSamplers() {
     auto device = module->getDevice();
-    const auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     for (auto &inlineSampler : getKernelDescriptor().inlineSamplers) {
         ze_sampler_desc_t samplerDesc = {};
         samplerDesc.addressMode = static_cast<ze_sampler_address_mode_t>(inlineSampler.addrMode);
         samplerDesc.filterMode = static_cast<ze_sampler_filter_mode_t>(inlineSampler.filterMode);
         samplerDesc.isNormalized = inlineSampler.isNormalized;
 
-        auto sampler = std::unique_ptr<L0::Sampler>(L0::Sampler::create(productFamily, device, &samplerDesc));
+        auto sampler = std::unique_ptr<L0::Sampler>(L0::Sampler::create(device, &samplerDesc));
         UNRECOVERABLE_IF(sampler.get() == nullptr);
 
         if (NEO::isValidOffset(inlineSampler.bindless)) {
-            auto samplerStateIndex = inlineSampler.samplerIndex;
+            auto samplerStateIndex = inlineSampler.bindlessSlot;
             auto &gfxCoreHelper = device->getGfxCoreHelper();
             auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
             uint32_t offset = inlineSampler.borderColorStateSize;
@@ -1409,8 +1428,8 @@ std::unique_ptr<KernelImp> KernelImp::makeDependentClone() {
     DEBUG_BREAK_IF(nullptr == this->ownedSharedState.get());
 
     auto *device{this->module->getDevice()};
-    const auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-    KernelAllocatorFn allocator = kernelFactory[productFamily];
+    const auto gfxCoreFamily = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    KernelAllocatorFn allocator = kernelFactory[gfxCoreFamily];
     auto clone = static_cast<KernelImp *>(allocator(nullptr));
     DEBUG_BREAK_IF(nullptr == clone);
     DEBUG_BREAK_IF(clone->ownedSharedState);
@@ -1470,6 +1489,8 @@ uint32_t KernelImp::getSurfaceStateHeapDataSize() const {
 }
 
 void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
+    UNRECOVERABLE_IF(this->sharedState->heaplessEnabled);
+
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     auto &ssInHeap = alloc->getBindlessInfo();
 
@@ -1511,10 +1532,10 @@ void KernelImp::patchGlobalOffset() {
     }
 }
 
-Kernel *Kernel::create(uint32_t productFamily, Module *module,
-                       const ze_kernel_desc_t *desc, ze_result_t *res) {
-    UNRECOVERABLE_IF(productFamily >= NEO::maxProductEnumValue);
-    KernelAllocatorFn allocator = kernelFactory[productFamily];
+Kernel *Kernel::create(Module *module, const ze_kernel_desc_t *desc, ze_result_t *res) {
+    auto gfxCoreFamily = module->getDevice()->getNEODevice()->getRenderCoreFamily();
+    UNRECOVERABLE_IF(gfxCoreFamily >= NEO::maxCoreEnumValue);
+    KernelAllocatorFn allocator = kernelFactory[gfxCoreFamily];
     auto kernel = static_cast<KernelImp *>(allocator(module));
     *res = kernel->initialize(desc);
     if (*res) {
@@ -1586,7 +1607,7 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
     UNRECOVERABLE_IF(this->module == nullptr);
 
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment());
 
     for (size_t argIndex = 0; argIndex < getImmutableData()->getDescriptor().payloadMappings.explicitArgs.size(); argIndex++) {
         const auto &arg = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex];
@@ -1606,7 +1627,7 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
 
             if (index < std::numeric_limits<uint32_t>::max() && !privateState.isBindlessOffsetSet[argIndex]) {
                 auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + index * surfaceStateSize);
-                auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
+                auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(surfaceStateOffset);
 
                 patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
             }
@@ -1637,15 +1658,12 @@ void KernelImp::patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerSta
             continue;
         }
 
-        auto samplerIndex = arg.as<NEO::ArgDescSampler>().index;
-        if (NEO::isValidOffset(crossThreadOffset)) {
+        const auto samplerSlot = arg.as<NEO::ArgDescSampler>().bindlessSlot;
+        if (NEO::isValidOffset(crossThreadOffset) && NEO::isDefined(samplerSlot)) {
             auto patchLocation = ptrOffset(crossThreadData, crossThreadOffset);
-
-            if (samplerIndex < std::numeric_limits<uint8_t>::max()) {
-                auto surfaceStateOffset = static_cast<uint64_t>(samplerStateOffset + samplerIndex * samplerStateSize);
-                auto patchValue = surfaceStateOffset;
-                patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), arg.as<NEO::ArgDescSampler>().size, patchValue);
-            }
+            auto surfaceStateOffset = static_cast<uint64_t>(samplerStateOffset + samplerSlot * samplerStateSize);
+            auto patchValue = surfaceStateOffset;
+            patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), arg.as<NEO::ArgDescSampler>().size, patchValue);
         }
     }
 
@@ -1659,14 +1677,11 @@ void KernelImp::patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerSta
             continue;
         }
 
-        auto samplerIndex = sampler.samplerIndex;
-
-        if (samplerIndex < std::numeric_limits<uint8_t>::max()) {
-            auto patchLocation = ptrOffset(crossThreadData, crossThreadOffset);
-            auto surfaceStateOffset = static_cast<uint64_t>(samplerStateOffset + samplerIndex * samplerStateSize);
-            auto patchValue = surfaceStateOffset;
-            patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sampler.size, patchValue);
-        }
+        auto samplerSlot = sampler.bindlessSlot;
+        auto patchLocation = ptrOffset(crossThreadData, crossThreadOffset);
+        auto surfaceStateOffset = static_cast<uint64_t>(samplerStateOffset + samplerSlot * samplerStateSize);
+        auto patchValue = surfaceStateOffset;
+        patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sampler.size, patchValue);
     }
 }
 
@@ -1683,7 +1698,7 @@ void KernelImp::patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStat
     auto implicitArgsVec = getImmutableData()->getDescriptor().getImplicitArgBindlessCandidatesVec();
 
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment());
 
     for (size_t i = 0; i < implicitArgsVec.size(); i++) {
         if (NEO::isValidOffset(implicitArgsVec[i]->bindless)) {
@@ -1692,7 +1707,7 @@ void KernelImp::patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStat
 
             if (index < std::numeric_limits<uint32_t>::max()) {
                 auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + index * surfaceStateSize);
-                auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
+                auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(surfaceStateOffset);
 
                 patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
             }

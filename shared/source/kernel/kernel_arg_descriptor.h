@@ -121,6 +121,7 @@ struct ArgDescSampler final {
     } metadataPayload;
     uint8_t index = undefined<uint8_t>;
     uint8_t size = undefined<uint8_t>;
+    uint8_t bindlessSlot = undefined<uint8_t>;
 };
 
 struct ArgDescValue final {

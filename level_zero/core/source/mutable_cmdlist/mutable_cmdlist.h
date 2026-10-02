@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/cmdlist/cmdlist_signal_event_parameters.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 
@@ -99,11 +100,11 @@ struct MutableCommandList {
         static MutableCommandList *allocate(uint32_t numIddsPerBlock) { return new Type(numIddsPerBlock); }
     };
 
-    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+    static CommandList *create(Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType) {
-        return create(productFamily, device, engineGroupType, flags, resultValue, useInternalEngineType, 0u);
+        return create(device, engineGroupType, flags, resultValue, useInternalEngineType, 0u);
     }
-    static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+    static CommandList *create(Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType, uint32_t estimatedNumberOfCommands);
     virtual ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) = 0;
     virtual ~MutableCommandList() = 0;
@@ -139,7 +140,8 @@ struct MutableCommandList {
     virtual ze_result_t appendMIMath(void *aluArray, size_t aluCount) = 0;
 
     virtual ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) = 0;
+                                      ze_event_handle_t *phWaitEvents,
+                                      CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters) = 0;
     virtual ze_result_t appendMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                                   const void **pRanges,
                                                   ze_event_handle_t hSignalEvent,
@@ -219,7 +221,7 @@ struct MutableCommandList {
 
     virtual MutableComputeWalker *getCommandWalker(size_t offsetToWalkerCommand, uint16_t indirectOffset, uint16_t scratchOffset) = 0;
 
-    virtual void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent) = 0;
+    virtual void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent, bool apiRequiredExternalGraphEvent) = 0;
 
     virtual bool isCbEventBoundToCmdList(Event *event) const = 0;
     virtual NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc) = 0;
@@ -242,10 +244,10 @@ struct MutableCommandList {
 using MutableCommandListAllocFn = MutableCommandList *(*)(uint32_t);
 extern MutableCommandListAllocFn mutableCommandListFactory[];
 
-template <uint32_t productFamily, typename CommandListType>
+template <uint32_t gfxCoreFamily, typename CommandListType>
 struct MutableCommandListPopulateFactory {
     MutableCommandListPopulateFactory() {
-        mutableCommandListFactory[productFamily] = MutableCommandList::Allocator<CommandListType>::allocate;
+        mutableCommandListFactory[gfxCoreFamily] = MutableCommandList::Allocator<CommandListType>::allocate;
     }
 };
 } // namespace MCL

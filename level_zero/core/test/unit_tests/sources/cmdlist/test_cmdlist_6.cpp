@@ -9,10 +9,12 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/program/sync_buffer_handler.h"
+#include "shared/source/utilities/software_tags.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -45,6 +47,7 @@ using MultiTileImmediateCommandListTest = Test<MultiTileCommandListFixture<true,
 
 HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImmediateCommandListThenExpectPartitionCountMatchTileCount, IsXeCore) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    commandList->ensureImmediateResourcesInitialized();
     EXPECT_EQ(2u, commandList->partitionCount);
 
     auto returnValue = commandList->reset();
@@ -56,6 +59,7 @@ using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixtu
 
 HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCreatingInternalImmediateCommandListThenExpectPartitionCountEqualOne, IsXeCore) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    commandList->ensureImmediateResourcesInitialized();
     EXPECT_EQ(1u, commandList->partitionCount);
 
     auto returnValue = commandList->reset();
@@ -84,7 +88,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     auto &currentCsrStreamProperties = commandListImmediate.getCsr(false)->getStreamProperties();
@@ -156,7 +160,7 @@ HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlush
         debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(forceMemoryPrefetch);
         debugManager.flags.EnableBOChunkingPrefetch.set(enableBOChunkingPrefetch);
 
-        commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+        commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
         auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
         commandListImmediate.containsAnyKernel = true;
         commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::kernel, false, false, nullptr, nullptr);
@@ -169,7 +173,7 @@ HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlush
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
@@ -188,17 +192,15 @@ HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlush
     commandList.cmdQImmediate = &mockCommandQueue;
     commandList.indirectAllocationsAllowed = false;
 
-    size_t size1 = 0x1000;
-    void *ptr1 = malloc(size1); // reinterpret_cast<void *>(0x1234);
-    size_t size2 = 0x2000;
-    void *ptr2 = malloc(size2); // reinterpret_cast<void *>(0x1234);
+    uint8_t data1{};
+    uint8_t data2{};
 
-    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, ptr1, size1, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
+    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, &data1, sizeof(data1), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
     EXPECT_EQ(1u, commandList.getMemAdviseOperations().size());
-    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, ptr2, size2, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
+    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, &data2, sizeof(data2), ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
     EXPECT_EQ(2u, commandList.getMemAdviseOperations().size());
-    commandList.appendMemoryPrefetch(ptr1, size1);
-    commandList.appendMemoryPrefetch(ptr2, size2);
+    commandList.appendMemoryPrefetch(&data1, sizeof(data1));
+    commandList.appendMemoryPrefetch(&data2, sizeof(data2));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::none, false, false, nullptr, nullptr));
     EXPECT_EQ(0u, commandList.getMemAdviseOperations().size());
@@ -208,15 +210,13 @@ HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlush
     EXPECT_TRUE(commandList.executeMemAdviseBeforePrefetch);
 
     commandList.cmdQImmediate = oldCommandQueue;
-    free(ptr1);
-    free(ptr2);
 }
 
 HWTEST_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned) {
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -228,7 +228,7 @@ HWTEST_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExec
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -240,7 +240,7 @@ HWTEST_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListIs
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
     if (commandListImmediate.isHeaplessModeEnabled()) {
         GTEST_SKIP();
@@ -1065,6 +1065,110 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBui
 
     commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+}
+
+struct CommandListSWTagCountersImageTest : CommandListTest {
+    void SetUp() override {
+        debugManager.flags.EnableSWTags.set(true);
+        debugManager.flags.EnableExtendedSoftwareTags.set(true);
+        CommandListTest::SetUp();
+
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
+        static_cast<Mock<::L0::KernelImp> *>(kernel)->setArgRedescribedImageCallBase = false;
+    }
+
+    template <typename FamilyType>
+    void expectSingleRopOperation(L0::CommandList &commandList) {
+        using MI_NOOP = typename FamilyType::MI_NOOP;
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+        auto cmdStream = commandList.getCmdContainer().getCommandStream();
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+        uint32_t callNameBeginTags = 0u;
+        std::vector<uint32_t> ropValues;
+        uint32_t dispatchCounterUpdates = 0u;
+        for (auto &cmd : cmdList) {
+            if (auto marker = genCmdCast<MI_NOOP *>(cmd)) {
+                if (NEO::SWTags::BaseTag::getMarkerNoopID(NEO::SWTags::OpCode::callNameBegin) == marker->getIdentificationNumber() &&
+                    marker->getIdentificationNumberRegisterWriteEnable()) {
+                    callNameBeginTags++;
+                }
+            } else if (auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd)) {
+                if (lri->getRegisterOffset() == RegisterOffsets::csGprR11) {
+                    ropValues.push_back(static_cast<uint32_t>(lri->getDataDword()));
+                } else if (lri->getRegisterOffset() == RegisterOffsets::csGprR10) {
+                    dispatchCounterUpdates++;
+                }
+            }
+        }
+
+        EXPECT_EQ(1u, callNameBeginTags);
+        ASSERT_EQ(1u, ropValues.size());
+        EXPECT_EQ(1u, ropValues[0]);
+        EXPECT_EQ(0u, dispatchCounterUpdates);
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+};
+
+HWTEST2_F(CommandListSWTagCountersImageTest, givenExtendedSWTagsWhenImageCopyFromMemoryThenOnlyRopCounterIsProgrammed, ImageSupport) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 2;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
+    ASSERT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    expectSingleRopOperation<FamilyType>(*commandList);
+}
+
+HWTEST2_F(CommandListSWTagCountersImageTest, givenExtendedSWTagsWhenImageCopyToMemoryThenOnlyRopCounterIsProgrammed, ImageSupport) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    commandList->appendImageCopyToMemory(dstPtr, imageHw->toHandle(), &srcRegion, nullptr, 0, nullptr, copyParams);
+    ASSERT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    expectSingleRopOperation<FamilyType>(*commandList);
+}
+
+HWTEST2_F(CommandListSWTagCountersImageTest, givenExtendedSWTagsWhenImageCopyRegionThenOnlyRopCounterIsProgrammed, ImageSupport) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto imageHwSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHwDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHwSrc->initialize(device, &zeDesc);
+    imageHwDst->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    commandList->appendImageCopyRegion(imageHwDst->toHandle(), imageHwSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, copyParams);
+    ASSERT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    expectSingleRopOperation<FamilyType>(*commandList);
 }
 
 HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyFromMemoryThenCorrectRowAndSlicePitchArePassed, HeaplessSupport) {
@@ -2140,7 +2244,7 @@ HWTEST_F(CommandListTest, givenCmdListWithIndirectAccessWhenExecutingCommandList
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -2159,7 +2263,7 @@ HWTEST_F(CommandListTest, givenRegularCmdListWithIndirectAccessWhenExecutingRegu
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     auto &mockCommandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandListImmediate);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -2169,8 +2273,7 @@ HWTEST_F(CommandListTest, givenRegularCmdListWithIndirectAccessWhenExecutingRegu
     auto oldCommandQueue = mockCommandListImmediate.cmdQImmediate;
     mockCommandListImmediate.cmdQImmediate = mockCmdQHw.get();
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily,
-                                                                            device,
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device,
                                                                             NEO::EngineGroupType::compute,
                                                                             0u,
                                                                             returnValue, false));
@@ -2193,7 +2296,7 @@ HWTEST_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandLi
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -3660,7 +3763,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     auto &csrStream = csr.commandStream;
 
     ze_result_t returnValue;
-    L0::ult::CommandList *cmdListObject = CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false));
+    L0::ult::CommandList *cmdListObject = CommandList::whiteboxCast(CommandList::create(device, engineGroupType, 0u, returnValue, false));
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -3937,7 +4040,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     otherCommandQueue->initialize(false, false, false);
     otherCommandQueue->heaplessModeEnabled = true;
     ze_result_t returnValue;
-    commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(device, engineGroupType, 0u, returnValue, false)));
     commandList->close();
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
     CommandListExecutionInternalOptions internalOptions = {};
@@ -3988,7 +4091,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
 
     ze_result_t returnValue;
-    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, &l0Device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
+    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(&l0Device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
     commandListImmediate->heaplessModeEnabled = true;
 
     const ze_group_count_t groupCount{1, 1, 1};

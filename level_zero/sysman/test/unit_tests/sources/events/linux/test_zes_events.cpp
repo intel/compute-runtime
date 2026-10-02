@@ -9,6 +9,7 @@
 
 #include "level_zero/sysman/test/unit_tests/sources/events/linux/mock_events.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
 
 namespace L0 {
 namespace Sysman {
@@ -211,7 +212,7 @@ TEST_F(SysmanEventsFixture, GivenLiveAndStaleTracePipeDescriptorsWhenUpdatingCpe
         {{mockStaleTracePipeFd, POLLIN, 0}, PollSourceType::tracefs}};
 
     bool cperRegistered = false;
-    eventsUtil->updateCperPollSource(ZES_INTEL_CPER_DATA_AVAILABLE, pollSources, cperRegistered);
+    eventsUtil->updateCperPollSource(ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT, pollSources, cperRegistered);
 
     EXPECT_TRUE(cperRegistered);
     ASSERT_EQ(3u, pollSources.size());
@@ -1435,6 +1436,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventTypeResult = "remove";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1480,7 +1482,8 @@ TEST_F(SysmanEventsFixture,
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH will be received only if EventType is "remove"
+    pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_DETACH will be received only if EventType is "remove"
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1525,6 +1528,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventTypeResult = "add";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1571,6 +1575,7 @@ TEST_F(SysmanEventsFixture,
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH will be received only if EventType is "add"
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1615,6 +1620,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventTypeResult = "add";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
 
     auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
@@ -1630,6 +1636,70 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
 
     delete[] phDevices;
     delete[] pDeviceEvents;
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibOriginal;
+    driverHandle->pOsSysmanDriver = pOsSysmanDriverOriginal;
+    delete pPublicLinuxSysmanDriverImp;
+    delete pUdevLibLocal;
+}
+
+TEST_F(SysmanEventsFixture, GivenDevPathsOfChildNodesWhenCheckingForDrmCardNodeThenTrueIsReturnedOnlyForPrimaryDrmCardNode) {
+    const std::string pciDevPath = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+    EXPECT_TRUE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/card0", pciDevPath));
+    EXPECT_TRUE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/card12", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/card", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/card0/card0-DP-1", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/drm/renderD128", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath + "/xe.nvm.768", pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode(pciDevPath, pciDevPath));
+    EXPECT_FALSE(PublicLinuxEventsUtil::isDrmCardNode("/devices/pci0000:00/0000:00:02.0/drm/card0", pciDevPath));
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachAndDetachEventsAndAddOrRemoveEventIsReceivedForNonDrmCardNodeThenNoEventIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    auto pOsSysmanDriverOriginal = driverHandle->pOsSysmanDriver;
+    driverHandle->pOsSysmanDriver = static_cast<L0::Sysman::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    auto pUdevLibLocal = new EventsUdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+
+    auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+
+    const std::string pciDevPath = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+    const std::vector<std::string> childNodeDevPaths = {pciDevPath + "/drm/renderD128",
+                                                        pciDevPath + "/drm/card0/card0-DP-1",
+                                                        pciDevPath + "/xe.nvm.768"};
+    for (const auto &eventType : {"add", "remove"}) {
+        for (const auto &childNodeDevPath : childNodeDevPaths) {
+            pUdevLibLocal->getEventTypeResult = eventType;
+            pUdevLibLocal->eventPropertyValueDevPathResult = childNodeDevPath;
+            uint32_t numDeviceEvents = 0;
+            zes_event_type_flags_t pDeviceEvents[1] = {0};
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+            EXPECT_EQ(0u, numDeviceEvents);
+            EXPECT_EQ(0u, pDeviceEvents[0]);
+        }
+    }
+
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibOriginal;
     driverHandle->pOsSysmanDriver = pOsSysmanDriverOriginal;
     delete pPublicLinuxSysmanDriverImp;
@@ -2531,6 +2601,164 @@ TEST_F(SysmanEventsFixture, GivenInvalidDeviceRealPathWhenListeningForSurvivabil
     pSysfsAccess->realPath = "/completely/invalid/path/without-device-substring";
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenPowerOffPendingEventFlagWhenRegisteringEventsThenSuccessIsReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsImp->eventRegister(ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
+}
+
+TEST_F(SysmanEventsFixture, GivenNullFsAccessWhenCheckingForPowerOffPendingThenFalseIsReturned) {
+    EXPECT_FALSE(PublicLinuxEventsUtil::isPowerOffPending(pSysmanDeviceImp, nullptr, "/devices/pci0000:97/0000:97:02.0"));
+}
+
+// The alert reason node is exposed by the xe driver only.
+class SysmanEventsXeFixture : public SysmanEventsFixture {
+  protected:
+    MockSysmanKmdInterfaceXe *pSysmanKmdInterfaceXe = nullptr;
+    std::unique_ptr<L0::Sysman::SysmanKmdInterface> pSysmanKmdInterfaceOriginal;
+
+    void SetUp() override {
+        SysmanEventsFixture::SetUp();
+        pSysmanKmdInterfaceOriginal = std::move(pLinuxSysmanImp->pSysmanKmdInterface);
+        pSysmanKmdInterfaceXe = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterfaceXe);
+    }
+
+    void TearDown() override {
+        pLinuxSysmanImp->pSysmanKmdInterface = std::move(pSysmanKmdInterfaceOriginal);
+        SysmanEventsFixture::TearDown();
+    }
+};
+
+TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsPresentWhenListeningForPowerOffPendingEventThenEventListenAPIReturnsEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING), pDeviceEvents[0]);
+}
+
+TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsNotPresentWhenListeningForPowerOffPendingEventThenEventListenAPIDoesNotReturnEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    // Without the alert reason node the wedged uevent is a survivability mode entry only.
+    pFsAccess->mockAlertReasonNodeExists = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsPresentButWedgedPropertyIsNotVendorSpecificWhenListeningForPowerOffPendingEventThenEventListenAPIDoesNotReturnEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    udevLibLocal.getEventPropertyValueResult = "not-vendor-specific";
+
+    pFsAccess->mockAlertReasonNodeExists = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
+    std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.data(), &numDeviceEvents, pDeviceEvents.data()));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeNameIsUnavailableWhenListeningForPowerOffPendingEventThenEventListenAPIDoesNotReturnEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> driverBackup(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+    EventsUdevLibMock udevLibLocal = {};
+    VariableBackup<L0::Sysman::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib, &udevLibLocal);
+    udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
+    udevLibLocal.getEventPropertyValueResult = "vendor-specific";
+
+    pFsAccess->mockAlertReasonNodeExists = true;
+    pSysmanKmdInterfaceXe->mockNodeFileNameUnavailable = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     uint32_t numDeviceEvents = 0;
     std::vector<zes_event_type_flags_t> pDeviceEvents(1, 0);

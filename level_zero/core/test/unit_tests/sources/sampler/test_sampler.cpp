@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/utilities/numeric.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -184,7 +185,8 @@ HWTEST2_F(ContextCreateSamplerTest, givenInvalidHardwareFamilyThenSamplerIsNotCr
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    L0::Sampler *sampler = Sampler::create(NEO::maxProductEnumValue, device, &desc);
+    VariableBackup<GFXCORE_FAMILY> coreFamilyBackup(&device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->platform.eRenderCoreFamily, GFXCORE_FAMILY{NEO::maxCoreEnumValue});
+    L0::Sampler *sampler = Sampler::create(device, &desc);
 
     EXPECT_EQ(nullptr, sampler);
 }
@@ -201,7 +203,7 @@ HWTEST2_F(ContextCreateSamplerTest, givenInvalidAddressModeThenSamplerIsNotCreat
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    L0::Sampler *sampler = Sampler::create(FamilyType::gfxCoreFamily, device, &desc);
+    L0::Sampler *sampler = Sampler::create(device, &desc);
 
     EXPECT_EQ(nullptr, sampler);
 }
@@ -218,7 +220,7 @@ HWTEST2_F(ContextCreateSamplerTest, givenInvalidFilterModeThenSamplerIsNotCreate
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    L0::Sampler *sampler = Sampler::create(FamilyType::gfxCoreFamily, device, &desc);
+    L0::Sampler *sampler = Sampler::create(device, &desc);
 
     EXPECT_EQ(nullptr, sampler);
 }
@@ -259,7 +261,7 @@ HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPreci
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[productFamily])());
+    auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[FamilyType::gfxCoreFamily])());
     sampler->initialize(device, &desc);
 
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, sampler->samplerState.getLowQualityFilter());
@@ -281,7 +283,7 @@ HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPreci
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[productFamily])());
+    auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[FamilyType::gfxCoreFamily])());
     sampler->initialize(device, &desc);
 
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, sampler->samplerState.getLowQualityFilter());

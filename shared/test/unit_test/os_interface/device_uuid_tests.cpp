@@ -36,7 +36,7 @@ struct MultipleDeviceBdfUuidTest : public ::testing::Test {
     DebugManagerStateRestore restorer;
 };
 
-HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffinityMaskThenUuidIsCorrectForRootAndSubDevices, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffinityMaskThenUuidIsCorrectForRootAndSubDevices, MatchAny) {
 
     debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
@@ -89,7 +89,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffinityMaskT
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
 }
 
-HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDeviceUuidFromBdfThenCorrectUuidIsRetrieved, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDeviceUuidFromBdfThenCorrectUuidIsRetrieved, MatchAny) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
@@ -128,7 +128,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDevic
     }
 }
 
-HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDeviceUuidFromBdfFromOneDeviceThenCorrectUuidIsRetrieved, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDeviceUuidFromBdfFromOneDeviceThenCorrectUuidIsRetrieved, MatchAny) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
@@ -160,7 +160,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDevic
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
 }
 
-HWTEST2_F(MultipleDeviceBdfUuidTest, GivenIncorrectBdfWhenRetrievingDeviceUuidFromBdfThenUuidIsNotRetrieved, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenIncorrectBdfWhenRetrievingDeviceUuidFromBdfThenUuidIsNotRetrieved, MatchAny) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
@@ -175,7 +175,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenIncorrectBdfWhenRetrievingDeviceUuidFr
     EXPECT_EQ(false, deviceFactory->rootDevices[0]->getUuid(uuid));
 }
 
-HWTEST2_F(MultipleDeviceBdfUuidTest, GivenNoSubDevicesInAffinityMaskwhenRetrievingDeviceUuidFromBdfThenUuidOfRootDeviceIsRetrieved, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenNoSubDevicesInAffinityMaskwhenRetrievingDeviceUuidFromBdfThenUuidOfRootDeviceIsRetrieved, MatchAny) {
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
@@ -207,7 +207,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenNoSubDevicesInAffinityMaskwhenRetrievi
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
 }
 
-HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMaskSetToRootDeviceThenUuidOfRootDeviceIsBasedOnAffinityMask, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMaskSetToRootDeviceThenUuidOfRootDeviceIsBasedOnAffinityMask, MatchAny) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
@@ -239,7 +239,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMas
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
 }
 
-HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMaskSetToSubDeviceThenUuidOfRootDeviceIsBasedOnAffinityMask, MatchAny) {
+HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMaskSetToSubDeviceThenUuidOfRootDeviceIsBasedOnAffinityMask, MatchAny) {
 
     debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
@@ -288,7 +288,7 @@ class MockProductHelperHwUuidEnablementTest : public ProductHelperHw<gfxProduct>
     }
 };
 
-HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIstUsed, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIstUsed, MatchAny) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
@@ -312,7 +312,7 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDev
     }
 }
 
-HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsUsed, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsUsed, MatchAny) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
@@ -336,7 +336,7 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDev
     }
 }
 
-HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsNotUsed, MatchAny) {
+HWTEST2_PRODUCT_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsNotUsed, MatchAny) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
@@ -355,7 +355,7 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDe
     EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
 }
 
-HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsTrueWhenDeviceIsCreatedAndGetHelperReturnsFalseThenGetUuidReturnsFalse, IsPVC) {
+HWTEST2_PRODUCT_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsTrueWhenDeviceIsCreatedAndGetHelperReturnsFalseThenGetUuidReturnsFalse, IsPVC) {
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);

@@ -23,7 +23,7 @@
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 }
@@ -125,8 +125,8 @@ TEST(BmgProductConfigHelperTest, givenLegacyProductConfigWhenGettingDeviceIdThen
     for (auto legacyProductConfig : {AOT::BMG_G21_A1_RESERVED, AOT::BMG_G21_B0_RESERVED}) {
         ProductConfigHelper productConfigHelper{};
 
-        auto compatibleConfigsIt = AOT::getCompatibilityMapping().find(legacyProductConfig);
-        ASSERT_NE(compatibleConfigsIt, AOT::getCompatibilityMapping().end());
+        auto compatibleConfigsIt = AOT::compatibilityMapping.find(legacyProductConfig);
+        ASSERT_NE(compatibleConfigsIt, AOT::compatibilityMapping.end());
         auto compatibleConfigs = compatibleConfigsIt->second;
         ASSERT_FALSE(compatibleConfigs.empty());
 

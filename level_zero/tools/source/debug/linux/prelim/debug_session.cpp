@@ -497,33 +497,38 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
         uint32_t index = 0;
         const auto uuid = vmBind->uuids[index];
 
-        if (connection->uuidMap.find(uuid) == connection->uuidMap.end()) {
+        auto uuidIt = connection->uuidMap.find(uuid);
+        if (uuidIt == connection->uuidMap.end()) {
             PRINT_DEBUGGER_ERROR_LOG("Unknown UUID handle = %llu\n", (uint64_t)uuid);
             return false;
         }
+        const auto &uuidData = uuidIt->second;
 
-        if (connection->vmToTile.find(vmHandle) == connection->vmToTile.end()) {
-            DEBUG_BREAK_IF(connection->vmToTile.find(vmHandle) == connection->vmToTile.end() && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) &&
-                           (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::isa || connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::moduleHeapDebugArea));
+        auto vmToTileIt = connection->vmToTile.find(vmHandle);
+        if (vmToTileIt == connection->vmToTile.end()) {
+            DEBUG_BREAK_IF((vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) &&
+                           (uuidData.classIndex == NEO::DrmResourceClass::isa || uuidData.classIndex == NEO::DrmResourceClass::moduleHeapDebugArea));
             return false;
         }
 
-        const auto tileIndex = connection->vmToTile[vmHandle];
+        const auto tileIndex = vmToTileIt->second;
 
         PRINT_DEBUGGER_INFO_LOG("UUID handle = %llu class index = %d\n", static_cast<uint64_t>(vmBind->uuids[index]), static_cast<int>(clientHandleToConnection[vmBind->client_handle]->uuidMap[vmBind->uuids[index]].classIndex));
 
-        auto classUuid = connection->uuidMap[uuid].classHandle;
+        auto classUuid = uuidData.classHandle;
 
-        if (connection->classHandleToIndex.find(classUuid) != connection->classHandleToIndex.end()) {
+        if (auto classIt = connection->classHandleToIndex.find(classUuid); classIt != connection->classHandleToIndex.end()) {
 
             std::lock_guard<std::mutex> lock(asyncThreadMutex);
 
-            if (connection->classHandleToIndex[classUuid].second ==
+            const auto classIndex = classIt->second.second;
+
+            if (classIndex ==
                 static_cast<uint32_t>(NEO::DrmResourceClass::sbaTrackingBuffer)) {
                 connection->vmToStateBaseAreaBindInfo[vmHandle] = {vmBind->va_start, vmBind->va_length};
             }
 
-            if (connection->classHandleToIndex[classUuid].second ==
+            if (classIndex ==
                 static_cast<uint32_t>(NEO::DrmResourceClass::moduleHeapDebugArea)) {
                 auto &isaMap = connection->isaMap[tileIndex];
                 {
@@ -548,7 +553,7 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                 }
             }
 
-            if (connection->classHandleToIndex[classUuid].second ==
+            if (classIndex ==
                 static_cast<uint32_t>(NEO::DrmResourceClass::contextSaveArea)) {
                 connection->vmToContextStateSaveAreaBindInfo[vmHandle] = {vmBind->va_start, vmBind->va_length};
             }
@@ -942,21 +947,23 @@ void DebugSessionLinuxi915::handleContextParamEvent(prelim_drm_i915_debug_event_
 
 uint64_t DebugSessionLinuxi915::getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) {
 
-    if (clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end()) {
+    auto connectionIt = clientHandleToConnection.find(clientHandle);
+    if (connectionIt == clientHandleToConnection.end()) {
         return invalidHandle;
     }
 
-    auto &clientConnection = clientHandleToConnection[clientHandle];
-    if (clientConnection->lrcToContextHandle.find(lrcHandle) == clientConnection->lrcToContextHandle.end()) {
+    auto &clientConnection = connectionIt->second;
+    auto lrcIt = clientConnection->lrcToContextHandle.find(lrcHandle);
+    if (lrcIt == clientConnection->lrcToContextHandle.end()) {
         return invalidHandle;
     }
 
-    auto contextHandle = clientConnection->lrcToContextHandle[lrcHandle];
-    if (clientConnection->contextsCreated.find(contextHandle) == clientConnection->contextsCreated.end()) {
+    auto contextIt = clientConnection->contextsCreated.find(lrcIt->second);
+    if (contextIt == clientConnection->contextsCreated.end()) {
         return invalidHandle;
     }
 
-    return clientConnection->contextsCreated[contextHandle].vm;
+    return contextIt->second.vm;
 }
 
 void DebugSessionLinuxi915::handleAttentionEvent(prelim_drm_i915_debug_event_eu_attention *attention) {

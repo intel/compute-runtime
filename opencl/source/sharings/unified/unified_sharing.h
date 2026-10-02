@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/unified/unified_sharing_types.h"
@@ -39,7 +41,7 @@ class UnifiedSharing : public SharingHandler {
     void synchronizeObject(UpdateData &updateData) override;
     void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
 
-    static std::unique_ptr<MultiGraphicsAllocation> createMultiGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType, cl_int *errcodeRet);
+    static std::unique_ptr<MultiGraphicsAllocation> createMultiGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType, cl_int *errcodeRet, const RootDeviceIndicesContainer &targetRootDeviceIndices);
 
   private:
     UnifiedSharingFunctions *sharingFunctions;

@@ -19,7 +19,6 @@
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/leo_supported_exception.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "opencl/source/api/additional_extensions.h"
@@ -60,13 +59,101 @@
 
 using namespace NEO;
 
+namespace {
+cl_int buildPlatforms() {
+    const bool leoListAvailable = (leoPlatformEntries != nullptr);
+
+    if (isLeoForcedOn()) {
+        if (!leoListAvailable) {
+            return CL_OUT_OF_HOST_MEMORY;
+        }
+        for (auto handle : getLeoPlatforms()) {
+            leoPlatformEntries->push_back({handle, {}, false});
+        }
+        return leoPlatformEntries->empty() ? CL_OUT_OF_HOST_MEMORY : CL_SUCCESS;
+    }
+
+    auto executionEnvironment = new ClExecutionEnvironment();
+    executionEnvironment->incRefInternal();
+
+    if (NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
+        const auto programDebugging = NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.get();
+        const auto dbgMode = NEO::getDebuggingMode(programDebugging);
+        executionEnvironment->setDebuggingMode(dbgMode);
+    }
+
+    std::vector<std::unique_ptr<Device>> allDevices = DeviceFactory::createDevices(*executionEnvironment);
+    const auto leoPlatformKeys = executionEnvironment->getLeoPlatformKeys();
+
+    cl_int retVal = CL_SUCCESS;
+    std::vector<DeviceGroupSortKey> nativeKeys;
+    for (auto &deviceVector : Device::groupDevices(std::move(allDevices))) {
+        const auto &hwInfo = deviceVector[0]->getHardwareInfo();
+        auto pPlatform = Platform::createFunc(*executionEnvironment);
+        if (!pPlatform || !pPlatform->initialize(std::move(deviceVector))) {
+            retVal = CL_OUT_OF_HOST_MEMORY;
+            break;
+        }
+        nativeKeys.push_back({hwInfo.platform.eProductFamily, hwInfo.capabilityTable.isIntegratedDevice});
+        platformsImpl->push_back(std::move(pPlatform));
+    }
+
+    executionEnvironment->decRefInternal();
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
+    if (leoListAvailable && !leoPlatformKeys.empty()) {
+        auto leoPlatforms = getLeoPlatforms();
+        const bool pairable = (leoPlatforms.size() == leoPlatformKeys.size());
+        if (!pairable) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s", "Warning: LEO platform count does not match detected LEO products; platform ordering degraded\n");
+        }
+        for (size_t i = 0u; i < leoPlatforms.size(); i++) {
+            leoPlatformEntries->push_back({leoPlatforms[i],
+                                           pairable ? leoPlatformKeys[i] : DeviceGroupSortKey{},
+                                           pairable});
+        }
+    }
+
+    if (platformsImpl->empty() && (!leoListAvailable || leoPlatformEntries->empty())) {
+        return CL_OUT_OF_HOST_MEMORY;
+    }
+    return CL_SUCCESS;
+}
+
+void collectExposedPlatforms(StackVec<cl_platform_id, 4> &out) {
+    out.clear();
+    const size_t numLeo = (leoPlatformEntries != nullptr) ? leoPlatformEntries->size() : 0u;
+    out.reserve(platformsImpl->size() + numLeo);
+
+    size_t nativeIdx = 0u;
+    size_t leoIdx = 0u;
+    while (nativeIdx < platformsImpl->size() && leoIdx < numLeo) {
+        const auto &leoEntry = (*leoPlatformEntries)[leoIdx];
+        const auto &nativeHwInfo = (*platformsImpl)[nativeIdx]->getClDevice(0)->getHardwareInfo();
+        const DeviceGroupSortKey nativeKey{nativeHwInfo.platform.eProductFamily, nativeHwInfo.capabilityTable.isIntegratedDevice};
+        if (leoEntry.ordered && compareDeviceGroups(leoEntry.sortKey, nativeKey)) {
+            out.push_back(leoEntry.handle);
+            leoIdx++;
+        } else {
+            out.push_back((*platformsImpl)[nativeIdx].get());
+            nativeIdx++;
+        }
+    }
+    for (; nativeIdx < platformsImpl->size(); nativeIdx++) {
+        out.push_back((*platformsImpl)[nativeIdx].get());
+    }
+    for (; leoIdx < numLeo; leoIdx++) {
+        out.push_back((*leoPlatformEntries)[leoIdx].handle);
+    }
+}
+} // namespace
+
 cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_platform_id *platforms,
                                     cl_uint *numPlatforms) {
-    if (isLEOEnabled()) {
-        return forwardClGetPlatformIDs(numEntries, platforms, numPlatforms);
-    }
-
     TRACING_ENTER(ClGetPlatformIDs, &numEntries, &platforms, &numPlatforms);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -90,58 +177,22 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
 
         static std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
-        if (isLEOEnabled()) {
-            retVal = forwardClGetPlatformIDs(numEntries, platforms, numPlatforms);
-            break;
-        }
-        if (platformsImpl->empty()) {
-            auto executionEnvironment = new ClExecutionEnvironment();
-            executionEnvironment->incRefInternal();
-
-            if (NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
-                const auto programDebugging = NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.get();
-                const auto dbgMode = NEO::getDebuggingMode(programDebugging);
-                executionEnvironment->setDebuggingMode(dbgMode);
-            }
-
-            std::vector<std::unique_ptr<Device>> allDevices;
-            bool leoSupported = false;
-            try {
-                allDevices = DeviceFactory::createDevices(*executionEnvironment);
-            } catch (const LeoSupportedException &) {
-                leoSupported = true;
-            }
-            executionEnvironment->decRefInternal();
-            if (leoSupported) {
-                activateLeoForwarding();
-                retVal = forwardClGetPlatformIDs(numEntries, platforms, numPlatforms);
-                break;
-            }
-            if (allDevices.empty()) {
-                retVal = CL_OUT_OF_HOST_MEMORY;
-                break;
-            }
-            auto groupedDevices = Device::groupDevices(std::move(allDevices));
-            for (auto &deviceVector : groupedDevices) {
-
-                auto pPlatform = Platform::createFunc(*executionEnvironment);
-                if (!pPlatform || !pPlatform->initialize(std::move(deviceVector))) {
-                    retVal = CL_OUT_OF_HOST_MEMORY;
-                    break;
-                }
-                platformsImpl->push_back(std::move(pPlatform));
-            }
+        if (platformsImpl->empty() && (leoPlatformEntries == nullptr || leoPlatformEntries->empty())) {
+            retVal = buildPlatforms();
             if (retVal != CL_SUCCESS) {
                 break;
             }
         }
-        cl_uint numPlatformsToExpose = std::min(numEntries, static_cast<cl_uint>(platformsImpl->size()));
+        StackVec<cl_platform_id, 4> allPlatforms;
+        collectExposedPlatforms(allPlatforms);
+
+        cl_uint numPlatformsToExpose = std::min(numEntries, static_cast<cl_uint>(allPlatforms.size()));
         if (numEntries == 0) {
-            numPlatformsToExpose = static_cast<cl_uint>(platformsImpl->size());
+            numPlatformsToExpose = static_cast<cl_uint>(allPlatforms.size());
         }
         if (platforms) {
             for (auto i = 0u; i < numPlatformsToExpose; i++) {
-                platforms[i] = (*platformsImpl)[i].get();
+                platforms[i] = allPlatforms[i];
             }
         }
 
@@ -172,7 +223,7 @@ cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
                                      size_t paramValueSize,
                                      void *paramValue,
                                      size_t *paramValueSizeRet) {
-    if (isLEOEnabled()) {
+    if (isLeoPlatformHandle(platform)) {
         return forwardClGetPlatformInfo(platform, paramName, paramValueSize, paramValue, paramValueSizeRet);
     }
     TRACING_ENTER(ClGetPlatformInfo, &platform, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
@@ -250,6 +301,10 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
             cl_uint numPlatforms = 0u;
             retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
             if (numPlatforms == 0u) {
+                retVal = CL_DEVICE_NOT_FOUND;
+                break;
+            }
+            if (platformsImpl->empty()) {
                 retVal = CL_DEVICE_NOT_FOUND;
                 break;
             }
@@ -796,6 +851,7 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
                                                      size_t size,
                                                      void *hostPtr,
                                                      cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clCreateBufferWithPropertiesINTEL, context, properties, flags, size, hostPtr, errcodeRet);
 
     TRACING_ENTER(ClCreateBufferWithPropertiesINTEL, &context, &properties, &flags, &size, &hostPtr, &errcodeRet);
     if (debugManager.flags.ForceExtendedBufferSize.get() >= 1) {
@@ -1011,6 +1067,7 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
                                                     const cl_image_desc *imageDesc,
                                                     void *hostPtr,
                                                     cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clCreateImageWithPropertiesINTEL, context, properties, flags, imageFormat, imageDesc, hostPtr, errcodeRet);
 
     TRACING_ENTER(ClCreateImageWithPropertiesINTEL, &context, &properties, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
     DBG_LOG_INPUTS("cl_context", context,
@@ -3898,6 +3955,7 @@ clCreatePerfCountersCommandQueueINTEL(
     cl_command_queue_properties properties,
     cl_uint configuration,
     cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clCreatePerfCountersCommandQueueINTEL, context, device, properties, configuration, errcodeRet);
 
     TRACING_ENTER(ClCreatePerfCountersCommandQueueINTEL, &context, &device, &properties, &configuration, &errcodeRet);
     API_ENTER(nullptr);
@@ -3966,6 +4024,7 @@ clSetPerformanceConfigurationINTEL(
     cl_uint count,
     cl_uint *offsets,
     cl_uint *values) {
+    FORWARD_TO_LEO_IF_FOREIGN(ClDevice, device, clSetPerformanceConfigurationINTEL, device, count, offsets, values);
     // Not supported, covered by Metric Library DLL.
     return CL_INVALID_OPERATION;
 }
@@ -3976,6 +4035,7 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clHostMemAllocINTEL, context, properties, size, alignment, errcodeRet);
 
     TRACING_ENTER(ClHostMemAllocINTEL, &context, &properties, &size, &alignment, &errcodeRet);
     if (debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
@@ -4038,6 +4098,7 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clDeviceMemAllocINTEL, context, device, properties, size, alignment, errcodeRet);
 
     TRACING_ENTER(ClDeviceMemAllocINTEL, &context, &device, &properties, &size, &alignment, &errcodeRet);
     if (debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
@@ -4106,6 +4167,7 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clSharedMemAllocINTEL, context, device, properties, size, alignment, errcodeRet);
 
     TRACING_ENTER(ClSharedMemAllocINTEL, &context, &device, &properties, &size, &alignment, &errcodeRet);
     if (debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
@@ -4206,6 +4268,7 @@ CL_API_ENTRY cl_int CL_API_CALL clMemFreeCommon(cl_context context,
 CL_API_ENTRY cl_int CL_API_CALL clMemFreeINTEL(
     cl_context context,
     void *ptr) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clMemFreeINTEL, context, ptr);
     TRACING_ENTER(ClMemFreeINTEL, &context, &ptr);
     auto retVal = clMemFreeCommon(context,
                                   ptr,
@@ -4217,6 +4280,7 @@ CL_API_ENTRY cl_int CL_API_CALL clMemFreeINTEL(
 CL_API_ENTRY cl_int CL_API_CALL clMemBlockingFreeINTEL(
     cl_context context,
     void *ptr) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clMemBlockingFreeINTEL, context, ptr);
     TRACING_ENTER(ClMemBlockingFreeINTEL, &context, &ptr);
     auto retVal = clMemFreeCommon(context,
                                   ptr,
@@ -4232,6 +4296,7 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
     size_t paramValueSize,
     void *paramValue,
     size_t *paramValueSizeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clGetMemAllocInfoINTEL, context, ptr, paramName, paramValueSize, paramValue, paramValueSizeRet);
 
     TRACING_ENTER(ClGetMemAllocInfoINTEL, &context, &ptr, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     Context *pContext = nullptr;
@@ -4356,6 +4421,7 @@ CL_API_ENTRY cl_int CL_API_CALL clSetKernelArgMemPointerINTEL(
     cl_kernel kernel,
     cl_uint argIndex,
     const void *argValue) {
+    FORWARD_TO_LEO_IF_FOREIGN(MultiDeviceKernel, kernel, clSetKernelArgMemPointerINTEL, kernel, argIndex, argValue);
     TRACING_ENTER(ClSetKernelArgMemPointerINTEL, &kernel, &argIndex, &argValue);
     auto retVal = clSetKernelArgSVMPointer(kernel,
                                            argIndex,
@@ -4372,6 +4438,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemsetINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueMemsetINTEL, commandQueue, dstPtr, value, size, numEventsInWaitList, eventWaitList, event);
 
     TRACING_ENTER(ClEnqueueMemsetINTEL, &commandQueue, &dstPtr, &value, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto retVal = clEnqueueSVMMemFill(commandQueue,
@@ -4399,6 +4466,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemFillINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueMemFillINTEL, commandQueue, dstPtr, pattern, patternSize, size, numEventsInWaitList, eventWaitList, event);
 
     TRACING_ENTER(ClEnqueueMemFillINTEL, &commandQueue, &dstPtr, &pattern, &patternSize, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto retVal = clEnqueueSVMMemFill(commandQueue,
@@ -4426,6 +4494,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueMemcpyINTEL, commandQueue, blocking, dstPtr, srcPtr, size, numEventsInWaitList, eventWaitList, event);
 
     TRACING_ENTER(ClEnqueueMemcpyINTEL, &commandQueue, &blocking, &dstPtr, &srcPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto retVal = clEnqueueSVMMemcpy(commandQueue,
@@ -4452,6 +4521,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueMigrateMemINTEL, commandQueue, ptr, size, flags, numEventsInWaitList, eventWaitList, event);
 
     TRACING_ENTER(ClEnqueueMigrateMemINTEL, &commandQueue, &ptr, &size, &flags, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
@@ -4489,6 +4559,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemAdviseINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueMemAdviseINTEL, commandQueue, ptr, size, advice, numEventsInWaitList, eventWaitList, event);
 
     TRACING_ENTER(ClEnqueueMemAdviseINTEL, &commandQueue, &ptr, &size, &advice, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
@@ -4512,6 +4583,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesKHR(cl_context co
                                                                    cl_device_id device,
                                                                    const cl_queue_properties_khr *properties,
                                                                    cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clCreateCommandQueueWithPropertiesKHR, context, device, properties, errcodeRet);
 
     TRACING_ENTER(ClCreateCommandQueueWithPropertiesKHR, &context, &device, &properties, &errcodeRet);
     API_ENTER(errcodeRet);
@@ -4598,6 +4670,7 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
                                                 const void *il,
                                                 size_t length,
                                                 cl_int *errcodeRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(Context, context, clCreateProgramWithILKHR, context, il, length, errcodeRet);
 
     TRACING_ENTER(ClCreateProgramWithILKHR, &context, &il, &length, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
@@ -4711,6 +4784,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSize(cl_command_queue commandQue
                                                      const size_t *globalWorkOffset,
                                                      const size_t *globalWorkSize,
                                                      size_t *suggestedLocalWorkSize) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clGetKernelSuggestedLocalWorkSize, commandQueue, kernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSize, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
     auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
                                                       commandQueue,
@@ -4729,6 +4803,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
                                                         const size_t *globalWorkOffset,
                                                         const size_t *globalWorkSize,
                                                         size_t *suggestedLocalWorkSize) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clGetKernelSuggestedLocalWorkSizeKHR, commandQueue, kernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
 
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeKHR, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
     auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
@@ -4751,14 +4826,17 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
         }                                                                                 \
     }
 void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
-    if (isLEOEnabled()) {
-        return forwardClGetExtensionFunctionAddress(funcName);
-    }
     TRACING_ENTER(ClGetExtensionFunctionAddress, &funcName);
 
     DBG_LOG_INPUTS("funcName", funcName);
     // Support an internal call by the ICD
     RETURN_FUNC_PTR_IF_EXIST(clIcdGetPlatformIDsKHR);
+
+    if (isLeoForcedOn() || areAllPlatformsLeo()) {
+        void *ret = forwardClGetExtensionFunctionAddress(funcName);
+        TRACING_EXIT(ClGetExtensionFunctionAddress, &ret);
+        return ret;
+    }
 
     // perf counters
     RETURN_FUNC_PTR_IF_EXIST(clCreatePerfCountersCommandQueueINTEL);
@@ -5985,6 +6063,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(cl_command_queue comm
                                                            const void *expectedData,
                                                            size_t sizeOfComparison,
                                                            cl_uint comparisonMode) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueVerifyMemoryINTEL, commandQueue, allocationPtr, expectedData, sizeOfComparison, comparisonMode);
 
     TRACING_ENTER(ClEnqueueVerifyMemoryINTEL, &commandQueue, &allocationPtr, &expectedData, &sizeOfComparison, &comparisonMode);
     cl_int retVal = CL_SUCCESS;
@@ -6023,6 +6102,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(cl_command_queue comm
 }
 
 cl_int CL_API_CALL clAddCommentINTEL(cl_device_id device, const char *comment) {
+    FORWARD_TO_LEO_IF_FOREIGN(ClDevice, device, clAddCommentINTEL, device, comment);
 
     TRACING_ENTER(ClAddCommentINTEL, &device, &comment);
     cl_int retVal = CL_SUCCESS;
@@ -6055,6 +6135,7 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
     const char *globalVariableName,
     size_t *globalVariableSizeRet,
     void **globalVariablePointerRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(ClDevice, device, clGetDeviceGlobalVariablePointerINTEL, device, program, globalVariableName, globalVariableSizeRet, globalVariablePointerRet);
     TRACING_ENTER(ClGetDeviceGlobalVariablePointerINTEL, &device, &program, &globalVariableName, &globalVariableSizeRet, &globalVariablePointerRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -6090,6 +6171,7 @@ cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
     cl_program program,
     const char *functionName,
     cl_ulong *functionPointerRet) {
+    FORWARD_TO_LEO_IF_FOREIGN(ClDevice, device, clGetDeviceFunctionPointerINTEL, device, program, functionName, functionPointerRet);
 
     TRACING_ENTER(ClGetDeviceFunctionPointerINTEL, &device, &program, &functionName, &functionPointerRet);
     cl_int retVal = CL_SUCCESS;
@@ -6144,6 +6226,7 @@ cl_int CL_API_CALL clSetProgramReleaseCallback(cl_program program,
 }
 
 cl_int CL_API_CALL clSetProgramSpecializationConstant(cl_program program, cl_uint specId, size_t specSize, const void *specValue) {
+    FORWARD_TO_LEO_IF_FOREIGN(Program, program, clSetProgramSpecializationConstant, program, specId, specSize, specValue);
 
     TRACING_ENTER(ClSetProgramSpecializationConstant, &program, &specId, &specSize, &specValue);
     cl_int retVal = CL_SUCCESS;
@@ -6170,6 +6253,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
                                                           const size_t *globalWorkOffset,
                                                           const size_t *globalWorkSize,
                                                           size_t *suggestedLocalWorkSize) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clGetKernelSuggestedLocalWorkSizeINTEL, commandQueue, kernel, workDim, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
 
     TRACING_ENTER(ClGetKernelSuggestedLocalWorkSizeINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &suggestedLocalWorkSize);
     auto retVal = getKernelSuggestedLocalWorkSizeImpl(NEO_FUNCTION_NAME,
@@ -6190,6 +6274,7 @@ cl_int CL_API_CALL clGetKernelMaxConcurrentWorkGroupCountINTEL(cl_command_queue 
                                                                const size_t *globalWorkOffset,
                                                                const size_t *localWorkSize,
                                                                size_t *suggestedWorkGroupCount) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clGetKernelMaxConcurrentWorkGroupCountINTEL, commandQueue, kernel, workDim, globalWorkOffset, localWorkSize, suggestedWorkGroupCount);
     TRACING_ENTER(ClGetKernelMaxConcurrentWorkGroupCountINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &localWorkSize, &suggestedWorkGroupCount);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -6259,6 +6344,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
                                                cl_uint numEventsInWaitList,
                                                const cl_event *eventWaitList,
                                                cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueNDCountKernelINTEL, commandQueue, kernel, workDim, globalWorkOffset, workgroupCount, localWorkSize, numEventsInWaitList, eventWaitList, event);
 
     TRACING_ENTER(ClEnqueueNDCountKernelINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &workgroupCount, &localWorkSize, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
@@ -6430,6 +6516,7 @@ cl_int CL_API_CALL clEnqueueAcquireExternalMemObjectsKHR(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueAcquireExternalMemObjectsKHR, commandQueue, numMemObjects, memObjects, numEventsInWaitList, eventWaitList, event);
 
     TRACING_ENTER(ClEnqueueAcquireExternalMemObjectsKHR, &commandQueue, &numMemObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
     auto retVal = clEnqueueExternalMemObjectsKHR(commandQueue,
@@ -6449,6 +6536,7 @@ cl_int CL_API_CALL clEnqueueReleaseExternalMemObjectsKHR(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
+    FORWARD_TO_LEO_IF_FOREIGN(CommandQueue, commandQueue, clEnqueueReleaseExternalMemObjectsKHR, commandQueue, numMemObjects, memObjects, numEventsInWaitList, eventWaitList, event);
 
     TRACING_ENTER(ClEnqueueReleaseExternalMemObjectsKHR, &commandQueue, &numMemObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
     auto retVal = clEnqueueExternalMemObjectsKHR(commandQueue,

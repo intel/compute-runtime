@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/os_interface/linux/device_factory_tests_linux.h"
 
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -78,6 +79,21 @@ TEST(SortAndFilterDevicesDrmTest, whenSortingAndFilteringDevicesThenMemoryOperat
         EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciFunction, pciBusInfo.pciFunction);
         EXPECT_EQ(rootDeviceIndex, static_cast<DrmMemoryOperationsHandlerBind &>(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface).getRootDeviceIndex());
     }
+}
+
+TEST(DeviceFactoryAffinityMaskTest, whenAffinityMaskDoesNotSelectAnyDeviceThenCreateDevicesReturnsNoDevicesWithoutBuildingMemoryManager) {
+    static const auto numRootDevices = 6;
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.ZE_AFFINITY_MASK.set("100");
+
+    VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
+    ExecutionEnvironment executionEnvironment{};
+
+    auto devices = DeviceFactory::createDevices(executionEnvironment);
+
+    EXPECT_TRUE(devices.empty());
+    EXPECT_EQ(nullptr, executionEnvironment.memoryManager.get());
 }
 
 TEST(DeviceFactoryAffinityMaskTest, whenAffinityMaskDoesNotSelectAnyDeviceThenEmptyEnvironmentIsReturned) {

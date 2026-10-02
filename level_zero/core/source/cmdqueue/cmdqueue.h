@@ -12,6 +12,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/heap_base_address_model.h"
+#include "shared/source/utilities/software_tags.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_helpers.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
@@ -73,7 +74,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     ze_result_t getMode(ze_command_queue_mode_t *pMode);
     ze_result_t getPriority(ze_command_queue_priority_t *pPriority);
 
-    static CommandQueue *create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
+    static CommandQueue *create(Device *device, NEO::CommandStreamReceiver *csr,
                                 const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, bool immediateCmdListQueue, ze_result_t &resultValue);
 
     static CommandQueue *fromHandle(ze_command_queue_handle_t handle) {
@@ -92,6 +93,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     void unregisterCsrClient();
     void registerCsrClient();
     void setCsrClientRegistered(bool registered) { csrClientRegistered = registered; }
+    void takeCsrQueueOwnership() { csrQueueOwnershipTaken = true; }
 
     TaskCountType getTaskCount() const { return taskCount; }
     void setTaskCount(TaskCountType newTaskCount) { taskCount = newTaskCount; }
@@ -188,6 +190,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     uint32_t activeSubDevices = 1;
     std::atomic<TaskCountType> taskCount = 0;
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+    NEO::SWTags::CounterContext swTagCounters{};
 
     uint32_t currentStateChangeIndex = 0;
 
@@ -209,16 +212,17 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool patchingPreamble = false;
     bool saveWaitForPreamble = false;
     bool csrClientRegistered = false;
+    bool csrQueueOwnershipTaken = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandStreamReceiver *csr,
                                                   const ze_command_queue_desc_t *desc);
 extern CommandQueueAllocatorFn commandQueueFactory[];
 
-template <uint32_t productFamily, typename CommandQueueType>
+template <uint32_t gfxCoreFamily, typename CommandQueueType>
 struct CommandQueuePopulateFactory {
     CommandQueuePopulateFactory() {
-        commandQueueFactory[productFamily] = CommandQueue::Allocator<CommandQueueType>::allocate;
+        commandQueueFactory[gfxCoreFamily] = CommandQueue::Allocator<CommandQueueType>::allocate;
     }
 };
 

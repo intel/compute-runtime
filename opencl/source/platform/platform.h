@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/device/device_group_sort_key.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
@@ -97,4 +98,12 @@ static_assert(NEO::NonCopyableAndNonMovable<BaseObject<_cl_platform_id>>);
 static_assert(NEO::NonCopyableAndNonMovable<Platform>);
 
 extern std::vector<std::unique_ptr<Platform>> *platformsImpl;
+
+struct LeoPlatformEntry {
+    cl_platform_id handle = nullptr;
+    DeviceGroupSortKey sortKey{};
+    bool ordered = false;
+};
+
+extern std::vector<LeoPlatformEntry> *leoPlatformEntries;
 } // namespace NEO

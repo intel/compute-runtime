@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
@@ -18,6 +19,7 @@
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -205,6 +207,473 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     EXPECT_EQ(1u, mock->waitUserFenceCall.called);
     EXPECT_EQ(expectedAddress, mock->waitUserFenceCall.address);
     EXPECT_EQ(expectedValue, mock->waitUserFenceCall.value);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBufferObjectsWhenMakeResidentIsCalledThenTheBufferObjectsAreMadeResident) {
+    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+        GTEST_SKIP();
+    }
+
+    auto size = 1024u;
+    auto bo0 = this->createBO(size);
+    auto bo1 = this->createBO(size);
+    auto bo2 = this->createBO(size);
+    auto bo3 = this->createBO(size);
+    BufferObjects bos{bo0, bo1, bo2, bo3};
+    auto allocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
+    allocation->storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+
+    csr->CommandStreamReceiver::makeResident(*allocation);
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
+    EXPECT_TRUE(isResident<FamilyType>(bo0));
+    EXPECT_TRUE(isResident<FamilyType>(bo1));
+    EXPECT_TRUE(isResident<FamilyType>(bo2));
+    EXPECT_TRUE(isResident<FamilyType>(bo3));
+
+    csr->makeNonResident(*allocation);
+    EXPECT_FALSE(isResident<FamilyType>(bo0));
+    EXPECT_FALSE(isResident<FamilyType>(bo1));
+    EXPECT_FALSE(isResident<FamilyType>(bo2));
+    EXPECT_FALSE(isResident<FamilyType>(bo3));
+
+    mm->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBufferObjectsAndTileInstancedSetWhenMakeResidentIsCalledThenTheBufferObjectForDeviceCsrIsMadeResident) {
+    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+        GTEST_SKIP();
+    }
+    auto size = 1024u;
+    auto bo0 = this->createBO(size);
+    auto bo1 = this->createBO(size);
+    auto bo2 = this->createBO(size);
+    auto bo3 = this->createBO(size);
+    BufferObjects bos{bo0, bo1, bo2, bo3};
+    auto allocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
+    allocation->storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocation->storageInfo.tileInstanced = true;
+
+    csr->CommandStreamReceiver::makeResident(*allocation);
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
+    EXPECT_TRUE(isResident<FamilyType>(bo0));
+    EXPECT_FALSE(isResident<FamilyType>(bo1));
+    EXPECT_FALSE(isResident<FamilyType>(bo2));
+    EXPECT_FALSE(isResident<FamilyType>(bo3));
+
+    csr->processResidency(csr->getResidencyAllocations(), 2u);
+    EXPECT_TRUE(isResident<FamilyType>(bo0));
+    EXPECT_FALSE(isResident<FamilyType>(bo1));
+    EXPECT_TRUE(isResident<FamilyType>(bo2));
+    EXPECT_FALSE(isResident<FamilyType>(bo3));
+
+    csr->makeNonResident(*allocation);
+    EXPECT_FALSE(isResident<FamilyType>(bo0));
+    EXPECT_FALSE(isResident<FamilyType>(bo1));
+    EXPECT_FALSE(isResident<FamilyType>(bo2));
+    EXPECT_FALSE(isResident<FamilyType>(bo3));
+
+    mm->freeGraphicsMemory(allocation);
+}
+
+class DrmCommandStreamForceTileTest : public ::testing::Test {
+  public:
+    template <typename GfxFamily>
+    class MockDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
+      public:
+        ~MockDrmCommandStreamReceiver() override {
+        }
+        MockDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex,
+                                     DeviceBitfield deviceBitfield,
+                                     uint32_t inputHandleId)
+            : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield), expectedHandleId(inputHandleId) {
+        }
+
+        SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
+            EXPECT_EQ(handleId, expectedHandleId);
+            return DrmCommandStreamReceiver<GfxFamily>::processResidency(allocationsForResidency, handleId);
+        }
+
+        const uint32_t expectedHandleId = std::numeric_limits<uint32_t>::max();
+    };
+    template <typename GfxFamily>
+    void setUpT() {
+        debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+
+        mock = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+        mock->setupIoctlHelper(hwInfo->platform.eProductFamily);
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
+        executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+
+        mock->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo));
+
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0,
+                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
+                                                                                                  PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(3)));
+        osContext->ensureContextInitialized();
+
+        csr = new MockDrmCommandStreamReceiver<GfxFamily>(executionEnvironment,
+                                                          rootDeviceIndex,
+                                                          3,
+                                                          expectedHandleId);
+        ASSERT_NE(nullptr, csr);
+        csr->setupContext(*osContext);
+
+        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive,
+                                             debugManager.flags.EnableForcePin.get(),
+                                             true,
+                                             executionEnvironment);
+        executionEnvironment.memoryManager.reset(memoryManager);
+
+        // assert we have memory manager
+        ASSERT_NE(nullptr, memoryManager);
+    }
+
+    template <typename GfxFamily>
+    void tearDownT() {
+        memoryManager->waitForDeletions();
+        if (memoryManager->peekGemCloseWorker()) {
+            memoryManager->peekGemCloseWorker()->close(true);
+        }
+        delete csr;
+        // Expect 2 calls with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on OsContextLinux destruction
+        // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
+        mock->expectedIoctlCallsOnDestruction = mock->ioctlCallsCount + 3 + static_cast<uint32_t>(mock->virtualMemoryIds.size());
+        mock->expectIoctlCallsOnDestruction = true;
+    }
+
+    const uint32_t rootDeviceIndex = 0u;
+    const uint32_t expectedHandleId = 1u;
+
+    DebugManagerStateRestore restorer;
+    CommandStreamReceiver *csr = nullptr;
+    DrmMemoryManager *memoryManager = nullptr;
+    DrmMock *mock = nullptr;
+    const int mockFd = 33;
+    static const uint64_t alignment = MemoryConstants::allocationAlignment;
+    MockExecutionEnvironment executionEnvironment;
+    std::unique_ptr<OsContextLinux> osContext;
+};
+
+HWTEST_TEMPLATED_F(DrmCommandStreamForceTileTest, givenForceExecutionTileThenCorrectHandleIdIsSet) {
+    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceExecutionTile.set(expectedHandleId);
+
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndicesAndContextInfo) {
+    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
+
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+
+    StreamCapture capture;
+    capture.captureStdout();
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
+    const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
+    std::ostringstream expectedValue;
+    expectedValue << SysCalls::getProcessId() << ": Submission to RootDevice Index: " << csr->getRootDeviceIndex()
+                  << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
+                  << ", EngineId: " << csr->getOsContext().getEngineType()
+                  << " (" << engineType << ", " << engineUsage << "), Priority: std::nullopt\n";
+    auto &drmContextIds = static_cast<const OsContextLinux *>(&csr->getOsContext())->getDrmContextIds();
+    for (uint32_t contextIndex = 0; contextIndex < drmContextIds.size(); contextIndex++) {
+        expectedValue << SysCalls::getProcessId() << ": Drm Submission of contextIndex: " << contextIndex << ", with context id " << drmContextIds[contextIndex] << "\n";
+    }
+    EXPECT_STREQ(capture.getCapturedStdout().c_str(), expectedValue.str().c_str());
+}
+
+struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+
+        executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        executionEnvironment->prepareRootDeviceEnvironments(1);
+
+        hwInfo.reset(new HardwareInfo(*defaultHwInfo));
+        hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = true;
+        hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 0b11;
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+        constexpr int mockFd = 33;
+        drm = new DrmMock(mockFd, *executionEnvironment->rootDeviceEnvironments[0]);
+        drm->setupIoctlHelper(hwInfo->platform.eProductFamily);
+        drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo.get()));
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        osContext = std::make_unique<OsContextLinux>(*drm, 0, 0u,
+                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
+                                                                                                  PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), DeviceBitfield(0b11)));
+        osContext->ensureContextInitialized();
+
+        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive, debugManager.flags.EnableForcePin.get(), true, *executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+    }
+
+    void TearDown() override {
+        // Expect 2 calls with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on OsContextLinux destruction
+        // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
+        drm->expectedIoctlCallsOnDestruction = drm->ioctlCallsCount + 3 + static_cast<uint32_t>(drm->virtualMemoryIds.size());
+        drm->expectIoctlCallsOnDestruction = true;
+    }
+
+    template <typename FamilyType>
+    std::unique_ptr<DrmCommandStreamReceiver<FamilyType>> createCsr() {
+        auto csr = std::make_unique<DrmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, 0b11);
+        csr->setupContext(*osContext);
+        return csr;
+    }
+
+    DrmMock *drm = nullptr;
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<OsContextLinux> osContext;
+    DrmMemoryManager *memoryManager;
+    std::unique_ptr<HardwareInfo> hwInfo;
+    DebugManagerStateRestore restorer;
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenTwoTilesWhenFlushIsCalledThenExecIsExecutedOnEveryTile) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+
+    auto csr = createCsr<FamilyType>();
+
+    auto size = 1024u;
+    auto multiStorageBo0 = new BufferObject(0u, drm, 3, 30, 0, 1);
+    auto multiStorageBo1 = new BufferObject(0u, drm, 3, 31, 0, 1);
+    BufferObjects multiStorageBos{multiStorageBo0, multiStorageBo1};
+    auto multiStorageAllocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, multiStorageBos, nullptr, 0u, size, MemoryPool::localMemory);
+    multiStorageAllocation->storageInfo.memoryBanks = 0b11;
+    csr->CommandStreamReceiver::makeResident(*multiStorageAllocation);
+
+    auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
+    auto tileInstancedBo1 = new BufferObject(0u, drm, 3, 41, 0, 1);
+    BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1};
+    auto tileInstancedAllocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, tileInstancedBos, nullptr, 0u, size, MemoryPool::localMemory);
+    tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
+    tileInstancedAllocation->storageInfo.tileInstanced = true;
+    csr->CommandStreamReceiver::makeResident(*tileInstancedAllocation);
+
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
+    ASSERT_NE(nullptr, commandBuffer);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+
+    const std::array<NEO::BufferObject *, 4> exec0Bos = {multiStorageBo0, multiStorageBo1, tileInstancedBo0, commandBuffer->getBO()};
+    const std::array<NEO::BufferObject *, 4> exec1Bos = {multiStorageBo0, multiStorageBo1, tileInstancedBo1, commandBuffer->getBO()};
+    const std::array<NEO::BufferObject *, 8> execBos = {multiStorageBo0, multiStorageBo1, tileInstancedBo0, commandBuffer->getBO(),
+                                                        multiStorageBo0, multiStorageBo1, tileInstancedBo1, commandBuffer->getBO()};
+
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+    auto availableSpacePriorToFlush = cs.getAvailableSpace();
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
+
+    EXPECT_EQ(2, drm->ioctlCount.execbuffer2);
+
+    EXPECT_EQ(exec0Bos.size(), drm->execBuffers[0].getBufferCount());
+    EXPECT_EQ(exec1Bos.size(), drm->execBuffers[1].getBufferCount());
+
+    for (size_t i = 0; i < execBos.size(); i++) {
+        EXPECT_EQ(static_cast<uint32_t>(execBos[i]->peekHandle()), drm->receivedBos[i].getHandle());
+    }
+
+    memoryManager->freeGraphicsMemory(tileInstancedAllocation);
+    memoryManager->freeGraphicsMemory(multiStorageAllocation);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecutionTileIsSetAndEnableWalkerPartitionIsSetButCsrhasOneOsContextThenTileIsNotForced) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceExecutionTile.set(1);
+    debugManager.flags.EnableWalkerPartition.set(0);
+
+    struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
+        using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
+        int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {
+            EXPECT_EQ(0u, execCalled);
+            EXPECT_EQ(0u, vmHandleId);
+            EXPECT_EQ(0u, drmContextId);
+            EXPECT_EQ(40, this->residency[0]->peekHandle());
+            execCalled++;
+            return 0;
+        }
+
+        uint32_t execCalled = 0;
+    };
+
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto osContext = std::make_unique<OsContextLinux>(*drm, 0, 0u,
+                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
+                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
+    osContext->ensureContextInitialized();
+    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield());
+    csr->setupContext(*osContext);
+
+    auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
+    auto tileInstancedBo1 = new BufferObject(0u, drm, 3, 41, 0, 1);
+    auto tileInstancedBo2 = new BufferObject(0u, drm, 3, 42, 0, 1);
+    auto tileInstancedBo3 = new BufferObject(0u, drm, 3, 43, 0, 1);
+    BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1, tileInstancedBo2, tileInstancedBo3};
+    auto tileInstancedAllocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, tileInstancedBos, nullptr, 0u, 1024u, MemoryPool::localMemory);
+    tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
+    tileInstancedAllocation->storageInfo.tileInstanced = true;
+    csr->CommandStreamReceiver::makeResident(*tileInstancedAllocation);
+
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    memoryManager->freeGraphicsMemory(tileInstancedAllocation);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecutionTileIsSetAndEnableWalkerPartitionIsSetThenExecIsCalledWithGoodArguments) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceExecutionTile.set(1);
+    debugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+
+    struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
+        using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
+        int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {
+            EXPECT_EQ(0u, execCalled);
+            EXPECT_EQ(1u, vmHandleId);
+            EXPECT_EQ(0u, drmContextId);
+            EXPECT_EQ(41, this->residency[0]->peekHandle());
+            execCalled++;
+            return 0;
+        }
+
+        uint32_t execCalled = 0;
+    };
+    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield());
+    csr->setupContext(*osContext);
+
+    auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
+    auto tileInstancedBo1 = new BufferObject(0u, drm, 3, 41, 0, 1);
+    auto tileInstancedBo2 = new BufferObject(0u, drm, 3, 42, 0, 1);
+    auto tileInstancedBo3 = new BufferObject(0u, drm, 3, 43, 0, 1);
+    BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1, tileInstancedBo2, tileInstancedBo3};
+    auto tileInstancedAllocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, tileInstancedBos, nullptr, 0u, 1024u, MemoryPool::localMemory);
+    tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
+    tileInstancedAllocation->storageInfo.tileInstanced = true;
+    csr->CommandStreamReceiver::makeResident(*tileInstancedAllocation);
+
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    memoryManager->freeGraphicsMemory(tileInstancedAllocation);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledImplicitScalingWhenFlushingThenUseOnlyOneContext) {
+    DebugManagerStateRestore debugRestore{};
+    debugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+
+    struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
+        using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
+        int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {
+            EXPECT_EQ(0u, execCalled);
+            EXPECT_EQ(0u, drmContextId);
+            EXPECT_EQ(0u, vmHandleId);
+            execCalled++;
+            return 0;
+        }
+        SubmissionStatus processResidency(ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+            EXPECT_EQ(0u, processResidencyCalled);
+            EXPECT_EQ(0u, handleId);
+            processResidencyCalled++;
+            return SubmissionStatus::success;
+        }
+
+        uint32_t execCalled = 0;
+        uint32_t processResidencyCalled = 0;
+    };
+    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield());
+    csr->setupContext(*osContext);
+
+    const auto size = 1024u;
+    BufferObject *bufferObject = new BufferObject(0u, drm, 3, 30, 0, 1);
+    BufferObjects bufferObjects{bufferObject};
+    auto allocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, bufferObjects, nullptr, 0u, size, MemoryPool::localMemory);
+    csr->CommandStreamReceiver::makeResident(*allocation);
+
+    auto &cs = csr->getCS();
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTileCsrWhenFlushThenVmHandleIdEqualsTileId) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableL3FlushAfterPostSync.set(0);
+    struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
+        using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
+        int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {
+            EXPECT_EQ(execCalled, vmHandleId);
+            EXPECT_EQ(static_cast<OsContextLinux *>(this->osContext)->getDrmContextIds()[execCalled], drmContextId);
+            execCalled++;
+            return 0;
+        }
+        SubmissionStatus processResidency(ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+            EXPECT_EQ(execCalled, handleId);
+            return SubmissionStatus::success;
+        }
+
+        uint32_t execCalled = 0;
+    };
+    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield());
+    csr->setupContext(*osContext);
+
+    const auto size = 1024u;
+    BufferObject *bufferObject = new BufferObject(0u, drm, 3, 30, 0, 1);
+    BufferObjects bufferObjects{bufferObject};
+    auto allocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, bufferObjects, nullptr, 0u, size, MemoryPool::localMemory);
+    csr->CommandStreamReceiver::makeResident(*allocation);
+
+    auto &cs = csr->getCS();
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     memoryManager->freeGraphicsMemory(allocation);
 }

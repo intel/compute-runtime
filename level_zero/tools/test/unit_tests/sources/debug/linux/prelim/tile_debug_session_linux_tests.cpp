@@ -678,7 +678,7 @@ TEST_F(TileAttachTest, givenRootSessionWithoutEuThreadsWhenResumingThroughTileSe
 
 TEST_F(TileAttachTest, givenThreadKnownToSessionWhenResumeImpIsCalledThenStateSaveAreaCoherencyIsCleared) {
     EuThread::ThreadId threadId(0, 0, 0, 0, 0);
-    ASSERT_NE(rootSession->allThreads.end(), rootSession->allThreads.find(threadId));
+    ASSERT_TRUE(rootSession->allThreads.contains(threadId));
 
     rootSession->allThreads[threadId]->setStateSaveAreaCoherent(true);
 

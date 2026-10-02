@@ -102,8 +102,8 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenValidDeviceHandleWhileRetrievingInf
     EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
 }
 
-HWTEST2_F(SysmanGlobalOperationsFixtureXe,
-          GivenSrcVersionFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned, IsNotCRI) {
+TEST_F(SysmanGlobalOperationsFixtureXe,
+       GivenSrcVersionFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     pFsAccess->mockReadVal = srcVersion;
     ze_result_t result = zesDeviceGetProperties(device, &properties);
@@ -111,8 +111,8 @@ HWTEST2_F(SysmanGlobalOperationsFixtureXe,
     EXPECT_TRUE(0 == srcVersion.compare(properties.driverVersion));
 }
 
-HWTEST2_F(SysmanGlobalOperationsFixtureXe,
-          GivenSrcVersionFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned, IsNotCRI) {
+TEST_F(SysmanGlobalOperationsFixtureXe,
+       GivenSrcVersionFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

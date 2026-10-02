@@ -8,7 +8,9 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/device_time_wddm.h"
+#include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/windows/mock_os_time_win.h"
@@ -54,6 +56,7 @@ struct OSTimeWinTest : public ::testing::Test {
         rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         osTime = std::unique_ptr<MockOSTimeWin>(new MockOSTimeWin(*rootDeviceEnvironment.osInterface));
+        osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
         osTime->setDeviceTimerResolution();
     }
 
@@ -61,6 +64,7 @@ struct OSTimeWinTest : public ::testing::Test {
     }
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<MockOSTimeWin> osTime;
+    std::unique_ptr<OsContextWin> osContext;
 };
 
 TEST_F(OSTimeWinTest, given36BitGpuTimeStampWhenGpuTimeStampOverflowThenGpuTimeDoesNotDecrease) {
@@ -379,22 +383,47 @@ TEST_F(OSTimeWinTest, givenNoKmdSupportWhenInitializingTimestampPtrThenItIsNotAv
     auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
     osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
 
-    osTime->initTimestampPtr();
+    osTime->initTimestampPtr(*osContext);
     EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+
+    osTime->initTimestampPtr(*osContext);
+    EXPECT_EQ(1u, wddm->createMmioTimestampPtrHelperCalled);
 }
 
 TEST_F(OSTimeWinTest, givenTimestampPtrWhenGettingGpuCpuTimeThenValueIsReadFromPointer) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableTimestampMmioRead.set(1);
 
-    uint64_t timestampValue = 0x200000100u;
+    uint32_t timestampDwords[2] = {0x100u, 0x2u};
     auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
-    wddm->timestampPtrResult = &timestampValue;
+    wddm->createMmioTimestampPtrHelperResult = MmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
     osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
     osTime->setDeviceTimerResolution();
 
-    osTime->initTimestampPtr();
+    osContext->setWddmContextHandle(0x1234u);
+    osTime->initTimestampPtr(*osContext);
     EXPECT_TRUE(osTime->isTimestampPtrAvailable());
+    EXPECT_EQ(0x1234u, wddm->createMmioTimestampPtrHelperContext);
+
+    TimeStampData gpuCpuTime{};
+    EXPECT_EQ(TimeQueryStatus::success, osTime->getGpuCpuTime(&gpuCpuTime));
+    EXPECT_EQ(0x200000100u, gpuCpuTime.gpuTimeStamp);
+}
+
+TEST_F(OSTimeWinTest, givenTimestampPtrAlreadyInitializedWhenInitializingAgainThenPointerIsNotChanged) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableTimestampMmioRead.set(1);
+
+    uint32_t timestampDwords[2] = {0x100u, 0x2u};
+    uint32_t otherTimestampDwords[2] = {0x100u, 0x3u};
+    auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+    wddm->createMmioTimestampPtrHelperResult = MmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
+    osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
+
+    osTime->initTimestampPtr(*osContext);
+    wddm->createMmioTimestampPtrHelperResult = MmioTimestampPtrHelper(&otherTimestampDwords[0], &otherTimestampDwords[1]);
+    osTime->initTimestampPtr(*osContext);
+    EXPECT_EQ(1u, wddm->createMmioTimestampPtrHelperCalled);
 
     TimeStampData gpuCpuTime{};
     EXPECT_EQ(TimeQueryStatus::success, osTime->getGpuCpuTime(&gpuCpuTime));
@@ -402,16 +431,17 @@ TEST_F(OSTimeWinTest, givenTimestampPtrWhenGettingGpuCpuTimeThenValueIsReadFromP
 }
 
 TEST_F(OSTimeWinTest, givenDebugKeyNotForcedWhenInitializingTimestampPtrThenKmdIsNotAsked) {
-    uint64_t timestampValue = 0x200000100u;
+    uint32_t timestampDwords[2] = {0x100u, 0x2u};
     auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
-    wddm->timestampPtrResult = &timestampValue;
+    wddm->createMmioTimestampPtrHelperResult = MmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
     osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
 
-    osTime->initTimestampPtr();
+    osTime->initTimestampPtr(*osContext);
     EXPECT_FALSE(osTime->isTimestampPtrAvailable());
 
     DebugManagerStateRestore restore;
     debugManager.flags.EnableTimestampMmioRead.set(0);
-    osTime->initTimestampPtr();
+    osTime->initTimestampPtr(*osContext);
     EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+    EXPECT_EQ(0u, wddm->createMmioTimestampPtrHelperCalled);
 }

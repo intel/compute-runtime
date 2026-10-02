@@ -8,7 +8,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
@@ -85,18 +84,10 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcDeviceIdsAndRevisionsWhenCheckingConfigs
 PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    PVC::setupHardwareInfoBase(&hwInfo, false, compilerReleaseHelper.get());
+    PVC::setupHardwareInfoBase(&hwInfo, false);
 
-    EXPECT_EQ(0u, gtSystemInfo.MaxFillRate);
-    EXPECT_EQ(0u, gtSystemInfo.TotalVsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalHsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalGsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalPsThreadsWindowerRange);
     EXPECT_EQ(0u, gtSystemInfo.CsrSizeInMb);
-    EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }
 
@@ -120,9 +111,8 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupMultiTileInfoBaseThenGtSy
 PVCTEST_F(PvcConfigHwInfoTests, givenPvcHwConfigWhenSetupHardwareInfoThenSharedSystemMemCapabilitiesIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
     auto &capabilityTable = hwInfo.capabilityTable;
-    PvcHwConfig::setupHardwareInfo(&hwInfo, false, compilerReleaseHelper.get());
+    PVC::setupHardwareInfoImpl(&hwInfo, false);
     uint64_t expectedSharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
     EXPECT_EQ(expectedSharedSystemMemCapabilities, capabilityTable.sharedSystemMemCapabilities);
 }

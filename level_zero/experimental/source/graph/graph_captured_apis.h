@@ -13,6 +13,7 @@
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/cmdqueue/patch_preamble_data_types.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
@@ -135,18 +136,12 @@ struct EventParams {
     ze_event_handle_t *phWaitEvents;
 };
 
-struct ExternalCbEventInfo {
+struct ExternalSignalCbEventInfo {
     L0::Event *event = nullptr;
     L0::CommandList *executorCommandList = nullptr;
     NEO::InOrderExecEventHelper inOrderExecEventHelper;
+    bool apiRequiredSignalEvent = false;
 };
-
-using PatchPreambleCounter = uint64_t;
-using PatchPreambleHostAddress = uint64_t *;
-using PatchPreambleHostGpuAddress = uint64_t;
-using PatchPreambleHostGraphicsAllocation = NEO::GraphicsAllocation *;
-using PatchPreambleDeviceGpuAddress = uint64_t;
-using PatchPreambleDeviceGraphicsAllocation = NEO::GraphicsAllocation *;
 
 using PatchPreambleData = std::tuple<PatchPreambleCounter, PatchPreambleHostAddress, PatchPreambleHostGpuAddress, PatchPreambleHostGraphicsAllocation, PatchPreambleDeviceGpuAddress, PatchPreambleDeviceGraphicsAllocation>;
 struct PatchPreambleItem {
@@ -184,39 +179,44 @@ struct ExternalWaitCbEventsInfo {
 };
 
 struct ExternalCbEventInfoContainer {
-    void addCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList) {
-        auto it = std::find_if(storage.begin(),
-                               storage.end(),
-                               [event](const ExternalCbEventInfo &info) { return info.event == event; });
+    void addSignalCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList, bool apiRequiredSignalEvent) {
+        auto it = std::find_if(signalEventStorage.begin(),
+                               signalEventStorage.end(),
+                               [event](const ExternalSignalCbEventInfo &info) { return info.event == event; });
 
-        if (it != storage.end()) {
+        if (it != signalEventStorage.end()) {
             event->getInOrderExecEventHelper().copyData(it->inOrderExecEventHelper);
             it->executorCommandList = executorCommandList;
         } else {
-            ExternalCbEventInfo &info = storage.emplace_back(event, executorCommandList);
+            ExternalSignalCbEventInfo &info = signalEventStorage.emplace_back(event, executorCommandList);
             info.inOrderExecEventHelper.initializeLocalTempStorage();
             event->getInOrderExecEventHelper().copyData(info.inOrderExecEventHelper);
+            info.apiRequiredSignalEvent = apiRequiredSignalEvent;
         }
     }
-    bool externalCbEventsPresent() const {
-        return false == storage.empty();
+    bool externalCbSignalEventsPresent() const {
+        return false == signalEventStorage.empty();
     }
-    void attachExternalCbEventsToExecutableGraph();
-    const std::vector<ExternalCbEventInfo> &getCbEventInfos() const {
-        return storage;
+    void attachExternalCbSignalEventsToExecutableGraph();
+    const std::vector<ExternalSignalCbEventInfo> &getCbSignalEventInfos() const {
+        return signalEventStorage;
     }
     const PatchPreambleDataContainer &getExecutorInfos() const {
         return executorStorage;
     }
 
     PatchPreambleDataContainer::iterator getExecutorInfo(L0::CommandList *executor) {
-        return std::find_if(executorStorage.begin(),
-                            executorStorage.end(),
+        return getExecutorInfo(&this->executorStorage, executor);
+    }
+
+    PatchPreambleDataContainer::iterator getExecutorInfo(PatchPreambleDataContainer *container, L0::CommandList *executor) {
+        return std::find_if(container->begin(),
+                            container->end(),
                             [executor](const PatchPreambleItem &item) { return item.key == executor; });
     }
 
     void finalizeExecutorContainer();
-    void updateExecutorContainer(L0::CommandList *currentRoot);
+    void updateExecutorContainer(L0::CommandList *currentRoot, PatchPreambleDataContainer &patchPreambleCrossSyncs);
     PatchPreambleItem &getPreambleData(L0::CommandList *executor) {
         static PatchPreambleItem nullPatchPreambleItem;
         auto it = getExecutorInfo(executor);
@@ -242,6 +242,13 @@ struct ExternalCbEventInfoContainer {
         info.waitEvents.assign(phWaitEvents, phWaitEvents + numWaitEvents);
         info.commandId = commandId;
         info.executor = executor;
+        auto it = std::find_if(waitEventMclContainer.begin(),
+                               waitEventMclContainer.end(),
+                               [executor](const L0::CommandList *savedExecutor) { return savedExecutor == executor; });
+        // commiting a mcl (command list close operation) should be done only once
+        if (it == waitEventMclContainer.end()) {
+            waitEventMclContainer.push_back(executor);
+        }
     }
     const std::vector<ExternalWaitCbEventsInfo> &getCbWaitEventInfos() const {
         return waitEventsContainer;
@@ -250,10 +257,12 @@ struct ExternalCbEventInfoContainer {
         return false == waitEventsContainer.empty();
     }
     void refreshExternalCbWaitEvents();
+    void commitMclForExternalCbWaitEvents();
 
   protected:
-    std::vector<ExternalCbEventInfo> storage;
+    std::vector<ExternalSignalCbEventInfo> signalEventStorage;
     std::vector<ExternalWaitCbEventsInfo> waitEventsContainer;
+    std::vector<L0::CommandList *> waitEventMclContainer;
     PatchPreambleDataContainer executorStorage;
 };
 
@@ -271,10 +280,18 @@ class GraphInternalEvents {
         }
     }
 
-    static bool isInternalEventDependency(const L0::Event *event) {
-        return event->isCounterBasedExplicitlyEnabled() && (false == event->isIpcImported()) &&
-               (0 == (event->getCounterBasedFlags() & ZE_EVENT_COUNTER_BASED_FLAG_IPC)) &&
-               (false == event->isExternalEvent()) && (false == L0::Event::isAggregatedEvent(event));
+    static bool isInternalEventDependency(L0::Event *event) {
+        bool apiRequiredExternalSignalEvent = event->getApiRequiredGraphExternalEvent();
+        bool isQualifiedForInternal = event->isCounterBasedExplicitlyEnabled() && (false == event->isIpcImported()) &&
+                                      (0 == (event->getCounterBasedFlags() & ZE_EVENT_COUNTER_BASED_FLAG_IPC)) &&
+                                      (false == (event->isExternalEvent() || apiRequiredExternalSignalEvent)) &&
+                                      (false == L0::Event::isAggregatedEvent(event));
+        // api required is one time append decision (in runtime/instantiation it is cleared when signal event is assigned to the next append)
+        // clear it once is checked for being external
+        if (apiRequiredExternalSignalEvent) {
+            event->setApiRequiredGraphExternalEvent(false);
+        }
+        return isQualifiedForInternal;
     }
 
     ze_result_t addInternalEvent(L0::Event *originalEvent, ze_context_handle_t hContext);
@@ -543,6 +560,21 @@ concept HasPCommandId = requires(ApiArgsT &apiArgs) {
     apiArgs.pCommandId;
 };
 
+bool getGraphExternalWaitEventFlagFromPNext(const void *pNext);
+
+template <CaptureApi api, typename... TArgs>
+    requires(api == CaptureApi::zeCommandListAppendWaitOnEventsWithParameters)
+inline bool getCommandsGraphExternalWaitFlag(TArgs... args) {
+    typename Closure<api>::ApiArgs structuredApiArgs{args...};
+    return getGraphExternalWaitEventFlagFromPNext(structuredApiArgs.pNext);
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires(api != CaptureApi::zeCommandListAppendWaitOnEventsWithParameters)
+inline bool getCommandsGraphExternalWaitFlag(TArgs... args) {
+    return false;
+}
+
 struct IndirectArgsWithWaitEvents {
     IndirectArgsWithWaitEvents() = default;
     template <typename ApiArgsT>
@@ -686,10 +718,14 @@ struct Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> {
     } apiArgs;
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
-        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage),
-                                                                                                 pNext(apiArgs.pNext) {}
-
-        const void *pNext;
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
+        ~IndirectArgs();
+        void *clonedPNext = nullptr;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -1012,10 +1048,14 @@ struct Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> {
     } apiArgs;
 
     struct IndirectArgs : EmptyIndirectArgs {
-        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : EmptyIndirectArgs(apiArgs, externalStorage),
-                                                                                                 pNext(apiArgs.pNext) {}
-
-        const void *pNext;
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : EmptyIndirectArgs(std::move(static_cast<EmptyIndirectArgs &>(other))),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
+        ~IndirectArgs();
+        void *clonedPNext = nullptr;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -1311,11 +1351,16 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              groupCounts(other.groupCounts),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)),
+              capturedKernel(std::move(other.capturedKernel)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
         ze_group_count_t groupCounts;
-        void *pNext;
+        void *clonedPNext = nullptr;
         std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
@@ -1343,10 +1388,15 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)),
+              argumentsId(other.argumentsId),
+              capturedKernel(std::move(other.capturedKernel)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
-        void *pNext;
+        void *clonedPNext = nullptr;
         ClosureExternalStorage::KernelArgumentsId argumentsId = ClosureExternalStorage::invalidKernelArgumentsId;
         std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
@@ -1468,10 +1518,13 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopyWithParameters> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
-        void *pNext;
+        void *clonedPNext = nullptr;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -1498,12 +1551,16 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&) = default;
-        IndirectArgs &operator=(IndirectArgs &&) = default;
+        IndirectArgs(IndirectArgs &&other) noexcept
+            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
+              pattern(std::move(other.pattern)),
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+        }
+        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
 
         StackVec<uint8_t, 16> pattern;
-        void *pNext;
+        void *clonedPNext = nullptr;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}

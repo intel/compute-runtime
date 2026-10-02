@@ -125,7 +125,4 @@ struct ImageCoreFamily : public ImageImp {
     SurfaceStateSlotStorage packedSurfaceStateStorage = {};
 };
 
-template <uint32_t gfxProductFamily>
-struct ImageProductFamily;
-
 } // namespace L0

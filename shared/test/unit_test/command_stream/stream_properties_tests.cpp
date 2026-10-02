@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
     allProperties.push_back(&properties.enableMemoryException);
     allProperties.push_back(&properties.enableBreakpoints);
     allProperties.push_back(&properties.enableForceExternalHaltAndForceException);
+    allProperties.push_back(&properties.l1CachePolicy);
     return allProperties;
 }
 

@@ -32,6 +32,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -494,7 +495,7 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCo
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment()));
 
     auto patchValue1 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress));
     auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 1 * surfaceStateSize));
@@ -553,7 +554,7 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchBindlessSurfaceStatesInC
     ASSERT_TRUE(baseAddress > std::numeric_limits<uint32_t>::max());
 
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment()));
 
     auto bindlessSufaceState1Address = baseAddress;
     auto bindlessSufaceState2Address = baseAddress + 2 * surfaceStateSize;
@@ -2132,15 +2133,15 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAnd
     MockContext mockCtx(&*this->pClDevice);
     MockKernelWithInternals mockKernel(mockCtx);
 
-    void *systemPtr = malloc(256);
+    // systemPtr is only ever used as an address token, never dereferenced.
+    uint8_t data{};
+    void *systemPtr = &data;
 
     auto svmData = mockKernel.mockContext->getSVMAllocsManager()->getSVMAlloc(systemPtr);
     EXPECT_EQ(nullptr, svmData);
 
     auto status = clSetKernelExecInfo(mockKernel.mockMultiDeviceKernel, CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL, sizeof(systemPtr), &systemPtr);
     EXPECT_EQ(CL_SUCCESS, status);
-
-    free(systemPtr);
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAndSharedSystemNotSupportedThenInvalidValueIsReturned) {
@@ -2154,15 +2155,15 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAnd
     MockContext mockCtx(&*this->pClDevice);
     MockKernelWithInternals mockKernel(mockCtx);
 
-    void *systemPtr = malloc(256);
+    // systemPtr is only ever used as an address token, never dereferenced.
+    uint8_t data{};
+    void *systemPtr = &data;
 
     auto svmData = mockKernel.mockContext->getSVMAllocsManager()->getSVMAlloc(systemPtr);
     EXPECT_EQ(nullptr, svmData);
 
     auto status = clSetKernelExecInfo(mockKernel.mockMultiDeviceKernel, CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL, sizeof(systemPtr), &systemPtr);
     EXPECT_EQ(CL_INVALID_VALUE, status);
-
-    free(systemPtr);
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicAndHasIndirectStatelessAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
@@ -3395,7 +3396,7 @@ HWTEST_F(KernelTest, givenBindlessArgBufferWhenPatchWithImplicitSurfaceThenSurfa
     kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
 
     const auto &gfxCoreHelper = device->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getDevice().getRootDeviceEnvironment()));
     const auto ssIndex = kernel.kernelInfo.kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
@@ -3436,10 +3437,9 @@ HWTEST_F(KernelTest, givenBindlessArgBufferAndNotInitializedBindlessOffsetToSurf
     EXPECT_EQ(0, std::memcmp(ssHeapDataInitial.get(), surfaceStateHeap, surfaceStateHeapSize));
 }
 
-HWTEST_F(KernelTest, givenBindlessHeapsHelperAndBindlessArgBufferWhenPatchWithImplicitSurfaceThenCrossThreadDataIsPatchedAndSurfaceStateIsEncoded) {
+HWTEST2_F(KernelTest, givenBindlessHeapsHelperAndBindlessArgBufferWhenPatchWithImplicitSurfaceThenCrossThreadDataIsPatchedAndSurfaceStateIsEncoded, IsHeapfulRequired) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseBindlessMode.set(1);
-
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
     auto &neoDevice = device->getDevice();
 

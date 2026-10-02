@@ -10,5 +10,5 @@
 #include <vector>
 
 namespace NEO {
-const std::vector<unsigned short> criDeviceIds{0x674C, 0x674D, 0x674E, 0x674F, 0x6750};
+const std::vector<unsigned short> criDeviceIds{0x674C, 0x674D, 0x674E, 0x674F, 0x6750, 0x6751};
 } // namespace NEO

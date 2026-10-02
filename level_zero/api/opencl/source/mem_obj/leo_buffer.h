@@ -13,7 +13,10 @@ namespace LEO {
 
 class Buffer : public MemObj {
   public:
-    Buffer(Context *context, MemoryProperties &properties, cl_mem_flags flags, void *ptr, void *cpuPtr, size_t size, bool externalHandle) : MemObj(context, properties, flags, cpuPtr, externalHandle, MemObjType::buffer), usmPtr(ptr), bufferSize(size) {};
+    constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
+    constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x02;
+
+    Buffer(Context *context, MemoryProperties &properties, cl_mem_flags flags, void *ptr, void *cpuPtr, size_t size, bool externalHandle) : MemObj(context, properties, flags, cpuPtr, externalHandle, MemObjType::buffer), usmPtr(ptr), bufferSize(size) { magic = objectMagic; };
     Buffer() = delete;
     ~Buffer() override;
 

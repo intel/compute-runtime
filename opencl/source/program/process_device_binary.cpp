@@ -225,7 +225,7 @@ cl_int Program::processGenBinary(ClDevice &clDevice) {
         if (auto usmPool = clDevice.getDevice().getUsmConstantSurfaceAllocPool();
             usmPool && usmPool->isInPoolRange(gpuAddress)) {
             [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
-            DEBUG_BREAK_IF(!ret);
+            DEBUG_BREAK_IF(!ret.freeSucceeded);
         } else if (auto &pool = clDevice.getDevice().getConstantSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.constantSurface->getGraphicsAllocation())) {
             pool.free(buildInfo.constantSurface.release());
@@ -241,7 +241,7 @@ cl_int Program::processGenBinary(ClDevice &clDevice) {
         if (auto usmPool = clDevice.getDevice().getUsmGlobalSurfaceAllocPool();
             usmPool && usmPool->isInPoolRange(gpuAddress)) {
             [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
-            DEBUG_BREAK_IF(!ret);
+            DEBUG_BREAK_IF(!ret.freeSucceeded);
         } else if (auto &pool = clDevice.getDevice().getGlobalSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.globalSurface->getGraphicsAllocation())) {
             pool.free(buildInfo.globalSurface.release());
@@ -424,7 +424,7 @@ void Program::processDebugData(uint32_t rootDeviceIndex) {
             kernelName = reinterpret_cast<const char *>(ptrOffset(kernelDebugHeader, sizeof(SKernelDebugDataHeaderIGC)));
 
             auto kernelInfo = kernelInfoArray[i];
-            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName.compare(0, kernelInfo->kernelDescriptor.kernelMetadata.kernelName.size(), kernelName) != 0);
+            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName != kernelName);
 
             kernelDebugData = ptrOffset(kernelName, kernelDebugHeader->KernelNameSize);
 

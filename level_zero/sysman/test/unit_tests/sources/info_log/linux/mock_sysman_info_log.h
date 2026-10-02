@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_instance_imp.h"
 #include "level_zero/sysman/source/api/info_log/sysman_os_info_log.h"
 #include "level_zero/sysman/source/api/info_log/sysman_os_info_log_instance.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/tracefs_api/mock_tracefs_api.h"
@@ -208,7 +209,7 @@ class MockPerCpuStats {
 
     static bool isStatsFile(const char *file) {
         constexpr std::string_view perCpuPrefix = "per_cpu/";
-        return (file != nullptr) && (std::string_view(file).compare(0, perCpuPrefix.size(), perCpuPrefix) == 0);
+        return (file != nullptr) && std::string_view(file).starts_with(perCpuPrefix);
     }
 
     static char *read(const char *file) {
@@ -609,6 +610,9 @@ class MockTraceFsApiWithBadCperData : public PublicTraceFsApi {
         if (failTraceRead) {
             return nullptr;
         }
+        if (MockPerCpuStats::isStatsFile(file)) {
+            return MockPerCpuStats::read(file);
+        }
         if (file && std::string(file) == "trace") {
             if (psize) {
                 *psize = static_cast<int>(eventData.size());
@@ -904,6 +908,26 @@ class MockPerCpuDirBackup {
     VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> closedirBackup{&NEO::SysCalls::sysCallsClosedir, MockPerCpuDir::mockSysCallsClosedir};
 };
 
+class MockPerCpuCountersWithoutDrops {
+  public:
+    MockPerCpuDirBackup perCpuDirBackup;
+    MockPerCpuStatsBackup perCpuStatsBackup{std::vector<std::string>(MockPerCpuDir::mockPerCpuBufferCount, MockPerCpuStats::makeBlob(0, 0))};
+};
+
+class MockLinuxInfoLogInstanceImpWithClock : public LinuxInfoLogInstanceImp {
+  public:
+    using LinuxInfoLogInstanceImp::LinuxInfoLogInstanceImp;
+
+    static constexpr uint64_t startTimeMs = 1000u;
+    uint32_t clockReadsBeforeDeadline = UINT32_MAX;
+    uint32_t clockReadCount = 0;
+
+    uint64_t getCurrentTimeInMs() override {
+        clockReadCount++;
+        return (clockReadCount > clockReadsBeforeDeadline) ? UINT64_MAX - 1 : startTimeMs;
+    }
+};
+
 // A trivial OsInfoLogInstance the generic InfoLogInstanceImp tests drive directly, without any of the
 // libtracefs machinery. It only records how often teardown() reached it, so the generic teardown
 // bookkeeping (which must forward exactly once) can be checked.
@@ -912,15 +936,19 @@ class MockOsInfoLogInstance : public OsInfoLogInstance {
     ze_result_t teardownResult = ZE_RESULT_SUCCESS;
     uint32_t teardownCallCount = 0;
     uint32_t *pSharedTeardownCallCount = nullptr;
+    uint32_t readCallCount = 0;
+    uint32_t peekCallCount = 0;
 
     ze_result_t readWithMetadata(uint64_t, uint32_t *, uint8_t *, uint32_t *,
-                                 zes_intel_info_log_metadata_exp *,
-                                 zes_intel_info_log_read_status_exp_t *) override {
+                                 zes_info_log_metadata_ext_t *,
+                                 zes_info_log_read_status_ext_t *) override {
+        readCallCount++;
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t peekWithMetadata(uint64_t, uint32_t *, uint8_t *, uint32_t *,
-                                 zes_intel_info_log_metadata_exp *,
-                                 zes_intel_info_log_read_status_exp_t *) override {
+                                 zes_info_log_metadata_ext_t *,
+                                 zes_info_log_read_status_ext_t *) override {
+        peekCallCount++;
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t teardown() override {
@@ -938,21 +966,21 @@ class MockOsInfoLogInstance : public OsInfoLogInstance {
 class MockOsInfoLog : public OsInfoLog {
   public:
     ze_result_t getPropertiesResult = ZE_RESULT_SUCCESS;
-    bool isNamedInstancedCollectionSupported = true;
+    bool isNamedInstanceSupported = true;
     ze_result_t createInstanceResult = ZE_RESULT_SUCCESS;
     bool createInstanceReturnsNullInstance = false;
     uint32_t createInstanceCallCount = 0;
     ze_result_t instanceTeardownResult = ZE_RESULT_SUCCESS;
     uint32_t instanceTeardownCallCount = 0;
 
-    ze_result_t getProperties(zes_intel_info_log_properties_exp_t *pProperties) override {
+    ze_result_t getProperties(zes_info_log_ext_properties_t *pProperties) override {
         if (getPropertiesResult == ZE_RESULT_SUCCESS && pProperties != nullptr) {
-            pProperties->isNamedInstancedCollectionSupported = isNamedInstancedCollectionSupported;
+            pProperties->isNamedInstanceSupported = isNamedInstanceSupported;
         }
         return getPropertiesResult;
     }
     ze_result_t createInstance(const char *pInstanceName,
-                               zes_intel_info_log_instance_exp_desc_t *pDesc,
+                               zes_info_log_instance_ext_desc_t *pDesc,
                                std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) override {
         createInstanceCallCount++;
         if (createInstanceResult == ZE_RESULT_SUCCESS && !createInstanceReturnsNullInstance) {

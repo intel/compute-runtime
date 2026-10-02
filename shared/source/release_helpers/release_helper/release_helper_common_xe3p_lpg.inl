@@ -8,10 +8,15 @@
 #include "shared/source/release_helpers/release_helper/release_helper_base.inl"
 #include "shared/source/xe3p_core/hw_cmds_base.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 #include "release_definitions.h"
 
 namespace NEO {
+template <>
+uint64_t ReleaseHelperHw<release>::overrideSystemMemoryPatIndexBase(uint64_t patIndex) const {
+    return 19u;
+}
+
 template <>
 const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
     if (!(hardwareIpVersion.value == AOT::NVL_P_A0)) {

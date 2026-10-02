@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/kernel/kernel_arg_descriptor.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <variant>
@@ -20,20 +22,10 @@ struct PatchFrontEndState {
     uint64_t gpuAddress = 0;
 };
 
-struct PatchPauseOnEnqueueSemaphoreStart {
+struct PatchDebugPause {
     void *pCommand = nullptr;
-};
-
-struct PatchPauseOnEnqueueSemaphoreEnd {
-    void *pCommand = nullptr;
-};
-
-struct PatchPauseOnEnqueuePipeControlStart {
-    void *pCommand = nullptr;
-};
-
-struct PatchPauseOnEnqueuePipeControlEnd {
-    void *pCommand = nullptr;
+    bool beforeWorkload = false;
+    bool isBlit = false;
 };
 
 struct PatchComputeWalkerInlineDataScratch {
@@ -52,6 +44,7 @@ struct PatchComputeWalkerImplicitArgsScratch {
     mutable uint64_t scratchAddressAfterPatch = 0;
     size_t offset = 0;
     size_t patchSize = 0;
+    size_t scratch0SizeAllocatedOffset = NEO::undefined<size_t>;
 };
 
 struct PatchNoopSpace {
@@ -148,10 +141,7 @@ struct PatchInvalidPatchType {};
 using CommandToPatchOnQueue = std::variant<
     PatchInvalidPatchType,
     PatchFrontEndState,
-    PatchPauseOnEnqueueSemaphoreStart,
-    PatchPauseOnEnqueueSemaphoreEnd,
-    PatchPauseOnEnqueuePipeControlStart,
-    PatchPauseOnEnqueuePipeControlEnd,
+    PatchDebugPause,
     PatchComputeWalkerInlineDataScratch,
     PatchComputeWalkerImplicitArgsScratch,
     PatchNoopSpace,

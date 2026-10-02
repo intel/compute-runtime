@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 namespace NEO {
@@ -66,6 +67,10 @@ struct KernelImp : Kernel {
                                  uint32_t *groupSizeX, uint32_t *groupSizeY,
                                  uint32_t *groupSizeZ) override;
 
+    ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY, uint32_t globalSizeZ,
+                                 uint32_t workDim, uint32_t *groupSizeX, uint32_t *groupSizeY,
+                                 uint32_t *groupSizeZ);
+
     ze_result_t getKernelName(size_t *pSize, char *pName) override;
     ze_result_t getArgumentSize(uint32_t argIndex, uint32_t *argSize) const override;
     ze_result_t getArgumentType(uint32_t argIndex, uint32_t *pSize, char *pString) const override;
@@ -107,6 +112,8 @@ struct KernelImp : Kernel {
     ze_result_t setArgSampler(uint32_t argIndex, size_t argSize, const void *argVal);
 
     virtual void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) = 0;
+
+    MOCKABLE_VIRTUAL std::optional<size_t> getPooledAllocationEndOffsetForSurfaceState(const void *address, const NEO::GraphicsAllocation *alloc) const;
 
     void setInlineSamplers();
 

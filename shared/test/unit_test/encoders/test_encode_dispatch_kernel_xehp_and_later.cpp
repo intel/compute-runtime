@@ -977,15 +977,38 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
 
         EXPECT_EQ(expectedEmitLocalIds[i], walkerCmd.getEmitLocalId());
         EXPECT_EQ(31u, walkerCmd.getLocalXMaximum());
-        auto expectedYMax = (localIdDims[i] > 1) ? 1u : 0u;
-        EXPECT_EQ(expectedYMax, walkerCmd.getLocalYMaximum());
-        auto expectedZMax = (localIdDims[i] > 2) ? 1u : 0u;
-        EXPECT_EQ(expectedZMax, walkerCmd.getLocalZMaximum());
+        EXPECT_EQ(1u, walkerCmd.getLocalYMaximum());
+        EXPECT_EQ(1u, walkerCmd.getLocalZMaximum());
         EXPECT_EQ(2u, walkerCmd.getWalkOrder());
 
         EXPECT_TRUE(walkerCmd.getGenerateLocalId());
         EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
     }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenFewerLocalIdDimensionsThanWorkGroupDimensionsWhenLocalIdGenerationByHwThenAllLocalIdMaximumsMatchWorkGroupSize) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+
+    workGroupSizes[0] = 80u;
+    workGroupSizes[1] = 7u;
+    workGroupSizes[2] = 1u;
+    localIdDimensions = 1u;
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+                                                       0, 0, false, false, false, requiredWorkGroupOrder, rootDeviceEnvironment);
+
+    uint32_t expectedEmitLocalIds = (1 << 0);
+    EXPECT_EQ(expectedEmitLocalIds, walkerCmd.getEmitLocalId());
+    EXPECT_TRUE(walkerCmd.getGenerateLocalId());
+
+    EXPECT_EQ(79u, walkerCmd.getLocalXMaximum());
+    EXPECT_EQ(6u, walkerCmd.getLocalYMaximum());
+    EXPECT_EQ(0u, walkerCmd.getLocalZMaximum());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenLocalIdsNotPresentThenEmitLocalIdsIsNotSet) {

@@ -9,6 +9,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_interface.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -49,6 +50,8 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+
+#include "implicit_args.h"
 
 using namespace NEO;
 
@@ -509,6 +512,40 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     EXPECT_EQ(expectedMocs, walker->getPostSync().getMocs());
     contextStartAddress = TimestampPacketHelper::getContextStartGpuAddress(*timestampPacketContainer.peekNodes()[1]);
     EXPECT_EQ(contextStartAddress, secondWalker->getPostSync().getDestinationAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWithImplicitArgsV2WhenDispatchingWalkerThenAllocatedScratchSizeIsSetInImplicitArgs) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    MockKernelWithInternals kernelWithImplicitArgs(*context);
+    kernelWithImplicitArgs.mockKernel->pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
+    memset(kernelWithImplicitArgs.mockKernel->pImplicitArgs.get(), 0, sizeof(NEO::ImplicitArgs));
+    kernelWithImplicitArgs.mockKernel->pImplicitArgs->initializeHeader(2);
+    kernelWithImplicitArgs.mockKernel->pImplicitArgs->setLocalSize(1, 1, 1);
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernelWithImplicitArgs.mockKernel}));
+    MockCommandQueue cmdQ(context.get(), device.get(), nullptr, false);
+
+    auto &queueCsr = cmdQ.getGpgpuCommandStreamReceiver();
+    auto scratchController = queueCsr.getPrimaryScratchSpaceController();
+    ASSERT_NE(nullptr, scratchController);
+
+    constexpr uint32_t requiredPerThreadScratchSizeSlot0 = 0x400u;
+    bool stateBaseAddressDirty = false;
+    bool vfeStateDirty = false;
+    auto surfaceStateHeap = std::make_unique<uint8_t[]>(MemoryConstants::pageSize);
+    scratchController->setRequiredScratchSpace(surfaceStateHeap.get(), 0u, requiredPerThreadScratchSizeSlot0, 0u,
+                                               queueCsr.getOsContext(), stateBaseAddressDirty, vfeStateDirty);
+    ASSERT_EQ(requiredPerThreadScratchSizeSlot0, queueCsr.getPerThreadScratchSizeSlot0Allocated());
+
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    HardwareInterface<FamilyType>::template dispatchWalker<DefaultWalkerType>(
+        cmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        walkerArgs);
+
+    EXPECT_EQ(requiredPerThreadScratchSizeSlot0, kernelWithImplicitArgs.mockKernel->pImplicitArgs->v2.scratch0SizeAllocated);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp) {

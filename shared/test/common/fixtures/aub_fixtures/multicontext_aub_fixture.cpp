@@ -12,7 +12,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -120,11 +119,9 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 
     bool setupCalled = false;
 
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(localHwInfo.ipVersion);
-
     if (localHwInfo.platform.eRenderCoreFamily >= IGFX_XE_HPG_CORE) {
         setupCalled = true;
-        hardwareInfoSetup[localHwInfo.platform.eProductFamily](&localHwInfo, true, 0u, compilerReleaseHelper.get());
+        hardwareInfoSetup[localHwInfo.platform.eProductFamily](&localHwInfo, true);
 
 #ifdef SUPPORT_DG2
         if (localHwInfo.platform.eProductFamily == IGFX_DG2) {

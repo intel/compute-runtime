@@ -21,14 +21,17 @@
 
 namespace L0::MCL {
 using Family = NEO::Xe3pCoreFamily;
+static constexpr auto gfxCoreFamily = Family::gfxCoreFamily;
 
-template struct MutableCommandListCoreFamily<IGFX_XE3P_CORE>;
+template struct MutableCommandListCoreFamily<gfxCoreFamily>;
 template struct MutableComputeWalkerHw<Family>;
 template struct MutableLoadRegisterImmHw<Family>;
 template struct MutablePipeControlHw<Family>;
 template struct MutableSemaphoreWaitHw<Family>;
 template struct MutableStoreDataImmHw<Family>;
 template struct MutableStoreRegisterMemHw<Family>;
+
+static MutableCommandListPopulateFactory<gfxCoreFamily, MutableCommandListCoreFamily<gfxCoreFamily>> populateMutableXe3pCore;
 
 static_assert(NEO::NonCopyableAndNonMovable<MutableComputeWalkerHw<Family>>);
 

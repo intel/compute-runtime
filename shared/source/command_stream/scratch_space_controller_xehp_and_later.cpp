@@ -30,7 +30,7 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
     : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
     auto &rootDeviceEnvironment = *environment.rootDeviceEnvironments[rootDeviceIndex];
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    singleSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
+    singleSurfaceStateSize = gfxCoreHelper.getScratchSurfaceStateSize(rootDeviceEnvironment);
     if (debugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
         twoSlotScratchSpaceSupported = !!debugManager.flags.EnablePrivateScratchSlot1.get();
     }

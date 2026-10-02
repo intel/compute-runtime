@@ -34,6 +34,7 @@
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/mocks/mock_cpuid_functions.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/platform/platform.h"
@@ -53,16 +54,10 @@ extern const char *dxcoreDllName;
 }
 
 namespace NEO {
-class OsLibrary;
 void __attribute__((destructor)) platformsDestructor();
 extern const DeviceDescriptor deviceDescriptorTable[];
 const char *apiName = "OCL";
 } // namespace NEO
-
-NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
-    return nullptr;
-}
-void setupExternalDependencies() {}
 
 using namespace NEO;
 
@@ -85,7 +80,7 @@ typedef Test<DrmTestsFixture> DrmTests;
 
 void initializeTestedDevice() {
     for (uint32_t i = 0; deviceDescriptorTable[i].deviceId != 0; i++) {
-        if (defaultHwInfo->platform.eProductFamily == deviceDescriptorTable[i].pHwInfo->platform.eProductFamily) {
+        if (defaultHwInfo->platform.eProductFamily == deviceDescriptorTable[i].productFamily) {
             deviceId = deviceDescriptorTable[i].deviceId;
             break;
         }
@@ -914,6 +909,12 @@ int main(int argc, char **argv) {
         listeners.Append(customEventListener);
     }
 
+    auto *mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
+    mockCpuInfo->featuresDetected = true;
+    mockCpuInfo->virtualAddressSize = 48u;
+    mockCpuInfo->cpuFlags.clear();
+    CpuInfo::getCpuFlagsFunc = [](std::string &cpuFlags) { cpuFlags.clear(); };
+
     defaultHwInfo = std::make_unique<HardwareInfo>();
     *defaultHwInfo = DEFAULT_TEST_PLATFORM::hwInfo;
 
@@ -974,6 +975,7 @@ TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatfor
 
     EXPECT_EQ(nullptr, platformsImpl);
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
+    leoPlatformEntries = new std::vector<LeoPlatformEntry>;
 }
 
 TEST_F(DrmTests, givenValidPciPathThenPciBusInfoIsAvailable) {
@@ -1220,4 +1222,12 @@ TEST(SysCallsSocketTest, givenDupWhenCalledWithInvalidFileDescriptorThenReturnsE
 TEST(SysCallsSocketTest, givenGetpidWhenCalledThenReturnsPositiveProcessId) {
     pid_t pid = NEO::SysCalls::getpid();
     EXPECT_GT(pid, 0);
+}
+
+TEST(CpuInfoTest, givenLinuxDllTestsWhenCpuInfoIsQueriedThenHostCpuIsNotUsed) {
+    std::string cpuFlags;
+    CpuInfo::getCpuFlagsFunc(cpuFlags);
+
+    EXPECT_TRUE(cpuFlags.empty());
+    EXPECT_EQ(48u, CpuInfo::getInstance().getVirtualAddressSize());
 }

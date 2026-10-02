@@ -250,6 +250,21 @@ HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingIsRegularEventThe
     }
 }
 
+HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingHasHostWaitablePostSyncThenCorrectValuesAreReturned) {
+    EncodePostSyncArgs args{};
+    for (bool inOrderExec : {true, false}) {
+        for (bool hostScopeSignalEvent : {true, false}) {
+            for (uint64_t eventAddress : {0, 0x1010}) {
+                args.inOrderExecInfo = (inOrderExec) ? reinterpret_cast<InOrderExecInfo *>(0x1234) : nullptr;
+                args.isHostScopeSignalEvent = hostScopeSignalEvent;
+                args.eventAddress = eventAddress;
+                bool expectedHostWaitablePostSync = (hostScopeSignalEvent && eventAddress != 0) || inOrderExec;
+                EXPECT_EQ(expectedHostWaitablePostSync, args.hasHostWaitablePostSync());
+            }
+        }
+    }
+}
+
 HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenInvalidSizeThenExpectUnrecoverable) {
     size_t size = 3;
 

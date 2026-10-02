@@ -155,12 +155,14 @@ class ConfigurableMakeResidentMemoryOps : public MockMemoryOperations {
         MockMemoryOperations::makeResident(device, gfxAllocations, isDummyExecNeeded, forcePagingFence);
         lastDeviceArg = device;
         lastAllocs.assign(gfxAllocations.begin(), gfxAllocations.end());
+        lastAllocImported = !gfxAllocations.empty() && gfxAllocations[0]->getIsImported();
         return makeResidentResult;
     }
 
     MemoryOperationsStatus makeResidentResult = MemoryOperationsStatus::success;
     Device *lastDeviceArg = nullptr;
     std::vector<GraphicsAllocation *> lastAllocs;
+    bool lastAllocImported = false;
 };
 
 struct PeerAccessProbeTest : public ::testing::Test {
@@ -296,6 +298,17 @@ TEST_F(PeerAccessProbeTest, givenMakeResidentReturnsSuccessWhenQueryingPeerAcces
     ASSERT_EQ(1u, peerOps->lastAllocs.size());
     EXPECT_EQ(memoryManager->lastImportedAllocation, peerOps->lastAllocs[0]);
     EXPECT_EQ(1u, memoryManager->countFrees(memoryManager->lastImportedAllocation));
+}
+
+TEST_F(PeerAccessProbeTest, givenDmaBufProbeWhenMakingImportedAllocationResidentThenItIsMarkedAsImported) {
+    auto peerOps = memoryOperationsHandlers[device1->getRootDeviceIndex()];
+
+    GraphicsAllocation *probeAllocation = nullptr;
+    uint64_t handle = std::numeric_limits<uint64_t>::max();
+    EXPECT_TRUE(queryPeerAccessDrm(*device0, *device1, &probeAllocation, &handle));
+
+    EXPECT_EQ(1, peerOps->makeResidentCalledCount.load());
+    EXPECT_TRUE(peerOps->lastAllocImported);
 }
 
 TEST_F(PeerAccessProbeTest, givenMakeResidentReturnsFailedWhenQueryingPeerAccessThenReturnsFalseAndImportedAllocationFreedExactlyOnce) {
@@ -476,9 +489,9 @@ TEST_F(PeerAccessProbeTest, givenNoIafFabricDirectoryWhenQueryingFabricStatsThen
 
 namespace {
 
-class MockIoctlHelperIafTest : public IoctlHelperPrelim20 {
+class MockIoctlHelperIafTest : public IoctlHelperUpstream {
   public:
-    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    using IoctlHelperUpstream::IoctlHelperUpstream;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override {
         latency = 1;
         bandwidth = 10;
@@ -486,9 +499,9 @@ class MockIoctlHelperIafTest : public IoctlHelperPrelim20 {
     }
 };
 
-class MockIoctlHelperIafFailing : public IoctlHelperPrelim20 {
+class MockIoctlHelperIafFailing : public IoctlHelperUpstream {
   public:
-    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    using IoctlHelperUpstream::IoctlHelperUpstream;
     bool getFabricLatency(uint32_t, uint32_t &, uint32_t &) override {
         return false;
     }

@@ -24,11 +24,11 @@ void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddress(CommandsToPatc
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs) {
+void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInInlineData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInCrossThreadData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams, bool kernelNeedsImplicitArgs) {
+void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInCrossThreadData(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const NEO::KernelDescriptor &kernelDescriptor, CmdListKernelLaunchParams &launchParams) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -40,10 +40,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
     auto clearCommandToPatchLambda = [&](auto &patch) {
         using PatchT = std::decay_t<decltype(patch)>;
-        if constexpr (NEO::isAnyOfType<PatchT, PatchPauseOnEnqueueSemaphoreStart,
-                                       PatchPauseOnEnqueueSemaphoreEnd,
-                                       PatchPauseOnEnqueuePipeControlStart,
-                                       PatchPauseOnEnqueuePipeControlEnd>) {
+        if constexpr (std::is_same_v<PatchT, PatchDebugPause>) {
             UNRECOVERABLE_IF(patch.pCommand == nullptr);
         } else if constexpr (std::is_same_v<PatchT, PatchFrontEndState>) {
             using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
@@ -71,6 +68,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
     this->frontEndPatchListCount = 0;
     this->activeScratchPatchElements = 0;
+    this->activeScratchSizePatchElements = 0;
     this->hostFunctionWithMemorySynchronizationCount = 0;
     this->hostFunctionWithoutMemorySynchronizationCount = 0;
 }

@@ -566,11 +566,11 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenCommandQueuesAreCreatedAn
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue1 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue1 = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(1u, drmMock->ioctlCallsCount);
     EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
 
-    auto commandQueue2 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue2 = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(1u, drmMock->ioctlCallsCount);
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
 
@@ -650,12 +650,12 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenDebuggingEnabledWhenCommandQueuesCre
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
 
-    auto commandQueue1 = CommandQueue::create(productFamily, subDevice0, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue1 = CommandQueue::create(subDevice0, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(1u, drmMock->ioctlCallsCount);
     EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto commandQueue2 = CommandQueue::create(productFamily, subDevice1, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue2 = CommandQueue::create(subDevice1, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -685,7 +685,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenDebuggingEnabledWhenCommandQueueCrea
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
 
-    auto commandQueue1 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue1 = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(2u, drmMock->ioctlCallsCount);
     EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -744,7 +744,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenC
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
 
-    auto commandQueue1 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    auto commandQueue1 = CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
     EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_NE(0u, debuggerL0Hw->uuidL0CommandQueueHandle[0]);

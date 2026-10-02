@@ -57,7 +57,7 @@ TEST_F(MultiDeviceContextTests,
     Context *contextImp = Context::fromHandle(hContext);
 
     for (size_t i = 0; i < driverHandle->devices.size(); i++) {
-        EXPECT_NE(contextImp->getDevices().find(driverHandle->devices[i]->getRootDeviceIndex()), contextImp->getDevices().end());
+        EXPECT_TRUE(contextImp->getDevices().contains(driverHandle->devices[i]->getRootDeviceIndex()));
     }
 
     res = L0::Context::fromHandle(hContext)->destroy();
@@ -1058,8 +1058,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -1070,8 +1069,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
-                                                                     device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device,
                                                                      NEO::EngineGroupType::copy,
                                                                      0u,
                                                                      returnValue, false));
@@ -1111,8 +1109,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests, whenExecutingKernelWithIndi
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -1162,8 +1159,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           &csr,
                                                           &desc,
                                                           true,
@@ -1174,8 +1170,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
-                                                                     device,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device,
                                                                      NEO::EngineGroupType::copy,
                                                                      0u,
                                                                      returnValue, false));
@@ -1216,8 +1211,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               device,
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(device,
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::renderCompute,
@@ -1266,8 +1260,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily,
-                                                                                       device,
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(device,
                                                                                        &desc,
                                                                                        false,
                                                                                        NEO::EngineGroupType::compute,
@@ -1280,8 +1273,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily,
-                                                                            device,
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device,
                                                                             NEO::EngineGroupType::compute,
                                                                             0u,
                                                                             result, false));
@@ -1328,8 +1320,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                               device,
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(device,
                                                                                &desc,
                                                                                false,
                                                                                NEO::EngineGroupType::renderCompute,

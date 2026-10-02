@@ -905,7 +905,10 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
 
     // Write completion event.
     if (result && writeCompletionEvent) {
-        result = commandList.appendSignalEvent(hSignalEvent, false) == ZE_RESULT_SUCCESS;
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        result = commandList.appendSignalEvent(hSignalEvent, signalEventParameters) == ZE_RESULT_SUCCESS;
     }
 
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;

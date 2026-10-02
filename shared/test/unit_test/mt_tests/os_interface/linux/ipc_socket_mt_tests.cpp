@@ -12,7 +12,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include <atomic>
-#include <chrono>
 #include <errno.h>
 #include <thread>
 #include <vector>
@@ -36,6 +35,52 @@ extern uint32_t pollFuncCalled;
 } // namespace SysCalls
 } // namespace NEO
 
+constexpr uint64_t maxNumHandles = 128;
+
+template <typename Condition>
+static void waitFor(Condition condition) {
+    while (!condition()) {
+        std::this_thread::yield();
+    }
+}
+
+class TestedIpcSocketServer : public IpcSocketServer {
+  public:
+    ~TestedIpcSocketServer() override {
+        unblockPollStub();
+    }
+
+    bool initialize() override {
+        pollStubUnblocked.store(false);
+        idlePollCount = 0;
+        return IpcSocketServer::initialize();
+    }
+
+    void shutdown() override {
+        unblockPollStub();
+        IpcSocketServer::shutdown();
+    }
+
+    static int pollNoEvents(pollfd *, nfds_t, int) {
+        idlePollCount++;
+        pollStubUnblocked.wait(false);
+        return 0;
+    }
+
+    static void waitUntilIdle() {
+        waitFor([] { return idlePollCount.load() > 0; });
+    }
+
+  protected:
+    void unblockPollStub() {
+        pollStubUnblocked.store(true);
+        pollStubUnblocked.notify_all();
+    }
+
+    static inline std::atomic<bool> pollStubUnblocked{false};
+    static inline std::atomic<int> idlePollCount{0};
+};
+
 class IpcSocketServerMtTest : public ::testing::Test {
   public:
     void SetUp() override {
@@ -51,6 +96,7 @@ class IpcSocketServerMtTest : public ::testing::Test {
         SysCalls::setsockoptCalled = 0;
         SysCalls::dupCalled = 0;
         SysCalls::pollFuncCalled = 0;
+        SysCalls::sysCallsPoll = TestedIpcSocketServer::pollNoEvents;
     }
 
     void TearDown() override {
@@ -77,7 +123,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenInitializedSuccessfullyThenIsRunnin
     SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return 0; };
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
     EXPECT_TRUE(server.isRunning());
 
@@ -91,7 +137,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSocketCreationFailsThenInitializeFa
 
     SysCalls::sysCallsSocket = [](int, int, int) -> int { return -1; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_FALSE(server.initialize());
     EXPECT_FALSE(server.isRunning());
 
@@ -106,7 +152,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenBindFailsThenInitializeFails) {
     SysCalls::sysCallsSocket = [](int, int, int) -> int { return 5; };
     SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return -1; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_FALSE(server.initialize());
     EXPECT_FALSE(server.isRunning());
 
@@ -124,7 +170,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenListenFailsThenInitializeFails) {
     SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return 0; };
     SysCalls::sysCallsListen = [](int, int) -> int { return -1; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_FALSE(server.initialize());
     EXPECT_FALSE(server.isRunning());
 
@@ -140,7 +186,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenInitializedMultipleTimesThenSubsequ
     SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return 0; };
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
     EXPECT_TRUE(server.isRunning());
 
@@ -159,7 +205,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenShutdownCalledThenServerStops) {
     SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return 0; };
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
     EXPECT_TRUE(server.isRunning());
 
@@ -176,7 +222,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenShutdownCalledMultipleTimesThenNoEr
     SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return 0; };
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     server.shutdown();
@@ -197,7 +243,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterHandleWithValidFdThenSuccee
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     uint64_t handleId = 12345;
@@ -218,7 +264,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterSameHandleMultipleTimesThen
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     uint64_t handleId = 12345;
@@ -242,7 +288,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenDupFailsThenRegisterHandleFails) {
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int) -> int { return -1; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     uint64_t handleId = 12345;
@@ -262,7 +308,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterExistingHandleThenSucceed
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     uint64_t handleId = 12345;
@@ -283,7 +329,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterMultipleDifferentHandlesThe
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     EXPECT_TRUE(server.registerHandle(1, 10));
@@ -307,68 +353,13 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenDestructorCalledWithRegisteredHandl
     uint32_t closeCallsBefore = SysCalls::closeFuncCalled;
 
     {
-        IpcSocketServer server;
+        TestedIpcSocketServer server;
         EXPECT_TRUE(server.initialize());
         EXPECT_TRUE(server.registerHandle(1, 10));
         EXPECT_TRUE(server.registerHandle(2, 20));
     }
 
     EXPECT_GT(SysCalls::closeFuncCalled, closeCallsBefore);
-}
-
-TEST_F(IpcSocketServerMtTest, givenServerWhenAcceptReturnsEAGAINThenContinues) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.PrintDebugMessages.set(false);
-
-    VariableBackup<decltype(SysCalls::sysCallsAccept)> acceptBackup(&SysCalls::sysCallsAccept);
-
-    static int acceptCallCount = 0;
-    acceptCallCount = 0;
-    SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
-        acceptCallCount++;
-        if (acceptCallCount == 1) {
-            errno = EAGAIN;
-            return -1;
-        }
-        errno = EWOULDBLOCK;
-        return -1;
-    };
-
-    IpcSocketServer server;
-    EXPECT_TRUE(server.initialize());
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-    server.shutdown();
-    EXPECT_FALSE(server.isRunning());
-}
-
-TEST_F(IpcSocketServerMtTest, givenServerWhenHandleClientConnectionReceivesUnknownMessageTypeThenReturnsFalse) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.PrintDebugMessages.set(false);
-
-    VariableBackup<decltype(SysCalls::sysCallsRecv)> recvBackup(&SysCalls::sysCallsRecv);
-
-    SysCalls::sysCallsRecv = [](int sockfd, void *buf, size_t len, int flags) -> ssize_t {
-        if (len == sizeof(IpcSocketMessage)) {
-            IpcSocketMessage *msg = static_cast<IpcSocketMessage *>(buf);
-            msg->type = static_cast<IpcSocketMessageType>(999); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
-            msg->processId = 12345;
-            msg->handleId = 100;
-            msg->payloadSize = 0;
-            msg->reserved = 0;
-            return sizeof(IpcSocketMessage);
-        }
-        return -1;
-    };
-
-    IpcSocketServer server;
-    EXPECT_TRUE(server.initialize());
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-    server.shutdown();
-    EXPECT_FALSE(server.isRunning());
 }
 
 TEST_F(IpcSocketServerMtTest, givenServerWhenThreadCreationFailsThenInitializeFails) {
@@ -382,7 +373,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenThreadCreationFailsThenInitializeFa
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     Thread::createFunc = [](void *(*)(void *), void *) -> std::unique_ptr<Thread> { return nullptr; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_FALSE(server.initialize());
     EXPECT_FALSE(server.isRunning());
 }
@@ -393,21 +384,18 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsErrorThenServerExits) {
 
     VariableBackup<decltype(SysCalls::sysCallsPoll)> pollBackup(&SysCalls::sysCallsPoll);
 
-    static int pollCallCount = 0;
+    static std::atomic<int> pollCallCount{0};
     pollCallCount = 0;
     SysCalls::sysCallsPoll = [](pollfd *fds, nfds_t nfds, int timeout) -> int {
         pollCallCount++;
-        if (pollCallCount <= 2) {
-            errno = EBADF;
-            return -1;
-        }
-        return 0;
+        errno = EBADF;
+        return -1;
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    waitFor([] { return pollCallCount.load() >= 1; });
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -428,7 +416,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenAcceptReturnsOtherErrorThenContinue
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -436,10 +424,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenAcceptReturnsOtherErrorThenContinue
         return -1;
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -461,7 +449,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenClientConnectionReceiveFailsThenRet
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -472,10 +460,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenClientConnectionReceiveFailsThenRet
         return -1;
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -498,7 +486,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForNonExistentHandleT
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -524,12 +512,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForNonExistentHandleT
         return static_cast<ssize_t>(len);
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    for (int i = 0; i < 100 && !sendCalled.load(); i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -546,24 +532,19 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForExistingHandleThen
     VariableBackup<decltype(SysCalls::sysCallsDup)> dupBackup(&SysCalls::sysCallsDup);
     VariableBackup<decltype(SysCalls::sysCallsSendmsg)> sendmsgBackup(&SysCalls::sysCallsSendmsg);
 
-    static std::atomic<bool> handleRegistered{false};
     static std::atomic<bool> connectionProcessed{false};
     static std::atomic<bool> sendmsgCalled{false};
 
-    handleRegistered = false;
     connectionProcessed = false;
     sendmsgCalled = false;
 
     SysCalls::sysCallsPoll = [](pollfd *fds, nfds_t nfds, int timeout) -> int {
-        if (!handleRegistered.load()) {
-            return 0;
-        }
         if (!connectionProcessed.load()) {
             connectionProcessed.store(true);
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -589,15 +570,11 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForExistingHandleThen
         return msg->msg_iov ? static_cast<ssize_t>(msg->msg_iov[0].iov_len) : 0;
     };
 
-    IpcSocketServer server;
-    EXPECT_TRUE(server.initialize());
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.registerHandle(12345, 42));
+    EXPECT_TRUE(server.initialize());
 
-    handleRegistered.store(true);
-
-    for (int i = 0; i < 50 && !sendmsgCalled.load(); i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -621,7 +598,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithPayloadAndPayloadSen
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -650,10 +627,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithPayloadAndPayloadSen
         return -1;
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -675,7 +652,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadAndPayload
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -698,10 +675,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadAndPayload
         return -1;
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -711,7 +688,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWithRegisteredHandleWhenShutdownThenClo
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     EXPECT_TRUE(server.registerHandle(12345, 42));
@@ -721,26 +698,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWithRegisteredHandleWhenShutdownThenClo
 }
 
 TEST_F(IpcSocketServerMtTest, givenRunningServerWhenUnregisterNonExistentHandleCalledThenReturnsFalse) {
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     EXPECT_FALSE(server.unregisterHandle(99999));
-
-    server.shutdown();
-}
-
-TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithRefCountGreaterThanOneThenDecrementOnly) {
-    IpcSocketServer server;
-    EXPECT_TRUE(server.initialize());
-
-    EXPECT_TRUE(server.registerHandle(12345, 42));
-    EXPECT_TRUE(server.registerHandle(12345, 42));
-
-    EXPECT_TRUE(server.unregisterHandle(12345));
-
-    EXPECT_TRUE(server.unregisterHandle(12345));
-
-    EXPECT_FALSE(server.unregisterHandle(12345));
 
     server.shutdown();
 }
@@ -751,7 +712,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithInvalidFdThenSt
     static int dupReturnValue = 42;
     SysCalls::sysCallsDup = [](int oldfd) -> int { return dupReturnValue; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     EXPECT_TRUE(server.registerHandle(12345, 10));
@@ -775,15 +736,13 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsEintrThenContinuesLoop) 
             errno = EINTR;
             return -1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    for (int i = 0; i < 100 && pollCallCount.load() < 2; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -807,7 +766,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadSizeLarger
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -826,70 +785,13 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadSizeLarger
         return -1;
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
-}
-
-TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithPayloadSucceedsThenReturnsTrue) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.PrintDebugMessages.set(false);
-
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> pollBackup(&SysCalls::sysCallsPoll);
-    VariableBackup<decltype(SysCalls::sysCallsAccept)> acceptBackup(&SysCalls::sysCallsAccept);
-    VariableBackup<decltype(SysCalls::sysCallsRecv)> recvBackup(&SysCalls::sysCallsRecv);
-    VariableBackup<decltype(SysCalls::sysCallsSend)> sendBackup(&SysCalls::sysCallsSend);
-
-    static std::atomic<bool> connectionProcessed{false};
-    static std::atomic<int> sendCallCount{0};
-
-    connectionProcessed = false;
-    sendCallCount = 0;
-
-    SysCalls::sysCallsPoll = [](pollfd *fds, nfds_t nfds, int timeout) -> int {
-        if (!connectionProcessed.load()) {
-            connectionProcessed.store(true);
-            fds->revents = POLLIN;
-            return 1;
-        }
-        return 0;
-    };
-
-    SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
-        return 100;
-    };
-
-    SysCalls::sysCallsRecv = [](int sockfd, void *buf, size_t len, int flags) -> ssize_t {
-        if (len == sizeof(IpcSocketMessage)) {
-            IpcSocketMessage *msg = static_cast<IpcSocketMessage *>(buf);
-            msg->type = IpcSocketMessageType::requestHandle;
-            msg->processId = 12345;
-            msg->handleId = 99999;
-            msg->payloadSize = 0;
-            return sizeof(IpcSocketMessage);
-        }
-        return -1;
-    };
-
-    SysCalls::sysCallsSend = [](int sockfd, const void *buf, size_t len, int flags) -> ssize_t {
-        sendCallCount.fetch_add(1);
-        return static_cast<ssize_t>(len);
-    };
-
-    IpcSocketServer server;
-    EXPECT_TRUE(server.initialize());
-
-    for (int i = 0; i < 50 && sendCallCount.load() < 2; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-
-    server.shutdown();
-    EXPECT_FALSE(server.isRunning());
-    EXPECT_GE(sendCallCount.load(), 2);
 }
 
 TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForHandleWithInvalidFdThenSendsFailureResponse) {
@@ -902,24 +804,19 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForHandleWithInvalidF
     VariableBackup<decltype(SysCalls::sysCallsDup)> dupBackup(&SysCalls::sysCallsDup);
     VariableBackup<decltype(SysCalls::sysCallsSend)> sendBackup(&SysCalls::sysCallsSend);
 
-    static std::atomic<bool> handleRegistered{false};
     static std::atomic<bool> connectionProcessed{false};
     static std::atomic<bool> sendCalled{false};
 
-    handleRegistered = false;
     connectionProcessed = false;
     sendCalled = false;
 
     SysCalls::sysCallsPoll = [](pollfd *fds, nfds_t nfds, int timeout) -> int {
-        if (!handleRegistered.load()) {
-            return 0;
-        }
         if (!connectionProcessed.load()) {
             connectionProcessed.store(true);
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -945,14 +842,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForHandleWithInvalidF
         return static_cast<ssize_t>(len);
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    handleRegistered.store(true);
-
-    for (int i = 0; i < 50 && !sendCalled.load(); i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -979,7 +872,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithZeroPayloadSizeThenS
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -1003,57 +896,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithZeroPayloadSizeThenS
         return static_cast<ssize_t>(len);
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    for (int i = 0; i < 50 && sendCallCountLocal.load() < 2; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-
-    server.shutdown();
-    EXPECT_FALSE(server.isRunning());
-}
-
-TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithMaxPayloadSizeLessThanPayloadSizeThenFails) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.PrintDebugMessages.set(false);
-
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> pollBackup(&SysCalls::sysCallsPoll);
-    VariableBackup<decltype(SysCalls::sysCallsAccept)> acceptBackup(&SysCalls::sysCallsAccept);
-    VariableBackup<decltype(SysCalls::sysCallsRecv)> recvBackup(&SysCalls::sysCallsRecv);
-
-    static std::atomic<bool> connectionProcessed{false};
-    connectionProcessed = false;
-
-    SysCalls::sysCallsPoll = [](pollfd *fds, nfds_t nfds, int timeout) -> int {
-        if (!connectionProcessed.load()) {
-            connectionProcessed.store(true);
-            fds->revents = POLLIN;
-            return 1;
-        }
-        return 0;
-    };
-
-    SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
-        return 100;
-    };
-
-    SysCalls::sysCallsRecv = [](int sockfd, void *buf, size_t len, int flags) -> ssize_t {
-        if (len == sizeof(IpcSocketMessage)) {
-            IpcSocketMessage *msg = static_cast<IpcSocketMessage *>(buf);
-            msg->type = IpcSocketMessageType::requestHandle;
-            msg->processId = 12345;
-            msg->handleId = 12345;
-            msg->payloadSize = 1000;
-            return sizeof(IpcSocketMessage);
-        }
-        return -1;
-    };
-
-    IpcSocketServer server;
-    EXPECT_TRUE(server.initialize());
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -1069,16 +915,16 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsTimeoutThenContinuesLoop
     pollCallCountLocal = 0;
 
     SysCalls::sysCallsPoll = [](pollfd *fds, nfds_t nfds, int timeout) -> int {
-        pollCallCountLocal.fetch_add(1);
-        return 0;
+        if (pollCallCountLocal.fetch_add(1) < 2) {
+            return 0;
+        }
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    for (int i = 0; i < 10 && pollCallCountLocal.load() < 3; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -1095,17 +941,17 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsWithoutPollinThenContinu
     pollCallCountLocal = 0;
 
     SysCalls::sysCallsPoll = [](pollfd *fds, nfds_t nfds, int timeout) -> int {
-        pollCallCountLocal.fetch_add(1);
-        fds->revents = POLLHUP;
-        return 1;
+        if (pollCallCountLocal.fetch_add(1) < 2) {
+            fds->revents = POLLHUP;
+            return 1;
+        }
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    for (int i = 0; i < 10 && pollCallCountLocal.load() < 3; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -1129,7 +975,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenHandleClientConnectionReceivesDefau
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -1148,10 +994,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenHandleClientConnectionReceivesDefau
         return -1;
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -1175,7 +1021,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageHeaderFailsThenReturnsFa
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -1198,10 +1044,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageHeaderFailsThenReturnsFa
         return -1;
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -1228,7 +1074,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithZeroPayloadSizeTh
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -1252,17 +1098,10 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithZeroPayloadSizeTh
         return static_cast<ssize_t>(len);
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    auto startTime = std::chrono::steady_clock::now();
-    while (recvCallCountLocal.load() == 0) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        auto elapsed = std::chrono::steady_clock::now() - startTime;
-        if (elapsed > std::chrono::seconds(5)) {
-            break;
-        }
-    }
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
@@ -1277,7 +1116,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithRefCountGreater
 
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     EXPECT_TRUE(server.registerHandle(12345, 42));
@@ -1290,6 +1129,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithRefCountGreater
     EXPECT_EQ(closeCallsBefore, SysCalls::closeFuncCalled);
 
     EXPECT_TRUE(server.unregisterHandle(12345));
+    EXPECT_FALSE(server.unregisterHandle(12345));
 
     server.shutdown();
 }
@@ -1315,7 +1155,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithValidPayloadThenSend
             fds->revents = POLLIN;
             return 1;
         }
-        return 0;
+        return TestedIpcSocketServer::pollNoEvents(fds, nfds, timeout);
     };
 
     SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
@@ -1339,84 +1179,14 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithValidPayloadThenSend
         return static_cast<ssize_t>(len);
     };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    for (int i = 0; i < 50 && sendCallCountLocal.load() < 2; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    TestedIpcSocketServer::waitUntilIdle();
 
     server.shutdown();
     EXPECT_FALSE(server.isRunning());
     EXPECT_GE(sendCallCountLocal.load(), 2);
-}
-
-TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForExistingHandleThenSendsSuccessWithFd) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.PrintDebugMessages.set(false);
-
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> pollBackup(&SysCalls::sysCallsPoll);
-    VariableBackup<decltype(SysCalls::sysCallsAccept)> acceptBackup(&SysCalls::sysCallsAccept);
-    VariableBackup<decltype(SysCalls::sysCallsRecv)> recvBackup(&SysCalls::sysCallsRecv);
-    VariableBackup<decltype(SysCalls::sysCallsDup)> dupBackup(&SysCalls::sysCallsDup);
-    VariableBackup<decltype(SysCalls::sysCallsSendmsg)> sendmsgBackup(&SysCalls::sysCallsSendmsg);
-
-    static std::atomic<bool> handleRegistered{false};
-    static std::atomic<bool> connectionProcessed{false};
-    static std::atomic<bool> sendmsgCalled{false};
-
-    handleRegistered = false;
-    connectionProcessed = false;
-    sendmsgCalled = false;
-
-    SysCalls::sysCallsPoll = [](pollfd *fds, nfds_t nfds, int timeout) -> int {
-        if (!handleRegistered.load()) {
-            return 0;
-        }
-        if (!connectionProcessed.load()) {
-            connectionProcessed.store(true);
-            fds->revents = POLLIN;
-            return 1;
-        }
-        return 0;
-    };
-
-    SysCalls::sysCallsAccept = [](int sockfd, sockaddr *addr, socklen_t *addrlen) -> int {
-        return 100;
-    };
-
-    SysCalls::sysCallsRecv = [](int sockfd, void *buf, size_t len, int flags) -> ssize_t {
-        if (len == sizeof(IpcSocketMessage)) {
-            IpcSocketMessage *msg = static_cast<IpcSocketMessage *>(buf);
-            msg->type = IpcSocketMessageType::requestHandle;
-            msg->processId = 12345;
-            msg->handleId = 12345;
-            msg->payloadSize = 0;
-            return sizeof(IpcSocketMessage);
-        }
-        return -1;
-    };
-
-    SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
-
-    SysCalls::sysCallsSendmsg = [](int sockfd, const struct msghdr *msg, int flags) -> ssize_t {
-        sendmsgCalled.store(true);
-        return msg->msg_iov ? static_cast<ssize_t>(msg->msg_iov[0].iov_len) : 0;
-    };
-
-    IpcSocketServer server;
-    EXPECT_TRUE(server.initialize());
-    EXPECT_TRUE(server.registerHandle(12345, 42));
-
-    handleRegistered.store(true);
-
-    for (int i = 0; i < 50 && !sendmsgCalled.load(); i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-
-    server.shutdown();
-    EXPECT_FALSE(server.isRunning());
-    EXPECT_TRUE(sendmsgCalled.load());
 }
 
 class IpcSocketMultiThreadedTest : public ::testing::Test {
@@ -1427,6 +1197,7 @@ class IpcSocketMultiThreadedTest : public ::testing::Test {
         SysCalls::listenCalled = 0;
         SysCalls::dupCalled = 0;
         SysCalls::closeFuncCalled = 0;
+        SysCalls::sysCallsPoll = TestedIpcSocketServer::pollNoEvents;
     }
 
     void TearDown() override {
@@ -1435,6 +1206,7 @@ class IpcSocketMultiThreadedTest : public ::testing::Test {
         SysCalls::sysCallsListen = nullptr;
         SysCalls::sysCallsDup = nullptr;
         SysCalls::sysCallsClose = nullptr;
+        SysCalls::sysCallsPoll = nullptr;
     }
 };
 
@@ -1452,7 +1224,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterHandles
     dupCounter = 100;
     SysCalls::sysCallsDup = [](int) -> int { return ++dupCounter; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     constexpr int numThreads = 10;
@@ -1489,7 +1261,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterAndUnre
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     constexpr int numThreads = 8;
@@ -1524,29 +1296,25 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenOneThreadRegistersWhileAnother
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    std::atomic<bool> stopThreads{false};
+    constexpr uint64_t handleCount = 5000;
 
-    std::thread registerThread([&server, &stopThreads]() {
-        uint64_t handleId = 0;
-        while (!stopThreads.load()) {
-            server.registerHandle(handleId++, 42);
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
+    // Encourages the scheduler to interleave both loops when they share a CPU.
+    std::thread registerThread([&server]() {
+        for (uint64_t handleId = 0; handleId < handleCount; handleId++) {
+            server.registerHandle(handleId, 42);
+            std::this_thread::yield();
         }
     });
 
-    std::thread unregisterThread([&server, &stopThreads]() {
-        uint64_t handleId = 0;
-        while (!stopThreads.load()) {
-            server.unregisterHandle(handleId++);
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
+    std::thread unregisterThread([&server]() {
+        for (uint64_t handleId = 0; handleId < handleCount; handleId++) {
+            server.unregisterHandle(handleId);
+            std::this_thread::yield();
         }
     });
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    stopThreads.store(true);
 
     registerThread.join();
     unregisterThread.join();
@@ -1565,7 +1333,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterSameHan
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     constexpr uint64_t sharedHandleId = 12345;
@@ -1591,40 +1359,6 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterSameHan
     EXPECT_FALSE(server.unregisterHandle(sharedHandleId));
 }
 
-TEST_F(IpcSocketMultiThreadedTest, givenServerWhenShutdownCalledWhileRegisteringHandlesThenShutdownSucceeds) {
-    VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
-    VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
-    VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
-    VariableBackup<decltype(SysCalls::sysCallsDup)> dupBackup(&SysCalls::sysCallsDup);
-
-    SysCalls::sysCallsSocket = [](int, int, int) -> int { return 5; };
-    SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return 0; };
-    SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
-    SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
-
-    IpcSocketServer server;
-    EXPECT_TRUE(server.initialize());
-
-    std::atomic<bool> stopRegister{false};
-
-    std::thread registerThread([&server, &stopRegister]() {
-        uint64_t handleId = 0;
-        while (!stopRegister.load()) {
-            server.registerHandle(handleId++, 42);
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
-        }
-    });
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-    server.shutdown();
-    stopRegister.store(true);
-
-    registerThread.join();
-
-    EXPECT_FALSE(server.isRunning());
-}
-
 #if 0
 TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsCallInitializeConcurrentlyThenOnlyOneSucceeds) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
@@ -1640,7 +1374,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsCallInitializeC
     SysCalls::sysCallsBind = [](int, const struct sockaddr *, socklen_t) -> int { return 0; };
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
 
     constexpr int numThreads = 10;
     std::vector<std::thread> threads;
@@ -1675,20 +1409,22 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenConcurrentRegisterAndShutdownT
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
     for (int iteration = 0; iteration < 5; iteration++) {
-        IpcSocketServer server;
+        TestedIpcSocketServer server;
         EXPECT_TRUE(server.initialize());
 
         std::atomic<bool> stop{false};
+        std::atomic<bool> registrationStarted{false};
 
-        std::thread worker([&server, &stop]() {
+        std::thread worker([&server, &stop, &registrationStarted]() {
             uint64_t id = 0;
             while (!stop.load()) {
-                server.registerHandle(id++, 42);
+                server.registerHandle(id++ % maxNumHandles, 42);
+                registrationStarted.store(true);
                 std::this_thread::yield();
             }
         });
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        waitFor([&registrationStarted] { return registrationStarted.load(); });
 
         server.shutdown();
         stop.store(true);
@@ -1710,7 +1446,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenStressTestingRegisterUnregiste
     SysCalls::sysCallsListen = [](int, int) -> int { return 0; };
     SysCalls::sysCallsDup = [](int oldfd) -> int { return oldfd + 100; };
 
-    IpcSocketServer server;
+    TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
     constexpr int numThreads = 4;

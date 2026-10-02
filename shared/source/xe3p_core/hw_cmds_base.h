@@ -34,6 +34,7 @@ struct Xe3pCore {
     static constexpr uint32_t stateComputeModeEnableOutOfBoundariesInTranslationExceptionMask = (1u << 7);
     static constexpr uint32_t stateComputeModePageFaultExceptionEnableMask = (1u << 9);
     static constexpr uint32_t stateComputeModeSystemMemoryReadFenceEnableMask = (1u << 11);
+    static constexpr uint32_t stateComputeModeTdlRowArbitrationPolicyMask = (1u << 12);
     static constexpr uint32_t stateComputeModeMemoryExceptionEnableMask = (1u << 13);
     static constexpr uint32_t stateComputeBreakpointsEnableMask = (1u << 14);
     static constexpr uint32_t stateComputeModeForceExternalHaltAndForceExceptionEnableMask = (1u << 15);

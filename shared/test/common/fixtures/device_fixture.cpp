@@ -61,10 +61,6 @@ const ReleaseHelper &DeviceFixture::getReleaseHelper() {
     return this->pDevice->getRootDeviceEnvironment().getReleaseHelper();
 }
 
-const CompilerReleaseHelper &DeviceFixture::getCompilerReleaseHelper() {
-    return this->pDevice->getRootDeviceEnvironment().getCompilerReleaseHelper();
-}
-
 template ProductHelper &DeviceFixture::getHelper<ProductHelper>() const;
 template GfxCoreHelper &DeviceFixture::getHelper<GfxCoreHelper>() const;
 template CompilerProductHelper &DeviceFixture::getHelper<CompilerProductHelper>() const;

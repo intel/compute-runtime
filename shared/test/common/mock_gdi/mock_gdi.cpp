@@ -531,11 +531,11 @@ NTSTATUS __stdcall mockD3DKMTLock2(IN OUT D3DKMT_LOCK2 *lock2) {
     if (lock2->hDevice == 0) {
         return STATUS_INVALID_PARAMETER;
     }
-    if (userPtrMap.find(handle) != userPtrMap.end()) {
-        lock2->pData = userPtrMap[handle];
+    if (auto it = userPtrMap.find(handle); it != userPtrMap.end()) {
+        lock2->pData = it->second;
         return STATUS_SUCCESS;
-    } else if (staticStorageMap.find(handle) != staticStorageMap.end()) {
-        lock2->pData = staticStorageMap[handle];
+    } else if (auto staticIt = staticStorageMap.find(handle); staticIt != staticStorageMap.end()) {
+        lock2->pData = staticIt->second;
         return STATUS_SUCCESS;
     }
     return STATUS_INVALID_PARAMETER;

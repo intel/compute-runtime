@@ -200,7 +200,15 @@ EuDebugEuControl MockEuDebugInterface::toEuDebugEuControl(const void *drmType) {
 }
 
 EuDebugConnect MockEuDebugInterface::toEuDebugConnect(const void *drmType) {
-    return *static_cast<const EuDebugConnect *>(drmType);
+    const prelim_drm_xe_eudebug_connect *drmConnect = static_cast<const prelim_drm_xe_eudebug_connect *>(drmType);
+    EuDebugConnect connectEvent = {};
+
+    connectEvent.extensions = drmConnect->extensions;
+    connectEvent.pid = drmConnect->pid;
+    connectEvent.flags = drmConnect->flags;
+    connectEvent.version = drmConnect->version;
+
+    return connectEvent;
 }
 
 std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugConnect(const EuDebugConnect &connect) {
@@ -208,7 +216,7 @@ std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugConnec
 
     pDrmConnect->extensions = connect.extensions;
     pDrmConnect->pid = connect.pid;
-    pDrmConnect->flags = connect.flags;
+    pDrmConnect->flags = static_cast<uint32_t>(connect.flags);
     pDrmConnect->version = connect.version;
 
     auto deleter = [](void *ptr) {

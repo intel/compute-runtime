@@ -10,6 +10,7 @@
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -50,6 +51,8 @@
 #include "shared/source/utilities/logger_neo_only.h"
 
 #include <iostream>
+#include <set>
+
 namespace NEO {
 uint32_t MemoryManager::maxOsContextCount = 0u;
 
@@ -105,6 +108,35 @@ void MemoryManager::storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>
     temporaryAllocations->pushTailOne(*gfxAllocation.release());
 }
 
+using CsrLocks = StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 8>;
+
+static bool needsCsrLockBeforeFree(const GraphicsAllocation &allocation) {
+    const auto allocationType = allocation.getAllocationType();
+    return allocationType == AllocationType::externalHostPtr ||
+           allocationType == AllocationType::internalHostMemory;
+}
+
+static bool tryLockCsrsForAllocation(const GraphicsAllocation &allocation,
+                                     const EngineControlContainer &engines,
+                                     CsrLocks &csrLocks) {
+    const auto numContextsToCheck = allocation.getNumRegisteredContexts();
+    uint32_t numContextsMatched = 0;
+
+    for (const auto &engine : engines) {
+        if (allocation.isUsedByOsContext(engine.osContext->getContextId())) {
+            csrLocks.push_back(engine.commandStreamReceiver->tryObtainUniqueOwnership());
+            if (!csrLocks.back().owns_lock()) {
+                csrLocks.clear();
+                return false;
+            }
+            if (++numContextsMatched == numContextsToCheck) {
+                break;
+            }
+        }
+    }
+    return true;
+}
+
 void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, TaskCountType waitedTaskCount) {
     auto lock = getHostPtrManager()->obtainOwnership();
 
@@ -116,8 +148,11 @@ void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, 
         const auto waitedOsContextId = csr.getOsContext().getContextId();
         auto *nextAlloc = currentAlloc->next;
         bool freeAllocation = false;
+        CsrLocks csrLocks;
 
-        if (currentAlloc->getHostPtrTaskCountAssignment() == 0) {
+        if (currentAlloc->getHostPtrTaskCountAssignment() == 0 &&
+            (!needsCsrLockBeforeFree(*currentAlloc) ||
+             tryLockCsrsForAllocation(*currentAlloc, getRegisteredEngines(currentAlloc->getRootDeviceIndex()), csrLocks))) {
             if (currentAlloc->isUsedByOsContext(waitedOsContextId)) {
                 if (currentAlloc->getTaskCount(waitedOsContextId) <= waitedTaskCount) {
                     if (!currentAlloc->isUsedByManyOsContexts() || !allocInUse(*currentAlloc)) {
@@ -130,6 +165,7 @@ void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, 
         }
 
         if (freeAllocation) {
+            csrLocks.clear();
             freeGraphicsMemory(currentAlloc);
         } else {
             allocationsLeft.pushTailOne(*currentAlloc);
@@ -391,7 +427,7 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
             auto allocationTaskCount = gfxAllocation->getTaskCount(osContextId);
             if (gfxAllocation->isUsedByOsContext(osContextId) &&
                 engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-                allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+                !TaskCountHelper::isReady(engine.commandStreamReceiver->getTagAddress(), allocationTaskCount, 1u, 0u)) {
                 engine.commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation),
                                                                                               DEFERRED_DEALLOCATION);
                 return;
@@ -845,8 +881,13 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
 
+    bool readOnlyAllocationsSupported = productHelper.supportReadOnlyAllocations();
+    if (debugManager.flags.EnableReadOnlyAllocations.get() != -1) {
+        readOnlyAllocationsSupported = !!debugManager.flags.EnableReadOnlyAllocations.get();
+    }
+
     bool isReadOnly = properties.flags.readOnly ||
-                      (productHelper.supportReadOnlyAllocations() &&
+                      (readOnlyAllocationsSupported &&
                        !productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *allocation) &&
                        allocation->canBeReadOnly());
 
@@ -911,7 +952,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
         return allocateGraphicsMemoryForImage(allocationData);
     }
-    if (allocationData.flags.shareable || allocationData.flags.isHostInaccessibleAllocation) {
+    if ((allocationData.flags.shareable && !allocationData.flags.isUSMHostAllocation) || allocationData.flags.isHostInaccessibleAllocation) {
         return allocateMemoryByKMD(allocationData);
     }
     if (((false == allocationData.flags.isUSMHostAllocation) || (nullptr == allocationData.hostPtr)) &&
@@ -1008,6 +1049,43 @@ void MemoryManager::unregisterEngineForCsr(CommandStreamReceiver *commandStreamR
             std::swap(registeredEngines[i], registeredEngines[numRegisteredEngines - 1]);
             registeredEngines.pop_back();
             return;
+        }
+    }
+}
+
+void MemoryManager::registerInstructionCacheFlushForAllocation(uint32_t rootDeviceIndex, const GraphicsAllocation &allocation) {
+    const auto &registeredEngines = getRegisteredEngines(rootDeviceIndex);
+    std::set<const OsContext *> affectedComputeGroups;
+
+    auto getPrimaryContext = [](const OsContext *osContext) -> const OsContext * {
+        auto primaryContext = osContext->getPrimaryContext();
+        return primaryContext != nullptr ? primaryContext : osContext;
+    };
+
+    for (const auto &engine : registeredEngines) {
+        auto osContext = engine.osContext;
+        if (!allocation.isUsedByOsContext(osContext->getContextId())) {
+            continue;
+        }
+
+        if (osContext->isPartOfContextGroup() &&
+            EngineHelpers::isCcs(osContext->getEngineType())) {
+            affectedComputeGroups.insert(getPrimaryContext(osContext));
+        } else {
+            engine.commandStreamReceiver->registerInstructionCacheFlush();
+        }
+    }
+
+    if (affectedComputeGroups.empty()) {
+        return;
+    }
+
+    for (const auto &engine : registeredEngines) {
+        auto osContext = engine.osContext;
+        if (osContext->isPartOfContextGroup() &&
+            EngineHelpers::isCcs(osContext->getEngineType()) &&
+            affectedComputeGroups.contains(getPrimaryContext(osContext))) {
+            engine.commandStreamReceiver->registerInstructionCacheFlush();
         }
     }
 }
@@ -1116,7 +1194,7 @@ void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocat
         auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
         if (graphicsAllocation.isUsedByOsContext(osContextId) &&
             engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+            !TaskCountHelper::isReady(engine.commandStreamReceiver->getTagAddress(), allocationTaskCount, 1u, 0u)) {
             engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, false, TimeoutControls::maxTimeout}, allocationTaskCount);
         }
     }
@@ -1137,7 +1215,8 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
             if (engine.commandStreamReceiver->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastGpuHangCheck)) {
                 return false;
             }
-            if (engine.commandStreamReceiver->getTagAddress() && (allocationTaskCount > *engine.commandStreamReceiver->getTagAddress())) {
+            if (engine.commandStreamReceiver->getTagAddress() &&
+                !TaskCountHelper::isReady(engine.commandStreamReceiver->getTagAddress(), allocationTaskCount, 1u, 0u)) {
                 return true;
             }
         }
@@ -1373,7 +1452,7 @@ bool MemoryManager::allocateBindlessSlot(GraphicsAllocation *allocation) {
         auto &gfxCoreHelper = peekExecutionEnvironment().rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getHelper<GfxCoreHelper>();
         const auto isImage = allocation->getAllocationType() == AllocationType::image || allocation->getAllocationType() == AllocationType::sharedImage || allocation->getAllocationType() == AllocationType::sharedResourceCopy;
         auto surfStateCount = isImage ? NEO::BindlessImageSlot::max : 1;
-        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize(*peekExecutionEnvironment().rootDeviceEnvironments[allocation->getRootDeviceIndex()]);
 
         auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh);
         if (surfaceStateInfo.heapAllocation == nullptr) {
@@ -1472,8 +1551,8 @@ void MemoryManager::destroyPageFaultManager() {
     pageFaultManager.reset();
 }
 
-bool MemoryManager::isRemoteResourceNeeded(GraphicsAllocation *alloc, SvmAllocationData *allocData, Device *device) {
-    return (alloc == nullptr || (allocData && ((allocData->gpuAllocations.getGraphicsAllocations().size() - 1) < device->getRootDeviceIndex())));
+bool MemoryManager::isRemoteResourceNeeded(const SvmAllocationData &allocData, Device *device) const {
+    return allocData.gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex()) == nullptr;
 }
 
 void *MemoryManager::importFdHandle(Device *neoDevice,

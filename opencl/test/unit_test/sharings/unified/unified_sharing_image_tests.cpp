@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,11 @@
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/unified/unified_image.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 
 namespace NEO {
@@ -58,7 +60,7 @@ TEST_F(UnifiedSharingImageTestsWithInvalidMemoryManager, givenValidContextAndAll
     const auto format = getValidImageFormat();
     const auto imageDesc = getValidImageDesc();
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
-                                                                               &format, &imageDesc, &retVal));
+                                                                               &format, &imageDesc, &retVal, {}));
     ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
@@ -71,7 +73,7 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenUnsupportedHandleTypeWhen
     const auto imageDesc = getValidImageDesc();
 
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, desc,
-                                                                               &format, &imageDesc, &retVal));
+                                                                               &format, &imageDesc, &retVal, {}));
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
@@ -81,7 +83,7 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenValidContextAndMemoryMana
     const auto format = getValidImageFormat();
     const auto imageDesc = getValidImageDesc();
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
-                                                                               &format, &imageDesc, &retVal));
+                                                                               &format, &imageDesc, &retVal, {}));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto renderSize = image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
@@ -98,7 +100,7 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenPassedFormatWhenCreatingU
     cl_int retVal{};
     const auto imageDesc = getValidImageDesc();
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
-                                                                               &format, &imageDesc, &retVal));
+                                                                               &format, &imageDesc, &retVal, {}));
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(GMM_FORMAT_R16G16_FLOAT_TYPE, image->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
     EXPECT_EQ(GFX3DSTATE_SURFACEFORMAT_R16G16_FLOAT, image->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat);
@@ -111,6 +113,25 @@ class MockProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
         return pageTableManagerSupported;
     }
 };
+
+TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenSharedBufferWhenSwappingGmmThenLinearImageGmmIsCreated) {
+    const auto format = getValidImageFormat();
+    const auto imageDesc = getValidImageDesc();
+    ImageInfo imgInfo = {};
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
+    imgInfo.surfaceFormat = &Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &format)->surfaceFormat;
+
+    MockGraphicsAllocation allocation;
+    allocation.setDefaultGmm(new MockGmm(context->getDevice(0)->getGmmHelper()));
+    ASSERT_EQ(RESOURCE_BUFFER, allocation.getDefaultGmm()->gmmResourceInfo->getResourceType());
+
+    UnifiedImage::swapGmm(&allocation, context.get(), &imgInfo);
+
+    auto gmm = std::unique_ptr<Gmm>(allocation.getDefaultGmm());
+    EXPECT_TRUE(imgInfo.linearStorage);
+    ASSERT_FALSE(gmm->resourceParamsData.empty());
+    EXPECT_EQ(1u, reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data())->Flags.Info.Linear);
+}
 
 struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryManager<true> {
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
@@ -145,7 +166,7 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPag
     const auto format = getValidImageFormat();
     const auto imageDesc = getValidImageDesc();
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
-                                                                               &format, &imageDesc, &retVal));
+                                                                               &format, &imageDesc, &retVal, {}));
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled());
     EXPECT_EQ(0u, memoryManager.calledMapAuxGpuVA);
@@ -164,15 +185,36 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndPageT
 
     memoryManager.resultOfMapAuxGpuVA = true;
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
-                                                                               &format, &imageDesc, &retVal));
+                                                                               &format, &imageDesc, &retVal, {}));
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled());
     EXPECT_EQ(1u, memoryManager.calledMapAuxGpuVA);
 
     memoryManager.resultOfMapAuxGpuVA = false;
     image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
-                                                                          &format, &imageDesc, &retVal));
+                                                                          &format, &imageDesc, &retVal, {}));
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled());
     EXPECT_EQ(2u, memoryManager.calledMapAuxGpuVA);
+}
+
+using UnifiedSharingImageTestsWithMultiRootDevice = MultiRootDeviceFixture;
+
+TEST_F(UnifiedSharingImageTestsWithMultiRootDevice, givenTargetRootDeviceIndicesWhenCreatingImageFromSharedHandleThenAllocationIsCreatedOnlyForRequestedDevices) {
+    cl_mem_flags flags{};
+    cl_int retVal{};
+    const auto format = getValidImageFormat();
+    const auto imageDesc = getValidImageDesc();
+
+    ASSERT_EQ(device1->getRootDeviceIndex(), context->getDevice(0)->getRootDeviceIndex());
+    RootDeviceIndicesContainer targetRootDeviceIndices{};
+    targetRootDeviceIndices.pushUnique(device2->getRootDeviceIndex());
+
+    auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
+                                                                               &format, &imageDesc, &retVal, targetRootDeviceIndices));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(nullptr, image->getGraphicsAllocation(device1->getRootDeviceIndex()));
+    EXPECT_NE(nullptr, image->getGraphicsAllocation(device2->getRootDeviceIndex()));
 }

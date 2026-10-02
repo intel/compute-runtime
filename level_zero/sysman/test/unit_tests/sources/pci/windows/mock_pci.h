@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ constexpr uint64_t mockTxCounter = 231000000u;
 constexpr uint64_t mockRxPacketCounter = 300000u;
 constexpr uint64_t mockTxPacketCounter = 200000u;
 constexpr uint64_t mockTimestamp = 120000u;
+constexpr int32_t mockUntouchedPciGen = 0x7E;
 
 struct PciKmdSysManager : public MockKmdSysManager {
     // PciCurrentDevice, PciParentDevice, PciRootPort
@@ -127,6 +128,8 @@ struct PciKmdSysManager : public MockKmdSysManager {
 class PciWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
   public:
     PciWddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) : WddmSysmanImp(pParentSysmanDeviceImp) {}
+
+    using WddmSysmanImp::pKmdSysManager;
 
     bool isPciBdfInfoPointerNull = false;
     bool isPciBdfInfoObjectInitialized = true;

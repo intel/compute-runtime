@@ -572,7 +572,7 @@ int MockNlApi::nlaOk(const struct nlattr *attr, int remaining) {
 
 int MockNlApi::nlaPutU16(struct nl_msg *msg, int id, uint16_t data) {
     if (!isNestedAttr) {
-        EXPECT_EQ(attribs.end(), attribs.find(id));
+        EXPECT_FALSE(attribs.contains(id));
         attribs[id] = data;
     }
     EXPECT_EQ(NLA_U16, pOps->o_cmds[cmdIndex].c_attr_policy[id].type);
@@ -581,7 +581,7 @@ int MockNlApi::nlaPutU16(struct nl_msg *msg, int id, uint16_t data) {
 
 int MockNlApi::nlaPutU32(struct nl_msg *msg, int id, uint32_t data) {
     if (!isNestedAttr) {
-        EXPECT_EQ(attribs.end(), attribs.find(id));
+        EXPECT_FALSE(attribs.contains(id));
         attribs[id] = data;
     }
     EXPECT_EQ(NLA_U32, pOps->o_cmds[cmdIndex].c_attr_policy[id].type);
@@ -590,7 +590,7 @@ int MockNlApi::nlaPutU32(struct nl_msg *msg, int id, uint32_t data) {
 
 int MockNlApi::nlaPutU64(struct nl_msg *msg, int id, uint64_t data) {
     if (!isNestedAttr) {
-        EXPECT_EQ(attribs.end(), attribs.find(id));
+        EXPECT_FALSE(attribs.contains(id));
         attribs[id] = data;
     }
     EXPECT_EQ(NLA_U64, pOps->o_cmds[cmdIndex].c_attr_policy[id].type);
@@ -599,7 +599,7 @@ int MockNlApi::nlaPutU64(struct nl_msg *msg, int id, uint64_t data) {
 
 int MockNlApi::nlaPutU8(struct nl_msg *msg, int id, uint8_t data) {
     if (!isNestedAttr) {
-        EXPECT_EQ(attribs.end(), attribs.find(id));
+        EXPECT_FALSE(attribs.contains(id));
         attribs[id] = data;
     }
     EXPECT_EQ(NLA_U8, pOps->o_cmds[cmdIndex].c_attr_policy[id].type);

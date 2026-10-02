@@ -163,7 +163,7 @@ void getCpuFlagsLinux(std::string &cpuFlags) {
     std::istringstream stream(content);
     std::string line;
     while (std::getline(stream, line)) {
-        if (line.substr(0, 5) == "flags") {
+        if (line.starts_with("flags")) {
             cpuFlags = line;
             break;
         }
@@ -190,7 +190,7 @@ size_t getLastLevelCacheSizeLinux() {
         }
 
         const auto processorId = static_cast<uint32_t>(std::strtoul(processorIdString, nullptr, 10));
-        if (visitedProcessors.count(processorId) != 0) {
+        if (visitedProcessors.contains(processorId)) {
             continue;
         }
         visitedProcessors.insert(processorId);

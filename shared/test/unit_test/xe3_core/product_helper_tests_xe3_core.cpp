@@ -18,7 +18,6 @@
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
-#include "neo_aot_platforms.h"
 namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 }

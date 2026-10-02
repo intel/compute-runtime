@@ -224,10 +224,12 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::fifoPollInterval;
+    using L0::DebugSessionImp::fifoTailStates;
     using L0::DebugSessionImp::interruptMutex;
     using L0::DebugSessionImp::interruptRequests;
     using L0::DebugSessionImp::isValidGpuAddress;
     using L0::DebugSessionImp::lastFifoReadTime;
+    using L0::DebugSessionImp::maxTailWriteAttempts;
     using L0::DebugSessionImp::minSlmSipVersion;
     using L0::DebugSessionImp::newlyStoppedThreads;
     using L0::DebugSessionImp::pendingInterrupts;
@@ -386,6 +388,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
         writeGpuMemoryCallCount++;
         if (forceWriteGpuMemoryFailOnCount == writeGpuMemoryCallCount) {
             return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        if (dropWriteGpuMemoryCount > 0 && gpuVa == dropWriteGpuMemoryGpuVa) {
+            dropWriteGpuMemoryCount--;
+            return writeMemoryResult;
         }
 
         if (gpuVa != 0 && gpuVa >= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()) &&
@@ -664,6 +670,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     uint32_t writeGpuMemoryCallCount = 0;
     uint32_t forceWriteGpuMemoryFailOnCount = 0;
+    uint64_t dropWriteGpuMemoryGpuVa = 0;
+    uint32_t dropWriteGpuMemoryCount = 0;
 
     // Instrumentation flag: set when getRegisterAccessProperties is invoked through SIP external lib path
     bool registerAccessPropertiesCalled = false;

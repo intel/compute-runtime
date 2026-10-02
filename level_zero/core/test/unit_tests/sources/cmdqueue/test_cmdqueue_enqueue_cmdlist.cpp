@@ -10,6 +10,8 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -39,11 +41,11 @@ struct CommandQueueExecuteCommandListsFixtureInit : DeviceFixture {
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandLists[0] = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandLists[1] = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -105,13 +107,13 @@ struct MultiDeviceCommandQueueExecuteCommandListsFixture : public MultiDeviceFix
         ASSERT_NE(nullptr, device);
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandLists[0] = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[0])->getPartitionCount());
         CommandList::fromHandle(commandLists[0])->close();
 
-        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        commandLists[1] = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[1])->getPartitionCount());
@@ -137,8 +139,7 @@ using MultiDeviceCommandQueueExecuteCommandLists = Test<MultiDeviceCommandQueueE
 HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncachedMOCSThenSuccessisReturned) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -158,6 +159,117 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncach
     commandQueue->destroy();
 }
 
+struct KernelDispatchStatsQueueTest : public CommandQueueExecuteCommandLists {
+    // the collection target is the process-wide logger, which outlives every test,
+    // so construct it here - SetUpTestSuite runs before the leak listener arms
+    static void SetUpTestSuite() {
+        NEO::fileLoggerInstance();
+    }
+
+    void TearDown() override {
+        NEO::fileLoggerInstance().clearKernelDispatchStats();
+        CommandQueueExecuteCommandLists::TearDown();
+    }
+
+    NEO::KernelDispatchStats createStats(const char *kernelName) {
+        NEO::KernelDispatchStats stats{};
+        stats.kernelName = kernelName;
+        return stats;
+    }
+
+    std::string findRow(const std::string &report, const char *kernelName) {
+        auto rowStart = report.find(std::string("\"") + kernelName + "\"");
+        if (rowStart == std::string::npos) {
+            return {};
+        }
+        return report.substr(rowStart, report.find('\n', rowStart) - rowStart);
+    }
+};
+
+HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenRegularCommandListIsExecutedTwiceThenEachExecutionIsCounted) {
+    debugManager.flags.LogKernelDispatchStats.set(true);
+    NEO::fileLoggerInstance().clearKernelDispatchStats();
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->getCmdContainer().obtainKernelDispatchStats().trackDispatch(createStats("regularListKernel"));
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
+
+    const auto report = NEO::fileLoggerInstance().createKernelDispatchStatsReport();
+    EXPECT_TRUE(findRow(report, "regularListKernel").ends_with(",2"));
+    EXPECT_FALSE(commandList->getCmdContainer().peekKernelDispatchStats()->isEmpty());
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenImmediateCommandListIsExecutedThenItsStatsAreCleared) {
+    debugManager.flags.LogKernelDispatchStats.set(true);
+    NEO::fileLoggerInstance().clearKernelDispatchStats();
+
+    auto commandList = CommandList::whiteboxCast(CommandList::fromHandle(commandLists[0]));
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
+    commandList->getCmdContainer().obtainKernelDispatchStats().trackDispatch(createStats("immediateListKernel"));
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
+
+    const auto report = NEO::fileLoggerInstance().createKernelDispatchStatsReport();
+    EXPECT_TRUE(findRow(report, "immediateListKernel").ends_with(",1"));
+    EXPECT_TRUE(commandList->getCmdContainer().peekKernelDispatchStats()->isEmpty());
+
+    commandList->cmdListType = CommandList::CommandListType::typeRegular;
+    commandQueue->destroy();
+}
+
+HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsDisabledWhenCommandListIsExecutedThenNothingIsCounted) {
+    debugManager.flags.LogKernelDispatchStats.set(false);
+    NEO::fileLoggerInstance().clearKernelDispatchStats();
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->getCmdContainer().obtainKernelDispatchStats().trackDispatch(createStats("notCountedKernel"));
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
+
+    EXPECT_EQ(std::string::npos, NEO::fileLoggerInstance().createKernelDispatchStatsReport().find("notCountedKernel"));
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueExecuteCommandLists, givenCommandListThatRequiresDisabledEUFusionWhenExecutingCommandListsThenCommandQueueHasProperStreamProperties) {
     struct WhiteBoxCommandList : public L0::CommandList {
         using CommandList::CommandList;
@@ -173,8 +285,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenCommandListThatRequiresDisabledEU
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -204,8 +315,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandL
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -254,8 +364,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandL
 HWTEST_F(CommandQueueExecuteCommandLists, givenFenceWhenExecutingCmdListThenFenceStatusIsCorrect) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -294,8 +403,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPip
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -339,8 +447,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
     using Parse = typename FamilyType::Parse;
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -424,8 +531,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
     for (auto flagInternal : testedInternalFlags) {
         ze_result_t returnValue;
         currentCsr->setPreemptionMode(NEO::PreemptionMode::Initial);
-        auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                              device,
+        auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                               currentCsr,
                                                               &desc,
                                                               false,
@@ -483,8 +589,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
     for (auto flagInternal : testedInternalFlags) {
         ze_result_t returnValue;
         currentCsr->setPreemptionMode(NEO::PreemptionMode::Initial);
-        auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                              device,
+        auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                               currentCsr,
                                                               &desc,
                                                               false,
@@ -615,19 +720,17 @@ void CommandQueueExecuteCommandListsFixtureInit::twoCommandListCommandPreemption
     auto currentCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(
-        productFamily,
-        device, currentCsr, &desc, false, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(device, currentCsr, &desc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
     commandQueue->preemptionCmdSyncProgramming = preemptionCmdProgramming;
     preemptionCmdProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(NEO::PreemptionMode::ThreadGroup, NEO::PreemptionMode::Disabled) > 0u;
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandListDisabled = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto commandListDisabled = CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     commandListDisabled->commandListPreemptionMode = NEO::PreemptionMode::Disabled;
     commandListDisabled->close();
 
-    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
     commandListThreadGroup->close();
 
@@ -912,7 +1015,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     constexpr uint32_t preemptionRegisterOffset = 0x2580;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
@@ -923,8 +1026,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     EXPECT_EQ(NEO::PreemptionMode::Initial, currentCsr->getPreemptionMode());
 
     const ze_command_queue_desc_t desc{};
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           currentCsr,
                                                           &desc,
                                                           true,
@@ -971,15 +1073,14 @@ struct CommandQueueExecuteCommandListSWTagsTestsFixture : public DeviceFixture {
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
-        auto cmdList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
+        auto cmdList = CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
         commandLists[0] = cmdList->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         cmdList->close();
 
         ze_command_queue_desc_t desc = {};
-        commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                         device,
+        commandQueue = whiteboxCast(CommandQueue::create(device,
                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
                                                          &desc,
                                                          false,
@@ -1061,12 +1162,12 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
 
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::pipeControlReason) == noop->getIdentificationNumber() &&
-            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            noop->getIdentificationNumberRegisterWriteEnable() &&
             ++it != noops.end()) {
 
             noop = genCmdCast<MI_NOOP *>(*(*it));
             if (noop->getIdentificationNumber() & 1 << 21 &&
-                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                noop->getIdentificationNumberRegisterWriteEnable()) {
                 tagFound = true;
             }
         }
@@ -1168,8 +1269,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
 
     ze_result_t returnValue;
 
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -1257,15 +1357,14 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecut
     debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
     csr->useNotifyEnableForPostSync = true;
 
     const ze_command_queue_desc_t desc{};
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           true,
@@ -1312,15 +1411,14 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     using Parse = typename FamilyType::Parse;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
     csr->useNotifyEnableForPostSync = true;
 
     const ze_command_queue_desc_t desc{};
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           true,
@@ -1372,8 +1470,7 @@ void CommandQueueExecuteCommandListsFixtureInit::testPatchPreambleAsyncPatchList
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                                                 device,
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(device,
                                                                                  neoDevice->getDefaultEngine().commandStreamReceiver,
                                                                                  &queueDesc,
                                                                                  copyEngine,
@@ -1384,7 +1481,7 @@ void CommandQueueExecuteCommandListsFixtureInit::testPatchPreambleAsyncPatchList
 
     auto engineType = copyEngine ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
 
-    auto commandList = CommandList::create(productFamily, device, engineType, 0u, returnValue, false);
+    auto commandList = CommandList::create(device, engineType, 0u, returnValue, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     size_t expectedEncodePatchSize = 0;

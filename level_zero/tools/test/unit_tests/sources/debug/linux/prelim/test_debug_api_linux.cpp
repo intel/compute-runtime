@@ -3265,7 +3265,7 @@ TEST_F(DebugApiLinuxTest, GivenContextCreateAndDestroyEventsWhenInitializingThen
     EXPECT_EQ(eventsCount, static_cast<size_t>(session->getInternalEventCounter.load()));
 
     EXPECT_EQ(1u, session->clientHandleToConnection[clientHandle]->contextsCreated.size());
-    EXPECT_EQ(session->clientHandleToConnection[clientHandle]->contextsCreated.end(), session->clientHandleToConnection[clientHandle]->contextsCreated.find(context.handle));
+    EXPECT_FALSE(session->clientHandleToConnection[clientHandle]->contextsCreated.contains(context.handle));
 }
 
 TEST_F(DebugApiLinuxTest, GivenUuidEventForClassWhenHandlingEventThenClassHandleIsSavedWithNameAndIndex) {
@@ -3379,11 +3379,11 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventWhenHandlingThenUuidIsInsertedToMap) {
     session->handleEvent(&uuid.base);
 
     EXPECT_EQ(1u, session->clientHandleToConnection[uuid.client_handle]->uuidMap.size());
-    EXPECT_NE(session->clientHandleToConnection[uuid.client_handle]->uuidMap.end(), session->clientHandleToConnection[uuid.client_handle]->uuidMap.find(uuid.handle));
+    EXPECT_TRUE(session->clientHandleToConnection[uuid.client_handle]->uuidMap.contains(uuid.handle));
 
     uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     session->handleEvent(&uuid.base);
-    EXPECT_NE(session->clientHandleToConnection[uuid.client_handle]->uuidMap.end(), session->clientHandleToConnection[uuid.client_handle]->uuidMap.find(uuid.handle));
+    EXPECT_TRUE(session->clientHandleToConnection[uuid.client_handle]->uuidMap.contains(uuid.handle));
 }
 
 TEST_F(DebugApiLinuxTest, GivenUuidEventForL0ZebinModuleWhenHandlingEventThenKernelCountFromPayloadIsRead) {
@@ -3421,8 +3421,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventForL0ZebinModuleWhenHandlingEventThenKer
 
     session->handleEvent(&l0ModuleUuid.base);
 
-    EXPECT_NE(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule.end(),
-              session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule.find(l0ModuleUuid.handle));
+    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule.contains(l0ModuleUuid.handle));
 
     EXPECT_EQ(kernelCount, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[l0ModuleUuid.handle].segmentCount);
 
@@ -3441,8 +3440,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventForL0ZebinModuleWhenHandlingEventThenKer
     l0ModuleUuid.payload_size = 0;
     session->handleEvent(&l0ModuleUuid.base);
 
-    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule.end(),
-              session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule.find(l0ModuleUuid.handle));
+    EXPECT_FALSE(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule.contains(l0ModuleUuid.handle));
 }
 
 TEST_F(DebugApiLinuxTest, GivenUuidEventWithNonElfClassHandleWhenHandlingEventThenUuidDataPtrIsNotSet) {
@@ -4215,7 +4213,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithAckNeededForIsaWhenHandlingE
     auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->isaMap[0];
 
     EXPECT_EQ(1u, isaMap.size());
-    EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
+    EXPECT_TRUE(isaMap.contains(isaGpuVa));
 
     auto isaAllocation = isaMap[isaGpuVa].get();
     EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
@@ -4259,7 +4257,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenCookieWhenHandlingVmBindForIsaThenIsaAlloca
     auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->isaMap[0];
 
     EXPECT_EQ(1u, isaMap.size());
-    EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
+    EXPECT_TRUE(isaMap.contains(isaGpuVa));
 
     auto isaAllocation = isaMap[isaGpuVa].get();
     EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
@@ -4297,7 +4295,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenNoCookieWhenHandlingVmBindForIsaThenIsaAllo
     auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->isaMap[0];
 
     EXPECT_EQ(1u, isaMap.size());
-    EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
+    EXPECT_TRUE(isaMap.contains(isaGpuVa));
 
     auto isaAllocation = isaMap[isaGpuVa].get();
     EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
@@ -4333,7 +4331,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenTwoVmBindEventForTheSameIsaInDifferentVMWhe
 
     auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->isaMap[0];
     EXPECT_EQ(1u, isaMap.size());
-    EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
+    EXPECT_TRUE(isaMap.contains(isaGpuVa));
     auto isaAllocation = isaMap[isaGpuVa].get();
     EXPECT_EQ(3u, isaAllocation->vmHandle);
 
@@ -5226,8 +5224,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
     EXPECT_EQ(static_cast<uint32_t>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
 
-    EXPECT_NE(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.end(),
-              session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.find(vmId));
+    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.contains(vmId));
     EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vmId]);
 
     auto infoMessage = capture.getCapturedStdout();
@@ -5288,8 +5285,7 @@ TEST_F(DebugApiLinuxTest, GivenNoVmIdWhenOrZeroEnginesContextParamEventIsHandled
     EXPECT_EQ(static_cast<uint32_t>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
 
-    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.end(),
-              session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.find(MockDebugSessionLinuxi915::invalidHandle));
+    EXPECT_FALSE(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.contains(MockDebugSessionLinuxi915::invalidHandle));
 
     paramToCopy.size = sizeof(i915_context_param_engines);
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextsCreated[contextHandle].vm = vmId;
@@ -5297,8 +5293,7 @@ TEST_F(DebugApiLinuxTest, GivenNoVmIdWhenOrZeroEnginesContextParamEventIsHandled
 
     session->handleEvent(&contextParamEvent->base);
 
-    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.end(),
-              session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.find(vmId));
+    EXPECT_FALSE(session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.contains(vmId));
 
     alignedFree(memory);
 }
@@ -5332,8 +5327,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerErrorLogsWhenContextParamWithInvalidConte
     capture.captureStderr();
     session->handleEvent(&contextParamEvent.base);
 
-    EXPECT_EQ(session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.end(),
-              session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.find(77));
+    EXPECT_FALSE(session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.contains(77));
 
     auto errorMessage = capture.getCapturedStderr();
     // Trim errorMessage and remove timestamp + first space
@@ -5372,8 +5366,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerInfoLogsWhenHandlingContextParamEventWith
 
     session->handleEvent(&contextParamEvent.base);
 
-    EXPECT_EQ(session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.end(),
-              session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.find(77));
+    EXPECT_FALSE(session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.contains(77));
 
     auto errorMessage = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(errorMessage, std::string("client_handle = 1 ctx_handle = 20\n")));
@@ -5967,8 +5960,8 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     engines1->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     session->handleEvent(&engines1->base);
     EXPECT_EQ(4u, session->clientHandleToConnection[clientHandle]->lrcToContextHandle.size());
-    EXPECT_EQ(session->clientHandleToConnection[clientHandle]->lrcToContextHandle.find(1), session->clientHandleToConnection[clientHandle]->lrcToContextHandle.end());
-    EXPECT_EQ(session->clientHandleToConnection[clientHandle]->lrcToContextHandle.find(2), session->clientHandleToConnection[clientHandle]->lrcToContextHandle.end());
+    EXPECT_FALSE(session->clientHandleToConnection[clientHandle]->lrcToContextHandle.contains(1));
+    EXPECT_FALSE(session->clientHandleToConnection[clientHandle]->lrcToContextHandle.contains(2));
     EXPECT_EQ(40u, session->clientHandleToConnection[clientHandle]->lrcToContextHandle[3]);
     EXPECT_EQ(40u, session->clientHandleToConnection[clientHandle]->lrcToContextHandle[4]);
     EXPECT_EQ(40u, session->clientHandleToConnection[clientHandle]->lrcToContextHandle[5]);

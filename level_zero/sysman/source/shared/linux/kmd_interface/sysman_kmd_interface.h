@@ -118,8 +118,9 @@ enum class SysfsName {
 };
 
 enum class NodeName {
-    nodeNameAmcAlertReason,
-    nodeNameTemperatureEmergency,
+    amcAlertReason,
+    temperatureEmergency,
+    memoryTemperature,
 };
 
 enum class SysfsValueUnit {

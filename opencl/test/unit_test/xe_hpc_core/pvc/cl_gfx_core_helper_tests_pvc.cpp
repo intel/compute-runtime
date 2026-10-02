@@ -10,7 +10,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/xe_hpc_core/hw_info_xe_hpc_core.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -55,9 +54,6 @@ PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenRelease1261WhenAskingForDeviceFeatures
     deviceHwInfo->ipVersion.release = 61;
     deviceHwInfo->ipVersion.revision = deviceHwInfo->platform.usRevId;
     setupCaps(*deviceHwInfo);
-
-    rootEnv->compilerReleaseHelper.reset();
-    rootEnv->initCompilerReleaseHelper();
 
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 

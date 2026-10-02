@@ -24,6 +24,7 @@ Image::Image(Context *context, MemoryProperties &properties, cl_mem_flags flags,
              cl_mem memObject)
     : MemObj(context, properties, flags, cpuPtr, externalHandle, MemObjType::image),
       imageHandle(imageHandle), baseImageHandle(baseImageHandle), originalFormat(originalFormat) {
+    magic = objectMagic;
     this->associatedMemObject = memObject ? castToObject<MemObj>(memObject) : nullptr;
     if (this->associatedMemObject) {
         // Image borrows the parent's storage, so the parent must outlive it.
@@ -36,8 +37,10 @@ Image::~Image() {
     if (!externalHandle && this->imageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->imageHandle) != ZE_RESULT_SUCCESS);
     }
-    for (auto &[rootDeviceIndex, handle] : this->perDeviceImageHandles) {
-        UNRECOVERABLE_IF(zeImageDestroy(handle) != ZE_RESULT_SUCCESS);
+    if (!externalHandle) {
+        for (auto &[rootDeviceIndex, handle] : this->perDeviceImageHandles) {
+            UNRECOVERABLE_IF(zeImageDestroy(handle) != ZE_RESULT_SUCCESS);
+        }
     }
     if (this->baseImageHandle) {
         UNRECOVERABLE_IF(zeImageDestroy(this->baseImageHandle) != ZE_RESULT_SUCCESS);
@@ -329,9 +332,6 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     auto imgInfo = getL0Object()->getImageInfo();
     size_t arraySize = imgInfo.imgDesc.imageArraySize * (imgInfo.imgDesc.imageType == ImageType::image1DArray ||
                                                          imgInfo.imgDesc.imageType == ImageType::image2DArray);
-    size_t slicePitch = imgInfo.slicePitch * !(imgInfo.imgDesc.imageType == ImageType::image2D ||
-                                               imgInfo.imgDesc.imageType == ImageType::image1D ||
-                                               imgInfo.imgDesc.imageType == ImageType::image1DBuffer);
     size_t elementSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
     cl_uint numSamples = static_cast<cl_uint>(imgInfo.imgDesc.numSamples);
     cl_uint numMipLevels = static_cast<cl_uint>(imgInfo.imgDesc.numMipLevels);
@@ -357,14 +357,28 @@ cl_int Image::getImageInfo(cl_image_info paramName,
         imageDepth = std::max(imageDepth, static_cast<size_t>(1));
     }
 
+    size_t hostRowPitch = hostPtrRowPitch ? hostPtrRowPitch : imgInfo.imgDesc.imageWidth * elementSize;
+
     size_t rowPitch;
     if (numSamples > 1) {
         rowPitch = imgInfo.imgDesc.imageWidth * elementSize * numSamples;
     } else {
-        rowPitch = imgInfo.rowPitch;
+        rowPitch = hostRowPitch;
+    }
+
+    size_t slicePitch = 0;
+    if (!(imgInfo.imgDesc.imageType == ImageType::image2D ||
+          imgInfo.imgDesc.imageType == ImageType::image1D ||
+          imgInfo.imgDesc.imageType == ImageType::image1DBuffer)) {
+        size_t hostImageHeight = (imgInfo.imgDesc.imageType == ImageType::image3D ||
+                                  imgInfo.imgDesc.imageType == ImageType::image2DArray)
+                                     ? imgInfo.imgDesc.imageHeight
+                                     : 1u;
+        slicePitch = hostPtrSlicePitch ? hostPtrSlicePitch : hostRowPitch * hostImageHeight;
     }
 
     cl_mem bufferMem = static_cast<cl_mem>(this->associatedMemObject);
+    std::vector<ze_image_handle_t> l0Handles{};
 
     switch (paramName) {
     case CL_IMAGE_FORMAT:
@@ -420,6 +434,12 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     case CL_IMAGE_NUM_SAMPLES:
         srcParamSize = sizeof(cl_uint);
         srcParam = &numSamples;
+        break;
+
+    case CL_IMAGE_L0_HANDLE_INTEL:
+        l0Handles = this->getL0Handles();
+        srcParamSize = l0Handles.size() * sizeof(ze_image_handle_t);
+        srcParam = l0Handles.data();
         break;
 
     default:
@@ -527,6 +547,16 @@ bool Image::isCompressionEnabled() {
 }
 
 GraphicsAllocation *Image::getGraphicsAllocation(uint32_t rootDeviceIndex) { return static_cast<GraphicsAllocation *>(getL0Object(rootDeviceIndex)->getAllocation()); };
+
+std::vector<ze_image_handle_t> Image::getL0Handles() const {
+    const auto &rootDeviceIndices = this->context->getRootDeviceIndices();
+    std::vector<ze_image_handle_t> handles{};
+    handles.reserve(rootDeviceIndices.size());
+    for (const auto &rootDeviceIndex : rootDeviceIndices) {
+        handles.push_back(this->getL0Handle(rootDeviceIndex));
+    }
+    return handles;
+}
 
 void Image::migrateTo(ze_command_list_handle_t cmdList, uint32_t targetRootDeviceIndex, bool outOfOrder,
                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {

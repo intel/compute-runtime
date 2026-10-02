@@ -6,7 +6,9 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
@@ -97,6 +99,42 @@ TEST_F(GetPlatformIDsWithDeviceTests, givenFlag0WhenGetPlatformIDsThenFlagIsIgno
     auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, numPlatforms);
+}
+
+struct LeoExposedDriverTests : public Test<OclFixture> {
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(LeoExposedDriverTests, givenProductSupportingLeoThenDriverIsExposed) {
+    RAIIProductHelperFactory<MockProductHelper> raiiProductHelper{neoDevice->getRootDeviceEnvironmentRef()};
+    raiiProductHelper.mockProductHelper->isLEOSupportedResult = true;
+    EXPECT_TRUE(isLeoExposedDriver(driverHandle->toHandle()));
+}
+
+TEST_F(LeoExposedDriverTests, givenProductNotSupportingLeoThenDriverIsStripped) {
+    RAIIProductHelperFactory<MockProductHelper> raiiProductHelper{neoDevice->getRootDeviceEnvironmentRef()};
+    raiiProductHelper.mockProductHelper->isLEOSupportedResult = false;
+    EXPECT_FALSE(isLeoExposedDriver(driverHandle->toHandle()));
+}
+
+TEST_F(LeoExposedDriverTests, givenEnableLeoForcedOnThenDriverIsExposedEvenWhenProductDoesNotSupportLeo) {
+    debugManager.flags.EnableLEO.set(1);
+
+    RAIIProductHelperFactory<MockProductHelper> raiiProductHelper{neoDevice->getRootDeviceEnvironmentRef()};
+    raiiProductHelper.mockProductHelper->isLEOSupportedResult = false;
+    EXPECT_TRUE(isLeoExposedDriver(driverHandle->toHandle()));
+}
+
+TEST_F(LeoExposedDriverTests, givenNullDriverHandleThenDriverIsStripped) {
+    EXPECT_FALSE(isLeoExposedDriver(nullptr));
+}
+
+TEST_F(LeoExposedDriverTests, whenPlatformIsBuiltThenItAdvertisesClKhrIcd) {
+    size_t extensionsSize = 0;
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS, 0, nullptr, &extensionsSize));
+    std::string extensions(extensionsSize, '\0');
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS, extensionsSize, extensions.data(), nullptr));
+    EXPECT_NE(std::string::npos, extensions.find("cl_khr_icd"));
 }
 
 } // namespace ult

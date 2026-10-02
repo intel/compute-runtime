@@ -15,6 +15,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -37,6 +38,7 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
@@ -46,6 +48,7 @@
 #include "clos_matchers.h"
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <fcntl.h>
@@ -2837,7 +2840,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWit
     EXPECT_EQ(gpuAddress, bo->peekAddress());
     EXPECT_EQ(size, bo->peekSize());
 
-    const auto expectedUnmapSize = prefer57bitAddressing ? alignUp(size, MemoryConstants::pageSize) : alignUp(size, 2 * MemoryConstants::megaByte);
+    const auto expectedUnmapSize = alignUp(size, memoryManager->getGfxPartition(rootDeviceIndex)->getHeapAllocationAlignment(expectedHeap));
     EXPECT_EQ(expectedUnmapSize, bo->peekUnmapSize());
     EXPECT_EQ(osHandleData.handle, graphicsAllocation->peekSharedHandle());
 
@@ -4593,11 +4596,17 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAlloca
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
     auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
 
-    if (productHelper.isMisalignedUserPtr2WayCoherent()) {
-        EXPECT_EQ(releaseHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::twoWayCoherent), allocation->getBO()->peekPatIndex());
-    } else {
-        EXPECT_EQ(releaseHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::cached), allocation->getBO()->peekPatIndex());
-    }
+    const bool usesTwoWayCoherentPat = productHelper.isMisalignedUserPtr2WayCoherent() &&
+                                       !releaseHelper.isAppTransientCoherentPatRequired();
+    const auto expectedUsage = usesTwoWayCoherentPat
+                                   ? GMM_RESOURCE_USAGE_HW_CONTEXT
+                                   : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+    const auto passedUsage = static_cast<MockGmmClientContextBase *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext())->passedUsageTypeForGetPatIndexQuery;
+    ASSERT_TRUE(passedUsage.has_value());
+    EXPECT_EQ(expectedUsage, passedUsage.value());
+    const auto gmmPatIndex = usesTwoWayCoherentPat ? MockGmmClientContextBase::MockPatIndex::twoWayCoherent : MockGmmClientContextBase::MockPatIndex::cached;
+    EXPECT_EQ(releaseHelper.overrideSystemMemoryPatIndex(gmmPatIndex),
+              allocation->getBO()->peekPatIndex());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -4666,7 +4675,7 @@ TEST_F(DrmMemoryManagerBasic, givenAlignedHostPtrWhenAllocateGraphicsMemoryThenS
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerBasic, givenNonSvmHostPtrWhenAllocateGraphicsMemoryThenOverrideSystemMemoryPatIndexIsApplied) {
+TEST_F(DrmMemoryManagerBasic, givenNonSvmHostPtrWhenAllocateGraphicsMemoryThenPatIndexIsObtainedFromGmm) {
     AllocationData allocationData;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
 
@@ -4677,11 +4686,10 @@ TEST_F(DrmMemoryManagerBasic, givenNonSvmHostPtrWhenAllocateGraphicsMemoryThenOv
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.flushL3 = false;
     auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
-    EXPECT_NE(nullptr, allocation);
+    ASSERT_NE(nullptr, allocation);
 
     auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
-    auto expectedPatIndex = releaseHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::cached);
-    EXPECT_EQ(expectedPatIndex, allocation->getBO()->peekPatIndex());
+    EXPECT_EQ(releaseHelper.overrideSystemMemoryPatIndex(MockGmmClientContextBase::MockPatIndex::cached), allocation->getBO()->peekPatIndex());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -5872,6 +5880,236 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
     }
 }
 
+using DrmMemoryManagerHostIpcTrackingTest = DrmMemoryManagerWithLocalMemoryTest;
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenRegisteredImportedHostAllocationWhenFreedThenAccountingAndEvictionTrackingAreCleared) {
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemMmapOffset = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
+
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+    SVMAllocsManager svmAllocsManager(memoryManager);
+    mock->outputHandle = 100;
+    const auto usedMemoryBefore = memoryManager->getUsedSystemMemorySize();
+    const auto trackedBefore = memoryManager->getSysMemAllocs().size();
+
+    for (bool importedParameter : {false, true}) {
+        SvmAllocationData mappedPeerAllocData(rootDeviceIndex);
+        GraphicsAllocation *allocation = nullptr;
+        auto ptr = memoryManager->importFdHandle(device, &svmAllocsManager, 123, AllocationType::bufferHostMemory,
+                                                 true, nullptr, &allocation, mappedPeerAllocData, false, false, 0u);
+        ASSERT_NE(nullptr, ptr);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_TRUE(allocation->getIsImported());
+        const auto &trackedAllocations = memoryManager->getSysMemAllocs();
+        EXPECT_NE(trackedAllocations.end(), std::find(trackedAllocations.begin(), trackedAllocations.end(), allocation));
+        EXPECT_EQ(trackedBefore + 1, trackedAllocations.size());
+        EXPECT_EQ(usedMemoryBefore + allocation->getUnderlyingBufferSize(), memoryManager->getUsedSystemMemorySize());
+
+        auto svmAllocation = svmAllocsManager.getSVMAlloc(ptr);
+        ASSERT_NE(nullptr, svmAllocation);
+        EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, svmAllocation->memoryType);
+        EXPECT_TRUE(svmAllocation->isImportedAllocation);
+        svmAllocsManager.removeSVMAlloc(*svmAllocation);
+        memoryManager->freeGraphicsMemory(allocation, importedParameter);
+
+        EXPECT_EQ(trackedBefore, memoryManager->getSysMemAllocs().size());
+        EXPECT_EQ(usedMemoryBefore, memoryManager->getUsedSystemMemorySize());
+    }
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenRegisteredHostAllocationWithoutImportedFlagWhenFreedAsImportedThenAccountingAndEvictionTrackingAreCleared) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, 1);
+    properties.useMmapObject = true;
+    mock->outputHandle = 100;
+    const auto usedMemoryBefore = memoryManager->getUsedSystemMemorySize();
+    const auto trackedBefore = memoryManager->getSysMemAllocs().size();
+    const auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(123, properties, nullptr, false, true);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_FALSE(allocation->getIsImported());
+    EXPECT_EQ(trackedBefore + 1, memoryManager->getSysMemAllocs().size());
+    EXPECT_GT(memoryManager->getUsedSystemMemorySize(), usedMemoryBefore);
+
+    memoryManager->freeGraphicsMemory(allocation, true);
+
+    EXPECT_EQ(unregisterBefore + 1, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(trackedBefore, memoryManager->getSysMemAllocs().size());
+    EXPECT_EQ(usedMemoryBefore, memoryManager->getUsedSystemMemorySize());
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenUnregisteredImportedDeviceAllocationWhenFreedThenAccountingIsUnchanged) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    mock->outputHandle = 100;
+    const auto usedMemoryBefore = memoryManager->getUsedSystemMemorySize();
+    const auto trackedBefore = memoryManager->getSysMemAllocs().size();
+    const auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+    MemoryManager::OsHandleData handleData{123u};
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(handleData, properties, false, false, false, nullptr);
+    ASSERT_NE(nullptr, allocation);
+    allocation->setIsImported();
+    allocation->setSharedHandle(Sharing::nonSharedResource);
+
+    memoryManager->freeGraphicsMemory(allocation, true);
+
+    EXPECT_EQ(trackedBefore, memoryManager->getSysMemAllocs().size());
+    EXPECT_EQ(usedMemoryBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenConsumeFdTrueAndMappedPtrWhenRegisterSysMemAllocFailsThenNullptrReturnedAndBoUnreferenced) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+    void *testMappedPtr = reinterpret_cast<void *>(0x12345000);
+
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unreferenceBefore = memoryManager->unreferenceCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, testMappedPtr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_GT(memoryManager->unreferenceCalled, unreferenceBefore);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenConsumeFdTrueAndNoBooMmapWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    int testFd = 123;
+
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = false;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenNewBoCreationWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd = 123;
+
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    installMockedMemoryInfo(*mock);
+
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd, properties, nullptr, false, true);
+
+    EXPECT_EQ(allocation, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenConsumeFdTrueAndReuseSharedAllocationWhenRegisterSysMemAllocFailsThenNullptrReturnedAndAccountingConsistent) {
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 1;
+
+    VariableBackup<off_t> lseekRetValBackup(&SysCalls::lseekReturn, MemoryConstants::pageSize);
+
+    int testFd1 = 123;
+    int testFd2 = 456;
+
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+    properties.useMmapObject = true;
+    properties.gpuAddress = 0x1000;
+
+    mock->outputHandle = 100;
+
+    installMockedMemoryInfo(*mock);
+
+    auto allocation1 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd1, properties, nullptr, false, false);
+    ASSERT_NE(allocation1, nullptr);
+
+    VariableBackup<uint32_t> closeCalledBackup(&SysCalls::closeFuncCalled, 0u);
+    VariableBackup<int> closeArgBackup(&SysCalls::closeFuncArgPassed, 0);
+
+    memoryManager->failRegisterSysMemAlloc = true;
+
+    auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    auto unregisterBefore = memoryManager->unregisterAllocationCalled;
+
+    auto allocation2 = memoryManager->createUSMHostAllocationFromSharedHandle(
+        testFd2, properties, nullptr, true, true);
+
+    EXPECT_EQ(allocation2, nullptr);
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(testFd2, SysCalls::closeFuncArgPassed);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(unregisterBefore, memoryManager->unregisterAllocationCalled);
+    EXPECT_EQ(0u, memoryManager->callsToCloseSharedHandle);
+
+    memoryManager->freeGraphicsMemory(allocation1);
+}
+
 struct DrmMemoryManagerMultipleSharedHandlesFailureInjectionTest : public MemoryManagementFixture, public ::testing::Test {
     void SetUp() override {
         MemoryManagementFixture::setUp();
@@ -6622,7 +6860,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCa
 
         EXPECT_EQ(cached ? CachePolicy::writeBack : CachePolicy::uncached, bo.peekCachePolicy());
 
-        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.getMemAdviseFlags().allFlags);
     }
 }
 
@@ -6638,6 +6876,100 @@ TEST_F(DrmAllocationTests, givenForceCoherentTrueWhenUncachedThenCacheableIsForc
 
     drm.getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, true);
     EXPECT_TRUE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
+}
+
+TEST_F(DrmAllocationTests, givenL3FlushAfterPostSyncSupportWhenGettingPatForCoherentUserptrThenSelectUsageAccordingTo2WayCoherencySupport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
+
+    const uint32_t rootDeviceIndex = 0u;
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isL3FlushAfterPostSyncSupportedResult = true;
+    rootDeviceEnvironment.productHelper = std::move(mockProductHelper);
+
+    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
+    auto mockReleaseHelperPtr = mockReleaseHelper.get();
+    rootDeviceEnvironment.releaseHelper = std::move(mockReleaseHelper);
+
+    DrmMock drm(rootDeviceEnvironment);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment.getGmmClientContext());
+
+    for (const bool is2WayCoherentPatSupported : {false, true}) {
+        mockReleaseHelperPtr->isAppTransientCoherentPatRequiredResult = !is2WayCoherentPatSupported;
+        mockClientContext->passedUsageTypeForGetPatIndexQuery.reset();
+
+        const auto patIndex = drm.getPatIndex(nullptr, AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, true);
+
+        const auto expectedUsage = is2WayCoherentPatSupported
+                                       ? GMM_RESOURCE_USAGE_FINE_GRAINED_COHERENT
+                                       : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+        ASSERT_TRUE(mockClientContext->passedUsageTypeForGetPatIndexQuery.has_value());
+        EXPECT_EQ(expectedUsage, mockClientContext->passedUsageTypeForGetPatIndexQuery.value());
+        EXPECT_EQ(is2WayCoherentPatSupported ? MockGmmClientContextBase::MockPatIndex::twoWayCoherent : MockGmmClientContextBase::MockPatIndex::cached, patIndex);
+    }
+}
+
+TEST_F(DrmAllocationTests, givenL3FlushAfterPostSyncSupportAndAppTransientUsageWhenGettingPatForCoherentUserptrThenPreserveAppTransientUsage) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
+
+    const uint32_t rootDeviceIndex = 0u;
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isL3FlushAfterPostSyncSupportedResult = true;
+    rootDeviceEnvironment.productHelper = std::move(mockProductHelper);
+
+    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
+    mockReleaseHelper->is2WayCoherentPatSupportedResult = true;
+    rootDeviceEnvironment.releaseHelper = std::move(mockReleaseHelper);
+
+    DrmMock drm(rootDeviceEnvironment);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment.getGmmClientContext());
+    mockClientContext->passedUsageTypeForGetPatIndexQuery.reset();
+
+    const auto patIndex = drm.getPatIndex(nullptr, AllocationType::bufferHostMemory, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, true);
+
+    ASSERT_TRUE(mockClientContext->passedUsageTypeForGetPatIndexQuery.has_value());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, mockClientContext->passedUsageTypeForGetPatIndexQuery.value());
+    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, patIndex);
+}
+
+HWTEST2_F(DrmAllocationTests, givenPat19OverrideWhenGettingPatThenOnlyCacheableSystemMemoryIsOverridden, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restorer;
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.productHelper = std::make_unique<MockProductHelper>();
+    rootDeviceEnvironment.releaseHelper = std::make_unique<MockReleaseHelper>();
+
+    DrmMock drm(rootDeviceEnvironment);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(), nullptr, 4096, 0,
+                                     GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(1);
+    gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = true;
+    const auto getPatIndex = [&](Gmm *resource, bool isSystemMemory) {
+        return drm.getPatIndex(resource, AllocationType::buffer, CacheRegion::defaultRegion,
+                               CachePolicy::writeBack, false, isSystemMemory, true);
+    };
+
+    EXPECT_EQ(19u, getPatIndex(gmm.get(), true));
+    EXPECT_EQ(19u, getPatIndex(nullptr, true));
+    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, getPatIndex(gmm.get(), false));
+
+    gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = false;
+    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, getPatIndex(gmm.get(), true));
+
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(0);
+    gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = true;
+    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, getPatIndex(gmm.get(), true));
 }
 
 TEST_F(DrmAllocationTests, givenForceCoherentFalseWhenUncachedThenCacheableIsNotForced) {
@@ -6673,6 +7005,59 @@ TEST_F(DrmAllocationTests, givenForceCoherentTrueWithGmmWhenUncachedThenGmmCache
 
     drm.getPatIndex(gmm.get(), AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, true);
     EXPECT_FALSE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
+    ASSERT_TRUE(mockClientContext->passedUsageTypeForGetPatIndexQuery.has_value());
+    EXPECT_EQ(gmm->getResourceUsageType(), mockClientContext->passedUsageTypeForGetPatIndexQuery.value());
+}
+
+TEST_F(DrmAllocationTests, givenGmmAndMemoryPropertiesWhenGettingPatThenPreserveGmmCacheabilityAndSelectCoherentUsageForCacheableSystemMemoryOrForcedCoherencyWithoutGmm) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
+
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto productHelper = std::make_unique<MockProductHelper>();
+    productHelper->isL3FlushAfterPostSyncSupportedResult = true;
+    rootDeviceEnvironment.productHelper = std::move(productHelper);
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    auto releaseHelperPtr = releaseHelper.get();
+    rootDeviceEnvironment.releaseHelper = std::move(releaseHelper);
+
+    DrmMock drm(rootDeviceEnvironment);
+    drm.vmBindPatIndexProgrammingSupported = true;
+    auto clientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment.getGmmClientContext());
+
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(), nullptr, 4096, 0,
+                                     GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+
+    for (const bool supports2WayCoherency : {false, true}) {
+        releaseHelperPtr->isAppTransientCoherentPatRequiredResult = !supports2WayCoherency;
+        for (const bool withGmm : {false, true}) {
+            for (const bool gmmCacheable : {false, true}) {
+                gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = gmmCacheable;
+                for (const bool isSystemMemory : {false, true}) {
+                    for (const bool forceCoherent : {false, true}) {
+                        clientContext->passedUsageTypeForGetPatIndexQuery.reset();
+                        const bool cacheable = !withGmm || gmmCacheable;
+                        const bool selectCoherentUsage = (isSystemMemory && cacheable) || (!withGmm && forceCoherent);
+                        const auto coherentUsage = supports2WayCoherency ? GMM_RESOURCE_USAGE_FINE_GRAINED_COHERENT : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                        const auto expectedUsage = selectCoherentUsage ? coherentUsage : GMM_RESOURCE_USAGE_OCL_BUFFER;
+
+                        const auto patIndex = drm.getPatIndex(withGmm ? gmm.get() : nullptr, AllocationType::buffer,
+                                                              CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemory, forceCoherent);
+
+                        ASSERT_TRUE(clientContext->passedUsageTypeForGetPatIndexQuery.has_value());
+                        EXPECT_EQ(expectedUsage, clientContext->passedUsageTypeForGetPatIndexQuery.value());
+                        EXPECT_EQ(cacheable, clientContext->passedCacheableSettingForGetPatIndexQuery);
+                        EXPECT_EQ(selectCoherentUsage && supports2WayCoherency ? MockGmmClientContextBase::MockPatIndex::twoWayCoherent : MockGmmClientContextBase::MockPatIndex::cached, patIndex);
+                        EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, gmm->getResourceUsageType());
+                        EXPECT_EQ(gmmCacheable, gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable);
+                    }
+                }
+            }
+        }
+    }
 }
 
 TEST_F(DrmAllocationTests, givenUncachedCachePolicyWhenGettingPatIndexThenUncachedGmmUsageTypeIsSelected) {
@@ -8161,11 +8546,10 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetch
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnTrue) {
 
-    void *ptr = malloc(1024);
+    uint8_t data{};
 
     auto subDeviceIds = NEO::SubDeviceIdsVec{0};
-    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, mockRootDeviceIndex));
-    free(ptr);
+    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(&data, sizeof(data), subDeviceIds, mockRootDeviceIndex));
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnFalse) {
@@ -8185,12 +8569,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledT
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
 
-    void *ptr = malloc(1024);
+    uint8_t data{};
 
     auto subDeviceIds = NEO::SubDeviceIdsVec{0};
-    EXPECT_FALSE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, mockRootDeviceIndex));
+    EXPECT_FALSE(memoryManager->prefetchSharedSystemAlloc(&data, sizeof(data), subDeviceIds, mockRootDeviceIndex));
     EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemPrefetchCalled);
-    free(ptr);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBufferAllocationThenAllocationShouldNotPageFaultAndExplicitResidencyIsNotRequired) {
@@ -11109,7 +11492,7 @@ TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenM
     }
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectSucceedsThenReturnTrueAndCorrectOffset) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectSucceedsThenReturnTrueAndCorrectOffset, IsAtMostXeCore) {
     mock->ioctlExpected.gemMmapOffset = 1;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
     mock->mmapOffsetExpected = 21;
@@ -11124,7 +11507,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     EXPECT_EQ(21u, offset);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectFailsThenReturnFalse) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectFailsThenReturnFalse, IsAtMostXeCore) {
     mock->ioctlExpected.gemMmapOffset = 2;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
     mock->failOnMmapOffset = true;
@@ -11138,7 +11521,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     EXPECT_FALSE(ret);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectFailsThenReturnFalseTestErrorDescription) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectFailsThenReturnFalseTestErrorDescription, IsAtMostXeCore) {
     mock->ioctlExpected.gemMmapOffset = 2;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
     mock->failOnMmapOffset = true;
@@ -11163,7 +11546,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     EXPECT_FALSE(ret);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForLocalMemoryThenApplyCorrectFlags) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForLocalMemoryThenApplyCorrectFlags, IsAtMostXeCore) {
     mock->ioctlExpected.gemMmapOffset = 5;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 
@@ -11224,7 +11607,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenMakeResidentBeforeL
     memoryManager->freeGraphicsMemory(sharedUSM);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForSystemMemoryThenApplyCorrectFlags) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForSystemMemoryThenApplyCorrectFlags, IsAtMostXeCore) {
     mock->ioctlExpected.gemMmapOffset = 8;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 

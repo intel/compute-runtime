@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ namespace NEO {
 class ClDeviceVector;
 class MultiGraphicsAllocation;
 class Context;
+class MemObj;
 class MultiDeviceKernel;
 
 template <>
@@ -80,6 +81,8 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     const KernelInfoContainer &getKernelInfos() const { return kernelInfos; }
 
   protected:
+    MemObj *getMemObjArg(uint32_t argIndex, size_t argSize, const void *argVal) const;
+
     template <typename FuncType, typename... Args>
     cl_int getResultFromEachKernel(FuncType function, Args &&...args) const {
         cl_int retVal = CL_INVALID_VALUE;

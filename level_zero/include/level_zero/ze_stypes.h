@@ -49,6 +49,10 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030031)
 #define ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030032)
 
+#ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
+#define ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC static_cast<ze_structure_type_ext_t>(0x00030033)
+#endif // ZE_RECORD_REPLAY_GRAPH_EXP_NAME
+
 #if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 16)
 #ifndef ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES
 #define ZE_STRUCTURE_TYPE_DEVICE_READONLY_MEMORY_EXT_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00020030)
@@ -90,8 +94,9 @@ typedef struct _ze_device_readonly_memory_ext_properties_t {
 #define ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_METADATA_EXP static_cast<zes_structure_type_ext_t>(0x0004000F)
 #define ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_INSTANCE_EXP_DESC static_cast<zes_structure_type_ext_t>(0x00040010)
 #define ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXP static_cast<zes_structure_type_ext_t>(0x00040011)
-#define ZES_INTEL_STRUCTURE_TYPE_DRIVER_PROPERTIES_EXP static_cast<zes_structure_type_ext_t>(0x00040012)
 #define ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP static_cast<zes_structure_type_ext_t>(0x00040013)
 #define ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040014)
+#define ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040015)
+#define ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040016)
 
 #endif

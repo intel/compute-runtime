@@ -24,7 +24,7 @@ extern "C" {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Module format is PISA intermediate representation
-#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 18)
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 19)
 #define ZE_MODULE_FORMAT_PISA static_cast<ze_module_format_t>(2U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 #define ZE_MODULE_FORMAT_OCLC static_cast<ze_module_format_t>(3U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 #endif
@@ -336,38 +336,6 @@ zeIntelKernelGetBinaryExp(
     ze_kernel_handle_t hKernel, ///< [in] Kernel handle
     size_t *pSize,              ///< [in, out] pointer to variable with size of GEN ISA binary
     char *pKernelBinary         ///< [in,out] pointer to storage area for GEN ISA binary function
-);
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Retrieve the handle of the Module that a given Kernel was created from
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hKernel`
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `nullptr == phModule`
-ze_result_t ZE_APICALL
-zeKernelGetModuleHandleExt(
-    ze_kernel_handle_t hKernel,  ///< [in] handle of the kernel
-    ze_module_handle_t *phModule ///< [out] handle of the module the kernel was created from
-);
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Retrieve the handle of the Device that a given Module was created for
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
-///         + `nullptr == hModule`
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `nullptr == phDevice`
-ze_result_t ZE_APICALL
-zeModuleGetDeviceHandleExt(
-    ze_module_handle_t hModule,  ///< [in] handle of the module
-    ze_device_handle_t *phDevice ///< [out] handle of the device the module was created for
 );
 
 #ifndef ZE_INTEL_DRM_FORMAT_MODIFIER_EXP_NAME

@@ -73,7 +73,8 @@ PVCTEST_F(CommandListAppendBarrierXeHpcCore, givenCommandListWhenAppendingBarrie
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    ze_result_t returnValue = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters);
+    L0::CmdListSignalEventParameters signalEventParams = {};
+    ze_result_t returnValue = commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParams);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(

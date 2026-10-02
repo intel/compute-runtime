@@ -26,6 +26,8 @@ std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 bool levelZeroDriverInitialized = false;
 
 void Driver::initialize(ze_result_t *result) {
+    NEO::debugManager.refreshEnvVariables();
+
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
     pid = NEO::SysCalls::getCurrentProcessId();
 

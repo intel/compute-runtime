@@ -53,6 +53,7 @@ class CommandQueueHw : public CommandQueue {
 
         if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) {
             priority = QueuePriority::low;
+            this->releaseGpgpuQueueOwnership();
             this->gpgpuEngine = &device->getNearestGenericSubDevice(0)->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::lowPriority);
 
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_MED_KHR)) {
@@ -72,6 +73,7 @@ class CommandQueueHw : public CommandQueue {
         }
 
         if (internalUsage) {
+            this->releaseGpgpuQueueOwnership();
             this->gpgpuEngine = &device->getInternalEngine();
         }
 

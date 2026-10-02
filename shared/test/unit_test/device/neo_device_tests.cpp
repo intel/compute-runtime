@@ -20,7 +20,6 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -35,19 +34,21 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
-#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_interface.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "spirv/unified1/spirv.hpp"
 
 using namespace NEO;
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
@@ -104,6 +105,43 @@ TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineT
     EXPECT_THROW(factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::cooperative}), std::runtime_error);
     EXPECT_THROW(factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal}), std::runtime_error);
     EXPECT_THROW(factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::lowPriority}), std::runtime_error);
+}
+
+struct DeferredImmediateCmdListDeviceTest : public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.CreateMultipleSubDevices.set(2);
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+        executionEnvironment->incRefInternal();
+        executionEnvironment->initializeMemoryManager();
+    }
+
+    void createRootDevice(bool isWddmOnLinux) {
+        static_cast<MockRootDeviceEnvironment *>(executionEnvironment->rootDeviceEnvironments[0].get())->isWddmOnLinuxEnable = isWddmOnLinux;
+        device.reset(Device::create<RootDevice>(executionEnvironment.get(), 0u));
+        ASSERT_NE(nullptr, device);
+        ASSERT_EQ(2u, device->getNumSubDevices());
+    }
+
+    void expectDeferredImmediateCmdListEnabled(bool expectedEnabled) {
+        EXPECT_EQ(expectedEnabled, device->isDeferredImmediateCmdListEnabled());
+        for (uint32_t subDeviceIndex = 0; subDeviceIndex < device->getNumSubDevices(); subDeviceIndex++) {
+            EXPECT_EQ(expectedEnabled, device->getSubDevice(subDeviceIndex)->isDeferredImmediateCmdListEnabled());
+        }
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<Device> device;
+};
+
+TEST_F(DeferredImmediateCmdListDeviceTest, givenWddmOnLinuxWhenRootDeviceIsCreatedThenDeferredImmediateCmdListIsDisabledForRootAndSubDevices) {
+    createRootDevice(true);
+    expectDeferredImmediateCmdListEnabled(false);
+}
+
+TEST_F(DeferredImmediateCmdListDeviceTest, givenNoWddmOnLinuxWhenRootDeviceIsCreatedThenDeferredImmediateCmdListIsEnabledForRootAndSubDevices) {
+    createRootDevice(false);
+    expectDeferredImmediateCmdListEnabled(true);
 }
 
 TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
@@ -397,64 +435,132 @@ TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledTh
     EXPECT_EQ(1u, pDevice->getDeviceInfo().maxParameterSize);
 }
 
-TEST_F(DeviceGetCapsTest, givenIgcSpirvYamlWhenInitializeSpirvQueriesFromIgcThenSharedDeviceInfoIsPopulated) {
+TEST_F(DeviceGetCapsTest, givenIgcSpirvYamlWhenInitializingSpirvQueriesThenSharedDeviceInfoIsPopulated) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSpirvQueriesFromIgc.set(1);
     auto pCompilerInterface = new MockCompilerInterface;
     pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
 
     const auto &deviceInfo = pDevice->getDeviceInfo();
     EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, deviceInfo.spirvExtensions.size());
-    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount, deviceInfo.spirvCapabilities.size());
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount + pDevice->getSpirvBaseCapabilities().size() - 1, deviceInfo.spirvCapabilities.size());
     EXPECT_TRUE(std::any_of(deviceInfo.spirvExtensions.begin(), deviceInfo.spirvExtensions.end(),
                             [](const std::string &e) { return e == "SPV_KHR_shader_clock"; }));
 
     // Repeated calls reuse the cached result without appending duplicates.
-    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, pDevice->getDeviceInfo().spirvExtensions.size());
 }
 
-TEST_F(DeviceGetCapsTest, givenEmptyIgcSpirvYamlWhenInitializeSpirvQueriesFromIgcThenReturnsFalseAndLeavesSharedDeviceInfoEmpty) {
+TEST_F(DeviceGetCapsTest, givenEmptyIgcSpirvYamlWhenInitializingSpirvQueriesThenBaseCapabilitiesAreReported) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSpirvQueriesFromIgc.set(1);
     auto pCompilerInterface = new MockCompilerInterface;
     pCompilerInterface->spirvExtensionsYAMLOverride = std::string("");
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-    EXPECT_FALSE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
     EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
-    EXPECT_TRUE(pDevice->getDeviceInfo().spirvCapabilities.empty());
+    EXPECT_EQ(pDevice->getSpirvBaseCapabilities(), pDevice->getDeviceInfo().spirvCapabilities);
 }
 
-TEST_F(DeviceGetCapsTest, givenDefaultDebugFlagWhenInitializeSpirvQueriesFromIgcThenIgcPathIsEnabledByDefault) {
+TEST_F(DeviceGetCapsTest, givenDefaultDebugFlagWhenInitializingSpirvQueriesThenIgcPathIsEnabledByDefault) {
     EXPECT_EQ(1, debugManager.flags.EnableSpirvQueriesFromIgc.get());
 
     auto pCompilerInterface = new MockCompilerInterface;
     pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-    EXPECT_TRUE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(1u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
     EXPECT_EQ(spirvExtensionsYamlIgcSampleExtensionCount, pDevice->getDeviceInfo().spirvExtensions.size());
-    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount, pDevice->getDeviceInfo().spirvCapabilities.size());
+    // Linkage is reported by both the base and the IGC sample.
+    EXPECT_EQ(spirvExtensionsYamlIgcSampleCapabilityCount + pDevice->getSpirvBaseCapabilities().size() - 1, pDevice->getDeviceInfo().spirvCapabilities.size());
 }
 
-TEST_F(DeviceGetCapsTest, givenDebugFlagDisabledWhenInitializeSpirvQueriesFromIgcThenIgcPathIsSkipped) {
+TEST_F(DeviceGetCapsTest, givenDebugFlagDisabledWhenInitializingSpirvQueriesThenIgcPathIsSkipped) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSpirvQueriesFromIgc.set(0);
     auto pCompilerInterface = new MockCompilerInterface;
     pCompilerInterface->spirvExtensionsYAMLOverride = std::string(spirvExtensionsYamlIgcSample);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-    EXPECT_FALSE(pDevice->initializeSpirvQueriesFromIGC());
+    pDevice->initializeSpirvQueries();
     EXPECT_EQ(0u, pCompilerInterface->getSpirvExtensionsYAMLCalled);
     EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
-    EXPECT_TRUE(pDevice->getDeviceInfo().spirvCapabilities.empty());
+    EXPECT_EQ(pDevice->getSpirvBaseCapabilities(), pDevice->getDeviceInfo().spirvCapabilities);
+}
+
+TEST_F(DeviceGetCapsTest, givenDeviceFeaturesWhenGettingSpirvBaseCapabilitiesThenCoreCapabilitiesAreGatedAndOrdered) {
+    pDevice->deviceInfo.imageSupport = false;
+    pDevice->deviceInfo.ilVersion = "SPIR-V_1.5 ";
+    std::vector<uint32_t> expected = {spv::CapabilityAddresses, spv::CapabilityFloat16Buffer,
+                                      spv::CapabilityInt16, spv::CapabilityInt8, spv::CapabilityKernel,
+                                      spv::CapabilityLinkage, spv::CapabilityVector16, spv::CapabilityInt64};
+    EXPECT_EQ(expected, pDevice->getSpirvBaseCapabilities());
+
+    pDevice->deviceInfo.imageSupport = true;
+    expected.insert(expected.end(), {spv::CapabilityImage1D, spv::CapabilityImageBasic, spv::CapabilityImageBuffer,
+                                     spv::CapabilityLiteralSampler, spv::CapabilitySampled1D, spv::CapabilitySampledBuffer});
+    EXPECT_EQ(expected, pDevice->getSpirvBaseCapabilities());
+
+    pDevice->deviceInfo.ilVersion = "SPIR-V_1.6 SPIR-V_1.5 ";
+    expected.push_back(spv::CapabilityUniformDecoration);
+    EXPECT_EQ(expected, pDevice->getSpirvBaseCapabilities());
+}
+
+TEST_F(DeviceGetCapsTest, givenRepeatedIgcEntriesWhenInitializingSpirvQueriesThenCapabilitiesAndExtensionsAreUnique) {
+    auto compiler = std::make_unique<MockCompilerInterface>();
+    compiler->spirvExtensionsYAMLOverride = R"(---
+- name: SPV_TEST_first
+  supported_capabilities:
+    - id: 4
+      name: Addresses
+    - id: 6220
+      name: SubgroupBufferPrefetchINTEL
+- name: SPV_TEST_first
+  supported_capabilities:
+    - id: 6220
+      name: SubgroupBufferPrefetchINTEL
+- name: SPV_TEST_second
+  supported_capabilities:
+    - id: 6220
+      name: SubgroupBufferPrefetchINTEL
+)";
+    pDevice->getRootDeviceEnvironmentRef().compilerInterface = std::move(compiler);
+    pDevice->initializeSpirvQueries();
+    const auto &info = pDevice->getDeviceInfo();
+    EXPECT_EQ((std::vector<std::string>{"SPV_TEST_first", "SPV_TEST_second"}), info.spirvExtensions);
+    EXPECT_EQ(1, std::count(info.spirvCapabilities.begin(), info.spirvCapabilities.end(), spv::CapabilityAddresses));
+    EXPECT_EQ(1, std::count(info.spirvCapabilities.begin(), info.spirvCapabilities.end(), 6220u));
+}
+
+TEST_F(DeviceGetCapsTest, givenInvalidIgcYamlWhenInitializingSpirvQueriesRepeatedlyThenBaseCapabilitiesAreCached) {
+    auto compiler = std::make_unique<MockCompilerInterface>();
+    auto *compilerPtr = compiler.get();
+    compiler->spirvExtensionsYAMLOverride = "name: [unterminated";
+    pDevice->getRootDeviceEnvironmentRef().compilerInterface = std::move(compiler);
+    pDevice->initializeSpirvQueries();
+    pDevice->initializeSpirvQueries();
+    EXPECT_EQ(1u, compilerPtr->getSpirvExtensionsYAMLCalled);
+    EXPECT_EQ(pDevice->getSpirvBaseCapabilities(), pDevice->getDeviceInfo().spirvCapabilities);
+    EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
+}
+
+TEST_F(DeviceGetCapsTest, givenNoCompilerWhenInitializingSpirvQueriesThenBaseCapabilitiesAreReported) {
+    struct DeviceWithoutCompiler : MockDevice {
+        using MockDevice::MockDevice;
+        CompilerInterface *getCompilerInterface() const override { return nullptr; }
+    };
+    auto device = std::unique_ptr<DeviceWithoutCompiler>(MockDevice::createWithNewExecutionEnvironment<DeviceWithoutCompiler>(defaultHwInfo.get()));
+    device->initializeSpirvQueries();
+    EXPECT_EQ(device->getSpirvBaseCapabilities(), device->getDeviceInfo().spirvCapabilities);
+    EXPECT_TRUE(device->getDeviceInfo().spirvExtensions.empty());
 }
 
 TEST_F(DeviceGetCapsTest,
@@ -1473,8 +1579,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebuggableOsContextWhenDeviceCrea
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
     auto hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.memoryManager.reset(new MockMemoryManagerWithDebuggableOsContext(executionEnvironment));
@@ -1492,8 +1597,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsIn
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
     auto hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();
@@ -1516,8 +1620,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.set(true);
 
     auto hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();
@@ -1540,8 +1643,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.set(true);
 
     auto hwInfo = *defaultHwInfo;
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, compilerReleaseHelper.get());
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();
@@ -2415,6 +2517,124 @@ HWTEST_F(DeviceTests, givenNulloptPriorityLevelWhenGetSecondaryEnginesThenPriori
     EXPECT_FALSE(engineControl->osContext->hasPriorityLevel());
 }
 
+HWTEST_F(DeviceTests, givenReleasedSecondaryContextWhenSelectingEngineThenReuseOnlyAfterLastQueueReleasesMatchingPriority) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(2);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    for (auto usage : {EngineUsage::regular, EngineUsage::highPriority}) {
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        auto &contexts = device->secondaryEngines[aub_stream::ENGINE_CCS];
+
+        auto first = contexts.getEngine(usage, std::nullopt);
+        ASSERT_NE(nullptr, first);
+        auto csr = first->commandStreamReceiver;
+        ASSERT_TRUE(csr->initializeResources(device->getPreemptionMode()));
+        EXPECT_EQ(1u, csr->getOwningQueueCount());
+
+        csr->retainQueueOwnership();
+        EXPECT_EQ(2u, csr->getOwningQueueCount());
+        csr->releaseQueueOwnership();
+
+        auto second = contexts.getEngine(usage, std::nullopt);
+        ASSERT_NE(nullptr, second);
+        EXPECT_NE(first, second);
+        EXPECT_EQ(1u, second->commandStreamReceiver->getOwningQueueCount());
+
+        csr->releaseQueueOwnership();
+        EXPECT_EQ(0u, csr->getOwningQueueCount());
+
+        auto assignedCount = contexts.assignedContextsCounter.load();
+        auto regularCount = contexts.regularCounter.load();
+        auto hpCount = contexts.highPriorityCounter.load();
+        for (auto i = 0; i < 10; i++) {
+            EXPECT_EQ(first, contexts.getEngine(usage, std::nullopt));
+            EXPECT_EQ(1u, csr->getOwningQueueCount());
+            csr->releaseQueueOwnership();
+        }
+        EXPECT_EQ(assignedCount, contexts.assignedContextsCounter.load());
+        EXPECT_EQ(regularCount, contexts.regularCounter.load());
+        EXPECT_EQ(hpCount, contexts.highPriorityCounter.load());
+
+        second->commandStreamReceiver->releaseQueueOwnership();
+    }
+}
+
+HWTEST_F(DeviceTests, givenUninitializedFreeSecondaryContextWhenSelectingEngineThenDoNotReuseIt) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(2);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &contexts = device->secondaryEngines[aub_stream::ENGINE_CCS];
+
+    auto first = contexts.getEngine(EngineUsage::regular, std::nullopt);
+    ASSERT_NE(nullptr, first);
+    auto second = contexts.getEngine(EngineUsage::regular, std::nullopt);
+    ASSERT_NE(nullptr, second);
+    ASSERT_NE(first, second);
+
+    ASSERT_FALSE(second->commandStreamReceiver->isInitialized());
+    second->commandStreamReceiver->releaseQueueOwnership();
+    first->commandStreamReceiver->releaseQueueOwnership();
+
+    EXPECT_EQ(first, contexts.getEngine(EngineUsage::regular, std::nullopt));
+    first->commandStreamReceiver->releaseQueueOwnership();
+}
+
+HWTEST_F(DeviceTests, givenPriorityChangeSupportedWhenReusingFreeSecondaryContextThenRequestedPriorityIsProgrammed) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(2);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &contexts = device->secondaryEngines[aub_stream::ENGINE_CCS];
+
+    auto engine = contexts.getEngine(EngineUsage::regular, std::nullopt);
+    ASSERT_NE(nullptr, engine);
+    ASSERT_TRUE(engine->commandStreamReceiver->initializeResources(device->getPreemptionMode()));
+
+    const bool priorityChangeSupported = engine->osContext->isPriorityChangeSupported();
+    const auto defaultPriority = engine->osContext->getDefaultPriorityLevel();
+    engine->commandStreamReceiver->releaseQueueOwnership();
+
+    auto reusedWithPriority = contexts.getEngine(EngineUsage::regular, 1u);
+    ASSERT_NE(nullptr, reusedWithPriority);
+    if (priorityChangeSupported) {
+        EXPECT_EQ(engine, reusedWithPriority);
+        EXPECT_EQ(1u, reusedWithPriority->osContext->getPriorityLevel());
+    } else {
+        EXPECT_NE(engine, reusedWithPriority);
+    }
+    reusedWithPriority->commandStreamReceiver->releaseQueueOwnership();
+
+    if (priorityChangeSupported && defaultPriority.has_value()) {
+        auto reusedWithoutPriority = contexts.getEngine(EngineUsage::regular, std::nullopt);
+        ASSERT_NE(nullptr, reusedWithoutPriority);
+        EXPECT_EQ(engine, reusedWithoutPriority);
+        EXPECT_EQ(defaultPriority.value(), reusedWithoutPriority->osContext->getPriorityLevel());
+        reusedWithoutPriority->commandStreamReceiver->releaseQueueOwnership();
+    }
+}
+
 HWTEST_F(DeviceTests, givenNonDefaultPriorityLevelWhenGetEngineThenReturnNotPrimaryEngine) {
     DebugManagerStateRestore dbgRestorer;
 
@@ -2554,7 +2774,7 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledAndAllocationUsedBySeconadryContex
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
     auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment->memoryManager.get());
 
-    EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(aub_stream::ENGINE_CCS));
+    EXPECT_TRUE(device->secondaryEngines.contains(aub_stream::ENGINE_CCS));
     auto &secondaryEngines = device->secondaryEngines[aub_stream::ENGINE_CCS];
     auto secondaryEnginesCount = secondaryEngines.engines.size();
     ASSERT_EQ(5u, secondaryEnginesCount);
@@ -2620,7 +2840,7 @@ HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTy
 
         if (supportedRegular || supportedHp) {
             auto usage = supportedRegular ? EngineUsage::regular : EngineUsage::highPriority;
-            EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(engineType));
+            EXPECT_TRUE(device->secondaryEngines.contains(engineType));
 
             auto expectedEngineCount = 5u;
             if (supportedRegular) {
@@ -2645,7 +2865,7 @@ HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTy
             EXPECT_NE(csr->getOsContext().getContextId(), csr2->getOsContext().getContextId());
             EXPECT_NE(tagAddress, tagAddress2);
         } else {
-            EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(engineType));
+            EXPECT_FALSE(device->secondaryEngines.contains(engineType));
         }
     }
 
@@ -2679,7 +2899,7 @@ HWTEST_F(DeviceTests, givenDebugFlagSetWhenCreatingSecondaryEnginesThenSkipSelec
     executionEnvironment->incRefInternal();
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
 
-    EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(aub_stream::ENGINE_CCS));
+    EXPECT_FALSE(device->secondaryEngines.contains(aub_stream::ENGINE_CCS));
 
     executionEnvironment->decRefInternal();
 }
@@ -2707,8 +2927,9 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndDebugFlagSetWhenCreatingSecondaryEngin
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment.release(), 0));
 
     EXPECT_NE(nullptr, device->getHpCopyEngine());
-    EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(hpEngine));
-    for (auto &enginePair : device->secondaryEngines.find(hpEngine)->second.engines) {
+    auto secondaryEnginesIt = device->secondaryEngines.find(hpEngine);
+    ASSERT_NE(device->secondaryEngines.end(), secondaryEnginesIt);
+    for (auto &enginePair : secondaryEnginesIt->second.engines) {
         EXPECT_TRUE(enginePair.osContext->isExclusivelyHpContext());
     }
 }
@@ -2740,8 +2961,8 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndAggregatedProcessCountWhenCreatingSeco
 
         EXPECT_NE(nullptr, device->getHpCopyEngine());
 
-        if (device->secondaryEngines.find(hpEngine) != device->secondaryEngines.end()) {
-            auto &secondaryEngines = device->secondaryEngines[hpEngine];
+        if (auto it = device->secondaryEngines.find(hpEngine); it != device->secondaryEngines.end()) {
+            auto &secondaryEngines = it->second;
             auto expectedContextCount = gfxCoreHelper.getContextGroupContextsCount();
             // Without process division, should have full context group count (64 contexts total)
             EXPECT_EQ(expectedContextCount, secondaryEngines.engines.size());
@@ -2763,8 +2984,8 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndAggregatedProcessCountWhenCreatingSeco
 
         EXPECT_NE(nullptr, device->getHpCopyEngine());
 
-        if (device->secondaryEngines.find(hpEngine) != device->secondaryEngines.end()) {
-            auto &secondaryEngines = device->secondaryEngines[hpEngine];
+        if (auto it = device->secondaryEngines.find(hpEngine); it != device->secondaryEngines.end()) {
+            auto &secondaryEngines = it->second;
 
             // With process division: max(64/4, 2) = max(16, 2) = 16 contexts total
             const uint32_t expectedContextCount = std::max(gfxCoreHelper.getContextGroupContextsCount() / numProcesses, 2u);
@@ -3515,4 +3736,49 @@ HWTEST2_F(DeviceTestRayTracing, giveSetMaxBVHLevelsWhenAllocateRTDispatchGlobals
     EXPECT_EQ(expectedNumDSSRTStacks, dispatchGlobals.numDSSRTStacks);
     EXPECT_EQ(expectedSyncNumDSSRTStacks, dispatchGlobals.syncNumDSSRTStacks);
     EXPECT_EQ(7u, dispatchGlobals.maxBVHLevels);
+}
+
+TEST(DeviceTimestampPtrTest, givenTimestampMmioReadEnabledWhenCreatingDeviceThenTimestampPtrIsInitializedOnceWithDefaultEngineContext) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableTimestampMmioRead.set(1);
+
+    struct MockDeviceTimeWithTimestampPtr : public MockDeviceTime {
+        MmioTimestampPtrHelper getMmioTimestampPtrHelper(OsContext &osContext) override {
+            getMmioTimestampPtrHelperCalled++;
+            passedOsContext = &osContext;
+            return {&timestampDwords[0], &timestampDwords[1]};
+        }
+        uint32_t timestampDwords[2] = {0x2u, 0x1u};
+        uint32_t getMmioTimestampPtrHelperCalled = 0u;
+        OsContext *passedOsContext = nullptr;
+    };
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    auto osTime = new MockOSTime();
+    auto deviceTime = new MockDeviceTimeWithTimestampPtr();
+    osTime->deviceTime.reset(deviceTime);
+    executionEnvironment->rootDeviceEnvironments[0]->osTime.reset(osTime);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+
+    EXPECT_TRUE(device->getOSTime()->isTimestampPtrAvailable());
+    EXPECT_EQ(1u, deviceTime->getMmioTimestampPtrHelperCalled);
+    EXPECT_EQ(device->getDefaultEngine().osContext, deviceTime->passedOsContext);
+}
+
+TEST(MmioTimestampPtrHelperTest, givenHighDwordChangedDuringReadWhenReadingThenReadIsRepeated) {
+    struct MockMmioTimestampPtrHelper : public MmioTimestampPtrHelper {
+        using MmioTimestampPtrHelper::MmioTimestampPtrHelper;
+        uint32_t readHighDword() const override {
+            return highDwordValues[readHighDwordCalled++];
+        }
+        mutable uint32_t readHighDwordCalled = 0u;
+        uint32_t highDwordValues[4] = {0x1u, 0x2u, 0x2u, 0x2u};
+    };
+
+    uint32_t timestampDwords[2] = {0x100u, 0x0u};
+    MockMmioTimestampPtrHelper mmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
+
+    EXPECT_EQ(0x200000100u, mmioTimestampPtrHelper.read());
+    EXPECT_EQ(4u, mmioTimestampPtrHelper.readHighDwordCalled);
 }

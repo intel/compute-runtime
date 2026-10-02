@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,24 @@ enum class OpCode : uint32_t {
 
 enum class Component : uint32_t {
     common = 1
+};
+
+enum class CounterType : uint32_t {
+    none,
+    dispatch,
+    rop,
+    flush,
+};
+
+uint32_t getCounterRegisterOffset(CounterType type);
+
+struct CounterContext {
+    uint32_t incrementAndGet(CounterType type);
+    void reset() { *this = CounterContext{}; }
+
+    uint32_t dispatch = 0;
+    uint32_t rop = 0;
+    uint32_t flush = 0;
 };
 
 inline constexpr uint32_t reservedDefault = 0u;
@@ -98,7 +116,7 @@ struct KernelNameTag : public BaseTag {
     static void bxml(std::ostream &os);
 
   private:
-    static constexpr unsigned int kenelNameStrLength = sizeof(uint32_t) * 16; // Dword aligned
+    static constexpr uint32_t kenelNameStrLength = sizeof(uint32_t) * 16; // Dword aligned
     char kernelName[kenelNameStrLength] = {};
 };
 
@@ -112,7 +130,7 @@ struct ArbitraryStringTag : public BaseTag {
     static void bxml(std::ostream &os);
 
   protected:
-    static constexpr unsigned int tagStringLength = sizeof(uint32_t) * 16; // Dword aligned
+    static constexpr uint32_t tagStringLength = sizeof(uint32_t) * 16; // Dword aligned
     char arbitraryString[tagStringLength] = {};
 };
 
@@ -126,7 +144,7 @@ struct PipeControlReasonTag : public BaseTag {
     static void bxml(std::ostream &os);
 
   private:
-    static constexpr unsigned int reasonStrLength = sizeof(uint32_t) * 32; // Dword aligned
+    static constexpr uint32_t reasonStrLength = sizeof(uint32_t) * 32; // Dword aligned
     char reasonString[reasonStrLength] = {};
 };
 
@@ -141,7 +159,7 @@ struct CallNameBeginTag : public BaseTag {
     static void bxml(std::ostream &os);
 
   private:
-    static constexpr unsigned int zeCallNameStrLength = sizeof(uint32_t) * 32; // Dword aligned
+    static constexpr uint32_t zeCallNameStrLength = sizeof(uint32_t) * 32; // Dword aligned
     char zeCallName[zeCallNameStrLength] = {};
     char zeCallId[zeCallNameStrLength] = {};
 };
@@ -157,7 +175,7 @@ struct CallNameEndTag : public BaseTag {
     static void bxml(std::ostream &os);
 
   private:
-    static constexpr unsigned int zeCallNameStrLength = sizeof(uint32_t) * 32; // Dword aligned
+    static constexpr uint32_t zeCallNameStrLength = sizeof(uint32_t) * 32; // Dword aligned
     char zeCallName[zeCallNameStrLength] = {};
     char zeCallId[zeCallNameStrLength] = {};
 };

@@ -18,6 +18,7 @@ class ZesPciFixtureXe : public SysmanDeviceFixture {
 
   protected:
     MockPciSysfsAccess *pSysfsAccess = nullptr;
+    std::unique_ptr<MockPciFsAccess> pFsAccess;
     MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
     L0::Sysman::SysFsAccessInterface *pOriginalSysfsAccess = nullptr;
@@ -36,6 +37,10 @@ class ZesPciFixtureXe : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pSysfsAccess = static_cast<MockPciSysfsAccess *>(pSysmanKmdInterface->pSysfsAccess.get());
 
+        pFsAccess = std::make_unique<MockPciFsAccess>();
+        pOriginalFsAccess = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
         pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
         pPciImp = static_cast<L0::Sysman::PciImp *>(pSysmanDeviceImp->pPci);
         pOsPciPrev = pPciImp->pOsPci;
@@ -53,6 +58,7 @@ class ZesPciFixtureXe : public SysmanDeviceFixture {
         pPciImp->pOsPci = pOsPciPrev;
         pPciImp = nullptr;
         pLinuxSysmanImp->pSysfsAccess = pOriginalSysfsAccess;
+        pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
         SysmanDeviceFixture::TearDown();
     }
 };
@@ -256,7 +262,7 @@ static int openMockReturnSuccess(const char *pathname, int flags) {
 }
 
 // Mock PCI config space
-static ssize_t preadMockConfigSpace(int fd, void *buf, size_t count, off_t offset) {
+static ssize_t readMockConfigSpace(int fd, void *buf, size_t count) {
     uint8_t *mockBuf = static_cast<uint8_t *>(buf);
     if (count == PCI_CFG_SPACE_SIZE) {
         memset(mockBuf, 0, PCI_CFG_SPACE_SIZE);
@@ -278,12 +284,12 @@ static ssize_t preadMockConfigSpace(int fd, void *buf, size_t count, off_t offse
     return -1;
 }
 
-static ssize_t preadMockFailure(int fd, void *buf, size_t count, off_t offset) {
+static ssize_t readMockFailure(int fd, void *buf, size_t count) {
     return -1;
 }
 
 // Mock config space without PCIe Express capability
-static ssize_t preadMockInvalidConfigSpace(int fd, void *buf, size_t count, off_t offset) {
+static ssize_t readMockInvalidConfigSpace(int fd, void *buf, size_t count) {
     if (count == PCI_CFG_SPACE_SIZE) {
         memset(buf, 0, PCI_CFG_SPACE_SIZE);
         return PCI_CFG_SPACE_SIZE;
@@ -292,7 +298,7 @@ static ssize_t preadMockInvalidConfigSpace(int fd, void *buf, size_t count, off_
 }
 
 // Mock PCI config space with link speed = 0 but valid link width
-static ssize_t preadMockZeroLinkSpeed(int fd, void *buf, size_t count, off_t offset) {
+static ssize_t readMockZeroLinkSpeed(int fd, void *buf, size_t count) {
     uint8_t *mockBuf = static_cast<uint8_t *>(buf);
     if (count == PCI_CFG_SPACE_SIZE) {
         memset(mockBuf, 0, PCI_CFG_SPACE_SIZE);
@@ -315,7 +321,7 @@ static ssize_t preadMockZeroLinkSpeed(int fd, void *buf, size_t count, off_t off
 }
 
 // Mock PCI config space with link width = 0 but valid link speed
-static ssize_t preadMockZeroLinkWidth(int fd, void *buf, size_t count, off_t offset) {
+static ssize_t readMockZeroLinkWidth(int fd, void *buf, size_t count) {
     uint8_t *mockBuf = static_cast<uint8_t *>(buf);
     if (count == PCI_CFG_SPACE_SIZE) {
         memset(mockBuf, 0, PCI_CFG_SPACE_SIZE);
@@ -338,9 +344,8 @@ static ssize_t preadMockZeroLinkWidth(int fd, void *buf, size_t count, off_t off
 }
 
 TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenPciConfigSpaceReadSucceedsThenValidValuesAreReturned) {
-    PublicLinuxPciImp *pLinuxPciImp = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
-    pLinuxPciImp->preadFunction = preadMockConfigSpace;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockConfigSpace);
 
     zes_pci_state_t pciState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetState(device, &pciState));
@@ -360,9 +365,8 @@ TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenPciConfigFileOpenFailsThenSpee
 }
 
 TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenPciConfigSpaceReadFailsThenSpeedAndWidthAreInvalid) {
-    PublicLinuxPciImp *pLinuxPciImp = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
-    pLinuxPciImp->preadFunction = preadMockFailure;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockFailure);
 
     zes_pci_state_t pciState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetState(device, &pciState));
@@ -372,9 +376,8 @@ TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenPciConfigSpaceReadFailsThenSpe
 }
 
 TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenPcieCapabilityNotFoundThenSpeedAndWidthAreInvalid) {
-    PublicLinuxPciImp *pLinuxPciImp = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
-    pLinuxPciImp->preadFunction = preadMockInvalidConfigSpace;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockInvalidConfigSpace);
 
     zes_pci_state_t pciState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetState(device, &pciState));
@@ -384,9 +387,8 @@ TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenPcieCapabilityNotFoundThenSpee
 }
 
 TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenLinkSpeedIsZeroThenSpeedAndWidthAreNotUpdated) {
-    PublicLinuxPciImp *pLinuxPciImp = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
-    pLinuxPciImp->preadFunction = preadMockZeroLinkSpeed;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockZeroLinkSpeed);
 
     zes_pci_state_t pciState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetState(device, &pciState));
@@ -396,9 +398,8 @@ TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenLinkSpeedIsZeroThenSpeedAndWid
 }
 
 TEST_F(ZesPciFixtureXe, GivenValidSysmanHandleWhenLinkWidthIsZeroThenSpeedAndWidthAreNotUpdated) {
-    PublicLinuxPciImp *pLinuxPciImp = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
-    pLinuxPciImp->preadFunction = preadMockZeroLinkWidth;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockZeroLinkWidth);
 
     zes_pci_state_t pciState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetState(device, &pciState));

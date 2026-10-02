@@ -100,6 +100,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     GMM_RESCREATE_PARAMS mockResourceCreateParams = {};
 
     void overrideReturnedRenderPitch(size_t newPitch) { rowPitch = newPitch; }
+    void overrideReturnedQPitch(uint32_t newQPitch) { qPitch = newQPitch; }
     void overrideReturnedSize(size_t newSize) { size = newSize; }
 
     void setUnifiedAuxTranslationCapable();

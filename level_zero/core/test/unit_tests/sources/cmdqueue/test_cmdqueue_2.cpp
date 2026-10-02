@@ -152,7 +152,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrSyncQueueAndKmdWaitWhenCallingExecuteC
     auto queue = L0::CommandQueue::fromHandle(commandQueue);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
@@ -178,7 +178,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndAsyncQueueWhenCallingExecuteCommand
     auto queue = L0::CommandQueue::fromHandle(commandQueue);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
@@ -359,8 +359,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
         tagAddress = ptrOffset(tagAddress, csr->getImmWritePostSyncWriteOffset());
     }
     csr->activePartitions = 2u;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -371,7 +370,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(2u, commandQueue->activeSubDevices);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
     commandList->partitionCount = 2;
 
@@ -400,8 +399,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
         tagAddress = ptrOffset(tagAddress, csr->getImmWritePostSyncWriteOffset());
     }
     csr->activePartitions = 2u;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -412,7 +410,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(2u, commandQueue->activeSubDevices);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
@@ -442,8 +440,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionF
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           csr.get(),
                                                           &desc,
                                                           false,
@@ -484,8 +481,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     const ze_command_queue_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, 0, 0, 0, ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
     ze_result_t returnValue;
 
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -496,7 +492,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, commandQueue->getCommandQueueMode());
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
 
     // 1st execute provides all preamble commands
@@ -595,8 +591,7 @@ TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQue
     memoryManager->forceFailureInPrimaryAllocation = true;
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
                                                           csr.get(),
                                                           &desc,
                                                           false,
@@ -605,6 +600,7 @@ TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQue
                                                           returnValue);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
     ASSERT_EQ(nullptr, commandQueue);
+    EXPECT_EQ(0u, csr->getOwningQueueCount());
 }
 
 struct CommandQueueInitTests : public ::testing::Test {
@@ -658,7 +654,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     memoryManager->storedAllocationProperties.clear();
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue);
+    L0::CommandQueue *commandQueue = CommandQueue::create(device, csr.get(), &desc, false, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
 
     const uint64_t expectedBitfield = maxNBitValue(numSubDevices);
@@ -692,7 +688,7 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue);
+    L0::CommandQueue *commandQueue = CommandQueue::create(device, csr.get(), &desc, false, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
     auto l0Device = static_cast<Device *>(device);
     EXPECT_TRUE(l0Device->allocationsForReuse->peekIsEmpty());
@@ -718,7 +714,7 @@ TEST_F(CommandQueueInitTests, givenPoolAllocatorDisabledWhenInitializingThenBuff
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue));
+    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(device, csr.get(), &desc, false, false, false, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -743,7 +739,7 @@ TEST_F(CommandQueueInitTests, givenPoolAllocatorEnabledWhenInitializingThenBuffe
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
-    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue));
+    auto commandQueue = static_cast<L0::ult::CommandQueue *>(CommandQueue::create(device, csr.get(), &desc, false, false, false, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -791,8 +787,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     ze_result_t res = ZE_RESULT_SUCCESS;
 
     const ze_command_queue_desc_t desc = {};
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
+    auto commandQueue = whiteboxCast(CommandQueue::create(device,
                                                           neoDevice->getInternalEngine().commandStreamReceiver,
                                                           &desc,
                                                           false,
@@ -802,7 +797,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, commandQueue);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, res, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, res, false)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, commandList);
     Mock<KernelImp> kernel;

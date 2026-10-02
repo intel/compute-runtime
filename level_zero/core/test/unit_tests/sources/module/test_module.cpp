@@ -22,15 +22,17 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/kernel/implicit_args_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/implicit_args_test_helper.h"
+#include "shared/test/common/helpers/instruction_cache_flush_test_engines.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
@@ -60,7 +62,9 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/driver_experimental/zex_module.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
+
+#include <algorithm>
 
 namespace L0 {
 namespace ult {
@@ -69,24 +73,16 @@ using ModuleTest = Test<ModuleFixture>;
 
 TEST_F(ModuleTest, givenValidModuleHandleWhenCallingZeModuleGetDeviceHandleThenParentDeviceHandleReturned) {
     ze_device_handle_t deviceHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeModuleGetDeviceHandleExt(module->toHandle(), &deviceHandle));
-    EXPECT_EQ(device->toHandle(), deviceHandle);
-
-    deviceHandle = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeModuleGetDeviceHandle(module->toHandle(), &deviceHandle));
     EXPECT_EQ(device->toHandle(), deviceHandle);
 }
 
 TEST_F(ModuleTest, givenNullModuleHandleWhenCallingZeModuleGetDeviceHandleThenInvalidNullHandleReturned) {
     ze_device_handle_t deviceHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeModuleGetDeviceHandleExt(nullptr, &deviceHandle));
-
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ::zeModuleGetDeviceHandle(nullptr, &deviceHandle));
 }
 
 TEST_F(ModuleTest, givenNullDeviceHandlePointerWhenCallingZeModuleGetDeviceHandleThenInvalidNullPointerReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeModuleGetDeviceHandleExt(module->toHandle(), nullptr));
-
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, ::zeModuleGetDeviceHandle(module->toHandle(), nullptr));
 }
 
@@ -372,7 +368,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
 
 using ModuleTestSupport = IsGen12LP;
 
-HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
+HWTEST2_PRODUCT_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     ze_kernel_handle_t kernelHandle;
 
@@ -4405,7 +4401,7 @@ kernels:
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     moduleTu.unpackedDeviceBinarySize = zebin.size();
-    moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+    moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
     memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
              zebin.data(), zebin.size());
     auto retVal = moduleTu.processUnpackedBinary();
@@ -4465,7 +4461,7 @@ kernels:
     {
         L0::ModuleTranslationUnit moduleTu(this->device);
         moduleTu.unpackedDeviceBinarySize = zebin.size();
-        moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+        moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
         memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
                  zebin.data(), zebin.size());
         auto retVal = moduleTu.processUnpackedBinary();
@@ -4486,11 +4482,10 @@ TEST_F(ModuleTranslationUnitTest, GivenGenericPoolsAnd2MBLocalMemAlignmentEnable
     neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
     mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
 
-    constexpr size_t constantDataSize = ConstantSurfacePoolTraits::maxAllocationSize * 3 / 4;
-    constexpr size_t globalDataSize = GlobalSurfacePoolTraits::maxAllocationSize * 3 / 4;
+    constexpr size_t constantDataSize = ConstantSurfacePoolTraits::defaultPoolSize / 2 + MemoryConstants::pageSize;
+    constexpr size_t globalDataSize = GlobalSurfacePoolTraits::defaultPoolSize / 2 + MemoryConstants::pageSize;
 
-    std::string constantData(constantDataSize, 7);
-    std::string globalData(globalDataSize, 8);
+    const std::vector<uint8_t> sectionData(std::max(constantDataSize, globalDataSize), 7);
 
     std::string zeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
@@ -4501,9 +4496,9 @@ kernels:
     MockElfEncoder<> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel", std::string{});
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, constantData);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, ArrayRef<const uint8_t>(sectionData.data(), constantDataSize));
     auto dataConstSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, globalData);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, ArrayRef<const uint8_t>(sectionData.data(), globalDataSize));
     auto dataGlobalSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
     NEO::Elf::ElfSymbolEntry<NEO::Elf::ElfIdentifierClass::EI_CLASS_64> symbolTable[2] = {};
@@ -4530,7 +4525,7 @@ kernels:
     {
         L0::ModuleTranslationUnit moduleTu(this->device);
         moduleTu.unpackedDeviceBinarySize = zebin.size();
-        moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+        moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
         memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
                  zebin.data(), zebin.size());
         auto retVal = moduleTu.processUnpackedBinary();
@@ -4611,7 +4606,7 @@ kernels:
     {
         L0::ModuleTranslationUnit moduleTu(this->device);
         moduleTu.unpackedDeviceBinarySize = zebin.size();
-        moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+        moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
         memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
                  zebin.data(), zebin.size());
         auto retVal = moduleTu.processUnpackedBinary();
@@ -4622,7 +4617,7 @@ kernels:
 
         L0::ModuleTranslationUnit moduleTu2(this->device);
         moduleTu2.unpackedDeviceBinarySize = zebin.size();
-        moduleTu2.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu2.unpackedDeviceBinarySize);
+        moduleTu2.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu2.unpackedDeviceBinarySize);
         memcpy_s(moduleTu2.unpackedDeviceBinary.get(), moduleTu2.unpackedDeviceBinarySize,
                  zebin.data(), zebin.size());
         retVal = moduleTu2.processUnpackedBinary();
@@ -6230,7 +6225,7 @@ TEST_F(ModuleTests, givenSlmSizeExceedingLocalMemorySizeWhenProcessingUnpackedBi
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     moduleTu.unpackedDeviceBinarySize = src.size();
-    moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+    moduleTu.unpackedDeviceBinary = std::make_unique_for_overwrite<char[]>(moduleTu.unpackedDeviceBinarySize);
     memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize, src.data(), src.size());
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, moduleTu.processUnpackedBinary());
@@ -6420,6 +6415,102 @@ TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAll
     EXPECT_NE(allocs.end(), iter);
 }
 
+TEST_F(ModuleTests, givenSharedIsaUsedOnlyBySecondaryWhenDestroyingModuleThenComputeGroupRequiresInstructionCacheFlush) {
+    VariableBackup<uint32_t> maxOsContextCountBackup{&NEO::MemoryManager::maxOsContextCount};
+
+    auto neoDevice = this->neoDevice;
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto memoryManager = neoDevice->getMemoryManager();
+
+    NEO::InstructionCacheFlushTestEngines engines(
+        *neoDevice->getExecutionEnvironment(), rootDeviceIndex);
+
+    for (const auto &engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+        NEO::MemoryManager::maxOsContextCount = std::max(
+            NEO::MemoryManager::maxOsContextCount, engine.osContext->getContextId() + 1u);
+    }
+
+    VariableBackup<std::unique_ptr<NEO::ISAPoolAllocator>> isaPoolAllocatorBackup{
+        &neoDevice->isaPoolAllocator,
+        std::make_unique<NEO::ISAPoolAllocator>(neoDevice)};
+
+    auto module = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(new MockModuleTranslationUnit{device});
+
+    const uint8_t kernelHeap[0x40] = {};
+    auto kernelInfo = new NEO::KernelInfo{};
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.kernelHeapSize = sizeof(kernelHeap);
+    module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+
+    ASSERT_EQ(nullptr, device->getL0Debugger());
+
+    const auto requiredIsaSize =
+        NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(
+            *neoDevice, sizeof(kernelHeap), true);
+    module->isaAllocationPageSize = std::max(
+        module->isaAllocationPageSize, requiredIsaSize);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, module->initializeKernelImmutableData());
+    ASSERT_NE(nullptr, module->sharedIsaAllocation);
+
+    auto isaAllocation = module->getKernelsIsaParentAllocation();
+    ASSERT_NE(nullptr, isaAllocation);
+    isaAllocation->updateTaskCount(1u, engines.secondary->getOsContext().getContextId());
+
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.primary->getOsContext().getContextId()));
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.sibling->getOsContext().getContextId()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module.release()->destroy());
+
+    EXPECT_TRUE(engines.primary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.secondary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.sibling->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedPrimary->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedSecondary->isInstructionCacheFlushRequired());
+}
+
+TEST_F(ModuleTests, givenPerKernelIsaUsedOnlyBySecondaryWhenDestroyingModuleThenComputeGroupRequiresInstructionCacheFlush) {
+    VariableBackup<uint32_t> maxOsContextCountBackup{&NEO::MemoryManager::maxOsContextCount};
+
+    auto neoDevice = device->getNEODevice();
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto memoryManager = neoDevice->getMemoryManager();
+
+    NEO::InstructionCacheFlushTestEngines engines(
+        *neoDevice->getExecutionEnvironment(), rootDeviceIndex);
+
+    for (const auto &engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+        NEO::MemoryManager::maxOsContextCount = std::max(
+            NEO::MemoryManager::maxOsContextCount, engine.osContext->getContextId() + 1u);
+    }
+
+    auto module = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
+    auto kernelData = std::make_unique<KernelImmutableData>(device);
+
+    NEO::AllocationProperties properties{
+        rootDeviceIndex, MemoryConstants::pageSize,
+        NEO::AllocationType::kernelIsa, neoDevice->getDeviceBitfield()};
+    auto isaAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(nullptr, isaAllocation);
+
+    kernelData->setIsaPerKernelAllocation(isaAllocation);
+    module->getKernelImmutableDataVectorRef().push_back(std::move(kernelData));
+
+    ASSERT_EQ(nullptr, module->getKernelsIsaParentAllocation());
+    isaAllocation->updateTaskCount(1u, engines.secondary->getOsContext().getContextId());
+
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.primary->getOsContext().getContextId()));
+    ASSERT_FALSE(isaAllocation->isUsedByOsContext(engines.sibling->getOsContext().getContextId()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module.release()->destroy());
+
+    EXPECT_TRUE(engines.primary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.secondary->isInstructionCacheFlushRequired());
+    EXPECT_TRUE(engines.sibling->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedPrimary->isInstructionCacheFlushRequired());
+    EXPECT_FALSE(engines.unrelatedSecondary->isInstructionCacheFlushRequired());
+}
 using ModuleIsaCopyTest = Test<ModuleImmutableDataFixture>;
 
 TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {

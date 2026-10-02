@@ -21,9 +21,9 @@
 #include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
@@ -416,7 +416,7 @@ TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsRet
 
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceBuildFailure = true;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
     auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
@@ -427,7 +427,7 @@ TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsRet
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::buildFailure, err);
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsReturned) {
@@ -442,7 +442,7 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
     igcDebugVars.binaryToReturnSize = sizeof(binaryToReturn);
     igcDebugVars.forceBuildFailure = true;
     igcDebugVars.forceBuildFailureBackendOnly = true;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
     cache->loadResult = true;
@@ -454,7 +454,7 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, err);
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
@@ -468,11 +468,11 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     // at the end we expect CL_SUCCESS which means compilation ends in cache
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.forceBuildFailure = true;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
 
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceBuildFailure = true;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
     cache->loadResult = true;
@@ -483,8 +483,8 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, retVal);
 
-    gEnvironment->fclPopDebugVars();
-    gEnvironment->igcPopDebugVars();
+    NEO::fclPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
@@ -496,7 +496,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.forceBuildFailure = true;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
 
     std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
     cache->loadResult = true;
@@ -506,7 +506,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
     auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::buildFailure, retVal);
 
-    gEnvironment->fclPopDebugVars();
+    NEO::fclPopDebugVars();
 }
 
 class CompilerInterfaceOclElfCacheTest : public ::testing::Test, public CompilerCacheHelper {
@@ -569,7 +569,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, givenIncorrectBinaryCausingPackDeviceBi
 }
 
 TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenBuildingThenPackBinaryOnCacheSaveAndUnpackBinaryOnLoadFromCache) {
-    gEnvironment->igcPushDebugVars(igcDebugVarsDeviceBinary);
+    NEO::igcPushDebugVars(igcDebugVarsDeviceBinary);
 
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
@@ -585,11 +585,11 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenBuildingThen
 
     EXPECT_EQ(1u, mockCompilerCache->hashToBinaryMap.size());
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 
     // we force igc to fail compilation request
     // at the end we expect CL_SUCCESS which means compilation ends in cache
-    gEnvironment->igcPushDebugVars(igcFclDebugVarsForceBuildFailure);
+    NEO::igcPushDebugVars(igcFclDebugVarsForceBuildFailure);
 
     TranslationOutput outputFromCache;
     err = compilerInterface->build(device, inputArgs, outputFromCache);
@@ -598,11 +598,11 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenBuildingThen
     EXPECT_EQ(0, memcmp(deviceBinaryData.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCache.debugData.mem.get());
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenBuildingThenPackBinaryOnCacheSaveAndUnpackBinaryOnLoadFromCache) {
-    gEnvironment->igcPushDebugVars(igcDebugVarsDeviceBinary);
+    NEO::igcPushDebugVars(igcDebugVarsDeviceBinary);
 
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
@@ -618,11 +618,11 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenBuildingThenPackBinaryOn
 
     EXPECT_EQ(1u, mockCompilerCache->hashToBinaryMap.size());
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 
     // we force fcl to fail compilation request
     // at the end we expect CL_SUCCESS which means compilation ends in cache
-    gEnvironment->fclPushDebugVars(igcFclDebugVarsForceBuildFailure);
+    NEO::fclPushDebugVars(igcFclDebugVarsForceBuildFailure);
 
     TranslationOutput outputFromCache;
     err = compilerInterface->build(device, inputArgs, outputFromCache);
@@ -631,7 +631,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenBuildingThenPackBinaryOn
     EXPECT_EQ(0, memcmp(deviceBinaryData.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCache.debugData.mem.get());
 
-    gEnvironment->fclPopDebugVars();
+    NEO::fclPopDebugVars();
 }
 
 class CompilerCacheHelperWhitelistedTest : public ::testing::Test, public CompilerCacheHelper {

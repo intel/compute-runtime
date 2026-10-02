@@ -87,6 +87,24 @@ static void onDeallocationEvent(void *) {
     }*/
 }
 
+static void *allocateSystemMemory(size_t size) {
+#if defined(_WIN32)
+    return HeapAlloc(GetProcessHeap(), 0, size);
+#else
+    return malloc(size);
+#endif
+}
+
+static void freeSystemMemory(void *p) {
+#if defined(_WIN32)
+    if (p) {
+        HeapFree(GetProcessHeap(), 0, p);
+    }
+#else
+    free(p);
+#endif
+}
+
 void (*deleteCallback)(void *) = onDeallocationEvent;
 
 template <AllocationEvent::EventType typeValid, AllocationEvent::EventType typeFail>
@@ -98,7 +116,7 @@ static void *allocate(size_t size) {
     }
 
     if (!fastLeakDetectionEnabled) {
-        return malloc(size);
+        return allocateSystemMemory(size);
     }
 
     void *p;
@@ -111,7 +129,7 @@ static void *allocate(size_t size) {
         auto &eventAllocation = eventsAllocated[indexAllocation];
         eventAllocation.size = size;
 
-        if ((p = malloc(size)) == nullptr) {
+        if ((p = allocateSystemMemory(size)) == nullptr) {
             eventAllocation.address = nullptr;
             eventAllocation.event = typeFail;
             throw std::bad_alloc();
@@ -130,7 +148,7 @@ static void *allocate(size_t size) {
 
         numAllocations++;
     } else {
-        p = malloc(size);
+        p = allocateSystemMemory(size);
     }
 
     if (p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
@@ -151,7 +169,7 @@ static void *allocate(size_t size, const std::nothrow_t &) {
     }
 
     if (!fastLeakDetectionEnabled) {
-        return malloc(size);
+        return allocateSystemMemory(size);
     }
 
     void *p;
@@ -163,7 +181,7 @@ static void *allocate(size_t size, const std::nothrow_t &) {
 
         p = indexAllocation == failingAllocation
                 ? nullptr
-                : malloc(size);
+                : allocateSystemMemory(size);
 
         auto &eventAllocation = eventsAllocated[indexAllocation];
         eventAllocation.event = p
@@ -181,7 +199,7 @@ static void *allocate(size_t size, const std::nothrow_t &) {
         eventAllocation.fastLeakDetectionEnabled = fastLeakDetectionEnabled;
         numAllocations += p ? 1 : 0;
     } else {
-        p = malloc(size);
+        p = allocateSystemMemory(size);
     }
 
     if (p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
@@ -198,7 +216,7 @@ static void deallocate(void *p) {
     deleteCallback(p);
 
     if (!fastLeakDetectionEnabled) {
-        free(p);
+        freeSystemMemory(p);
         return;
     }
 
@@ -229,7 +247,7 @@ static void deallocate(void *p) {
             fastEventsDeallocated[currentIndex].store(p, std::memory_order_relaxed);
             assert(currentIndex < maxEvents);
         }
-        free(p);
+        freeSystemMemory(p);
     }
 }
 int detectLeaks() {

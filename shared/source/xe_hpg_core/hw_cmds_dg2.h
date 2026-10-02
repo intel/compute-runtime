@@ -26,9 +26,10 @@ struct DG2 : public XeHpgCoreFamily {
     static FeatureTable featureTable;
     static WorkaroundTable workaroundTable;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper);
+    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
-    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+    static void setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 
     static bool isG10(const HardwareInfo &hwInfo) {
         auto it = std::find(dg2G10DeviceIds.begin(), dg2G10DeviceIds.end(), hwInfo.platform.usDeviceID);
@@ -44,12 +45,6 @@ struct DG2 : public XeHpgCoreFamily {
         auto it = std::find(dg2G12DeviceIds.begin(), dg2G12DeviceIds.end(), hwInfo.platform.usDeviceID);
         return it != dg2G12DeviceIds.end();
     }
-};
-
-class Dg2HwConfig : public DG2 {
-  public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper);
-    static const HardwareInfo hwInfo;
 
   private:
     static GT_SYSTEM_INFO gtSystemInfo;

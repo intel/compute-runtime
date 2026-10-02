@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 namespace NEO {
@@ -30,11 +30,11 @@ struct MockZebinImageWrapper {
         MockCompilerDebugVars debugVars;
         debugVars.binaryToReturn = const_cast<unsigned char *>(this->binaries[0]);
         debugVars.binaryToReturnSize = sizeof(unsigned char) * this->binarySizes[0];
-        gEnvironment->igcPushDebugVars(debugVars);
-        gEnvironment->fclPushDebugVars(debugVars);
-        this->debugVarsRestore = std::unique_ptr<void, void (*)(void *)>{&gEnvironment, [](void *) -> void {
-                                                                             gEnvironment->fclPopDebugVars();
-                                                                             gEnvironment->igcPopDebugVars();
+        NEO::igcPushDebugVars(debugVars);
+        NEO::fclPushDebugVars(debugVars);
+        this->debugVarsRestore = std::unique_ptr<void, void (*)(void *)>{this, [](void *) -> void {
+                                                                             NEO::fclPopDebugVars();
+                                                                             NEO::igcPopDebugVars();
                                                                          }};
     }
 
@@ -82,11 +82,11 @@ struct MockZebinWrapper {
         MockCompilerDebugVars debugVars;
         debugVars.binaryToReturn = const_cast<unsigned char *>(this->binaries[0]);
         debugVars.binaryToReturnSize = sizeof(unsigned char) * this->binarySizes[0];
-        gEnvironment->igcPushDebugVars(debugVars);
-        gEnvironment->fclPushDebugVars(debugVars);
-        this->debugVarsRestore = std::unique_ptr<void, void (*)(void *)>{&gEnvironment, [](void *) -> void {
-                                                                             gEnvironment->igcPopDebugVars();
-                                                                             gEnvironment->fclPopDebugVars();
+        NEO::igcPushDebugVars(debugVars);
+        NEO::fclPushDebugVars(debugVars);
+        this->debugVarsRestore = std::unique_ptr<void, void (*)(void *)>{this, [](void *) -> void {
+                                                                             NEO::igcPopDebugVars();
+                                                                             NEO::fclPopDebugVars();
                                                                          }};
     }
 

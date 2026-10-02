@@ -13,6 +13,9 @@
 namespace NEO {
 
 template <>
+const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::none;
+
+template <>
 void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
     gmmResourceParams->Flags.Info.NotCompressed = isNotCompressed;

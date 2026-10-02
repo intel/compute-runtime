@@ -9,10 +9,8 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/mocks/mock_compiler_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -21,7 +19,6 @@ TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperField
     HardwareInfo hwInfo{};
     FeatureTable expectedFeatureTable{};
     WorkaroundTable expectedWorkaroundTable{};
-    MockCompilerReleaseHelper mockCompilerReleaseHelper;
 
     hwInfo.caps.availableSemaphore64 = true;
 
@@ -89,15 +86,13 @@ TEST(HwInfoTest, whenApplyDebugOverrideCalledThenDebugVariablesAreApplied) {
 
 TEST(HwInfoTest, whenSetupHardwareInfoForDefaultProductThenCapsAreInitializedFromLookup) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    auto compilerReleaseHelper = CompilerReleaseHelper::create(hwInfo.ipVersion);
 
     auto expectedCaps = resolveCaps(hwInfo.ipVersion);
 
     if (expectedCaps.has_value()) {
         hwInfo.caps = {};
         hwInfo.caps.dotProductAccumulateSystolicSupported = !expectedCaps->dotProductAccumulateSystolicSupported;
-        hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, false, compilerProductHelper->getHwInfoConfig(hwInfo), compilerReleaseHelper.get());
+        hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, false);
 
         EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hwInfo.caps.dotProductAccumulateSystolicSupported);
     }

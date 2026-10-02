@@ -91,6 +91,11 @@ void clearIgcDebugVars();
 MockCompilerDebugVars getFclDebugVars();
 MockCompilerDebugVars getIgcDebugVars();
 
+void fclPushDebugVars(MockCompilerDebugVars &newDebugVars);
+void fclPopDebugVars();
+void igcPushDebugVars(MockCompilerDebugVars &newDebugVars);
+void igcPopDebugVars();
+
 struct MockCIFPlatform : MockCIF<NEO::PlatformTag> {
     IGC::TypeErasedEnum GetProductFamily() const override {
         return productFamily;

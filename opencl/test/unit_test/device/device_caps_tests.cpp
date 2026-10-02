@@ -14,7 +14,6 @@
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -48,7 +47,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.ContextGroupSize.set(0);
         MockSipData::clearUseFlags();
-        backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, true);
     }
     void TearDown() override {
         MockSipData::clearUseFlags();
@@ -67,6 +65,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_EQ(CL_MAKE_VERSION(1u, 1u, 0u), (++openclCWithVersionIterator)->version);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), (++openclCWithVersionIterator)->version);
         EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
+        EXPECT_EQ(CL_MAKE_VERSION(3u, 1u, 0u), (++openclCWithVersionIterator)->version);
 
         EXPECT_EQ(clDevice.getDeviceInfo().openclCAllVersions.end(), ++openclCWithVersionIterator) << " versions count : " << clDevice.getDeviceInfo().openclCAllVersions.size();
     }
@@ -138,7 +137,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<VariableBackup<bool>> backupSipInitType;
 };
 
 TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
@@ -160,7 +158,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(nullptr, caps.vendor);
     EXPECT_NE(nullptr, caps.driverVersion);
     EXPECT_NE(nullptr, caps.profile);
-    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL 3.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
     EXPECT_NE(0u, caps.numericClVersion);
     EXPECT_GT(caps.openclCAllVersions.size(), 0u);
@@ -312,12 +310,12 @@ TEST_F(DeviceGetCapsTest, GivenPlatformWhenGettingHwInfoThenImage3dDimensionsAre
     EXPECT_EQ(2048u, sharedCaps.image3DMaxDepth);
 }
 
-TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsOpenCL30) {
+TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsOpenCL31) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL 3.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), caps.numericClVersion);
+    EXPECT_EQ(CL_MAKE_VERSION(3u, 1u, 0u), caps.numericClVersion);
     verifyOpenclCAllVersions(*device);
     verifyOpenclCFeatures(*device);
 }
@@ -552,6 +550,35 @@ TEST_F(DeviceGetCapsTest, GivenDeviceDependentSpirvCapabilitiesThenIgcPathReport
             EXPECT_EQ(1u, igcExtensions.count(deviceDependentExtension)) << "device-dependent extension " << deviceDependentExtension << " missing from the IGC path";
         }
     }
+}
+
+TEST_F(DeviceGetCapsTest, givenSharedSpirvCacheInitializedFirstWhenQueryingOpenClThenSharedDataIsPreservedAndCompilerIsNotQueriedAgain) {
+    auto *mockDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
+    auto compiler = std::make_unique<MockCompilerInterface>();
+    auto *compilerPtr = compiler.get();
+    compiler->spirvExtensionsYAMLOverride = spirvExtensionsYamlIgcSample;
+    mockDevice->getRootDeviceEnvironmentRef().compilerInterface = std::move(compiler);
+    auto device = std::make_unique<MockClDevice>(mockDevice);
+    mockDevice->initializeSpirvQueries();
+    const auto sharedCapabilities = mockDevice->getDeviceInfo().spirvCapabilities;
+    const auto sharedExtensions = mockDevice->getDeviceInfo().spirvExtensions;
+
+    size_t size = 0;
+    ASSERT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, 0, nullptr, &size));
+    std::vector<cl_uint> capabilities(size / sizeof(cl_uint));
+    ASSERT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_CAPABILITIES_KHR, size, capabilities.data(), nullptr));
+    for (auto capability : sharedCapabilities) {
+        EXPECT_EQ(1, std::count(capabilities.begin(), capabilities.end(), capability));
+    }
+    ASSERT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, 0, nullptr, &size));
+    std::vector<const char *> extensions(size / sizeof(const char *));
+    ASSERT_EQ(CL_SUCCESS, device->getDeviceInfo(CL_DEVICE_SPIRV_EXTENSIONS_KHR, size, extensions.data(), nullptr));
+    for (const auto &extension : sharedExtensions) {
+        EXPECT_EQ(1, std::count_if(extensions.begin(), extensions.end(), [&](const char *name) { return extension == name; }));
+    }
+    EXPECT_EQ(sharedCapabilities, mockDevice->getDeviceInfo().spirvCapabilities);
+    EXPECT_EQ(sharedExtensions, mockDevice->getDeviceInfo().spirvExtensions);
+    EXPECT_EQ(1u, compilerPtr->getSpirvExtensionsYAMLCalled);
 }
 
 TEST_F(DeviceGetCapsTest, GivenDefaultDebugFlagWhenQueryingSpirvExtensionsThenIgcPathIsUsedByDefault) {

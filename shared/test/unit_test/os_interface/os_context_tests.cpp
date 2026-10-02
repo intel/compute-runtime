@@ -402,3 +402,23 @@ TEST_F(DeferredOsContextCreationTests, givenPrintOsContextInitializationsIsSetWh
     std::string expectedMessage = "OsContext initialization: contextId=0 usage=Regular type=RCS isRootDevice=0 priorityLevel=std::nullopt\n";
     EXPECT_EQ(expectedMessage, capture.getCapturedStdout());
 }
+
+TEST(OSContext, givenEngineTypeUsageAndContextGroupWhenCheckingLatePreemptionStartTargetThenOnlyRegularCcsOutsideOfContextGroupIsTarget) {
+    struct Case {
+        aub_stream::EngineType engineType;
+        EngineUsage engineUsage;
+        bool expected;
+    };
+    for (auto &testCase : {Case{aub_stream::ENGINE_CCS, EngineUsage::regular, true},
+                           Case{aub_stream::ENGINE_CCS, EngineUsage::lowPriority, false},
+                           Case{aub_stream::ENGINE_CCS, EngineUsage::internal, false},
+                           Case{aub_stream::ENGINE_CCS1, EngineUsage::regular, false},
+                           Case{aub_stream::ENGINE_RCS, EngineUsage::regular, false},
+                           Case{aub_stream::ENGINE_BCS, EngineUsage::regular, false}}) {
+        auto osContext = OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({testCase.engineType, testCase.engineUsage}));
+        EXPECT_EQ(testCase.expected, osContext->isLatePreemptionStartTarget());
+        osContext->setContextGroupCount(2);
+        EXPECT_FALSE(osContext->isLatePreemptionStartTarget());
+        delete osContext;
+    }
+}

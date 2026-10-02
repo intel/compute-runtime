@@ -65,12 +65,12 @@
 
 namespace NEO {
 const DeviceDescriptor deviceDescriptorTable[] = {
-#define NAMEDDEVICE(devId, gt, devName) {devId, &gt::hwInfo, &gt::setupHardwareInfo, devName},
-#define DEVICE(devId, gt) {devId, &gt::hwInfo, &gt::setupHardwareInfo, ""},
+#define NAMEDDEVICE(devId, family, devName) {devId, family, devName},
+#define DEVICE(devId, family) {devId, family, ""},
 #include "devices.inl"
 #undef DEVICE
 #undef NAMEDDEVICE
-    {0, nullptr, nullptr, ""}};
+    {0, IGFX_UNKNOWN, ""}};
 
 const DeviceDescriptor *Drm::getDeviceDescriptor(uint32_t usDeviceID) {
     for (auto &deviceDescriptorEntry : deviceDescriptorTable) {
@@ -112,10 +112,6 @@ void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
 
 int Drm::ioctl(DrmIoctl request, void *arg) {
     auto requestValue = getIoctlRequestValue(request, ioctlHelper.get());
-    return ioctlWithRequestValue(request, arg, requestValue, nullptr);
-}
-
-int Drm::ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int requestValue, const char *requestName) {
     int ret;
     int returnedErrno = 0;
     SYSTEM_ENTER();
@@ -128,7 +124,7 @@ int Drm::ioctlWithRequestValue(DrmIoctl request, void *arg, unsigned int request
         std::string ioctlName;
 
         if (printIoctl) {
-            ioctlName = requestName ? requestName : ioctlHelper->getIoctlString(request);
+            ioctlName = ioctlHelper->getIoctlString(request);
             PRINT_STRING(true, stdout, "IOCTL %s called\n", ioctlName.c_str());
         }
 
@@ -291,7 +287,13 @@ bool Drm::checkResetStatus(OsContext &osContext) {
         ContextHealth contextHealth{};
         contextHealth.contextId = drmContextId;
         const auto retVal{ioctlHelper->getContextHealth(contextHealth)};
-        UNRECOVERABLE_IF(retVal != 0);
+        if (retVal != 0) {
+            std::call_once(contextHealthQueryFailedOnce, [&]() {
+                IoFunctions::fprintf(stderr, "ERROR: Failed to query context health, ctx_id: %u, ret: %d, treating as GPU hang\n", contextHealth.contextId, retVal);
+            });
+            osContextLinux->setHangDetected();
+            return true;
+        }
         auto debuggingEnabled = rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled();
         if (checkToDisableScratchPage() && contextHealth.faultValid) {
             const auto &fault = contextHealth.fault;
@@ -495,7 +497,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
 
     auto productFamily = IGFX_UNKNOWN;
     if (deviceDescriptor) {
-        productFamily = deviceDescriptor->pHwInfo->platform.eProductFamily;
+        productFamily = deviceDescriptor->productFamily;
     }
 
     setupIoctlHelper(productFamily);
@@ -526,7 +528,7 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
     }
 
     // reset hwInfo and apply overrides
-    rootDeviceEnvironment.setHwInfo(deviceDescriptor->pHwInfo);
+    rootDeviceEnvironment.setHwInfo(hardwareInfoTable[deviceDescriptor->productFamily]);
     HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = usDeviceIdOverride;
     hwInfo->platform.usRevId = usRevIdOverride;
@@ -547,10 +549,8 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
 
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
-    rootDeviceEnvironment.initCompilerReleaseHelper();
 
-    const auto &compilerReleaseHelper = rootDeviceEnvironment.getCompilerReleaseHelper();
-    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, &compilerReleaseHelper);
+    hardwareInfoSetup[deviceDescriptor->productFamily](hwInfo, setupFeatureTableAndWorkaroundTable);
     this->adjustSharedSystemMemCapabilities();
 
     querySystemInfo();
@@ -1610,14 +1610,18 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         cacheable = true;
     }
 
+    if ((isSystemMemory && cacheable) || (!gmm && forceCoherent)) {
+        usageType = CacheSettingsHelper::getGmmUsageTypeForCoherentSystemMemory(usageType, productHelper, releaseHelper);
+    }
+
     uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cacheable);
     patIndex = productHelper.overridePatIndex(isUncachedType, patIndex, allocationType);
+
+    UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));
 
     if (isSystemMemory && cacheable) {
         patIndex = releaseHelper.overrideSystemMemoryPatIndex(patIndex);
     }
-
-    UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));
 
     if (debugManager.flags.ClosEnabled.get() != -1) {
         closEnabled = !!debugManager.flags.ClosEnabled.get();
@@ -1892,15 +1896,13 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
         drmVmId = ctl.vmId;
 
         if (isSharedSystemAllocEnabled()) {
-            auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-
             VmBindParams vmBind{};
             vmBind.vmId = ctl.vmId;
             vmBind.flags = this->getSharedSystemBindFlags();
             vmBind.length = this->getSharedSystemAllocAddressRange();
             vmBind.sharedSystemUsmEnabled = true;
             vmBind.sharedSystemUsmBind = true;
-            vmBind.patIndex = productHelper.getSharedSystemPatIndex();
+            vmBind.patIndex = rootDeviceEnvironment.getProductHelper().getSharedSystemPatIndex();
             VmBindExtUserFenceT vmBindExtUserFence{};
             ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence,
                                                 castToUint64(ioctlHelper->getPagingFenceAddress(0, nullptr)),
@@ -2002,13 +2004,15 @@ PhysicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
         {16.0, {4, gen3EncodingLossFactor}},
         {32.0, {5, gen3EncodingLossFactor}}};
 
-    if (maxSpeedToGenAndEncodingLossMapping.find(maxSpeed) == maxSpeedToGenAndEncodingLossMapping.end()) {
+    auto it = maxSpeedToGenAndEncodingLossMapping.find(maxSpeed);
+    if (it == maxSpeedToGenAndEncodingLossMapping.end()) {
         return pciSpeedInfo;
     }
-    pciSpeedInfo.genVersion = maxSpeedToGenAndEncodingLossMapping[maxSpeed].first;
+    const auto &[genVersion, encodingLossFactor] = it->second;
+    pciSpeedInfo.genVersion = genVersion;
 
     constexpr double gigaBitsPerSecondToBytesPerSecondMultiplier = 125000000;
-    const auto maxSpeedWithEncodingLoss = maxSpeed * gigaBitsPerSecondToBytesPerSecondMultiplier * maxSpeedToGenAndEncodingLossMapping[maxSpeed].second;
+    const auto maxSpeedWithEncodingLoss = maxSpeed * gigaBitsPerSecondToBytesPerSecondMultiplier * encodingLossFactor;
     pciSpeedInfo.maxBandwidth = static_cast<int64_t>(maxSpeedWithEncodingLoss * pciSpeedInfo.width);
 
     return pciSpeedInfo;

@@ -387,7 +387,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         src = deviceInfo.spirvCapabilities.data();
         retSize = srcSize = deviceInfo.spirvCapabilities.size() * sizeof(cl_uint);
         break;
-    case CL_L0_DEVICE_HANDLE: {
+    case CL_DEVICE_L0_HANDLE_INTEL: {
         auto handle = this->getL0Handle();
         param.bitfield = reinterpret_cast<cl_bitfield>(handle);
         src = &param.bitfield;

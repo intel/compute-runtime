@@ -794,7 +794,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
         return nullptr;
     }
 
-    auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, productHelper);
+    const auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, productHelper, releaseHelper);
     auto patIndex = rootDeviceEnvironment->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, false, true);
     patIndex = static_cast<uint32_t>(releaseHelper.overrideSystemMemoryPatIndex(patIndex));
 
@@ -2064,8 +2064,13 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         return;
     }
     DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(gfxAllocation);
-    // Imported allocations were never registered, so the accounting decrement would underflow.
-    if (!isImported && !gfxAllocation->getIsImported() && Sharing::nonSharedResource == gfxAllocation->peekSharedHandle()) {
+    bool unregister = !isImported && !gfxAllocation->getIsImported() && Sharing::nonSharedResource == gfxAllocation->peekSharedHandle();
+    if (isImported || gfxAllocation->getIsImported()) {
+        std::lock_guard<std::mutex> lock(allocMutex);
+        const auto &allocations = gfxAllocation->isAllocatedInLocalMemoryPool() ? localMemAllocs[gfxAllocation->getRootDeviceIndex()] : sysMemAllocs;
+        unregister = std::find(allocations.begin(), allocations.end(), gfxAllocation) != allocations.end();
+    }
+    if (unregister) {
         this->unregisterAllocation(gfxAllocation);
     }
     auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();

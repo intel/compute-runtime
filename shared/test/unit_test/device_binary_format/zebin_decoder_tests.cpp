@@ -25,7 +25,7 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <numeric>
 #include <vector>
@@ -7539,11 +7539,11 @@ TEST(ValidateTargetDeviceTests, givenDeviceInCompatModeWhenValidatingTargetDevic
                                             productConfigToCompare,
                                             targetMetadata);
 
-            auto prodConfCompatPairItr = AOT::getCompatibilityMapping().find(productConfigToCompare);
+            auto prodConfCompatPairItr = AOT::compatibilityMapping.find(productConfigToCompare);
 
             if (targetDevice.aotConfig.value == productConfigToCompare) {
                 EXPECT_TRUE(res);
-            } else if (prodConfCompatPairItr != AOT::getCompatibilityMapping().end()) {
+            } else if (prodConfCompatPairItr != AOT::compatibilityMapping.end()) {
                 auto prodConfVec = prodConfCompatPairItr->second;
                 auto found = std::find(prodConfVec.begin(), prodConfVec.end(), currentDevice.second);
                 if (found != prodConfVec.end()) {
@@ -7562,8 +7562,8 @@ TEST(ValidateTargetDeviceTests, givenBmgG21ReservedSteppingProductConfigWhenVali
     Zebin::Elf::ZebinTargetFlags targetMetadata;
 
     for (auto reservedStepping : {AOT::BMG_G21_A1_RESERVED, AOT::BMG_G21_B0_RESERVED}) {
-        auto compatibleTargetsIt = AOT::getCompatibilityMapping().find(reservedStepping);
-        ASSERT_NE(compatibleTargetsIt, AOT::getCompatibilityMapping().end());
+        auto compatibleTargetsIt = AOT::compatibilityMapping.find(reservedStepping);
+        ASSERT_NE(compatibleTargetsIt, AOT::compatibilityMapping.end());
         ASSERT_FALSE(compatibleTargetsIt->second.empty());
 
         for (auto compatibleTargetConfig : compatibleTargetsIt->second) {

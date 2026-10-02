@@ -257,7 +257,7 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     struct igsc_oprom_image *opromImg = nullptr;
     uint32_t opromImgType = 0;
-    int retData = 0, retCode = 0;
+    int retData = IGSC_SUCCESS, retCode = IGSC_SUCCESS;
     int ret = imageOpromInit(&opromImg, static_cast<const uint8_t *>(pImage), size);
     if (ret != IGSC_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -276,7 +276,7 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     if (opromImgType & IGSC_OPROM_CODE) {
         retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, firmwareFlashProgressFunc, this);
     }
-    if ((retData != IGSC_SUCCESS) && (retCode != IGSC_SUCCESS)) {
+    if ((retData != IGSC_SUCCESS) || (retCode != IGSC_SUCCESS)) {
         int firstErr = (retData != IGSC_SUCCESS) ? retData : retCode;
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Error@ %s(): igsc oprom update failed (error:0x%x)\n", NEO_FUNCTION_NAME, firstErr);

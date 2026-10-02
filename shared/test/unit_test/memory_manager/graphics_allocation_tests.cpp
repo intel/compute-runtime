@@ -156,6 +156,14 @@ TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenUpdatingResidenc
     graphicsAllocation.updateResidencyTaskCount(1u, contextId);
 }
 
+TEST(GraphicsAllocationTest, givenImportedAllocationWhenCheckingAubWritableThenFalseIsReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(GraphicsAllocation::defaultBank));
+
+    graphicsAllocation.setIsImported();
+    EXPECT_FALSE(graphicsAllocation.isAubWritable(GraphicsAllocation::defaultBank));
+}
+
 TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingCpuAccessRequiredThenReturnTrue) {
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         auto allocType = static_cast<AllocationType>(i);
@@ -570,14 +578,14 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsInterna
     graphicsAllocation.allocationType = AllocationType::kernelIsaInternal;
     EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
 }
-TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsCommandBufferAndMaskDoesNotSupportItThenAllocationHasReadonlyType) {
+TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsCommandBufferAndMaskDoesNotSupportItThenAllocationHasNotReadonlyType) {
     DebugManagerStateRestore restorer;
     auto mask = 1llu << (static_cast<int64_t>(AllocationType::kernelIsaInternal) - 1);
     debugManager.flags.ReadOnlyAllocationsTypeMask.set(mask);
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
     graphicsAllocation.allocationType = AllocationType::commandBuffer;
-    EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
+    EXPECT_FALSE(graphicsAllocation.hasAllocationReadOnlyType());
 }
 TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsLinearStreamAndMaskDoesNotSupportItThenAllocationHasNotReadonlyType) {
     DebugManagerStateRestore restorer;

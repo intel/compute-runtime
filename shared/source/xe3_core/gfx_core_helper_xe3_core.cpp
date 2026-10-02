@@ -23,9 +23,6 @@ using Family = NEO::Xe3CoreFamily;
 
 namespace NEO {
 template <>
-const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::none;
-
-template <>
 EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     if (engineType == aub_stream::ENGINE_CCCS) {
         return EngineGroupType::renderCompute;

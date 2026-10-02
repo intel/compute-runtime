@@ -15,8 +15,8 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "neo_aot_platforms.h"
 #include "per_product_test_definitions.h"
+#include "platforms.h"
 
 using GfxCoreHelperTestsNvlp = GfxCoreHelperTest;
 

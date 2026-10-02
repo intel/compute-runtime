@@ -9,7 +9,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_mtl.h"
 
 #include "aubstream/engine_node.h"
@@ -81,7 +80,7 @@ void MTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void MTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void MTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupDefaultGtSysInfo(hwInfo);
 
     hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
@@ -95,27 +94,21 @@ void MTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo MtlHwConfig::hwInfo = {
+const HardwareInfo MTL::hwInfo = {
     &MTL::platform,
     &MTL::featureTable,
     &MTL::workaroundTable,
-    &MtlHwConfig::gtSystemInfo,
+    &MTL::gtSystemInfo,
     MTL::capabilityTable};
 
-GT_SYSTEM_INFO MtlHwConfig::gtSystemInfo = {0};
-void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    MTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO MTL::gtSystemInfo = {0};
+void MTL::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    MTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     if (setupFeatureTableAndWorkaroundTable) {
         MTL::setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
 
-const HardwareInfo MTL::hwInfo = MtlHwConfig::hwInfo;
-
-void setupMTLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    MtlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-}
-
-void (*MTL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupMTLHardwareInfoImpl;
+void (*MTL::setupHardwareInfo)(HardwareInfo *, bool) = MTL::setupHardwareInfoImpl;
 } // namespace NEO

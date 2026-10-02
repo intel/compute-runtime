@@ -83,7 +83,7 @@ char *mockTraceFsInstanceFileRead(struct tracefs_instance *instance, const char 
     // per CPU of whichever buffer it collects from, so neither the instance nor the file name is
     // fixed. Reporting them as unreadable leaves that caller on its best effort path.
     constexpr std::string_view perCpuPrefix = "per_cpu/";
-    if (file != nullptr && std::string_view(file).compare(0, perCpuPrefix.size(), perCpuPrefix) == 0) {
+    if (file != nullptr && std::string_view(file).starts_with(perCpuPrefix)) {
         return nullptr;
     }
 

@@ -211,14 +211,29 @@ inline void CommandQueueHw<gfxCoreFamily>::CommandsToPatchVisitor::operator()(Pa
     if (!patchNewScratchController && patchElem.scratchAddressAfterPatch == scratchAddress) {
         return;
     }
-    uint64_t fullScratchAddress = scratchAddress + patchElem.baseAddress;
-    if (patchPreambleEnabled) {
-        uint64_t gpuAddressToPatch = patchElem.gpuAddress + patchElem.offset;
-        NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, gpuAddressToPatch, &fullScratchAddress, patchElem.patchSize);
-    } else {
-        void *scratchAddressPatch = ptrOffset(patchElem.pDestination, patchElem.offset);
-        std::memcpy(scratchAddressPatch, &fullScratchAddress, patchElem.patchSize);
+
+    if (NEO::isDefined(patchElem.patchSize) && NEO::isValidOffset(patchElem.offset)) {
+        uint64_t fullScratchAddress = scratchAddress + patchElem.baseAddress;
+        if (patchPreambleEnabled) {
+            uint64_t gpuAddressToPatch = patchElem.gpuAddress + patchElem.offset;
+            NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, gpuAddressToPatch, &fullScratchAddress, patchElem.patchSize);
+        } else {
+            void *scratchAddressPatch = ptrOffset(patchElem.pDestination, patchElem.offset);
+            std::memcpy(scratchAddressPatch, &fullScratchAddress, patchElem.patchSize);
+        }
     }
+
+    if (NEO::isValidOffset(patchElem.scratch0SizeAllocatedOffset)) {
+        uint32_t scratch0SizeAllocated = queue.csr->getPerThreadScratchSizeSlot0Allocated();
+        if (patchPreambleEnabled) {
+            uint64_t gpuAddressToPatch = patchElem.gpuAddress + patchElem.scratch0SizeAllocatedOffset;
+            NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, gpuAddressToPatch, &scratch0SizeAllocated, sizeof(scratch0SizeAllocated));
+        } else {
+            void *scratch0SizeAllocatedPatch = ptrOffset(patchElem.pDestination, patchElem.scratch0SizeAllocatedOffset);
+            std::memcpy(scratch0SizeAllocatedPatch, &scratch0SizeAllocated, sizeof(scratch0SizeAllocated));
+        }
+    }
+
     patchElem.scratchAddressAfterPatch = scratchAddress;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ inline std::unique_ptr<T[]> makeCopy(const void *src, size_t size) {
 
     static_assert(sizeof(T) == 1u && std::is_trivially_copyable_v<T>);
 
-    auto copiedData = std::make_unique<T[]>(size);
+    auto copiedData = std::make_unique_for_overwrite<T[]>(size);
     memcpy_s(copiedData.get(), size, src, size);
 
     return copiedData;

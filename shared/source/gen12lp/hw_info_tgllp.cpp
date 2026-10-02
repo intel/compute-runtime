@@ -97,17 +97,15 @@ void TGLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
+void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->NumThreadsPerEu = 7u;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = TGLLP::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = TGLLP::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = TGLLP::maxSubslicesSupported;
     gtSysInfo->MaxDualSubSlicesSupported = TGLLP::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
     setupCaps(*hwInfo);
@@ -118,74 +116,31 @@ void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAn
     applyDebugOverrides(*hwInfo);
 }
 
-const HardwareInfo TgllpHw1x6x16::hwInfo = {
+const HardwareInfo TGLLP::hwInfo = {
     &TGLLP::platform,
     &TGLLP::featureTable,
     &TGLLP::workaroundTable,
-    &TgllpHw1x6x16::gtSystemInfo,
+    &TGLLP::gtSystemInfo,
     TGLLP::capabilityTable};
 
-GT_SYSTEM_INFO TgllpHw1x6x16::gtSystemInfo = {0};
-void TgllpHw1x6x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
+GT_SYSTEM_INFO TGLLP::gtSystemInfo = {0};
+void TGLLP::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->DualSubSliceCount = 6;
-    gtSysInfo->L3CacheSizeInKb = 3840;
-    gtSysInfo->L3BankCount = 8;
-    gtSysInfo->MaxFillRate = 16;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
 
-    gtSysInfo->CCSInfo.IsValid = true;
-    gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
-    gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
-};
-
-const HardwareInfo TgllpHw1x2x16::hwInfo = {
-    &TGLLP::platform,
-    &TGLLP::featureTable,
-    &TGLLP::workaroundTable,
-    &TgllpHw1x2x16::gtSystemInfo,
-    TGLLP::capabilityTable};
-
-GT_SYSTEM_INFO TgllpHw1x2x16::gtSystemInfo = {0};
-void TgllpHw1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerReleaseHelper *compilerReleaseHelper) {
-    TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->DualSubSliceCount = 2;
-    gtSysInfo->L3CacheSizeInKb = 1920;
-    gtSysInfo->L3BankCount = 4;
-    gtSysInfo->MaxFillRate = 16;
-    gtSysInfo->TotalVsThreads = 224;
-    gtSysInfo->TotalHsThreads = 224;
-    gtSysInfo->TotalDsThreads = 224;
-    gtSysInfo->TotalGsThreads = 224;
-
-    gtSysInfo->CCSInfo.IsValid = true;
-    gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
-    gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
-};
-
-const HardwareInfo TGLLP::hwInfo = TgllpHw1x6x16::hwInfo;
-
-void setupTGLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerReleaseHelper *compilerReleaseHelper) {
-    if (hwInfoConfig == 0x100060010) {
-        TgllpHw1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else if (hwInfoConfig == 0x100020010) {
-        TgllpHw1x2x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else if (hwInfoConfig == 0x0) {
-        // Default config
-        TgllpHw1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerReleaseHelper);
-    } else {
-        UNRECOVERABLE_IF(true);
+    const bool isHw1x2x16 = TGLLP::isHw1x2x16(*hwInfo);
+    if (gtSysInfo->SliceCount == 0) {
+        gtSysInfo->SliceCount = 1;
+        gtSysInfo->DualSubSliceCount = isHw1x2x16 ? 2 : 6;
     }
-}
+    gtSysInfo->L3CacheSizeInKb = isHw1x2x16 ? 1920 : 3840;
+    gtSysInfo->L3BankCount = isHw1x2x16 ? 4 : 8;
 
-void (*TGLLP::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerReleaseHelper *) = setupTGLLPHardwareInfoImpl;
+    gtSysInfo->CCSInfo.IsValid = true;
+    gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
+    gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
+};
+
+void (*TGLLP::setupHardwareInfo)(HardwareInfo *, bool) = TGLLP::setupHardwareInfoImpl;
 } // namespace NEO

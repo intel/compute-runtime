@@ -371,6 +371,9 @@ void MclDecoder::parseSymbols() {
             kernelData.passInlineData = kernelSymbol.passInlineData;
             kernelData.indirectOffset = (kernelSymbol.indirectOffset << Symbols::KernelSymbol::indirectOffsetBitShift);
             kernelData.grfCount = GrfConfig::defaultGrfNumber;
+            if (kernelSymbol.hasNumLocalIdChannels) {
+                kernelData.numLocalIdChannels = kernelSymbol.numLocalIdChannels;
+            }
         } break;
         }
     }

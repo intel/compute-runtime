@@ -42,6 +42,31 @@ concept PubliclyMutableDebugVariable = requires(VariableT &variable, ValueT valu
     variable.set(value);
 };
 
+namespace {
+template <typename DataT, typename ValueT, typename DefaultT>
+FORCE_NOINLINE void expectDefaultValue(const char *variableName, const ValueT &value, DefaultT defaultValue) {
+    EXPECT_TRUE(TestDebugFlagsChecker::isEqual(value, static_cast<DataT>(defaultValue))) << variableName;
+}
+
+template <typename ValueT, typename DefaultT>
+FORCE_NOINLINE void expectDumpedValue(MockSettingsFileReader &reader, const char *variableName, const ValueT &value, DefaultT defaultValue) {
+    DebugVarPrefix type;
+    EXPECT_EQ(value, reader.getSetting(variableName, defaultValue, type)) << variableName;
+}
+
+void expectAllDebugVariablesDumped(FullyEnabledTestDebugManager &debugManager, MockSettingsFileReader &reader) {
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    expectDumpedValue(reader, #variableName, debugManager.flags.variableName.get(), defaultValue);
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#include "debug_variables.inl"
+#undef DECLARE_DEBUG_VARIABLE_OPT
+#undef DECLARE_DEBUG_SCOPED_V
+#undef DECLARE_DEBUG_VARIABLE
+}
+} // namespace
+
 TEST(DebugVariables, givenCompileTimeVariablesWhenCheckingTheirClassificationThenOnlyRuntimeAndReleaseVariablesAreMutable) {
     NEO::DebugVariablesT<true> debugVariables;
 
@@ -106,11 +131,8 @@ TEST(DebugSettingsManager, WhenDebugManagerIsDisabledThenDebugFunctionalityIsNot
     EXPECT_TRUE(debugManager.disabled());
 
 // debug variables / flags set to default
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                                  \
-    {                                                                                                                              \
-        bool isEqual = TestDebugFlagsChecker::isEqual(debugManager.flags.variableName.get(), static_cast<dataType>(defaultValue)); \
-        EXPECT_TRUE(isEqual);                                                                                                      \
-    }
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    expectDefaultValue<dataType>(#variableName, debugManager.flags.variableName.get(), defaultValue);
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
@@ -207,18 +229,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCalling
 
     // Validate allSettingsDumpFile
     MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-#define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
-    {                                                                                                            \
-        DebugVarPrefix type;                                                                                     \
-        EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
-    }
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
+    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
 
     removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
@@ -286,18 +297,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNeoPrefixWhenCallin
 
     // Validate allSettingsDumpFile
     MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-#define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
-    {                                                                                                            \
-        DebugVarPrefix type;                                                                                     \
-        EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
-    }
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
+    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
 
     removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
@@ -330,18 +330,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhen
 
     // Validate allSettingsDumpFile
     MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-#define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
-    {                                                                                                            \
-        DebugVarPrefix type;                                                                                     \
-        EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
-    }
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
+    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
 
     removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
@@ -374,18 +363,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallin
 
     // Validate allSettingsDumpFile
     MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-#define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
-    {                                                                                                            \
-        DebugVarPrefix type;                                                                                     \
-        EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
-    }
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
+    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
 
     removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
@@ -418,18 +396,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCall
 
     // Validate allSettingsDumpFile
     MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-#define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)                                     \
-    {                                                                                                            \
-        DebugVarPrefix type;                                                                                     \
-        EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
-    }
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
-    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "debug_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
+    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
 
     removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
@@ -891,4 +858,55 @@ TEST(DebugSettingsManager, givenSettingsFileWithSomeDebugKeysThenDebugKeysMissin
     EXPECT_EQ(1, debugManager.flags.Enable64kbpages.get());
     EXPECT_FALSE(debugManager.flags.LogApiCalls.get());
     EXPECT_FALSE(debugManager.flags.MakeAllBuffersResident.get());
+}
+
+TEST(DebugSettingsManager, givenSettingsFileHasTheKeyWhenRefreshEnvVariablesIsCalledThenFileValueWinsOverLiveEnvironment) {
+    struct MockSettingFileReader : SettingsFileReader {
+        MockSettingFileReader() : SettingsFileReader("") {
+            settingStringMap["ZE_FLAT_DEVICE_HIERARCHY"] = "FLAT";
+        }
+    };
+
+    VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+    VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::L0);
+
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMBINED"}};
+    VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    mockSettingsReader = std::make_unique<MockSettingFileReader>();
+    FullyEnabledTestDebugManager debugManager;
+    EXPECT_EQ("FLAT", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
+
+    mockableEnvs["ZE_FLAT_DEVICE_HIERARCHY"] = "COMPOSITE";
+    debugManager.refreshEnvVariables();
+
+    EXPECT_EQ("FLAT", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
+}
+
+TEST(DebugSettingsManager, givenNoSettingsFileOrKeyMissingFromItWhenRefreshEnvVariablesIsCalledThenLiveEnvironmentWinsOverStaleValue) {
+    struct EmptyMockSettingFileReader : SettingsFileReader {
+        EmptyMockSettingFileReader() : SettingsFileReader("") {}
+    };
+
+    for (bool fileConfigPresent : {true, false}) {
+        VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+        VariableBackup<ApiSpecificConfig::ApiType> apiBackup(&apiTypeForUlts, ApiSpecificConfig::L0);
+
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMBINED"}};
+        VariableBackup<decltype(IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        if (fileConfigPresent) {
+            mockSettingsReader = std::make_unique<EmptyMockSettingFileReader>();
+        } else {
+            mockSettingsReader = std::make_unique<EnvironmentVariableReader>();
+        }
+
+        FullyEnabledTestDebugManager debugManager;
+        EXPECT_EQ("COMBINED", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
+
+        mockableEnvs["ZE_FLAT_DEVICE_HIERARCHY"] = "COMPOSITE";
+        debugManager.refreshEnvVariables();
+
+        EXPECT_EQ("COMPOSITE", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
+    }
 }

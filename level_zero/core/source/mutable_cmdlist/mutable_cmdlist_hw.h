@@ -47,6 +47,7 @@ struct MutableAppendEvents {
     bool eventInsideInOrder = false;
     bool inOrderIncrementEvent = false;
     bool omitWaitEventResidency = false;
+    bool apiRequestGraphExternal = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -84,7 +85,8 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     ze_result_t appendMIMath(void *aluArray, size_t aluCount) override;
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                              ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters) override;
+                              ze_event_handle_t *phWaitEvents,
+                              CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters) override;
     ze_result_t appendMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                           const void **pRanges,
                                           ze_event_handle_t hSignalEvent,
@@ -147,7 +149,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     MutableComputeWalker *getCommandWalker(CommandBufferOffset offsetToWalkerCommand, uint16_t indirectOffset, uint16_t scratchOffset) override;
     uint32_t getInlineDataSize() const;
 
-    void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent) override;
+    void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent, bool apiRequiredExternalGraphEvent) override;
     bool isCbEventBoundToCmdList(Event *event) const override {
         return CommandListCoreFamily<gfxCoreFamily>::isCbEventBoundToCmdList(event);
     }
@@ -189,7 +191,8 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void storeWaitEventsVariables(uint32_t numWaitEvents,
                                   ze_event_handle_t *phWaitEvents,
                                   MutableAppendEvents &mutableEventParams);
-    void processWaitEventVariables(uint32_t numWaitEvents);
+    void processWaitEventVariables(uint32_t numWaitEvents,
+                                   MutableAppendEvents &mutableEventParams);
     void clearMutableAppendData();
 
     void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker, MutableIndirectData *newKernelIndirectData) override;
@@ -205,7 +208,5 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     MutableKernelGroup *getKernelGroupForPrefetch(uint64_t cmdId) const;
     size_t ensureCmdBufferSpaceForPrefetch() override;
 };
-template <PRODUCT_FAMILY gfxProductFamily>
-struct MutableCommandListProductFamily;
 } // namespace MCL
 } // namespace L0

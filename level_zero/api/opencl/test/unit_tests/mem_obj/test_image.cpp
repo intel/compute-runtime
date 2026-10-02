@@ -15,6 +15,7 @@
 
 #include "CL/cl.h"
 
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -208,6 +209,119 @@ TEST_F(ImageHostPtrSizeTest, given2dImageWhenQueryingHostPtrSizeThenItIsSmallerT
     ASSERT_NE(nullptr, image);
 
     EXPECT_LT(image->getHostptrSize(), image->calculateTotalSizeForImage({width, height, 1u}));
+}
+
+struct ImageGetInfoPitchTest : public ImageHostPtrSizeTest {
+    static size_t queryInfo(Image &image, cl_image_info paramName) {
+        size_t value = std::numeric_limits<size_t>::max();
+        EXPECT_EQ(CL_SUCCESS, image.getImageInfo(paramName, sizeof(value), &value, nullptr));
+        return value;
+    }
+
+    static constexpr size_t unalignedWidth = 329;
+    static constexpr size_t elementSize = 4;
+};
+
+TEST_F(ImageGetInfoPitchTest, given1dImageWithoutRowPitchWhenQueryingPitchesThenRowPitchIsWidthTimesElementSizeAndSlicePitchIsZero) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    desc.image_width = unalignedWidth;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(unalignedWidth * elementSize, queryInfo(*image, CL_IMAGE_ROW_PITCH));
+    EXPECT_EQ(0u, queryInfo(*image, CL_IMAGE_SLICE_PITCH));
+}
+
+TEST_F(ImageGetInfoPitchTest, given2dImageWithoutRowPitchWhenQueryingPitchesThenRowPitchIsWidthTimesElementSizeAndSlicePitchIsZero) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    desc.image_width = unalignedWidth;
+    desc.image_height = height;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(unalignedWidth * elementSize, queryInfo(*image, CL_IMAGE_ROW_PITCH));
+    EXPECT_EQ(0u, queryInfo(*image, CL_IMAGE_SLICE_PITCH));
+}
+
+TEST_F(ImageGetInfoPitchTest, given3dImageWithoutPitchesWhenQueryingPitchesThenSlicePitchIsRowPitchTimesHeight) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    desc.image_width = unalignedWidth;
+    desc.image_height = height;
+    desc.image_depth = depth;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(unalignedWidth * elementSize, queryInfo(*image, CL_IMAGE_ROW_PITCH));
+    EXPECT_EQ(unalignedWidth * elementSize * height, queryInfo(*image, CL_IMAGE_SLICE_PITCH));
+}
+
+TEST_F(ImageGetInfoPitchTest, given2dImageArrayWithoutPitchesWhenQueryingPitchesThenSlicePitchIsRowPitchTimesHeight) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    desc.image_width = unalignedWidth;
+    desc.image_height = height;
+    desc.image_array_size = arraySize;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(unalignedWidth * elementSize, queryInfo(*image, CL_IMAGE_ROW_PITCH));
+    EXPECT_EQ(unalignedWidth * elementSize * height, queryInfo(*image, CL_IMAGE_SLICE_PITCH));
+}
+
+TEST_F(ImageGetInfoPitchTest, given1dImageArrayWithoutPitchesWhenQueryingPitchesThenSlicePitchIsRowPitch) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
+    desc.image_width = unalignedWidth;
+    desc.image_array_size = arraySize;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_EQ(unalignedWidth * elementSize, queryInfo(*image, CL_IMAGE_ROW_PITCH));
+    EXPECT_EQ(unalignedWidth * elementSize, queryInfo(*image, CL_IMAGE_SLICE_PITCH));
+}
+
+TEST_F(ImageGetInfoPitchTest, given3dImageWithHostPtrPitchesWhenQueryingPitchesThenHostPtrPitchesAreReturned) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    desc.image_width = unalignedWidth;
+    desc.image_height = height;
+    desc.image_depth = depth;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t hostRowPitch = unalignedWidth * elementSize + 12;
+    const size_t hostSlicePitch = hostRowPitch * height + 36;
+    image->setHostPtrRowPitch(hostRowPitch);
+    image->setHostPtrSlicePitch(hostSlicePitch);
+
+    EXPECT_EQ(hostRowPitch, queryInfo(*image, CL_IMAGE_ROW_PITCH));
+    EXPECT_EQ(hostSlicePitch, queryInfo(*image, CL_IMAGE_SLICE_PITCH));
+}
+
+TEST_F(ImageGetInfoPitchTest, given3dImageWithHostPtrRowPitchOnlyWhenQueryingSlicePitchThenItIsHostRowPitchTimesHeight) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    desc.image_width = unalignedWidth;
+    desc.image_height = height;
+    desc.image_depth = depth;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t hostRowPitch = unalignedWidth * elementSize + 12;
+    image->setHostPtrRowPitch(hostRowPitch);
+
+    EXPECT_EQ(hostRowPitch, queryInfo(*image, CL_IMAGE_ROW_PITCH));
+    EXPECT_EQ(hostRowPitch * height, queryInfo(*image, CL_IMAGE_SLICE_PITCH));
 }
 
 TEST(ImageFormatConversionTest, givenPackedYuvChannelOrderWhenConvertingToL0FormatThenLayoutIsMapped) {

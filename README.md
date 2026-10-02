@@ -34,20 +34,20 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 |Platform|OpenCL|Level Zero|WSL
 |--------|:----:|:-----:|:-:|
-|DG1| 3.0 | 1.18 | Y |
-|Alchemist| 3.0 | 1.18 | Y |
-|Battlemage| 3.0 | 1.18 | Y |
-|Tiger Lake| 3.0 | 1.18 | Y |
-|Rocket Lake| 3.0 | 1.18 | Y |
-|Alder Lake| 3.0 | 1.18 | Y |
-|Raptor Lake| 3.0 | 1.18 | Y |
-|Meteor Lake| 3.0 | 1.18 | Y |
-|Arrow Lake| 3.0 | 1.18 | Y |
-|Lunar Lake| 3.0 | 1.18 | Y |
-|Panther Lake| 3.0 | 1.18 | Y |
-|Wildcat Lake| 3.0 | 1.18 | Y |
-|Crescent Island| 3.0 | 1.18 | N/A |
-|Nova Lake| 3.0 | 1.18 | N/A |
+|DG1| 3.1 | 1.18 | Y |
+|Alchemist| 3.1 | 1.18 | Y |
+|Battlemage| 3.1 | 1.18 | Y |
+|Tiger Lake| 3.1 | 1.18 | Y |
+|Rocket Lake| 3.1 | 1.18 | Y |
+|Alder Lake| 3.1 | 1.18 | Y |
+|Raptor Lake| 3.1 | 1.18 | Y |
+|Meteor Lake| 3.1 | 1.18 | Y |
+|Arrow Lake| 3.1 | 1.18 | Y |
+|Lunar Lake| 3.1 | 1.18 | Y |
+|Panther Lake| 3.1 | 1.18 | Y |
+|Wildcat Lake| 3.1 | 1.18 | Y |
+|Crescent Island| 3.1 | 1.18 | N/A |
+|Nova Lake| 3.1 | 1.18 | N/A |
 
 
 _No code changes may be introduced that would regress support for any currently supported hardware. All contributions must ensure continued compatibility and functionality across all supported hardware platforms. Failure to maintain hardware compatibility may result in the rejection or reversion of the contribution. Any deliberate modifications or removal of hardware support will be transparently communicated in the release notes._

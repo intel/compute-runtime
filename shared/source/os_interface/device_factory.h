@@ -22,7 +22,8 @@ const HardwareInfo *getDefaultHwInfo();
 bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
 bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex);
 bool isLeoDetectionEnabled();
-void quitOclInitIfLeoEnabled(RootDeviceEnvironment &rootDeviceEnvironment);
+bool isLeoRootDevice(const RootDeviceEnvironment &rootDeviceEnvironment);
+void dropLeoRootDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
 class DeviceFactory {
   public:
     static bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);

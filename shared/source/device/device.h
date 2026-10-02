@@ -35,7 +35,6 @@ class FrontEndController;
 class GfxCoreHelper;
 class GmmClientContext;
 class GmmHelper;
-class CompilerReleaseHelper;
 class GraphicsAllocation;
 class ISAPoolAllocator;
 class OSTime;
@@ -69,8 +68,11 @@ struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
         this->engines = std::move(in.engines);
         this->regularCounter = in.regularCounter.load();
         this->highPriorityCounter = in.highPriorityCounter.load();
+        this->assignedContextsCounter = in.assignedContextsCounter.load();
         this->regularEnginesTotal = in.regularEnginesTotal;
         this->highPriorityEnginesTotal = in.highPriorityEnginesTotal;
+        this->npIndices = std::move(in.npIndices);
+        this->hpIndices = std::move(in.hpIndices);
     }
     SecondaryContexts &operator=(SecondaryContexts &&other) noexcept = delete;
 
@@ -80,8 +82,8 @@ struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
     std::atomic<uint8_t> regularCounter = 0;          // Counter used to assign next regular EngineControl
     std::atomic<uint8_t> highPriorityCounter = 0;     // Counter used to assign next highPriority EngineControl
     std::atomic<uint8_t> assignedContextsCounter = 0; // Counter of assigned contexts in group
-    uint32_t regularEnginesTotal;
-    uint32_t highPriorityEnginesTotal;
+    uint32_t regularEnginesTotal = 0;
+    uint32_t highPriorityEnginesTotal = 0;
 
     std::vector<int32_t> npIndices;
     std::vector<int32_t> hpIndices;
@@ -206,7 +208,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
     MOCKABLE_VIRTUAL const ReleaseHelper &getReleaseHelper() const;
-    MOCKABLE_VIRTUAL const CompilerReleaseHelper &getCompilerReleaseHelper() const;
     MOCKABLE_VIRTUAL AILConfiguration *getAilConfigurationHelper() const;
     ISAPoolAllocator &getIsaPoolAllocator() {
         return *isaPoolAllocator;
@@ -305,7 +306,14 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         peerDevice->crossAccessEnabledDevices[this->getRootDeviceIndex()] = value;
     }
 
-    MOCKABLE_VIRTUAL bool initializeSpirvQueriesFromIGC();
+    std::vector<uint32_t> getSpirvBaseCapabilities() const;
+    void initializeSpirvQueries();
+    MOCKABLE_VIRTUAL bool isDeferredImmediateCmdListEnabled() const {
+        return deferredImmediateCmdListEnabled;
+    }
+    MOCKABLE_VIRTUAL bool areSecondaryEnginesAvailable() const {
+        return secondaryEngines.size() > 0;
+    }
 
   protected:
     Device() = delete;
@@ -349,6 +357,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     void allocateDebugSurface(size_t debugSurfaceSize);
 
     DeviceInfo deviceInfo = {};
+    std::once_flag initializeSpirvQueriesOnce;
 
     std::unique_ptr<PerformanceCounters> performanceCounters;
     CsrContainer commandStreamReceivers;
@@ -400,6 +409,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     uint32_t microsecondResolution = 1000u;
 
     std::optional<bool> hasPeerAccess = std::nullopt;
+    bool deferredImmediateCmdListEnabled = true;
 
     struct {
         bool isValid = false;

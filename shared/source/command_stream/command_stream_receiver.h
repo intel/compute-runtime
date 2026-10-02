@@ -314,7 +314,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual void fillReusableAllocationsList();
     void releaseHeapAllocation(GraphicsAllocation *heapMemory);
     void releaseCommandBufferAllocation(GraphicsAllocation *commandBufferMemory);
-    virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
+    virtual void setupContext(OsContext &osContext);
     void setDevice(Device *device) { this->device = device; }
     Device *getDevice() const { return this->device; }
     OsContext &getOsContext() const { return *osContext; }
@@ -548,6 +548,17 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void registerClient(void *client);
     void unregisterClient(void *client);
 
+    void retainQueueOwnership() {
+        owningQueueCount.fetch_add(1);
+    }
+    void releaseQueueOwnership() {
+        DEBUG_BREAK_IF(owningQueueCount.load() == 0u);
+        owningQueueCount.fetch_sub(1);
+    }
+    uint32_t getOwningQueueCount() const {
+        return owningQueueCount.load();
+    }
+
     bool getDcFlushSupport() const {
         return dcFlushSupport;
     }
@@ -609,6 +620,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     uint32_t getRequiredScratchSlot0Size() { return requiredScratchSlot0Size; }
     uint32_t getRequiredScratchSlot1Size() { return requiredScratchSlot1Size; }
+    uint32_t getPerThreadScratchSizeSlot0Allocated() const;
     virtual bool submitDependencyUpdate(TagNodeBase *tag) = 0;
 
     MOCKABLE_VIRTUAL bool isBusy() {
@@ -751,6 +763,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::atomic<TaskCountType> taskCount{0};
 
     std::atomic<uint32_t> numClients = 0u;
+    std::atomic<uint32_t> owningQueueCount = 0u;
     DispatchMode dispatchMode = DispatchMode::immediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;

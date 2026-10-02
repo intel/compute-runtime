@@ -13,11 +13,12 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
 #include <memory>
+#include <string>
 
 namespace NEO {
 
@@ -66,14 +67,15 @@ TEST_F(WddmExternalSemaphoreTest, givenValidTimelineSemaphoreWin32WhenCreateExte
 
 class MockWindowsExternalSemaphore : public ExternalSemaphoreWindows {
   public:
+    using ExternalSemaphoreWindows::convertUtf8NameToWide;
     using ExternalSemaphoreWindows::enqueueSignal;
     using ExternalSemaphoreWindows::enqueueWait;
     using ExternalSemaphoreWindows::getNamedObjectDirectoryPath;
+    using ExternalSemaphoreWindows::maxNameLengthInWideChars;
 
     MockWindowsExternalSemaphore(OSInterface *osInterface, ExternalSemaphore::Type type, uint64_t *signalVal) {
         this->osInterface = osInterface;
         this->type = type;
-        this->state = ExternalSemaphore::SemaphoreState::Initial;
         this->syncHandle = 1;
         this->pCpuAddress = nullptr;
         this->pLastSignaledValue = signalVal;
@@ -91,6 +93,10 @@ class MockSyncGdi : public MockGdi {
 
     static NTSTATUS __stdcall mockOpenSyncObjectNtHandleFromName(IN OUT D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *openSyncObject) {
         openSyncObjectNtHandleFromNameCallCount++;
+        if ((lastObjectName != nullptr) && (openSyncObject->pObjAttrib != nullptr) &&
+            (openSyncObject->pObjAttrib->ObjectName != nullptr) && (openSyncObject->pObjAttrib->ObjectName->Buffer != nullptr)) {
+            lastObjectName->assign(openSyncObject->pObjAttrib->ObjectName->Buffer);
+        }
         if (failOpenSyncObjectNtHandleName) {
             return STATUS_UNSUCCESSFUL;
         }
@@ -117,6 +123,8 @@ class MockSyncGdi : public MockGdi {
     static bool failSignalSynchObjectFromCpu;
     static uint32_t openSyncObjectNtHandleFromNameCallCount;
     static uint32_t allowFenceRewindPassedToSignal;
+    // Points at a test-local string; the mock must not own heap memory that outlives a test.
+    static std::wstring *lastObjectName;
 };
 
 bool MockSyncGdi::failOpenSyncObjectNtHandleName = true;
@@ -125,6 +133,7 @@ bool MockSyncGdi::failWaitForSynchObjectFromCpu = false;
 bool MockSyncGdi::failSignalSynchObjectFromCpu = false;
 uint32_t MockSyncGdi::openSyncObjectNtHandleFromNameCallCount = 0;
 uint32_t MockSyncGdi::allowFenceRewindPassedToSignal = 0;
+std::wstring *MockSyncGdi::lastObjectName = nullptr;
 
 TEST_F(WddmExternalSemaphoreTest, givenOpaqueWin32OrTimelineSemaphoreWin32WhenEnqueueSignalIsCalledThenAllowFenceRewindIsSet) {
     const ExternalSemaphore::Type types[] = {ExternalSemaphore::Type::OpaqueWin32,
@@ -160,13 +169,12 @@ TEST_F(WddmExternalSemaphoreTest, givenFenceSemaphoreWhenEnqueueSignalIsCalledTh
     }
 }
 
-TEST_F(WddmExternalSemaphoreTest, givenGdiSignalSyncObjFailsWhenEnqueueSignalIsCalledWithOpaqueWin32ThenFalseIsReturnedAndStateIsNotChanged) {
+TEST_F(WddmExternalSemaphoreTest, givenGdiSignalSyncObjFailsWhenEnqueueSignalIsCalledWithOpaqueWin32ThenFalseIsReturned) {
     auto mockGdi = new MockSyncGdi();
     static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
 
     uint64_t lastSignaledValue = 5u;
     auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
-    EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
 
     uint64_t fenceValue = 7u;
 
@@ -175,16 +183,14 @@ TEST_F(WddmExternalSemaphoreTest, givenGdiSignalSyncObjFailsWhenEnqueueSignalIsC
     MockSyncGdi::failSignalSynchObjectFromCpu = false;
 
     EXPECT_EQ(result, false);
-    EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
 }
 
-TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjFailsWhenEnqueueWaitIsCalledWithOpaqueWin32ThenFalseIsReturnedAndStateIsNotChanged) {
+TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjFailsWhenEnqueueWaitIsCalledWithOpaqueWin32ThenFalseIsReturned) {
     auto mockGdi = new MockSyncGdi();
     static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
 
     uint64_t lastSignaledValue = 5u;
     auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
-    EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
 
     uint64_t fenceValue = 7u;
 
@@ -193,7 +199,6 @@ TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjFailsWhenEnqueueWaitIsCa
     MockSyncGdi::failWaitForSynchObjectFromCpu = false;
 
     EXPECT_EQ(result, false);
-    EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenGdiSignalSyncObjSucceedsWhenEnqueueSignalIsCalledWithOpaqueWin32ThenTrueIsReturned) {
@@ -202,13 +207,11 @@ TEST_F(WddmExternalSemaphoreTest, givenGdiSignalSyncObjSucceedsWhenEnqueueSignal
 
     uint64_t lastSignaledValue = 5u;
     auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
-    EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
 
     uint64_t fenceValue = 7u;
     auto result = extSem->enqueueSignal(&fenceValue);
 
     EXPECT_EQ(result, true);
-    EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Signaled);
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjSucceedsWhenEnqueueWaitIsCalledWithOpaqueWin32ThenTrueIsReturned) {
@@ -217,13 +220,11 @@ TEST_F(WddmExternalSemaphoreTest, givenGdiWaitForSyncObjSucceedsWhenEnqueueWaitI
 
     uint64_t lastSignaledValue = 5u;
     auto extSem = std::make_unique<MockWindowsExternalSemaphore>(osInterface, ExternalSemaphore::Type::OpaqueWin32, &lastSignaledValue);
-    EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Initial);
 
     uint64_t fenceValue = 7u;
     auto result = extSem->enqueueWait(&fenceValue);
 
     EXPECT_EQ(result, true);
-    EXPECT_EQ(extSem->getState(), ExternalSemaphore::SemaphoreState::Signaled);
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenOpaqueWin32SemaphoreWhenAcquireSignalFenceValueIsCalledThenLastSignaledValueIsIncrementedByTwoAndReturned) {
@@ -394,6 +395,93 @@ TEST(WddmExternalSemaphoreNamespaceTest, givenUnprefixedNameInSessionZeroWhenRes
     auto directoryPath = MockWindowsExternalSemaphore::getNamedObjectDirectoryPath(0u, L"myFence", &relativeName);
     EXPECT_EQ(directoryPath, std::wstring(L"\\BaseNamedObjects"));
     EXPECT_STREQ(relativeName, L"myFence");
+}
+
+TEST(WddmExternalSemaphoreUtf8Test, givenValidUtf8NameWhenConvertingToWideThenCodePointsAreDecoded) {
+    struct NameCase {
+        const char *utf8Name;
+        const wchar_t *expectedWideName;
+        size_t expectedLength;
+    };
+
+    const NameCase nameCases[] = {
+        {"myFence", L"myFence", 7u},
+        {"caf\xC3\xA9", L"caf\u00e9", 4u},
+        {"\xE4\xB8\xAD", L"\u4e2d", 1u},
+        {"\xF0\x9F\x98\x80", L"\U0001f600", 2u},
+    };
+
+    for (const auto &nameCase : nameCases) {
+        auto wideName = MockWindowsExternalSemaphore::convertUtf8NameToWide(nameCase.utf8Name);
+        EXPECT_STREQ(nameCase.expectedWideName, wideName.c_str());
+        EXPECT_EQ(nameCase.expectedLength, wideName.size());
+    }
+}
+
+TEST(WddmExternalSemaphoreUtf8Test, givenMalformedOrEmptyUtf8NameWhenConvertingToWideThenConversionFails) {
+    const char *invalidNames[] = {
+        "",
+        "\x80",
+        "\xC3",
+        "\xC0\xAF",
+        "\xF8\x88\x80\x80\x80",
+        "\xF4\x90\x80\x80",
+    };
+
+    for (const auto &invalidName : invalidNames) {
+        EXPECT_TRUE(MockWindowsExternalSemaphore::convertUtf8NameToWide(invalidName).empty());
+    }
+}
+
+TEST(WddmExternalSemaphoreUtf8Test, givenNameExceedingMaxLengthWhenConvertingToWideThenConversionFails) {
+    const std::string tooLongName(MockWindowsExternalSemaphore::maxNameLengthInWideChars + 1, 'a');
+    EXPECT_TRUE(MockWindowsExternalSemaphore::convertUtf8NameToWide(tooLongName.c_str()).empty());
+
+    const std::string maxLengthName(MockWindowsExternalSemaphore::maxNameLengthInWideChars, 'a');
+    EXPECT_EQ(MockWindowsExternalSemaphore::maxNameLengthInWideChars,
+              MockWindowsExternalSemaphore::convertUtf8NameToWide(maxLengthName.c_str()).size());
+}
+
+TEST_F(WddmExternalSemaphoreTest, givenUtf8NamedSemaphoreWhenCreatingThenDecodedWideNameIsPassedToOs) {
+    auto mockGdi = new MockSyncGdi();
+    static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
+    MockSyncGdi::failOpenSyncObjectNtHandleName = false;
+    MockSyncGdi::failOpenSyncObjectFromNtHandle = false;
+    MockSyncGdi::openSyncObjectNtHandleFromNameCallCount = 0;
+    HANDLE extSemaphoreHandle = 0;
+
+    std::wstring capturedName;
+    VariableBackup<decltype(MockSyncGdi::lastObjectName)> backupCapturedName(&MockSyncGdi::lastObjectName, &capturedName);
+
+    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, "caf\xC3\xA9");
+    EXPECT_NE(externalSemaphore, nullptr);
+    EXPECT_EQ(std::wstring(L"caf\u00e9"), capturedName);
+
+    capturedName.clear();
+    auto globalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, "Global\\caf\xC3\xA9");
+    EXPECT_NE(globalSemaphore, nullptr);
+    EXPECT_EQ(std::wstring(L"caf\u00e9"), capturedName);
+
+    MockSyncGdi::failOpenSyncObjectNtHandleName = true;
+    MockSyncGdi::failOpenSyncObjectFromNtHandle = true;
+}
+
+TEST_F(WddmExternalSemaphoreTest, givenInvalidUtf8NamedSemaphoreWhenCreatingThenInvalidResourceIsReturnedAndNameLookupIsNotInvoked) {
+    auto mockGdi = new MockSyncGdi();
+    static_cast<OsEnvironmentWin *>(executionEnvironment->osEnvironment.get())->gdi.reset(mockGdi);
+    MockSyncGdi::failOpenSyncObjectNtHandleName = false;
+    MockSyncGdi::failOpenSyncObjectFromNtHandle = false;
+    MockSyncGdi::openSyncObjectNtHandleFromNameCallCount = 0;
+    HANDLE extSemaphoreHandle = 0;
+    ExternalSemaphore::ImportResult importResult = ExternalSemaphore::ImportResult::success;
+
+    auto externalSemaphore = ExternalSemaphore::create(osInterface, ExternalSemaphore::Type::D3d12Fence, extSemaphoreHandle, 0u, "\xC3", importResult);
+    EXPECT_EQ(externalSemaphore, nullptr);
+    EXPECT_EQ(ExternalSemaphore::ImportResult::invalidResource, importResult);
+    EXPECT_EQ(0u, MockSyncGdi::openSyncObjectNtHandleFromNameCallCount);
+
+    MockSyncGdi::failOpenSyncObjectNtHandleName = true;
+    MockSyncGdi::failOpenSyncObjectFromNtHandle = true;
 }
 
 TEST_F(WddmExternalSemaphoreTest, givenNamedSemaphoreWithNonZeroSessionWhenCreatingThenSessionDirectoryIsOpenedAndSemaphoreIsReturned) {

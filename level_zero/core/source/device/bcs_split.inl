@@ -49,7 +49,10 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
     const bool signalSplitBarrier = barrierEvent != nullptr;
 
     if (signalSplitBarrier) {
-        cmdList->appendSignalEvent(barrierEvent->toHandle(), false);
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        cmdList->appendSignalEvent(barrierEvent->toHandle(), signalEventParameters);
     }
 
     StackVec<ze_event_handle_t, 16> eventHandles;
@@ -64,7 +67,10 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
 
         auto lock = subCmdList->getCsr(false)->obtainUniqueOwnership();
 
-        subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false);
+        auto spaceCheckStatus = subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false);
+        if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
+            return spaceCheckStatus;
+        }
 
         if (signalSplitBarrier) {
             auto barrierEventHandle = barrierEvent->toHandle();
@@ -152,11 +158,15 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
     if (mainCmdList->isInOrderExecutionEnabled()) {
         mainCmdList->appendSignalInOrderDependencyCounter(signalEvent, dualStreamCopyOffload, false, false, useSignalEventForSubCopy);
     }
-    mainCmdList->handleInOrderDependencyCounter(signalEvent, false, dualStreamCopyOffload);
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = dualStreamCopyOffload,
+        .apiRequiredExternalGraphEvent = false};
+    mainCmdList->handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 
     if (events.isAggregatedEventMode() && !useSignalEventForSubCopy) {
         auto lock = events.obtainLock();
-        mainCmdList->assignInOrderExecInfoToEvent(markerEvent);
+        mainCmdList->assignInOrderExecInfoToEvent(markerEvent, false);
     }
 }
 

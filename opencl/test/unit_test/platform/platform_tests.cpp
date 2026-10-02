@@ -10,7 +10,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -40,19 +39,15 @@ using namespace NEO;
 struct PlatformTest : public ::testing::Test {
     void SetUp() override {
         MockSipData::clearUseFlags();
-        backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, true);
 
         pPlatform.reset(new MockPlatform());
         compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
-        compilerReleaseHelper = CompilerReleaseHelper::create(defaultHwInfo->ipVersion);
     }
     void TearDown() override {
         MockSipData::clearUseFlags();
     }
     std::unique_ptr<MockPlatform> pPlatform;
-    std::unique_ptr<VariableBackup<bool>> backupSipInitType;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
-    std::unique_ptr<CompilerReleaseHelper> compilerReleaseHelper;
 
     cl_int retVal = CL_SUCCESS;
 };
@@ -291,7 +286,7 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     if (hwInfo->capabilityTable.supportsImages) {
         EXPECT_TRUE(hasSubstr(extensionsList, std::string("cl_khr_3d_image_writes")));
     }
-    EXPECT_TRUE(endsWith(compilerExtensions, std::string(" ")));
+    EXPECT_TRUE(compilerExtensions.ends_with(' '));
 }
 
 TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchingSubstrings) {

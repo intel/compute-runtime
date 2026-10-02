@@ -23,8 +23,8 @@
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
-#include "neo_aot_platforms.h"
 #include "per_product_test_definitions.h"
+#include "platforms.h"
 
 #include <set>
 

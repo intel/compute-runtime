@@ -15,12 +15,11 @@
 
 namespace NEO {
 
-using _3DSTATE_BTD = typename Family::_3DSTATE_BTD;
 using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
 template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
-    size_t size = sizeof(_3DSTATE_BTD);
+    size_t size = EncodeEnableRayTracing<Family>::getCmdSizeFor3dStateBtd();
     const auto &releaseHelper = getReleaseHelper();
     const bool isExtendedWARequired = releaseHelper.isPipeControlPriorToNonPipelinedStateCommandsExtendedWARequired(hwInfo, isRcs());
 

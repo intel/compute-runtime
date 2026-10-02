@@ -673,7 +673,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenUpdatingTaskCountDuringWaitTh
     // trying to catch up on allocation2's task, which was never actually flushed
     EXPECT_EQ(2u, tbxCsr.obtainUniqueOwnershipCalled);
     EXPECT_EQ(1u, tbxCsr.allocationsForDownload.size());
-    EXPECT_NE(tbxCsr.allocationsForDownload.find(&allocation2), tbxCsr.allocationsForDownload.end());
+    EXPECT_TRUE(tbxCsr.allocationsForDownload.contains(&allocation2));
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenAllocationWithBiggerTaskCountThanWaitingTaskCountThenDontRemoveFromContainer) {
@@ -700,8 +700,8 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenAllocationWithBiggerTaskCountThanWaitin
     EXPECT_EQ(2u, tbxCsr.obtainUniqueOwnershipCalled);
     EXPECT_EQ(2u, tbxCsr.allocationsForDownload.size());
 
-    EXPECT_NE(tbxCsr.allocationsForDownload.find(&allocation1), tbxCsr.allocationsForDownload.end());
-    EXPECT_NE(tbxCsr.allocationsForDownload.find(&allocation3), tbxCsr.allocationsForDownload.end());
+    EXPECT_TRUE(tbxCsr.allocationsForDownload.contains(&allocation1));
+    EXPECT_TRUE(tbxCsr.allocationsForDownload.contains(&allocation3));
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenDifferentTaskCountThanLatestFlushedWhenDownloadingThenPickSmallest) {

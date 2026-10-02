@@ -14,6 +14,7 @@ volatile bool wasPlatformTeardownCalled = false;
 
 void globalPlatformSetup() {
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
+    leoPlatformEntries = new std::vector<LeoPlatformEntry>;
     leoSetup();
 }
 
@@ -25,9 +26,11 @@ void globalPlatformTeardown(bool processTermination) {
         }
         return;
     }
-    leoTeardown();
+    delete leoPlatformEntries;
+    leoPlatformEntries = nullptr;
     delete platformsImpl;
     platformsImpl = nullptr;
+    leoTeardown();
     SharingFactory::clearSharingBuilders();
 }
 } // namespace NEO

@@ -110,8 +110,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacket<WalkerType>(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
     }
 
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
     if constexpr (heaplessModeEnabled) {
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
         if (productHelper.isL3FlushAfterPostSyncSupported()) {
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(walkerCmd,
                                                                       commandQueue,
@@ -140,7 +141,17 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     EncodeDispatchKernel<GfxFamily>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
 
+    auto *implicitArgs = kernel.getImplicitArgs();
+    if (implicitArgs != nullptr) {
+        implicitArgs->setScratch0SizeAllocated(queueCsr.getPerThreadScratchSizeSlot0Allocated());
+    }
+
     auto interfaceDescriptor = &walkerCmd.getInterfaceDescriptor();
+
+    auto walkerPreemptionMode = walkerArgs.preemptionMode;
+    if (productHelper.isWalkerPreemptionFallbackRequired(walkerPreemptionMode, timestampPacketNode != nullptr)) {
+        walkerPreemptionMode = PreemptionMode::ThreadGroup;
+    }
 
     HardwareCommandsHelper<GfxFamily>::template sendIndirectState<WalkerType, InterfaceDescriptorType>(
         commandStream,
@@ -154,7 +165,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         threadGroupCount,
         walkerArgs.offsetInterfaceDescriptorTable,
         walkerArgs.interfaceDescriptorIndex,
-        walkerArgs.preemptionMode,
+        walkerPreemptionMode,
         &walkerCmd,
         interfaceDescriptor,
         localIdsGenerationByRuntime,

@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-struct KernelInfo;
+struct KernelDescriptor;
 struct RootDeviceEnvironment;
 
 struct WorkSizeInfo {
@@ -33,7 +33,7 @@ struct WorkSizeInfo {
 
     WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSizePerThreadGroup, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion);
 
-    void setIfUseImg(const KernelInfo &kernelInfo);
+    void setIfUseImg(const KernelDescriptor &kernelDescriptor);
     void setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool disableEUFusion);
     void checkRatio(const size_t workItems[3]);
     void setPreferredWgCountPerSubslice(uint32_t preferredWgCount);

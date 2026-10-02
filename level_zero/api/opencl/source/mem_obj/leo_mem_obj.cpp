@@ -126,9 +126,11 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         srcParamSize = propertiesVector.size() * sizeof(cl_mem_properties);
         srcParam = propertiesVector.data();
         break;
-    case CL_L0_MEM_OBJ_HANDLE: {
-        srcParamSize = this->isImage() ? sizeof(ze_image_handle_t) : sizeof(void *);
-        srcParam = this->isImage() ? reinterpret_cast<void *>(NEO::LEO::castToObject<Image>(this)->getL0HandleRef()) : castToObject<Buffer>(this)->getUsmPtrRef();
+    case CL_MEM_L0_HANDLE_INTEL: {
+        if (this->isBuffer()) {
+            srcParamSize = sizeof(void *);
+            srcParam = castToObject<Buffer>(this)->getUsmPtrRef();
+        }
         break;
     }
     default:
@@ -145,9 +147,19 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
 
 void MemObj::storeProperties(const cl_mem_properties *properties) {
     if (properties) {
-        for (size_t i = 0; properties[i] != 0; i += 2) {
-            propertiesVector.push_back(properties[i]);
-            propertiesVector.push_back(properties[i + 1]);
+        size_t i = 0;
+        while (properties[i] != 0) {
+            if (isHandleListProperty(properties[i])) {
+                const auto listEnd = getHandleListEnd(properties, i);
+                for (size_t entry = i; entry <= listEnd; ++entry) {
+                    propertiesVector.push_back(properties[entry]);
+                }
+                i = listEnd + 1;
+            } else {
+                propertiesVector.push_back(properties[i]);
+                propertiesVector.push_back(properties[i + 1]);
+                i += 2;
+            }
         }
         propertiesVector.push_back(0);
     }

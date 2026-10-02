@@ -17,10 +17,12 @@
 #include <vector>
 
 namespace NEO {
+class AubCenter;
 
 class AubMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
     AubMemoryOperationsHandler(aub_stream::AubManager *aubManager);
+    AubMemoryOperationsHandler(AubCenter &aubCenter);
     ~AubMemoryOperationsHandler() override = default;
 
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override;
@@ -50,7 +52,9 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
     uint64_t decanonizeAddress(uint64_t address) const {
         return addressWidth > 0 ? (address & maxNBitValue(addressWidth)) : address;
     }
+    [[nodiscard]] std::unique_lock<std::mutex> obtainPageTablesLock();
     aub_stream::AubManager *aubManager = nullptr;
+    AubCenter *aubCenter = nullptr;
     std::vector<GraphicsAllocation *> residentAllocations;
     SpinLock resourcesLock;
     uint32_t addressWidth = 0;

@@ -191,8 +191,11 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t WddmMemoryImp::getVendorId(uint32_t *pVendorId) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t WddmMemoryImp::getExtensionProperties(void *pNext) {
+    if (pNext != nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {

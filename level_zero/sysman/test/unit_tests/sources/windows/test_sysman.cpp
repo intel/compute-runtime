@@ -188,7 +188,7 @@ TEST_F(SysmanDeviceFixture, GivenEmptyPciUuidWhenCallingUpdatePciUuidMapThenNoEn
     const size_t sizeBefore = driverHandle->pciUuidToPciBusInfoMap.size();
     driverHandle->updatePciUuidMap(pSysmanDeviceImp);
     EXPECT_EQ(sizeBefore, driverHandle->pciUuidToPciBusInfoMap.size());
-    EXPECT_EQ(driverHandle->pciUuidToPciBusInfoMap.end(), driverHandle->pciUuidToPciBusInfoMap.find(""));
+    EXPECT_FALSE(driverHandle->pciUuidToPciBusInfoMap.contains(""));
 
     pSysmanDeviceImp->pOsSysman = pOrigOsSysman;
 }
@@ -201,7 +201,7 @@ TEST_F(SysmanDeviceFixture, GivenNonEmptyPciUuidWhenCallingUpdatePciUuidMapThenE
     pSysmanDeviceImp->pOsSysman = pMockOsSysman.get();
 
     driverHandle->updatePciUuidMap(pSysmanDeviceImp);
-    EXPECT_NE(driverHandle->pciUuidToPciBusInfoMap.end(), driverHandle->pciUuidToPciBusInfoMap.find(mockPciUuid));
+    EXPECT_TRUE(driverHandle->pciUuidToPciBusInfoMap.contains(mockPciUuid));
 
     pSysmanDeviceImp->pOsSysman = pOrigOsSysman;
 }

@@ -199,6 +199,14 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
 
+    unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = 0;
+    auto neoDevice = L0::Device::fromHandle(this->devices.begin()->second)->getNEODevice();
+    auto &productHelper = neoDevice->getProductHelper();
+    if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
+        unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = productHelper.canShareMemoryWithoutNTHandle();
+    }
+    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(hostMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault);
+
     if (false == lookupTable.exportMemory) {
         if (size <= NEO::PoolInfo::getHostMaxPoolableSize()) {
             this->driverHandle->initHostUsmAllocPoolOnce();
@@ -519,33 +527,10 @@ void Context::freePeerAllocationsFromAll(const void *ptr, bool blocking) {
     }
 }
 
-void Context::clearMemAdviseState(NEO::SvmAllocationData *svmData, Device *device) {
-    {
-        std::unique_lock<NEO::SpinLock> lock(device->memAdviseAllocationsMutex);
-        device->memAdviseSharedAllocations.erase(svmData);
-    }
-
-    for (auto &subDevice : device->subDevices) {
-        this->clearMemAdviseState(svmData, subDevice);
-    }
-}
-
-void Context::clearMemAdviseStateFromAll(NEO::SvmAllocationData *svmData) {
-    for (auto &pairDevice : this->devices) {
-        this->clearMemAdviseState(svmData, Device::fromHandle(pairDevice.second));
-    }
-}
-
 NEO::UsmPoolLookupResult Context::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData) {
     DEBUG_BREAK_IF(nullptr == svmData);
 
-    if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType) {
-        return driverHandle->getHostUsmPoolOwningPtr(ptr);
-    } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
-        return svmData->device->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr);
-    }
-
-    return {};
+    return this->driverHandle->getUsmPoolOwningPtr(ptr, svmData);
 }
 
 bool Context::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, NEO::FreePolicyType policy) {
@@ -576,38 +561,20 @@ void Context::invokeMemFreeCallbacks(NEO::SvmAllocationData &svmData) {
     }
 }
 
-ze_result_t Context::freeMem(const void *ptr) {
-    return this->freeMem(ptr, false);
-}
-
-ze_result_t Context::freeMem(const void *ptr, bool blocking) {
-    auto allocation = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    if (allocation == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
-    auto poolLookup = getUsmPoolOwningPtr(ptr, allocation);
-    if (poolLookup.pool) {
-        if (false == poolLookup.isAllocatedInPool()) {
-            // ptr is within usm pool address space but is not allocated
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        } else {
-            addressForIpc = poolLookup.pool->getPoolAddress();
-        }
-    }
-
-    this->invokeMemFreeCallbacks(*allocation);
-
-    this->clearMemAdviseStateFromAll(allocation);
-
+// call this before the chunk goes back to the pool: freeing the last chunk can trim
+// the pool away, and with it the address
+void Context::releaseIpcHandle(const void *ptr, NEO::UsmMemAllocPool *usmPool) {
+    const bool pooled = nullptr != usmPool;
+    const uint64_t addressForIpc = pooled ? usmPool->getPoolAddress() : reinterpret_cast<uint64_t>(ptr);
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lockIPC = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().begin();
     while (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         if (ipcHandleIterator->second->ptr == addressForIpc) {
             ipcHandleIterator->second->refcnt -= 1;
-            if (ipcHandleIterator->second->refcnt == 0 || nullptr == poolLookup.pool) {
+            // pooled: close when the last export of this pool BO is released
+            // non-pooled: the allocation is going away, so its entry must not outlive it
+            if (ipcHandleIterator->second->refcnt == 0 || false == pooled) {
                 auto *memoryManager = driverHandle->getMemoryManager();
                 void *reservedHandleData = nullptr;
                 if (ipcHandleIterator->second->hasReservedHandleData) {
@@ -628,6 +595,27 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
         }
         ipcHandleIterator++;
     }
+}
+
+ze_result_t Context::freeMem(const void *ptr) {
+    return this->freeMem(ptr, false);
+}
+
+ze_result_t Context::freeMem(const void *ptr, bool blocking) {
+    auto allocation = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    if (allocation == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto poolLookup = getUsmPoolOwningPtr(ptr, allocation);
+    if (poolLookup.pool && false == poolLookup.isAllocatedInPool()) {
+        // ptr is within usm pool address space but is not allocated
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    this->invokeMemFreeCallbacks(*allocation);
+
+    this->releaseIpcHandle(ptr, poolLookup.pool);
 
     if (this->tryFreeViaPooling(ptr, allocation, poolLookup.pool,
                                 blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none)) {
@@ -663,7 +651,7 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
         // for an unrelated pointer.
         this->invokeMemFreeCallbacks(*allocation);
 
-        this->clearMemAdviseStateFromAll(allocation);
+        this->releaseIpcHandle(ptr, poolLookup.pool);
 
         if (this->tryFreeViaPooling(ptr, allocation, poolLookup.pool, NEO::FreePolicyType::defer)) {
             return ZE_RESULT_SUCCESS;
@@ -1031,6 +1019,7 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
     NEO::GraphicsAllocation *alloc = nullptr;
     bool fabricAccessibleHandle = false;
     bool allocSupportsIpc = false;
+    uint64_t allocationBaseAddress = castToUint64(ptr);
 
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (!allocData) {
@@ -1059,6 +1048,7 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
         }
         usmPool = poolLookup.pool;
         alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        allocationBaseAddress = usmPool ? castToUint64(poolLookup.pooledAllocationBasePtr) : alloc->getGpuAddress();
         fabricAccessibleHandle = allocData->ipcHandleTypeFlags & ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
         allocSupportsIpc = allocData->ipcHandleTypeFlags != 0;
     }
@@ -1126,16 +1116,15 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
 
         memoryManager->registerIpcExportedAllocation(alloc);
 
-        uint64_t ptrAddr = reinterpret_cast<uint64_t>(ptr);
         if (settings.useOpaqueHandle) {
             using IpcDataT = IpcOpaqueMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddr, ipcType,
+            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, allocationBaseAddress, ipcType,
                                        usmPool, settings.handleType, reservedHandleData, physicalOffset);
         } else {
             using IpcDataT = IpcMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddr, ipcType,
+            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, allocationBaseAddress, ipcType,
                                        usmPool, settings.handleType, nullptr, physicalOffset);
         }
     }
@@ -2029,8 +2018,8 @@ ze_result_t Context::getAtomicAccessAttribute(ze_device_handle_t hDevice, const 
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     } else {
-        if (device->atomicAccessAllocations.find(allocData) != device->atomicAccessAllocations.end()) {
-            *pAttr = device->atomicAccessAllocations[allocData];
+        if (auto it = device->atomicAccessAllocations.find(allocData); it != device->atomicAccessAllocations.end()) {
+            *pAttr = it->second;
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

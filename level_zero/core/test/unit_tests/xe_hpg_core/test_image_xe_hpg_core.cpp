@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -46,7 +47,7 @@ HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -61,7 +62,7 @@ HWTEST2_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -70,12 +71,13 @@ HWTEST2_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
     image->destroy();
 }
 
-HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenReturnNullPointer, IsXeHpgCore) {
+HWTEST2_F(ImageCreate, givenInvalidGfxCoreFamilyThenReturnNullPointer, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
 
-    auto result = Image::create(IGFX_UNKNOWN, device, &desc, &imagePtr);
+    VariableBackup<GFXCORE_FAMILY> coreFamilyBackup(&device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->platform.eRenderCoreFamily, IGFX_UNKNOWN_CORE);
+    auto result = Image::create(device, &desc, &imagePtr);
     ASSERT_NE(ZE_RESULT_SUCCESS, result);
 
     auto image = whiteboxCast(imagePtr);
@@ -96,7 +98,7 @@ HWTEST2_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHpgCore) {
 
     L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    auto result = Image::create(device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);

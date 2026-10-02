@@ -271,6 +271,8 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
 
     void injectSettingsFromReader();
 
+    void refreshEnvVariables();
+
     DebugVariables flags;
     void *injectFcn = nullptr;
 

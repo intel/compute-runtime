@@ -8,7 +8,7 @@
 #include "shared/source/release_helpers/caps/caps_gen12lp.h"
 
 #include "gtest/gtest.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 using namespace NEO;
 

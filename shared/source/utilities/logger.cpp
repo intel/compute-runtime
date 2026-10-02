@@ -30,13 +30,32 @@ std::string getFileLoggerFileName(const DebugVariables &flags) {
     return "igdrcl_" + std::to_string(SysCalls::getProcessId()) + ".log";
 }
 
+std::string getKernelDispatchStatsFileName() {
+    return "kernel_dispatch_stats_" + std::to_string(SysCalls::getProcessId()) + ".csv";
+}
+
+void collectKernelDispatchStats(KernelDispatchStatsTracker &target, KernelDispatchStatsTracker *commandListStats, bool consumeStats) {
+    if (commandListStats == nullptr) {
+        return;
+    }
+
+    target.merge(*commandListStats);
+    if (consumeStats) {
+        commandListStats->clear();
+    }
+}
+
 FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
     static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance(getFileLoggerFileName(debugManager.flags), debugManager.flags);
     return fileLoggerInstance;
 }
 
 UsmReusePerfLogger::UsmReusePerfLogger()
-    : FileLogger(std::string("usm_reuse_perf.csv"), debugManager.flags) {}
+    : FileLogger(std::string("usm_reuse_perf.csv"), debugManager.flags) {
+    // only the logger that collection runs through owns the dispatch statistics
+    // report, otherwise this instance truncates it with its own empty tracker
+    logKernelDispatchStats = false;
+}
 
 template <DebugFunctionalityLevel debugLevel>
 FileLogger<debugLevel>::FileLogger(std::string filename, const DebugVariables &flags) {
@@ -51,6 +70,7 @@ FileLogger<debugLevel>::FileLogger(std::string filename, const DebugVariables &f
     logAllocationType = flags.LogAllocationType.get();
     logAllocationStdout = flags.LogAllocationStdout.get();
     logAllocationSummaryReport = flags.LogAllocationSummaryReport.get();
+    logKernelDispatchStats = flags.LogKernelDispatchStats.get();
 }
 
 template <DebugFunctionalityLevel debugLevel>
@@ -58,6 +78,17 @@ FileLogger<debugLevel>::~FileLogger() {
     if (logAllocationSummaryReport) {
         printAllocationSummaryReport();
     }
+    writeKernelDispatchStatsReport();
+}
+
+template <DebugFunctionalityLevel debugLevel>
+void FileLogger<debugLevel>::writeKernelDispatchStatsReport() {
+    if (!enabled() || !logKernelDispatchStats) {
+        return;
+    }
+    const auto report = kernelDispatchStatsTracker.createReport();
+    // called from the destructor, where virtual dispatch no longer reaches an override
+    FileLogger<debugLevel>::writeToFile(getKernelDispatchStatsFileName(), report.c_str(), report.size(), std::ios::trunc);
 }
 
 void AllocationSummaryTracker::printReport() {

@@ -77,7 +77,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.Debug = &this->toolsDebug;
 
     this->sysman.isValidFlag = true;
-    this->sysman.version = ZE_API_VERSION_1_18;
+    this->sysman.version = ZE_API_VERSION_1_19;
     this->sysman.Global = &this->sysmanGlobal;
     this->sysman.Device = &this->sysmanDevice;
     this->sysman.DeviceExp = &this->sysmanDeviceExp;
@@ -102,6 +102,8 @@ DriverDispatch::DriverDispatch() {
     this->sysman.RasExp = &this->sysmanRasExp;
     this->sysman.Diagnostics = &this->sysmanDiagnostics;
     this->sysman.VFManagementExp = &this->sysmanVFManagementExp;
+    this->sysman.InfoLog = &this->sysmanInfoLog;
+    this->sysman.InfoLogInstance = &this->sysmanInfoLogInstance;
 
     this->runtime.isValidFlag = true;
     this->runtime.version = ZE_API_VERSION_1_14;
@@ -481,9 +483,18 @@ DriverDispatch::DriverDispatch() {
     this->sysmanDeviceExp.pfnEnumEnabledVFExp = L0::zesDeviceEnumEnabledVFExp;
     this->sysmanDriver.pfnEventListen = L0::zesDriverEventListen;
     this->sysmanDriver.pfnEventListenEx = L0::zesDriverEventListenEx;
+    this->sysmanDriver.pfnEventRegisterExt = L0::zesDriverEventRegisterExt;
+    this->sysmanDriver.pfnEventListenExt = L0::zesDriverEventListenExt;
     this->sysmanDriver.pfnGet = L0::zesDriverGet;
     this->sysmanDriver.pfnGetExtensionProperties = L0::zesDriverGetExtensionProperties;
     this->sysmanDriver.pfnGetExtensionFunctionAddress = L0::zesDriverGetExtensionFunctionAddress;
+    this->sysmanDriver.pfnEnumInfoLogsExt = L0::zesDriverEnumInfoLogsExt;
+    this->sysmanInfoLog.pfnGetPropertiesExt = L0::zesInfoLogGetPropertiesExt;
+    this->sysmanInfoLog.pfnCreateInstanceExt = L0::zesInfoLogCreateInstanceExt;
+    this->sysmanInfoLogInstance.pfnReadWithMetadataExt = L0::zesInfoLogInstanceReadWithMetadataExt;
+    this->sysmanInfoLogInstance.pfnPeekWithMetadataExt = L0::zesInfoLogInstancePeekWithMetadataExt;
+    this->sysmanInfoLogInstance.pfnDeleteExt = L0::zesInfoLogInstanceDeleteExt;
+    this->sysmanDriver.pfnGetProperties = L0::zesDriverGetProperties;
     this->sysmanDriverExp.pfnGetDeviceByUuidExp = L0::zesDriverGetDeviceByUuidExp;
     this->sysmanOverclock.pfnGetDomainProperties = L0::zesOverclockGetDomainProperties;
     this->sysmanOverclock.pfnGetDomainVFProperties = L0::zesOverclockGetDomainVFProperties;

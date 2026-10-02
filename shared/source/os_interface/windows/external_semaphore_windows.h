@@ -56,9 +56,15 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
     // session; session 0 has no \Sessions\0 directory, so it collapses to \BaseNamedObjects.
     static std::wstring getNamedObjectDirectoryPath(uint32_t sessionId, const wchar_t *name, const wchar_t **relativeName);
 
+    // RtlInitUnicodeString stores Length and MaximumLength as USHORT byte counts, with
+    // MaximumLength including a terminator, so this is the longest name it can represent.
+    static constexpr size_t maxNameLengthInWideChars = (static_cast<size_t>(std::numeric_limits<USHORT>::max()) - sizeof(wchar_t)) / sizeof(wchar_t);
+
+    static std::wstring convertUtf8NameToWide(const char *name);
+
     // Opens the named sync object, resolving its namespace via getNamedObjectDirectoryPath, and
     // returns an owned NT handle (caller must CloseHandle) or nullptr on failure.
-    static void *openSyncObjectByName(Gdi *gdi, const wchar_t *name, uint32_t desiredAccess, bool forceGlobal = false);
+    static void *openSyncObjectByName(Gdi *gdi, const char *name, uint32_t desiredAccess, bool forceGlobal);
 
     D3DKMT_HANDLE syncHandle;
     void *pCpuAddress = nullptr;

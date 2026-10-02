@@ -39,6 +39,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
 #include "shared/source/utilities/thread_data_hash.h"
 
 #include "encode_dispatch_kernel_args_ext.h"
@@ -188,6 +189,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     auto preemptionMode = args.device->getDebugger() ? PreemptionMode::ThreadGroup : args.preemptionMode;
+    if (productHelper.isWalkerPreemptionFallbackRequired(preemptionMode, args.postSyncArgs.hasHostWaitablePostSync())) {
+        preemptionMode = PreemptionMode::ThreadGroup;
+    }
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, preemptionMode);
 
     uint32_t samplerCount = 0;
@@ -253,7 +257,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     const auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
     const bool scratchPointerInCrossThreadData = isValidOffset(scratchPointerAddress.offset) && isDefined(scratchPointerAddress.pointerSize) && (static_cast<uint32_t>(scratchPointerAddress.offset) >= inlineDataProgrammingOffset);
 
-    auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(container, args);
+    uint32_t scratchSlot0SizeAllocated = 0u;
+    auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(container, args, scratchSlot0SizeAllocated);
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
     uint32_t sizeForImplicitArgsStruct = NEO::ImplicitArgsHelper::getSizeForImplicitArgsStruct(pImplicitArgs, kernelDescriptor, true, rootDeviceEnvironment);
@@ -295,6 +300,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     offsetThreadData -= sizeForImplicitArgsStruct;
                     pImplicitArgs->setLocalIdTablePtr(heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize);
                     EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs(*pImplicitArgs, scratchAddressForImmediatePatching, args.immediateScratchAddressPatching);
+                    pImplicitArgs->setScratch0SizeAllocated(scratchSlot0SizeAllocated);
 
                     ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(!localIdsGenerationByRuntime, requiredWorkgroupOrder), rootDeviceEnvironment, &args.outImplicitArgsPtr);
                     args.outImplicitArgsGpuVa = heap->getGraphicsAllocation()->getGpuAddress() + ptrDiff(args.outImplicitArgsPtr, heap->getCpuBase());
@@ -381,14 +387,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if (!args.makeCommandView) {
-        if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-            void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData));
-            args.additionalCommands->push_back(commandBuffer);
-
-            NEO::PauseOnGpuProperties::programPauseRegisterWrite<Family>(*listCmdBufferStream, false);
-
-            void *semaphoreCmd = listCmdBufferStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
-            args.additionalCommands->push_back(semaphoreCmd);
+        if (args.pauseOnEnqueue.beforeWorkload) [[unlikely]] {
+            const auto pauseSize = EncodeDebugPause<Family>::getSize(rootDeviceEnvironment, false);
+            void *pauseCommands = listCmdBufferStream->getSpace(pauseSize);
+            memset(pauseCommands, 0, pauseSize);
+            args.additionalCommands->push_back(pauseCommands);
         }
     }
 
@@ -451,6 +454,13 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                  walkerCmd.getThreadGroupIdYDimension(),
                  walkerCmd.getThreadGroupIdZDimension(),
                  idd.getThreadGroupDispatchSize());
+
+    if (debugManager.flags.LogKernelDispatchStats.get() && !args.makeCommandView) {
+        container.trackKernelDispatchStats(kernelDescriptor, args.dispatchInterface->getGroupSize(),
+                                           walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension(),
+                                           args.dispatchInterface->getSlmTotalSizePerThreadGroup(), threadsPerThreadGroup, threadGroupCount,
+                                           args.isIndirect);
+    }
 
     EncodeSlmSizePerSubSliceArgs slmArgs{
         .threadsPerThreadGroup = threadsPerThreadGroup,
@@ -529,14 +539,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     if (!args.makeCommandView) {
 
-        if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-            void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData));
-            args.additionalCommands->push_back(commandBuffer);
-
-            NEO::PauseOnGpuProperties::programPauseRegisterWrite<Family>(*listCmdBufferStream, false);
-
-            void *semaphoreCmd = listCmdBufferStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
-            args.additionalCommands->push_back(semaphoreCmd);
+        if (args.pauseOnEnqueue.afterWorkload) [[unlikely]] {
+            const auto pauseSize = EncodeDebugPause<Family>::getSize(rootDeviceEnvironment, false);
+            void *pauseCommands = listCmdBufferStream->getSpace(pauseSize);
+            memset(pauseCommands, 0, pauseSize);
+            args.additionalCommands->push_back(pauseCommands);
         }
     }
 }
@@ -742,14 +749,14 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
         UNRECOVERABLE_IF(localIdDimensions > 3);
         uint32_t emitLocalIdsForDim = (1 << 0);
         walkerCmd.setLocalXMaximum(static_cast<uint32_t>(workGroupSizes[0] - 1));
+        walkerCmd.setLocalYMaximum(workGroupSizes[1] > 0 ? static_cast<uint32_t>(workGroupSizes[1] - 1) : 0);
+        walkerCmd.setLocalZMaximum(workGroupSizes[2] > 0 ? static_cast<uint32_t>(workGroupSizes[2] - 1) : 0);
 
         if (localIdDimensions > 1) {
             emitLocalIdsForDim |= (1 << 1);
-            walkerCmd.setLocalYMaximum(static_cast<uint32_t>(workGroupSizes[1] - 1));
         }
         if (localIdDimensions > 2) {
             emitLocalIdsForDim |= (1 << 2);
-            walkerCmd.setLocalZMaximum(static_cast<uint32_t>(workGroupSizes[2] - 1));
         }
         walkerCmd.setEmitLocalId(emitLocalIdsForDim);
         walkerCmd.setGenerateLocalId(1);
@@ -1244,6 +1251,11 @@ void EncodeEnableRayTracing<Family>::programEnableRayTracing(LinearStream &comma
     cmd.setMemoryBackedBufferBasePointer(backBuffer);
     append3dStateBtd(&cmd);
     *commandStream.getSpaceForCmd<typename Family::_3DSTATE_BTD>() = cmd;
+}
+
+template <typename Family>
+size_t EncodeEnableRayTracing<Family>::getCmdSizeFor3dStateBtd() {
+    return sizeof(typename Family::_3DSTATE_BTD);
 }
 
 template <typename Family>

@@ -12,7 +12,6 @@
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -36,8 +35,7 @@ struct XeHPAndLaterAubCommandStreamReceiverTests : DeviceFixture, ::testing::Tes
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        auto compilerReleaseHelper = CompilerReleaseHelper::create(hardwareInfo.ipVersion);
-        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, compilerReleaseHelper.get());
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true);
         hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
         DeviceFixture::setUpImpl(&hardwareInfo);
     }

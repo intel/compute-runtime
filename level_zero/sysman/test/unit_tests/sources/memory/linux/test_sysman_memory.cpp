@@ -10,6 +10,7 @@
 
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
@@ -215,6 +216,59 @@ HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionWhenCalling
         EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(properties.pNext, &vendorIdProperties);
         EXPECT_EQ(vendorIdProperties.vendorId, 0u);
+        EXPECT_EQ(vendorIdProperties.length, 0u);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "");
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionAndVendorIdIsKnownWhenCallingZesMemoryGetPropertiesThenVendorNameIsReturned) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    struct MockSysmanProductHelperMemoryVendorId : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+        ze_result_t getMemoryVendorId(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pVendorId) override {
+            *pVendorId = mockMicronMemoryVendorIdValue;
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperMemoryVendorId>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_properties_t properties = {};
+        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(properties.pNext, &vendorIdProperties);
+        EXPECT_EQ(vendorIdProperties.vendorId, mockMicronMemoryVendorIdValue);
+        EXPECT_STREQ(vendorIdProperties.vendorName, "Micron");
+        EXPECT_EQ(vendorIdProperties.length, static_cast<uint16_t>(std::strlen("Micron")));
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionAndVendorIdIsUnknownWhenCallingZesMemoryGetPropertiesThenVendorNameIsNotReturned) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    struct MockSysmanProductHelperMemoryVendorId : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+        ze_result_t getMemoryVendorId(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pVendorId) override {
+            *pVendorId = mockMemoryVendorIdValue;
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperMemoryVendorId>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_properties_t properties = {};
+        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
+        vendorIdProperties.length = 0xBEEFu;
+        std::strncpy(vendorIdProperties.vendorName, "unexpected", ZES_MEMORY_VENDOR_NAME_EXT_SIZE);
+        properties.pNext = &vendorIdProperties;
+
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(vendorIdProperties.vendorId, mockMemoryVendorIdValue);
         EXPECT_EQ(vendorIdProperties.length, 0u);
         EXPECT_STREQ(vendorIdProperties.vendorName, "");
     }

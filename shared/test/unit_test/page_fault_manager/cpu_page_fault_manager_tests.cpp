@@ -1093,7 +1093,7 @@ TEST_F(PageFaultManagerTest, givenHardwareModeWhenCallTbxInsertOrRemoveApiThenNo
     auto gfxAlloc = reinterpret_cast<GraphicsAllocation *>(0xFFFF);
     auto csr = reinterpret_cast<CommandStreamReceiver *>(0xFFFF);
     pageFaultManager2->insertAllocation(csr, gfxAlloc, 0, ptr, 0);
-    EXPECT_EQ(pageFaultManager2->memoryData.find(ptr), pageFaultManager2->memoryData.end());
+    EXPECT_FALSE(pageFaultManager2->memoryData.contains(ptr));
 
     pageFaultManager2->memoryData[ptr] = {};
     pageFaultManager2->removeAllocation(gfxAlloc);

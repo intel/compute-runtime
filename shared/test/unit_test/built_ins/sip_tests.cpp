@@ -17,7 +17,6 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
@@ -46,7 +45,6 @@ struct RawBinarySipFixture : public DeviceWithoutSipFixture {
         debugManager.flags.LoadBinarySipFromFile.set("dummy_file.bin");
 
         backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, false);
-        backupSipClassType = std::make_unique<VariableBackup<SipClassType>>(&SipKernel::classType);
 
         backupFopenReturned = std::make_unique<VariableBackup<FILE *>>(&IoFunctions::mockFopenReturned);
         backupFtellReturned = std::make_unique<VariableBackup<long int>>(&IoFunctions::mockFtellReturn, 128);
@@ -70,7 +68,6 @@ struct RawBinarySipFixture : public DeviceWithoutSipFixture {
     DebugManagerStateRestore dbgRestorer;
 
     std::unique_ptr<VariableBackup<bool>> backupSipInitType;
-    std::unique_ptr<VariableBackup<SipClassType>> backupSipClassType;
 
     std::unique_ptr<VariableBackup<FILE *>> backupFopenReturned;
     std::unique_ptr<VariableBackup<long int>> backupFtellReturned;
@@ -377,55 +374,6 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingDebugSipWithContextThenSip
     EXPECT_NE(0u, header.size());
 }
 
-struct HexadecimalHeaderSipKernel : public SipKernel {
-    using SipKernel::getSipKernelImpl;
-    using SipKernel::initHexadecimalArraySipKernel;
-};
-
-using HexadecimalHeaderSipTest = Test<DeviceWithoutSipFixture>;
-
-TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledThenSipKernelIsCorrect) {
-    VariableBackup<SipClassType> backupSipClassType(&SipKernel::classType, SipClassType::hexadecimalHeaderFile);
-
-    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::csr, *pDevice));
-    EXPECT_EQ(SipKernelType::csr, SipKernel::getSipKernelType(*pDevice));
-
-    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::csr);
-    const auto expectedSipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
-    ASSERT_NE(nullptr, expectedSipKernel);
-
-    const auto &sipKernel = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
-    EXPECT_EQ(expectedSipKernel, &sipKernel);
-
-    auto expectedSipAllocation = expectedSipKernel->getSipAllocation();
-    auto sipAllocation = sipKernel.getSipAllocation();
-    EXPECT_EQ(expectedSipAllocation, sipAllocation);
-}
-
-TEST_F(HexadecimalHeaderSipTest, givenFailMemoryManagerWhenInitHexadecimalArraySipKernelIsCalledThenSipKernelIsNullptr) {
-    pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));
-    EXPECT_FALSE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::csr, *pDevice));
-
-    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::csr);
-    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
-    EXPECT_EQ(nullptr, sipKernel);
-}
-
-TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceThenSipKernelIsCreatedOnce) {
-    VariableBackup<SipClassType> backupSipClassType(&SipKernel::classType, SipClassType::hexadecimalHeaderFile);
-    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::csr, *pDevice));
-
-    const auto &sipKernel = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
-    EXPECT_TRUE(HexadecimalHeaderSipKernel::initHexadecimalArraySipKernel(SipKernelType::csr, *pDevice));
-
-    const auto &sipKernel2 = HexadecimalHeaderSipKernel::getSipKernelImpl(*pDevice);
-    EXPECT_EQ(&sipKernel, &sipKernel2);
-
-    auto sipAllocation = sipKernel.getSipAllocation();
-    auto sipAllocation2 = sipKernel2.getSipAllocation();
-    EXPECT_EQ(sipAllocation, sipAllocation2);
-}
-
 struct StateSaveAreaSipTest : Test<RawBinarySipFixture> {
     void SetUp() override {
         RawBinarySipFixture::setUp();
@@ -489,8 +437,8 @@ TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderVersion4WhenGetSipKernelIsC
     MockCompilerDebugVars debugVars = {};
     debugVars.stateSaveAreaHeaderToReturn = stateSaveAreaHeader.data();
     debugVars.stateSaveAreaHeaderToReturnSize = stateSaveAreaHeader.size();
-    gEnvironment->igcPushDebugVars(debugVars);
-    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) -> void { gEnvironment->igcPopDebugVars(); }};
+    NEO::igcPushDebugVars(debugVars);
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{this, [](void *) -> void { NEO::igcPopDebugVars(); }};
 
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.requiredPreemptionSurfaceSize = static_cast<size_t>(MockSipData::totalWmtpDataSize * 4);
@@ -952,7 +900,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenSipIsInitializedThenBinaryIs
     binary[6] = 0xcafebead;
     igcDebugVars.binaryToReturnSize = sizeof(binary);
     igcDebugVars.binaryToReturn = binary;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
@@ -979,7 +927,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenSipIsInitializedThenBinaryIs
     EXPECT_EQ(6u, sipKernel->getPidOffset());
     EXPECT_EQ(sizeof(binary), sipKernel->getBinary().size());
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitializedThenContextIdOffsetsAreZero) {
@@ -988,7 +936,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitialize
     binary[19] = 0xcafebead;
     igcDebugVars.binaryToReturnSize = sizeof(binary);
     igcDebugVars.binaryToReturn = binary;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
@@ -1015,7 +963,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitialize
     EXPECT_EQ(0u, sipKernel->getPidOffset());
     EXPECT_EQ(sizeof(binary), sipKernel->getBinary().size());
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedThenContextIdIsPatched) {
@@ -1025,7 +973,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
     binary[6] = 0xcafebead;
     igcDebugVars.binaryToReturnSize = sizeof(binary);
     igcDebugVars.binaryToReturn = binary;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
@@ -1066,7 +1014,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
     EXPECT_EQ(low, patchedBinary[2]);
     EXPECT_EQ(high, patchedBinary[6]);
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 using DebugBuiltinSipTest = Test<DeviceFixture>;
@@ -1093,10 +1041,6 @@ TEST_F(DebugBuiltinSipTest, givenDebugFlagForForceSipClassWhenInitSipKernelThenP
     debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
     EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
     EXPECT_EQ(MockSipKernel::classType, SipClassType::builtins);
-
-    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::hexadecimalHeaderFile));
-    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
-    EXPECT_EQ(MockSipKernel::classType, SipClassType::hexadecimalHeaderFile);
 
     SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }

@@ -24,6 +24,8 @@ using namespace NEO;
 struct WorkGroupSizeBase {
     static constexpr uint32_t simdSizes[] = {8, 16, 32};
 
+    const MockExecutionEnvironment mockExecutionEnvironment;
+
     template <typename FamilyType>
     size_t computeWalkerWorkItems(typename FamilyType::GPGPU_WALKER &pCmd) {
         typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
@@ -62,8 +64,7 @@ struct WorkGroupSizeBase {
         size_t workGroupSize[3];
         auto maxWorkGroupSize = 256u;
         if (debugManager.flags.EnableComputeWorkSizeND.get()) {
-            MockExecutionEnvironment mockExecutionEnvironment{};
-            RootDeviceEnvironment &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+            const RootDeviceEnvironment &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0].get();
             WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, simdSize, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dims);
         } else {

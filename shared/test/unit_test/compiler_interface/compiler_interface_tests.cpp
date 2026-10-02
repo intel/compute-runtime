@@ -17,7 +17,6 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_cif.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
@@ -79,18 +78,18 @@ class CompilerInterfaceMockedBinaryFilesTest : public CompilerInterfaceTest {
         igcDebugVars.binaryToReturnSize = sizeof(fakeBinFile);
         igcDebugVars.debugDataToReturn = fakeBinFile;
         igcDebugVars.debugDataToReturnSize = sizeof(fakeBinFile);
-        gEnvironment->igcPushDebugVars(igcDebugVars);
+        NEO::igcPushDebugVars(igcDebugVars);
 
         fclDebugVars.binaryToReturn = fakeBinFile;
         fclDebugVars.binaryToReturnSize = sizeof(fakeBinFile);
         fclDebugVars.debugDataToReturn = fakeBinFile;
         fclDebugVars.debugDataToReturnSize = sizeof(fakeBinFile);
-        gEnvironment->fclPushDebugVars(fclDebugVars);
+        NEO::fclPushDebugVars(fclDebugVars);
     }
 
     void TearDown() override {
-        gEnvironment->fclPopDebugVars();
-        gEnvironment->igcPopDebugVars();
+        NEO::fclPopDebugVars();
+        NEO::igcPopDebugVars();
         CompilerInterfaceTest::TearDown();
     }
 
@@ -256,10 +255,10 @@ TEST_F(CompilerInterfaceMockedBinaryFilesTest, GivenOptionsWhenCompilingToIsaThe
     std::string internalOptions = "SOME_OPTION";
 
     fclDebugVars.internalOptionsExpected = true;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
 
     igcDebugVars.internalOptionsExpected = true;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
 
@@ -267,18 +266,18 @@ TEST_F(CompilerInterfaceMockedBinaryFilesTest, GivenOptionsWhenCompilingToIsaThe
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, err);
 
-    gEnvironment->fclPopDebugVars();
-    gEnvironment->igcPopDebugVars();
+    NEO::fclPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenCompilingToIrThenSuccessIsReturned) {
 
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::success, err);
 
-    gEnvironment->fclPopDebugVars();
+    NEO::fclPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceIgcWhenCompilingToIrThenIgcIsBeingUsed) {
@@ -289,16 +288,16 @@ TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceIgcWhenCompilingTo
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.binaryToReturn = bin;
     igcDebugVars.binaryToReturnSize = 1;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.forceBuildFailure = true;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    gEnvironment->fclPopDebugVars();
-    gEnvironment->igcPopDebugVars();
+    NEO::fclPopDebugVars();
+    NEO::igcPopDebugVars();
     EXPECT_EQ(TranslationErrorCode::success, err);
     ASSERT_EQ(1U, translationOutput.intermediateRepresentation.size);
     EXPECT_EQ(7, translationOutput.intermediateRepresentation.mem[0]);
@@ -311,17 +310,17 @@ TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceFclWhenCompilingTo
     char bin[1] = {7};
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceBuildFailure = true;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.binaryToReturn = bin;
     fclDebugVars.binaryToReturnSize = 1;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    gEnvironment->fclPopDebugVars();
-    gEnvironment->igcPopDebugVars();
+    NEO::fclPopDebugVars();
+    NEO::igcPopDebugVars();
     EXPECT_EQ(TranslationErrorCode::success, err);
     ASSERT_EQ(1U, translationOutput.intermediateRepresentation.size);
     EXPECT_EQ(7, translationOutput.intermediateRepresentation.mem[0]);
@@ -342,16 +341,16 @@ TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceIgcWhenBuildingDev
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.binaryToReturn = bin;
     igcDebugVars.binaryToReturnSize = 1;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.forceBuildFailure = true;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    gEnvironment->fclPopDebugVars();
-    gEnvironment->igcPopDebugVars();
+    NEO::fclPopDebugVars();
+    NEO::igcPopDebugVars();
     EXPECT_EQ(TranslationErrorCode::success, err);
     ASSERT_EQ(1U, translationOutput.intermediateRepresentation.size);
     EXPECT_EQ(7, translationOutput.intermediateRepresentation.mem[0]);
@@ -366,17 +365,17 @@ TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceFclWhenBuildingDev
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.binaryToReturn = igcBin;
     igcDebugVars.binaryToReturnSize = 1;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.binaryToReturn = fclBin;
     fclDebugVars.binaryToReturnSize = 2;
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    gEnvironment->fclPopDebugVars();
-    gEnvironment->igcPopDebugVars();
+    NEO::fclPopDebugVars();
+    NEO::igcPopDebugVars();
     EXPECT_EQ(TranslationErrorCode::success, err);
     ASSERT_EQ(2U, translationOutput.intermediateRepresentation.size);
     EXPECT_EQ(3, translationOutput.intermediateRepresentation.mem[0]);
@@ -424,35 +423,35 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenCompileFailsGra
 TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenCompilingToIrThenCompilationFailureErrorIsReturned) {
     MockCompilerDebugVars debugVars;
     debugVars.forceBuildFailure = true;
-    gEnvironment->fclPushDebugVars(debugVars);
-    gEnvironment->igcPushDebugVars(debugVars);
+    NEO::fclPushDebugVars(debugVars);
+    NEO::igcPushDebugVars(debugVars);
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::compilationFailure, err);
 
-    gEnvironment->igcPopDebugVars();
-    gEnvironment->fclPopDebugVars();
+    NEO::igcPopDebugVars();
+    NEO::fclPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenLinkingIrThenLinkFailureErrorIsReturned) {
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceBuildFailure = true;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::linkFailure, err);
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenLinkIsCalledThenOclGenBinIsTheTranslationTarget) {
 
     // link only from .ll to gen ISA
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
     ASSERT_EQ(TranslationErrorCode::success, err);
     ASSERT_EQ(1u, pCompilerInterface->requestedTranslationCtxs.size());
 
@@ -489,21 +488,21 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenCreatingLibraryThenLinkF
     // create library from .ll to IR
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceBuildFailure = true;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::linkFailure, err);
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenCreateLibraryIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
 
     // create library from .ll to IR
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
     EXPECT_EQ(TranslationErrorCode::success, err);
     ASSERT_EQ(1U, pCompilerInterface->requestedTranslationCtxs.size());
 
@@ -536,13 +535,13 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenFclBuildingThenBuildFail
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.forceBuildFailure = true;
 
-    gEnvironment->fclPushDebugVars(fclDebugVars);
+    NEO::fclPushDebugVars(fclDebugVars);
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::buildFailure, err);
 
-    gEnvironment->fclPopDebugVars();
+    NEO::fclPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenIgcBuildingThenBuildFailureErrorIsReturned) {
@@ -553,13 +552,13 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenIgcBuildingThenBuildFail
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceBuildFailure = true;
 
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationErrorCode::buildFailure, err);
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 struct TranslationCtxMock {
@@ -1171,7 +1170,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSipKernelBinaryFa
 TEST_F(CompilerInterfaceTest, whenIgcReturnsErrorThenGetSipKernelBinaryFailsGracefully) {
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceBuildFailure = true;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
+    NEO::igcPushDebugVars(igcDebugVars);
 
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
@@ -1179,7 +1178,7 @@ TEST_F(CompilerInterfaceTest, whenIgcReturnsErrorThenGetSipKernelBinaryFailsGrac
     EXPECT_EQ(TranslationErrorCode::unknownError, err);
     EXPECT_EQ(0U, sipBinary.size());
 
-    gEnvironment->igcPopDebugVars();
+    NEO::igcPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceTest, whenGetIgcDeviceCtxReturnsNullptrThenGetSipKernelBinaryFailsGracefully) {

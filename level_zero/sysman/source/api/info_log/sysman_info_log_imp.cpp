@@ -15,36 +15,45 @@
 namespace L0 {
 namespace Sysman {
 
-ze_result_t InfoLogImp::infoLogGetProperties(zes_intel_info_log_properties_exp_t *pProperties) {
+ze_result_t InfoLogImp::infoLogGetProperties(zes_info_log_ext_properties_t *pProperties) {
     if (initResult != ZE_RESULT_SUCCESS) {
         return initResult;
     }
 
-    // Only the [out] members are assigned; the caller's stype and pNext extension chain survive.
+    if (pProperties->pNext != nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Extension structures are not supported, pNext must be nullptr, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     pProperties->infoLogType = infoLogProperties.infoLogType;
     pProperties->infoLogFormat = infoLogProperties.infoLogFormat;
-    pProperties->isNamedInstancedCollectionSupported = infoLogProperties.isNamedInstancedCollectionSupported;
-    pProperties->isPeekSupported = infoLogProperties.isPeekSupported;
+    pProperties->isNamedInstanceSupported = infoLogProperties.isNamedInstanceSupported;
+    pProperties->isPeekDataSupported = infoLogProperties.isPeekDataSupported;
 
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t InfoLogImp::infoLogCreateInstance(const char *pInstanceName,
-                                              zes_intel_info_log_instance_exp_desc_t *pDesc,
-                                              zes_intel_info_log_instance_handle_t *phInfoLogInstance) {
+                                              zes_info_log_instance_ext_desc_t *pDesc,
+                                              zes_info_log_instance_handle_t *phInfoLogInstance) {
     if (initResult != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Info log properties were not captured, returning error: 0x%x\n", NEO_FUNCTION_NAME, initResult);
         return initResult;
     }
 
-    if (pInstanceName != nullptr && !infoLogProperties.isNamedInstancedCollectionSupported) {
+    if (pDesc->pNext != nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Extension structures are not supported, pNext must be nullptr, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (pInstanceName != nullptr && !infoLogProperties.isNamedInstanceSupported) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Named collection instances are not supported, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     std::lock_guard<std::mutex> lock(instancesMutex);
 
-    if (pInstanceName != nullptr && activeInstanceNames.count(pInstanceName) != 0) {
+    if (pInstanceName != nullptr && activeInstanceNames.contains(pInstanceName)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Collection instance '%s' is already in use, returning error: 0x%x\n", NEO_FUNCTION_NAME, pInstanceName, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     }
@@ -107,7 +116,7 @@ void InfoLogImp::init() {
     initResult = pOsInfoLog->getProperties(&infoLogProperties);
 }
 
-InfoLogImp::InfoLogImp(zes_intel_info_log_format_exp_t format) {
+InfoLogImp::InfoLogImp(zes_info_log_format_ext_t format) {
     pOsInfoLog = OsInfoLog::create(format);
     init();
 }

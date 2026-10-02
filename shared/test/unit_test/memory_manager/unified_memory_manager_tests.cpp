@@ -14,7 +14,6 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
@@ -129,6 +128,20 @@ TEST_F(SVMLocalMemoryAllocatorTest, GivenTwoRootDevicesWhenAllocatingSharedMemor
     memoryManager->deferAllocInUse = false;
     svmManager->freeSVMAllocDefer(ptr);
     ASSERT_EQ(svmManager->getSVMAlloc(ptr), nullptr);
+}
+
+TEST(MapBasedAllocationTrackerTest, givenPointersAroundSingleAllocationWhenGettingThenOnlyPointersInsideAllocationAreFound) {
+    SVMAllocsManager::MapBasedAllocationTracker tracker;
+    SvmAllocationData allocData(1u);
+    allocData.size = MemoryConstants::pageSize;
+    tracker.allocations.insert(std::make_pair(reinterpret_cast<const void *>(0x10000), allocData));
+
+    EXPECT_EQ(nullptr, tracker.get(reinterpret_cast<const void *>(0x8000)));
+    EXPECT_EQ(nullptr, tracker.get(reinterpret_cast<const void *>(0x8010)));
+    EXPECT_NE(nullptr, tracker.get(reinterpret_cast<const void *>(0x10000)));
+    EXPECT_NE(nullptr, tracker.get(reinterpret_cast<const void *>(0x10010)));
+    EXPECT_EQ(nullptr, tracker.get(reinterpret_cast<const void *>(0x11000)));
+    EXPECT_EQ(nullptr, tracker.get(reinterpret_cast<const void *>(0x20000)));
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenMultipleFreeSVMAllocDeferredThenFreedSubsequently) {
@@ -406,15 +419,12 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenPrefetchMemor
 
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
 
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
-    svmManager->prefetchMemory(*device, *csr, ptr, 4096);
+    svmManager->prefetchMemory(*device, *csr, &data, sizeof(data));
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->prefetchSharedSystemAllocCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenPrefetchMemoryIsCalledAndNotEnabledThenNoPrefetchAllocationToSystemMemory) {
@@ -427,15 +437,12 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenPrefetchMemor
     auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     csr->setupContext(*device->getDefaultEngine().osContext);
 
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
-    svmManager->prefetchMemory(*device, *csr, ptr, 4096);
+    svmManager->prefetchMemory(*device, *csr, &data, sizeof(data));
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_FALSE(mockMemoryManager->prefetchSharedSystemAllocCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemMemAdviseIsCalledThenMemoryManagerSetSharedSystemMemAdviseIsCalled) {
@@ -445,15 +452,12 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemM
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
 
     MemAdvise memAdviseOp = MemAdvise::setSystemMemoryPreferredLocation;
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
-    svmManager->sharedSystemMemAdvise(*device, *device, memAdviseOp, ptr, 4096);
+    svmManager->sharedSystemMemAdvise(*device, *device, memAdviseOp, &data, sizeof(data));
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->setSharedSystemMemAdviseCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemAtomicAccessIsCalledThenMemoryManagerSetSharedSystemAtomicAccessIsCalled) {
@@ -463,15 +467,12 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemA
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
 
     AtomicAccessMode mode = AtomicAccessMode::device;
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
+    uint8_t data{};
 
-    svmManager->sharedSystemAtomicAccess(*device, mode, ptr, 4096);
+    svmManager->sharedSystemAtomicAccess(*device, mode, &data, sizeof(data));
 
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     EXPECT_TRUE(mockMemoryManager->setSharedSystemAtomicAccessCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenGetSharedSystemAtomicAccessIsCalledThenMemoryManagerGetSharedSystemAtomicAccessIsCalledAndFails) {
@@ -482,14 +483,11 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenGetSharedSyst
     auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     mockMemoryManager->failGetSharedSystemAtomicAccess = true;
 
-    auto ptr = malloc(4096);
-    EXPECT_NE(nullptr, ptr);
-    auto ret = svmManager->getSharedSystemAtomicAccess(*device, ptr, 4096);
+    uint8_t data{};
+    auto ret = svmManager->getSharedSystemAtomicAccess(*device, &data, sizeof(data));
     EXPECT_EQ(AtomicAccessMode::invalid, ret);
 
     EXPECT_TRUE(mockMemoryManager->getSharedSystemAtomicAccessCalled);
-
-    free(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenSVMAllocsIsCalledThenPrefetchSharedUnifiedMemoryInSvmAllocsManager) {
@@ -586,6 +584,44 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenExternalHostPointerWhenCreatingHostUnif
 
     svmManager->freeSVMAlloc(ptr);
     alignedFree(externalHostPointer);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenShareableHostUnifiedMemoryPropertiesWhenCreatingAllocationThenShareableAndIpcSupportedFlagsArePassedToAllocationProperties) {
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
+    unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = 1u;
+
+    uint32_t validatedCount = 0u;
+    memoryManager->validateAllocateProperties = [&validatedCount](const AllocationProperties &properties) {
+        EXPECT_EQ(1u, properties.flags.shareable);
+        EXPECT_EQ(1u, properties.flags.ipcSupportedAllocationByDefault);
+        validatedCount++;
+    };
+
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_EQ(1u, validatedCount);
+
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenNonShareableHostUnifiedMemoryPropertiesWhenCreatingAllocationThenShareableAndIpcSupportedFlagsAreNotSetInAllocationProperties) {
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    uint32_t validatedCount = 0u;
+    memoryManager->validateAllocateProperties = [&validatedCount](const AllocationProperties &properties) {
+        EXPECT_EQ(0u, properties.flags.shareable);
+        EXPECT_EQ(0u, properties.flags.ipcSupportedAllocationByDefault);
+        validatedCount++;
+    };
+
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_EQ(1u, validatedCount);
+
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenUncachedHostAllocationThenSetAllocationAsUncached) {
@@ -736,7 +772,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSubmitIndirectAllocationsAsPackCalledBut
 
     EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(csr->getOsContext().getContextId()));
     EXPECT_EQ(0u, svmManager->indirectAllocationsResidency.size());
-    EXPECT_EQ(svmManager->indirectAllocationsResidency.find(csr.get()), svmManager->indirectAllocationsResidency.end());
+    EXPECT_FALSE(svmManager->indirectAllocationsResidency.contains(csr.get()));
 
     svmManager->freeSVMAlloc(ptr);
 }

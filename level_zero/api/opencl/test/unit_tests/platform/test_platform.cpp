@@ -22,7 +22,7 @@ namespace ult {
 
 using PlatformGetInfoTests = Test<OclFixture>;
 
-TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoVersionThenReturnsOpenCL30String) {
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoVersionThenReturnsOpenCL31String) {
     size_t retSize = 0;
     auto retVal = platform->getInfo(CL_PLATFORM_VERSION, 0, nullptr, &retSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -31,7 +31,7 @@ TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoVersionThenReturnsOpenCL30S
     std::string version(retSize, '\0');
     retVal = platform->getInfo(CL_PLATFORM_VERSION, retSize, version.data(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(std::string::npos, version.find("OpenCL 3.0"));
+    EXPECT_NE(std::string::npos, version.find("OpenCL 3.1"));
 }
 
 TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoProfileThenReturnsFullProfile) {
@@ -75,13 +75,13 @@ TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoWithInvalidParamThenReturns
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoNumericVersionThenReturnsCL30) {
+TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoNumericVersionThenReturnsCL31) {
     auto numericVersion = 0;
     size_t retSize = 0;
     auto retVal = platform->getInfo(CL_PLATFORM_NUMERIC_VERSION, sizeof(numericVersion), &numericVersion, &retSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_version), retSize);
-    EXPECT_EQ(CL_MAKE_VERSION(3, 0, 0), numericVersion);
+    EXPECT_EQ(CL_MAKE_VERSION(3, 1, 0), numericVersion);
 }
 
 TEST_F(PlatformGetInfoTests, givenPlatformWhenGetDevicesThenReturnsNonEmptyList) {
@@ -161,7 +161,7 @@ TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoExternalMemoryImportHandleT
 TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoL0DriverHandleThenReturnsOwningDriver) {
     ze_driver_handle_t queried = nullptr;
     size_t retSize = 0;
-    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_L0_DRIVER_HANDLE, sizeof(queried), &queried, &retSize));
+    EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_L0_DRIVER_HANDLE_INTEL, sizeof(queried), &queried, &retSize));
     EXPECT_EQ(sizeof(ze_driver_handle_t), retSize);
     EXPECT_EQ(driverHandle->toHandle(), queried);
 }
@@ -169,7 +169,7 @@ TEST_F(PlatformGetInfoTests, givenPlatformWhenGetInfoL0DriverHandleThenReturnsOw
 TEST_F(PlatformGetInfoTests, givenTooSmallBufferWhenGetInfoThenReturnsCLInvalidValue) {
     const cl_platform_info params[] = {CL_PLATFORM_VERSION, CL_PLATFORM_PROFILE, CL_PLATFORM_NAME,
                                        CL_PLATFORM_VENDOR, CL_PLATFORM_NUMERIC_VERSION,
-                                       CL_PLATFORM_HOST_TIMER_RESOLUTION, CL_L0_DRIVER_HANDLE};
+                                       CL_PLATFORM_HOST_TIMER_RESOLUTION, CL_PLATFORM_L0_DRIVER_HANDLE_INTEL};
 
     std::vector<uint8_t> storage(4096);
     for (auto paramName : params) {

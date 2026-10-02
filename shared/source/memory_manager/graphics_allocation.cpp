@@ -71,7 +71,8 @@ GraphicsAllocation::GraphicsAllocation(GraphicsAllocation *parent, size_t offset
       sharingInfo(parent->sharingInfo),
       residency(parent->residency.resident.size()),
       parentAllocation(parent),
-      offsetInParent(offsetInParentAllocation) {
+      offsetInParent(offsetInParentAllocation),
+      enabledMemAdviseFlags(parent->getMemAdviseFlags()) {
     allocationInfo.flags.shareableHostMemory = false;
     allocationInfo.flags.cantBeReadOnly = false;
     this->storageInfo = parent->storageInfo;
@@ -124,6 +125,10 @@ void GraphicsAllocation::setAubWritable(bool writable, uint32_t banks) {
 }
 
 bool GraphicsAllocation::isAubWritable(uint32_t banks) const {
+    if (getIsImported()) {
+        return false;
+    }
+
     if (debugManager.flags.AUBDumpAllocations.get()) {
         UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(this->getAllocationType()) - 1)) & ~debugManager.flags.AUBDumpAllocations.get()) {
@@ -174,7 +179,6 @@ void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t 
 bool GraphicsAllocation::hasAllocationReadOnlyType() {
     if (allocationType == AllocationType::kernelIsa ||
         allocationType == AllocationType::kernelIsaInternal ||
-        allocationType == AllocationType::commandBuffer ||
         allocationType == AllocationType::ringBuffer) {
         return true;
     }

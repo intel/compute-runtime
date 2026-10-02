@@ -290,7 +290,7 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfulWhenStreame
 
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
         std::unique_ptr<L0::CommandList> commandList(
-            CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+            CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
         EXPECT_EQ(zetCommandListAppendMetricStreamerMarker(commandList->toHandle(), streamerHandle, 0),
                   ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
@@ -538,7 +538,7 @@ HWTEST2_F(MetricIpSamplingStreamerTest, whenGetConcurrentMetricGroupsIsCalledThe
 
 using MetricIpSamplingMultiDevCalcOpTest = MetricIpSamplingCalculateOperationFixture;
 
-HWTEST2_F(MetricIpSamplingMultiDevCalcOpTest, GivenMetricWhenGettingSupportedMetricScopesThenExpectedCountAndHandlesAreReturned, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingMultiDevCalcOpTest, GivenMetricWhenGettingSupportedMetricScopesThenExpectedCountAndHandlesAreReturned, HasIPSamplingSupport) {
 
     for (auto device : testDevices) { // Test all sub-devices since metric scopes are expected to be different
         uint32_t expectedScopesCount = 1u;
@@ -669,7 +669,7 @@ HWTEST2_F(MetricIpSamplingMultiDevCalcOpTest, GivenMetricGroupCreatingCalcOpItIg
     }
 }
 
-HWTEST2_F(MetricIpSamplingMultiDevCalcOpTest, GivenSuccessfulCalcOpCreationExpectValidResultsReportFormat, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingMultiDevCalcOpTest, GivenSuccessfulCalcOpCreationExpectValidResultsReportFormat, HasIPSamplingSupport) {
 
     for (auto device : testDevices) { // Test all sub-devices since metric scopes are expected to be different
         uint32_t expectedMetricsInGroup = 0;
@@ -926,7 +926,7 @@ HWTEST2_F(MetricIpSamplingMultiDevCalcOpTest, GivenMultipleMetricsWithDifferentS
     delete mockMetricScope2;
 }
 
-HWTEST2_F(MetricIpSamplingMultiDevCalcOpTest, GivenRootDeviceCreatingCalcOpWithOnlyOddMetricsHandlesThenExpectToFindOnlyThoseInResults, HasIPSamplingSupport) {
+HWTEST2_PRODUCT_F(MetricIpSamplingMultiDevCalcOpTest, GivenRootDeviceCreatingCalcOpWithOnlyOddMetricsHandlesThenExpectToFindOnlyThoseInResults, HasIPSamplingSupport) {
 
     uint32_t expectedMetricsInGroup = 0;
     ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);

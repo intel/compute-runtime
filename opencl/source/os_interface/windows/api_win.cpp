@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "opencl/source/api/api_enter.h"
+#include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
@@ -744,6 +745,7 @@ cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context,
                                                              cl_mem_object_type imageType, cl_uint plane,
                                                              cl_uint numEntries, D3DFORMAT *dx9Formats,
                                                              cl_uint *numImageFormats) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::Context, context, clGetSupportedDX9MediaSurfaceFormatsINTEL, context, flags, imageType, plane, numEntries, dx9Formats, numImageFormats);
 
     if (validateObject(context) != CL_SUCCESS) {
         return CL_INVALID_CONTEXT;
@@ -796,11 +798,13 @@ cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context,
 cl_int CL_API_CALL clGetSupportedD3D10TextureFormatsINTEL(cl_context context, cl_mem_flags flags,
                                                           cl_mem_object_type imageType,
                                                           cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numTextureFormats) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::Context, context, clGetSupportedD3D10TextureFormatsINTEL, context, flags, imageType, numEntries, formats, numTextureFormats);
     return getSupportedDXTextureFormats<D3DTypesHelper::D3D10>(context, imageType, 0, numEntries, formats, numTextureFormats);
 }
 
 cl_int CL_API_CALL clGetSupportedD3D11TextureFormatsINTEL(cl_context context, cl_mem_flags flags,
                                                           cl_mem_object_type imageType, cl_uint plane,
                                                           cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numTextureFormats) {
+    FORWARD_TO_LEO_IF_FOREIGN(NEO::Context, context, clGetSupportedD3D11TextureFormatsINTEL, context, flags, imageType, plane, numEntries, formats, numTextureFormats);
     return getSupportedDXTextureFormats<D3DTypesHelper::D3D11>(context, imageType, plane, numEntries, formats, numTextureFormats);
 }

@@ -24,6 +24,7 @@ class ZesPcieDowngradeFixture : public SysmanDeviceFixture {
     L0::Sysman::PciImp *pPciImp;
     L0::Sysman::OsPci *pOsPciPrev;
     std::unique_ptr<L0::ult::Mock<L0::DriverHandle>> driverHandle;
+    std::unique_ptr<MockPciFsAccess> pFsAccess;
     std::unique_ptr<MockPcieDowngradeFwInterface> pMockFwInterface;
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
 
@@ -36,6 +37,10 @@ class ZesPcieDowngradeFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->pSysfsAccess.get();
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pSysfsAccess = static_cast<MockPciSysfsAccess *>(pSysmanKmdInterface->pSysfsAccess.get());
+
+        pFsAccess = std::make_unique<MockPciFsAccess>();
+        pOriginalFsAccess = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
         pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
         pMockFwInterface = std::make_unique<MockPcieDowngradeFwInterface>();
@@ -58,6 +63,7 @@ class ZesPcieDowngradeFixture : public SysmanDeviceFixture {
         pPciImp->pOsPci = pOsPciPrev;
         pPciImp = nullptr;
         pLinuxSysmanImp->pSysfsAccess = pOriginalSysfsAccess;
+        pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
         SysmanDeviceFixture::TearDown();
     }
@@ -180,11 +186,10 @@ HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenCallingZesDevicePci
 }
 
 HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenPciConfigSpaceReadSucceedsThenValidValuesAreReturned, IsBMG) {
-    PublicLinuxPciImp *pLinuxPciImp = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
     auto openMockReturnSuccess = +[](const char *pathname, int flags) -> int {
         return 5;
     };
-    auto preadMockConfigSpace = +[](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+    auto readMockConfigSpace = +[](int fd, void *buf, size_t count) -> ssize_t {
         uint8_t *mockBuf = static_cast<uint8_t *>(buf);
         if (count == PCI_CFG_SPACE_SIZE) {
             memset(mockBuf, 0, PCI_CFG_SPACE_SIZE);
@@ -205,7 +210,7 @@ HWTEST2_F(ZesPcieDowngradeFixture, GivenValidSysmanHandleWhenPciConfigSpaceReadS
     };
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockReturnSuccess);
-    pLinuxPciImp->preadFunction = preadMockConfigSpace;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockConfigSpace);
 
     zes_pci_state_t pciState = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetState(device, &pciState));

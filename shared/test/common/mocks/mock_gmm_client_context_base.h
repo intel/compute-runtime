@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #pragma once
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+
+#include <optional>
 
 namespace NEO {
 class MockGmmClientContextBase : public GmmClientContext {
@@ -42,6 +44,7 @@ class MockGmmClientContextBase : public GmmClientContext {
 
     bool passedCompressedSettingForGetPatIndexQuery = false;
     bool passedCacheableSettingForGetPatIndexQuery = false;
+    std::optional<GmmResourceUsageType> passedUsageTypeForGetPatIndexQuery;
 
   protected:
     using GmmClientContext::GmmClientContext;

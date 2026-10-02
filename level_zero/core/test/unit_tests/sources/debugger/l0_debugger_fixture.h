@@ -44,12 +44,6 @@ struct L0DebuggerFixture {
         hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo.featureTable.flags.ftrLocalMemory = true;
 
-        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
-        auto isHexadecimalArrayPreferred = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred();
-        if (isHexadecimalArrayPreferred) {
-            MockSipData::useMockSip = true;
-        }
-
         executionEnvironment->calculateMaxOsContextCount();
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->initializeMemoryManager();
@@ -77,7 +71,6 @@ struct L0DebuggerFixture {
     MockMemoryOperations *memoryOperationsHandler = nullptr;
     VariableBackup<bool> mockSipCalled{&NEO::MockSipData::called};
     VariableBackup<NEO::SipKernelType> mockSipCalledType{&NEO::MockSipData::calledType};
-    VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
 };
 
 struct L0DebuggerHwFixture : public L0DebuggerFixture {

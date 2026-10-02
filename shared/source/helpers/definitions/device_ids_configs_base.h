@@ -38,6 +38,9 @@
 #ifdef SUPPORT_MTL
 #include "shared/source/xe_hpg_core/xe_lpg/device_ids_configs_xe_lpg.h"
 #endif
+#ifdef SUPPORT_DG2
+#include "shared/source/xe_hpg_core/dg2/device_ids_configs_dg2.h"
+#endif
 #endif
 
 #if SUPPORT_XE_HPC_CORE

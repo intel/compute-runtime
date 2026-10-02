@@ -252,7 +252,6 @@ struct ModuleImp : public Module {
     size_t getIsaAllocationPageSize() const;
 
     Device *device = nullptr;
-    PRODUCT_FAMILY productFamily{};
     std::unique_ptr<ModuleTranslationUnit> translationUnit;
     ModuleBuildLog *moduleBuildLog = nullptr;
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;

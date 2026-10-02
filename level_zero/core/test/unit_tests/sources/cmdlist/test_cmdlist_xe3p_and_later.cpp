@@ -36,7 +36,7 @@ struct InOrderCmdListTestsXe3pCoreAndLater : public InOrderCmdListFixture {
     }
 };
 
-HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCallingAppendThenSetCorrectGpuVa, IsAtLeastXe3pCore) {
+HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenAggregatedEventWhenCallingAppendThenSetCorrectGpuVa, IsAtLeastXe3pCore) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA_2 = typename FamilyType::POSTSYNC_DATA_2;
@@ -45,7 +45,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncStorageWhenCalli
     constexpr uint64_t incValue = 2;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     eventObj->isTimestampEvent = true;
     eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
 
@@ -410,7 +410,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData.getOperation());
         } else {
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSyncData.getDestinationAddress());
-            EXPECT_FALSE(postSyncData.getInterruptSignalEnable());
+            EXPECT_TRUE(postSyncData.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData.getSerializePostsyncOps());
             EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
         }
@@ -421,7 +421,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData1.getOperation());
         } else {
             EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
-            EXPECT_TRUE(postSyncData1.getInterruptSignalEnable());
+            EXPECT_FALSE(postSyncData1.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData1.getSerializePostsyncOps());
             EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
         }
@@ -445,37 +445,17 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
         auto &postSyncData = walkerCmd->getPostSync();
 
         if (compactEvent1) {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
+            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData.getOperation());
         } else {
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSyncData.getDestinationAddress());
-            EXPECT_FALSE(postSyncData.getInterruptSignalEnable());
+            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
+            EXPECT_EQ(events[1]->getPacketAddress(device), postSyncData.getDestinationAddress());
+            EXPECT_TRUE(postSyncData.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData.getSerializePostsyncOps());
             EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
         }
 
-        auto &postSyncData1 = walkerCmd->getPostSyncOpn1();
-
-        if (compactEvent1) {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData1.getOperation());
-        } else {
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
-            EXPECT_TRUE(postSyncData1.getInterruptSignalEnable());
-            EXPECT_FALSE(postSyncData1.getSerializePostsyncOps());
-            EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
-        }
-
-        auto &postSyncData2 = walkerCmd->getPostSyncOpn2();
-
-        if (compactEvent1) {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData2.getOperation());
-        } else {
-            EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_TIMESTAMP, postSyncData2.getOperation());
-            EXPECT_EQ(events[1]->getPacketAddress(device), postSyncData2.getDestinationAddress());
-            EXPECT_FALSE(postSyncData2.getInterruptSignalEnable());
-            EXPECT_FALSE(postSyncData2.getSerializePostsyncOps());
-            EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
-        }
-
+        EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn1().getOperation());
+        EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn2().getOperation());
         EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, walkerCmd->getPostSyncOpn3().getOperation());
     }
 }
@@ -763,7 +743,7 @@ HWTEST2_F(MultiTileInOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWh
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t) * 2));
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     auto handle = eventObj->toHandle();
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -839,7 +819,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenExternalSyncEventWhenAppendC
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t) * 2));
 
-    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto eventObj = createAggregatedEvent(counterValue, incValue, devAddress);
     auto handle = eventObj->toHandle();
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -932,7 +912,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3pAndLater, givenHeaplessModeWhenAppend
     ze_result_t returnValue;
     auto backup = std::unique_ptr<NEO::CompilerProductHelper>{new MockCompilerProductHelperHeapless(true)};
     neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     device->getNEODevice()->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
 
     void *alloc = nullptr;

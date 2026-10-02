@@ -243,7 +243,7 @@ struct DrmMockXeDebug : public DrmMockCustom {
             ret = 0;
         } break;
         case DrmIoctl::debuggerOpen: {
-            auto debuggerOpen = reinterpret_cast<EuDebugConnect *>(arg);
+            auto debuggerOpen = static_cast<prelim_drm_xe_eudebug_connect *>(arg);
 
             if (debuggerOpen->version != 0) {
                 return -1;

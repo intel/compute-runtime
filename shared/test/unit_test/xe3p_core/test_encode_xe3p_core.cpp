@@ -35,6 +35,7 @@
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 #include "hw_cmds_xe3p_core.h"
+#include "implicit_args.h"
 #include "per_product_test_definitions.h"
 
 using namespace NEO;
@@ -375,6 +376,42 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchRequiredPatchingDisabledWh
     auto scratchAddressProgrammed = inlineData[1];
 
     EXPECT_EQ(expectedAddress, scratchAddressProgrammed);
+}
+
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenImplicitArgsV2WhenEncodeComputeWalker2ThenAllocatedScratchSizeIsSetAccordingToImmediatePatchingMode) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    for (auto immediateScratchAddressPatching : {true, false}) {
+        uint32_t dims[] = {1, 1, 1};
+        std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+        dispatchInterface->getCrossThreadDataSizeResult = 256u;
+        dispatchInterface->kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 1024u;
+        dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = true;
+        dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = 8u;
+        dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+        NEO::ImplicitArgs implicitArgs{};
+        implicitArgs.initializeHeader(2);
+        implicitArgs.setLocalSize(1, 1, 1);
+        dispatchInterface->implicitArgsPtr = &implicitArgs;
+
+        EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+        dispatchArgs.isHeaplessModeEnabled = true;
+        dispatchArgs.immediateScratchAddressPatching = immediateScratchAddressPatching;
+
+        auto *csr = dispatchArgs.device->getDefaultEngine().commandStreamReceiver;
+        cmdContainer->setImmediateCmdListCsr(csr);
+
+        EncodeDispatchKernel<FamilyType>::template encode<WalkerType>(*cmdContainer.get(), dispatchArgs);
+
+        if (immediateScratchAddressPatching) {
+            auto expectedScratch0SizeAllocated = csr->getPerThreadScratchSizeSlot0Allocated();
+            EXPECT_NE(0u, expectedScratch0SizeAllocated);
+            EXPECT_EQ(expectedScratch0SizeAllocated, implicitArgs.v2.scratch0SizeAllocated);
+        } else {
+            EXPECT_EQ(0u, implicitArgs.v2.scratch0SizeAllocated);
+        }
+    }
 }
 
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenHeaplessAndScratchRequiredWhenEncodeComputeWalker2ThenInlineDataContainCorrectScratchAddress) {
@@ -720,7 +757,7 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDefaultSettingForFenceWhenEventHo
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
-XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDefaultSettingForFenceWhenKernelUsesSystemMemoryAndHostSignalEventFlagTrueThenUseSystemFence) {
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDefaultSettingForFenceWhenKernelUsesSystemMemoryAndHostSignalEventFlagTrueThenNotUseSystemFence) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
@@ -744,7 +781,7 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDefaultSettingForFenceWhenKernelU
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_EQ(postSyncData.getSystemMemoryFenceRequest(), !pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice);
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
 XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDebugFlagSetWhenSetPropertiesAllCalledThenDisablePipelinedThreadArbitrationPolicy) {
@@ -893,7 +930,7 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenNoDebugFlagWhenProgrammingStateCo
     EXPECT_FALSE(stateComputeModeCmd.getOutOfBoundariesInTranslationExceptionEnable());
 }
 
-XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDebugFlagWhenProgrammingStateComputeModeThenEnableSystemMemoryReadFenceFieldIsCorrectlySet) {
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenAnyDebugFlagValueWhenProgrammingStateComputeModeThenSystemMemoryReadFenceIsNotEnabled) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     DebugManagerStateRestore restore;
@@ -902,47 +939,20 @@ XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenDebugFlagWhenProgrammingStateComp
     MockExecutionEnvironment executionEnvironment{};
     const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
-    {
-        // default
-        LinearStream linearStream(buffer, sizeof(buffer));
+    for (auto debugFlagValue : {-1, 0, 1}) {
+        debugManager.flags.EnableSystemMemoryReadFence.set(debugFlagValue);
 
-        StreamProperties streamProperties{};
-        streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
-        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
+        for (auto hasPeerAccess : {false, true}) {
+            LinearStream linearStream(buffer, sizeof(buffer));
 
-        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
-        EXPECT_FALSE(stateComputeModeCmd.getSystemMemoryReadFenceEnable());
-    }
+            StreamProperties streamProperties{};
+            streamProperties.initSupport(rootDeviceEnvironment);
+            streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, hasPeerAccess);
+            EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
-    {
-        // enabled
-        debugManager.flags.EnableSystemMemoryReadFence.set(1);
-
-        LinearStream linearStream(buffer, sizeof(buffer));
-
-        StreamProperties streamProperties{};
-        streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
-        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
-
-        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
-        EXPECT_TRUE(stateComputeModeCmd.getSystemMemoryReadFenceEnable());
-    }
-
-    {
-        // disabled
-        debugManager.flags.EnableSystemMemoryReadFence.set(0);
-
-        LinearStream linearStream(buffer, sizeof(buffer));
-
-        StreamProperties streamProperties{};
-        streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, true);
-        EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
-
-        auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
-        EXPECT_FALSE(stateComputeModeCmd.getSystemMemoryReadFenceEnable());
+            auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
+            EXPECT_FALSE(stateComputeModeCmd.getSystemMemoryReadFenceEnable());
+        }
     }
 }
 

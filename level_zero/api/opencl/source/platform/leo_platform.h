@@ -73,5 +73,9 @@ static_assert(NEO::NonCopyableAndNonMovable<Platform>);
 
 extern std::vector<std::unique_ptr<Platform>> *platformsImpl;
 
+extern bool platformsInitAttempted;
+
+bool isLeoExposedDriver(ze_driver_handle_t driverHandle);
+
 } // namespace LEO
 } // namespace NEO

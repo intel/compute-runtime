@@ -26,13 +26,13 @@ ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsA
         // buffer can be offset SVM value
         gpuAddress = reinterpret_cast<GpuAddress>(buffer);
         allocId = allocData->getAllocId();
-        if (driverHandle->isRemoteResourceNeeded(bufferAlloc, allocData, device)) {
-            // get GPU base value
-            gpuAddress = bufferAlloc->getGpuAddress();
-            // calculate possible offset
-            size_t offset = reinterpret_cast<GpuAddress>(buffer) - gpuAddress;
-            // gpuAddress will get new value from peer allocation
-            bufferAlloc = driverHandle->getPeerAllocation(device, allocData, buffer, &gpuAddress, nullptr, false);
+        if (driverHandle->isRemoteResourceNeeded(*allocData, device)) {
+            // get GPU base value of the source allocation
+            uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+            // calculate possible offset from the source allocation base
+            size_t offset = reinterpret_cast<GpuAddress>(buffer) - pbase;
+            // gpuAddress will get base value of the peer allocation
+            bufferAlloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &gpuAddress, nullptr, false);
             if (bufferAlloc == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }

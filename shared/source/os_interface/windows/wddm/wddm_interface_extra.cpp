@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 
 using namespace NEO;
 
@@ -28,7 +28,7 @@ bool WddmInterface32::createNativeFence(MonitoredFence &monitorFence, bool useFo
     auto privateData = reinterpret_cast<CREATENATIVEFENCE_PVTDATA *>(&createNativeFenceObject.PrivateDriverData);
     privateData->UseForWalkerInterrupt = useForWalkerInterrupt;
     privateData->UseHw64bToken = debugManager.flags.WddmUseHw64bToken.get() &&
-                                 rootDeviceEnvironment.getCompilerReleaseHelper().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+                                 rootDeviceEnvironment.getHelper<CompilerProductHelper>().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
 
     status = wddm.getGdi()->createNativeFence(&createNativeFenceObject);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);

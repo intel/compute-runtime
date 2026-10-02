@@ -8,7 +8,6 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/release_helpers/compiler_release_helper/compiler_release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -272,6 +271,52 @@ HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpV
     EXPECT_EQ(compilerProductHelper.getHwIpVersion(hwInfo), config);
 }
 
+TEST_F(CompilerProductHelperFixture, givenFtrHwSemaphore64SetWhenIsAvailableSemaphore64CalledThenValueFromCapsIsReturned) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrHwSemaphore64 = true;
+
+    hwInfo.caps.availableSemaphore64 = true;
+    EXPECT_TRUE(compilerProductHelper.isAvailableSemaphore64(hwInfo));
+
+    hwInfo.caps.availableSemaphore64 = false;
+    EXPECT_FALSE(compilerProductHelper.isAvailableSemaphore64(hwInfo));
+}
+
+TEST_F(CompilerProductHelperFixture, givenNoFtrHwSemaphore64WhenIsAvailableSemaphore64CalledThenFalseReturned) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrHwSemaphore64 = false;
+    hwInfo.caps.availableSemaphore64 = true;
+
+    EXPECT_FALSE(compilerProductHelper.isAvailableSemaphore64(hwInfo));
+}
+
+TEST_F(CompilerProductHelperFixture, givenEnable64BitSemaphoreFlagSetWhenIsAvailableSemaphore64CalledThenFlagValueOverridesEverythingElse) {
+    DebugManagerStateRestore restore;
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrHwSemaphore64 = true;
+    hwInfo.caps.availableSemaphore64 = true;
+
+    debugManager.flags.Enable64BitSemaphore.set(0);
+    EXPECT_FALSE(compilerProductHelper.isAvailableSemaphore64(hwInfo));
+
+    debugManager.flags.Enable64BitSemaphore.set(1);
+    EXPECT_TRUE(compilerProductHelper.isAvailableSemaphore64(hwInfo));
+}
+
+TEST_F(CompilerProductHelperFixture, givenEnable64BitSemaphoreFlagSetWhenIsAvailableSemaphore64CalledThenFtrFlagAndCapsValueAreIgnored) {
+    DebugManagerStateRestore restore;
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrHwSemaphore64 = false;
+    hwInfo.caps.availableSemaphore64 = false;
+
+    debugManager.flags.Enable64BitSemaphore.set(1);
+    EXPECT_TRUE(compilerProductHelper.isAvailableSemaphore64(hwInfo));
+}
+
 HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenFalseIsReturned, IsAtMostXe3Core) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
@@ -279,8 +324,8 @@ HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeapless
 
 HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{3, 0});
-    ASSERT_LT(3U, versions.size());
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{3, 1});
+    ASSERT_EQ(5U, versions.size());
 
     EXPECT_EQ(1, versions[0].major);
     EXPECT_EQ(0, versions[0].minor);
@@ -290,6 +335,17 @@ HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsR
 
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
+
+    EXPECT_EQ(3, versions[3].major);
+    EXPECT_EQ(0, versions[3].minor);
+
+    EXPECT_EQ(3, versions[4].major);
+    EXPECT_EQ(1, versions[4].minor);
+}
+
+HWTEST_F(CompilerProductHelperFixture, WhenOpenCLC30ListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListTrimmedToOpenCLC30) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{3, 0});
 
     ASSERT_EQ(4U, versions.size());
     EXPECT_EQ(3, versions[3].major);
@@ -311,7 +367,7 @@ HWTEST_F(CompilerProductHelperFixture, WhenLimitedListOfSupportedOpenCLCVersions
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsEmptyThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{0, 0});
-    ASSERT_LT(3U, versions.size());
+    ASSERT_EQ(5U, versions.size());
 
     EXPECT_EQ(1, versions[0].major);
     EXPECT_EQ(0, versions[0].minor);
@@ -322,9 +378,11 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpen
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
 
-    ASSERT_EQ(4U, versions.size());
     EXPECT_EQ(3, versions[3].major);
     EXPECT_EQ(0, versions[3].minor);
+
+    EXPECT_EQ(3, versions[4].major);
+    EXPECT_EQ(1, versions[4].minor);
 }
 
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsBelow10ThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToOclC12) {

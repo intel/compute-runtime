@@ -32,7 +32,10 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenM
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    auto result = commandList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    auto result = commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -53,7 +56,10 @@ HWTEST_F(CommandListAppendSignalEvent, GivenSignalWithUserInterruptEnabledWhenAp
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    auto result = commandList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    auto result = commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     {
         GenCmdList cmdList;
@@ -67,7 +73,7 @@ HWTEST_F(CommandListAppendSignalEvent, GivenSignalWithUserInterruptEnabledWhenAp
     // path - only the dedicated Linux KMD-wait flag does.
     event->enableInterruptMode();
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendSignalEvent(event->toHandle(), false);
+    result = commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     {
         GenCmdList cmdList;
@@ -79,7 +85,7 @@ HWTEST_F(CommandListAppendSignalEvent, GivenSignalWithUserInterruptEnabledWhenAp
 
     event->setSignalWithUserInterrupt(true);
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendSignalEvent(event->toHandle(), false);
+    result = commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     {
         GenCmdList cmdList;
@@ -91,7 +97,10 @@ HWTEST_F(CommandListAppendSignalEvent, GivenSignalWithUserInterruptEnabledWhenAp
 }
 
 HWTEST_F(CommandListAppendSignalEvent, givenCmdlistWhenAppendingSignalEventThenEventPoolGraphicsAllocationIsAddedToResidencyContainer) {
-    auto result = commandList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    auto result = commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
@@ -121,7 +130,10 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
     auto eventHostVisible = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolHostVisible.get(), &eventDesc, device, result));
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendSignalEvent(eventHostVisible->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    result = commandList->appendSignalEvent(eventHostVisible->toHandle(), signalEventParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -230,12 +242,12 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListAndAppendingRegular
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
     ze_event_handle_t hSignalEventHandle = eventHostVisible->toHandle();
     ze_event_handle_t hWaitEventHandle = waitEvent->toHandle();
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
@@ -281,8 +293,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAnd
 
     using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>;
 
-    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(productFamily,
-                                                                                                                            device,
+    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(device,
                                                                                                                             &desc,
                                                                                                                             false,
                                                                                                                             NEO::EngineGroupType::compute,
@@ -293,7 +304,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAnd
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -329,12 +340,12 @@ HWTEST2_F(CommandListAppendSignalEvent, givenCopyOnlyImmediateCmdListAndAppendin
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
     ze_event_handle_t hSignalEventHandle = eventHostVisible->toHandle();
     ze_event_handle_t hWaitEventHandle = waitEvent->toHandle();
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
     auto usedSpaceBefore = immCommandList->getCmdContainer().getCommandStream()->getUsed();
@@ -371,8 +382,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndApp
 
     using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>;
 
-    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(productFamily,
-                                                                                                                            device,
+    std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(device,
                                                                                                                             &desc,
                                                                                                                             false,
                                                                                                                             NEO::EngineGroupType::copy,
@@ -383,7 +393,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndApp
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -414,10 +424,10 @@ HWTEST_F(CommandListAppendSignalEvent, givenOutOfOrderImmediateCmdListWhenAppend
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -455,10 +465,10 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
     ze_command_queue_desc_t desc = {};
     desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    std::unique_ptr<L0::CommandList> immCommandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     ASSERT_NE(nullptr, immCommandList);
 
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
     auto commandListHandle = commandListRegular->toHandle();
 
@@ -519,8 +529,10 @@ HWTEST_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeCo
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
-
-    commandList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     auto contextOffset = event->getContextEndOffset();
     auto baseAddr = event->getGpuAddress(device);
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
@@ -565,7 +577,10 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     commandList->partitionCount = packets;
     event->maxPacketCount = packets;
-    ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
@@ -611,7 +626,10 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
 
     commandList->partitionCount = 2;
     event->maxPacketCount = 2;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle(), false));
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle(), signalEventParameters));
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
 
@@ -666,7 +684,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
 
     offset = cmdStream->getUsed();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle(), false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle(), signalEventParameters));
 
     expectedSize = sizeof(MI_STORE_DATA_IMM);
     usedSize = cmdStream->getUsed() - offset;
@@ -703,7 +721,10 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     commandList->partitionCount = packets;
     event->maxPacketCount = packets;
-    ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
@@ -1061,7 +1082,10 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     event->setEventTimestampFlag(false);
 
-    commandList->appendSignalEvent(event->toHandle(), false);
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    commandList->appendSignalEvent(event->toHandle(), signalEventParameters);
     size_t usedAfterSize = cmdStream->getUsed();
 
     GenCmdList cmdList;

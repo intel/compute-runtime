@@ -782,6 +782,16 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_TRUE(pSysmanProductHelper->isMemoryMaxTemperatureSupported());
 }
 
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingIsTemperatureReadFromSysfsSupportedThenTrueIsReturned, IsBMG) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isTemperatureReadFromSysfsSupported());
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingIsTemperatureReadFromSysfsSupportedThenFalseIsReturned, IsDG2) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(pSysmanProductHelper->isTemperatureReadFromSysfsSupported());
+}
+
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBmgOrCri) {
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
@@ -2167,7 +2177,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     std::map<zes_temp_sensors_t, uint32_t> supportedSensorTypeMap;
     pSysmanProductHelper->getSupportedSensors(supportedSensorTypeMap);
-    EXPECT_NE(supportedSensorTypeMap.find(ZES_TEMP_SENSORS_COMPOSITE), supportedSensorTypeMap.end());
+    EXPECT_TRUE(supportedSensorTypeMap.contains(ZES_TEMP_SENSORS_COMPOSITE));
 }
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingCompositeTemperatureThenFailureIsReturned, IsCRI) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_ocloc_concat.h"
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 #include <array>
 

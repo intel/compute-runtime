@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,8 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
             .srcSlicePitch = gpuSlicePitch,
             .dstSize = copySize,
             .srcSize = copySize,
-            .isSystemMemoryPoolUsed = true};
+            .isSystemMemoryPoolUsed = true,
+            .isDstSystemOrRemoteMemory = true};
     };
 }
 
@@ -114,7 +115,7 @@ BlitProperties BlitProperties::constructPropertiesForCopy(
     const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
     size_t srcRowPitch, size_t srcSlicePitch,
     size_t dstRowPitch, size_t dstSlicePitch,
-    GraphicsAllocation *clearColorAllocation) {
+    GraphicsAllocation *clearColorAllocation, bool isDstRemote) {
 
     copySize.y = copySize.y ? copySize.y : 1;
     copySize.z = copySize.z ? copySize.z : 1;
@@ -128,6 +129,7 @@ BlitProperties BlitProperties::constructPropertiesForCopy(
     bool sysMem = (!dstAllocation || !srcAllocation)
                       ? true
                       : MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool());
+    bool dstSystemOrRemoteMem = isDstRemote || !dstAllocation || MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool());
 
     return {
         .blitSyncProperties = {},
@@ -147,7 +149,8 @@ BlitProperties BlitProperties::constructPropertiesForCopy(
         .dstSlicePitch = dstSlicePitch,
         .srcRowPitch = srcRowPitch,
         .srcSlicePitch = srcSlicePitch,
-        .isSystemMemoryPoolUsed = sysMem};
+        .isSystemMemoryPoolUsed = sysMem,
+        .isDstSystemOrRemoteMemory = dstSystemOrRemoteMem};
 }
 
 BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,

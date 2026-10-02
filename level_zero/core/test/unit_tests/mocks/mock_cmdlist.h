@@ -50,6 +50,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendDispatchOffsetRegister;
     using BaseClass::appendEventForProfiling;
     using BaseClass::appendEventForProfilingCopyCommand;
+    using BaseClass::appendFrontEndCopy;
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::appendMemoryCopyBlit;
     using BaseClass::appendMemoryCopyBlitRegion;
@@ -126,7 +127,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isUsingSystemAllocation;
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::l3FlushAfterPostSyncEnabled;
-    using BaseClass::latestOperationHasHeapfullCbEventWithProfiling;
+    using BaseClass::latestOperationHasCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;
@@ -134,7 +135,9 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
     using BaseClass::patternTags;
+    using BaseClass::pendingSubmissionPauses;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::programPauseOnEnqueueCommands;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::resetBcsSplitEvents;
@@ -236,6 +239,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::compactL3FlushEvent;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::copyOffloadMode;
+    using BaseClass::copyOffloadTagUpdateRequired;
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
@@ -270,12 +274,14 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestFlushIsHostVisible;
-    using BaseClass::latestOperationHasHeapfullCbEventWithProfiling;
+    using BaseClass::latestOperationHasCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::partitionCount;
+    using BaseClass::pendingSubmissionPauses;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::programPauseOnEnqueueCommands;
     using BaseClass::relaxedOrderingCounter;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
@@ -453,7 +459,8 @@ struct Mock<CommandList> : public CommandList {
     ADDMETHOD_NOBASE(appendBarrier, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters));
+                      ze_event_handle_t *phWaitEvents,
+                      CmdListWaitEventParameters &waitEventsParameters, CmdListSignalEventParameters &signalEventParameters));
 
     ADDMETHOD_NOBASE(appendMemoryRangesBarrier, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numRanges,
@@ -589,7 +596,7 @@ struct Mock<CommandList> : public CommandList {
                       CmdListMemoryCopyParams &memoryCopyParams));
 
     ADDMETHOD_NOBASE(appendSignalEvent, ze_result_t, ZE_RESULT_SUCCESS,
-                     (ze_event_handle_t hEvent, bool relaxedOrderingDispatch));
+                     (ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters));
 
     ADDMETHOD_NOBASE(appendWaitOnEvents, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numEvents,
@@ -762,8 +769,8 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
               (numEvents, phEvent, waitEventsParameters));
 
     ADDMETHOD(appendSignalEvent, ze_result_t, true, ZE_RESULT_SUCCESS,
-              (ze_event_handle_t hEvent, bool relaxedOrderingDispatch),
-              (hEvent, relaxedOrderingDispatch));
+              (ze_event_handle_t hEvent, CmdListSignalEventParameters &signalEventParameters),
+              (hEvent, signalEventParameters));
 
     AlignedAllocationData resolveAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, const L0::MemAllocInfo *bufferAllocInfo, const L0::ResolveAlignedAllocationFlags &flags) override {
         return L0::CommandListCoreFamily<gfxCoreFamily>::resolveAlignedAllocation(device, buffer, bufferSize, bufferAllocInfo, flags);
@@ -831,6 +838,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;
     using BaseClass::dummyBlitWa;
+    using BaseClass::hasPendingInOrderWork;
     using BaseClass::internalUsage;
     using BaseClass::isSmallBarConfigPresent;
     using BaseClass::isSyncModeQueue;
@@ -1013,47 +1021,11 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
     using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
 
-    using BaseClass::enableInOrderExecution;
     using BaseClass::semaphoreSignalHostFunction;
     using BaseClass::semaphoreWaitHostFunction;
     using typename BaseClass::ExternalSemaphoreHostFunctionData;
 
     MockCommandListImmediateExtSem() : WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>() {}
-
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventsParameters) override {
-
-        appendWaitOnEventsCalledTimes++;
-
-        if (failingWaitOnEvents) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override {
-        appendSignalEventCalledTimes++;
-
-        if (failOnSecondSignalEvent && appendSignalEventCalledTimes == 2) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        if (failingSignalEvent) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation) override {
-        appendSignalEventPostWalkerCalledTimes++;
-
-        BaseClass::appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, skipBarrierForEndProfiling, skipAddingEventToResidency, copyOperation);
-    }
-
-    void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired, bool skipAggregatedEventSignaling) override {
-        appendSignalInOrderDependencyCounterCalledTimes++;
-
-        BaseClass::appendSignalInOrderDependencyCounter(signalEvent, copyOffloadOperation, stall, textureFlushRequired, skipAggregatedEventSignaling);
-    }
 
     ze_result_t appendHostFunction(ze_host_function_callback_t pHostFunction, void *pUserData, const void *pNext,
                                    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
@@ -1064,17 +1036,9 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
         return ZE_RESULT_SUCCESS;
     }
 
-    uint32_t appendWaitOnEventsCalledTimes = 0;
-    uint32_t appendSignalEventCalledTimes = 0;
-    uint16_t appendSignalEventPostWalkerCalledTimes = 0;
-    uint32_t appendSignalInOrderDependencyCounterCalledTimes = 0;
     uint32_t appendHostFunctionCalledTimes = 0u;
     ze_host_function_callback_t capturedHostFunction = nullptr;
     void *capturedUserData = nullptr;
-    bool failingWaitOnEvents = false;
-    bool failingSignalEvent = false;
-    bool failOnSecondSignalEvent = false;
-    bool skipAppendWaitOnSingleEvent = false;
 };
 
 } // namespace ult

@@ -24,12 +24,14 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
 #include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/thread_data_map.h"
@@ -57,6 +59,10 @@ bool shouldSkipHeapPrefillForPool(HeapType heapType, size_t heapSize, bool linea
 
 } // namespace
 
+std::unique_ptr<GraphicsAllocation> CommandContainer::detachReusableCommandBuffer(AllocationsList &allocations, size_t requiredSize, bool forceHostMemory) {
+    return allocations.detachAllocation(requiredSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer, *this->device);
+}
+
 CommandContainer::~CommandContainer() {
     if (!device) {
         DEBUG_BREAK_IF(device);
@@ -66,6 +72,7 @@ CommandContainer::~CommandContainer() {
     this->handleCmdBufferAllocations(0u);
     this->threadDataTracker.reset();
     this->threadDataMap.reset();
+    this->kernelDispatchStats.reset();
     if (heapHelper) {
         for (auto allocationIndirectHeap : allocationIndirectHeaps) {
             heapHelper->storeHeapAllocation(allocationIndirectHeap);
@@ -237,6 +244,9 @@ void CommandContainer::reset() {
     setDirtyStateForAllHeaps(true);
     slmSize = std::numeric_limits<uint32_t>::max();
     clearResidencyContainer();
+    if (this->kernelDispatchStats) {
+        this->kernelDispatchStats->clear();
+    }
     if (getHeapHelper()) {
         for (auto deallocation : deallocationContainer) {
             if ((deallocation->getAllocationType() == AllocationType::internalHeap) || (deallocation->getAllocationType() == AllocationType::linearStream)) {
@@ -395,7 +405,7 @@ GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation(bool for
     GraphicsAllocation *cmdBufferAllocation = nullptr;
     if (this->reusableAllocationList) {
         const size_t alignedSize = getAlignedCmdBufferSize();
-        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, nullptr, AllocationType::commandBuffer).release();
+        cmdBufferAllocation = this->detachReusableCommandBuffer(*this->reusableAllocationList, alignedSize, forceHostMemory).release();
     }
     if (!cmdBufferAllocation) {
         cmdBufferAllocation = this->allocateCommandBuffer(forceHostMemory);
@@ -532,9 +542,9 @@ GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
 GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer(bool forceHostMemory) {
     forceHostMemory &= this->useSecondaryCommandStream;
     size_t alignedSize = getAlignedCmdBufferSize();
-    auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
-    if (!cmdBufferAllocation) {
-        this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
+    auto cmdBufferAllocation = this->detachReusableCommandBuffer(*this->immediateReusableAllocationList, alignedSize, forceHostMemory).release();
+    if (!cmdBufferAllocation && this->reusableAllocationList) {
+        cmdBufferAllocation = this->detachReusableCommandBuffer(*this->reusableAllocationList, alignedSize, forceHostMemory).release();
     }
 
     if (cmdBufferAllocation) {
@@ -773,6 +783,37 @@ void CommandContainer::extractCommonThreadData() {
 
 void CommandContainer::registerThreadData(uint64_t hash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) {
     this->threadDataTracker->registerThreadData(hash, crossThreadData, perThreadData);
+}
+
+KernelDispatchStatsTracker &CommandContainer::obtainKernelDispatchStats() {
+    if (!this->kernelDispatchStats) {
+        this->kernelDispatchStats = std::make_unique<KernelDispatchStatsTracker>();
+    }
+    return *this->kernelDispatchStats;
+}
+
+COLD_SECTION void CommandContainer::trackKernelDispatchStats(const KernelDescriptor &kernelDescriptor, const uint32_t *groupSize,
+                                                             uint32_t threadGroupIdXDimension, uint32_t threadGroupIdYDimension, uint32_t threadGroupIdZDimension,
+                                                             uint32_t slmTotalSizePerThreadGroup, uint32_t threadsPerThreadGroup, uint32_t threadGroupCount,
+                                                             bool isIndirect) {
+    this->obtainKernelDispatchStats().trackDispatch({
+        .kernelName = kernelDescriptor.kernelMetadata.kernelName,
+        .globalWorkSize = {static_cast<uint64_t>(groupSize[0]) * threadGroupIdXDimension,
+                           static_cast<uint64_t>(groupSize[1]) * threadGroupIdYDimension,
+                           static_cast<uint64_t>(groupSize[2]) * threadGroupIdZDimension},
+        .localWorkSize = {groupSize[0], groupSize[1], groupSize[2]},
+        .simdSize = kernelDescriptor.kernelAttributes.simdSize,
+        .numGrfRequired = kernelDescriptor.kernelAttributes.numGrfRequired,
+        .slmInlineSize = kernelDescriptor.kernelAttributes.slmInlineSize,
+        .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+        .barrierCount = kernelDescriptor.kernelAttributes.barrierCount,
+        .perThreadScratchSize = {kernelDescriptor.kernelAttributes.perThreadScratchSize[0],
+                                 kernelDescriptor.kernelAttributes.perThreadScratchSize[1]},
+        .threadsPerThreadGroup = threadsPerThreadGroup,
+        .threadGroupCount = threadGroupCount,
+        .usesSystolicMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode,
+        .isIndirect = isIndirect,
+    });
 }
 
 std::optional<uint64_t> CommandContainer::getCachedIohOffset(uint64_t threadDataHash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const {

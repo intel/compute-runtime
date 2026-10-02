@@ -7,7 +7,8 @@
 
 #pragma once
 
-#include "level_zero/core/source/cmdlist/cmdlist_wait_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_signal_event_parameters.h"
+#include "level_zero/core/source/cmdlist/cmdlist_wait_event_parameters.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include <level_zero/ze_api.h>
 
@@ -104,11 +105,12 @@ struct AppendBarrierArgs {
     ze_event_handle_t signalEvent;
     EventHandles waitEvents;
     L0::CmdListWaitEventParameters waitEventsParameters;
+    L0::CmdListSignalEventParameters signalEventParameters;
 
     AppendBarrierArgs(ze_event_handle_t signalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                      L0::CmdListWaitEventParameters waitEventsParameters)
+                      L0::CmdListWaitEventParameters waitEventsParameters, L0::CmdListSignalEventParameters signalEventParameters)
         : signalEvent(signalEvent), waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)),
-          waitEventsParameters(waitEventsParameters) {}
+          waitEventsParameters(waitEventsParameters), signalEventParameters(signalEventParameters) {}
 };
 
 struct AppendImageCopyFromMemoryExtArgs {

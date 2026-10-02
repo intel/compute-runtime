@@ -48,6 +48,10 @@ struct MockSubDevice : public SubDevice {
 
     ~MockSubDevice() override;
 
+    MockSubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice) : SubDevice(executionEnvironment, subDeviceIndex, rootDevice) {
+        this->deferredImmediateCmdListEnabled = false;
+    }
+
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override;
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
@@ -63,6 +67,8 @@ struct MockSubDevice : public SubDevice {
     bool queryPeerAccess(Device &peerDevice, GraphicsAllocation **probeAllocPtr, uint64_t *handle) override {
         return invokeMockQueryPeerAccess(*this, queryPeerAccessFunc, peerDevice, probeAllocPtr, handle);
     }
+    bool isDeferredImmediateCmdListEnabled() const override;
+
     MockQueryPeerAccessFunc queryPeerAccessFunc;
 };
 
@@ -77,6 +83,7 @@ class MockDevice : public RootDevice {
     using Device::createEngine;
     using Device::createSubDevices;
     using Device::debugger;
+    using Device::deferredImmediateCmdListEnabled;
     using Device::deviceBitfield;
     using Device::deviceInfo;
     using Device::executionEnvironment;
@@ -85,6 +92,7 @@ class MockDevice : public RootDevice {
     using Device::initializeCaps;
     using Device::initializePeerAccessForDevices;
     using Device::initUsmReuseLimits;
+    using Device::isaPoolAllocator;
     using Device::maxBufferPoolCount;
     using Device::microsecondResolution;
     using Device::preemptionMode;
@@ -176,7 +184,6 @@ class MockDevice : public RootDevice {
     void finalizeRayTracing();
 
     const ReleaseHelper &getReleaseHelper() const override;
-    const CompilerReleaseHelper &getCompilerReleaseHelper() const override;
     AILConfiguration *getAilConfigurationHelper() const override;
 
     void setRTDispatchGlobalsForceAllocation() {
@@ -213,6 +220,8 @@ class MockDevice : public RootDevice {
     }
 
     EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel) override;
+    bool isDeferredImmediateCmdListEnabled() const override;
+    bool areSecondaryEnginesAvailable() const override;
 
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
@@ -226,7 +235,6 @@ class MockDevice : public RootDevice {
     bool stopDirectSubmissionCalled = false;
     bool pollForCompletionCalled = false;
     ReleaseHelper *mockReleaseHelper = nullptr;
-    CompilerReleaseHelper *mockCompilerReleaseHelper = nullptr;
     AILConfiguration *mockAilConfigurationHelper = nullptr;
     uint64_t getGlobalMemorySizeReturn = 0u;
     bool callBaseGetGlobalMemorySize = true;

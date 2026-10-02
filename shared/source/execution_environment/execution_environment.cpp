@@ -27,6 +27,8 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/logger.h"
 
+#include <algorithm>
+
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
     this->configureNeoEnvironment();
@@ -37,6 +39,17 @@ UsmReusePerfLogger &ExecutionEnvironment::getUsmReusePerfLogger() const {
         usmReusePerfLogger = std::make_unique<UsmReusePerfLogger>();
     });
     return *usmReusePerfLogger;
+}
+
+void ExecutionEnvironment::addLeoPlatformKey(const HardwareInfo &hwInfo) {
+    const DeviceGroupSortKey key{hwInfo.platform.eProductFamily, hwInfo.capabilityTable.isIntegratedDevice};
+    for (const auto &existingKey : leoPlatformKeys) {
+        if (existingKey.productFamily == key.productFamily) {
+            return;
+        }
+    }
+    auto position = std::upper_bound(leoPlatformKeys.begin(), leoPlatformKeys.end(), key, compareDeviceGroups);
+    leoPlatformKeys.insert(position, key);
 }
 
 void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment) {
@@ -199,12 +212,7 @@ int ExecutionEnvironment::setErrorDescription(const std::string &str) {
     auto threadId = std::this_thread::get_id();
     {
         std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
-        if (errorDescs.find(threadId) == errorDescs.end()) {
-            errorDescs[threadId] = str;
-        } else {
-            errorDescs[threadId].clear();
-            errorDescs[threadId] = str;
-        }
+        errorDescs[threadId] = str;
     }
     return static_cast<int>(str.size());
 }
@@ -213,27 +221,24 @@ void ExecutionEnvironment::getErrorDescription(const char **ppString) {
     auto threadId = std::this_thread::get_id();
     {
         std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
-        if (errorDescs.find(threadId) == errorDescs.end()) {
-            errorDescs[threadId] = std::string();
-        }
+        *ppString = errorDescs[threadId].c_str();
     }
-    *ppString = errorDescs[threadId].c_str();
 }
 
 int ExecutionEnvironment::clearErrorDescription() {
     auto threadId = std::this_thread::get_id();
     {
         std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
-        if (errorDescs.find(threadId) != errorDescs.end()) {
-            errorDescs[threadId].clear();
+        if (auto it = errorDescs.find(threadId); it != errorDescs.end()) {
+            it->second.clear();
         }
     }
     return 0;
 }
 
 bool ExecutionEnvironment::getSubDeviceHierarchy(uint32_t index, std::tuple<uint32_t, uint32_t, uint32_t> *subDeviceMap) {
-    if (mapOfSubDeviceIndices.find(index) != mapOfSubDeviceIndices.end()) {
-        *subDeviceMap = mapOfSubDeviceIndices.at(index);
+    if (auto it = mapOfSubDeviceIndices.find(index); it != mapOfSubDeviceIndices.end()) {
+        *subDeviceMap = it->second;
         return true;
     } else {
         return false;
@@ -378,8 +383,8 @@ bool ExecutionEnvironment::adjustCcsCount() {
 bool ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const {
     auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
     UNRECOVERABLE_IF(!rootDeviceEnvironment);
-    if (rootDeviceNumCcsMap.find(rootDeviceIndex) != rootDeviceNumCcsMap.end()) {
-        if (!rootDeviceEnvironment->setNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex))) {
+    if (auto it = rootDeviceNumCcsMap.find(rootDeviceIndex); it != rootDeviceNumCcsMap.end()) {
+        if (!rootDeviceEnvironment->setNumberOfCcs(it->second)) {
             return false;
         }
     } else {

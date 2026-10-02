@@ -36,7 +36,7 @@
 #include <mutex>
 
 namespace L0 {
-ImageAllocatorFn imageFactory[NEO::maxProductEnumValue] = {};
+ImageAllocatorFn imageFactory[NEO::maxCoreEnumValue] = {};
 
 bool isImportedWin32Handle(const ze_image_desc_t *imgDesc) {
     const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(imgDesc->pNext);
@@ -118,19 +118,19 @@ ze_result_t ImageImp::destroyPeerImages(const void *ptr, Device *device) {
 
     std::unique_lock<NEO::SpinLock> lock(device->peerImageAllocationsMutex);
 
-    if (device->peerImageAllocations.find(ptr) != device->peerImageAllocations.end()) {
-        delete device->peerImageAllocations[ptr];
-        device->peerImageAllocations.erase(ptr);
+    if (auto it = device->peerImageAllocations.find(ptr); it != device->peerImageAllocations.end()) {
+        delete it->second;
+        device->peerImageAllocations.erase(it);
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze_image_handle_t *pImage) {
-    auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+    auto gfxCoreFamily = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
 
     ImageAllocatorFn allocator = nullptr;
-    allocator = imageFactory[productFamily];
+    allocator = imageFactory[gfxCoreFamily];
 
     ImageImp *image = nullptr;
 
@@ -184,9 +184,10 @@ ze_result_t ImageImp::allocateBindlessSlot() {
     auto bindlessHelper = this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getBindlessHeapsHelper();
 
     if (bindlessHelper && !bindlessInfo) {
-        auto &gfxCoreHelper = this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getHelper<NEO::GfxCoreHelper>();
+        auto &allocRootDeviceEnvironment = *this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[allocation->getRootDeviceIndex()];
+        auto &gfxCoreHelper = allocRootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
         const auto surfStateCount = NEO::BindlessImageSlot::max;
-        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getBindlessSurfaceStateSlotSize();
+        auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize(allocRootDeviceEnvironment);
 
         auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh);
         if (surfaceStateInfo.heapAllocation == nullptr) {
@@ -226,7 +227,7 @@ ze_result_t ImageImp::allocateBindlessSlotWithMipmap(uint32_t mipLevel) {
         return ZE_RESULT_SUCCESS;
     }
 
-    const auto surfaceStateSize = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>().getBindlessSurfaceStateSlotSize();
+    const auto surfaceStateSize = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>().getRenderSurfaceStateSize(rootDeviceEnvironment);
     const auto slotSize = NEO::BindlessImageSlot::max * surfaceStateSize;
 
     auto surfaceStateInfo = bindlessHeapsHelper->allocateSSInHeap(slotSize, allocation, NEO::BindlessHeapsHelper::globalSsh);
@@ -260,11 +261,12 @@ NEO::SurfaceStateInHeapInfo *ImageImp::getBindlessSlotWithMipmap(uint32_t mipLev
     return mipLevelBindlessInfo.get();
 }
 
-ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage) {
+ze_result_t Image::create(Device *device, const ze_image_desc_t *desc, Image **pImage) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     ImageAllocatorFn allocator = nullptr;
-    if (productFamily < NEO::maxProductEnumValue) {
-        allocator = imageFactory[productFamily];
+    auto gfxCoreFamily = device->getNEODevice()->getRenderCoreFamily();
+    if (gfxCoreFamily < NEO::maxCoreEnumValue) {
+        allocator = imageFactory[gfxCoreFamily];
     }
 
     ImageImp *image = nullptr;

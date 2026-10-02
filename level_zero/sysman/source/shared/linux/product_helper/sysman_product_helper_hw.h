@@ -49,6 +49,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ze_result_t getGpuBoardTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId, uint32_t sensorIndex) override;
     ze_result_t getCompositeTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
     bool isMemoryMaxTemperatureSupported() override;
+    bool isTemperatureReadFromSysfsSupported() override;
     void getSupportedSensors(std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) override;
 
     // Ras
@@ -59,7 +60,6 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isRepairStatusSupported() override;
     ze_result_t memoryGetPageOfflineStateExp(SysFsAccessInterface *pSysFsAccess, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, std::vector<MemPageInfo> &memPageInfoList, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) override;
     ze_result_t getMaxMemoryOfflinePages(SysFsAccessInterface *pSysFsAccess, uint32_t *pMaxOfflinePages) override;
-    ze_result_t getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
 
     // power
     int32_t getPowerLimitValue(uint64_t value) override;

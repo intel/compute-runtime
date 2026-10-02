@@ -266,6 +266,34 @@ TEST_F(OsContextWinTest, whenLatePreemptionStartEventIsSignalledThenCommandsAreP
     EXPECT_EQ(1u, csr.submitLateMidThreadPreemptionStartCounter);
 }
 
+TEST_F(OsContextWinTest, whenPreparingLatePreemptionStartThenCpuEventUsageEscapeIsSentWithDeviceHandle) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideLatePreemptionStart.set(1);
+    static D3DKMT_HANDLE escapeDevice;
+    static D3DKMT_HANDLE escapeAdapter;
+    escapeDevice = 0;
+    escapeAdapter = 0;
+    VariableBackup<decltype(NEO::pCallEscape)> mockCallEscape(&NEO::pCallEscape, [](D3DKMT_ESCAPE &escapeCommand) -> NTSTATUS {
+        escapeDevice = escapeCommand.hDevice;
+        escapeAdapter = escapeCommand.hAdapter;
+        return STATUS_SUCCESS;
+    });
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+
+    auto &wddm = *osInterface->getDriverModel()->as<Wddm>();
+    auto osContext = std::make_unique<OsContextWin>(wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::MidThread));
+    osContext->setCommandStreamReceiver(csr);
+
+    initPrivateData(*osContext);
+    EXPECT_NE(0u, escapeDevice);
+    EXPECT_EQ(wddm.getDeviceHandle(), escapeDevice);
+    EXPECT_EQ(wddm.getAdapter(), escapeAdapter);
+}
+
 TEST_F(OsContextWinTest, whenStopLatePreemptionStartWaitThenResourcesAreFreed) {
     static int unregisterWaitCalled;
     unregisterWaitCalled = 0;
