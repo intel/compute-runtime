@@ -179,6 +179,7 @@ UsmPoolFreeResult UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType 
         return result;
     }
     DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
+    DEBUG_BREAK_IF(false == allocationInfo->memFreeCallbacks.empty());
     StackVec<GraphicsAllocation *, 4> peerAllocations;
     if (this->peerAllocationsFn && FreePolicyType::none != policy) {
         peerAllocations = this->peerAllocationsFn(this->pool);
@@ -269,6 +270,31 @@ UsmPoolLookupResult UsmMemAllocPool::lookupAlloc(const void *ptr) {
         result.pooledAllocationSize = allocationInfo->requestedSize;
     }
     return result;
+}
+
+bool UsmMemAllocPool::addMemFreeCallback(const void *ptr, MemFreeCallback callback) {
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
+        return false;
+    }
+    std::unique_lock<std::mutex> lock(mtx);
+    auto allocationInfo = allocations.get(ptr);
+    if (nullptr == allocationInfo) {
+        return false;
+    }
+    allocationInfo->memFreeCallbacks.push_back(callback);
+    return true;
+}
+
+std::vector<MemFreeCallback> UsmMemAllocPool::takeMemFreeCallbacks(const void *ptr) {
+    if (false == isInitialized() || false == isInPoolRange(ptr)) {
+        return {};
+    }
+    std::unique_lock<std::mutex> lock(mtx);
+    auto allocationInfo = allocations.get(ptr);
+    if (nullptr == allocationInfo) {
+        return {};
+    }
+    return std::exchange(allocationInfo->memFreeCallbacks, {});
 }
 
 size_t UsmMemAllocPool::getOffsetInPool(const void *ptr) const {

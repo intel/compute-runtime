@@ -14,6 +14,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/free_policy_type.h"
+#include "shared/source/memory_manager/mem_free_callback.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
@@ -65,11 +66,6 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
         this->mappedPhysicalOffset = svmAllocData.mappedPhysicalOffset;
     }
     SvmAllocationData(SvmAllocationData &&other) noexcept = delete;
-    // Spelled out instead of using zex_mem_free_callback_fn_t, to keep shared free of L0 types.
-    struct MemFreeCallback {
-        void (*function)(void *userData);
-        void *userData;
-    };
     GraphicsAllocation *cpuAllocation = nullptr;
     MultiGraphicsAllocation gpuAllocations;
     VirtualMemoryReservation *virtualReservationData = nullptr;
@@ -81,8 +77,6 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     bool isImportedAllocation = false;
     bool isExportedAllocation = false;
     bool isExternalMemmapAllocation = false;
-    // Guarded by SVMAllocsManager::getMemFreeCallbacksMutex(): pooled chunks share one
-    // SvmAllocationData, so registrations for different chunks reach the same vector.
     std::vector<MemFreeCallback> memFreeCallbacks;
     void setAllocId(uint32_t id) {
         allocId = id;

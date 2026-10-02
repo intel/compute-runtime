@@ -10,6 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/free_policy_type.h"
+#include "shared/source/memory_manager/mem_free_callback.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
@@ -51,6 +52,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         size_t size;
         size_t requestedSize;
         std::unordered_map<Device *, bool> isResident;
+        std::vector<MemFreeCallback> memFreeCallbacks;
         bool isExported{false};
     };
 
@@ -89,6 +91,8 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     void reclaimDeferredFreeChunks();
     void markChunkExported(const void *ptr);
     UsmPoolLookupResult lookupAlloc(const void *ptr);
+    bool addMemFreeCallback(const void *ptr, MemFreeCallback callback);
+    std::vector<MemFreeCallback> takeMemFreeCallbacks(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
     uint64_t getPoolAddress() const;
     std::mutex &getMutex() noexcept { return mtx; }

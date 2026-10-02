@@ -5455,21 +5455,80 @@ TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenPointerInsidePoolRangeThat
     auto usmPool = getPoolOwningPtr(ptr);
     ASSERT_NE(nullptr, usmPool);
 
-    // freedPtr has to be freed before the callback is registered: pooled chunks share one
-    // SvmAllocationData, so freeing any live chunk would drain the list and leave nothing
-    // for the invalid free below to expose.
-    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freedPtr));
-    ASSERT_FALSE(usmPool->lookupAlloc(freedPtr).isAllocatedInPool());
-
     CallbackTracker tracker{};
     auto callbackDesc = makeCallbackDesc(tracker);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, ptr));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freedPtr));
+    ASSERT_FALSE(usmPool->lookupAlloc(freedPtr).isAllocatedInPool());
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->freeMem(freedPtr));
     EXPECT_EQ(0u, tracker.invocations);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
     EXPECT_EQ(1u, tracker.invocations);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenCallbacksOnTwoPooledChunksWhenOneIsFreedThenOnlyItsCallbackIsInvoked) {
+    auto firstPtr = allocDeviceMem(4096u);
+    auto secondPtr = allocDeviceMem(4096u);
+    ASSERT_NE(nullptr, firstPtr);
+    ASSERT_NE(nullptr, secondPtr);
+    ASSERT_NE(nullptr, getPoolOwningPtr(firstPtr));
+    ASSERT_EQ(getPoolOwningPtr(firstPtr), getPoolOwningPtr(secondPtr));
+
+    CallbackTracker firstTracker{};
+    CallbackTracker secondTracker{};
+    auto firstCallbackDesc = makeCallbackDesc(firstTracker);
+    auto secondCallbackDesc = makeCallbackDesc(secondTracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &firstCallbackDesc, firstPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &secondCallbackDesc, secondPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(firstPtr));
+    EXPECT_EQ(1u, firstTracker.invocations);
+    EXPECT_EQ(0u, secondTracker.invocations);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(secondPtr));
+    EXPECT_EQ(1u, firstTracker.invocations);
+    EXPECT_EQ(1u, secondTracker.invocations);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenTwoCallbacksOnOnePooledChunkWhenFreedThenBothAreInvokedInRegistrationOrder) {
+    auto ptr = allocDeviceMem(4096u);
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_NE(nullptr, getPoolOwningPtr(ptr));
+
+    CallbackTracker firstTracker{};
+    CallbackTracker secondTracker{};
+    auto firstCallbackDesc = makeCallbackDesc(firstTracker);
+    auto secondCallbackDesc = makeCallbackDesc(secondTracker);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &firstCallbackDesc, ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &secondCallbackDesc, ptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, firstTracker.invocations);
+    EXPECT_EQ(1u, secondTracker.invocations);
+    EXPECT_EQ(1u, firstTracker.invocationOrder);
+    EXPECT_EQ(2u, secondTracker.invocationOrder);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenFreedPooledChunkWhenRegisteringCallbackThenInvalidArgumentIsReturned) {
+    auto poolKeepAlivePtr = allocDeviceMem(4096u);
+    auto freedPtr = allocDeviceMem(4096u);
+    ASSERT_NE(nullptr, poolKeepAlivePtr);
+    ASSERT_NE(nullptr, freedPtr);
+    auto usmPool = getPoolOwningPtr(poolKeepAlivePtr);
+    ASSERT_NE(nullptr, usmPool);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freedPtr));
+    ASSERT_FALSE(usmPool->lookupAlloc(freedPtr).isAllocatedInPool());
+
+    CallbackTracker tracker{};
+    auto callbackDesc = makeCallbackDesc(tracker);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zexMemFreeRegisterCallbackExt(context->toHandle(), &callbackDesc, freedPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(poolKeepAlivePtr));
+    EXPECT_EQ(0u, tracker.invocations);
 }
 
 TEST_F(ZexMemFreeRegisterCallbackExtPooledTests, givenPooledAllocationWithCallbackWhenFreedWithDeferPolicyThenItIsInvoked) {

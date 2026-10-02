@@ -547,9 +547,11 @@ bool Context::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData
     return false;
 }
 
-void Context::invokeMemFreeCallbacks(NEO::SvmAllocationData &svmData) {
-    std::vector<NEO::SvmAllocationData::MemFreeCallback> callbacks;
-    {
+void Context::invokeMemFreeCallbacks(const void *ptr, NEO::SvmAllocationData &svmData, NEO::UsmMemAllocPool *usmPool) {
+    std::vector<NEO::MemFreeCallback> callbacks;
+    if (usmPool) {
+        callbacks = usmPool->takeMemFreeCallbacks(ptr);
+    } else {
         std::lock_guard<std::mutex> lock(this->driverHandle->svmAllocsManager->getMemFreeCallbacksMutex());
         callbacks = std::exchange(svmData.memFreeCallbacks, {});
     }
@@ -600,7 +602,7 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    this->invokeMemFreeCallbacks(*allocation);
+    this->invokeMemFreeCallbacks(ptr, *allocation, poolLookup.pool);
 
     this->releaseIpcHandle(ptr, poolLookup.pool);
 
@@ -636,7 +638,7 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
         // Required, not just for parity with freeMem: the usm reuse cache hands this
         // SvmAllocationData to the next allocation, so a list left behind here would fire
         // for an unrelated pointer.
-        this->invokeMemFreeCallbacks(*allocation);
+        this->invokeMemFreeCallbacks(ptr, *allocation, poolLookup.pool);
 
         this->releaseIpcHandle(ptr, poolLookup.pool);
 
@@ -659,13 +661,14 @@ ze_result_t Context::registerMemoryFreeCallback(zex_memory_free_callback_ext_des
     }
 
     auto *usmPool = getUsmPoolOwningPtr(ptr, allocation).pool;
-    std::lock_guard<std::mutex> lock(this->driverHandle->svmAllocsManager->getMemFreeCallbacksMutex());
     if (usmPool) {
-        // pooled chunks share one SvmAllocationData, so a list would fire callbacks of
-        // still-live chunks; keep only the newest until per-chunk storage exists
-        allocation->memFreeCallbacks.clear();
+        if (false == usmPool->addMemFreeCallback(ptr, {pfnCallbackDesc->pfnCallback, pfnCallbackDesc->pUserData})) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    } else {
+        std::lock_guard<std::mutex> lock(this->driverHandle->svmAllocsManager->getMemFreeCallbacksMutex());
+        allocation->memFreeCallbacks.push_back({pfnCallbackDesc->pfnCallback, pfnCallbackDesc->pUserData});
     }
-    allocation->memFreeCallbacks.push_back({pfnCallbackDesc->pfnCallback, pfnCallbackDesc->pUserData});
 
     return ZE_RESULT_SUCCESS;
 }

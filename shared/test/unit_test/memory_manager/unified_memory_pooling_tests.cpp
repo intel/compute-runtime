@@ -74,6 +74,62 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingIsInitializedThenRe
     EXPECT_FALSE(usmMemAllocPool.isInitialized());
     EXPECT_EQ(0u, usmMemAllocPool.getPoolAddress());
     EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(reinterpret_cast<void *>(0x1), FreePolicyType::blocking).freeSucceeded);
+    EXPECT_FALSE(usmMemAllocPool.addMemFreeCallback(reinterpret_cast<void *>(0x1), {nullptr, nullptr}));
+    EXPECT_TRUE(usmMemAllocPool.takeMemFreeCallbacks(reinterpret_cast<void *>(0x1)).empty());
+}
+
+TEST_F(UnifiedMemoryPoolingTest, givenPooledAllocationWhenAddingMemFreeCallbacksThenTheyAreTakenInRegistrationOrderAndEntryIsEmptied) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+
+    MockUsmMemAllocPool usmMemAllocPool;
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitfields);
+    ASSERT_TRUE(usmMemAllocPool.initialize(svmManager.get(), unifiedMemoryProperties, 2 * MemoryConstants::megaByte, 0u, 1 * MemoryConstants::megaByte));
+
+    auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(1024u, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, pooledPtr);
+
+    auto callbackFunction = +[](void *) {};
+    int firstUserData = 0;
+    int secondUserData = 0;
+    EXPECT_TRUE(usmMemAllocPool.addMemFreeCallback(pooledPtr, {callbackFunction, &firstUserData}));
+    EXPECT_TRUE(usmMemAllocPool.addMemFreeCallback(ptrOffset(pooledPtr, 64u), {callbackFunction, &secondUserData}));
+    auto allocationInfo = usmMemAllocPool.allocations.get(pooledPtr);
+    ASSERT_NE(nullptr, allocationInfo);
+    EXPECT_EQ(2u, allocationInfo->memFreeCallbacks.size());
+
+    auto callbacks = usmMemAllocPool.takeMemFreeCallbacks(ptrOffset(pooledPtr, 128u));
+    ASSERT_EQ(2u, callbacks.size());
+    EXPECT_EQ(&firstUserData, callbacks[0].userData);
+    EXPECT_EQ(&secondUserData, callbacks[1].userData);
+    EXPECT_TRUE(allocationInfo->memFreeCallbacks.empty());
+
+    usmMemAllocPool.cleanup();
+}
+
+TEST_F(UnifiedMemoryPoolingTest, givenPointerThatIsNotAllocatedChunkWhenAddingMemFreeCallbackThenFalseIsReturnedAndNothingIsStored) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+
+    MockUsmMemAllocPool usmMemAllocPool;
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitfields);
+    ASSERT_TRUE(usmMemAllocPool.initialize(svmManager.get(), unifiedMemoryProperties, 2 * MemoryConstants::megaByte, 0u, 1 * MemoryConstants::megaByte));
+
+    auto callbackFunction = +[](void *) {};
+    EXPECT_FALSE(usmMemAllocPool.addMemFreeCallback(reinterpret_cast<void *>(0x1), {callbackFunction, nullptr}));
+    EXPECT_TRUE(usmMemAllocPool.takeMemFreeCallbacks(reinterpret_cast<void *>(0x1)).empty());
+
+    auto pooledPtr = usmMemAllocPool.createUnifiedMemoryAllocation(1024u, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, pooledPtr);
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(pooledPtr, FreePolicyType::none).freeSucceeded);
+
+    EXPECT_FALSE(usmMemAllocPool.addMemFreeCallback(pooledPtr, {callbackFunction, nullptr}));
+    EXPECT_TRUE(usmMemAllocPool.takeMemFreeCallbacks(pooledPtr).empty());
+    EXPECT_EQ(nullptr, usmMemAllocPool.allocations.get(pooledPtr));
+
+    usmMemAllocPool.cleanup();
 }
 
 TEST_F(UnifiedMemoryPoolingTest, givenUsmPoolChunkAllocatorSizeThresholdSetWhenInitializingThenHeapAllocatorUsesGivenThreshold) {
