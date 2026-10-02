@@ -8,10 +8,8 @@
 #include "shared/test/unit_test/encoders/test_encode_slm_xe2_and_later.h"
 
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include <algorithm>
 #include <limits>
 
 using namespace NEO;
@@ -30,7 +28,6 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmSizePerSubsliceAboveAva
             .threadsPerThreadGroup = 1,
             .workloadThreadGroupCount = workloadThreadGroupCount,
             .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
-            .grfCount = GrfConfig::defaultGrfNumber,
             .slmPolicy = slmPolicy};
 
         NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
@@ -69,7 +66,6 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmSizePerSubsliceAboveAva
             .threadsPerThreadGroup = 1,
             .workloadThreadGroupCount = saturatingWorkloadThreadGroupCount,
             .slmTotalSizePerThreadGroup = availableSlmSizePerSubslice,
-            .grfCount = GrfConfig::defaultGrfNumber,
             .slmPolicy = NEO::SlmPolicy::slmPolicyLargeSlm};
         const auto threadGroupCountSharingSubsliceSlm = NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
         ASSERT_LE(2u, threadGroupCountSharingSubsliceSlm) << "a single thread group per subslice cannot exceed the available slm by sharing it";
@@ -83,45 +79,6 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmSizePerSubsliceAboveAva
 
         EXPECT_LT(previousProgrammedValue, expectedValue) << ", availableSlmSizeKb: " << availableSlmSizeKb;
         previousProgrammedValue = expectedValue;
-    }
-}
-
-HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenGrfCountLimitedSubsliceResidencyWhenCallingEncodeSlmSizePerSubSliceThenSameSlmIsEncodedAsForAnEquallyLimitedWorkload, IsAtLeastXe2HpgCore) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
-
-    auto &rootDeviceEnvironment = getRootDeviceEnvironment();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
-
-    ASSERT_TRUE(std::is_sorted(grfCounts.begin(), grfCounts.end()));
-    const uint32_t smallestGrfCount = *grfCounts.begin();
-
-    constexpr uint32_t threadsPerThreadGroup = 1;
-    constexpr uint32_t slmTotalSizePerThreadGroup = MemoryConstants::kiloByte;
-    const uint32_t saturatingWorkloadThreadGroupCount = hwInfo.gtSystemInfo.ThreadCount;
-
-    auto encodePreferredSlm = [&](uint32_t grfCount, uint32_t workloadThreadGroupCount) {
-        auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
-        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
-            .threadsPerThreadGroup = threadsPerThreadGroup,
-            .workloadThreadGroupCount = workloadThreadGroupCount,
-            .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
-            .grfCount = grfCount,
-            .slmPolicy = NEO::SlmPolicy::slmPolicyLargeSlm};
-
-        NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
-        return static_cast<uint32_t>(idd.getPreferredSlmAllocationSize());
-    };
-
-    for (auto grfCount : grfCounts) {
-        const auto maxConcurrentThreadCountPerSubslice = NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
-        const auto workloadThreadGroupCountFittingInSubslices = maxConcurrentThreadCountPerSubslice * hwInfo.gtSystemInfo.SubSliceCount;
-
-        EXPECT_EQ(encodePreferredSlm(smallestGrfCount, workloadThreadGroupCountFittingInSubslices),
-                  encodePreferredSlm(grfCount, saturatingWorkloadThreadGroupCount))
-            << ", grfCount: " << grfCount
-            << ", maxConcurrentThreadCountPerSubslice: " << maxConcurrentThreadCountPerSubslice;
     }
 }
 

@@ -9,10 +9,8 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
-#include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -77,7 +75,7 @@ class CommandEncodeStatesSlmTestXe2AndLater : public ::testing::Test {
         ASSERT_EQ(slmTotalSizePerThreadGroup, NEO::EncodeDispatchKernel<FamilyType>::alignSlmSizePerThreadGroup(slmTotalSizePerThreadGroup, releaseHelper))
             << "the size has to be already aligned, so that only the policy decides the slm size of a subslice";
 
-        const uint32_t maxThreadGroupCountSharingSubsliceSlm = NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber) / threadsPerThreadGroup;
+        const uint32_t maxThreadGroupCountSharingSubsliceSlm = NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo) / threadsPerThreadGroup;
         ASSERT_LE(2u, maxThreadGroupCountSharingSubsliceSlm);
         hwInfo.gtSystemInfo.SLMSizeInKb = static_cast<uint32_t>(slmTotalSizePerThreadGroup / MemoryConstants::kiloByte) * maxThreadGroupCountSharingSubsliceSlm;
         const uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment) * MemoryConstants::kiloByte;
@@ -87,7 +85,6 @@ class CommandEncodeStatesSlmTestXe2AndLater : public ::testing::Test {
                 .threadsPerThreadGroup = threadsPerThreadGroup,
                 .workloadThreadGroupCount = workloadThreadGroupCount,
                 .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
-                .grfCount = GrfConfig::defaultGrfNumber,
                 .slmPolicy = slmPolicy};
         };
 
@@ -137,7 +134,6 @@ class CommandEncodeStatesSlmTestXe2AndLater : public ::testing::Test {
                 .threadsPerThreadGroup = 1,
                 .workloadThreadGroupCount = hwInfo.gtSystemInfo.ThreadCount,
                 .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
-                .grfCount = GrfConfig::defaultGrfNumber,
                 .slmPolicy = NEO::SlmPolicy::slmPolicyLargeSlm};
         };
 

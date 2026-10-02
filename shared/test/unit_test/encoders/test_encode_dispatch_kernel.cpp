@@ -16,9 +16,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_descriptor.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/kernel_dispatch_stats.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -36,7 +34,6 @@
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 #include <algorithm>
-#include <limits>
 
 using namespace NEO;
 #include "shared/test/common/test_macros/heapless_matchers.h"
@@ -1744,14 +1741,10 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenForcingDifferent
     EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, pDevice->getHardwareInfo()), expectedAlignment);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingMaxConcurrentThreadCountPerSubsliceThenAllThreadsAreCountedAndDualSubSliceIsUsedAsDenominator, IsAtMostXeCore) {
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCountPerSubsliceThenUseDualSubSliceAsDenominator, IsAtMostXeCore) {
     auto &hwInfo = pDevice->getHardwareInfo();
     auto expectedValue = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
-
-    for (auto grfCount : {GrfConfig::defaultGrfNumber, GrfConfig::largeGrfNumber}) {
-        EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount)) << ", grfCount: " << grfCount;
-    }
+    EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenWorkloadThreadGroupCountWhenCalculateThreadGroupCountPerSubsliceThenDivideByDualSubSliceCountAndRoundUp, IsAtMostXeCore) {
@@ -1772,65 +1765,10 @@ HWTEST2_F(CommandEncodeStatesTest, givenWorkloadThreadGroupCountWhenCalculateThr
     EXPECT_EQ(5u, NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountPerSubslice(hwInfo, 17));
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingMaxConcurrentThreadCountPerSubsliceThenGrfCountLimitedThreadCountIsUsedAndSubSliceIsUsedAsDenominator, IsAtLeastXe2HpgCore) {
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCountPerSubsliceThenUseSubSliceAsDenominator, IsAtLeastXe2HpgCore) {
     auto &hwInfo = pDevice->getHardwareInfo();
-    const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
-
-    ASSERT_TRUE(std::is_sorted(grfCounts.begin(), grfCounts.end()));
-
-    uint32_t previousThreadCount = std::numeric_limits<uint32_t>::max();
-    for (auto grfCount : grfCounts) {
-        auto expectedValue = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount, rootDeviceEnvironment) / hwInfo.gtSystemInfo.SubSliceCount;
-        auto threadCount = NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
-
-        EXPECT_EQ(expectedValue, threadCount) << ", grfCount: " << grfCount;
-        EXPECT_LE(threadCount, hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount) << ", grfCount: " << grfCount;
-        EXPECT_GE(previousThreadCount, threadCount) << ", grfCount: " << grfCount;
-
-        previousThreadCount = threadCount;
-    }
-
-    EXPECT_LT(NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, *(grfCounts.end() - 1)),
-              NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, *grfCounts.begin()));
-}
-
-HWTEST2_F(CommandEncodeStatesTest, GivenLargestDispatchableThreadGroupWhenGettingMaxConcurrentThreadCountPerSubsliceThenWholeThreadGroupIsResident, IsAtLeastXe2HpgCore) {
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
-
-    for (auto grfCount : grfCounts) {
-        auto maxConcurrentThreadCountPerSubslice = NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
-        ASSERT_NE(0u, maxConcurrentThreadCountPerSubslice) << ", grfCount: " << grfCount;
-
-        for (auto simd : {16u, 32u}) {
-            auto maxThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, CommonConstants::maxWorkgroupSize, grfCount, rootDeviceEnvironment);
-
-            EXPECT_LE(maxThreadsPerThreadGroup, maxConcurrentThreadCountPerSubslice)
-                << ", grfCount: " << grfCount
-                << ", simd: " << simd
-                << ", maxThreadsPerThreadGroup: " << maxThreadsPerThreadGroup
-                << ", maxConcurrentThreadCountPerSubslice: " << maxConcurrentThreadCountPerSubslice;
-        }
-    }
-}
-
-HWTEST2_F(CommandEncodeStatesTest, givenThreadCountLimitedHwInfoWhenGettingMaxConcurrentThreadCountPerSubsliceThenThreadCountIsDividedBySubSliceCount, IsAtLeastXe2HpgCore) {
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-
-    hwInfo.gtSystemInfo.ThreadCount = 64;
-    hwInfo.gtSystemInfo.EUCount = 1024;
-
-    for (auto grfCount : {GrfConfig::defaultGrfNumber, GrfConfig::largeGrfNumber}) {
-        hwInfo.gtSystemInfo.SubSliceCount = 8;
-        EXPECT_EQ(8u, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount)) << ", grfCount: " << grfCount;
-
-        hwInfo.gtSystemInfo.SubSliceCount = 4;
-        EXPECT_EQ(16u, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount)) << ", grfCount: " << grfCount;
-    }
+    auto expectedValue = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
+    EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenWorkloadThreadGroupCountWhenCalculateThreadGroupCountPerSubsliceThenDivideBySubSliceCountAndRoundUp, IsAtLeastXe2HpgCore) {
@@ -1856,18 +1794,16 @@ HWTEST2_F(CommandEncodeStatesTest, givenWorkloadAndThreadGroupSizeWhenCalculatin
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     hwInfo.gtSystemInfo.ThreadCount = 64;
-    hwInfo.gtSystemInfo.EUCount = 1024;
     hwInfo.gtSystemInfo.SubSliceCount = 8;
 
-    constexpr uint32_t maxConcurrentThreadCountPerSubslice = 8;
-    ASSERT_EQ(maxConcurrentThreadCountPerSubslice, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber));
+    constexpr uint32_t threadCountPerSubslice = 8;
+    ASSERT_EQ(threadCountPerSubslice, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
 
     auto calculateThreadGroupCountSharingSubsliceSlm = [&](uint32_t threadsPerThreadGroup, uint32_t workloadThreadGroupCount) {
         NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
             .threadsPerThreadGroup = threadsPerThreadGroup,
             .workloadThreadGroupCount = workloadThreadGroupCount,
             .slmTotalSizePerThreadGroup = 0,
-            .grfCount = GrfConfig::defaultGrfNumber,
             .slmPolicy = NEO::SlmPolicy::slmPolicyNone};
 
         return NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
@@ -1890,51 +1826,6 @@ HWTEST2_F(CommandEncodeStatesTest, givenWorkloadAndThreadGroupSizeWhenCalculatin
     EXPECT_EQ(2u, calculateThreadGroupCountSharingSubsliceSlm(4, 16));
 }
 
-HWTEST2_F(CommandEncodeStatesTest, GivenEveryDispatchableThreadGroupSizeWhenCalculatingThreadGroupCountSharingSubsliceSlmThenAtLeastOneThreadGroupSharesTheSubslice, IsAtLeastXe2HpgCore) {
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const auto &hwInfo = pDevice->getHardwareInfo();
-    const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
-
-    const uint32_t saturatingWorkloadThreadGroupCount = hwInfo.gtSystemInfo.ThreadCount;
-
-    for (auto grfCount : grfCounts) {
-        const auto maxConcurrentThreadCountPerSubslice = NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, grfCount);
-        ASSERT_NE(0u, maxConcurrentThreadCountPerSubslice) << ", grfCount: " << grfCount;
-
-        for (auto simd : {16u, 32u}) {
-            const auto maxThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, CommonConstants::maxWorkgroupSize, grfCount, rootDeviceEnvironment);
-            ASSERT_NE(0u, maxThreadsPerThreadGroup) << ", grfCount: " << grfCount << ", simd: " << simd;
-
-            for (uint32_t threadsPerThreadGroup = 1; threadsPerThreadGroup <= maxThreadsPerThreadGroup; threadsPerThreadGroup++) {
-                for (auto workloadThreadGroupCount : {1u, saturatingWorkloadThreadGroupCount}) {
-                    NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
-                        .threadsPerThreadGroup = threadsPerThreadGroup,
-                        .workloadThreadGroupCount = workloadThreadGroupCount,
-                        .slmTotalSizePerThreadGroup = 0,
-                        .grfCount = grfCount,
-                        .slmPolicy = NEO::SlmPolicy::slmPolicyNone};
-
-                    const auto threadGroupCountSharingSubsliceSlm = NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
-
-                    // a thread group that can be dispatched always shares the slm of a subslice with at least itself,
-                    // otherwise no slm at all would be programmed for a kernel that asked for it
-                    EXPECT_NE(0u, threadGroupCountSharingSubsliceSlm)
-                        << ", grfCount: " << grfCount
-                        << ", simd: " << simd
-                        << ", threadsPerThreadGroup: " << threadsPerThreadGroup
-                        << ", workloadThreadGroupCount: " << workloadThreadGroupCount;
-                    EXPECT_LE(threadGroupCountSharingSubsliceSlm, maxConcurrentThreadCountPerSubslice / threadsPerThreadGroup)
-                        << ", grfCount: " << grfCount
-                        << ", simd: " << simd
-                        << ", threadsPerThreadGroup: " << threadsPerThreadGroup
-                        << ", workloadThreadGroupCount: " << workloadThreadGroupCount;
-                }
-            }
-        }
-    }
-}
-
 HWTEST2_F(CommandEncodeStatesTest, givenWorkloadAndThreadGroupSizeWhenCalculatingThreadGroupCountSharingSubsliceSlmThenWorkloadSizeIsIgnoredAndCountIsRoundedUp, IsAtMostXeCore) {
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
@@ -1942,15 +1833,14 @@ HWTEST2_F(CommandEncodeStatesTest, givenWorkloadAndThreadGroupSizeWhenCalculatin
     hwInfo.gtSystemInfo.ThreadCount = 64;
     hwInfo.gtSystemInfo.DualSubSliceCount = 8;
 
-    constexpr uint32_t maxConcurrentThreadCountPerSubslice = 8;
-    ASSERT_EQ(maxConcurrentThreadCountPerSubslice, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber));
+    constexpr uint32_t threadCountPerSubslice = 8;
+    ASSERT_EQ(threadCountPerSubslice, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
 
     auto calculateThreadGroupCountSharingSubsliceSlm = [&](uint32_t threadsPerThreadGroup, uint32_t workloadThreadGroupCount) {
         NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
             .threadsPerThreadGroup = threadsPerThreadGroup,
             .workloadThreadGroupCount = workloadThreadGroupCount,
             .slmTotalSizePerThreadGroup = 0,
-            .grfCount = GrfConfig::defaultGrfNumber,
             .slmPolicy = NEO::SlmPolicy::slmPolicyNone};
 
         return NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
