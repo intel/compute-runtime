@@ -542,14 +542,6 @@ bool ProductHelperHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const {
-    constexpr size_t defaultLimitValue = MemoryConstants::kiloByte;
-
-    uint32_t limitValue = debugManager.flags.LimitIsaPrefetchSize.getIfNotDefault(static_cast<uint32_t>(defaultLimitValue));
-    return std::min(isaSize, limitValue);
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
     if (debugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
         return debugManager.flags.DoNotReportTile1BscWaActive.get();

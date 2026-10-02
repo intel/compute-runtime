@@ -1422,7 +1422,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalse
     EXPECT_FALSE(productHelper->isLEOSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenIsaSizeExceedingDefaultLimitWhenGettingIsaPrefetchSizeThenDefaultLimitIsReturned) {
+HWTEST2_F(ProductHelperTest, givenIsaSizeExceedingDefaultLimitWhenGettingIsaPrefetchSizeThenDefaultLimitIsReturned, IsAtMostXe3Core) {
     constexpr uint32_t isaSize = 4 * MemoryConstants::kiloByte;
 
     EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(isaSize));
@@ -1440,4 +1440,18 @@ HWTEST_F(ProductHelperTest, givenLimitIsaPrefetchSizeDebugFlagSetWhenGettingIsaP
 
     EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
     EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte)));
+}
+
+HWTEST2_F(ProductHelperTest, givenNoDebugFlagSetWhenGettingIsaPrefetchSizeThenWholeIsaSizeIsReturned, IsAtLeastXe3pCore) {
+    EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(0u));
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte / 2), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte / 2)));
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte)));
+    EXPECT_EQ(static_cast<uint32_t>(64 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(64 * MemoryConstants::kiloByte)));
+}
+
+HWTEST_F(ProductHelperTest, givenLimitIsaPrefetchSizeDebugFlagSetToZeroWhenGettingIsaPrefetchSizeThenPrefetchIsDisabled) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.LimitIsaPrefetchSize.set(0);
+
+    EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
 }

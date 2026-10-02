@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 
 namespace NEO {
@@ -16,6 +17,14 @@ std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t p
         return true;
     }
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const {
+    if (debugManager.flags.LimitIsaPrefetchSize.get() != -1) {
+        return std::min(isaSize, static_cast<uint32_t>(debugManager.flags.LimitIsaPrefetchSize.get()));
+    }
+    return isaSize;
 }
 
 } // namespace NEO

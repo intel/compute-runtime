@@ -274,29 +274,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnC
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
 }
 
-CRITEST_F(CriProductHelper, givenNoDebugFlagSetWhenGettingIsaPrefetchSizeThenWholeIsaSizeIsReturned) {
-    EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(0u));
-    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte / 2), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte / 2)));
-    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte)));
-    EXPECT_EQ(static_cast<uint32_t>(64 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(64 * MemoryConstants::kiloByte)));
-}
-
-CRITEST_F(CriProductHelper, givenLimitIsaPrefetchSizeDebugFlagSetWhenGettingIsaPrefetchSizeThenDebugFlagValueLimitsIsaSize) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.LimitIsaPrefetchSize.set(2 * MemoryConstants::kiloByte);
-
-    EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
-    EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(2 * MemoryConstants::kiloByte)));
-    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(static_cast<uint32_t>(MemoryConstants::kiloByte)));
-}
-
-CRITEST_F(CriProductHelper, givenLimitIsaPrefetchSizeDebugFlagSetToZeroWhenGettingIsaPrefetchSizeThenPrefetchIsDisabled) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.LimitIsaPrefetchSize.set(0);
-
-    EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIfWriteSplitIsRequiredThenTrueReturned) {
     EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
     EXPECT_TRUE(productHelper->isWriteSplitRequired(true));

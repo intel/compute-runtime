@@ -183,14 +183,6 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const {
-    if (debugManager.flags.LimitIsaPrefetchSize.get() != -1) {
-        return std::min(isaSize, static_cast<uint32_t>(debugManager.flags.LimitIsaPrefetchSize.get()));
-    }
-    return isaSize;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const {
     switch (debugManager.flags.OverrideBcsWriteSplit.get()) {
     case 0:

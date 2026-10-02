@@ -384,6 +384,11 @@ std::optional<bool> ProductHelperHw<IGFX_UNKNOWN>::isCoherentAllocation(uint64_t
     return std::nullopt;
 }
 
+template <>
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getIsaPrefetchSize(uint32_t isaSize) const {
+    return std::min(isaSize, static_cast<uint32_t>(MemoryConstants::kiloByte));
+}
+
 struct UnknownProduct {
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = false;
