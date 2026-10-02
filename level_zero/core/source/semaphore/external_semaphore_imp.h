@@ -31,6 +31,7 @@ class ExternalSemaphoreImp : public ExternalSemaphore {
     static void semaphoreSignal(const ExternalSemaphoreOperationData &operationData);
 
     ExternalSemaphore *toBase() { return static_cast<ExternalSemaphore *>(this); }
+    static bool areImportedToDevice(Device &device, uint32_t numSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores);
 
     std::unique_ptr<NEO::ExternalSemaphore> neoExternalSemaphore;
 

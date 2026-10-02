@@ -451,5 +451,49 @@ HWTEST_F(ExternalSemaphoreTest, givenExternalSemaphoreWhenSemaphoreSignalHostFun
     EXPECT_EQ(neoSemaphore->lastSignalValue, 7u);
 }
 
+HWTEST_F(ExternalSemaphoreTest, givenSemaphoresWhenAreImportedToDeviceIsCalledThenTrueIsReturnedOnlyIfAllUseDeviceOsInterface) {
+    NEO::OSInterface otherDeviceOsInterface;
+    ExternalSemaphoreImp semaphores[3];
+    ze_external_semaphore_ext_handle_t hSemaphores[3];
+    for (uint32_t i = 0; i < 3; i++) {
+        semaphores[i].neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>();
+        semaphores[i].neoExternalSemaphore->osInterface = device->getOsInterface();
+        hSemaphores[i] = semaphores[i].toHandle();
+    }
+    semaphores[2].neoExternalSemaphore->osInterface = &otherDeviceOsInterface;
+
+    EXPECT_TRUE(ExternalSemaphoreImp::areImportedToDevice(*device, 0, nullptr));
+    EXPECT_TRUE(ExternalSemaphoreImp::areImportedToDevice(*device, 2, hSemaphores));
+    EXPECT_FALSE(ExternalSemaphoreImp::areImportedToDevice(*device, 3, hSemaphores));
+    EXPECT_FALSE(ExternalSemaphoreImp::areImportedToDevice(*device, 1, &hSemaphores[2]));
+}
+
+HWTEST_F(ExternalSemaphoreTest, givenSemaphoreImportedToDifferentDeviceWhenAppendingWaitOrSignalThenInvalidArgumentIsReturnedAndFenceValuesAreNotAcquired) {
+    MockCommandListExtSem<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    NEO::OSInterface otherDeviceOsInterface;
+    ExternalSemaphoreImp semaphore0;
+    ExternalSemaphoreImp semaphore1;
+    semaphore0.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>();
+    semaphore1.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>();
+    semaphore0.neoExternalSemaphore->osInterface = device->getOsInterface();
+    semaphore1.neoExternalSemaphore->osInterface = &otherDeviceOsInterface;
+    auto neoSemaphore0 = static_cast<MockNeoExtSemaphore *>(semaphore0.neoExternalSemaphore.get());
+    auto neoSemaphore1 = static_cast<MockNeoExtSemaphore *>(semaphore1.neoExternalSemaphore.get());
+    ze_external_semaphore_ext_handle_t hSemaphores[] = {semaphore0.toHandle(), semaphore1.toHandle()};
+
+    ze_external_semaphore_wait_params_ext_t waitParams[2] = {};
+    ze_external_semaphore_signal_params_ext_t signalParams[2] = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList.appendWaitExternalSemaphores(2, hSemaphores, waitParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList.appendSignalExternalSemaphores(2, hSemaphores, signalParams, nullptr, 0, nullptr));
+
+    EXPECT_EQ(0u, cmdList.appendHostFunctionCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore0->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore0->acquireSignalFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore1->acquireWaitFenceValueCalledTimes);
+    EXPECT_EQ(0u, neoSemaphore1->acquireSignalFenceValueCalledTimes);
+}
+
 } // namespace ult
 } // namespace L0

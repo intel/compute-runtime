@@ -127,4 +127,14 @@ ze_result_t ExternalSemaphoreImp::releaseExternalSemaphore() {
     return ZE_RESULT_SUCCESS;
 }
 
+bool ExternalSemaphoreImp::areImportedToDevice(Device &device, uint32_t numSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores) {
+    const auto osInterface = device.getOsInterface();
+    for (uint32_t i = 0; i < numSemaphores; ++i) {
+        if (static_cast<ExternalSemaphoreImp *>(hSemaphores[i])->neoExternalSemaphore->osInterface != osInterface) {
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace L0
