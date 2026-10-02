@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "wsl_compute_helper_types_tokens.h"
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define CCONV __cdecl
 static const char *wslComputeHelperLibName = "wsl_compute_helper.dll";
 #else

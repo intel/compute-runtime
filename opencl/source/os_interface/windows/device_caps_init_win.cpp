@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#ifdef _WIN32
+#if defined(_WIN32)
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"

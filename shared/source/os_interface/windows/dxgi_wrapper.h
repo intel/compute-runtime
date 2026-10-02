@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,6 @@
 
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
-#if _WIN32
+#if defined(_WIN32)
 #include <dxgi.h>
 #endif

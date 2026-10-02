@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#ifdef _WIN32
+#if defined(_WIN32)
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #else // !_WIN32
 #ifdef WDDM_LINUX

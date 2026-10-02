@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <windows.h>
 
 #include <io.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#ifndef _WIN32
+#if !defined(_WIN32)
 #define COM_NO_WINDOWS_H
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #endif
@@ -28,7 +28,7 @@
 
 static const char *const dXCoreCreateAdapterFactoryFuncName = "DXCoreCreateAdapterFactory";
 
-#ifndef _WIN32
+#if !defined(_WIN32)
 template <>
 inline GUID uuidof<IDXCoreAdapterFactory>() { return IID_IDXCoreAdapterFactory; }
 template <>

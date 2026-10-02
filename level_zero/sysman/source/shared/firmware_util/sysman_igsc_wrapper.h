@@ -7,7 +7,7 @@
 
 #pragma once
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #pragma warning(push)
 #pragma warning(disable : 4200)
 #endif
@@ -16,6 +16,6 @@
 
 using IgscDeviceInfo = igsc_device_info;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #pragma warning(pop)
 #endif

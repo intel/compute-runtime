@@ -620,7 +620,7 @@ typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clGetGLContextInfoKHR)(
     void *paramValue,
     size_t *paramValueSizeRet) CL_API_SUFFIX__VERSION_1_0;
 
-#ifndef _WIN32
+#if !defined(_WIN32)
 typedef void *clGetDeviceIDsFromDX9INTEL_fn;
 typedef void *clCreateFromDX9MediaSurfaceINTEL_fn;
 typedef void *clEnqueueAcquireDX9ObjectsINTEL_fn;

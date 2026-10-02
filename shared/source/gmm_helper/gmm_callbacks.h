@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#ifndef _WIN32
+#if !defined(_WIN32)
 #define __stdcall
 #endif
 

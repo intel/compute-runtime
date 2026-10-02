@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <direct.h>
 #include <process.h>
 #pragma warning(disable : 4996)
@@ -16,7 +16,7 @@
 #include <iostream>
 #include <vector>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 const char *fSeparator = "\\";
 #elif defined(__linux__)
 const char *fSeparator = "/";

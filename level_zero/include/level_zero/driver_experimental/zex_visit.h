@@ -33,7 +33,7 @@ typedef enum _ze_command_visit_ext_version_t {
 extern "C" {
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define VISITOR_CCONV __cdecl
 #else
 #define VISITOR_CCONV

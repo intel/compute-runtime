@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#if _WIN32
+#if defined(_WIN32)
 #if __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wignored-pragma-intrinsic"

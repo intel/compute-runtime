@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ typedef struct _tagCLGLBufferInfo {
     GLboolean createOrDestroy;
 } CL_GL_BUFFER_INFO, *PCL_GL_BUFFER_INFO;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 // Used for creating GL sync objects from CL events
 typedef struct _tagCLGLSyncInfo {
     char *eventName{};
@@ -105,7 +105,7 @@ typedef struct _tagCLGLDispatch {
     INTELpfn_clEnqueueMarkerWithSyncObjectINTEL clEnqueueMarkerWithSyncObjectINTEL;
 } CL_GL_DISPATCH, *PCL_GL_DISPATCH;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 typedef struct _tagCLGLContextInfo {
     D3DKMT_HANDLE DeviceHandle;
     D3DKMT_HANDLE ContextHandle;

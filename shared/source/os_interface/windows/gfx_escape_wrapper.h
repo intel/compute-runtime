@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include "gfxEscape.h"
 #else // !_WIN32
 typedef struct GFX_ESCAPE_HEADER { // NOLINT(readability-identifier-naming)

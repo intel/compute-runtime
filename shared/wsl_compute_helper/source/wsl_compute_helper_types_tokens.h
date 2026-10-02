@@ -15,7 +15,7 @@
 #include <type_traits>
 
 #ifndef WCH_SAFE_COPY
-#ifdef WIN32
+#if defined(_WIN32)
 #define WCH_SAFE_COPY memcpy_s
 #else
 inline int safeCopy(void *dst, size_t dstSize, const void *src, size_t sizeToCopy) {

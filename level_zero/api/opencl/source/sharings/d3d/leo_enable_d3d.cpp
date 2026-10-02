@@ -5,7 +5,7 @@
  *
  */
 
-#ifdef _WIN32
+#if defined(_WIN32)
 
 #include "level_zero/api/opencl/source/sharings/d3d/leo_enable_d3d.h"
 

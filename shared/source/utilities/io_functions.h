@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <direct.h>
 #else
 #include <sys/stat.h>
@@ -62,7 +62,7 @@ inline int snprintf(char *buff, size_t buffLen, char const *const formatStr, ...
     return ret;
 }
 
-#ifdef _WIN32
+#if defined(_WIN32)
 inline int makedir(const char *dirName) {
     return _mkdir(dirName);
 }

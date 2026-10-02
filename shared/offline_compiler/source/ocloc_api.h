@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ typedef struct _ocloc_name_version {
 } ocloc_name_version;
 // NOLINTEND(readability-identifier-naming)
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define SIGNATURE __declspec(dllexport) int __cdecl
 #else
 #define SIGNATURE int

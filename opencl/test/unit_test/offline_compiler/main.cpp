@@ -23,12 +23,6 @@
 #include <fstream>
 #include <igfxfmid.h>
 
-#ifdef WIN32
-const char *fSeparator = "\\";
-#elif defined(__linux__)
-const char *fSeparator = "/";
-#endif
-
 Environment *gEnvironment;
 extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;

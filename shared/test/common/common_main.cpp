@@ -59,7 +59,7 @@ bool disabled = false;
 extern const char *executionDirectorySuffix;
 extern bool useMockGmm;
 
-#ifdef WIN32
+#if defined(_WIN32)
 const char *fSeparator = "\\";
 #else
 const char *fSeparator = "/";
@@ -395,7 +395,7 @@ int main(int argc, char **argv) {
             executionDirectory += "/";
             executionDirectory += std::to_string(testRevId);
 
-#ifdef WIN32
+#if defined(_WIN32)
 #include <direct.h>
             if (_chdir(executionDirectory.c_str())) {
                 std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;

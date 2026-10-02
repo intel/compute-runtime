@@ -11,7 +11,7 @@
 #include "shared/wsl_compute_helper/source/wsl_compute_helper.h"
 #include "shared/wsl_compute_helper/source/wsl_compute_helper_types_tokens_structs.h"
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
 #else
 #define EXPORT __attribute__((__visibility__("default")))

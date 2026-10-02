@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ HRESULT WINAPI ultDxCoreCreateAdapterFactory(REFIID riid, void **ppFactory) {
 }
 
 void WINAPI ultGetSystemInfo(SYSTEM_INFO *pSystemInfo) {
-#ifdef _WIN32
+#if defined(_WIN32)
     pSystemInfo->lpMaximumApplicationAddress = is32bit ? (LPVOID)MemoryConstants::max32BitAppAddress : (LPVOID)MemoryConstants::max64BitAppAddress;
 #endif
 }

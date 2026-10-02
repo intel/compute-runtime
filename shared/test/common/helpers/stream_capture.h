@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <string>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <io.h>
 #else
 #include <cstring>
@@ -21,7 +21,7 @@
 class StreamCapture {
   public:
     ~StreamCapture() {
-#ifdef _WIN32
+#if defined(_WIN32)
         if (pipefdStdout[0] != -1) {
             _close(pipefdStdout[0]);
         }
@@ -55,7 +55,7 @@ class StreamCapture {
 
   private:
     void captureStream(FILE *stream, int pipefd[2], int &savedFd) {
-#ifdef _WIN32
+#if defined(_WIN32)
         _pipe(pipefd, bufferSize, O_TEXT);
         fflush(stream);
         savedFd = _dup(_fileno(stream));
@@ -76,7 +76,7 @@ class StreamCapture {
     }
 
     std::string getCapturedStream(FILE *stream, int pipefd[2], int &savedFd) {
-#ifdef _WIN32
+#if defined(_WIN32)
         fflush(stream);
         _dup2(savedFd, _fileno(stream));
         _close(savedFd);

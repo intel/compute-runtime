@@ -18,15 +18,15 @@
 #include <map>
 #include <sys/stat.h>
 #include <thread>
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 #include <conio.h>
 #include <shlobj_core.h>
 #include <string>
-#else // defined(_WIN32) || defined(_WIN64)#
+#else // defined(_WIN32)
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
-#endif // defined(_WIN32) || defined(_WIN64)
+#endif // defined(_WIN32)
 #include <cstring>
 #include <mutex>
 #include <sstream>
@@ -350,7 +350,7 @@ void setPowerLimitExp(const zes_pwr_handle_t &handle, std::vector<std::string> &
     }
 }
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 int geteuid() {
     if (IsUserAnAdmin()) {
         return 0;
@@ -358,7 +358,7 @@ int geteuid() {
         return -1;
     }
 }
-#endif // defined(_WIN32) || defined(_WIN64)
+#endif // defined(_WIN32)
 static std::string getPowerDomainType(zes_power_domain_t type) {
     static const std::map<zes_power_domain_t, std::string> powerDomainEnumToStringMap{
         {ZES_POWER_DOMAIN_CARD, "ZES_POWER_DOMAIN_CARD"},
@@ -2710,7 +2710,7 @@ std::string getInfoLogRecordTypeString(zes_info_log_record_type_ext_t recordType
 
 // Cross-platform non-blocking character input
 // Returns the character code if a key is pressed, or -1 if no input
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 int getCh() {
     if (_kbhit()) {
         return _getch();
@@ -3386,11 +3386,11 @@ bool validateGetenv(const char *name) {
 }
 int enableSysman() {
     int ret = 0;
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
     ret = _putenv_s("ZES_ENABLE_SYSMAN", "1");
-#else  // defined(_WIN32) || defined(_WIN64)
+#else  // defined(_WIN32)
     ret = setenv("ZES_ENABLE_SYSMAN", "1", 1);
-#endif // defined(_WIN32) || defined(_WIN64)
+#endif // defined(_WIN32)
     return ret;
 }
 

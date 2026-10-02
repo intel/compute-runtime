@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#ifdef _WIN32
+#if defined(_WIN32)
 
 #include "opencl/source/sharings/d3d/enable_d3d.h"
 

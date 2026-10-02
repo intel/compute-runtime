@@ -5,7 +5,7 @@
  *
  */
 
-#ifdef _WIN32
+#if defined(_WIN32)
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
