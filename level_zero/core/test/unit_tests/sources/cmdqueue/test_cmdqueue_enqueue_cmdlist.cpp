@@ -1567,5 +1567,185 @@ HWTEST_F(CommandQueueExecuteDefaultCommandLists,
     testPatchPreambleAsyncPatchList<FamilyType>(true);
 }
 
+HWTEST_F(CommandQueueExecuteDefaultCommandLists, givenPatchPreambleCrossSyncWhenTwoCommandListsExecutedWithOwnSyncRequirementThenCommandsAreDispatchedInCorrectOrder) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    const bool useSemaphore64bCmd = neoDevice->getDeviceInfo().semaphore64bCmdSupport;
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto csr = commandQueue->getCsr();
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto commandList1 = CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ze_command_list_handle_t commandListHandle1 = commandList1->toHandle();
+    commandList1->close();
+
+    auto cmdList1StartingGpuAddress = commandList1->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
+
+    auto commandList2 = CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ze_command_list_handle_t commandListHandle2 = commandList2->toHandle();
+    commandList2->close();
+
+    auto cmdList2StartingGpuAddress = commandList2->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
+
+    PatchPreambleCounter externalCounterForCmdList1 = 0x10;
+    PatchPreambleDeviceGpuAddress externalDeviceGpuAddressForCmdList1 = 0xABC000;
+    MockGraphicsAllocation externalAllocForCmdList1(nullptr, externalDeviceGpuAddressForCmdList1, 0x8);
+
+    PatchPreambleDeviceGpuAddress externalDeviceGpuAddressForCmdList2 = 0xDEF000;
+    MockGraphicsAllocation externalAllocForCmdList2(nullptr, externalDeviceGpuAddressForCmdList2, 0x8);
+    PatchPreambleCounter externalCounterForCmdList2 = 0x20;
+
+    PatchPreambleCountersCrossSyncContainer crossSyncContainer;
+    crossSyncContainer.list.push_back({externalCounterForCmdList1,
+                                       externalDeviceGpuAddressForCmdList1,
+                                       &externalAllocForCmdList1,
+                                       commandList1});
+    crossSyncContainer.list.push_back({externalCounterForCmdList2,
+                                       externalDeviceGpuAddressForCmdList2,
+                                       &externalAllocForCmdList2,
+                                       commandList2});
+
+    commandQueue->setPatchingPreamble(true);
+
+    // initialize internal patch preamble counter and get counter data
+    uint64_t internalCounterValue = 0;
+    uint64_t *internalHostAddress = nullptr;
+    uint64_t internalHostGpuAddress = 0;
+    NEO::GraphicsAllocation *internalHostGraphicsAllocation = nullptr;
+    uint64_t internalDeviceGpuAddress = 0;
+    NEO::GraphicsAllocation *internalDeviceNodeGraphicsAllocation = nullptr;
+
+    commandQueue->getPatchPreambleFullData(internalCounterValue,
+                                           internalHostAddress,
+                                           internalHostGpuAddress,
+                                           internalHostGraphicsAllocation,
+                                           internalDeviceGpuAddress,
+                                           internalDeviceNodeGraphicsAllocation);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.patchPreambleCountersCrossSyncContainer = &crossSyncContainer;
+    internalOptions.patchPreambleRequiredCounter = internalCounterValue;
+    internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress = internalDeviceGpuAddress;
+
+    ze_command_list_handle_t cmdLists[] = {commandListHandle1, commandListHandle2};
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    returnValue = commandQueue->executeCommandLists(2, cmdLists, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    // verify external sync allocations are added to the residency
+    EXPECT_TRUE(ultCsr->isMadeResident(&externalAllocForCmdList1));
+    EXPECT_TRUE(ultCsr->isMadeResident(&externalAllocForCmdList2));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    // first in sequence is device patch preamble post-sync
+    auto pipeControlCmds = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControlCmds.size());
+    auto pipeControlDevicePatchPreamblePostSyncIt = cmdList.end();
+    for (auto &pipeControlCmdIt : pipeControlCmds) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlCmdIt);
+        auto actualAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA &&
+            internalDeviceGpuAddress == actualAddress &&
+            pipeControl->getImmediateData() == internalCounterValue) {
+            pipeControlDevicePatchPreamblePostSyncIt = pipeControlCmdIt;
+            break;
+        }
+    }
+    ASSERT_NE(cmdList.end(), pipeControlDevicePatchPreamblePostSyncIt);
+
+    // now use pipe control iterator as a starting point to search for bb start for 1st command list
+    auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(pipeControlDevicePatchPreamblePostSyncIt, cmdList.end());
+    // expect 2 bb start commands, one for each command list, as there must be a return to the command queue after 1st command list execution
+    // to insert 2nd command list sem wait for the external sync and jump to 2nd command list using bb start
+    ASSERT_EQ(2u, bbStartCmds.size());
+    auto bbStartCmdList1It = cmdList.end();
+    auto bbStartCmdList2It = cmdList.end();
+    for (auto bbStartCmdIt : bbStartCmds) {
+        auto bbs = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartCmdIt);
+        if (bbs->getBatchBufferStartAddress() == cmdList1StartingGpuAddress) {
+            bbStartCmdList1It = bbStartCmdIt;
+        }
+        if (bbs->getBatchBufferStartAddress() == cmdList2StartingGpuAddress) {
+            bbStartCmdList2It = bbStartCmdIt;
+        }
+    }
+    ASSERT_NE(cmdList.end(), bbStartCmdList1It);
+    ASSERT_NE(cmdList.end(), bbStartCmdList2It);
+
+    // between these two commands should be sem wait for 1st command list
+    auto semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(pipeControlDevicePatchPreamblePostSyncIt, bbStartCmdList1It);
+    // expect 1 sem wait command for 1st command list
+    ASSERT_EQ(1u, semWaitCmds.size());
+    auto semWaitBeforeCmdList1Cmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(*semWaitCmds[0]);
+    EXPECT_EQ(externalDeviceGpuAddressForCmdList1, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitBeforeCmdList1Cmd));
+
+    // if qword indirect, find also 2 lri cmds
+    if (qwordIndirect) {
+        auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(pipeControlDevicePatchPreamblePostSyncIt, bbStartCmdList1It);
+        // expect 2 lri commands for 1st command list
+        ASSERT_EQ(2u, lriCmds.size());
+        auto lriLowerDwordBeforeCmdList1Cmd1 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[0]);
+        EXPECT_EQ(externalCounterForCmdList1, lriLowerDwordBeforeCmdList1Cmd1->getDataDword());
+        auto lriHigherDwordBeforeCmdList1Cmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[1]);
+        EXPECT_EQ(0u, lriHigherDwordBeforeCmdList1Cmd2->getDataDword());
+    } else {
+        EXPECT_EQ(externalCounterForCmdList1, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitBeforeCmdList1Cmd));
+    }
+
+    // between 1st and 2nd bb start commands should be sem wait for 2nd command list
+    auto semWaitCmds2 = findAll<MI_SEMAPHORE_WAIT *>(bbStartCmdList1It, bbStartCmdList2It);
+    // expect 1 sem wait command for 2nd command list
+    ASSERT_EQ(1u, semWaitCmds2.size());
+    auto semWaitBeforeCmdList2Cmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(*semWaitCmds2[0]);
+    EXPECT_EQ(externalDeviceGpuAddressForCmdList2, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitBeforeCmdList2Cmd));
+
+    // if qword indirect, find also 2 lri cmds
+    if (qwordIndirect) {
+        auto lriCmds2 = findAll<MI_LOAD_REGISTER_IMM *>(bbStartCmdList1It, bbStartCmdList2It);
+        // expect 2 lri commands for 2nd command list
+        ASSERT_EQ(2u, lriCmds2.size());
+        auto lriLowerDwordBeforeCmdList2Cmd1 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds2[0]);
+        EXPECT_EQ(externalCounterForCmdList2, lriLowerDwordBeforeCmdList2Cmd1->getDataDword());
+        auto lriHigherDwordBeforeCmdList2Cmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds2[1]);
+        EXPECT_EQ(0u, lriHigherDwordBeforeCmdList2Cmd2->getDataDword());
+    } else {
+        EXPECT_EQ(externalCounterForCmdList2, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitBeforeCmdList2Cmd));
+    }
+
+    commandList1->destroy();
+    commandList2->destroy();
+    commandQueue->destroy();
+}
+
 } // namespace ult
 } // namespace L0

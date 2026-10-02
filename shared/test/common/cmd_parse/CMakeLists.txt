@@ -51,6 +51,7 @@ if(TESTS_XE2_AND_LATER)
 
   if(TESTS_XE3P_AND_LATER)
     target_sources(neo_libult_common PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_walker_no_heap.inl
                    ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_xe3p_and_later.inl
     )
   endif()

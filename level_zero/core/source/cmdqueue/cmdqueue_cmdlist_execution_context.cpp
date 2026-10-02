@@ -77,6 +77,9 @@ CommandListExecutionContext::CommandListExecutionContext(
 
     this->pipelineCmdsDispatch |= (this->isProgramActivePartitionConfigRequired || this->isPreemptionModeInitial || this->stateSipRequired);
     this->patchPreambleCountersCrossSyncContainer = internalOptions.patchPreambleCountersCrossSyncContainer;
+    if (this->patchPreambleCountersCrossSyncContainer) {
+        this->spaceForResidency += this->patchPreambleCountersCrossSyncContainer->list.size();
+    }
 }
 
 } // namespace L0

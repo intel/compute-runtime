@@ -931,11 +931,6 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleReq
         encodeSize += commandList->getTotalNoopSpacePatchSize();
 
         ctx.bufferSpaceForPatchPreamble += encodeSize;
-
-        // this part estimates the required size of command buffer, but not in the patch preamble itself, but before BB_START jumps
-        if (ctx.patchPreambleCountersCrossSyncContainer != nullptr) {
-            encodeSize += estimatePatchPreambleCrossSyncSize(ctx.patchPreambleCountersCrossSyncContainer->list.size());
-        }
     }
     return encodeSize;
 }
@@ -975,6 +970,38 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleIni
         ctx.bufferSpaceForPatchPreamble += encodeSize;
         // patch preamble dispatched into queue's buffer forces not to use cmdlist as a starting buffer
         this->forceBbStartJump = true;
+
+        // this part estimates the required size of command buffer - not in the space of patch preamble itself
+        // (no adding to ctx.bufferSpaceForPatchPreamble), but before bb start jumps to command lists and including these bb start commands too
+        // this is needed only in queue direct mode, for immediate command list high level estimation is enough
+        if (ctx.patchPreambleCountersCrossSyncContainer != nullptr && ctx.containsParentImmediateStream == false) {
+            // here estimate the sem waits only
+            encodeSize += estimatePatchPreambleCrossSyncSize(ctx.patchPreambleCountersCrossSyncContainer->list.size());
+
+            // need to estimate bb_start jumps for the 2nd and subsequent command lists that will be executed after the cross-sync sem wait
+            std::vector<CommandList *> alreadyEstimatedCmdLists;
+            alreadyEstimatedCmdLists.reserve(numCommandLists);
+            // the first command list is always estimated - patch preamble force 1st bb_start to be estimated anyway
+            alreadyEstimatedCmdLists.push_back(ctx.firstCommandList);
+            if (ctx.regularHeapful) {
+                // in heapful mode each command list might have already estimated bb_start if the state was deem dirty
+                for (auto &state : this->stateChanges) {
+                    alreadyEstimatedCmdLists.push_back(state.commandList);
+                }
+            }
+            // heapless and copy-engine mode do not have state changes between command lists
+
+            auto isAlreadyEstimated = [&alreadyEstimatedCmdLists](CommandList *cmdList) -> bool {
+                return std::find(alreadyEstimatedCmdLists.begin(), alreadyEstimatedCmdLists.end(), cmdList) != alreadyEstimatedCmdLists.end();
+            };
+            for (auto &crossSyncItem : ctx.patchPreambleCountersCrossSyncContainer->list) {
+                if (!isAlreadyEstimated(crossSyncItem.appendedCommandListToSyncBefore)) {
+                    encodeSize += bbStartSize;
+                    // add to the list of already estimated command lists, as a single command list might have multiple cross-sync items, but we need to estimate bb_start only once per command list
+                    alreadyEstimatedCmdLists.push_back(crossSyncItem.appendedCommandListToSyncBefore);
+                }
+            }
+        }
     }
     return encodeSize;
 }
@@ -1120,7 +1147,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCrossSync(CommandListEx
                 continue;
             }
             auto waitAddress = item.deviceGpuAddress;
-            auto waitValue = item.counter;
+            auto waitValue = !GfxFamily::isQwordInOrderCounter ? getLowPart(item.counter) : item.counter;
             this->csr->makeResident(*item.deviceGraphicsAllocation);
 
             if (qwordIndirect) {
@@ -1769,6 +1796,8 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
     } else if (this->alignedChildStreamPadding) {
         void *paddingPtr = innerCommandStream.getSpace(this->alignedChildStreamPadding);
         memset(paddingPtr, 0, this->alignedChildStreamPadding);
+
+        DEBUG_BREAK_IF(innerCommandStream.getAvailableSpace() > 0);
     }
     size_t startOffset = (this->startingCmdBuffer == &this->firstCmdListStream)
                              ? 0

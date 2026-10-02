@@ -2217,6 +2217,8 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
         }
         if (internalOptions.patchPreambleCountersCrossSyncContainer != nullptr) {
             additionalSize += static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->estimatePatchPreambleCrossSyncSize(internalOptions.patchPreambleCountersCrossSyncContainer->list.size());
+            // for immediate command list driver needs high-level estimate for bb_start: each command list will have the jump - here its better to have little overestimate
+            additionalSize += bbStartSize * numCommandLists;
         }
     }
 

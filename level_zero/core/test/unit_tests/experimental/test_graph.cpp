@@ -4212,6 +4212,116 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     zeEventDestroy(eventHandle);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenExternalSignalEventsUsedThenPatchPreambleCrossSyncsUseSamePatchPreambleCountersAsExternalEvents) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandListRoot(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandListRoot->setOrdinal(0);
+    auto commandListRootHandle = commandListRoot->toHandle();
+    auto whiteBoxRootCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(commandListRoot.get())->cmdQImmediate);
+
+    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    subCommandList->setOrdinal(0);
+    auto subCommandListHandle = subCommandList->toHandle();
+    auto whiteBoxSubCmdQueue = static_cast<CommandQueue *>(CommandList::whiteboxCast(subCommandList.get())->cmdQImmediate);
+
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    ze_event_handle_t internalEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &internalEventHandle));
+
+    eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
+    ze_event_handle_t signalFromParentExternalEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &signalFromParentExternalEventHandle));
+    auto signalFromParentExternalEvent = L0::Event::fromHandle(signalFromParentExternalEventHandle);
+
+    ze_event_handle_t signalFromForkExternalEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &signalFromForkExternalEventHandle));
+    auto signalFromForkExternalEvent = L0::Event::fromHandle(signalFromForkExternalEventHandle);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListRootHandle, graphHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListRootHandle, internalEventHandle, 0U, nullptr));                           // here send fork using internal handle
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(subCommandListHandle, signalFromForkExternalEventHandle, 1U, &internalEventHandle)); // add signal external event from subcmdlist and connect the fork using internal event
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(subCommandListHandle, internalEventHandle, 0U, nullptr));                            // here send the join using internal event
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListRootHandle, nullptr, 1U, &internalEventHandle));                          // here connect the join using internal event
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListRootHandle, signalFromParentExternalEventHandle, 0U, nullptr));           // and signal external event from main cmdlist
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListRootHandle, &graphHandle, nullptr));
+    srcGraph->enablePatchPreambleCrossSync();
+
+    GraphInstatiateSettings settings{};
+    settings.forkPolicy = GraphInstatiateSettings::ForkPolicy::ForkPolicyMonolythicLevels;
+    ExecutableGraph execGraph;
+    auto ret = execGraph.instantiateFrom(*(srcGraph.get()), settings);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto execGraphHandle = execGraph.toHandle();
+
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    ASSERT_EQ(2u, externalCbSignalEventContainer.size());
+
+    auto itSignalFromFork = std::find_if(externalCbSignalEventContainer.begin(),
+                                         externalCbSignalEventContainer.end(),
+                                         [signalFromForkExternalEvent](const ExternalSignalCbEventInfo &info) { return info.event == signalFromForkExternalEvent; });
+    ASSERT_NE(externalCbSignalEventContainer.end(), itSignalFromFork);
+    auto itSignalFromParent = std::find_if(externalCbSignalEventContainer.begin(),
+                                           externalCbSignalEventContainer.end(),
+                                           [signalFromParentExternalEvent](const ExternalSignalCbEventInfo &info) { return info.event == signalFromParentExternalEvent; });
+    ASSERT_NE(externalCbSignalEventContainer.end(), itSignalFromParent);
+
+    auto rootCmdListStream = commandListRoot->getCmdContainer().getCommandStream();
+    auto subCmdListStream = subCommandList->getCmdContainer().getCommandStream();
+
+    auto rootCmdListBeforeSize = rootCmdListStream->getUsed();
+    auto subCmdListBeforeSize = subCmdListStream->getUsed();
+    ret = L0::zeCommandListAppendGraphExp(commandListRootHandle, execGraphHandle, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto rootCmdListAfterSize = rootCmdListStream->getUsed();
+    auto subCmdListAfterSize = subCmdListStream->getUsed();
+
+    GenCmdList cmdListRoot;
+    GenCmdList cmdListChild;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListRoot,
+        ptrOffset(rootCmdListStream->getCpuBase(), rootCmdListBeforeSize),
+        rootCmdListAfterSize - rootCmdListBeforeSize));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListChild,
+        ptrOffset(subCmdListStream->getCpuBase(), subCmdListBeforeSize),
+        subCmdListAfterSize - subCmdListBeforeSize));
+
+    // patch preamble of the root graph should have the counter in root graph external event and child patch preamble cross-sync
+    EXPECT_EQ(whiteBoxRootCmdQueue->patchPreambleCounter.counter, signalFromParentExternalEvent->getInOrderExecEventHelper().getPatchPreambleCounter());
+    EXPECT_EQ(whiteBoxRootCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, signalFromParentExternalEvent->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress());
+    auto semWaitCmdsRoot = findAll<MI_SEMAPHORE_WAIT *>(cmdListRoot.begin(), cmdListRoot.end());
+    ASSERT_EQ(1u, semWaitCmdsRoot.size());
+    auto semWaitCmdRoot = *(semWaitCmdsRoot[0]);
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdRoot));
+
+    // patch preamble of the child graph should have the counter in child graph external event and root patch preamble cross-sync
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.counter, signalFromForkExternalEvent->getInOrderExecEventHelper().getPatchPreambleCounter());
+    EXPECT_EQ(whiteBoxSubCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, signalFromForkExternalEvent->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress());
+    auto semWaitCmdsChild = findAll<MI_SEMAPHORE_WAIT *>(cmdListChild.begin(), cmdListChild.end());
+    ASSERT_EQ(1u, semWaitCmdsChild.size());
+    auto semWaitCmdChild = *(semWaitCmdsChild[0]);
+    EXPECT_EQ(whiteBoxRootCmdQueue->patchPreambleCounter.deviceNodeGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmdChild));
+
+    srcGraph.reset();
+    zeEventDestroy(internalEventHandle);
+    zeEventDestroy(signalFromForkExternalEventHandle);
+    zeEventDestroy(signalFromParentExternalEventHandle);
+}
+
 TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventRecordedWithoutApiGraphExternalFlagWhenInstantiateToGraphThenDoNotRecordAsExternalCbEvent) {
     GraphsCleanupGuard graphCleanup;
 

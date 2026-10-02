@@ -2218,6 +2218,12 @@ bool testWrappedMultipleEngines(ze_context_handle_t &context,
         SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &events[i]));
     }
 
+    if (useInOrder) {
+        for (uint32_t i = 0; i < sequenceCount; i++) {
+            SUCCESS_OR_TERMINATE(zeCommandListAppendEventReset(cmdListSequence[i], events[i]));
+        }
+    }
+
     void *zeBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &zeBuffer));
@@ -2339,6 +2345,12 @@ bool testSingleWrappedEngineDeepFork(ze_context_handle_t &context,
     for (uint32_t i = 0; i < kernelsAppendCount; i++) {
         eventDesc.index = i;
         SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &events[i]));
+    }
+
+    if (useInOrder) {
+        for (uint32_t i = 0; i < kernelsAppendCount; i++) {
+            SUCCESS_OR_TERMINATE(zeCommandListAppendEventReset(cmdListSequence[i], events[i]));
+        }
     }
 
     void *zeBuffer = nullptr;
