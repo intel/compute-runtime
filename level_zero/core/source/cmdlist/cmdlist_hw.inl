@@ -2590,7 +2590,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         if ((!useAdditionalBlitProperties || !isCopyOnlyEnabled || size == 0) &&
             (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed || emitPipeControl)) {
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnlyEnabled);
-            appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
+            appendSignalInOrderDependencyCounter(signalEvent, isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed), false, false, false);
         } else if ((!useAdditionalBlitProperties || size == 0) && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
             appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled);
         }
@@ -2729,7 +2729,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
             if (!useAdditionalBlitProperties || srcRegion->width == 0) {
-                appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
+                appendSignalInOrderDependencyCounter(signalEvent, isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed), false, false, false);
             }
             CmdListHandleInOrderDependencyParams inOrderDependencyParams{
                 .nonWalkerInOrderCmdsChaining = false,

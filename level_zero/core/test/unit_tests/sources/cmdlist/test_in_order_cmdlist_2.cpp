@@ -28,6 +28,88 @@ namespace L0 {
 namespace ult {
 using CopyOffloadInOrderTests = CopyOffloadInOrderFixture;
 
+template <typename FamilyType>
+static void verifyInOrderCounterUpdate(WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> &list, NEO::GmmHelper &gmmHelper, size_t offset, bool atomicSignalling) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    auto *cmdStream = list.getCmdContainer().getCommandStream();
+    auto inOrderInfo = list.getInOrderExecInfo();
+    EXPECT_EQ(1u, inOrderInfo->getCounterValue());
+
+    GenCmdList commands;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(commands, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    const auto counterAddress = inOrderInfo->getBaseDeviceAddress() + inOrderInfo->getAllocationOffset();
+    auto atomics = findAll<MI_ATOMIC *>(commands.begin(), commands.end());
+    ASSERT_EQ(atomicSignalling ? 1u : 0u, atomics.size());
+    if (atomicSignalling) {
+        auto *atomic = genCmdCast<MI_ATOMIC *>(*atomics[0]);
+        EXPECT_EQ(counterAddress, gmmHelper.canonize(NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomic)));
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_ADD, atomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, atomic->getDataSize());
+        EXPECT_EQ(1u, atomic->getOperand1DataDword0());
+        EXPECT_EQ(0u, atomic->getOperand1DataDword1());
+    } else {
+        auto stores = findAll<MI_STORE_DATA_IMM *>(commands.begin(), commands.end());
+        ASSERT_EQ(inOrderInfo->isHostStorageDuplicated() ? 2u : 1u, stores.size());
+        auto *store = genCmdCast<MI_STORE_DATA_IMM *>(*stores[0]);
+        EXPECT_EQ(counterAddress, gmmHelper.canonize(store->getAddress()));
+        EXPECT_EQ(list.isQwordInOrderCounter(), store->getStoreQword());
+        EXPECT_EQ(1u, store->getDataDword0());
+        EXPECT_EQ(0u, store->getDataDword1());
+    }
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenNonZeroSizeNonVmmCopyWithSingleStreamOffloadWhenAppendingThenInOrderCounterIsUpdated, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(2);
+    auto source = allocDeviceMem(MemoryConstants::pageSize64k);
+    auto destination = allocDeviceMem(MemoryConstants::pageSize64k);
+    ASSERT_NE(nullptr, source);
+    ASSERT_NE(nullptr, destination);
+    for (bool atomicSignalling : {false, true}) {
+        debugManager.flags.InOrderAtomicSignallingEnabled.set(atomicSignalling);
+        auto list = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+        list->useAdditionalBlitProperties = false;
+        ASSERT_TRUE(list->isInOrderExecutionEnabled());
+        ASSERT_TRUE(list->isCopyOffloadEnabled());
+        ASSERT_NE(CopyOffloadModes::dualStream, list->getCopyOffloadModeForOperation(true));
+        CmdListMemoryCopyParams copyParams = {};
+        auto *cmdStream = list->getCmdContainer().getCommandStream();
+        const auto offset = cmdStream->getUsed();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, list->appendMemoryCopy(destination, source, 1, nullptr, 0, nullptr, copyParams));
+        EXPECT_TRUE(copyParams.copyOffloadAllowed);
+        verifyInOrderCounterUpdate<FamilyType>(*list, *device->getNEODevice()->getGmmHelper(), offset, atomicSignalling);
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(source));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(destination));
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenNonZeroSizeCopyRegionWithSingleStreamOffloadWhenAppendingThenInOrderCounterIsUpdated, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(2);
+    auto source = allocDeviceMem(MemoryConstants::pageSize64k);
+    auto destination = allocDeviceMem(MemoryConstants::pageSize64k);
+    ASSERT_NE(nullptr, source);
+    ASSERT_NE(nullptr, destination);
+    ze_copy_region_t region = {0, 0, 0, 16, 2, 1};
+    for (bool atomicSignalling : {false, true}) {
+        debugManager.flags.InOrderAtomicSignallingEnabled.set(atomicSignalling);
+        auto list = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+        list->useAdditionalBlitProperties = false;
+        ASSERT_TRUE(list->isInOrderExecutionEnabled());
+        ASSERT_TRUE(list->isCopyOffloadEnabled());
+        ASSERT_EQ(nonDualStreamMode, list->getCopyOffloadModeForOperation(true));
+        CmdListMemoryCopyParams copyParams = {};
+        auto *cmdStream = list->getCmdContainer().getCommandStream();
+        const auto offset = cmdStream->getUsed();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, list->appendMemoryCopyRegion(destination, &region, 16, 32, source, &region, 16, 32, nullptr, 0, nullptr, copyParams));
+        ASSERT_TRUE(copyParams.copyOffloadAllowed);
+        verifyInOrderCounterUpdate<FamilyType>(*list, *device->getNEODevice()->getGmmHelper(), offset, atomicSignalling);
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(source));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(destination));
+}
+
 HWTEST_F(CopyOffloadInOrderTests, givenVariousParametersWhenAskingForCopyOffloadThenReturnCorrectValue) {
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
