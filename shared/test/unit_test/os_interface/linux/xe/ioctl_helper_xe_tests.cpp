@@ -3034,10 +3034,20 @@ TEST_F(IoctlHelperXeTest, whenCallingGetContextHealthThenBanPropertyDecidesTheBa
     EXPECT_FALSE(contextHealth.banned);
     EXPECT_EQ(ContextBanReason::none, contextHealth.banReason);
 
-    drm->execQueueBanPropertyReturn = 1;
+    drm->execQueueBanPropertyReturn = DRM_XE_EXEC_QUEUE_BAN_REASON_GPU_HANG;
     EXPECT_EQ(0, xeIoctlHelper->getContextHealth(contextHealth));
     EXPECT_TRUE(contextHealth.banned);
     EXPECT_EQ(ContextBanReason::gpuHang, contextHealth.banReason);
+
+    drm->execQueueBanPropertyReturn = DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE;
+    EXPECT_EQ(0, xeIoctlHelper->getContextHealth(contextHealth));
+    EXPECT_TRUE(contextHealth.banned);
+    EXPECT_EQ(ContextBanReason::pageOffline, contextHealth.banReason);
+
+    drm->execQueueBanPropertyReturn = DRM_XE_EXEC_QUEUE_BAN_REASON_GPU_HANG | DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE;
+    EXPECT_EQ(0, xeIoctlHelper->getContextHealth(contextHealth));
+    EXPECT_TRUE(contextHealth.banned);
+    EXPECT_EQ(ContextBanReason::pageOffline, contextHealth.banReason);
 
     // xe exposes no fault details through this property
     EXPECT_FALSE(contextHealth.faultValid);

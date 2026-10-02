@@ -52,6 +52,7 @@
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
+#include "shared/source/utilities/logger.h"
 
 #include "hw_cmds.h"
 
@@ -314,8 +315,16 @@ bool Drm::checkResetStatus(OsContext &osContext) {
             printFault(stdout);
             UNRECOVERABLE_IF(true);
         }
-        if (contextHealth.banReason == ContextBanReason::gpuHang) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
+        if (contextHealth.banReason != ContextBanReason::none) {
+            if (contextHealth.banReason == ContextBanReason::pageOffline) {
+                CREATE_DEBUG_STRING(str, "ERROR: GPU memory page offlined, ctx_id: %u (%s) banned, device lost.\n",
+                                    contextHealth.contextId,
+                                    EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str());
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", str.get());
+                rootDeviceEnvironment.executionEnvironment.setErrorDescription(std::string(str.get()));
+            } else {
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
+            }
             osContextLinux->setHangDetected();
             return true;
         }
