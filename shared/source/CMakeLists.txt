@@ -138,7 +138,6 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_SRCS_BUILT_INS
                                NEO_CORE_SRCS_BUILT_INS_OPS
                                NEO_CORE_SRCS_BUILT_IN_KERNELS
-                               NEO_CORE_TBX
                                NEO_CORE_UTILITIES
                                NEO_CORE_ZEINFO_EXTRA
                                NEO_DEVICE_BINARY_FORMAT

@@ -15,7 +15,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
-#include "shared/source/tbx/tbx_proto.h"
 
 #include "aubstream/aubstream.h"
 

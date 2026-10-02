@@ -110,7 +110,6 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/abort.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/blitter_mask_override.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/compiler_options_parser_ult.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_tbx_sockets.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/debug_settings_reader_creator.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/mock_io_functions.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/options_unit_tests.cpp

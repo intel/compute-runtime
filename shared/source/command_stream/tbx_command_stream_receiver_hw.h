@@ -17,7 +17,6 @@
 namespace NEO {
 
 class AubSubCaptureManager;
-class TbxStream;
 class CpuPageFaultManager;
 
 template <typename GfxFamily>
