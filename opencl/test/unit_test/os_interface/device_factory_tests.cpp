@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
@@ -273,6 +274,8 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
         hwInfo[i] = *NEO::defaultHwInfo.get();
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo[i]);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface =
+            std::make_unique<NEO::MockMemoryOperations>();
     }
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
     executionEnvironment->rootDeviceEnvironments[1]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
@@ -283,7 +286,9 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
     executionEnvironment->rootDeviceEnvironments[6]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
     executionEnvironment->rootDeviceEnvironments[7]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
     auto devices = DeviceFactory::createDevices(*executionEnvironment);
-    for (auto iterator = 0u; iterator < 8; iterator++) {
+    ASSERT_EQ(numRootDevices, devices.size());
+    for (auto iterator = 0u; iterator < numRootDevices; iterator++) {
+        ASSERT_NE(nullptr, devices[iterator]);
         EXPECT_EQ(iterator, devices[iterator]->getRootDeviceIndex());
     }
 }

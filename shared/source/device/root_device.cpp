@@ -51,8 +51,10 @@ Device *RootDevice::getRootDevice() const {
 
 void RootDevice::createBindlessHeapsHelper() {
 
-    if (!NEO::debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.get() && ApiSpecificConfig::getGlobalBindlessHeapConfiguration(this->getHardwareInfo()) && ApiSpecificConfig::getBindlessMode(*this)) {
-        this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(this, getNumGenericSubDevices() > 1);
+    if (!NEO::debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.get() &&
+        ApiSpecificConfig::createBindlessHeapsHelper(*this)) {
+        this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(
+            this, getNumGenericSubDevices() > 1);
     }
 }
 

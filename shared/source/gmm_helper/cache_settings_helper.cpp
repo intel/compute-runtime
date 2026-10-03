@@ -94,6 +94,7 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(
         return GMM_RESOURCE_USAGE_OCL_IMAGE;
     case AllocationType::internalHeap:
     case AllocationType::linearStream:
+    case AllocationType::bindlessHeap:
         if (debugManager.flags.DisableCachingForHeaps.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
@@ -142,6 +143,7 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
     case AllocationType::internalHeap:
     case AllocationType::linearStream:
+    case AllocationType::bindlessHeap:
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
     default:
         return productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;

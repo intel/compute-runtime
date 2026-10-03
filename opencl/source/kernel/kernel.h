@@ -391,6 +391,8 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
 
     MOCKABLE_VIRTUAL void getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &allocationsInfo) const;
 
+    bool usesBindlessImages() const;
+
   protected:
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
 

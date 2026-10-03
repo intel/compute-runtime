@@ -699,6 +699,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::kernelIsa:
     case AllocationType::kernelIsaInternal:
     case AllocationType::linearStream:
+    case AllocationType::bindlessHeap:
     case AllocationType::mcs:
     case AllocationType::preemption:
     case AllocationType::scratchSurface:
@@ -1384,6 +1385,7 @@ bool MemoryManager::isAllocationTypeToCapture(AllocationType type) const {
     case AllocationType::scratchSurface:
     case AllocationType::privateSurface:
     case AllocationType::linearStream:
+    case AllocationType::bindlessHeap:
     case AllocationType::internalHeap:
         return true;
     default:

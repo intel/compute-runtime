@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
@@ -19,7 +20,7 @@ namespace NEO {
 StackVec<const char *, 4> validClPrefixes;
 StackVec<NEO::DebugVarPrefix, 4> validClPrefixTypes;
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const HardwareInfo &hwInfo) {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const HardwareInfo &) {
     return false;
 }
 
@@ -27,12 +28,10 @@ bool ApiSpecificConfig::getBindlessMode(const Device &device) {
     if (device.getCompilerProductHelper().isHeaplessModeEnabled(device.getHardwareInfo())) {
         return true;
     }
-
     if (debugManager.flags.UseBindlessMode.get() != -1) {
         return debugManager.flags.UseBindlessMode.get();
-    } else {
-        return false;
     }
+    return false;
 }
 
 bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
@@ -94,6 +93,10 @@ bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &ro
 
 bool ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless() {
     return true;
+}
+
+bool ApiSpecificConfig::createBindlessHeapsHelper(const Device &) {
+    return false;
 }
 
 } // namespace NEO

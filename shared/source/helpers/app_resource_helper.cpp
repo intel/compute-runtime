@@ -56,6 +56,8 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "KRLISAIN";
     case AllocationType::linearStream:
         return "LINRSTRM";
+    case AllocationType::bindlessHeap:
+        return "BNDLHEAP";
     case AllocationType::mapAllocation:
         return "MAPALLOC";
     case AllocationType::mcs:

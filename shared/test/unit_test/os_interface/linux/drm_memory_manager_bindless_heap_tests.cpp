@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -20,16 +21,22 @@
 #include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+
 struct GlobalBindlessDrmMemManagerFixture : public DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     GlobalBindlessDrmMemManagerFixture() : DrmMemoryManagerFixtureWithoutQuietIoctlExpectation(1, 0) {}
     void setUp() {
+        previousApiType = apiTypeForUlts;
+        apiTypeForUlts = ApiSpecificConfig::L0;
         debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(true);
     }
     void tearDown() {
+        apiTypeForUlts = previousApiType;
     }
 
     DebugManagerStateRestore dbgRestorer;
+    ApiSpecificConfig::ApiType previousApiType = ApiSpecificConfig::OCL;
 };
 
 using DrmGlobalBindlessAllocatorTests = Test<GlobalBindlessDrmMemManagerFixture>;

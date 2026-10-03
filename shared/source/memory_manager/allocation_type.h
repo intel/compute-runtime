@@ -28,6 +28,7 @@ enum class AllocationType {
     kernelIsa,
     kernelIsaInternal,
     linearStream,
+    bindlessHeap,
     mapAllocation,
     mcs,
     preemption,

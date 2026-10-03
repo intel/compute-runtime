@@ -769,6 +769,7 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 break;
             case AllocationType::internalHeap:
             case AllocationType::linearStream:
+            case AllocationType::bindlessHeap:
                 expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
                 break;
             case AllocationType::gpuTimestampDeviceBuffer:
@@ -818,6 +819,7 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 break;
             case AllocationType::internalHeap:
             case AllocationType::linearStream:
+            case AllocationType::bindlessHeap:
                 expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
                 break;
             case AllocationType::gpuTimestampDeviceBuffer:
@@ -888,6 +890,7 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             break;
         case AllocationType::internalHeap:
         case AllocationType::linearStream:
+        case AllocationType::bindlessHeap:
             expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
             break;
         case AllocationType::bufferHostMemory:
@@ -926,6 +929,7 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             break;
         case AllocationType::internalHeap:
         case AllocationType::linearStream:
+        case AllocationType::bindlessHeap:
             expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
             break;
         case AllocationType::bufferHostMemory:
@@ -1001,7 +1005,9 @@ TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenRetur
         if (allocationType == AllocationType::preemption) {
             expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
 
-        } else if ((allocationType == AllocationType::internalHeap) || (allocationType == AllocationType::linearStream)) {
+        } else if ((allocationType == AllocationType::internalHeap) ||
+                   (allocationType == AllocationType::linearStream) ||
+                   (allocationType == AllocationType::bindlessHeap)) {
             expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
         }
 
