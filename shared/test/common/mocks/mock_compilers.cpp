@@ -390,6 +390,15 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
         return nullptr;
     }
 
+    if (igcDebugVars->receivedSpecConstantIdsOutput != nullptr && specConstantsIds != nullptr) {
+        const auto *ids = specConstantsIds->GetMemory<uint32_t>();
+        igcDebugVars->receivedSpecConstantIdsOutput->assign(ids, ids + specConstantsIds->GetSizeRaw() / sizeof(uint32_t));
+    }
+    if (igcDebugVars->receivedSpecConstantValuesOutput != nullptr && specConstantsValues != nullptr) {
+        const auto *values = specConstantsValues->GetMemory<uint64_t>();
+        igcDebugVars->receivedSpecConstantValuesOutput->assign(values, values + specConstantsValues->GetSizeRaw() / sizeof(uint64_t));
+    }
+
     auto out = new MockOclTranslationOutput();
     translate(true, src, options, internalOptions, out, createdOutType);
     return out;

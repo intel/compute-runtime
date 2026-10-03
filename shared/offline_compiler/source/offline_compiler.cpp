@@ -801,7 +801,8 @@ int OfflineCompiler::buildSourceCode() {
     const bool generateDebugInfo = CompilerOptions::contains(options, CompilerOptions::generateDebugInfo);
 
     const bool useSpecConsts = (!specConstants.empty()) &&
-                               (pBuildInfo->intermediateRepresentation == IGC::CodeType::spirV);
+                               ((pBuildInfo->intermediateRepresentation == IGC::CodeType::spirV) ||
+                                (pBuildInfo->intermediateRepresentation == NEO::pisaCodeType));
     std::vector<uint32_t> specConstantIds;
     std::vector<uint64_t> specConstantValues;
 
@@ -1797,7 +1798,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -config                                   Target hardware info config for a single device,
                                             e.g 1x4x8.
 
--spec_const <filename>                      File containing specialization constants for SPIR-V input.
+-spec_const <filename>                      File containing specialization constants for SPIR-V
+                                            or PISA input.
                                             Each line should contain: <spec_constant_id>: <value>
                                             Example: 0: 32505859
 
