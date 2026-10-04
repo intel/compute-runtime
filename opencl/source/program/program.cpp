@@ -513,7 +513,7 @@ cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize
         }
 
         SpecConstantInfo specConstInfo;
-        auto retVal = pCompilerInterface->getSpecConstantsInfo(device, ArrayRef<const char>(irBinary.get(), irBinarySize), specConstInfo, IGC::CodeType::spirV);
+        auto retVal = pCompilerInterface->getSpecConstantsInfo(device, ArrayRef<const char>(irBinary.get(), irBinarySize), specConstInfo);
 
         if (retVal != TranslationErrorCode::success) {
             return CL_INVALID_VALUE;

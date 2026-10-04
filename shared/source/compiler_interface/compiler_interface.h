@@ -129,8 +129,7 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
                                                TranslationOutput &output);
 
     MOCKABLE_VIRTUAL TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                               ArrayRef<const char> src, SpecConstantInfo &output,
-                                                               IGC::CodeType::CodeType_t srcCodeType);
+                                                               ArrayRef<const char> srcSpirV, SpecConstantInfo &output);
 
     MOCKABLE_VIRTUAL TranslationErrorCode createLibrary(NEO::Device &device,
                                                         const TranslationInput &input,

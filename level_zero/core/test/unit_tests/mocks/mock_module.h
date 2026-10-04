@@ -238,9 +238,7 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
     }
 
     NEO::TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                   ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output,
-                                                   IGC::CodeType::CodeType_t srcCodeType) override {
-        receivedSpecConstantsCodeType = srcCodeType;
+                                                   ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
         output.idsBuffer.reset(new NEO::MockCIFBuffer());
         output.sizesBuffer.reset(new NEO::MockCIFBuffer());
         for (uint32_t i = 0; i < moduleNumSpecConstants; i++) {
@@ -249,7 +247,6 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
         }
         return NEO::TranslationErrorCode::success;
     }
-    IGC::CodeType::CodeType_t receivedSpecConstantsCodeType = IGC::CodeType::invalid;
     uint32_t moduleNumSpecConstants = 0u;
     const std::vector<uint32_t> moduleSpecConstantsIds{2, 0, 1, 3, 5, 4};
     const std::vector<T1> moduleSpecConstantsValuesT1{10, 20, 30};

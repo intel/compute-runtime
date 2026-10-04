@@ -1259,7 +1259,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSpecializationCon
     pCompilerInterface->failLoadIgc = true;
 
     NEO::SpecConstantInfo sci;
-    auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, ArrayRef<char>{}, sci, IGC::CodeType::spirV);
+    auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, ArrayRef<char>{}, sci);
     EXPECT_EQ(TranslationErrorCode::compilerNotAvailable, err);
 }
 
@@ -1378,14 +1378,14 @@ TEST(GetSpecConstantsTest, whenGetSpecializationConstantsFailThenErrorIsReturned
 TEST_F(CompilerInterfaceTest, whenIgcTranlationContextCreationFailsThenErrorIsReturned) {
     pCompilerInterface->failCreateIgcTranslationCtx = true;
     NEO::SpecConstantInfo specConstInfo;
-    auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, inputArgs.src, specConstInfo, IGC::CodeType::spirV);
+    auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, inputArgs.src, specConstInfo);
     EXPECT_EQ(TranslationErrorCode::unknownError, err);
 }
 
 TEST_F(CompilerInterfaceTest, givenCompilerInterfaceWhenGetSpecializationConstantsThenSuccessIsReturned) {
     TranslationOutput translationOutput;
     NEO::SpecConstantInfo specConstInfo;
-    auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, inputArgs.src, specConstInfo, IGC::CodeType::spirV);
+    auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, inputArgs.src, specConstInfo);
     EXPECT_EQ(TranslationErrorCode::success, err);
 }
 

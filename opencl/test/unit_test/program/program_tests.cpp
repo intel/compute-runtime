@@ -3225,8 +3225,7 @@ struct SpecializationConstantCompilerInterfaceMock : public CompilerInterface {
     TranslationErrorCode retVal = TranslationErrorCode::success;
     int counter = 0;
     const char *spirV = nullptr;
-    TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output,
-                                              IGC::CodeType::CodeType_t srcCodeType) override {
+    TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) override {
         counter++;
         spirV = srcSpirV.begin();
         return retVal;

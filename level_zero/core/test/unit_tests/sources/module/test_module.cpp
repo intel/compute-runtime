@@ -937,7 +937,6 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
         result = module->initialize(&moduleDesc, neoDevice);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
-        EXPECT_EQ(IGC::CodeType::spirV, mockCompiler->receivedSpecConstantsCodeType);
         for (uint32_t i = 0; i < mockCompiler->moduleNumSpecConstants / 2; i++) {
             EXPECT_EQ(static_cast<uint64_t>(module->translationUnit->specConstantsValues[mockCompiler->moduleSpecConstantsIds[2 * i]]), static_cast<uint64_t>(mockCompiler->moduleSpecConstantsValuesT2[i]));
             EXPECT_EQ(static_cast<uint64_t>(module->translationUnit->specConstantsValues[mockCompiler->moduleSpecConstantsIds[2 * i + 1]]), static_cast<uint64_t>(mockCompiler->moduleSpecConstantsValuesT1[i]));
@@ -1072,8 +1071,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
       public:
         FailingMockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(moduleNumSpecConstants) {}
         NEO::TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                       ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output,
-                                                       IGC::CodeType::CodeType_t srcCodeType) override {
+                                                       ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
             return NEO::TranslationErrorCode::compilerNotAvailable;
         }
     };
@@ -1160,8 +1158,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
       public:
         FailingMockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(moduleNumSpecConstants) {}
         NEO::TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                       ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output,
-                                                       IGC::CodeType::CodeType_t srcCodeType) override {
+                                                       ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
             return NEO::TranslationErrorCode::compilerNotAvailable;
         }
     };
