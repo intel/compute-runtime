@@ -16,8 +16,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 
-#include <chrono>
-#include <future>
+#include <thread>
 
 namespace L0 {
 namespace ult {
@@ -65,15 +64,14 @@ struct CommandBufferReuseMtTests : CopyOffloadInOrderFixture {
         }
 
         auto copyLock = copyCsr->obtainUniqueOwnership();
-        auto append = std::async(std::launch::async, [&] {
+        ze_result_t appendResult = ZE_RESULT_ERROR_UNKNOWN;
+        std::thread appendThread([&] {
             CommandListExecutionInternalOptions options = {};
-            return immediate->appendCommandLists(1, &regularHandle, nullptr, invalidWaitEvents ? 1 : 0, nullptr, options);
+            appendResult = immediate->appendCommandLists(1, &regularHandle, nullptr, invalidWaitEvents ? 1 : 0, nullptr, options);
         });
-        const auto appendStatus = append.wait_for(std::chrono::seconds(2));
+        appendThread.join();
         copyLock.unlock();
-        EXPECT_EQ(std::future_status::ready, appendStatus);
-        EXPECT_EQ(invalidWaitEvents ? ZE_RESULT_ERROR_INVALID_ARGUMENT : queueResult,
-                  append.get());
+        EXPECT_EQ(invalidWaitEvents ? ZE_RESULT_ERROR_INVALID_ARGUMENT : queueResult, appendResult);
         EXPECT_EQ(0u, copyCsr->flushCount);
         EXPECT_EQ(retireBuffer, allocation != immediate->commandContainer.getCommandStream()->getGraphicsAllocation());
     }

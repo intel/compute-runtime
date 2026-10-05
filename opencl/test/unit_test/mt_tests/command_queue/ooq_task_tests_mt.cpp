@@ -10,7 +10,7 @@
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 
-#include <future>
+#include <thread>
 
 using namespace NEO;
 
@@ -107,7 +107,7 @@ TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsT
 
     constexpr uint32_t numThreads = 4;
     std::atomic_uint32_t barrier = numThreads;
-    std::array<std::future<void>, numThreads> threads;
+    std::array<std::thread, numThreads> threads;
 
     auto cmdQ = createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
     auto bcsCsr = cmdQ->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
@@ -118,7 +118,7 @@ TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsT
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     for (auto &thread : threads) {
-        thread = std::async(std::launch::async, [&]() {
+        thread = std::thread([&]() {
             auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
             barrier.fetch_sub(1u);
             while (barrier.load() != 0u) {
@@ -157,7 +157,7 @@ TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsT
         });
     }
     for (auto &thread : threads) {
-        thread.get();
+        thread.join();
     }
 
     EXPECT_NE(cmdQ->taskCount, 0u);

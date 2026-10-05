@@ -12,7 +12,7 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 
-#include <future>
+#include <thread>
 
 using namespace NEO;
 
@@ -280,7 +280,7 @@ TEST_F(IOQTaskTestsMt, givenBlitterWhenCopyUsingMultipleThreadsThenSuccessReturn
 
     constexpr uint32_t numThreads = 4;
     std::atomic_uint32_t barrier = numThreads;
-    std::array<std::future<void>, numThreads> threads;
+    std::array<std::thread, numThreads> threads;
 
     auto cmdQ = createCommandQueue(pClDevice);
     auto initialCsrTaskCount = cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount();
@@ -292,7 +292,7 @@ TEST_F(IOQTaskTestsMt, givenBlitterWhenCopyUsingMultipleThreadsThenSuccessReturn
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     for (auto &thread : threads) {
-        thread = std::async(std::launch::async, [&]() {
+        thread = std::thread([&]() {
             auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
             barrier.fetch_sub(1u);
             while (barrier.load() != 0u) {
@@ -313,7 +313,7 @@ TEST_F(IOQTaskTestsMt, givenBlitterWhenCopyUsingMultipleThreadsThenSuccessReturn
         });
     }
     for (auto &thread : threads) {
-        thread.get();
+        thread.join();
     }
 
     EXPECT_EQ(cmdQ->taskCount, 0u);
