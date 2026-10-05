@@ -313,6 +313,11 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheck
     EXPECT_FALSE(pSysmanKmdInterface->isVfEngineUtilizationSupported());
 }
 
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForDriverScopedAttachDetachEventsThenFalseValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_FALSE(pSysmanKmdInterface->isDriverScopedAttachDetachEventSupported());
+}
+
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenGettingBusyAndTotalTicksConfigsForVfThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     auto pPmuInterface = pLinuxSysmanImp->getPmuInterface();

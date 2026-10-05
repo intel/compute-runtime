@@ -16,6 +16,8 @@
 #include <map>
 #include <mutex>
 #include <poll.h>
+#include <set>
+#include <string>
 #include <vector>
 
 namespace L0 {
@@ -71,10 +73,13 @@ class LinuxEventsUtil {
     int pipeFd[2] = {-1, -1};
     std::map<SysmanDeviceImp *, zes_event_type_flags_t> deviceEventsMap;
     zes_event_type_flags_t registeredDriverEvents = 0;
+    std::set<std::string> supportedPciDeviceAddresses;
+    bool supportedPciDeviceAddressesOutdated = false;
     bool checkRasEvent(zes_event_type_flags_t &pEvent, SysmanDeviceImp *pSysmanDeviceImp, zes_event_type_flags_t registeredEvents);
     bool isResetRequired(void *dev, zes_event_type_flags_t &pEvent);
     bool checkDeviceDetachEvent(zes_event_type_flags_t &pEvent);
     bool checkDeviceAttachEvent(zes_event_type_flags_t &pEvent);
+    bool checkDriverAttachDetachEvent(void *dev, zes_event_type_flags_t driverRegisteredEvents, zes_event_type_flags_t &driverEvents);
     bool checkIfMemHealthChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkIfFabricPortStatusChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkDeviceWedgedEvent(void *dev, zes_event_type_flags_t &pEvent);
@@ -87,6 +92,9 @@ class LinuxEventsUtil {
     bool processNetlinkRasEvent(const DrmRasEvent &netlinkEvent, zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents);
     static bool isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess, const std::string &devPath, const std::string &mode);
     static bool isDrmCardNode(const std::string &eventDevPath, const std::string &pciDevPath);
+    static bool getPciAddressOfDrmCardNode(const std::string &eventDevPath, std::string &pciAddress);
+    void getSupportedPciDeviceAddresses(std::set<std::string> &pciAddresses);
+    void updateSupportedPciDeviceAddresses(zes_event_type_flags_t driverRegisteredEvents);
     static bool isPowerOffPending(SysmanDeviceImp *pSysmanDeviceImp, FsAccessInterface *pFsAccess, const std::string &devPath);
     std::string action;
 

@@ -143,6 +143,8 @@ void usage() {
                  "\n  -g,   --global                                                                                  selectively run device/global operations black box test"
                  "\n  -R,   --ras                                                                                     selectively run ras black box test"
                  "\n  -E,   --event                                                                                   set and listen to events black box test"
+                 "\n  -DE,  --driverevent                                                                             register and listen to driver scoped device attach/detach events black box test"
+                 "\n        [--timeout <milliseconds>]                                                                optionally override the event listen timeout, default is 1000"
                  "\n  -r,   --reset force|noforce                                                                     selectively run device reset test on all devices"
                  "\n        [deviceNo]                                                                                optionally run device reset test only on specified device"
                  "\n  -i,   --firmware <image>                                                                        selectively run device firmware test <image> is the firmware binary needed to flash"
@@ -3373,6 +3375,57 @@ void testSysmanInfoLogInstanceOnEvent(zes_driver_handle_t driver, std::vector<ze
     VALIDATECALL(zesInfoLogInstanceDeleteExt(hInstance));
 }
 
+void testSysmanDriverAttachDetachEvents(zes_driver_handle_t driver, std::vector<ze_device_handle_t> &devices, uint64_t timeout) {
+    std::cout << std::endl
+              << " ----  Driver scoped device attach/detach event tests ---- " << std::endl;
+
+    ze_result_t result = zesDriverEventRegisterExt(driver, ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH);
+    if (result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+        std::cout << "Driver scoped device attach/detach events are not supported. Skipping the test." << std::endl;
+        return;
+    }
+    VALIDATECALL(result);
+
+    const uint32_t deviceCount = static_cast<uint32_t>(devices.size());
+    std::vector<zes_event_type_flags_t> events(deviceCount, 0);
+
+    std::cout << "\nListening for driver scoped device attach/detach events with a " << timeout
+              << " millisecond timeout." << std::endl;
+    std::cout << "\n** Press any key to exit **\n"
+              << std::endl;
+
+    // Clear any pending keypresses
+    while (getCh() != -1) {
+    }
+
+    while (true) {
+        if (getCh() != -1) {
+            std::cout << "\nKey pressed. Exiting..." << std::endl;
+            break;
+        }
+
+        uint32_t numDeviceEvents = 0;
+        zes_event_type_flags_t driverEvents = 0;
+        result = zesDriverEventListenExt(driver, timeout, deviceCount, devices.data(), &numDeviceEvents,
+                                         events.data(), &driverEvents);
+        if (result != ZE_RESULT_SUCCESS) {
+            std::cout << "\nzesDriverEventListenExt() Failed: " << getErrorString(result) << ". Exiting..." << std::endl;
+            break;
+        }
+        if (driverEvents & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
+            std::cout << "\nDriver got DEVICE_DETACH event" << std::endl;
+        }
+        if (driverEvents & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
+            std::cout << "\nDriver got DEVICE_ATTACH event" << std::endl;
+        }
+        if (!(driverEvents & (ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH))) {
+            std::cout << "\rWaiting for device attach/detach events... " << std::flush;
+        }
+    }
+
+    VALIDATECALL(zesDriverEventRegisterExt(driver, 0));
+}
+
 bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector<std::string> &buf) {
     uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[1]));
     if (deviceIndex >= devices.size()) {
@@ -3837,6 +3890,37 @@ int main(int argc, char *argv[]) {
         testSysmanDriverRescan(driver, devices);
     }
 
+    if (isParamEnabled(argc, argv, "-DE", "--driverevent", &optind)) {
+        uint64_t driverEventTimeout = 1000u;
+
+        optind = optind + 1;
+        while (optind < argc) {
+            buf.push_back(argv[optind]);
+            optind++;
+        }
+
+        for (size_t i = 0; i < buf.size(); i++) {
+            if (buf[i] == "--timeout") {
+                if (i + 1 >= buf.size()) {
+                    std::cout << "Missing value for --timeout option" << std::endl;
+                    usage();
+                    exit(0);
+                }
+                if (!parseUnsignedArgument("--timeout", buf[i + 1], std::numeric_limits<uint64_t>::max(), driverEventTimeout)) {
+                    usage();
+                    exit(0);
+                }
+                i++; // skip the value
+            } else {
+                std::cout << "Unknown option '" << buf[i] << "' for --driverevent" << std::endl;
+                usage();
+                exit(0);
+            }
+        }
+
+        testSysmanDriverAttachDetachEvents(driver, devices, driverEventTimeout);
+        buf.clear();
+    }
     if (isParamEnabled(argc, argv, "-D", "--driverproperties", &optind)) {
         testSysmanDriverProperties(driver);
     }

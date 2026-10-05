@@ -31,6 +31,19 @@ const std::string LinuxEventsUtil::change("change");
 const std::string LinuxEventsUtil::unbind("unbind");
 const std::string LinuxEventsUtil::bind("bind");
 
+constexpr zes_event_type_flags_t driverScopedAttachDetachEvents = ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
+
+static bool isDriverScopedAttachDetachEventSupported() {
+    for (auto *sysmanDevice : globalSysmanDriver->sysmanDevices) {
+        auto pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(sysmanDevice->deviceGetOsInterface());
+        auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+        if (pSysmanKmdInterface->isDriverScopedAttachDetachEventSupported()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) {
     // This is dummy implementation, Actual implementation is handled at driver level
     // for all devices.
@@ -139,7 +152,7 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
 }
 
 ze_result_t LinuxEventsUtil::driverEventRegister(zes_event_type_flags_t events) {
-    zes_event_type_flags_t supportedDriverEventMask = ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT;
+    zes_event_type_flags_t supportedDriverEventMask = ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT | driverScopedAttachDetachEvents;
 
     if (events & ~supportedDriverEventMask) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -147,11 +160,21 @@ ze_result_t LinuxEventsUtil::driverEventRegister(zes_event_type_flags_t events) 
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
+    if ((events & driverScopedAttachDetachEvents) && !isDriverScopedAttachDetachEventSupported()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s(): driver scoped device attach/detach events are not supported and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     {
         std::unique_lock<std::mutex> lock(eventsMutex);
 
         zes_event_type_flags_t prevRegisteredEvents = registeredDriverEvents;
         registeredDriverEvents = events;
+        if (!(prevRegisteredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) && (events & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH)) {
+            // The devices may have changed while detach was not registered, so their addresses are collected again
+            supportedPciDeviceAddressesOutdated = true;
+        }
 
         if ((pipeFd[1] != -1) && (prevRegisteredEvents != registeredDriverEvents)) {
             uint8_t value = 0x00;
@@ -301,6 +324,46 @@ bool LinuxEventsUtil::isDrmCardNode(const std::string &eventDevPath, const std::
     return std::regex_match(eventDevPath.substr(pciDevPath.length()), drmCardNodeRegex);
 }
 
+bool LinuxEventsUtil::getPciAddressOfDrmCardNode(const std::string &eventDevPath, std::string &pciAddress) {
+    // Driver scoped attach/detach events are not tied to an enumerated device, so the primary drm card node of
+    // a PCI device (e.g. /devices/pci0000:00/0000:00:02.0/drm/card0) is used, including devices which were
+    // not enumerated by sysman or which come back at a different PCI address. The PCI address of the device
+    // is the path component right before the drm directory.
+    const std::string pciRootRegex = "/devices/pci[^/]+";                                 // e.g. /devices/pci0000:00
+    const std::string pciBridgesRegex = "(?:/[^/]+)*";                                    // e.g. /0000:00:01.0, zero or more bridges
+    const std::string pciAddressRegex = "/([0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-7])"; // e.g. /0000:03:00.0, captured
+    const std::string drmCardRegex = "/drm/card[0-9]+";                                   // e.g. /drm/card0
+    const std::regex pciDrmCardNodeRegex(pciRootRegex + pciBridgesRegex + pciAddressRegex + drmCardRegex);
+    std::smatch match;
+    if (!std::regex_match(eventDevPath, match, pciDrmCardNodeRegex)) {
+        return false;
+    }
+    pciAddress = match[1].str();
+    return true;
+}
+
+void LinuxEventsUtil::getSupportedPciDeviceAddresses(std::set<std::string> &pciAddresses) {
+    // Restricts driver scoped attach/detach events to the supported Intel GPUs, so devices of other vendors are not reported.
+    // Only the addresses are queried, as reading the PCI device properties would wake up the devices.
+    pciAddresses.clear();
+    for (const auto &address : pLinuxSysmanDriverImp->getPciDeviceAddresses()) {
+        char pciAddress[16] = {};
+        snprintf(pciAddress, sizeof(pciAddress), "%04x:%02x:%02x.%x", address.domain, address.bus, address.device, address.function);
+        pciAddresses.insert(pciAddress);
+    }
+}
+
+void LinuxEventsUtil::updateSupportedPciDeviceAddresses(zes_event_type_flags_t driverRegisteredEvents) {
+    // The device may already be removed from the PCI bus when the remove uevent of its drm card node is received,
+    // so the addresses of the supported devices are collected once detach is registered and then kept up to date
+    // from the uevents. They are not collected again on every listen, as the uevents queued between two listen
+    // calls would then be matched against devices which may already be gone from the PCI bus.
+    if ((driverRegisteredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) && supportedPciDeviceAddressesOutdated) {
+        getSupportedPciDeviceAddresses(supportedPciDeviceAddresses);
+        supportedPciDeviceAddressesOutdated = false;
+    }
+}
+
 bool LinuxEventsUtil::checkDeviceDetachEvent(zes_event_type_flags_t &pEvent) {
     if (action.compare(remove) == 0) {
         pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
@@ -312,6 +375,45 @@ bool LinuxEventsUtil::checkDeviceDetachEvent(zes_event_type_flags_t &pEvent) {
 bool LinuxEventsUtil::checkDeviceAttachEvent(zes_event_type_flags_t &pEvent) {
     if (action.compare(add) == 0) {
         pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH;
+        return true;
+    }
+    return false;
+}
+
+bool LinuxEventsUtil::checkDriverAttachDetachEvent(void *dev, zes_event_type_flags_t driverRegisteredEvents, zes_event_type_flags_t &driverEvents) {
+    if (!(driverRegisteredEvents & driverScopedAttachDetachEvents)) {
+        return false;
+    }
+
+    const char *devicePath = pUdevLib->getEventPropertyValue(dev, "DEVPATH");
+    std::string pciAddress;
+    if ((devicePath == nullptr) || !getPciAddressOfDrmCardNode(devicePath, pciAddress)) {
+        return false;
+    }
+
+    if (action.compare(remove) == 0) {
+        // The addresses are collected again when detach gets registered, so they are not updated while it is not registered
+        if (!(driverRegisteredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH)) {
+            return false;
+        }
+        if (supportedPciDeviceAddresses.erase(pciAddress) == 0) {
+            return false;
+        }
+        driverEvents |= ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
+        return true;
+    }
+
+    if (action.compare(add) == 0) {
+        std::set<std::string> pciAddresses;
+        getSupportedPciDeviceAddresses(pciAddresses);
+        if (pciAddresses.count(pciAddress) == 0) {
+            return false;
+        }
+        supportedPciDeviceAddresses.insert(pciAddress);
+        if (!(driverRegisteredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH)) {
+            return false;
+        }
+        driverEvents |= ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH;
         return true;
     }
     return false;
@@ -579,6 +681,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
         }
 
         refreshDriverEventPollSources(pDriverEvents, driverRegisteredEvents, pollSources, cperRegistered);
+        updateSupportedPciDeviceAddresses(driverRegisteredEvents);
 
         getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
     }
@@ -630,6 +733,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             pFsAccess = nullptr;
             getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
             refreshDriverEventPollSources(pDriverEvents, driverRegisteredEvents, pollSources, cperRegistered);
+            updateSupportedPciDeviceAddresses(driverRegisteredEvents);
             syncPfds();
         }
 
@@ -638,7 +742,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             retval = true;
         }
 
-        if (mapOfDevIndexToDevPath.empty() && !cperRegistered) {
+        if (mapOfDevIndexToDevPath.empty() && !cperRegistered && !(driverRegisteredEvents & driverScopedAttachDetachEvents)) {
             break;
         }
 
@@ -650,6 +754,9 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
                 if (eventTypePtr != nullptr) {
                     action = std::string(eventTypePtr);
                     if (checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev, phDevices)) {
+                        retval = true;
+                    }
+                    if ((pDriverEvents != nullptr) && checkDriverAttachDetachEvent(dev, driverRegisteredEvents, *pDriverEvents)) {
                         retval = true;
                     }
                 }

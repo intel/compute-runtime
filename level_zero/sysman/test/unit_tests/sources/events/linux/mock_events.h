@@ -329,6 +329,8 @@ class PublicLinuxEventsUtil : public L0::Sysman::LinuxEventsUtil {
     using LinuxEventsUtil::checkDeviceWedgedEvent;
     using LinuxEventsUtil::deviceEventsMap;
     using LinuxEventsUtil::getDevIndexToDevPathMap;
+    using LinuxEventsUtil::getPciAddressOfDrmCardNode;
+    using LinuxEventsUtil::getSupportedPciDeviceAddresses;
     using LinuxEventsUtil::handleNetlinkEvents;
     using LinuxEventsUtil::init;
     using LinuxEventsUtil::initNetlink;
@@ -341,7 +343,10 @@ class PublicLinuxEventsUtil : public L0::Sysman::LinuxEventsUtil {
     using LinuxEventsUtil::processNetlinkRasEvent;
     using LinuxEventsUtil::pUdevLib;
     using LinuxEventsUtil::registeredDriverEvents;
+    using LinuxEventsUtil::supportedPciDeviceAddresses;
+    using LinuxEventsUtil::supportedPciDeviceAddressesOutdated;
     using LinuxEventsUtil::updateCperPollSource;
+    using LinuxEventsUtil::updateSupportedPciDeviceAddresses;
 };
 
 } // namespace ult

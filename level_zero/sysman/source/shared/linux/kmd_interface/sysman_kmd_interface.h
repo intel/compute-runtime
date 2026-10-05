@@ -191,6 +191,7 @@ class SysmanKmdInterface {
     virtual bool isSettingExclusiveModeSupported() const = 0;
     virtual void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual bool isVfEngineUtilizationSupported() const = 0;
+    virtual bool isDriverScopedAttachDetachEventSupported() const = 0;
     virtual ze_result_t getPhysicalMemorySize(uint64_t &physicalMemSize, bool isSubdevice, uint32_t subDeviceId, LinuxSysmanImp *pLinuxSysmanImp) = 0;
     virtual ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
                                                          uint64_t fnNumber,
@@ -289,6 +290,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     bool isSettingExclusiveModeSupported() const override { return true; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     bool isVfEngineUtilizationSupported() const override { return false; }
+    bool isDriverScopedAttachDetachEventSupported() const override { return false; }
     ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
                                                  uint64_t fnNumber,
                                                  uint64_t engineInstance,
@@ -359,6 +361,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     bool isSettingExclusiveModeSupported() const override { return true; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     bool isVfEngineUtilizationSupported() const override { return true; }
+    bool isDriverScopedAttachDetachEventSupported() const override { return false; }
     ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
                                                  uint64_t fnNumber,
                                                  uint64_t engineInstance,
@@ -433,6 +436,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isSettingExclusiveModeSupported() const override { return false; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     bool isVfEngineUtilizationSupported() const override { return true; }
+    bool isDriverScopedAttachDetachEventSupported() const override { return true; }
     ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
                                                  uint64_t fnNumber,
                                                  uint64_t engineInstance,

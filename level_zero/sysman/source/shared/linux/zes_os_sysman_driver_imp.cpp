@@ -393,16 +393,26 @@ static bool getPciDeviceCandidate(const std::string &devicePath, PciDeviceCandid
     return true;
 }
 
-static std::vector<PciDeviceCandidate> getIntelGpuDevices() {
+static std::vector<PciDeviceCandidate> getIntelGpuDeviceCandidates() {
     const std::string pciSysfsDevicesDirectory = "/sys/bus/pci/devices";
-    std::vector<PciDeviceCandidate> devices;
+    std::vector<PciDeviceCandidate> candidates;
 
+    // Only the sysfs attributes cached by the kernel are read, the config space is not accessed so that
+    // the devices are not woken up
     for (const auto &devicePath : NEO::Directory::getFiles(pciSysfsDevicesDirectory)) {
         PciDeviceCandidate candidate = {};
-        if (!getPciDeviceCandidate(devicePath, candidate)) {
-            continue;
+        if (getPciDeviceCandidate(devicePath, candidate)) {
+            candidates.push_back(std::move(candidate));
         }
+    }
 
+    return candidates;
+}
+
+static std::vector<PciDeviceCandidate> getIntelGpuDevices() {
+    std::vector<PciDeviceCandidate> devices;
+
+    for (auto &candidate : getIntelGpuDeviceCandidates()) {
         bool deviceRemoved = false;
         candidate.status = getPciDeviceLinkStatus(candidate.devicePath, deviceRemoved);
         if (deviceRemoved) {
@@ -457,6 +467,16 @@ ze_result_t LinuxSysmanDriverImp::getPciDeviceProperties(uint32_t *pCount, zes_i
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+std::vector<zes_pci_address_t> LinuxSysmanDriverImp::getPciDeviceAddresses() {
+    // The link status is not read unlike in getPciDeviceProperties(), so this can be called frequently
+    // without waking up the devices
+    std::vector<zes_pci_address_t> addresses;
+    for (const auto &candidate : getIntelGpuDeviceCandidates()) {
+        addresses.push_back(candidate.address);
+    }
+    return addresses;
 }
 
 int32_t LinuxSysmanDriverImp::findDeviceIndexByPciUuid(SysmanDriverHandleImp *driverHandle, const std::string &pciUuid) {

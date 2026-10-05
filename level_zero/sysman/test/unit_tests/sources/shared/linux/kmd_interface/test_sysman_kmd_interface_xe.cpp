@@ -261,6 +261,11 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingSupport
     EXPECT_TRUE(pSysmanKmdInterface->isVfEngineUtilizationSupported());
 }
 
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForDriverScopedAttachDetachEventsThenTrueValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->isDriverScopedAttachDetachEventSupported());
+}
+
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCallingGpuBindAndUnbindEntryThenProperStringIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_STREQ("/sys/bus/pci/drivers/xe/bind", pSysmanKmdInterface->getGpuBindEntry().c_str());

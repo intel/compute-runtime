@@ -484,6 +484,58 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenDriverHandleWithoutOsSysmanDrive
     EXPECT_NE(nullptr, emptyDriverHandle->pOsSysmanDriver);
 }
 
+TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenNoPciDevicesWhenCallingGetPciDeviceAddressesThenNoAddressIsReturned) {
+    MockPciSysfs pciSysfs;
+    pciSysfs.setupDirectoryListing();
+    auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+
+    EXPECT_TRUE(pLinuxDriverImp->getPciDeviceAddresses().empty());
+}
+
+TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenPciDevicesWhenCallingGetPciDeviceAddressesThenOnlyAddressesOfSupportedIntelGpusAreReturnedWithoutReadingConfigSpace) {
+    MockPciSysfs pciSysfs;
+    pciSysfs.addDevice("0000:03:00.0");
+    pciSysfs.addDevice("0001:ab:1f.7");
+
+    auto &otherVendorDevice = pciSysfs.addDevice("0000:04:00.0");
+    otherVendorDevice.attributes["vendor"] = getMockSysfsHexValue(mockPciNonIntelVendorId, 4);
+
+    auto &networkDevice = pciSysfs.addDevice("0000:05:00.0");
+    networkDevice.attributes["class"] = getMockSysfsHexValue(mockPciNetworkControllerClassCode, 6);
+
+    auto &virtualFunction = pciSysfs.addDevice("0000:03:00.1");
+    virtualFunction.isVirtualFunction = true;
+
+    pciSysfs.setupDirectoryListing();
+    auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+
+    auto addresses = pLinuxDriverImp->getPciDeviceAddresses();
+    ASSERT_EQ(2u, addresses.size());
+    EXPECT_EQ(0u, addresses[0].domain);
+    EXPECT_EQ(3u, addresses[0].bus);
+    EXPECT_EQ(0u, addresses[0].device);
+    EXPECT_EQ(0u, addresses[0].function);
+    EXPECT_EQ(1u, addresses[1].domain);
+    EXPECT_EQ(0xabu, addresses[1].bus);
+    EXPECT_EQ(0x1fu, addresses[1].device);
+    EXPECT_EQ(7u, addresses[1].function);
+    // Reading the config space wakes up a device
+    EXPECT_EQ(0u, pciSysfs.configOpenCallCount);
+}
+
+TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigNodeOfDeviceIsNotAvailableWhenCallingGetPciDeviceAddressesThenAddressOfDeviceIsStillReturned) {
+    MockPciSysfs pciSysfs;
+    auto &device = pciSysfs.addDevice("0000:03:00.0");
+    device.configOpenErrorNum = ENOENT;
+    pciSysfs.setupDirectoryListing();
+    auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+
+    auto addresses = pLinuxDriverImp->getPciDeviceAddresses();
+    ASSERT_EQ(1u, addresses.size());
+    EXPECT_EQ(3u, addresses[0].bus);
+    EXPECT_EQ(0u, pciSysfs.configOpenCallCount);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0
