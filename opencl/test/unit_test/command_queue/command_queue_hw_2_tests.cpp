@@ -1713,6 +1713,34 @@ HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushRequiredWhenEnqueueWr
     EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
 }
 
+HWTEST_F(IoqCommandQueueHwBlitTest, givenUnalignedHostPtrWhenEnqueueReadAndWriteImageOnBcsThenHostPtrIsNotAlignedDown) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+
+    auto cmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context));
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {2, 1, 1};
+
+    alignas(MemoryConstants::cacheLineSize) uint8_t hostMemory[MemoryConstants::cacheLineSize] = {};
+    constexpr size_t unalignedOffset = 2;
+    void *ptr = ptrOffset(hostMemory, unalignedOffset);
+
+    EXPECT_EQ(CL_SUCCESS, cmdQHw->enqueueReadImage(image.get(), CL_FALSE, origin, region, 0, 0, ptr, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(static_cast<unsigned int>(CL_COMMAND_READ_IMAGE), cmdQHw->lastCommandType);
+    EXPECT_EQ(0u, cmdQHw->kernelParams.dstOffset.x);
+    EXPECT_EQ(unalignedOffset, reinterpret_cast<uintptr_t>(cmdQHw->kernelParams.dstPtr) & 0x3);
+
+    EXPECT_EQ(CL_SUCCESS, cmdQHw->enqueueWriteImage(image.get(), CL_FALSE, origin, region, 0, 0, ptr, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(static_cast<unsigned int>(CL_COMMAND_WRITE_IMAGE), cmdQHw->lastCommandType);
+    EXPECT_EQ(0u, cmdQHw->kernelParams.srcOffset.x);
+    EXPECT_EQ(unalignedOffset, reinterpret_cast<uintptr_t>(cmdQHw->kernelParams.srcPtr) & 0x3);
+
+    EXPECT_EQ(CL_SUCCESS, cmdQHw->finish(false));
+}
+
 HWTEST_F(IoqCommandQueueHwBlitTest, givenImageWithHostPtrWhenCreateImageThenStopRegularBcs) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto &engine = pDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);

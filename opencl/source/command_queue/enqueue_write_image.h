@@ -8,8 +8,10 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -115,7 +117,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImageImpl(
         }
     }
 
-    void *alignedSrcPtr = alignDown(srcPtr, 4);
+    // blitter takes host ptr as is - offset.x is used as a pixel coordinate, so it can't carry byte alignment remainder
+    const bool isBcs = EngineHelpers::isBcs(csr.getOsContext().getEngineType());
+    void *alignedSrcPtr = isBcs ? srcPtr : alignDown(srcPtr, 4);
     size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
 
     BuiltIn::OpParams dc;

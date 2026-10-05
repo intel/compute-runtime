@@ -235,12 +235,18 @@ struct ClBlitProperties {
         } else if (src1DBuffer) {
             blitProperties.srcSize.x *= blitProperties.bytesPerPixel;
             blitProperties.srcOffset.x *= blitProperties.bytesPerPixel;
+            if (blitProperties.blitDirection == BlitterConstants::BlitDirection::imageToHostPtr) {
+                blitProperties.dstOffset.x *= blitProperties.bytesPerPixel;
+            }
             blitProperties.copySize.x *= blitProperties.bytesPerPixel;
             blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
             blitProperties.bytesPerPixel = 1;
         } else if (dst1DBuffer) {
             blitProperties.dstSize.x *= blitProperties.bytesPerPixel;
             blitProperties.dstOffset.x *= blitProperties.bytesPerPixel;
+            if (blitProperties.blitDirection == BlitterConstants::BlitDirection::hostPtrToImage) {
+                blitProperties.srcOffset.x *= blitProperties.bytesPerPixel;
+            }
             blitProperties.copySize.x *= blitProperties.bytesPerPixel;
             blitProperties.blitDirection = BlitterConstants::BlitDirection::hostPtrToBuffer;
             blitProperties.bytesPerPixel = 1;

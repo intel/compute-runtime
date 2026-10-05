@@ -127,7 +127,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImageImpl(
         }
     }
 
-    void *alignedDstPtr = alignDown(dstPtr, 4);
+    // blitter takes host ptr as is - offset.x is used as a pixel coordinate, so it can't carry byte alignment remainder
+    const bool isBcs = EngineHelpers::isBcs(csr.getOsContext().getEngineType());
+    void *alignedDstPtr = isBcs ? dstPtr : alignDown(dstPtr, 4);
     size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
 
     BuiltIn::OpParams dc;

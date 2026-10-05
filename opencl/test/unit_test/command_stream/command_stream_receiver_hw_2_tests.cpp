@@ -1993,7 +1993,7 @@ HWTEST_F(BcsTestsImages, givenImage1DBufferWhenSetBlitPropertiesForImageIsCalled
     EXPECT_EQ(blitProperties.srcSize.x, initBlitProperties.srcSize.x * originalBytesPerPixel);
     EXPECT_EQ(blitProperties.dstSize.x, initBlitProperties.dstSize.x);
     EXPECT_EQ(blitProperties.srcOffset.x, initBlitProperties.srcOffset.x * originalBytesPerPixel);
-    EXPECT_EQ(blitProperties.dstOffset.x, initBlitProperties.dstOffset.x);
+    EXPECT_EQ(blitProperties.dstOffset.x, initBlitProperties.dstOffset.x * originalBytesPerPixel);
     EXPECT_EQ(blitProperties.copySize.x, initBlitProperties.copySize.x * originalBytesPerPixel);
     EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::bufferToHostPtr);
     EXPECT_EQ(blitProperties.bytesPerPixel, 1u);
@@ -2007,7 +2007,7 @@ HWTEST_F(BcsTestsImages, givenImage1DBufferWhenSetBlitPropertiesForImageIsCalled
 
     EXPECT_EQ(blitProperties.srcSize.x, initBlitProperties.srcSize.x);
     EXPECT_EQ(blitProperties.dstSize.x, initBlitProperties.dstSize.x * originalBytesPerPixel);
-    EXPECT_EQ(blitProperties.srcOffset.x, initBlitProperties.srcOffset.x);
+    EXPECT_EQ(blitProperties.srcOffset.x, initBlitProperties.srcOffset.x * originalBytesPerPixel);
     EXPECT_EQ(blitProperties.dstOffset.x, initBlitProperties.dstOffset.x * originalBytesPerPixel);
     EXPECT_EQ(blitProperties.copySize.x, initBlitProperties.copySize.x * originalBytesPerPixel);
     EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::hostPtrToBuffer);
@@ -2260,6 +2260,60 @@ HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPrope
 
     EXPECT_EQ(1u, blitProperties.dstAllocation->getHostPtrTaskCountAssignment());
     blitProperties.dstAllocation->decrementHostPtrTaskCountAssignment();
+}
+
+HWTEST_F(BcsTests, givenImageToHostPtrWithUnalignedHostPtrAndPixelOffsetWhenConstructPropertiesIsCalledThenHostPtrAndOffsetAreUsedAsIs) {
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
+
+    constexpr uint64_t hostGpuVa = 0x10002;
+    constexpr size_t hostPixelOffset = 5;
+    MockGraphicsAllocation transferAllocation(reinterpret_cast<void *>(0x1000), 0x10000, MemoryConstants::pageSize);
+
+    BuiltIn::OpParams builtinOpParams{};
+    builtinOpParams.dstPtr = reinterpret_cast<void *>(hostGpuVa);
+    builtinOpParams.dstOffset = {hostPixelOffset, 0, 0};
+    builtinOpParams.srcMemObj = image.get();
+    builtinOpParams.srcOffset = {3, 4, 0};
+    builtinOpParams.size = {2, 3, 1};
+    builtinOpParams.transferAllocation = &transferAllocation;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::imageToHostPtr,
+                                                                csr,
+                                                                builtinOpParams);
+
+    EXPECT_EQ(&transferAllocation, blitProperties.dstAllocation);
+    EXPECT_EQ(hostGpuVa, blitProperties.dstGpuAddress);
+    EXPECT_EQ(builtinOpParams.dstOffset, blitProperties.dstOffset);
+    EXPECT_EQ(builtinOpParams.srcOffset, blitProperties.srcOffset);
+}
+
+HWTEST_F(BcsTests, givenHostPtrToImageWithUnalignedHostPtrAndPixelOffsetWhenConstructPropertiesIsCalledThenHostPtrAndOffsetAreUsedAsIs) {
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
+
+    constexpr uint64_t hostGpuVa = 0x10002;
+    constexpr size_t hostPixelOffset = 5;
+    MockGraphicsAllocation transferAllocation(reinterpret_cast<void *>(0x1000), 0x10000, MemoryConstants::pageSize);
+
+    BuiltIn::OpParams builtinOpParams{};
+    builtinOpParams.srcPtr = reinterpret_cast<void *>(hostGpuVa);
+    builtinOpParams.srcOffset = {hostPixelOffset, 0, 0};
+    builtinOpParams.dstMemObj = image.get();
+    builtinOpParams.dstOffset = {3, 4, 0};
+    builtinOpParams.size = {2, 3, 1};
+    builtinOpParams.transferAllocation = &transferAllocation;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::hostPtrToImage,
+                                                                csr,
+                                                                builtinOpParams);
+
+    EXPECT_EQ(&transferAllocation, blitProperties.srcAllocation);
+    EXPECT_EQ(hostGpuVa, blitProperties.srcGpuAddress);
+    EXPECT_EQ(builtinOpParams.srcOffset, blitProperties.srcOffset);
+    EXPECT_EQ(builtinOpParams.dstOffset, blitProperties.dstOffset);
 }
 
 HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsFound) {
