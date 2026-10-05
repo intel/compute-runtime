@@ -553,7 +553,7 @@ HWTEST_TEMPLATED_F(CommandQueueHwTestWithMockCsr, GivenNotCompleteUserEventPasse
     GraphicsAllocation *printfSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockCSR->getRootDeviceIndex(), MemoryConstants::pageSize});
     GraphicsAllocation *privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockCSR->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    mockKernel->setPrivateSurface(privateSurface, 10);
+    mockKernel->setPrivateSurface(privateSurface);
 
     cl_event blockedEvent = userEvent.get();
     pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
@@ -563,7 +563,7 @@ HWTEST_TEMPLATED_F(CommandQueueHwTestWithMockCsr, GivenNotCompleteUserEventPasse
     EXPECT_TRUE(mockCSR->isMadeResident(constantSurface));
     EXPECT_TRUE(mockCSR->isMadeResident(privateSurface));
 
-    mockKernel->setPrivateSurface(nullptr, 0);
+    mockKernel->setPrivateSurface(nullptr);
     mockProgram->setConstantSurface(nullptr);
 
     mockCSR->getMemoryManager()->freeGraphicsMemory(privateSurface);

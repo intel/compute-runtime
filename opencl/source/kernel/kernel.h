@@ -429,8 +429,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     std::unique_ptr<char[]> pSshLocal;
     std::unique_ptr<ImplicitArgs> pImplicitArgs = nullptr;
 
-    uint64_t privateSurfaceSize = 0u;
-
     size_t numberOfBindingTableStates = 0u;
     size_t localBindingTableOffset = 0u;
 

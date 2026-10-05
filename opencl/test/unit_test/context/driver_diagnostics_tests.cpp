@@ -864,6 +864,20 @@ TEST_F(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThen
     }
 }
 
+HWTEST2_F(PerformanceHintKernelTest, GivenPrivateMemoryInScratchWhenKernelIsInitializedThenContextProvidesPrivateMemoryHint, IsAtLeastXeCore) {
+    MockKernelWithInternals mockKernel(*context);
+    auto &kernelAttributes = mockKernel.kernelInfo.kernelDescriptor.kernelAttributes;
+    kernelAttributes.perHwThreadPrivateMemorySize = 0u;
+    kernelAttributes.privateScratchMemorySize = 1024u;
+
+    mockKernel.mockKernel->initialize();
+
+    auto expectedSize = kernelAttributes.privateScratchMemorySize * mockKernel.mockKernel->getDevice().getSharedDeviceInfo().computeUnitsUsedForScratch;
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PRIVATE_MEMORY_USAGE_TOO_HIGH],
+             mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+}
+
 TEST(PerformanceHintsDebugVariables, givenDefaultDebugManagerWhenPrintDriverDiagnosticsIsCalledThenMinusOneIsReturned) {
     EXPECT_EQ(-1, debugManager.flags.PrintDriverDiagnostics.get());
 }

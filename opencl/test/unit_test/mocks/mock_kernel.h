@@ -213,9 +213,8 @@ class MockKernel : public Kernel {
         }
     }
 
-    void setPrivateSurface(GraphicsAllocation *gfxAllocation, uint32_t size) {
+    void setPrivateSurface(GraphicsAllocation *gfxAllocation) {
         privateSurface = gfxAllocation;
-        privateSurfaceSize = size;
     }
 
     void setTotalSLMSize(uint32_t size) {

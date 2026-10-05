@@ -3260,7 +3260,7 @@ TEST(KernelTest, givenKernelUsesPrivateMemoryWhenDeviceReleasedBeforeKernelThenK
     MockContext mockCtx(&*device);
     auto mockKernel = std::make_unique<MockKernelWithInternals>(mockCtx);
     GraphicsAllocation *privateSurface = device->getExecutionEnvironment()->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
-    mockKernel->mockKernel->setPrivateSurface(privateSurface, 10);
+    mockKernel->mockKernel->setPrivateSurface(privateSurface);
 
     executionEnvironment->incRefInternal();
     mockKernel.reset(nullptr);

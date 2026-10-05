@@ -395,7 +395,7 @@ cl_int Kernel::patchPrivateSurface() {
     auto perHwThreadPrivateMemorySize = kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
     if (perHwThreadPrivateMemorySize) {
         if (!privateSurface) {
-            privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
+            auto privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
             DEBUG_BREAK_IF(privateSurfaceSize == 0);
 
             privateSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
@@ -1901,10 +1901,13 @@ void Kernel::provideInitializationHints() {
     }
 
     auto pClDevice = &getDevice();
-    if (privateSurfaceSize) {
+    auto privateMemorySize = KernelHelper::getPrivateSurfaceSize(this->getGfxCoreHelper().getKernelPrivateMemSize(kernelInfo.kernelDescriptor),
+                                                                 pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
+
+    if (privateMemorySize) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, PRIVATE_MEMORY_USAGE_TOO_HIGH,
                                         kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(),
-                                        privateSurfaceSize);
+                                        privateMemorySize);
     }
     auto scratchSize = kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize *
                        pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * kernelInfo.getMaxSimdSize();
