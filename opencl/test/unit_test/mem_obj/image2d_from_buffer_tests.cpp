@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,6 @@ class Image2dFromBufferTest : public ::testing::Test {
         imageDesc.image_slice_pitch = 0;
         imageDesc.num_samples = 0;
 
-        size = 128 * 256 * 4;
         hostPtr = alignedMalloc(size, 16);
         ASSERT_NE(nullptr, hostPtr);
         imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, &retVal);
@@ -71,7 +70,7 @@ class Image2dFromBufferTest : public ::testing::Test {
     cl_int retVal = CL_SUCCESS;
     MockContext context;
     void *hostPtr;
-    size_t size;
+    static constexpr size_t size = 128 * 256 * 4;
 };
 
 TEST_F(Image2dFromBufferTest, WhenCreatingImage2dFromBufferThenImagePropertiesAreCorrect) {
@@ -129,12 +128,9 @@ TEST_F(Image2dFromBufferTest, givenRowPitchThatIsGreaterThenComputedWhenImageIsC
 
 TEST_F(Image2dFromBufferTest, GivenInvalidHostPtrAlignmentWhenCreatingImageThenInvalidImageFormatDescriptorErrorIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(&context);
-    std::unique_ptr<void, decltype(free) *> myHostPtr(malloc(size + 1), free);
-    ASSERT_NE(nullptr, myHostPtr);
-    void *nonAlignedHostPtr = myHostPtr.get();
-    if ((reinterpret_cast<uint64_t>(myHostPtr.get()) % 4) == 0) {
-        nonAlignedHostPtr = reinterpret_cast<void *>((reinterpret_cast<uint64_t>(myHostPtr.get()) + 1));
-    }
+    alignas(4) uint8_t hostStorage[size + 1];
+    void *nonAlignedHostPtr = hostStorage + 1;
+    ASSERT_NE(0u, reinterpret_cast<uint64_t>(nonAlignedHostPtr) % 4);
 
     cl_mem origBuffer = imageDesc.mem_object;
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_USE_HOST_PTR, size, nonAlignedHostPtr, &retVal);
