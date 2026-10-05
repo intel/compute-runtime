@@ -681,7 +681,10 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->destroy();
         return nullptr;
     }
-    device->setFirstImmCmdlistCreated();
+
+    if (!internalUsage) {
+        device->setFirstImmCmdlistCreated();
+    }
     return commandList;
 }
 

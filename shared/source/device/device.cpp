@@ -168,7 +168,7 @@ bool Device::createSubDevices() {
 }
 
 bool Device::createDeviceImpl() {
-    if (getRootDeviceEnvironment().isWddmOnLinux()) {
+    if (getRootDeviceEnvironment().isWddmOnLinux() || !getGfxCoreHelper().areSecondaryContextsSupported()) {
         deferredImmediateCmdListEnabled = false;
     }
 
