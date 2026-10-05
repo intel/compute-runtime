@@ -38,7 +38,7 @@ uint32_t L1CachePolicyHelper<gfxProduct>::getDefaultL1CachePolicy(bool isDebugge
     if (isDebuggerActive) {
         return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
     }
-    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
+    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WS;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

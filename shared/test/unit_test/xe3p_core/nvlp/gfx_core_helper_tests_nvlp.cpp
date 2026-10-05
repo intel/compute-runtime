@@ -38,7 +38,7 @@ NVLPTEST_F(GfxCoreHelperTestsNvlp, whenGetL1CachePolicyThenReturnCorrectValue) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.getL1CachePolicy(false), FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB);
+    EXPECT_EQ(productHelper.getL1CachePolicy(false), FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS);
     EXPECT_EQ(productHelper.getL1CachePolicy(true), FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
 }
 
