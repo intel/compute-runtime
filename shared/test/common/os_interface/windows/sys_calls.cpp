@@ -233,8 +233,11 @@ HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, B
     return reinterpret_cast<HANDLE>(dummyHandle);
 }
 
+std::atomic<size_t> resetEventCalled = 0u;
+BOOL resetEventResult = TRUE;
 BOOL resetEvent(HANDLE hEvent) {
-    return TRUE;
+    resetEventCalled++;
+    return resetEventResult;
 }
 
 BOOL setEvent(HANDLE hEvent) {
@@ -256,6 +259,20 @@ DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
         return sysCallsWaitForSingleObject(hHandle, dwMilliseconds);
     }
     return WAIT_OBJECT_0;
+}
+
+HANDLE createWaitableTimerEx(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess) {
+    return reinterpret_cast<HANDLE>(dummyHandle);
+}
+
+size_t setWaitableTimerCalled = 0u;
+int64_t setWaitableTimerLastDueTime = 0;
+BOOL setWaitableTimerResult = TRUE;
+
+BOOL setWaitableTimer(HANDLE hTimer, const LARGE_INTEGER *lpDueTime, LONG lPeriod, PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, BOOL fResume) {
+    setWaitableTimerCalled++;
+    setWaitableTimerLastDueTime = lpDueTime->QuadPart;
+    return setWaitableTimerResult;
 }
 
 BOOL registerWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags) {

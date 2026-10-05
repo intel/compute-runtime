@@ -604,6 +604,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     lockCSR.unlock();
     ze_result_t status = ZE_RESULT_SUCCESS;
     cmdQ->setTaskCount(completionStamp.taskCount);
+    cmdQ->setFlushStamp(completionStamp.flushStamp);
 
     if (cmdQ == this->cmdQImmediate || cmdQ == this->cmdQImmediateCopyOffload) {
         if (this->isSyncModeQueue) {
@@ -1521,6 +1522,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
             // host synchronization on the event cleans temporary allocations up to this event's
             // own completion, instead of a live (possibly stale) tag read that can under-clean.
             signalEvent->setCleanupTaskCount(queue->getCsr(), queue->getTaskCount());
+            signalEvent->setSignalFlushStamp(queue->getFlushStamp());
         }
     }
 

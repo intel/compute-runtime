@@ -97,6 +97,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
 
     TaskCountType getTaskCount() const { return taskCount; }
     void setTaskCount(TaskCountType newTaskCount) { taskCount = newTaskCount; }
+    NEO::FlushStamp getFlushStamp() const { return flushStamp; }
+    void setFlushStamp(NEO::FlushStamp newFlushStamp) { flushStamp = newFlushStamp; }
 
     inline bool getAndClearIsWalkerWithProfilingEnqueued() {
         bool retVal = this->isWalkerWithProfilingEnqueued;
@@ -189,6 +191,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     uint32_t partitionCount = 1;
     uint32_t activeSubDevices = 1;
     std::atomic<TaskCountType> taskCount = 0;
+    std::atomic<NEO::FlushStamp> flushStamp = 0;
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
     NEO::SWTags::CounterContext swTagCounters{};
 

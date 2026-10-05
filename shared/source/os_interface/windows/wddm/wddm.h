@@ -18,6 +18,9 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <atomic>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 struct _SYSTEM_INFO;
 typedef struct _SYSTEM_INFO SYSTEM_INFO;
@@ -29,6 +32,7 @@ class Gdi;
 class GfxPartition;
 class Gmm;
 class GmmMemory;
+class KmdWaiter;
 class OsContextWin;
 class ProductHelper;
 class SettingsReader;
@@ -98,6 +102,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments);
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait);
     MOCKABLE_VIRTUAL WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds);
+    MOCKABLE_VIRTUAL std::unique_ptr<KmdWaiter> createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue);
 
     MOCKABLE_VIRTUAL NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
     MOCKABLE_VIRTUAL MmioTimestampPtrHelper createMmioTimestampPtrHelper(D3DKMT_HANDLE context);
@@ -265,6 +270,13 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle);
     MOCKABLE_VIRTUAL bool waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds);
 
+    class MonitoredFenceKmdWaiter;
+    struct KmdWaitHandles {
+        HANDLE eventHandle = nullptr;
+        HANDLE timerHandle = nullptr;
+    };
+    void releaseUnusedKmdWaitHandles();
+
     Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
     bool createDevice(PreemptionMode preemptionMode);
@@ -350,5 +362,8 @@ class Wddm : public DriverModel {
     bool instrumentationEnabled = false;
     bool checkDeviceState = false;
     bool useAdditionalEngine = false;
+    std::mutex unusedKmdWaitHandlesMutex;
+    // Reused, because closing handles right after a wakeup delays the return from the wait.
+    std::vector<KmdWaitHandles> unusedKmdWaitHandles;
 };
 } // namespace NEO

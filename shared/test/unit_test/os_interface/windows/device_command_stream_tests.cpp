@@ -211,6 +211,22 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenWddmInterfaceBeforeWddm3ThenCreat
     EXPECT_FALSE(wddm->isNativeFenceAvailable());
 }
 
+HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenHardwareOrHardwareWithAubCsrWithoutDirectSubmissionWhenCreatingKmdWaiterThenWaiterForGivenFlushStampIsCreated) {
+    csr->createKmdWaiter(7u);
+    EXPECT_EQ(1u, wddm->createMonitoredFenceKmdWaiterCalled);
+    EXPECT_EQ(7u, wddm->createMonitoredFenceKmdWaiterFenceValue);
+
+    auto &executionEnvironment = *device->getExecutionEnvironment();
+    MockAubCenterFixture::setMockAubCenter(*executionEnvironment.rootDeviceEnvironments[0], CommandStreamReceiverType::hardwareWithAub, true);
+    std::unique_ptr<CommandStreamReceiver> csrWithAubDump(WddmCommandStreamReceiver<FamilyType>::create(true, executionEnvironment, 0, device->getDeviceBitfield()));
+    csrWithAubDump->setupContext(csr->getOsContext());
+    ASSERT_EQ(CommandStreamReceiverType::hardwareWithAub, csrWithAubDump->getType());
+
+    csrWithAubDump->createKmdWaiter(8u);
+    EXPECT_EQ(2u, wddm->createMonitoredFenceKmdWaiterCalled);
+    EXPECT_EQ(8u, wddm->createMonitoredFenceKmdWaiterFenceValue);
+}
+
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenWddmWhenCallingWaitUserFenceThenUseMonitoredFenceForSynchronization) {
     std::unique_ptr<SyncFence> mf = std::make_unique<WddmSyncFence>();
     uint32_t waitFromCpuCallCount = wddm->waitFromCpuResult.called;
@@ -1055,6 +1071,19 @@ void waitFromCpuOnDefaultEngineMonitoredFence(MockDevice &device, WddmMock *wddm
     wddm->waitFromCpu(fenceValueToWaitFor, monitoredFence, busyWait);
 }
 } // namespace
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionWhenCreatingKmdWaiterThenNoWaiterIsCreated) {
+    auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
+    if (directSubmission == nullptr) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_EQ(nullptr, csr->createKmdWaiter(csr->obtainCurrentFlushStamp()));
+    EXPECT_EQ(0u, wddm->createMonitoredFenceKmdWaiterCalled);
+    EXPECT_EQ(0u, directSubmission->flushMonitorFenceCalled);
+
+    static_cast<MockWddmCsr<FamilyType> *>(csr)->directSubmission.reset();
+}
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenResetDirectSubmissionThenObjectDeleted) {
     using Dispatcher = RenderDispatcher<FamilyType>;

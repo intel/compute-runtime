@@ -82,6 +82,7 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
 }
 
 Wddm::~Wddm() {
+    releaseUnusedKmdWaitHandles();
     temporaryResources.reset();
     destroyPagingQueue();
     destroyDevice();

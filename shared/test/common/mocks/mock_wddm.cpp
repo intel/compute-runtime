@@ -7,6 +7,7 @@
 
 #include "shared/test/common/mocks/mock_wddm.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -303,6 +304,12 @@ WaitStatus WddmMock::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContex
         return Wddm::waitFromCpu(lastFenceValue, osContext, timeoutNanoseconds);
     }
     return this->waitFromCpuWithTimeoutReturnValue;
+}
+
+std::unique_ptr<KmdWaiter> WddmMock::createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue) {
+    this->createMonitoredFenceKmdWaiterCalled++;
+    this->createMonitoredFenceKmdWaiterFenceValue = fenceValue;
+    return nullptr;
 }
 
 HANDLE WddmMock::createMonitoredFenceKmdWaitEvent() {

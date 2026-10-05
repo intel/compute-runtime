@@ -967,6 +967,15 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                                           csrs[0]->waitUserFenceSupported(nullptr) &&
                                           this->isLinuxUserFenceKmdWaitEnabled() &&
                                           (this->metricNotification == nullptr);
+    const auto monitoredFenceKmdWaitTimeoutNs = static_cast<uint64_t>(std::max<int64_t>(NEO::debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitTimeoutNanoseconds.get(), 0));
+    NEO::FlushStamp signalFlushStamp = 0;
+    bool waitForMonitoredFenceUsingKmd = (NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get() == 3) &&
+                                         this->isWindowsDiscreteKmdWaitEnabled() &&
+                                         !cacheFlushRequiredForHostSync &&
+                                         (this->csrs.size() == 1u) &&
+                                         (this->metricNotification == nullptr) &&
+                                         !Event::isAggregatedEvent(this) &&
+                                         this->getSignalFlushStamp(this->csrs[0], signalFlushStamp);
     const auto kmdWaitInitialPollUs = std::max<int64_t>(NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.get(), 0);
     TaskCountType taskCountToWaitForCacheFlush = 0;
     bool taskCountWaitedForCacheFlush = false;
@@ -984,6 +993,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && !this->cbEventWithProfiling && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
     EventHostSynchronize::WaitController waitController(*csrs[0]);
+    std::unique_ptr<NEO::KmdWaiter> kmdWaiter;
 
     auto *assertHndlr = neoDevice->getRootDeviceEnvironment().assertHandler.get();
 
@@ -1075,6 +1085,25 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (!fenceWait && waitForUserFenceUsingKmd && (elapsedTimeSinceWaitStartUs >= kmdWaitInitialPollUs)) {
             const auto waitStatus = tryUserFenceWaitForHostSynchronize(elapsedTimeSinceWaitStartUs);
             if (waitStatus == NEO::WaitStatus::ready) {
+                continue;
+            }
+        }
+
+        if (!fenceWait && waitForMonitoredFenceUsingKmd && (elapsedTimeSinceWaitStartUs >= kmdWaitInitialPollUs)) {
+            const auto kmdWaitTimeoutNs = std::min(EventHostSynchronize::getKmdWaitTimeout(timeout, elapsedTimeSinceWaitStartNs), monitoredFenceKmdWaitTimeoutNs);
+            if (!kmdWaiter && (kmdWaitTimeoutNs > 0)) {
+                kmdWaiter = csrs[0]->createKmdWaiter(signalFlushStamp);
+                waitForMonitoredFenceUsingKmd = (kmdWaiter != nullptr);
+            }
+            if (kmdWaiter && (kmdWaitTimeoutNs > 0)) {
+                const auto waitStatus = kmdWaiter->wait(kmdWaitTimeoutNs);
+                if (waitStatus == NEO::WaitStatus::gpuHang) {
+                    if (assertHndlr) {
+                        assertHndlr->printAssertAndAbort();
+                    }
+                    return ZE_RESULT_ERROR_DEVICE_LOST;
+                }
+                waitForMonitoredFenceUsingKmd = (waitStatus == NEO::WaitStatus::notReady);
                 continue;
             }
         }

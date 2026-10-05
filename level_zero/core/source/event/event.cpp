@@ -29,6 +29,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/event/event_host_synchronize_wait.h"
 #include "level_zero/core/source/event/event_impl.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
@@ -1353,6 +1354,10 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     setLinuxUserFenceKmdWaitEnabled(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get() &&
                                     hostVisibleForKmdWait &&
                                     userFenceNotEqualSupported);
+    setWindowsDiscreteKmdWaitEnabled(NEO::debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWait.get() &&
+                                     hostVisibleForKmdWait &&
+                                     !this->device->getNEODevice()->getHardwareInfo().capabilityTable.isIntegratedDevice &&
+                                     !csrs.empty() && EventHostSynchronize::isNativeWddm(*csrs[0]));
 
     if (externalInterruptWait || (interruptMode && kmdWaitMode)) {
         enableKmdWaitMode();

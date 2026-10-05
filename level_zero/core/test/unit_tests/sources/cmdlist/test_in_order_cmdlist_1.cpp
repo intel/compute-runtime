@@ -175,6 +175,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenQueueFlagWhenCreatingCmdL
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
+HWTEST_F(InOrderCmdListTests, givenWorkAppendedAfterSignalingEventWhenGettingSignalFlushStampThenFlushStampOfEventSubmissionIsReturned) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    ultCsr->incrementFlushStampOnFlush = true;
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+    const auto eventSubmissionFlushStamp = ultCsr->obtainCurrentFlushStamp();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    EXPECT_NE(eventSubmissionFlushStamp, ultCsr->obtainCurrentFlushStamp());
+
+    NEO::FlushStamp signalFlushStamp = 0;
+    EXPECT_TRUE(events[0]->getSignalFlushStamp(ultCsr, signalFlushStamp));
+    EXPECT_EQ(eventSubmissionFlushStamp, signalFlushStamp);
+}
+
 HWTEST_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListThenSkipWait) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 

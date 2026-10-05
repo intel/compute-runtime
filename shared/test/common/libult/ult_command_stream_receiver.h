@@ -44,6 +44,29 @@ struct WaitUserFenceParams {
     std::function<void()> onWait;
 };
 
+struct KmdWaiterParams {
+    uint32_t createCount = 0;
+    uint32_t waitCount = 0;
+    FlushStamp latestFlushStamp = 0;
+    uint64_t latestWaitTimeout = 0;
+    bool createWaiter = true;
+    std::optional<WaitStatus> waitStatus = WaitStatus::notReady;
+    std::function<void()> onWait;
+};
+
+struct UltKmdWaiter : KmdWaiter {
+    UltKmdWaiter(KmdWaiterParams &params) : params(params) {}
+    std::optional<WaitStatus> wait(uint64_t timeoutNanoseconds) override {
+        params.waitCount++;
+        params.latestWaitTimeout = timeoutNanoseconds;
+        if (params.onWait) {
+            params.onWait();
+        }
+        return params.waitStatus;
+    }
+    KmdWaiterParams &params;
+};
+
 struct WriteMemoryParams {
     GraphicsAllocation *latestGfxAllocation = nullptr;
     uint64_t latestGpuVaChunkOffset = 0;
@@ -394,6 +417,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle, timeoutNanoseconds);
     }
 
+    std::unique_ptr<KmdWaiter> createKmdWaiter(FlushStamp flushStamp) override {
+        kmdWaiterParams.createCount++;
+        kmdWaiterParams.latestFlushStamp = flushStamp;
+        if (!kmdWaiterParams.createWaiter) {
+            return nullptr;
+        }
+        return std::make_unique<UltKmdWaiter>(kmdWaiterParams);
+    }
+
     WaitStatus waitForTaskCount(TaskCountType requiredTaskCount) override {
         this->waitForTaskCountCalled = true;
         if (waitForTaskCountReturnValue.has_value()) {
@@ -724,6 +756,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     TaskCountType latestSentTaskCountValueDuringFlush = 0;
     WaitParams latestWaitForCompletionWithTimeoutWaitParams{};
     WaitUserFenceParams waitUserFenceParams;
+    KmdWaiterParams kmdWaiterParams;
     WriteMemoryParams writeMemoryParams;
     uint32_t writePooledMemoryCalledCount = 0;
     bool latestWritePooledMemoryInitFullPageTables = false;

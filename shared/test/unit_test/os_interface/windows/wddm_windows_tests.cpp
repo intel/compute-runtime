@@ -685,3 +685,154 @@ TEST_F(WddmTest, GivenWddmDriverModelWhenLatePreemptionStartSupportIsCheckedThen
     defaultHwInfo->featureTable.flags.ftrSelectiveWmtp = false;
     EXPECT_TRUE(wddm->isLatePreemptionStartSupported(*NEO::defaultHwInfo));
 }
+
+namespace {
+uint64_t kmdWaiterRegistrationCount = 0;
+uint64_t kmdWaiterRegisteredFenceValue = 0;
+D3DKMT_HANDLE kmdWaiterRegisteredFenceHandle = 0;
+HANDLE kmdWaiterRegisteredAsyncEvent = nullptr;
+NTSTATUS kmdWaiterRegistrationStatus = STATUS_SUCCESS;
+
+NTSTATUS __stdcall registerKmdWaiterMock(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {
+    kmdWaiterRegistrationCount++;
+    kmdWaiterRegisteredFenceValue = waitStruct->FenceValueArray[0];
+    kmdWaiterRegisteredFenceHandle = waitStruct->ObjectHandleArray[0];
+    kmdWaiterRegisteredAsyncEvent = waitStruct->hAsyncEvent;
+    return kmdWaiterRegistrationStatus;
+}
+
+size_t kmdWaiterCreatedEvents = 0;
+HANDLE countingCreateEventMock(LPSECURITY_ATTRIBUTES, BOOL, BOOL, LPCSTR, void *) {
+    kmdWaiterCreatedEvents++;
+    return reinterpret_cast<HANDLE>(dummyHandle);
+}
+} // namespace
+
+TEST_F(Wddm20Tests, givenMonitoredFenceWhenCreatingKmdWaiterThenAsyncKmdWaitIsRegisteredAndEachWaitIsBoundedByTimer) {
+    VariableBackup<uint64_t> registrationCountBackup(&kmdWaiterRegistrationCount, 0u);
+    VariableBackup<HANDLE> asyncEventBackup(&kmdWaiterRegisteredAsyncEvent, nullptr);
+    VariableBackup<size_t> setTimerCallsBackup(&SysCalls::setWaitableTimerCalled, 0u);
+    VariableBackup<int64_t> dueTimeBackup(&SysCalls::setWaitableTimerLastDueTime, 0);
+    VariableBackup<size_t> waitCallsBackup(&SysCalls::waitForMultipleObjectsCalled, 0u);
+    VariableBackup<DWORD> waitTimeoutBackup(&SysCalls::waitForMultipleObjectsLastTimeout, 0u);
+    VariableBackup<DWORD> waitResultBackup(&SysCalls::waitForMultipleObjectsReturnValue, WAIT_OBJECT_0 + 1);
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &registerKmdWaiterMock;
+
+    volatile uint64_t fenceCpuValue = 4u;
+    MonitoredFence monitoredFence = {};
+    monitoredFence.cpuAddress = &fenceCpuValue;
+    monitoredFence.fenceHandle = 7u;
+
+    auto kmdWaiter = wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 5u);
+    ASSERT_NE(nullptr, kmdWaiter);
+    EXPECT_EQ(1u, kmdWaiterRegistrationCount);
+    EXPECT_EQ(5u, kmdWaiterRegisteredFenceValue);
+    EXPECT_EQ(7u, kmdWaiterRegisteredFenceHandle);
+    EXPECT_NE(nullptr, kmdWaiterRegisteredAsyncEvent);
+
+    EXPECT_EQ(WaitStatus::notReady, kmdWaiter->wait(500000u));
+    EXPECT_EQ(-5000, SysCalls::setWaitableTimerLastDueTime);
+    EXPECT_EQ(INFINITE, SysCalls::waitForMultipleObjectsLastTimeout);
+    EXPECT_EQ(1u, SysCalls::waitForMultipleObjectsCalled);
+
+    fenceCpuValue = 5u;
+    EXPECT_EQ(WaitStatus::ready, kmdWaiter->wait(500000u));
+    fenceCpuValue = Wddm::gpuHangIndication;
+    EXPECT_EQ(WaitStatus::gpuHang, kmdWaiter->wait(500000u));
+    EXPECT_EQ(1u, SysCalls::setWaitableTimerCalled);
+}
+
+TEST_F(Wddm20Tests, givenFinishedKmdWaiterWhenCreatingNextKmdWaiterThenItsHandlesAreReusedResetAndOnlyWddmDestructionClosesThem) {
+    VariableBackup<size_t> createdEventsBackup(&kmdWaiterCreatedEvents, 0u);
+    VariableBackup<decltype(mockCreateEventClb)> createEventBackup(&mockCreateEventClb, &countingCreateEventMock);
+    VariableBackup<size_t> closeCallsBackup(&SysCalls::closeHandleCalled, 0u);
+    VariableBackup<DWORD> waitResultBackup(&SysCalls::waitForMultipleObjectsReturnValue, WAIT_OBJECT_0);
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &registerKmdWaiterMock;
+    const auto resetCallsBefore = SysCalls::resetEventCalled.load();
+
+    volatile uint64_t fenceCpuValue = 0u;
+    MonitoredFence monitoredFence = {};
+    monitoredFence.cpuAddress = &fenceCpuValue;
+
+    wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 1u).reset();
+    auto reusingKmdWaiter = wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 2u);
+    ASSERT_NE(nullptr, reusingKmdWaiter);
+    EXPECT_EQ(1u, kmdWaiterCreatedEvents);
+    EXPECT_EQ(resetCallsBefore + 2u, SysCalls::resetEventCalled);
+
+    EXPECT_EQ(WaitStatus::notReady, reusingKmdWaiter->wait(500000u));
+    EXPECT_EQ(resetCallsBefore + 3u, SysCalls::resetEventCalled);
+
+    reusingKmdWaiter.reset();
+    EXPECT_EQ(0u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(1u, wddm->unusedKmdWaitHandles.size());
+
+    wddm->releaseUnusedKmdWaitHandles();
+    EXPECT_EQ(2u, SysCalls::closeHandleCalled);
+    EXPECT_TRUE(wddm->unusedKmdWaitHandles.empty());
+}
+
+TEST_F(Wddm20Tests, givenFailingTimerArmWaitOrEventResetWhenKmdWaiterWaitsThenFailureIsReportedAndItsHandlesAreNotReused) {
+    VariableBackup<size_t> waitCallsBackup(&SysCalls::waitForMultipleObjectsCalled, 0u);
+    VariableBackup<size_t> closeCallsBackup(&SysCalls::closeHandleCalled, 0u);
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &registerKmdWaiterMock;
+
+    volatile uint64_t fenceCpuValue = 0u;
+    MonitoredFence monitoredFence = {};
+    monitoredFence.cpuAddress = &fenceCpuValue;
+
+    {
+        auto kmdWaiter = wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 1u);
+        ASSERT_NE(nullptr, kmdWaiter);
+        VariableBackup<BOOL> timerResultBackup(&SysCalls::setWaitableTimerResult, FALSE);
+        EXPECT_EQ(std::nullopt, kmdWaiter->wait(500000u));
+        EXPECT_EQ(0u, SysCalls::waitForMultipleObjectsCalled);
+    }
+    {
+        auto kmdWaiter = wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 1u);
+        ASSERT_NE(nullptr, kmdWaiter);
+        VariableBackup<DWORD> waitResultBackup(&SysCalls::waitForMultipleObjectsReturnValue, WAIT_FAILED);
+        EXPECT_EQ(std::nullopt, kmdWaiter->wait(500000u));
+    }
+    {
+        auto kmdWaiter = wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 1u);
+        ASSERT_NE(nullptr, kmdWaiter);
+        VariableBackup<DWORD> waitResultBackup(&SysCalls::waitForMultipleObjectsReturnValue, WAIT_OBJECT_0);
+        VariableBackup<BOOL> resetResultBackup(&SysCalls::resetEventResult, FALSE);
+        EXPECT_EQ(std::nullopt, kmdWaiter->wait(500000u));
+    }
+    EXPECT_EQ(6u, SysCalls::closeHandleCalled);
+    EXPECT_TRUE(wddm->unusedKmdWaitHandles.empty());
+}
+
+TEST_F(Wddm20Tests, givenEventCreationResetOrKmdWaitRegistrationFailureWhenCreatingKmdWaiterThenNothingIsReturnedAndNoHandleLeaks) {
+    VariableBackup<uint64_t> registrationCountBackup(&kmdWaiterRegistrationCount, 0u);
+    VariableBackup<NTSTATUS> registrationStatusBackup(&kmdWaiterRegistrationStatus, STATUS_UNSUCCESSFUL);
+    VariableBackup<size_t> closeCallsBackup(&SysCalls::closeHandleCalled, 0u);
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &registerKmdWaiterMock;
+
+    volatile uint64_t fenceCpuValue = 0u;
+    MonitoredFence monitoredFence = {};
+    monitoredFence.cpuAddress = &fenceCpuValue;
+
+    {
+        VariableBackup<decltype(mockCreateEventClb)> createEventBackup(&mockCreateEventClb, [](LPSECURITY_ATTRIBUTES, BOOL, BOOL, LPCSTR, void *) -> HANDLE {
+            return nullptr;
+        });
+        EXPECT_EQ(nullptr, wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 1u));
+        EXPECT_EQ(0u, kmdWaiterRegistrationCount);
+        EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+        EXPECT_TRUE(wddm->unusedKmdWaitHandles.empty());
+    }
+
+    EXPECT_EQ(nullptr, wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 1u));
+    EXPECT_EQ(1u, kmdWaiterRegistrationCount);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+    EXPECT_EQ(1u, wddm->unusedKmdWaitHandles.size());
+
+    VariableBackup<BOOL> resetResultBackup(&SysCalls::resetEventResult, FALSE);
+    EXPECT_EQ(nullptr, wddm->Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 1u));
+    EXPECT_EQ(1u, kmdWaiterRegistrationCount);
+    EXPECT_EQ(3u, SysCalls::closeHandleCalled);
+    EXPECT_TRUE(wddm->unusedKmdWaitHandles.empty());
+}

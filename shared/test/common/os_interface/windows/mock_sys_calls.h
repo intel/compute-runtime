@@ -9,6 +9,8 @@
 
 #include "shared/source/os_interface/windows/sys_calls.h"
 
+#include <atomic>
+
 using mockCreateEventClbT = HANDLE (*)(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName, void *data);
 inline mockCreateEventClbT mockCreateEventClb = nullptr;
 inline void *mockCreateEventClbData = nullptr;
@@ -95,6 +97,11 @@ extern BOOL (*sysCallsUnregisterWait)(HANDLE waitHandle);
 extern DWORD waitForMultipleObjectsLastTimeout;
 extern DWORD waitForMultipleObjectsReturnValue;
 extern size_t waitForMultipleObjectsCalled;
+extern std::atomic<size_t> resetEventCalled;
+extern BOOL resetEventResult;
+extern size_t setWaitableTimerCalled;
+extern int64_t setWaitableTimerLastDueTime;
+extern BOOL setWaitableTimerResult;
 
 extern size_t ntOpenDirectoryObjectCalled;
 extern BOOL (*sysCallsProcessIdToSessionId)(DWORD dwProcessId, DWORD *pSessionId);

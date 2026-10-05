@@ -65,6 +65,7 @@ class WddmMock : public Wddm {
     using Wddm::platformSupportsEvictIfNecessary;
     using Wddm::populateAdditionalAdapterInfoOptions;
     using Wddm::populateIpVersion;
+    using Wddm::releaseUnusedKmdWaitHandles;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
     using Wddm::segmentId;
@@ -73,6 +74,7 @@ class WddmMock : public Wddm {
     using Wddm::setPlatformSupportEvictIfNecessaryFlag;
     using Wddm::temporaryResources;
     using Wddm::timestampFrequency;
+    using Wddm::unusedKmdWaitHandles;
     using Wddm::useAdditionalEngine;
     using Wddm::waitFromCpu;
     using Wddm::wddmInterface;
@@ -106,6 +108,7 @@ class WddmMock : public Wddm {
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
     bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait) override;
     WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds) override;
+    std::unique_ptr<KmdWaiter> createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue) override;
     HANDLE createMonitoredFenceKmdWaitEvent() override;
     bool resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) override;
     bool waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) override;
@@ -200,6 +203,8 @@ class WddmMock : public Wddm {
     WddmMockHelpers::WaitFromCpuResult waitFromCpuResult;
     WddmMockHelpers::MonitoredFenceKmdWaitEventResult monitoredFenceKmdWaitEventResult;
     uint32_t waitFromCpuWithTimeoutCalled = 0;
+    uint32_t createMonitoredFenceKmdWaiterCalled = 0;
+    uint64_t createMonitoredFenceKmdWaiterFenceValue = 0;
     uint64_t waitFromCpuWithTimeoutFenceValue = 0;
     uint64_t waitFromCpuTimeoutNanoseconds = 0;
     OsContextWin *waitFromCpuWithTimeoutOsContext = nullptr;

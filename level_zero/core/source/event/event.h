@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -284,9 +285,15 @@ struct Event : _ze_event_handle_t {
         }
         return false;
     }
+    void setSignalFlushStamp(NEO::FlushStamp flushStamp) { this->signalFlushStamp = flushStamp; }
+    bool getSignalFlushStamp(NEO::CommandStreamReceiver *csr, NEO::FlushStamp &flushStamp) const {
+        flushStamp = this->signalFlushStamp;
+        return (csr == this->cleanupCsr) && (flushStamp != 0);
+    }
     void clearCleanupTaskCounts() {
         this->cleanupCsr = nullptr;
         this->cleanupTaskCount = 0;
+        this->signalFlushStamp = 0;
     }
     void setCsrForCacheFlush(NEO::CommandStreamReceiver *csr) {
         this->csrForCacheFlush = csr;
@@ -374,6 +381,8 @@ struct Event : _ze_event_handle_t {
     bool isSignalWithUserInterrupt() const { return signalWithUserInterrupt; }
     void setLinuxUserFenceKmdWaitEnabled(bool value) { linuxUserFenceKmdWaitEnabled = value; }
     bool isLinuxUserFenceKmdWaitEnabled() const { return linuxUserFenceKmdWaitEnabled; }
+    void setWindowsDiscreteKmdWaitEnabled(bool value) { windowsDiscreteKmdWaitEnabled = value; }
+    bool isWindowsDiscreteKmdWaitEnabled() const { return windowsDiscreteKmdWaitEnabled; }
     void unsetInOrderExecInfo();
     uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
 
@@ -515,6 +524,7 @@ struct Event : _ze_event_handle_t {
     // rather than a live (and possibly stale) tag read. See handleSuccessfulHostSynchronization.
     NEO::CommandStreamReceiver *cleanupCsr = nullptr;
     TaskCountType cleanupTaskCount = 0;
+    NEO::FlushStamp signalFlushStamp = 0;
     NEO::CommandStreamReceiver *csrForCacheFlush = nullptr;
     StackVec<uint64_t, 3> exportedIpcServerHandles;
     void *hostAddressFromPool = nullptr;
@@ -544,6 +554,7 @@ struct Event : _ze_event_handle_t {
     bool interruptMode = false;
     bool signalWithUserInterrupt = false;
     bool linuxUserFenceKmdWaitEnabled = false;
+    bool windowsDiscreteKmdWaitEnabled = false;
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
     bool cbEventWithProfiling = false;

@@ -3184,6 +3184,116 @@ HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingRegula
 }
 
 namespace {
+struct EventCompletingAfterPolling : L0::EventImp<uint32_t> {
+    EventCompletingAfterPolling(L0::Device *device, NEO::CommandStreamReceiver *csr) : L0::EventImp<uint32_t>(0, device, false) {
+        this->setCsr(csr, true);
+        this->setWindowsDiscreteKmdWaitEnabled(true);
+    }
+
+    using L0::EventImp<uint32_t>::queryStatus;
+    ze_result_t queryStatus(int64_t timeSinceWait, bool blockOnMiss) override {
+        return ++this->queryCount == 3 ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
+    }
+
+    uint32_t queryCount = 0;
+};
+
+void setUpWindowsDiscreteKmdWait(int64_t kmdWaitTimeoutNanoseconds) {
+    NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
+    NEO::debugManager.flags.EventHostSynchronizeKmdWaitInitialPollMicroseconds.set(0);
+    NEO::debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitTimeoutNanoseconds.set(kmdWaitTimeoutNanoseconds);
+}
+} // namespace
+
+HWTEST_F(EventSynchronizeTest, GivenWorkFlushedAfterEventWhenSynchronizingThenKmdWaiterForEventSubmissionIsCreatedOnceAndWaitedOnWithTimeout) {
+    DebugManagerStateRestore restore;
+    setUpWindowsDiscreteKmdWait(2000000);
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    event->setWindowsDiscreteKmdWaitEnabled(true);
+    event->setCleanupTaskCount(&csr, csr.peekTaskCount());
+    event->setSignalFlushStamp(5);
+    csr.taskCount++;
+
+    auto eventAddress = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+    *eventAddress = Event::STATE_CLEARED;
+    csr.kmdWaiterParams.onWait = [&]() {
+        if (csr.kmdWaiterParams.waitCount == 2u) {
+            *eventAddress = Event::STATE_SIGNALED;
+        }
+    };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(1u, csr.kmdWaiterParams.createCount);
+    EXPECT_EQ(5u, csr.kmdWaiterParams.latestFlushStamp);
+    EXPECT_EQ(2u, csr.kmdWaiterParams.waitCount);
+    EXPECT_EQ(2000000u, csr.kmdWaiterParams.latestWaitTimeout);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenMissingSignalFlushStampNoKmdWaitBudgetOrNoWaiterWhenSynchronizingEventThenEventIsPolled) {
+    DebugManagerStateRestore restore;
+    setUpWindowsDiscreteKmdWait(2000000);
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EventCompletingAfterPolling eventNotSignaledByItsCsr(device, &csr);
+    eventNotSignaledByItsCsr.setSignalFlushStamp(5);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventNotSignaledByItsCsr.hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(3u, eventNotSignaledByItsCsr.queryCount);
+
+    EventCompletingAfterPolling eventWithoutFlushStamp(device, &csr);
+    eventWithoutFlushStamp.setCleanupTaskCount(&csr, csr.peekTaskCount());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventWithoutFlushStamp.hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(3u, eventWithoutFlushStamp.queryCount);
+
+    event->setWindowsDiscreteKmdWaitEnabled(true);
+    event->setCleanupTaskCount(&csr, csr.peekTaskCount());
+    event->setSignalFlushStamp(5);
+    *static_cast<uint32_t *>(event->getCompletionFieldHostAddress()) = Event::STATE_CLEARED;
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->hostSynchronize(1));
+    EXPECT_EQ(0u, csr.kmdWaiterParams.createCount);
+
+    csr.kmdWaiterParams.createWaiter = false;
+    EventCompletingAfterPolling eventWithoutWaiter(device, &csr);
+    eventWithoutWaiter.setCleanupTaskCount(&csr, csr.peekTaskCount());
+    eventWithoutWaiter.setSignalFlushStamp(5);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventWithoutWaiter.hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(3u, eventWithoutWaiter.queryCount);
+    EXPECT_EQ(1u, csr.kmdWaiterParams.createCount);
+    EXPECT_EQ(0u, csr.kmdWaiterParams.waitCount);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenMonitoredFenceReachedBeforeEventOrFailedKmdWaitWhenSynchronizingThenRemainingWaitIsPolled) {
+    DebugManagerStateRestore restore;
+    setUpWindowsDiscreteKmdWait(2000000);
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    for (const auto waitStatus : {std::optional<NEO::WaitStatus>(NEO::WaitStatus::ready), std::optional<NEO::WaitStatus>()}) {
+        csr.kmdWaiterParams.waitStatus = waitStatus;
+        csr.kmdWaiterParams.waitCount = 0;
+        EventCompletingAfterPolling pollingEvent(device, &csr);
+        pollingEvent.setCleanupTaskCount(&csr, csr.peekTaskCount());
+        pollingEvent.setSignalFlushStamp(5);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pollingEvent.hostSynchronize(std::numeric_limits<uint64_t>::max()));
+        EXPECT_EQ(3u, pollingEvent.queryCount);
+        EXPECT_EQ(1u, csr.kmdWaiterParams.waitCount);
+    }
+}
+
+HWTEST_F(EventSynchronizeTest, GivenGpuHangReportedByKmdWaitWhenSynchronizingEventThenDeviceLostIsReturned) {
+    DebugManagerStateRestore restore;
+    setUpWindowsDiscreteKmdWait(2000000);
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.kmdWaiterParams.waitStatus = NEO::WaitStatus::gpuHang;
+    event->setWindowsDiscreteKmdWaitEnabled(true);
+    event->setCleanupTaskCount(&csr, csr.peekTaskCount());
+    event->setSignalFlushStamp(5);
+    *static_cast<uint32_t *>(event->getCompletionFieldHostAddress()) = Event::STATE_CLEARED;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(1u, csr.kmdWaiterParams.waitCount);
+}
+
+namespace {
 struct MockMetricNotification : public MetricCollectorEventNotify {
     Event::State state = Event::STATE_INITIAL;
     uint32_t getNotificationStateCalled = 0u;
@@ -6011,6 +6121,43 @@ HWTEST_F(EventTests, GivenLinuxUserFenceKmdWaitFlagWhenCreatingDeviceScopeStanda
     EXPECT_FALSE(event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
     EXPECT_FALSE(event->isLinuxUserFenceKmdWaitEnabled());
     EXPECT_FALSE(event->isSignalWithUserInterrupt());
+}
+
+HWTEST_F(EventTests, GivenWindowsDiscreteKmdWaitFlagWhenCreatingEventThenKmdWaitIsEnabledOnlyForHostVisibleEventOnDiscreteWddmDevice) {
+    DebugManagerStateRestore restore;
+    auto rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    rootDeviceEnvironment->osInterface = std::make_unique<NEO::OSInterface>();
+    rootDeviceEnvironment->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    auto eventWithoutFlag = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(eventWithoutFlag->isWindowsDiscreteKmdWaitEnabled());
+
+    NEO::debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWait.set(true);
+    auto eventWithFlag = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(eventWithFlag->isWindowsDiscreteKmdWaitEnabled());
+
+    ze_event_pool_desc_t deviceOnlyPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    deviceOnlyPoolDesc.count = 1;
+    auto deviceOnlyPool = std::unique_ptr<L0::EventPool>(whiteboxCast(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &deviceOnlyPoolDesc, result)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto deviceOnlyEvent = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(deviceOnlyPool.get(), &eventDesc, device, result)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(deviceOnlyEvent->isWindowsDiscreteKmdWaitEnabled());
+
+    rootDeviceEnvironment->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+    auto drmEvent = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(drmEvent->isWindowsDiscreteKmdWaitEnabled());
+
+    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    rootDeviceEnvironment->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    auto integratedEvent = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(integratedEvent->isWindowsDiscreteKmdWaitEnabled());
 }
 
 HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeUsesWaitFenceThenPreambleCounterIsSynchronized) {

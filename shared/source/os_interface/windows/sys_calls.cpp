@@ -84,6 +84,14 @@ DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
     return ::WaitForSingleObject(hHandle, dwMilliseconds);
 }
 
+HANDLE createWaitableTimerEx(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess) {
+    return ::CreateWaitableTimerExW(lpTimerAttributes, lpTimerName, dwFlags, dwDesiredAccess);
+}
+
+BOOL setWaitableTimer(HANDLE hTimer, const LARGE_INTEGER *lpDueTime, LONG lPeriod, PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, BOOL fResume) {
+    return ::SetWaitableTimer(hTimer, lpDueTime, lPeriod, pfnCompletionRoutine, lpArgToCompletionRoutine, fResume);
+}
+
 BOOL registerWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags) {
     return ::RegisterWaitForSingleObject(phNewWaitObject, hObject, callback, context, dwMilliseconds, dwFlags);
 }

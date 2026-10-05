@@ -31,6 +31,7 @@
 #include <cstdint>
 #include <functional>
 #include <mutex>
+#include <optional>
 
 namespace aub_stream {
 struct AllocationParams;
@@ -85,6 +86,13 @@ class TimestampPackets;
 template <typename T1>
 class TagAllocator;
 class TagNodeBase;
+
+class KmdWaiter : NEO::NonCopyableAndNonMovableClass {
+  public:
+    virtual ~KmdWaiter() = default;
+    // std::nullopt means the OS wait failed and the waiter must not be used again.
+    virtual std::optional<WaitStatus> wait(uint64_t timeoutNanoseconds) = 0;
+};
 
 enum class DispatchMode {
     deviceDefault = 0, // default for given device
@@ -186,6 +194,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
     virtual WaitStatus waitForFlushStamp(FlushStamp &flushStampToWait, uint64_t timeoutNanoseconds) { return WaitStatus::notReady; }
+    // Does not block; nullptr if the KMD wait is not possible.
+    virtual std::unique_ptr<KmdWaiter> createKmdWaiter(FlushStamp flushStamp) { return nullptr; }
 
     TaskCountType peekTaskCount() const { return taskCount; }
 

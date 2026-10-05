@@ -40,6 +40,101 @@ bool Wddm::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeou
     return SysCalls::waitForSingleObject(eventHandle, timeoutMilliseconds) == WAIT_OBJECT_0;
 }
 
+class Wddm::MonitoredFenceKmdWaiter : public KmdWaiter {
+  public:
+    MonitoredFenceKmdWaiter(Wddm &wddm, const MonitoredFence &monitoredFence, uint64_t fenceValue, const KmdWaitHandles &handles)
+        : wddm(wddm), monitoredFence(monitoredFence), fenceValue(fenceValue), handles(handles) {}
+
+    ~MonitoredFenceKmdWaiter() override {
+        if (this->osWaitFailed) {
+            SysCalls::closeHandle(this->handles.timerHandle);
+            SysCalls::closeHandle(this->handles.eventHandle);
+            return;
+        }
+        std::lock_guard lock(this->wddm.unusedKmdWaitHandlesMutex);
+        this->wddm.unusedKmdWaitHandles.push_back(this->handles);
+    }
+
+    std::optional<WaitStatus> wait(uint64_t timeoutNanoseconds) override {
+        if (!this->isFenceReached() && !this->waitForEventOrTimer(timeoutNanoseconds)) {
+            this->osWaitFailed = true;
+            return std::nullopt;
+        }
+        if (*this->monitoredFence.cpuAddress == Wddm::gpuHangIndication) {
+            return WaitStatus::gpuHang;
+        }
+        return this->isFenceReached() ? WaitStatus::ready : WaitStatus::notReady;
+    }
+
+  protected:
+    bool isFenceReached() const { return this->fenceValue <= *this->monitoredFence.cpuAddress; }
+
+    bool waitForEventOrTimer(uint64_t timeoutNanoseconds) {
+        constexpr uint64_t nanosecondsPerTimerUnit = 100;
+        LARGE_INTEGER relativeDueTime = {};
+        relativeDueTime.QuadPart = -static_cast<LONGLONG>(timeoutNanoseconds / nanosecondsPerTimerUnit);
+        if (!SysCalls::setWaitableTimer(this->handles.timerHandle, &relativeDueTime, 0, nullptr, nullptr, FALSE)) {
+            return false;
+        }
+        const HANDLE waitHandles[] = {this->handles.eventHandle, this->handles.timerHandle};
+        const auto signaledHandleIndex = SysCalls::waitForMultipleObjects(2, waitHandles, FALSE, INFINITE);
+        if (signaledHandleIndex == WAIT_OBJECT_0) {
+            // A reused event can be signaled by a wait registered by its previous owner.
+            return this->isFenceReached() || SysCalls::resetEvent(this->handles.eventHandle);
+        }
+        return signaledHandleIndex == WAIT_OBJECT_0 + 1;
+    }
+
+    Wddm &wddm;
+    const MonitoredFence &monitoredFence;
+    const uint64_t fenceValue;
+    const KmdWaitHandles handles;
+    bool osWaitFailed = false;
+};
+
+std::unique_ptr<KmdWaiter> Wddm::createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue) {
+    KmdWaitHandles handles = {};
+    {
+        std::lock_guard lock(this->unusedKmdWaitHandlesMutex);
+        if (!this->unusedKmdWaitHandles.empty()) {
+            handles = this->unusedKmdWaitHandles.back();
+            this->unusedKmdWaitHandles.pop_back();
+        }
+    }
+    if (handles.eventHandle == nullptr) {
+        handles.eventHandle = SysCalls::createEvent(nullptr, TRUE, FALSE, nullptr);
+        handles.timerHandle = SysCalls::createWaitableTimerEx(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_MODIFY_STATE | SYNCHRONIZE);
+    }
+    if ((handles.eventHandle == nullptr) || (handles.timerHandle == nullptr) || !SysCalls::resetEvent(handles.eventHandle)) {
+        for (const auto handle : {handles.eventHandle, handles.timerHandle}) {
+            if (handle != nullptr) {
+                SysCalls::closeHandle(handle);
+            }
+        }
+        return nullptr;
+    }
+
+    auto kmdWaiter = std::make_unique<MonitoredFenceKmdWaiter>(*this, monitoredFence, fenceValue, handles);
+    D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
+    waitFromCpu.ObjectCount = 1;
+    waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
+    waitFromCpu.FenceValueArray = &fenceValue;
+    waitFromCpu.hDevice = this->device;
+    waitFromCpu.hAsyncEvent = handles.eventHandle;
+    if (this->getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu) != STATUS_SUCCESS) {
+        return nullptr;
+    }
+    return kmdWaiter;
+}
+
+void Wddm::releaseUnusedKmdWaitHandles() {
+    for (const auto &handles : this->unusedKmdWaitHandles) {
+        SysCalls::closeHandle(handles.timerHandle);
+        SysCalls::closeHandle(handles.eventHandle);
+    }
+    this->unusedKmdWaitHandles.clear();
+}
+
 HANDLE Wddm::getSharedHandle(const MemoryManager::OsHandleData &osHandleData) {
     HANDLE sharedNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
     if (osHandleData.parentProcessId != 0) {

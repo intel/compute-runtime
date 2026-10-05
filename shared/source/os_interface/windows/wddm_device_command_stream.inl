@@ -171,6 +171,15 @@ WaitStatus WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &f
 }
 
 template <typename GfxFamily>
+std::unique_ptr<KmdWaiter> WddmCommandStreamReceiver<GfxFamily>::createKmdWaiter(FlushStamp flushStamp) {
+    // With direct submission the monitored fence is not signaled per submission.
+    if (this->isAnyDirectSubmissionEnabled()) {
+        return nullptr;
+    }
+    return this->wddm->createMonitoredFenceKmdWaiter(static_cast<OsContextWin *>(this->osContext)->getMonitoredFence(), flushStamp);
+}
+
+template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::isTlbFlushRequiredForStateCacheFlush() {
     return true;
 }

@@ -29,6 +29,8 @@ BOOL resetEvent(HANDLE hEvent);
 BOOL setEvent(HANDLE hEvent);
 DWORD waitForMultipleObjects(DWORD nCount, CONST HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
 DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
+HANDLE createWaitableTimerEx(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess);
+BOOL setWaitableTimer(HANDLE hTimer, const LARGE_INTEGER *lpDueTime, LONG lPeriod, PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, BOOL fResume);
 BOOL registerWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK callback, PVOID context, ULONG dwMilliseconds, ULONG dwFlags);
 BOOL unregisterWait(HANDLE waitHandle);
 BOOL closeHandle(HANDLE hObject);

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
@@ -45,6 +46,13 @@ bool Wddm::resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) {
 
 bool Wddm::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) {
     return false;
+}
+
+std::unique_ptr<KmdWaiter> Wddm::createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue) {
+    return nullptr;
+}
+
+void Wddm::releaseUnusedKmdWaitHandles() {
 }
 
 HANDLE Wddm::getSharedHandle(const MemoryManager::OsHandleData &osHandleData) {
