@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/caps/materialize_caps.h"
@@ -18,9 +19,12 @@
 namespace NEO {
 
 struct CapsXe3pCore {
+    static constexpr uint32_t cacheLineSize = 256u;
     static constexpr uint32_t kernelBFloat16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps;
     static constexpr uint32_t stackSizePerRay = 64u;
+
+    static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize64k;
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
@@ -34,9 +38,12 @@ struct CapsXe3pCore {
 };
 
 struct CapsCri : CapsXe3pCore {
+    static constexpr uint32_t preferredWorkgroupCountPerSubslice = 4u;
+
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
 };
 struct CapsNvlP : CapsXe3pCore {
+    static constexpr uint32_t maxNumSamplers = 16u;
     static constexpr uint32_t rtasFormat = 3u;
 
     static constexpr bool ftrXe2Compression = true;

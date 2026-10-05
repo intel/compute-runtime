@@ -49,7 +49,6 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_before_xe2.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_from_xe_hpc_to_xe3.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe_hpc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/query_peer_access.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_common.h

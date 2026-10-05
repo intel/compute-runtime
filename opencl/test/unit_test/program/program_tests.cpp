@@ -488,13 +488,13 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
     auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    auto &productHelper = pDevice->getProductHelper();
+    const auto &hwInfo = pDevice->getHardwareInfo();
     size_t isaPadding = gfxCoreHelper.getPaddingForISAAllocation();
     const size_t kernelHeapSize = kernelInfo->heapInfo.kernelHeapSize;
     bool isIsaPooled = (pProgram->getKernelsIsaParentAllocation(rootDeviceIndex) != nullptr);
     if (isIsaPooled) {
         const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
-        const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+        const size_t cacheLine = static_cast<size_t>(hwInfo.caps.cacheLineSize);
         const size_t alignment = std::max(kernelAlign, cacheLine);
         EXPECT_EQ(kernelInfo->getIsaSize(), alignUp(kernelHeapSize + isaPadding, alignment));
     } else {
@@ -899,10 +899,10 @@ TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndAllConditionsMetWhe
 
 TEST_F(ProgramFromBinaryTest, givenVariousIsaSizesAndKernelPositionsWhenComputingSizeThenCorrectAlignmentAndPaddingAreApplied) {
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto &productHelper = pDevice->getProductHelper();
+    const auto &hwInfo = pDevice->getHardwareInfo();
 
     const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
-    const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+    const size_t cacheLine = static_cast<size_t>(hwInfo.caps.cacheLineSize);
     const size_t alignment = std::max(kernelAlign, cacheLine);
     const size_t padding = gfxCoreHelper.getPaddingForISAAllocation();
 

@@ -39,10 +39,15 @@ TEST(CapsXeHpcTest, givenPvcVgIpVersionWhenResolvingCapsThenReleaseCapsAreReturn
 
 TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPvc = materializeCaps<CapsPvc>();
+
+    EXPECT_EQ(64u, capsPvc.cacheLineSize);
     EXPECT_EQ(0u, capsPvc.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPvc.kernelFp16AtomicCapabilities);
-    EXPECT_EQ(0u, capsPvc.stackSizePerRay);
+    EXPECT_EQ(0u, capsPvc.maxNumSamplers);
+    EXPECT_EQ(0u, capsPvc.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsPvc.rtasFormat);
+    EXPECT_EQ(0u, capsPvc.stackSizePerRay);
+    EXPECT_EQ(MemoryConstants::pageSize64k, capsPvc.svmCpuAlignment);
     EXPECT_FALSE(capsPvc.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPvc.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPvc.availableSemaphore64);
@@ -77,10 +82,15 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
 
 TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPvcVg = materializeCaps<CapsPvcVg>();
+
+    EXPECT_EQ(64u, capsPvcVg.cacheLineSize);
     EXPECT_EQ(0u, capsPvcVg.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPvcVg.kernelFp16AtomicCapabilities);
-    EXPECT_EQ(0u, capsPvcVg.stackSizePerRay);
+    EXPECT_EQ(0u, capsPvcVg.maxNumSamplers);
+    EXPECT_EQ(0u, capsPvcVg.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsPvcVg.rtasFormat);
+    EXPECT_EQ(0u, capsPvcVg.stackSizePerRay);
+    EXPECT_EQ(MemoryConstants::pageSize64k, capsPvcVg.svmCpuAlignment);
     EXPECT_FALSE(capsPvcVg.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPvcVg.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPvcVg.availableSemaphore64);

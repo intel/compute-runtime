@@ -325,11 +325,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isPrefetcherDisablingInDirectSubmissionRequi
 }
 
 template <>
-uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxNumSamplers() const {
-    return 0u;
-}
-
-template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::getCommandBuffersPreallocatedPerCommandQueue() const {
     return 0u;
 }
@@ -433,11 +428,6 @@ struct HwMapper<IGFX_UNKNOWN> {
     static const char *abbreviation;
     using GfxProduct = UnknownProduct;
 };
-
-template <>
-uint32_t ProductHelperHw<IGFX_UNKNOWN>::getCacheLineSize() const {
-    return 0x40;
-}
 
 template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::is48bResourceNeededForRayTracing() const {

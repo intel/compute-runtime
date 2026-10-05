@@ -8,7 +8,6 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/os_interface/product_helper_from_xe_hpc_to_xe3.inl"
 #include "shared/source/os_interface/product_helper_from_xe_hpg_to_xe3.inl"
-#include "shared/source/os_interface/product_helper_xe_hpc_and_later.inl"
 
 namespace NEO {
 
@@ -35,11 +34,6 @@ bool ProductHelperHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequire
 template <>
 bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const {
     return true;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
-    return 0u;
 }
 
 template <>

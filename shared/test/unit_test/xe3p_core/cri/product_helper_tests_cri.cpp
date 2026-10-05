@@ -83,10 +83,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSuppor
     EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
-CRITEST_F(CriProductHelper, whenQueryingMaxNumSamplersThenReturnZero) {
-    EXPECT_EQ(0u, productHelper->getMaxNumSamplers());
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
     EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
 }
@@ -246,10 +242,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAskingShouldRegisterEnqueuedWa
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
-}
-
-CRITEST_F(CriProductHelper, givenProductHelperWhenGettingPreferredWorkgroupCountPerSubsliceThenFourIsReturned) {
-    EXPECT_EQ(4u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {

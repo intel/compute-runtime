@@ -2508,7 +2508,8 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenSi
     auto &helper = device->getNEODevice()->getGfxCoreHelper();
     const size_t isaPadding = helper.getPaddingForISAAllocation();
     const size_t kernelAlign = helper.getKernelIsaPointerAlignment();
-    const size_t cacheLine = static_cast<size_t>(device->getNEODevice()->getProductHelper().getCacheLineSize());
+    const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+    const size_t cacheLine = hwInfo.caps.cacheLineSize;
     const size_t alignment = std::max(kernelAlign, cacheLine);
     const size_t expectedSize = alignUp(kernelHeapSize + isaPadding, alignment);
     EXPECT_EQ(kernelImmutableData->getIsaSize(), expectedSize);

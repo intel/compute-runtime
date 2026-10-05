@@ -254,11 +254,6 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroup(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getPreferredWorkgroupCountPerSubslice() const {
-    return 0;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getDefaultMidthreadPreemptionDelayTimer() const {
     return 0;
 }
@@ -477,11 +472,6 @@ uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareI
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize) const {
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
-    return MemoryConstants::pageSize2M;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -803,11 +793,6 @@ bool ProductHelperHw<gfxProduct>::isTranslationExceptionSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
-    return 16u;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &) const {
     return false;
 }
@@ -901,12 +886,6 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
     }
 
     return threshold;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getCacheLineSize() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::cacheLineSize;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

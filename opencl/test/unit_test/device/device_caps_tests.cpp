@@ -143,9 +143,9 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     const auto &sharedCaps = device->getSharedDeviceInfo();
-    const auto &sysInfo = defaultHwInfo->gtSystemInfo;
+    const auto &hwInfo = device->getHardwareInfo();
+    const auto &sysInfo = hwInfo.gtSystemInfo;
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    auto &productHelper = device->getProductHelper();
 
     EXPECT_NE(nullptr, caps.builtInKernels);
 
@@ -222,7 +222,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[0], sharedCaps.maxWorkGroupSize);
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[1], sharedCaps.maxWorkGroupSize);
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[2], sharedCaps.maxWorkGroupSize);
-    EXPECT_EQ(productHelper.getMaxNumSamplers(), sharedCaps.maxSamplers);
+    EXPECT_EQ(hwInfo.caps.maxNumSamplers, sharedCaps.maxSamplers);
 
     // Minimum requirements for OpenCL 1.x
     EXPECT_EQ(static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST), CL_FP_ROUND_TO_NEAREST & caps.singleFpConfig);
@@ -420,7 +420,6 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndDisabledMultipl
     const auto &caps = device->getDeviceInfo();
 
     auto &productHelper = device->getProductHelper();
-
     if (productHelper.isSharingWith3dOrMediaAllowed()) {
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_sharing_format_query ")));
     } else {

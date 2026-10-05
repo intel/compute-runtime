@@ -13,7 +13,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/work_size_info.h"
 
@@ -452,7 +452,7 @@ WorkSizeInfo createWorkSizeInfoForKernel(const KernelDescriptor &kernelDescripto
 
     wsInfo.setIfUseImg(kernelDescriptor);
 
-    auto preferredWorkgroupCount = device.getProductHelper().getPreferredWorkgroupCountPerSubslice();
+    auto preferredWorkgroupCount = device.getHardwareInfo().caps.preferredWorkgroupCountPerSubslice;
     if (debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.get() != -1) {
         preferredWorkgroupCount = static_cast<uint32_t>(debugManager.flags.OverridePreferredWorkgroupCountPerSubslice.get());
     }

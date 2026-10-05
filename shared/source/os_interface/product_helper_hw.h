@@ -35,7 +35,6 @@ class ProductHelperHw : public ProductHelper {
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
-    uint32_t getPreferredWorkgroupCountPerSubslice() const override;
     uint32_t getDefaultMidthreadPreemptionDelayTimer() const override;
     void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
@@ -84,7 +83,6 @@ class ProductHelperHw : public ProductHelper {
     bool isTimestampWaitSupportedForQueues() const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     void adjustScratchSize(size_t &requiredScratchSize) const override;
-    size_t getSvmCpuAlignment() const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
     bool adjustDispatchAllRequired(const HardwareInfo &hwInfo) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;
@@ -126,7 +124,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getRequiredDetectIndirectVersionVC() const override;
     bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const override;
     bool isTranslationExceptionSupported() const override;
-    uint32_t getMaxNumSamplers() const override;
     uint32_t getCommandBuffersPreallocatedPerCommandQueue() const override;
     uint32_t getInternalHeapsPreallocated() const override;
     bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const override;
@@ -183,7 +180,6 @@ class ProductHelperHw : public ProductHelper {
     bool isPatIndexValidForUserptr(uint64_t patIndex) const override;
     bool isStagingBuffersEnabled() const override;
     size_t getCpuCopyThreshold(TransferType transferType) const override;
-    uint32_t getCacheLineSize() const override;
     bool supports2DBlockStore() const override;
     bool supports2DBlockLoad() const override;
     uint32_t getNumCacheRegions() const override;

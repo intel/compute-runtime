@@ -201,8 +201,9 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
         iddBlock = nullptr;
         nextIddInBlock = this->getNumIddPerBlock();
-        auto heapAlignment = productHelper.getCacheLineSize();
-        if (indirectHeapInLocalMemory && AlignmentHelper::isReducedAlignmentAllowed(device->getHardwareInfo())) {
+        const auto &hwInfo = device->getHardwareInfo();
+        auto heapAlignment = hwInfo.caps.cacheLineSize;
+        if (indirectHeapInLocalMemory && AlignmentHelper::isReducedAlignmentAllowed(hwInfo)) {
             heapAlignment = MemoryConstants::cacheLineSize;
         }
         this->threadDataTracker = std::make_unique<ThreadDataTracker>();

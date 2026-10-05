@@ -690,7 +690,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentWhenLocalMemoryIsEnabledThenSh
     auto mockPageFaultManager = new MockPageFaultManager();
     memoryManager->pageFaultManager.reset(mockPageFaultManager);
 
-    const size_t svmCpuAlignment = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0]->getProductHelper().getSvmCpuAlignment();
+    const auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0]->getHardwareInfo();
+    const size_t svmCpuAlignment = hwInfo.caps.svmCpuAlignment;
     const size_t representativeAlignments[] = {0, MemoryConstants::pageSize, MemoryConstants::pageSize64k, 2 * MemoryConstants::pageSize64k, MemoryConstants::pageSize2M};
     for (size_t alignment : representativeAlignments) {
         memoryManager->validateAllocateProperties = [alignment, svmCpuAlignment](const AllocationProperties &properties) {

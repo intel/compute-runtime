@@ -5773,16 +5773,10 @@ TEST_F(DeviceTest, givenDeviceWithNoVmBindWhenQueryingReadonlyMemoryCapabilityTh
     EXPECT_EQ(ZE_DEVICE_READONLY_MEMORY_CAPABILITY_NONE, roProps.readonlyCapability);
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-struct MockProductHelperWideCacheLine : NEO::ProductHelperHw<gfxProduct> {
-    uint32_t getCacheLineSize() const override { return 256u; }
-};
-
 HWTEST_F(DeviceTest, givenCacheLineWiderThanTagWhenTakingFillPatternTagsThenNoTwoTagsShareACacheLine) {
-    NEO::RAIIProductHelperFactory<MockProductHelperWideCacheLine<IGFX_UNKNOWN>> raiiProductHelper{
-        *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]};
-
-    const auto cacheLineSize = device->getProductHelper().getCacheLineSize();
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.cacheLineSize = 256u;
+    const auto cacheLineSize = hwInfo.caps.cacheLineSize;
 
     auto allocator = device->getFillPatternAllocator();
     ASSERT_NE(nullptr, allocator);

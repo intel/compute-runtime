@@ -394,10 +394,10 @@ TEST_F(KernelHelperTest, GivenThreadGroupCountWhenSyncBufferCreatedThenAllocatio
 
 TEST_F(KernelHelperTest, givenVariousIsaSizesWhenComputingAlignedSizeWithPaddingThenResultIsAlignedToMaxOfKernelAlignAndCacheLineSize) {
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto &productHelper = pDevice->getProductHelper();
+    const auto &hwInfo = pDevice->getHardwareInfo();
 
     const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
-    const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+    const size_t cacheLine = static_cast<size_t>(hwInfo.caps.cacheLineSize);
     const size_t alignment = std::max(kernelAlign, cacheLine);
     const size_t isaPadding = gfxCoreHelper.getPaddingForISAAllocation();
 

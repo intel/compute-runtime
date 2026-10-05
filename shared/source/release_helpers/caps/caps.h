@@ -7,15 +7,21 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace NEO {
 
 struct Caps {
+    uint32_t cacheLineSize = 0u;
     uint32_t kernelBFloat16AtomicCapabilities = 0u;
     uint32_t kernelFp16AtomicCapabilities = 0u;
-    uint32_t stackSizePerRay = 0u;
+    uint32_t maxNumSamplers = 0u;
+    uint32_t preferredWorkgroupCountPerSubslice = 0u;
     uint32_t rtasFormat = 0u;
+    uint32_t stackSizePerRay = 0u;
+
+    size_t svmCpuAlignment = 0u;
 
     bool adjustWalkOrderAvailable = false;
     bool auxSurfaceModeOverrideRequired = false;

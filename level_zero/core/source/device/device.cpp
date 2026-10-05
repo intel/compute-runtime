@@ -1308,8 +1308,7 @@ ze_result_t Device::getCacheProperties(uint32_t *pCount, ze_device_cache_propert
             cacheReservationProperties->maxCacheReservationSize = cacheReservation->getMaxCacheReservationSize(cacheLevel);
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_CACHELINE_SIZE_EXT) {
             auto cacheLineSizeProperties = reinterpret_cast<ze_device_cache_line_size_ext_t *>(extendedProperties);
-            auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-            cacheLineSizeProperties->cacheLineSize = productHelper.getCacheLineSize();
+            cacheLineSizeProperties->cacheLineSize = hardwareInfo.caps.cacheLineSize;
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }
@@ -2502,7 +2501,8 @@ NEO::TagAllocatorBase *Device::getFillPatternAllocator() {
 
         if (!this->fillPatternAllocator.get()) {
             RootDeviceIndicesContainer rootDeviceIndices = {getNEODevice()->getRootDeviceIndex()};
-            const size_t tagStride = this->getProductHelper().getCacheLineSize();
+            const auto &hwInfo = getHwInfo();
+            const size_t tagStride = hwInfo.caps.cacheLineSize;
             fillPatternAllocator = std::make_unique<NEO::TagAllocator<NEO::FillPaternNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), static_cast<uint32_t>(MemoryConstants::pageSize2M / tagStride),
                                                                                                 tagStride, tagStride, 0, false, false, getNEODevice()->getDeviceBitfield());
         }

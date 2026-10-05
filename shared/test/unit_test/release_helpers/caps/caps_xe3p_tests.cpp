@@ -36,10 +36,14 @@ TEST(CapsXe3pTest, givenNvlPIpVersionWhenResolvingCapsThenReleaseCapsAreReturned
 TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsCri = materializeCaps<CapsCri>();
 
+    EXPECT_EQ(256u, capsCri.cacheLineSize);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelFp16AtomicCapabilities);
-    EXPECT_EQ(64u, capsCri.stackSizePerRay);
+    EXPECT_EQ(0u, capsCri.maxNumSamplers);
+    EXPECT_EQ(4u, capsCri.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsCri.rtasFormat);
+    EXPECT_EQ(64u, capsCri.stackSizePerRay);
+    EXPECT_EQ(MemoryConstants::pageSize64k, capsCri.svmCpuAlignment);
     EXPECT_FALSE(capsCri.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsCri.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsCri.availableSemaphore64);
@@ -76,10 +80,14 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     constexpr auto capsNvlPA0 = materializeCaps<CapsNvlPA0>();
     constexpr auto capsNvlPB0 = materializeCaps<CapsNvlPB0>();
 
+    EXPECT_EQ(256u, capsNvlPA0.cacheLineSize);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPA0.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPA0.kernelFp16AtomicCapabilities);
-    EXPECT_EQ(64u, capsNvlPA0.stackSizePerRay);
+    EXPECT_EQ(16u, capsNvlPA0.maxNumSamplers);
+    EXPECT_EQ(0u, capsNvlPA0.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(3u, capsNvlPA0.rtasFormat);
+    EXPECT_EQ(64u, capsNvlPA0.stackSizePerRay);
+    EXPECT_EQ(MemoryConstants::pageSize64k, capsNvlPA0.svmCpuAlignment);
     EXPECT_FALSE(capsNvlPA0.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsNvlPA0.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsNvlPA0.availableSemaphore64);
@@ -111,10 +119,14 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsNvlPA0.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsNvlPA0.splitMatrixMultiplyAccumulateSupported);
 
+    EXPECT_EQ(256u, capsNvlPB0.cacheLineSize);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPB0.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPB0.kernelFp16AtomicCapabilities);
-    EXPECT_EQ(64u, capsNvlPB0.stackSizePerRay);
+    EXPECT_EQ(16u, capsNvlPB0.maxNumSamplers);
+    EXPECT_EQ(0u, capsNvlPB0.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(3u, capsNvlPB0.rtasFormat);
+    EXPECT_EQ(64u, capsNvlPB0.stackSizePerRay);
+    EXPECT_EQ(MemoryConstants::pageSize64k, capsNvlPB0.svmCpuAlignment);
     EXPECT_FALSE(capsNvlPB0.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsNvlPB0.auxSurfaceModeOverrideRequired);
     EXPECT_TRUE(capsNvlPB0.availableSemaphore64);

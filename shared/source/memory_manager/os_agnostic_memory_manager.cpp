@@ -80,6 +80,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
 
     if (allocationData.type == AllocationType::svmCpu) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+        const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
         auto force2MBAlignmentForSharedUsmCpuAllocation = allocationData.makeGPUVaDifferentThanCPUPtr &&
                                                           (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get() ||
@@ -87,7 +88,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         if (force2MBAlignmentForSharedUsmCpuAllocation) {
             alignment = alignUpNonZero<size_t>(allocationData.alignment, MemoryConstants::pageSize2M);
         } else {
-            alignment = alignUpNonZero<size_t>(allocationData.alignment, productHelper.getSvmCpuAlignment());
+            alignment = alignUpNonZero<size_t>(allocationData.alignment, hwInfo.caps.svmCpuAlignment);
         }
         sizeAligned = alignUp(allocationData.size, alignment);
     }
@@ -149,8 +150,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateUSMHostGraphicsMemory(const
     AllocationData allocData = allocationData;
     if (allocData.type == AllocationType::svmCpu) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocData.rootDeviceIndex];
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        allocData.alignment = alignUpNonZero<size_t>(allocationData.alignment, productHelper.getSvmCpuAlignment());
+        const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        allocData.alignment = alignUpNonZero<size_t>(allocationData.alignment, hwInfo.caps.svmCpuAlignment);
         allocData.size = alignUp(allocationData.size, allocData.alignment);
     }
     auto memoryAllocation = allocateGraphicsMemoryWithHostPtr(allocData);

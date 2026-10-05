@@ -61,7 +61,7 @@ void Device::initializeCaps() {
     // copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;
 
-    deviceInfo.globalMemCachelineSize = productHelper.getCacheLineSize();
+    deviceInfo.globalMemCachelineSize = hwInfo.caps.cacheLineSize;
 
     uint32_t allSubDevicesMask = static_cast<uint32_t>(getDeviceBitfield().to_ulong());
     constexpr uint32_t singleSubDeviceMask = 1;
@@ -148,7 +148,7 @@ void Device::initializeCaps() {
     deviceInfo.maxWorkItemSizes[0] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxWorkItemSizes[1] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxWorkItemSizes[2] = deviceInfo.maxWorkGroupSize;
-    deviceInfo.maxSamplers = productHelper.getMaxNumSamplers();
+    deviceInfo.maxSamplers = hwInfo.caps.maxNumSamplers;
 
     deviceInfo.computeUnitsUsedForScratch = gfxCoreHelper.getComputeUnitsUsedForScratch(this->getRootDeviceEnvironment());
     deviceInfo.maxFrontEndThreads = gfxCoreHelper.getMaxThreadsForVfe(hwInfo);

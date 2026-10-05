@@ -255,10 +255,6 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsIpSamplingSupportedThenCo
     }
 }
 
-PVCTEST_F(PvcProductHelper, whenQueryingMaxNumSamplersThenReturnZero) {
-    EXPECT_EQ(0u, productHelper->getMaxNumSamplers());
-}
-
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
     EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
 }

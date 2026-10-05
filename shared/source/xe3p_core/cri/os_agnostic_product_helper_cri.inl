@@ -35,11 +35,6 @@ bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isImage1d, bool 
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
-    return 0u;
-}
-
-template <>
 aub_stream::EngineType ProductHelperHw<gfxProduct>::getDefaultCopyEngine() const {
     return aub_stream::EngineType::ENGINE_BCS1;
 }
@@ -126,11 +121,6 @@ uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const Hardw
 template <>
 bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() const {
     return true;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getPreferredWorkgroupCountPerSubslice() const {
-    return 4;
 }
 
 template <>

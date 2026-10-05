@@ -1042,10 +1042,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsTranslationException
     EXPECT_FALSE(productHelper->isTranslationExceptionSupported());
 }
 
-HWTEST_F(ProductHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
-    EXPECT_EQ(16u, productHelper->getMaxNumSamplers());
-}
-
 HWTEST_F(ProductHelperTest, whenDisableL3ForDebugCalledThenFalseIsReturned) {
     EXPECT_FALSE(productHelper->disableL3CacheForDebug(*defaultHwInfo));
 }
@@ -1180,14 +1176,6 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
     }
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenItsPreXe2ThenCacheLineSizeIs64Bytes, IsAtMostPVC) {
-    EXPECT_EQ(productHelper->getCacheLineSize(), 64u);
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenItsXe2PlusThenCacheLineSizeIs256Bytes, IsAtLeastXe2HpgCore) {
-    EXPECT_EQ(productHelper->getCacheLineSize(), 256u);
-}
-
 TEST_F(ProductHelperTest, whenGettingMaxSubSliceSpaceThenValueIsNotSmallerThanMaxSubSliceCount) {
     constexpr auto maxSupportedSubSlices = 128u;
     auto hwInfo = *defaultHwInfo;
@@ -1226,10 +1214,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnTru
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTrue, IsWithinXeHpcCoreAndXe3pCore) {
 
     EXPECT_TRUE(productHelper->supports2DBlockStore());
-}
-
-HWTEST2_F(ProductHelperTest, WhenGetSvmCpuAlignmentThenProperValueIsReturned, IsAtLeastXeHpcCore) {
-    EXPECT_EQ(MemoryConstants::pageSize64k, productHelper->getSvmCpuAlignment());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetRequiredDetectIndirectVersionCalledThenReturnCorrectVersion, IsNotPVC) {
@@ -1342,10 +1326,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingIsResourceUncachedForC
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenisPackedCopyFormatSupportedThenCorrectValueIsReturned, IsAtMostXe3Core) {
     EXPECT_FALSE(productHelper->isPackedCopyFormatSupported());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingPreferredWorkgroupCountPerSubsliceThenZeroReturned) {
-    EXPECT_EQ(0u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingDefaultMidthreadPreemptionDelayTimerThenZeroReturned) {

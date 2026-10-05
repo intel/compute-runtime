@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helpers/caps/materialize_caps.h"
@@ -18,8 +19,12 @@
 namespace NEO {
 
 struct CapsXe2HpgCore {
+    static constexpr uint32_t cacheLineSize = 256u;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
+    static constexpr uint32_t maxNumSamplers = 16u;
     static constexpr uint32_t rtasFormat = 1u;
+
+    static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize64k;
 
     static constexpr bool auxSurfaceModeOverrideRequired = true;
     static constexpr bool bFloat16ConversionSupported = true;

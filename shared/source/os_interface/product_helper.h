@@ -103,7 +103,6 @@ class ProductHelper {
     virtual bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
-    virtual uint32_t getPreferredWorkgroupCountPerSubslice() const = 0;
     virtual uint32_t getDefaultMidthreadPreemptionDelayTimer() const = 0; // STATE_COMPUTE_MODE field encoding, not microseconds
     virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
@@ -150,7 +149,6 @@ class ProductHelper {
     virtual bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const = 0;
     virtual void adjustScratchSize(size_t &requiredScratchSize) const = 0;
-    virtual size_t getSvmCpuAlignment() const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool adjustDispatchAllRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
@@ -194,7 +192,6 @@ class ProductHelper {
     virtual uint32_t getRequiredDetectIndirectVersionVC() const = 0;
     virtual bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const = 0;
     virtual bool isTranslationExceptionSupported() const = 0;
-    virtual uint32_t getMaxNumSamplers() const = 0;
     virtual uint32_t getCommandBuffersPreallocatedPerCommandQueue() const = 0;
     virtual uint32_t getInternalHeapsPreallocated() const = 0;
     virtual bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const = 0;
@@ -252,7 +249,6 @@ class ProductHelper {
     virtual bool isPatIndexValidForUserptr(uint64_t patIndex) const = 0;
     virtual bool isStagingBuffersEnabled() const = 0;
     virtual size_t getCpuCopyThreshold(TransferType transferType) const = 0;
-    virtual uint32_t getCacheLineSize() const = 0;
     virtual bool supports2DBlockStore() const = 0;
     virtual bool supports2DBlockLoad() const = 0;
     virtual uint32_t getNumCacheRegions() const = 0;

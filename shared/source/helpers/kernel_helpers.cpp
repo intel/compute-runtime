@@ -142,7 +142,8 @@ std::pair<GraphicsAllocation *, size_t> KernelHelper::getSyncBufferAllocationOff
 size_t KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(Device &device, size_t isaSize, bool isLastKernel) {
     const size_t isaPadding = isLastKernel ? device.getGfxCoreHelper().getPaddingForISAAllocation() : 0u;
     const size_t kernelStartPointerAlignment = device.getGfxCoreHelper().getKernelIsaPointerAlignment();
-    const size_t cacheLineSize = static_cast<size_t>(device.getProductHelper().getCacheLineSize());
+    const auto &hwInfo = device.getHardwareInfo();
+    const size_t cacheLineSize = hwInfo.caps.cacheLineSize;
     const size_t alignment = std::max(kernelStartPointerAlignment, cacheLineSize);
     DEBUG_BREAK_IF(cacheLineSize > kernelStartPointerAlignment && (cacheLineSize % kernelStartPointerAlignment) != 0);
     return alignUp(isaPadding + isaSize, alignment);
