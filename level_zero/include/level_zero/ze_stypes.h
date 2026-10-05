@@ -50,7 +50,7 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030032)
 
 #ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
-#define ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC static_cast<ze_structure_type_ext_t>(0x00030033)
+#define ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC static_cast<ze_structure_type_ext_t>(0x00030033)
 #endif // ZE_RECORD_REPLAY_GRAPH_EXP_NAME
 
 #if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 16)

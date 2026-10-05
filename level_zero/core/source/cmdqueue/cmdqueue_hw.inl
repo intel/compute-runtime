@@ -979,9 +979,8 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleIni
             encodeSize += estimatePatchPreambleCrossSyncSize(ctx.patchPreambleCountersCrossSyncContainer->list.size());
 
             // need to estimate bb_start jumps for the 2nd and subsequent command lists that will be executed after the cross-sync sem wait
-            std::vector<CommandList *> alreadyEstimatedCmdLists;
-            alreadyEstimatedCmdLists.reserve(numCommandLists);
-            // the first command list is always estimated - patch preamble force 1st bb_start to be estimated anyway
+            StackVec<CommandList *, 9> alreadyEstimatedCmdLists;
+            // the first command list is always estimated - patch preamble forces 1st bb_start to be estimated anyway
             alreadyEstimatedCmdLists.push_back(ctx.firstCommandList);
             if (ctx.regularHeapful) {
                 // in heapful mode each command list might have already estimated bb_start if the state was deem dirty

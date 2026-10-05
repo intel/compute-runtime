@@ -690,8 +690,8 @@ void addEventExtensionParameters(std::vector<std::pair<std::string, std::string>
     while (baseDesc != nullptr) {
         const auto stypeValue = std::to_string(static_cast<uint32_t>(baseDesc->stype));
 
-        if (baseDesc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
-            const auto *eventFlagsDesc = reinterpret_cast<const ze_event_flags_exp_desc_t *>(baseDesc);
+        if (baseDesc->stype == ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC) {
+            const auto *eventFlagsDesc = reinterpret_cast<const ze_event_exp_flags_desc_t *>(baseDesc);
             params.emplace_back("eventFlagsExp.stype", stypeValue);
             params.emplace_back("eventFlagsExp.flags", std::to_string(eventFlagsDesc->flags));
         } else {

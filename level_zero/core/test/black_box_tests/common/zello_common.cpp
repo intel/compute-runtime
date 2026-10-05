@@ -259,10 +259,15 @@ void getErrorMax(int argc, char *argv[]) {
 }
 
 void printTestHeader(const std::string_view currentTest) {
+    const bool endsWithNewline = !currentTest.empty() && currentTest.back() == '\n';
     std::cout << std::endl
-              << "Starting test case: ***" << std::endl
-              << currentTest << std::endl
-              << "                    *** " << std::endl;
+              << "Starting test case: " << std::endl
+              << "***" << std::endl
+              << currentTest;
+    if (!endsWithNewline) {
+        std::cout << std::endl;
+    }
+    std::cout << "*** " << std::endl;
 }
 
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string_view blackBoxName, const std::string_view currentTest) {

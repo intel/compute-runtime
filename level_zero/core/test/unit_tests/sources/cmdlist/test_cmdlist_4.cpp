@@ -1822,14 +1822,14 @@ HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneAppendMemory
 }
 
 HWTEST_F(CommandListCreateTests, givenEventFlagsDescriptorWhenCloneAppendEventIsCalledThenClonedValueDesciriptorIsAvailable) {
-    ze_event_flags_exp_desc_t eventFlagsDesc{ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+    ze_event_exp_flags_desc_t eventFlagsDesc{ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
 
     void *outExtPtr = nullptr;
     auto result = CommandList::cloneAppendEventExtensions(reinterpret_cast<ze_base_desc_t *>(&eventFlagsDesc), outExtPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, outExtPtr);
 
-    auto cloneExt = reinterpret_cast<ze_event_flags_exp_desc_t *>(outExtPtr);
+    auto cloneExt = reinterpret_cast<ze_event_exp_flags_desc_t *>(outExtPtr);
     EXPECT_EQ(eventFlagsDesc.stype, cloneExt->stype);
     EXPECT_EQ(eventFlagsDesc.flags, cloneExt->flags);
 

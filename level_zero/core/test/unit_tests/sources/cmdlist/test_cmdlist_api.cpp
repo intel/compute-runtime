@@ -197,7 +197,7 @@ TEST(zeCommandListAppendSignalEventWithParameters, WhenAppendingSignalEventWithF
     Mock<Event> eventObj;
     ze_event_handle_t event = eventObj.toHandle();
 
-    ze_event_flags_exp_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
 
     auto result = zeCommandListAppendSignalEventWithParameters(commandList.toHandle(), &eventFlagsDesc, event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -235,7 +235,7 @@ TEST(zeCommandListAppendWaitOnEventsWithParameters, WhenAppendingWaitOnEventsWit
     Mock<Event> eventObj;
     ze_event_handle_t event = eventObj.toHandle();
 
-    ze_event_flags_exp_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC, nullptr, ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL};
+    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
 
     auto result = zeCommandListAppendWaitOnEventsWithParameters(commandList.toHandle(), &eventFlagsDesc, 1, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

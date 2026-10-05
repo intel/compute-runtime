@@ -1011,9 +1011,9 @@ void CommandList::getPatchPreambleFullData(uint64_t &outCounterValue,
 
 ze_result_t CommandList::cloneAppendEventExtensions(const ze_base_desc_t *desc, void *&outPnext) {
     while (desc) {
-        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
-            auto eventFlagsDesc = reinterpret_cast<const ze_event_flags_exp_desc_t *>(desc);
-            auto cloneEventFlagsDesc = new ze_event_flags_exp_desc_t;
+        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC) {
+            auto eventFlagsDesc = reinterpret_cast<const ze_event_exp_flags_desc_t *>(desc);
+            auto cloneEventFlagsDesc = new ze_event_exp_flags_desc_t;
             *cloneEventFlagsDesc = *eventFlagsDesc;
             cloneEventFlagsDesc->pNext = nullptr;
             outPnext = cloneEventFlagsDesc;
@@ -1030,8 +1030,8 @@ void CommandList::freeClonedAppendEventExtensions(void *pNext) {
     while (desc) {
         // cloned descriptors are not const memory
         pNext = const_cast<void *>(desc->pNext);
-        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
-            auto eventFlagsDesc = reinterpret_cast<ze_event_flags_exp_desc_t *>(desc);
+        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC) {
+            auto eventFlagsDesc = reinterpret_cast<ze_event_exp_flags_desc_t *>(desc);
             delete eventFlagsDesc;
         }
         desc = static_cast<ze_base_desc_t *>(pNext);
@@ -1040,9 +1040,9 @@ void CommandList::freeClonedAppendEventExtensions(void *pNext) {
 
 ze_result_t CommandList::obtainWaitEventParamsFromExtensions(const ze_base_desc_t *desc, CmdListWaitEventParameters &waitEventParams) {
     while (desc) {
-        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
-            auto eventFlagsDesc = reinterpret_cast<const ze_event_flags_exp_desc_t *>(desc);
-            if (eventFlagsDesc->flags & ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC) {
+            auto eventFlagsDesc = reinterpret_cast<const ze_event_exp_flags_desc_t *>(desc);
+            if (eventFlagsDesc->flags & ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL) {
                 waitEventParams.apiRequestForGraphExternal = true;
             }
             desc = static_cast<const ze_base_desc_t *>(desc->pNext);
@@ -1055,9 +1055,9 @@ ze_result_t CommandList::obtainWaitEventParamsFromExtensions(const ze_base_desc_
 
 ze_result_t CommandList::obtainSignalEventParamsFromExtensions(const ze_base_desc_t *desc, CmdListSignalEventParameters &signalEventParams) {
     while (desc) {
-        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_FLAGS_EXP_DESC) {
-            auto eventFlagsDesc = reinterpret_cast<const ze_event_flags_exp_desc_t *>(desc);
-            if (eventFlagsDesc->flags & ZE_EVENT_FLAG_EXP_MODE_GRAPH_EXTERNAL) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC) {
+            auto eventFlagsDesc = reinterpret_cast<const ze_event_exp_flags_desc_t *>(desc);
+            if (eventFlagsDesc->flags & ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL) {
                 signalEventParams.apiRequestForGraphExternal = true;
             }
             desc = static_cast<const ze_base_desc_t *>(desc->pNext);
