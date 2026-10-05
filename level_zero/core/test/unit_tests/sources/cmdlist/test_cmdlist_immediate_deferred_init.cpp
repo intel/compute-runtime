@@ -88,6 +88,28 @@ TEST_F(ImmediateCmdListCreationTest, givenInvalidIndexWhenCreatingFirstImmediate
     EXPECT_FALSE(device->getFirstImmCmdlistCreated());
 }
 
+TEST_F(ImmediateCmdListCreationTest, givenInternalImmediateCmdListCreatedFirstWhenCreatingFirstUserImmediateCmdListThenUserCmdListResourcesAreCreatedImmediately) {
+    ze_command_queue_desc_t desc = {};
+    auto internalCommandList = createImmediateCmdList(desc, true, NEO::EngineGroupType::copy);
+    EXPECT_FALSE(device->getFirstImmCmdlistCreated());
+
+    auto userCommandList = createImmediateCmdList(desc, false, NEO::EngineGroupType::compute);
+
+    EXPECT_TRUE(device->getFirstImmCmdlistCreated());
+    EXPECT_NE(nullptr, CommandList::whiteboxCast(userCommandList.get())->cmdQImmediate);
+}
+
+TEST_F(ImmediateCmdListCreationTest, givenCsrProvidedWhenCreatingInternalImmediateCmdListThenFirstImmediateCmdListIsNotMarkedAsCreated) {
+    ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
+    auto providedCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    std::unique_ptr<L0::CommandList> internalCommandList(CommandList::createImmediate(device, &desc, true, NEO::EngineGroupType::compute, providedCsr, returnValue));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_NE(nullptr, CommandList::whiteboxCast(internalCommandList.get())->cmdQImmediate);
+    EXPECT_FALSE(device->getFirstImmCmdlistCreated());
+}
+
 struct ImmediateCmdListDeferredInitializationFixture : public ImmediateCmdListCreationFixture {
     void setUp() {
         ImmediateCmdListCreationFixture::setUp();

@@ -140,6 +140,30 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate->getCommandQueueMode());
 }
 
+TEST(L0DeviceTest, GivenPageFaultCmdListCreatedWhenCreatingFirstUserImmediateCmdListThenUserCmdListResourcesAreCreatedImmediately) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+    NEO::debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
+
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    ASSERT_NE(nullptr, device->pageFaultCommandList);
+    EXPECT_FALSE(device->getFirstImmCmdlistCreated());
+
+    ze_command_queue_desc_t desc = {};
+    std::unique_ptr<L0::CommandList> userCommandList(CommandList::createImmediate(device.get(), &desc, false, NEO::EngineGroupType::compute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_TRUE(device->getFirstImmCmdlistCreated());
+    EXPECT_NE(nullptr, CommandList::whiteboxCast(userCommandList.get())->cmdQImmediate);
+}
+
 TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     DebugManagerStateRestore restorer;

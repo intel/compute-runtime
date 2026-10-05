@@ -683,7 +683,10 @@ CommandList *CommandList::createImmediate(Device *device,
         commandList->destroy();
         return nullptr;
     }
-    device->setFirstImmCmdlistCreated();
+
+    if (!internalUsage) {
+        device->setFirstImmCmdlistCreated();
+    }
     return commandList;
 }
 

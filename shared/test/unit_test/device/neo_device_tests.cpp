@@ -110,12 +110,14 @@ TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineT
 struct DeferredImmediateCmdListDeviceTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.CreateMultipleSubDevices.set(2);
+        debugManager.flags.ContextGroupSize.set(4);
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         executionEnvironment->incRefInternal();
         executionEnvironment->initializeMemoryManager();
     }
 
-    void createRootDevice(bool isWddmOnLinux) {
+    void createRootDevice(bool isWddmOnLinux, bool secondaryContextsSupported) {
+        debugManager.flags.ContextGroupSize.set(secondaryContextsSupported ? 4 : 0);
         static_cast<MockRootDeviceEnvironment *>(executionEnvironment->rootDeviceEnvironments[0].get())->isWddmOnLinuxEnable = isWddmOnLinux;
         device.reset(Device::create<RootDevice>(executionEnvironment.get(), 0u));
         ASSERT_NE(nullptr, device);
@@ -135,13 +137,18 @@ struct DeferredImmediateCmdListDeviceTest : public ::testing::Test {
 };
 
 TEST_F(DeferredImmediateCmdListDeviceTest, givenWddmOnLinuxWhenRootDeviceIsCreatedThenDeferredImmediateCmdListIsDisabledForRootAndSubDevices) {
-    createRootDevice(true);
+    createRootDevice(true, true);
     expectDeferredImmediateCmdListEnabled(false);
 }
 
-TEST_F(DeferredImmediateCmdListDeviceTest, givenNoWddmOnLinuxWhenRootDeviceIsCreatedThenDeferredImmediateCmdListIsEnabledForRootAndSubDevices) {
-    createRootDevice(false);
+TEST_F(DeferredImmediateCmdListDeviceTest, givenNoWddmOnLinuxAndSecondaryContextsSupportedWhenRootDeviceIsCreatedThenDeferredImmediateCmdListIsEnabledForRootAndSubDevices) {
+    createRootDevice(false, true);
     expectDeferredImmediateCmdListEnabled(true);
+}
+
+TEST_F(DeferredImmediateCmdListDeviceTest, givenSecondaryContextsNotSupportedWhenRootDeviceIsCreatedThenDeferredImmediateCmdListIsDisabledForRootAndSubDevices) {
+    createRootDevice(false, false);
+    expectDeferredImmediateCmdListEnabled(false);
 }
 
 TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
