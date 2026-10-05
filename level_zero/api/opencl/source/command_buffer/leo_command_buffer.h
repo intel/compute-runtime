@@ -50,6 +50,7 @@ class CommandBuffer : public BaseObject<_cl_command_buffer_khr> {
     cl_int validateCommand(cl_command_queue commandQueue, const cl_command_properties_khr *properties,
                            cl_uint numSyncPointsInWaitList, const cl_sync_point_khr *syncPointWaitList,
                            const cl_mutable_command_khr *mutableHandle) const;
+    ze_result_t appendSyncPointBarrier(cl_uint numSyncPointsInWaitList);
     cl_int recordCommand(ze_result_t appendResult, cl_sync_point_khr *syncPoint);
     void keepAlive(Kernel *kernel);
     void keepAlive(MemObj *memObj);

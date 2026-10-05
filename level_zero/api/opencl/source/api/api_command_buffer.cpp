@@ -14,6 +14,7 @@
 #include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/event/leo_event.h"
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
@@ -113,12 +114,14 @@ CL_API_ENTRY cl_command_buffer_khr CL_API_CALL clCreateCommandBufferKHR(
     auto contextHandle = pCommandQueue->getContext()->getL0ContextHandle();
     auto deviceHandle = NEO::LEO::ConvertTo::zeDeviceHandle(pCommandQueue->getDevice());
 
-    // Recorded in order even for an out-of-order queue: a sync point can only name an earlier command,
-    // so recording order satisfies every sync point without an event per command.
+    ze_command_list_flags_t cmdListFlags = ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT;
+    if (false == pCommandQueue->isOutOfOrder()) {
+        cmdListFlags |= ZE_COMMAND_LIST_FLAG_IN_ORDER;
+    }
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC,
                                           nullptr,
                                           pCommandQueue->getL0Object()->getOrdinal(),
-                                          ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_LIST_FLAG_IN_ORDER};
+                                          cmdListFlags};
 
     ze_command_list_handle_t cmdListHandle = nullptr;
     auto result = zeCommandListCreate(contextHandle, deviceHandle, &cmdListDesc, &cmdListHandle);
@@ -129,7 +132,9 @@ CL_API_ENTRY cl_command_buffer_khr CL_API_CALL clCreateCommandBufferKHR(
 
     // A command buffer may be enqueued again while an earlier replay is still executing. Without the
     // patch preamble each execution resets the in-order counter from the host, under the running replay.
-    L0::CommandList::fromHandle(cmdListHandle)->setupPatchPreambleEnabled(true);
+    if (false == pCommandQueue->isOutOfOrder()) {
+        L0::CommandList::fromHandle(cmdListHandle)->setupPatchPreambleEnabled(true);
+    }
 
     return new NEO::LEO::CommandBuffer(pCommandQueue->getContext(), pCommandQueue, cmdListHandle, properties);
 }
@@ -190,7 +195,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueCommandBufferKHR(
     }
 
     // With no queue given the buffer replays onto the queue it was created with. A given queue may
-    // be a different one, as long as it is on the same device and in the same context.
+    // be a different one, as long as it is on the same device, in the same context and on the same engine group.
     auto pTargetQueue = pCommandBuffer->getCommandQueue();
     if (numQueues == 1u) {
         auto [queueRetVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(queues[0]));
@@ -207,6 +212,13 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueCommandBufferKHR(
             return CL_INCOMPATIBLE_COMMAND_QUEUE_KHR;
         }
         pTargetQueue = pCommandQueue;
+    }
+    if (std::any_of(eventWaitList, eventWaitList + numEventsInWaitList, [pTargetQueue](cl_event event) { return NEO::LEO::castToObject<NEO::LEO::Event>(event)->getContext() != pTargetQueue->getContext(); })) {
+        return CL_INVALID_CONTEXT;
+    }
+    // Recorded commands carry no perf counter query, so a replay cannot report MDAPI data.
+    if (pTargetQueue->isPerfCountersEnabled()) {
+        return CL_INCOMPATIBLE_COMMAND_QUEUE_KHR;
     }
 
     auto lock = pCommandBuffer->takeOwnership();
@@ -278,10 +290,15 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandCopyBufferKHR(
         return CL_INVALID_CONTEXT;
     }
 
-    auto result = zeCommandListAppendMemoryCopy(pCommandBuffer->getL0Handle(),
-                                                ptrOffset(pDstBuffer->getUsmPtr(), dstOffset),
-                                                ptrOffset(pSrcBuffer->getUsmPtr(), srcOffset),
-                                                size, nullptr, 0u, nullptr);
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
+    }
+
+    result = zeCommandListAppendMemoryCopy(pCommandBuffer->getL0Handle(),
+                                           ptrOffset(pDstBuffer->getUsmPtr(), dstOffset),
+                                           ptrOffset(pSrcBuffer->getUsmPtr(), srcOffset),
+                                           size, nullptr, 0u, nullptr);
     return recordAndRetain(*pCommandBuffer, result, syncPoint, {pSrcBuffer, pDstBuffer});
 }
 
@@ -326,16 +343,21 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandCopyBufferRectKHR(
     ze_copy_region_t l0DstRegion{static_cast<uint32_t>(dstOrigin[0]), static_cast<uint32_t>(dstOrigin[1]), static_cast<uint32_t>(dstOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
     ze_copy_region_t l0SrcRegion{static_cast<uint32_t>(srcOrigin[0]), static_cast<uint32_t>(srcOrigin[1]), static_cast<uint32_t>(srcOrigin[2]), static_cast<uint32_t>(region[0]), static_cast<uint32_t>(region[1]), static_cast<uint32_t>(region[2])};
 
-    auto result = zeCommandListAppendMemoryCopyRegion(pCommandBuffer->getL0Handle(),
-                                                      pDstBuffer->getUsmPtr(),
-                                                      &l0DstRegion,
-                                                      static_cast<uint32_t>(dstRowPitch),
-                                                      static_cast<uint32_t>(dstSlicePitch),
-                                                      pSrcBuffer->getUsmPtr(),
-                                                      &l0SrcRegion,
-                                                      static_cast<uint32_t>(srcRowPitch),
-                                                      static_cast<uint32_t>(srcSlicePitch),
-                                                      nullptr, 0u, nullptr);
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
+    }
+
+    result = zeCommandListAppendMemoryCopyRegion(pCommandBuffer->getL0Handle(),
+                                                 pDstBuffer->getUsmPtr(),
+                                                 &l0DstRegion,
+                                                 static_cast<uint32_t>(dstRowPitch),
+                                                 static_cast<uint32_t>(dstSlicePitch),
+                                                 pSrcBuffer->getUsmPtr(),
+                                                 &l0SrcRegion,
+                                                 static_cast<uint32_t>(srcRowPitch),
+                                                 static_cast<uint32_t>(srcSlicePitch),
+                                                 nullptr, 0u, nullptr);
     return recordAndRetain(*pCommandBuffer, result, syncPoint, {pSrcBuffer, pDstBuffer});
 }
 
@@ -368,8 +390,13 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandFillBufferKHR(
         return CL_INVALID_CONTEXT;
     }
 
-    auto result = zeCommandListAppendMemoryFill(pCommandBuffer->getL0Handle(), ptrOffset(pBuffer->getUsmPtr(), offset),
-                                                pattern, patternSize, size, nullptr, 0u, nullptr);
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
+    }
+
+    result = zeCommandListAppendMemoryFill(pCommandBuffer->getL0Handle(), ptrOffset(pBuffer->getUsmPtr(), offset),
+                                           pattern, patternSize, size, nullptr, 0u, nullptr);
     return recordAndRetain(*pCommandBuffer, result, syncPoint, {pBuffer});
 }
 
@@ -394,6 +421,11 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandSVMMemcpyKHR(
     retVal = pCommandBuffer->validateCommand(commandQueue, properties, numSyncPointsInWaitList, syncPointWaitList, mutableHandle);
     if (retVal != CL_SUCCESS) {
         return retVal;
+    }
+
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
     }
 
     return pCommandBuffer->recordCommand(zeCommandListAppendMemoryCopy(pCommandBuffer->getL0Handle(), dstPtr, srcPtr, size, nullptr, 0u, nullptr),
@@ -422,6 +454,11 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandSVMMemFillKHR(
     retVal = pCommandBuffer->validateCommand(commandQueue, properties, numSyncPointsInWaitList, syncPointWaitList, mutableHandle);
     if (retVal != CL_SUCCESS) {
         return retVal;
+    }
+
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
     }
 
     return pCommandBuffer->recordCommand(zeCommandListAppendMemoryFill(pCommandBuffer->getL0Handle(), svmPtr, pattern, patternSize, size, nullptr, 0u, nullptr),
@@ -484,15 +521,18 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandNDRangeKernelKHR(
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (!globalWorkSize || globalWorkSize[0] == 0) {
-        result = zeCommandListAppendBarrier(pCommandBuffer->getL0Handle(), nullptr, 0u, nullptr);
+        result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
     } else {
         ze_group_count_t wgc{};
         retVal = pKernel->setupDispatch(*pDevice, workDim, globalWorkOffset, globalWorkSize, localWorkSize, wgc);
         if (retVal != CL_SUCCESS) {
             return retVal;
         }
-        result = zeCommandListAppendLaunchKernel(pCommandBuffer->getL0Handle(), pKernel->getL0Handle(pDevice->getRootDeviceIndex()),
-                                                 &wgc, nullptr, 0u, nullptr);
+        result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+        if (result == ZE_RESULT_SUCCESS) {
+            result = zeCommandListAppendLaunchKernel(pCommandBuffer->getL0Handle(), pKernel->getL0Handle(pDevice->getRootDeviceIndex()),
+                                                     &wgc, nullptr, 0u, nullptr);
+        }
     }
 
     retVal = pCommandBuffer->recordCommand(result, syncPoint);

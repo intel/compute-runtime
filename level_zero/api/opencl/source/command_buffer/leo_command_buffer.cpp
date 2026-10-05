@@ -91,6 +91,14 @@ cl_int CommandBuffer::validateCommand(cl_command_queue commandQueue, const cl_co
     return CL_SUCCESS;
 }
 
+// A sync point can only name an earlier command, so a full barrier satisfies any wait list.
+ze_result_t CommandBuffer::appendSyncPointBarrier(cl_uint numSyncPointsInWaitList) {
+    if (numSyncPointsInWaitList == 0u || false == this->commandQueue->isOutOfOrder()) {
+        return ZE_RESULT_SUCCESS;
+    }
+    return zeCommandListAppendBarrier(this->cmdListHandle, nullptr, 0u, nullptr);
+}
+
 cl_int CommandBuffer::recordCommand(ze_result_t appendResult, cl_sync_point_khr *syncPoint) {
     if (appendResult != ZE_RESULT_SUCCESS) {
         return L0ToClResultMapper(appendResult);

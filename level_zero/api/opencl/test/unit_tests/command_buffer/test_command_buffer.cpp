@@ -91,6 +91,7 @@ struct LeoCommandBufferCaptureTest : public Test<LeoCaptureFixture> {
     void SetUp() override {
         debugManager.flags.EnableClKhrCommandBuffer.set(1);
         Test<LeoCaptureFixture>::SetUp();
+        capturingCmdList.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -212,7 +213,7 @@ TEST_F(LeoCommandBufferTest, givenInOrderQueueWhenCreatingCommandBufferThenRecor
     EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
 }
 
-TEST_F(LeoCommandBufferTest, givenOutOfOrderQueueWhenCreatingCommandBufferThenRecordedListIsInOrder) {
+TEST_F(LeoCommandBufferTest, givenOutOfOrderQueueWhenCreatingCommandBufferThenRecordedListIsOutOfOrderWithoutPatchPreamble) {
     cl_int errcode = CL_SUCCESS;
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     auto oooQueue = clCreateCommandQueueWithProperties(clContext, clDeviceId, properties, &errcode);
@@ -224,7 +225,8 @@ TEST_F(LeoCommandBufferTest, givenOutOfOrderQueueWhenCreatingCommandBufferThenRe
     ASSERT_NE(nullptr, commandBuffer);
 
     auto pCommandBuffer = castToObject<CommandBuffer>(commandBuffer);
-    EXPECT_TRUE(L0::CommandList::fromHandle(pCommandBuffer->getL0Handle())->isInOrderExecutionEnabled());
+    EXPECT_FALSE(L0::CommandList::fromHandle(pCommandBuffer->getL0Handle())->isInOrderExecutionEnabled());
+    EXPECT_FALSE(L0::CommandList::fromHandle(pCommandBuffer->getL0Handle())->isPatchPreambleEnabled());
 
     EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
     EXPECT_EQ(CL_SUCCESS, clReleaseCommandQueue(oooQueue));
@@ -477,6 +479,24 @@ TEST_F(LeoCommandBufferTest, givenQueueFromAnotherContextWhenEnqueuedThenInvalid
     EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
 }
 
+TEST_F(LeoCommandBufferTest, givenWaitEventFromAnotherContextWhenEnqueuedThenInvalidContextIsReturned) {
+    cl_int errcode = CL_SUCCESS;
+    auto commandBuffer = createCommandBuffer(nullptr, errcode);
+    ASSERT_NE(nullptr, commandBuffer);
+    ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
+
+    auto otherContext = clCreateContext(nullptr, 1, &clDeviceId, nullptr, nullptr, &errcode);
+    ASSERT_NE(nullptr, otherContext);
+    auto otherEvent = clCreateUserEvent(otherContext, &errcode);
+    ASSERT_NE(nullptr, otherEvent);
+
+    EXPECT_EQ(CL_INVALID_CONTEXT, clEnqueueCommandBufferKHR(0, nullptr, commandBuffer, 1, &otherEvent, nullptr));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(otherEvent));
+    EXPECT_EQ(CL_SUCCESS, clReleaseContext(otherContext));
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
+}
+
 TEST_F(LeoCommandBufferCaptureTest, givenFinalizedCommandBufferWhenEnqueuedThenRecordedListIsAppendedToQueue) {
     cl_command_queue clQueue = commandQueue;
     cl_command_queue queues[] = {clQueue};
@@ -500,6 +520,27 @@ TEST_F(LeoCommandBufferCaptureTest, givenFinalizedCommandBufferWhenEnqueuedThenR
     EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
 }
 
+TEST_F(LeoCommandBufferCaptureTest, givenWaitEventFromSameContextWhenEnqueuedThenRecordedListIsAppendedWithThatWaitEvent) {
+    cl_command_queue clQueue = commandQueue;
+    cl_command_queue queues[] = {clQueue};
+
+    cl_int errcode = CL_SUCCESS;
+    auto commandBuffer = clCreateCommandBufferKHR(1, queues, nullptr, &errcode);
+    ASSERT_NE(nullptr, commandBuffer);
+    ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
+    auto userEvent = clCreateUserEvent(clContext, &errcode);
+    ASSERT_NE(nullptr, userEvent);
+
+    capturingCmdList.clearCaptures();
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueCommandBufferKHR(1, queues, commandBuffer, 1, &userEvent, nullptr));
+    ASSERT_EQ(1u, capturingCmdList.appendCommandListsArgs.count());
+    EXPECT_EQ(1u, capturingCmdList.appendCommandListsArgs[0].waitEvents.size());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(userEvent));
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
+}
+
 TEST_F(LeoCommandBufferCaptureTest, givenAnotherQueueWhenEnqueuedThenRecordedListIsAppendedToThatQueue) {
     cl_command_queue clQueue = commandQueue;
     cl_command_queue queues[] = {clQueue};
@@ -510,6 +551,7 @@ TEST_F(LeoCommandBufferCaptureTest, givenAnotherQueueWhenEnqueuedThenRecordedLis
     ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
 
     CapturingCommandList otherCmdList{};
+    otherCmdList.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     auto otherQueue = new CommandQueue(context, clDevice, nullptr, otherCmdList.toHandle());
     cl_command_queue otherQueues[] = {otherQueue};
 
@@ -576,6 +618,122 @@ TEST_F(LeoCommandBufferCaptureTest, givenQueueOrdinalWhenCreatingCommandBufferTh
     EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
 }
 
+TEST_F(LeoCommandBufferCaptureTest, givenOutOfOrderQueueWhenCreatingCommandBufferThenRecordedListIsNotInOrder) {
+    CommandListCreateHook createHook{};
+    CapturingCommandList recordedCmdList{};
+    createHook.cmdListToReturn = recordedCmdList.toHandle();
+    capturingCmdList.flags = 0u;
+
+    cl_command_queue clQueue = commandQueue;
+    cl_command_queue queues[] = {clQueue};
+    cl_int errcode = CL_SUCCESS;
+    auto commandBuffer = clCreateCommandBufferKHR(1, queues, nullptr, &errcode);
+    ASSERT_NE(nullptr, commandBuffer);
+
+    ASSERT_EQ(1u, createHook.requestedDescs.size());
+    EXPECT_EQ(static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT), createHook.requestedDescs[0].flags);
+    EXPECT_FALSE(recordedCmdList.isPatchPreambleEnabled());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
+}
+
+TEST_F(LeoCommandBufferCaptureTest, givenQueueWithOtherProfilingPropertyWhenEnqueuedThenRecordedListIsAppendedToThatQueue) {
+    cl_command_queue clQueue = commandQueue;
+    cl_command_queue queues[] = {clQueue};
+
+    cl_int errcode = CL_SUCCESS;
+    auto commandBuffer = clCreateCommandBufferKHR(1, queues, nullptr, &errcode);
+    ASSERT_NE(nullptr, commandBuffer);
+    ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
+
+    CapturingCommandList otherCmdList{};
+    otherCmdList.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
+    otherCmdList.getOrdinalResult = castToObject<CommandBuffer>(commandBuffer)->getOrdinal();
+    cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    auto otherQueue = new CommandQueue(context, clDevice, properties, otherCmdList.toHandle());
+    cl_command_queue otherQueues[] = {otherQueue};
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueCommandBufferKHR(1, otherQueues, commandBuffer, 0, nullptr, nullptr));
+    ASSERT_EQ(1u, otherCmdList.appendCommandListsArgs.count());
+    EXPECT_EQ(castToObject<CommandBuffer>(commandBuffer)->getL0Handle(), otherCmdList.appendCommandListsArgs[0].commandLists[0]);
+
+    otherQueue->decRefApi();
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
+}
+
+struct WhiteBoxLeoCommandQueue : public CommandQueue {
+    using CommandQueue::CommandQueue;
+    using CommandQueue::perfCountersEnabled;
+};
+
+TEST_F(LeoCommandBufferCaptureTest, givenQueueWithPerfCountersEnabledWhenEnqueuedThenIncompatibleCommandQueueIsReturned) {
+    cl_command_queue clQueue = commandQueue;
+    cl_command_queue queues[] = {clQueue};
+
+    cl_int errcode = CL_SUCCESS;
+    auto commandBuffer = clCreateCommandBufferKHR(1, queues, nullptr, &errcode);
+    ASSERT_NE(nullptr, commandBuffer);
+    ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
+
+    CapturingCommandList otherCmdList{};
+    otherCmdList.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
+    otherCmdList.getOrdinalResult = castToObject<CommandBuffer>(commandBuffer)->getOrdinal();
+    cl_queue_properties noProperties[] = {0};
+    auto otherQueue = new WhiteBoxLeoCommandQueue(context, clDevice, noProperties, otherCmdList.toHandle());
+    otherQueue->perfCountersEnabled = true;
+    cl_command_queue otherQueues[] = {otherQueue};
+
+    EXPECT_EQ(CL_INCOMPATIBLE_COMMAND_QUEUE_KHR, clEnqueueCommandBufferKHR(1, otherQueues, commandBuffer, 0, nullptr, nullptr));
+    EXPECT_EQ(0u, otherCmdList.appendCommandListsArgs.count());
+
+    otherQueue->perfCountersEnabled = false;
+    otherQueue->decRefApi();
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
+}
+
+TEST_F(LeoCommandBufferCaptureTest, givenCommandBufferCreatedOnQueueWithPerfCountersEnabledWhenEnqueuedWithoutQueuesThenIncompatibleCommandQueueIsReturned) {
+    CapturingCommandList perfCountersCmdList{};
+    perfCountersCmdList.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
+    cl_queue_properties noProperties[] = {0};
+    auto perfCountersQueue = new WhiteBoxLeoCommandQueue(context, clDevice, noProperties, perfCountersCmdList.toHandle());
+    perfCountersQueue->perfCountersEnabled = true;
+    cl_command_queue queues[] = {perfCountersQueue};
+
+    cl_int errcode = CL_SUCCESS;
+    auto commandBuffer = clCreateCommandBufferKHR(1, queues, nullptr, &errcode);
+    ASSERT_NE(nullptr, commandBuffer);
+    ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
+
+    EXPECT_EQ(CL_INCOMPATIBLE_COMMAND_QUEUE_KHR, clEnqueueCommandBufferKHR(0, nullptr, commandBuffer, 0, nullptr, nullptr));
+    EXPECT_EQ(0u, perfCountersCmdList.appendCommandListsArgs.count());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
+    perfCountersQueue->perfCountersEnabled = false;
+    perfCountersQueue->decRefApi();
+}
+
+TEST_F(LeoCommandBufferCaptureTest, givenQueueWithOtherOrderingWhenEnqueuedThenRecordedListIsAppendedToThatQueue) {
+    cl_command_queue clQueue = commandQueue;
+    cl_command_queue queues[] = {clQueue};
+
+    cl_int errcode = CL_SUCCESS;
+    auto commandBuffer = clCreateCommandBufferKHR(1, queues, nullptr, &errcode);
+    ASSERT_NE(nullptr, commandBuffer);
+    ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
+
+    CapturingCommandList otherCmdList{};
+    otherCmdList.getOrdinalResult = castToObject<CommandBuffer>(commandBuffer)->getOrdinal();
+    auto otherQueue = new CommandQueue(context, clDevice, nullptr, otherCmdList.toHandle());
+    cl_command_queue otherQueues[] = {otherQueue};
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueCommandBufferKHR(1, otherQueues, commandBuffer, 0, nullptr, nullptr));
+    ASSERT_EQ(1u, otherCmdList.appendCommandListsArgs.count());
+    EXPECT_EQ(castToObject<CommandBuffer>(commandBuffer)->getL0Handle(), otherCmdList.appendCommandListsArgs[0].commandLists[0]);
+
+    otherQueue->decRefApi();
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandBufferKHR(commandBuffer));
+}
+
 TEST_F(LeoCommandBufferCaptureTest, givenQueueOnAnotherOrdinalWhenEnqueuedThenIncompatibleCommandQueueIsReturned) {
     cl_command_queue clQueue = commandQueue;
     cl_command_queue queues[] = {clQueue};
@@ -586,6 +744,7 @@ TEST_F(LeoCommandBufferCaptureTest, givenQueueOnAnotherOrdinalWhenEnqueuedThenIn
     ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
 
     CapturingCommandList otherCmdList{};
+    otherCmdList.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     otherCmdList.getOrdinalResult = castToObject<CommandBuffer>(commandBuffer)->getOrdinal() + 1u;
     auto otherQueue = new CommandQueue(context, clDevice, nullptr, otherCmdList.toHandle());
     cl_command_queue otherQueues[] = {otherQueue};
@@ -603,6 +762,9 @@ struct LeoCommandBufferRecordTest : public LeoCommandBufferCaptureTest {
     void SetUp() override {
         LeoCommandBufferCaptureTest::SetUp();
         createHook.cmdListToReturn = recordedCmdList.toHandle();
+        if (outOfOrderQueue) {
+            capturingCmdList.flags = 0u;
+        }
 
         cl_command_queue clQueue = commandQueue;
         cl_command_queue queues[] = {clQueue};
@@ -634,12 +796,30 @@ struct LeoCommandBufferRecordTest : public LeoCommandBufferCaptureTest {
     CapturingCommandList recordedCmdList{};
     cl_command_buffer_khr commandBuffer = nullptr;
     CommandBuffer *pCommandBuffer = nullptr;
+    bool outOfOrderQueue = false;
+};
+
+struct LeoCommandBufferOutOfOrderRecordTest : public LeoCommandBufferRecordTest {
+    LeoCommandBufferOutOfOrderRecordTest() { outOfOrderQueue = true; }
+
+    std::vector<cl_int> recordCommands(cl_uint numSyncPoints, const cl_sync_point_khr *syncPointWaitList, cl_mem buffer) {
+        const size_t origin[3] = {0u, 0u, 0u};
+        const size_t region[3] = {4u, 1u, 1u};
+        const uint32_t pattern = 0u;
+        auto ptr = reinterpret_cast<void *>(0x1000);
+        return {clCommandCopyBufferKHR(commandBuffer, nullptr, nullptr, buffer, buffer, 0u, 32u, 4u, numSyncPoints, syncPointWaitList, nullptr, nullptr),
+                clCommandCopyBufferRectKHR(commandBuffer, nullptr, nullptr, buffer, buffer, origin, origin, region, 0u, 0u, 0u, 0u, numSyncPoints, syncPointWaitList, nullptr, nullptr),
+                clCommandFillBufferKHR(commandBuffer, nullptr, nullptr, buffer, &pattern, sizeof(pattern), 0u, 4u, numSyncPoints, syncPointWaitList, nullptr, nullptr),
+                clCommandSVMMemcpyKHR(commandBuffer, nullptr, nullptr, ptr, ptr, 4u, numSyncPoints, syncPointWaitList, nullptr, nullptr),
+                clCommandSVMMemFillKHR(commandBuffer, nullptr, nullptr, ptr, &pattern, sizeof(pattern), 4u, numSyncPoints, syncPointWaitList, nullptr, nullptr)};
+    }
 };
 
 TEST_F(LeoCommandBufferRecordTest, givenCommandBufferEnqueuedOnQueuesWhenReleasedThenEachQueueIsSynchronizedOnce) {
     ASSERT_EQ(CL_SUCCESS, clFinalizeCommandBufferKHR(commandBuffer));
 
     CapturingCommandList otherCmdList{};
+    otherCmdList.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     auto otherQueue = new CommandQueue(context, clDevice, nullptr, otherCmdList.toHandle());
     cl_command_queue otherQueues[] = {otherQueue};
 
@@ -911,6 +1091,62 @@ TEST_F(LeoCommandBufferRecordTest, givenSvmPointersWhenRecordingSvmCommandsThenC
     EXPECT_EQ(16u, recordedCmdList.appendMemoryFillArgs[0].size);
 }
 
+TEST_F(LeoCommandBufferOutOfOrderRecordTest, givenOutOfOrderCommandBufferWhenRecordingCommandsWithSyncPointsThenBarrierIsAppendedBeforeEachOfThem) {
+    auto buffer = createBuffer(64u);
+    const std::vector<cl_int> allSucceeded(5u, CL_SUCCESS);
+    ASSERT_EQ(allSucceeded, recordCommands(0u, nullptr, buffer));
+    EXPECT_EQ(0u, recordedCmdList.appendBarrierArgs.count());
+
+    recordedCmdList.clearCaptures();
+    const cl_sync_point_khr waitList[] = {0u, 1u};
+    ASSERT_EQ(allSucceeded, recordCommands(2u, waitList, buffer));
+
+    const std::vector<ApiId> expected = {ApiId::appendBarrier, ApiId::appendMemoryCopy,
+                                         ApiId::appendBarrier, ApiId::appendMemoryCopyRegion,
+                                         ApiId::appendBarrier, ApiId::appendMemoryFill,
+                                         ApiId::appendBarrier, ApiId::appendMemoryCopy,
+                                         ApiId::appendBarrier, ApiId::appendMemoryFill};
+    EXPECT_EQ(expected, recordedCmdList.sequence);
+    EXPECT_EQ(nullptr, recordedCmdList.appendBarrierArgs[0].signalEvent);
+    EXPECT_TRUE(recordedCmdList.appendBarrierArgs[0].waitEvents.empty());
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(LeoCommandBufferRecordTest, givenInOrderCommandBufferWhenRecordingCommandWithSyncPointsThenNoBarrierIsAppended) {
+    auto buffer = createBuffer(64u);
+    const cl_sync_point_khr waitList[] = {0u};
+    ASSERT_EQ(CL_SUCCESS, clCommandCopyBufferKHR(commandBuffer, nullptr, nullptr, buffer, buffer, 0u, 32u, 4u, 0u, nullptr, nullptr, nullptr));
+    ASSERT_EQ(CL_SUCCESS, clCommandCopyBufferKHR(commandBuffer, nullptr, nullptr, buffer, buffer, 0u, 32u, 4u, 1u, waitList, nullptr, nullptr));
+
+    EXPECT_EQ(0u, recordedCmdList.appendBarrierArgs.count());
+    EXPECT_EQ(2u, recordedCmdList.appendMemoryCopyArgs.count());
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(LeoCommandBufferOutOfOrderRecordTest, givenBarrierAppendFailureWhenRecordingCommandsWithSyncPointsThenErrorIsReturnedAndCommandsAreNotAppended) {
+    auto buffer = createBuffer(64u);
+    cl_sync_point_khr syncPoint = 7u;
+    ASSERT_EQ(CL_SUCCESS, recordBarrier(0u, nullptr, &syncPoint));
+    recordedCmdList.clearCaptures();
+
+    recordedCmdList.appendBarrierResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    const cl_sync_point_khr waitList[] = {syncPoint};
+    const std::vector<cl_int> allFailed(5u, CL_INVALID_VALUE);
+    EXPECT_EQ(allFailed, recordCommands(1u, waitList, buffer));
+
+    EXPECT_EQ(0u, recordedCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(0u, recordedCmdList.appendMemoryCopyRegionArgs.count());
+    EXPECT_EQ(0u, recordedCmdList.appendMemoryFillArgs.count());
+
+    recordedCmdList.appendBarrierResult = ZE_RESULT_SUCCESS;
+    EXPECT_EQ(CL_SUCCESS, recordBarrier(0u, nullptr, &syncPoint));
+    EXPECT_EQ(1u, syncPoint);
+
+    clReleaseMemObject(buffer);
+}
+
 struct WhiteBoxLeoKernel : public Kernel {
     using Kernel::Kernel;
     using Kernel::sharedObjArgs;
@@ -982,13 +1218,13 @@ TEST_F(LeoCommandBufferKernelTest, givenLaunchAppendFailureWhenRecordingNDRangeK
     EXPECT_EQ(refCount, kernel->getRefInternalCount());
 }
 
-TEST_F(LeoCommandBufferKernelTest, givenZeroGlobalWorkSizeWhenRecordingNDRangeKernelThenBarrierIsAppended) {
+TEST_F(LeoCommandBufferKernelTest, givenZeroGlobalWorkSizeWhenRecordingNDRangeKernelThenNothingIsAppended) {
     const size_t zeroGlobalWorkSize[3] = {0u, 0u, 0u};
 
     cl_sync_point_khr syncPoint = 7u;
     EXPECT_EQ(CL_SUCCESS, recordKernel(zeroGlobalWorkSize, localWorkSize, &syncPoint));
     EXPECT_EQ(0u, syncPoint);
-    EXPECT_EQ(1u, recordedCmdList.appendBarrierArgs.count());
+    EXPECT_EQ(0u, recordedCmdList.appendBarrierArgs.count());
     EXPECT_EQ(0u, recordedCmdList.appendLaunchKernelArgs.count());
 }
 
@@ -1116,6 +1352,45 @@ TEST_F(LeoCommandBufferKernelTest, givenKernelFromAnotherContextWhenRecordingNDR
         EXPECT_EQ(0u, recordedCmdList.totalCalls());
     }
     clReleaseContext(otherContext);
+}
+
+struct LeoCommandBufferOutOfOrderKernelTest : public LeoCommandBufferKernelTest {
+    LeoCommandBufferOutOfOrderKernelTest() { outOfOrderQueue = true; }
+};
+
+TEST_F(LeoCommandBufferOutOfOrderKernelTest, givenOutOfOrderCommandBufferWhenRecordingNDRangeKernelWithSyncPointsThenBarrierIsAppendedBeforeLaunch) {
+    ASSERT_EQ(CL_SUCCESS, recordKernel(globalWorkSize, localWorkSize, nullptr));
+    const cl_sync_point_khr waitList[] = {0u};
+    ASSERT_EQ(CL_SUCCESS, clCommandNDRangeKernelKHR(commandBuffer, nullptr, nullptr, kernel.get(), 2u, nullptr, globalWorkSize, localWorkSize,
+                                                    1u, waitList, nullptr, nullptr));
+
+    const std::vector<ApiId> expected = {ApiId::appendLaunchKernel, ApiId::appendBarrier, ApiId::appendLaunchKernel};
+    EXPECT_EQ(expected, recordedCmdList.sequence);
+}
+
+TEST_F(LeoCommandBufferOutOfOrderKernelTest, givenZeroGlobalWorkSizeWhenRecordingNDRangeKernelThenBarrierIsAppendedOnlyWithSyncPoints) {
+    const size_t zeroGlobalWorkSize[3] = {0u, 0u, 0u};
+    ASSERT_EQ(CL_SUCCESS, recordKernel(zeroGlobalWorkSize, localWorkSize, nullptr));
+    EXPECT_EQ(0u, recordedCmdList.appendBarrierArgs.count());
+
+    const cl_sync_point_khr waitList[] = {0u};
+    ASSERT_EQ(CL_SUCCESS, clCommandNDRangeKernelKHR(commandBuffer, nullptr, nullptr, kernel.get(), 2u, nullptr, zeroGlobalWorkSize, localWorkSize,
+                                                    1u, waitList, nullptr, nullptr));
+    EXPECT_EQ(1u, recordedCmdList.appendBarrierArgs.count());
+    EXPECT_EQ(0u, recordedCmdList.appendLaunchKernelArgs.count());
+}
+
+TEST_F(LeoCommandBufferOutOfOrderKernelTest, givenBarrierAppendFailureWhenRecordingNDRangeKernelWithSyncPointsThenErrorIsReturnedAndKernelIsNotRetained) {
+    ASSERT_EQ(CL_SUCCESS, recordKernel(globalWorkSize, localWorkSize, nullptr));
+    const auto refCount = kernel->getRefInternalCount();
+
+    recordedCmdList.appendBarrierResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    const cl_sync_point_khr waitList[] = {0u};
+    EXPECT_EQ(CL_INVALID_VALUE, clCommandNDRangeKernelKHR(commandBuffer, nullptr, nullptr, kernel.get(), 2u, nullptr, globalWorkSize, localWorkSize,
+                                                          1u, waitList, nullptr, nullptr));
+
+    EXPECT_EQ(1u, recordedCmdList.appendLaunchKernelArgs.count());
+    EXPECT_EQ(refCount, kernel->getRefInternalCount());
 }
 
 } // namespace ult

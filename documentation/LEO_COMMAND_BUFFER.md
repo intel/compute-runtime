@@ -65,16 +65,18 @@ With the default, the driver is indistinguishable from one without the feature:
 `CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE` and `CL_QUEUE_PROFILING_ENABLE`, and
 `CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR` reports none.
 
-Commands are recorded into an in-order Level Zero command list, also for an
-out-of-order queue. A sync point can only name an earlier command, so recording
-order satisfies every sync point; commands of one command buffer do not run
-concurrently.
+Commands are recorded into a Level Zero command list with the ordering of the
+queue the command buffer is created with. On an in-order list, recording order
+satisfies every sync point. On an out-of-order list, commands may run
+concurrently, and a command with a non-empty sync point wait list is recorded
+after a barrier. A sync point can only name an earlier command, so the barrier
+satisfies it.
 
 A command buffer may be enqueued again while an earlier enqueue of it is still
 executing, as long as the new enqueue depends on the earlier one, for example
-through an in-order queue, an event or a barrier. The recorded list uses the
-patch preamble, so each execution initializes its in-order counter on the GPU,
-in submission order.
+through an in-order queue, an event or a barrier. An in-order recorded list
+uses the patch preamble, so each execution initializes its in-order counter on
+the GPU, in submission order.
 
 A command buffer holds a reference to every kernel and memory object it
 records, so it stays valid after the application releases them. As the
@@ -86,9 +88,16 @@ waits for every queue the command buffer was enqueued on before the recorded
 list is destroyed.
 
 A replay may target a queue other than the one the buffer was created with, as
-long as it is on the same device, in the same context and on the same engine
-group. A queue on another engine group is rejected with
+long as it is in the same context, on the same device and on the same engine
+group. Its ordering and profiling may differ: the recorded list keeps the
+ordering of the creating queue. A queue or a wait event from another context
+returns `CL_INVALID_CONTEXT`, a queue on another device returns
+`CL_INVALID_DEVICE`, and a queue on another engine group returns
 `CL_INCOMPATIBLE_COMMAND_QUEUE_KHR`.
+
+The recorded commands carry no performance counter query. A replay on a queue
+with performance counters (MDAPI) enabled returns
+`CL_INCOMPATIBLE_COMMAND_QUEUE_KHR`, also when that queue is the creating queue.
 
 ## Validation
 
