@@ -983,7 +983,7 @@ HWTEST2_F(CommandListAppend, givenImmediateCommandListWhenImageCopyFromOrToMemor
     std::unique_ptr<L0::ult::CommandList> cmdList(CommandList::whiteboxCast(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, ret)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    void *hostPtr = reinterpret_cast<void *>(0x1234);
+    void *hostPtr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     zeDesc.width = 1;
@@ -1013,6 +1013,8 @@ HWTEST2_F(CommandListAppend, givenImmediateCommandListWhenImageCopyFromOrToMemor
         DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
         EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
     }
+
+    alignedFree(hostPtr);
 }
 
 HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullDestinationRegionWhenImageCopyToMemoryThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {

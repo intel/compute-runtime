@@ -4953,8 +4953,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-
     auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -4970,6 +4968,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
     image->initialize(device, &desc);
+
+    const size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *srcPtr = nullptr;
+    context->allocHostMem(&hostDesc, imageMemSize, 1, &srcPtr);
 
     immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, nullptr, 0, 0, nullptr, 0, nullptr, copyParams);
     auto offset = cmdStream->getUsed();
@@ -4995,6 +4998,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(2u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
+
+    context->freeMem(srcPtr);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEventsThenSignalSyncAllocation) {

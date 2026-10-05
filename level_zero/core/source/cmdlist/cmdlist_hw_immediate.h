@@ -264,7 +264,11 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
 
     bool isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies);
+    bool isValidForStagingImageTransfer(const void *ptr, size_t size, bool hasDependencies);
     MOCKABLE_VIRTUAL ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
+    MOCKABLE_VIRTUAL ze_result_t appendStagingImageTransfer(ze_image_handle_t hImage, const void *ptr, const ze_image_region_t *pRegion, size_t rowPitch, size_t slicePitch, bool isRead, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
+    bool tryAppendStagingImageTransfer(ze_image_handle_t hImage, const void *ptr, const ze_image_region_t *&pRegion, ze_image_region_t &tmpRegion, uint32_t rowPitch, uint64_t slicePitch, bool isRead, uint32_t numWaitEvents, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams, ze_result_t &result);
+    ze_result_t handlePostStagingTransferSync(Event *event, bool isSingleTransfer, ze_event_handle_t hSignalEvent, bool relaxedOrdering);
     ze_result_t stagingStatusToL0(const NEO::StagingTransferStatus &status) const;
     size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, CommandListExecutionInternalOptions &internalOptions);
     void tryResetKernelWithAssertFlag();
