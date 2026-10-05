@@ -130,14 +130,18 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateCommandSizeForImag
         auto image = L0::Image::fromHandle(hImage);
         auto depth = pRegion ? std::max(pRegion->depth, 1u) : std::max(image->getImageDesc().depth, 1u);
         auto nBlits = static_cast<size_t>(std::max(depth, 1u));
-        auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
-        auto &productHelper = rootDeviceEnvironment.getProductHelper();
-        auto sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT);
-        auto nBlitsWithFlush = productHelper.isFlushBetweenBlitsRequired() ? nBlits : 1u;
-        estimatedSize += sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
-        if (this->arePostBlitWACmdsRequired()) {
-            estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();
-        }
+        estimatedSize += estimateCopyBlitCommandsSize(nBlits, sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT), false);
+    }
+    return estimatedSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateCopyBlitCommandsSize(size_t nBlits, size_t sizePerBlit, bool isDstSystemOrRemoteMemory) const {
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+    auto nBlitsWithFlush = NEO::BlitCommandsHelper<GfxFamily>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, isDstSystemOrRemoteMemory) ? nBlits : std::min<size_t>(nBlits, 1u);
+    auto estimatedSize = sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
+    if (this->arePostBlitWACmdsRequired()) {
+        estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();
     }
     return estimatedSize;
 }
@@ -819,13 +823,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
         auto maxBlitWidth = NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(rootDeviceEnvironment);
         auto nBlits = size / (maxBlitWidth * NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(rootDeviceEnvironment, true, true, maxBlitWidth));
-        auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
-        auto nBlitsWithFlush = NEO::BlitCommandsHelper<GfxFamily>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true) ? nBlits : 1u;
-        auto postBlitsCmdsSize = nBlits ? NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush) : 0u;
-        estimatedSize += sizePerBlit * nBlits + postBlitsCmdsSize;
-    }
-    if (this->arePostBlitWACmdsRequired()) {
-        estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();
+        estimatedSize += estimateCopyBlitCommandsSize(nBlits, sizeof(typename GfxFamily::XY_COPY_BLT), true);
     }
     auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
@@ -900,12 +898,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
         auto yBlits = static_cast<size_t>(std::ceil(srcRegion->height / static_cast<double>(maxBlitHeight)));
         auto zBlits = static_cast<size_t>(std::max(srcRegion->depth, 1u));
         auto nBlits = xBlits * yBlits * zBlits;
-        auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
-        auto nBlitsWithFlush = NEO::BlitCommandsHelper<GfxFamily>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true) ? nBlits : 1u;
-        estimatedSize += sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
-        if (this->arePostBlitWACmdsRequired()) {
-            estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();
-        }
+        estimatedSize += estimateCopyBlitCommandsSize(nBlits, sizeof(typename GfxFamily::XY_COPY_BLT), true);
     }
     auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
@@ -1017,7 +1010,15 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                                                                NEO::GraphicsAllocation *srcAllocation,
                                                                                size_t size, bool flushHost, size_t offset) {
-    auto spaceCheckStatus = checkAvailableSpace(0, false, commonImmediateCommandSize, false);
+    auto estimatedSize = commonImmediateCommandSize;
+    if (isCopyOnly(false)) {
+        auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+        auto isSystemMemoryPoolUsed = NEO::MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool());
+        auto isDstSystemMemory = NEO::MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool());
+        auto nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow({size, 1, 1}, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemMemory);
+        estimatedSize += estimateCopyBlitCommandsSize(nBlits, sizeof(typename GfxFamily::XY_COPY_BLT), isDstSystemMemory);
+    }
+    auto spaceCheckStatus = checkAvailableSpace(0, false, estimatedSize, false);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
     }
@@ -1044,7 +1045,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
         };
 
         BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstAddress, srcAddress};
-        ret = this->device->bcsSplit->template appendImmediateSplitCall<gfxCoreFamily>(this, copyParams, size, nullptr, 0u, nullptr, false, bcsSplitMemoryCopyParams.relaxedOrderingDispatch, direction, commonImmediateCommandSize, splitCall);
+        ret = this->device->bcsSplit->template appendImmediateSplitCall<gfxCoreFamily>(this, copyParams, size, nullptr, 0u, nullptr, false, bcsSplitMemoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost, offset);
     }

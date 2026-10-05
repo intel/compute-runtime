@@ -790,6 +790,38 @@ HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEv
     EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 1u);
 }
 
+HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListAndCopyRequiringManyBlitsWhenAppendPageFaultCopyThenCommandBufferWithSpaceForAllBlitsIsUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LimitBlitterMaxWidth.set(1);
+    debugManager.flags.LimitBlitterMaxHeight.set(1);
+
+    size_t size = 1024;
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
+                                                  MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x100003456), size, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, 1, false, 0));
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    ASSERT_GT(size * sizeof(typename FamilyType::XY_COPY_BLT), commonImmediateCommandSize);
+    ASSERT_GT(cmdStream->getAvailableSpace(), commonImmediateCommandSize);
+    cmdStream->getSpace(cmdStream->getAvailableSpace() - commonImmediateCommandSize);
+    auto cmdBufferBefore = cmdStream->getGraphicsAllocation();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, 0));
+
+    cmdStream = commandList->getCmdContainer().getCommandStream();
+    EXPECT_NE(cmdBufferBefore, cmdStream->getGraphicsAllocation());
+}
+
 HWTEST_F(CommandListCreateTests, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     ze_result_t returnValue;
