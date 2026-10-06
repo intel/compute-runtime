@@ -4944,6 +4944,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    const bool profiledComputeBarrier = signalEvent && signalEvent->isEventTimestampFlagSet() && !isCopyOnly(false) &&
+                                        !this->isInOrderExecutionEnabled() && this->partitionCount == 1;
+    if (profiledComputeBarrier) {
+        NEO::PipeControlArgs args = createBarrierFlags();
+        args.dcFlushEnable = getDcFlushRequired(signalEvent->isSignalScope());
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), NEO::PostSyncMode::noWrite, 0u, 0u, args);
+    }
+
     appendEventForProfiling(signalEvent, nullptr, true, false, false, isCopyOnly(false));
 
     if (!this->isInOrderExecutionEnabled()) {
@@ -4960,14 +4968,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
             }
 
             encodeMiFlush(gpuAddress, value, args);
-        } else {
+        } else if (!profiledComputeBarrier) {
             appendComputeBarrierCommand();
         }
     }
 
     addToMappedEventList(signalEvent);
 
-    bool skipPipeControl = this->isInOrderExecutionEnabled() && !getDcFlushRequired(hostVisibleEvent);
+    bool skipPipeControl = (this->isInOrderExecutionEnabled() && !getDcFlushRequired(hostVisibleEvent)) || profiledComputeBarrier;
 
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipPipeControl, false, isCopyOnly(false));
 

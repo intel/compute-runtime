@@ -110,6 +110,64 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     ASSERT_LE(sizeWithoutEvent, sizeWithEvent);
 }
 
+HWTEST_F(CommandListAppendBarrier, givenTimestampEventWhenAppendingBarrierThenStallIsProgrammedBeforeStartTimestampAndNoPipeControlIsProgrammedBetweenTimestamps) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 2;
+    auto timestampEventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+
+    const ze_event_scope_flags_t signalScopes[] = {ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE};
+    for (uint32_t i = 0; i < 2; i++) {
+        ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+        eventDesc.index = i;
+        eventDesc.signal = signalScopes[i];
+        auto timestampEvent = std::unique_ptr<Event>(getHelper<L0GfxCoreHelper>().createEvent(timestampEventPool.get(), &eventDesc, device, result));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_TRUE(timestampEvent->isEventTimestampFlagSet());
+
+        auto commandStream = commandList->getCmdContainer().getCommandStream();
+        auto usedSpaceBefore = commandStream->getUsed();
+        result = commandList->appendBarrier(timestampEvent->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(commandStream->getCpuBase(), usedSpaceBefore),
+                                                          commandStream->getUsed() - usedSpaceBefore));
+
+        auto storeRegisterMemItors = findAll<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+        ASSERT_FALSE(storeRegisterMemItors.empty());
+        auto startTimestampItor = storeRegisterMemItors.front();
+        auto endTimestampItor = storeRegisterMemItors.back();
+
+        auto pipeControlsBeforeStartTimestamp = findAll<PIPE_CONTROL *>(cmdList.begin(), startTimestampItor);
+        ASSERT_FALSE(pipeControlsBeforeStartTimestamp.empty());
+        auto stall = genCmdCast<PIPE_CONTROL *>(*pipeControlsBeforeStartTimestamp.back());
+        EXPECT_TRUE(stall->getCommandStreamerStallEnable());
+        EXPECT_EQ(commandList->dcFlushSupport, stall->getDcFlushEnable());
+
+        EXPECT_EQ(endTimestampItor, find<PIPE_CONTROL *>(startTimestampItor, endTimestampItor));
+        EXPECT_TRUE(findAll<PIPE_CONTROL *>(std::next(endTimestampItor), cmdList.end()).empty());
+    }
+}
+
 template <typename FamilyType>
 void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
                               uint64_t gpuFinalSyncAddress, uint64_t gpuCrossTileSyncAddress, uint64_t gpuStartAddress,

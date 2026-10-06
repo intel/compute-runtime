@@ -709,6 +709,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr;
 
     bool isStallingOperation = true;
+    bool copyOffloadSynchronizationRequired = dualStreamCopyOffload;
 
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents, signalEventParameters.apiRequestForGraphExternal)) {
@@ -733,10 +734,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
                 !signalEvent->isCounterBased() && !Event::isAggregatedEvent(signalEvent)) {
                 return signalEvent->hostSignal(false);
             }
+            copyOffloadSynchronizationRequired = false;
         }
     }
 
-    if (!isInOrderExecutionEnabled() && dualStreamCopyOffload) {
+    if (!isInOrderExecutionEnabled() && copyOffloadSynchronizationRequired) {
         ret = appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, isStallingOperation);
     } else {
         checkAvailableSpace(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed, commonImmediateCommandSize, false);
