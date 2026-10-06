@@ -215,6 +215,250 @@ ze_result_t LinuxSysmanDriverImp::rescanDevices(SysmanDriverHandleImp *driverHan
     return driverHandle->getDevice(pCount, phDevices);
 }
 
+template <typename Type>
+static ze_result_t readPciDeviceAttribute(const std::string &devicePath, const char *attribute, Type &value) {
+    std::string attributePath = devicePath + "/" + attribute;
+    int errorNum = 0;
+    int fd = SysmanSysCallsWrapper::open(attributePath.c_str(), O_RDONLY, errorNum);
+    if (fd < 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): open() failed to open %s (errno:%d) \n", NEO_FUNCTION_NAME, attributePath.c_str(), errorNum);
+        return LinuxSysmanImp::getResult(errorNum);
+    }
+
+    char buffer[16] = {};
+    ssize_t bytesRead = SysmanSysCallsWrapper::read(fd, buffer, sizeof(buffer) - 1, errorNum);
+    int savedErrorNum = errorNum;
+    SysmanSysCallsWrapper::close(fd, errorNum);
+
+    if (bytesRead <= 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): read() failed to read %s (errno:%d) \n", NEO_FUNCTION_NAME, attributePath.c_str(), savedErrorNum);
+        return LinuxSysmanImp::getResult(savedErrorNum);
+    }
+
+    buffer[bytesRead] = '\0';
+    value = static_cast<Type>(std::strtoul(buffer, nullptr, 16));
+    return ZE_RESULT_SUCCESS;
+}
+
+static bool isDeviceVirtual(const std::string &devicePath) {
+    int errorNum = 0;
+    return SysmanSysCallsWrapper::access(devicePath + "/physfn", F_OK, errorNum) == 0;
+}
+
+static uint32_t getPciConfigDword(const uint8_t *configHeader, uint32_t offset) {
+    uint32_t value = 0;
+    memcpy_s(&value, sizeof(value), configHeader + offset, sizeof(value));
+    return value;
+}
+
+static zes_pci_link_status_t getLinkStatusFromConfigHeader(const uint8_t *configHeader) {
+    constexpr uint32_t pciConfigVendorAndDeviceIdOffset = 0x00u;
+    constexpr uint32_t pciConfigRevisionIdOffset = 0x08u;
+    constexpr uint32_t pciConfigHeaderTypeOffset = 0x0eu;
+    constexpr uint32_t pciConfigBar0Offset = 0x10u;
+    constexpr uint32_t pciMaxStandardBars = 6u; // BAR0 to BAR5
+    constexpr uint8_t pciHeaderTypeLayoutMask = 0x7fu;
+    constexpr uint8_t pciHeaderTypeEndpoint = 0x00u;
+    constexpr uint32_t pciAllOnesDword = 0xffffffffu;
+    constexpr uint8_t pciAllOnesByte = 0xffu;
+
+    if (getPciConfigDword(configHeader, pciConfigVendorAndDeviceIdOffset) == pciAllOnesDword) {
+        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+    }
+
+    if (configHeader[pciConfigRevisionIdOffset] == pciAllOnesByte) {
+        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+    }
+
+    if ((configHeader[pciConfigHeaderTypeOffset] & pciHeaderTypeLayoutMask) != pciHeaderTypeEndpoint) {
+        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+    }
+
+    for (uint32_t barIndex = 0; barIndex < pciMaxStandardBars; barIndex++) {
+        uint32_t bar = getPciConfigDword(configHeader, pciConfigBar0Offset + (barIndex * sizeof(uint32_t)));
+        if (bar == pciAllOnesDword) {
+            return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+        }
+    }
+
+    return ZES_PCI_LINK_STATUS_GOOD;
+}
+
+static zes_pci_link_status_t getPciDeviceLinkStatus(const std::string &devicePath, bool &deviceRemoved) {
+    constexpr size_t pciStandardHeaderSize = 64u;
+
+    std::string configPath = devicePath + "/config";
+    int errorNum = 0;
+    int fd = SysmanSysCallsWrapper::open(configPath.c_str(), O_RDONLY, errorNum);
+    if (fd < 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): open() failed to open %s (errno:%d) \n", NEO_FUNCTION_NAME, configPath.c_str(), errorNum);
+        if (errorNum == ENOENT) {
+            deviceRemoved = true;
+            return ZES_PCI_LINK_STATUS_UNKNOWN;
+        }
+        if ((errorNum == EACCES) || (errorNum == EPERM)) {
+            return ZES_PCI_LINK_STATUS_UNKNOWN;
+        }
+        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+    }
+
+    uint8_t configHeader[pciStandardHeaderSize] = {};
+    ssize_t bytesRead = SysmanSysCallsWrapper::read(fd, configHeader, sizeof(configHeader), errorNum);
+    int savedErrorNum = errorNum;
+    SysmanSysCallsWrapper::close(fd, errorNum);
+
+    if (bytesRead < static_cast<ssize_t>(sizeof(configHeader))) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): read() returned %zd of %zu bytes of %s (errno:%d) \n", NEO_FUNCTION_NAME, bytesRead, sizeof(configHeader), configPath.c_str(), savedErrorNum);
+        if ((savedErrorNum == EACCES) || (savedErrorNum == EPERM)) {
+            return ZES_PCI_LINK_STATUS_UNKNOWN;
+        }
+        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+    }
+
+    return getLinkStatusFromConfigHeader(configHeader);
+}
+
+struct PciDeviceCandidate {
+    std::string devicePath;
+    zes_pci_address_t address = {};
+    uint16_t vendorId = 0;
+    uint16_t deviceId = 0;
+    uint16_t subsystemVendorId = 0;
+    uint16_t subsystemDeviceId = 0;
+    uint8_t revision = 0;
+    zes_pci_link_status_t status = ZES_PCI_LINK_STATUS_UNKNOWN;
+};
+
+static bool isKnownGpuDeviceId(uint16_t deviceId) {
+    for (size_t i = 0; NEO::deviceDescriptorTable[i].deviceId != 0; i++) {
+        if (deviceId == NEO::deviceDescriptorTable[i].deviceId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool getPciDeviceCandidate(const std::string &devicePath, PciDeviceCandidate &candidate) {
+    constexpr uint32_t intelPciVendorId = 0x8086u;
+    constexpr uint32_t pciClassCodeBaseClassShift = 16u;
+    constexpr uint32_t pciBaseClassDisplayController = 0x03u;
+    constexpr uint32_t pciBaseClassProcessingAccelerator = 0x12u;
+
+    std::string bdfString = devicePath.substr(devicePath.find_last_of('/') + 1);
+    uint16_t domain = 0;
+    uint8_t bus = 0, device = 0, function = 0;
+    constexpr int bdfTokensNum = 4;
+    if (NEO::parseBdfString(bdfString, domain, bus, device, function) != bdfTokensNum) {
+        return false;
+    }
+
+    uint16_t vendorId = 0;
+    if (readPciDeviceAttribute(devicePath, "vendor", vendorId) != ZE_RESULT_SUCCESS) {
+        return false;
+    }
+    if (vendorId != intelPciVendorId) {
+        return false;
+    }
+
+    uint32_t classCode = 0;
+    if (readPciDeviceAttribute(devicePath, "class", classCode) != ZE_RESULT_SUCCESS) {
+        return false;
+    }
+    uint32_t baseClass = (classCode >> pciClassCodeBaseClassShift) & 0xffu;
+    if ((baseClass != pciBaseClassDisplayController) && (baseClass != pciBaseClassProcessingAccelerator)) {
+        return false;
+    }
+
+    if (readPciDeviceAttribute(devicePath, "device", candidate.deviceId) != ZE_RESULT_SUCCESS) {
+        return false;
+    }
+    if (!isKnownGpuDeviceId(candidate.deviceId)) {
+        return false;
+    }
+
+    if (isDeviceVirtual(devicePath)) {
+        return false;
+    }
+
+    readPciDeviceAttribute(devicePath, "subsystem_vendor", candidate.subsystemVendorId);
+    readPciDeviceAttribute(devicePath, "subsystem_device", candidate.subsystemDeviceId);
+    readPciDeviceAttribute(devicePath, "revision", candidate.revision);
+
+    candidate.devicePath = devicePath;
+    candidate.address.domain = static_cast<uint32_t>(domain);
+    candidate.address.bus = static_cast<uint32_t>(bus);
+    candidate.address.device = static_cast<uint32_t>(device);
+    candidate.address.function = static_cast<uint32_t>(function);
+    candidate.vendorId = vendorId;
+    return true;
+}
+
+static std::vector<PciDeviceCandidate> getIntelGpuDevices() {
+    const std::string pciSysfsDevicesDirectory = "/sys/bus/pci/devices";
+    std::vector<PciDeviceCandidate> devices;
+
+    for (const auto &devicePath : NEO::Directory::getFiles(pciSysfsDevicesDirectory)) {
+        PciDeviceCandidate candidate = {};
+        if (!getPciDeviceCandidate(devicePath, candidate)) {
+            continue;
+        }
+
+        bool deviceRemoved = false;
+        candidate.status = getPciDeviceLinkStatus(candidate.devicePath, deviceRemoved);
+        if (deviceRemoved) {
+            continue;
+        }
+
+        devices.push_back(std::move(candidate));
+    }
+
+    return devices;
+}
+
+ze_result_t LinuxSysmanDriverImp::getPciDeviceProperties(uint32_t *pCount, zes_intel_driver_pci_device_properties_exp_t *pProperties) {
+    if (pCount == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pCount is nullptr and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_NULL_POINTER);
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    auto devices = getIntelGpuDevices();
+    auto availableCount = static_cast<uint32_t>(devices.size());
+
+    if ((*pCount == 0) || (pProperties == nullptr)) {
+        *pCount = availableCount;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto count = std::min(*pCount, availableCount);
+    for (uint32_t index = 0; index < count; index++) {
+        if (pProperties[index].pNext != nullptr) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pProperties[%u].pNext is not nullptr and returning error:0x%x \n", NEO_FUNCTION_NAME, index, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
+    *pCount = count;
+    for (uint32_t index = 0; index < *pCount; index++) {
+        const auto &device = devices[index];
+        pProperties[index].address = device.address;
+        pProperties[index].maxSpeed = {-1, -1, -1};
+        pProperties[index].status = device.status;
+
+        auto &configProperties = pProperties[index].configProperties;
+        configProperties.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
+        configProperties.pNext = nullptr;
+        configProperties.vendorId = device.vendorId;
+        configProperties.deviceId = device.deviceId;
+        configProperties.subsystemVendorId = device.subsystemVendorId;
+        configProperties.subsystemDeviceId = device.subsystemDeviceId;
+        configProperties.revision = device.revision;
+        configProperties.pcieCapabilityVersion = 0;
+        configProperties.supportedLinkSpeeds = 0;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 int32_t LinuxSysmanDriverImp::findDeviceIndexByPciUuid(SysmanDriverHandleImp *driverHandle, const std::string &pciUuid) {
     for (uint32_t i = 0; i < driverHandle->sysmanDevices.size(); i++) {
         auto sysmanDevice = static_cast<SysmanDeviceImp *>(driverHandle->sysmanDevices[i]);

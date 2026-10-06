@@ -89,9 +89,7 @@ ze_result_t LinuxDriverImp::initializeInSurvivabilityMode(std::vector<std::uniqu
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
-    if (pSysmanDriverHandle->pOsSysmanDriver == nullptr) {
-        pSysmanDriverHandle->pOsSysmanDriver = L0::Sysman::OsSysmanDriver::create();
-    }
+    pSysmanDriverHandle->getOsSysmanDriver();
     pSysmanDriverHandle->numDevices = static_cast<uint32_t>(pSysmanDriverHandle->sysmanDevices.size());
     return ZE_RESULT_SUCCESS;
 }

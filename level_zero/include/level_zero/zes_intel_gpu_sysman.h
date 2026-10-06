@@ -87,8 +87,9 @@ typedef struct _zes_intel_pci_link_speed_downgrade_exp_properties_t {
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Query pci configuration space extension Version(s)
 typedef enum _zes_intel_pci_config_exp_properties_version_t {
-    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
-    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                               ///< version 1.0
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_1_1 = ZE_MAKE_VERSION(1, 1),                               ///< version 1.1
+    ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_CURRENT = ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_1_1, ///< latest known version
     ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_pci_config_exp_properties_version_t;
 
@@ -122,6 +123,7 @@ typedef struct _zes_intel_pci_config_exp_properties_t {
     zes_intel_pci_link_speed_exp_flags_t supportedLinkSpeeds; ///< [out] Returns the supported link speeds, a
                                                               ///< combination of ::zes_intel_pci_link_speed_exp_flag_t. Zero if the
                                                               ///< capability could not be read.
+    uint8_t revision;                                         ///< [out] Returns the PCI revision id.
 } zes_intel_pci_config_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1032,6 +1034,89 @@ typedef struct _zes_intel_device_compute_exp_properties_t {
     uint32_t numEUs;                ///< [out] Total number of EUs.
     uint32_t numThreads;            ///< [out] Total number of hardware threads.
 } zes_intel_device_compute_exp_properties_t;
+#ifndef ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_NAME
+/// @brief Driver PCI device properties extension name
+#define ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_NAME "ZES_intel_experimental_driver_pci_device_properties"
+#endif // ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver PCI device properties extension Version(s)
+typedef enum _zes_intel_driver_pci_device_properties_exp_version_t {
+    ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                      ///< version 1.0
+    ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_pci_device_properties_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Intel experimental extension to the standard ::zes_pci_link_status_t
+///
+/// @details
+///     - The value continues the numbering of ::zes_pci_link_status_t, so it must be revisited
+///       if a fourth status is ever added to the specification.
+///     - A device which stopped responding reads back its configuration space, including its
+///       base address registers, as all ones.
+#define ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR static_cast<zes_pci_link_status_t>(4)
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief PCI device properties, reported by ::zesIntelDriverGetPciDevicePropertiesExp
+// NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
+typedef struct _zes_intel_driver_pci_device_properties_exp_t {
+    zes_structure_type_ext_t stype;                         ///< [in] type of this structure. Must be
+                                                            ///< ZES_INTEL_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES_EXP
+    void *pNext;                                            ///< [in,out][optional] must be null or a pointer to an
+                                                            ///< extension-specific structure (i.e. contains stype and pNext).
+    zes_pci_address_t address;                              ///< [out] the BDF of the device.
+    zes_pci_speed_t maxSpeed;                               ///< [out] the maximum speed of the link of the device. Each member is
+                                                            ///< -1 when it could not be determined.
+    zes_intel_pci_config_exp_properties_t configProperties; ///< [out] the identifiers and revision id of the device.
+    zes_pci_link_status_t status;                           ///< [out] ::ZES_PCI_LINK_STATUS_GOOD when the device responds on the
+                                                            ///< bus, ::ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR when it does
+                                                            ///< not, ::ZES_PCI_LINK_STATUS_UNKNOWN when this could not be
+                                                            ///< determined.
+} zes_intel_driver_pci_device_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get the PCI properties of every supported Intel GPU device present on the PCI bus
+///
+/// @details
+///     - This function reports every supported Intel GPU present on the PCI bus, whether or not
+///       a kernel mode driver is installed or bound to it. A GPU is supported when this driver
+///       recognizes its device id. Only display controllers and processing accelerators are
+///       reported, and SR-IOV virtual functions are not.
+///     - The identifiers of a device are reported even while it does not respond on the bus,
+///       which `status` reports.
+///     - The pcieCapabilityVersion and supportedLinkSpeeds of the embedded
+///       ::zes_intel_pci_config_exp_properties_t are always zero.
+///     - This function is read only. Recovering a device reported as
+///       ::ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR is left to the application.
+///     - This function is meant for diagnostics rather than for frequent polling.
+///     - The application must initialize the stype member of every element of pProperties.
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCount`
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + `nullptr != pProperties[i].pNext` for an element which would be written, as no extension
+///           structures are supported
+ze_result_t ZE_APICALL zesIntelDriverGetPciDevicePropertiesExp(
+    zes_driver_handle_t hDriver,                              ///< [in] handle of the driver instance
+    uint32_t *pCount,                                         ///< [in,out] pointer to the number of PCI devices.
+                                                              ///< if count is zero, then the driver shall update the value with
+                                                              ///< the total number of available PCI devices.
+                                                              ///< if count is non-zero, then the driver shall only retrieve that
+                                                              ///< number of PCI devices.
+    zes_intel_driver_pci_device_properties_exp_t *pProperties ///< [in,out][optional][range(0, *pCount)] array of PCI device
+                                                              ///< properties.
+                                                              ///< if count is less than the number of available PCI devices, then
+                                                              ///< the driver shall only retrieve that number of properties.
+);
 
 #if defined(__cplusplus)
 } // extern "C"

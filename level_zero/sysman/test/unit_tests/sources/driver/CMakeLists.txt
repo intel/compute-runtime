@@ -13,3 +13,5 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysman_os_driver.h
                ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_driver.cpp
 )
+
+add_subdirectories()

@@ -87,7 +87,8 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME, ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_NAME, ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME, ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_CURRENT},
-        {ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME, ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_CURRENT}};
+        {ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME, ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_CURRENT},
+        {ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_NAME, ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_VERSION_CURRENT}};
     for (uint32_t i = 0; i < count; i++) {
         if (extensionsReturned[i].name != supportedExtensions[i].first) {
             return false;
@@ -180,6 +181,9 @@ TEST_F(SysmanDriverHandleTest,
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverEventListenExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverGetPciDevicePropertiesExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 using SysmanRescanDriverHandleTest = SysmanDriverHandleTest;
@@ -249,6 +253,27 @@ TEST_F(SysmanDriverEventListenTest, GivenWddmDriverWhenCallingDriverEventListenE
     zes_event_type_flags_t deviceEvents = 0;
     zes_event_type_flags_t driverEvents = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDriverEventListenExt(driverHandle->toHandle(), 0u, 1u, nullptr, &numDeviceEvents, &deviceEvents, &driverEvents));
+}
+
+using SysmanDriverPciDevicePropertiesTest = SysmanDriverHandleTest;
+
+TEST_F(SysmanDriverPciDevicePropertiesTest, GivenWddmDriverWhenCallingGetPciDevicePropertiesThenUnsupportedFeatureIsReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, driverHandle->getPciDeviceProperties(&count, nullptr));
+}
+
+TEST_F(SysmanDriverPciDevicePropertiesTest, GivenNullOsSysmanDriverWhenCallingGetPciDevicePropertiesThenOsSysmanDriverIsCreatedAndUnsupportedFeatureIsReturned) {
+    delete driverHandle->pOsSysmanDriver;
+    driverHandle->pOsSysmanDriver = nullptr;
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, driverHandle->getPciDeviceProperties(&count, nullptr));
+    EXPECT_NE(nullptr, driverHandle->pOsSysmanDriver);
+}
+
+TEST_F(SysmanDriverPciDevicePropertiesTest, GivenWddmDriverWhenCallingGetPciDevicePropertiesEntrypointThenUnsupportedFeatureIsReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverGetPciDevicePropertiesExp(driverHandle->toHandle(), &count, nullptr));
 }
 
 struct PublicSysmanDriverHandleImp : public L0::Sysman::SysmanDriverHandleImp {

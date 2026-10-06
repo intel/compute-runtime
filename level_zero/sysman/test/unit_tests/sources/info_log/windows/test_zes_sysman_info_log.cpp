@@ -44,6 +44,9 @@ struct MockOsSysmanDriver : public OsSysmanDriver {
     ze_result_t rescanDevices(SysmanDriverHandleImp *, uint32_t *, zes_device_handle_t *) override {
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t getPciDeviceProperties(uint32_t *, zes_intel_driver_pci_device_properties_exp_t *) override {
+        return ZE_RESULT_SUCCESS;
+    }
     InfoLogHandleContext context;
 };
 

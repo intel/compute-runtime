@@ -48,6 +48,7 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverRescanDevicesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceGetPowerOffReasonExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEnumInfoLogsExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverGetPciDevicePropertiesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogGetPropertiesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogCreateInstanceExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogInstanceReadWithMetadataExp);
@@ -136,7 +137,7 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
-    pOsSysmanDriver = L0::Sysman::OsSysmanDriver::create();
+    getOsSysmanDriver();
     this->numDevices = static_cast<uint32_t>(this->sysmanDevices.size());
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
@@ -424,6 +425,18 @@ ze_result_t SysmanDriverHandleImp::getDriverProperties(zes_driver_properties_t *
     memcpy_s(pProperties->uuid.id, sizeof(pProperties->uuid.id), &uniqueId, sizeof(uniqueId));
 
     return ZE_RESULT_SUCCESS;
+}
+
+OsSysmanDriver *SysmanDriverHandleImp::getOsSysmanDriver() {
+    std::lock_guard<std::mutex> lock(osSysmanDriverMutex);
+    if (pOsSysmanDriver == nullptr) {
+        pOsSysmanDriver = L0::Sysman::OsSysmanDriver::create();
+    }
+    return pOsSysmanDriver;
+}
+
+ze_result_t SysmanDriverHandleImp::getPciDeviceProperties(uint32_t *pCount, zes_intel_driver_pci_device_properties_exp_t *pProperties) {
+    return getOsSysmanDriver()->getPciDeviceProperties(pCount, pProperties);
 }
 
 SysmanDriverHandleImp::~SysmanDriverHandleImp() {

@@ -54,6 +54,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     ze_result_t enumInfoLogs(uint32_t *pCount, zes_info_log_handle_t *phInfoLogs) override;
     ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) override;
     ze_result_t getDriverProperties(zes_driver_properties_t *pProperties) override;
+    ze_result_t getPciDeviceProperties(uint32_t *pCount, zes_intel_driver_pci_device_properties_exp_t *pProperties) override;
     const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {
         return uuidDeviceMap;
     }
@@ -68,11 +69,14 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     void updatePciUuidMap(SysmanDevice *sysmanDevice);
     std::map<std::string, std::unique_ptr<NEO::PhysicalDevicePciBusInfo>> pciUuidToPciBusInfoMap;
 
+    struct OsSysmanDriver *getOsSysmanDriver();
+
   private:
     SysmanDevice *findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle);
     SysmanDriverHandle *findSysmanDriverHandleFromCoreToSysmanDriverMap(ze_driver_handle_t handle);
     std::mutex coreToSysmanDeviceMapLock;
     std::mutex rescanMutex;
+    std::mutex osSysmanDriverMutex;
     std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap{};
 
   protected:

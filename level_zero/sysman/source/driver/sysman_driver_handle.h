@@ -40,6 +40,7 @@ struct SysmanDriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
     virtual ze_result_t enumInfoLogs(uint32_t *pCount, zes_info_log_handle_t *phInfoLogs) = 0;
     virtual ze_result_t getDeviceRescan(uint32_t *pCount, zes_device_handle_t *phDevices) = 0;
     virtual ze_result_t getDriverProperties(zes_driver_properties_t *pProperties) = 0;
+    virtual ze_result_t getPciDeviceProperties(uint32_t *pCount, zes_intel_driver_pci_device_properties_exp_t *pProperties) = 0;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<SysmanDriverHandle>);

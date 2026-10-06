@@ -25,6 +25,7 @@ namespace Sysman {
 // PCI configuration space header
 #define PCI_VENDOR_ID 0x00
 #define PCI_DEVICE_ID 0x02
+#define PCI_REVISION_ID 0x08
 #define PCI_SUBSYSTEM_VENDOR_ID 0x2c
 #define PCI_SUBSYSTEM_DEVICE_ID 0x2e
 #define PCI_INVALID_VENDOR_ID 0xffff // every config read returns all ones once a device stops responding

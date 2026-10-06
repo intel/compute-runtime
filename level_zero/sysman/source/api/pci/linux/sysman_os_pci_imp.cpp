@@ -49,7 +49,7 @@ ze_result_t LinuxPciImp::getExtensionProperties(void *pNext) {
     if (pLinuxSysmanImp->isDeviceInSurvivabilityMode()) {
         while (pNext) {
             auto pExtProps = reinterpret_cast<zes_base_properties_t *>(pNext);
-            if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES) {
+            if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1) {
                 ze_result_t result = getPciConfigProperties(reinterpret_cast<zes_intel_pci_config_exp_properties_t *>(pExtProps));
                 if (result != ZE_RESULT_SUCCESS) {
                     return result;
@@ -70,7 +70,7 @@ ze_result_t LinuxPciImp::getExtensionProperties(void *pNext) {
             auto pDowngradeExpProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
             pDowngradeExpProps->maxPciGenSupported = pciDowngradeProperties.maxPciGenSupported;
             pDowngradeExpProps->pciLinkSpeedUpdateCapable = pciDowngradeProperties.pciLinkSpeedUpdateCapable;
-        } else if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES) {
+        } else if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1) {
             if (pciConfigPropertiesResult != ZE_RESULT_SUCCESS) {
                 return pciConfigPropertiesResult;
             }
@@ -79,6 +79,7 @@ ze_result_t LinuxPciImp::getExtensionProperties(void *pNext) {
             pConfigProps->deviceId = pciConfigProperties.deviceId;
             pConfigProps->subsystemVendorId = pciConfigProperties.subsystemVendorId;
             pConfigProps->subsystemDeviceId = pciConfigProperties.subsystemDeviceId;
+            pConfigProps->revision = pciConfigProperties.revision;
             pConfigProps->pcieCapabilityVersion = pciConfigProperties.pcieCapabilityVersion;
             pConfigProps->supportedLinkSpeeds = pciConfigProperties.supportedLinkSpeeds;
         } else {
@@ -143,6 +144,7 @@ ze_result_t LinuxPciImp::getPciConfigProperties(zes_intel_pci_config_exp_propert
     pConfigProperties->deviceId = L0::Sysman::PciUtil::getWordFromConfig(PCI_DEVICE_ID, deviceConfigMemory.data());
     pConfigProperties->subsystemVendorId = L0::Sysman::PciUtil::getWordFromConfig(PCI_SUBSYSTEM_VENDOR_ID, deviceConfigMemory.data());
     pConfigProperties->subsystemDeviceId = L0::Sysman::PciUtil::getWordFromConfig(PCI_SUBSYSTEM_DEVICE_ID, deviceConfigMemory.data());
+    pConfigProperties->revision = L0::Sysman::PciUtil::getByteFromConfig(PCI_REVISION_ID, deviceConfigMemory.data());
     pConfigProperties->pcieCapabilityVersion = capabilityVersion;
     pConfigProperties->supportedLinkSpeeds = supportedLinkSpeeds;
 

@@ -543,7 +543,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetP
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetPropertiesWithPciConfigExtensionThenExtensionIsNotFilledAndUnsupportedFeatureIsReturned) {
     zes_pci_properties_t properties = {};
     zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
     properties.pNext = &configProps;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties));
@@ -634,7 +634,7 @@ TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciConfigExtens
 
     zes_pci_properties_t properties = {};
     zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
     properties.pNext = &configProps;
 
     ze_result_t result = testPciImp->pciStaticProperties(&properties);
@@ -671,7 +671,7 @@ TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenMultipleExtensi
     zes_pci_link_speed_downgrade_ext_properties_t downgradeProps = {};
     downgradeProps.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
     zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
 
     properties.pNext = &downgradeProps;
     downgradeProps.pNext = &configProps;
@@ -707,7 +707,7 @@ TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciGetPropertie
 
     zes_pci_properties_t properties = {};
     zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
     properties.pNext = &configProps;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, testPciImp->pciStaticProperties(&properties));
@@ -730,7 +730,7 @@ TEST_F(SysmanDevicePciFixture, GivenDeviceInSurvivabilityModeWhenPciGetPropertie
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingPciConfigPropertiesThenUnsupportedFeatureIsReturned) {
     auto pPciImp = static_cast<L0::Sysman::PciImp *>(pSysmanDeviceImp->pPci);
     zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPciImp->pOsPci->getPciConfigProperties(&configProps));
 }

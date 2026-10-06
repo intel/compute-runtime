@@ -169,6 +169,7 @@ void usage() {
                  "\n        [--instance <name>]                                                                       optionally collect into a named tracefs instance instead of the default buffer, for --instancepeek/--instanceread"
                  "\n        [--buffersize <kilobytes>]                                                                optionally request a total collection buffer size for --instancepeek/--instanceread"
                  "\n        [--timeout <milliseconds>]                                                                optionally override the event listen timeout of --instancepeek/--instanceread, default is 1000"
+                 "\n        --pcidevices                                                                              selectively run the PCI device properties EXP API black box test, reporting every supported Intel GPU on the PCI bus and whether it responds"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -211,7 +212,8 @@ void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_ha
 
 void getSysmanDeviceHandles(zes_driver_handle_t &sysmanDriverHandle, std::vector<zes_device_handle_t> &sysmanDevices) {
 
-    if (validateGetenv("ZES_INIT_NO_GPUS")) {
+    bool noGpus = validateGetenv("ZES_INIT_NO_GPUS");
+    if (noGpus) {
         std::cout << "ZES_INIT_NO_GPUS is set, calling zesInit() with ZES_INTEL_INIT_FLAG_EXP_NO_GPUS" << std::endl;
         VALIDATECALL(zesInit(static_cast<zes_init_flags_t>(ZES_INTEL_INIT_FLAG_EXP_NO_GPUS)));
     } else {
@@ -230,6 +232,10 @@ void getSysmanDeviceHandles(zes_driver_handle_t &sysmanDriverHandle, std::vector
     uint32_t deviceCount = 0;
     VALIDATECALL(zesDeviceGet(sysmanDriverHandle, &deviceCount, nullptr));
     if (deviceCount == 0) {
+        if (noGpus) {
+            std::cout << "No device was retrieved, only the driver level tests can run" << std::endl;
+            return;
+        }
         std::cout << "Error could not retrieve device" << std::endl;
         std::terminate();
     }
@@ -877,7 +883,7 @@ void testSysmanPci(ze_device_handle_t &device, std::vector<std::string> &buf, ui
     zes_pci_link_speed_downgrade_ext_properties_t extProps = {};
     extProps.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
     zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES;
+    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
     extProps.pNext = &configProps;
     properties.pNext = &extProps;
     VALIDATECALL(zesDevicePciGetProperties(device, &properties));
@@ -898,6 +904,7 @@ void testSysmanPci(ze_device_handle_t &device, std::vector<std::string> &buf, ui
         std::cout << "configProps.deviceId = " << std::hex << configProps.deviceId << std::endl;
         std::cout << "configProps.subsystemVendorId = " << std::hex << configProps.subsystemVendorId << std::endl;
         std::cout << "configProps.subsystemDeviceId = " << std::hex << configProps.subsystemDeviceId << std::endl;
+        std::cout << "configProps.revision = " << std::hex << static_cast<uint32_t>(configProps.revision) << std::endl;
         std::cout << "configProps.pcieCapabilityVersion = " << std::dec << configProps.pcieCapabilityVersion << std::endl;
         std::cout << "configProps.supportedLinkSpeeds = " << std::hex << configProps.supportedLinkSpeeds << std::endl;
     }
@@ -2773,6 +2780,69 @@ void testSysmanDriverProperties(zes_driver_handle_t driver) {
     }
 }
 
+std::string pciLinkStatusToString(zes_pci_link_status_t status) {
+    if (status == ZES_PCI_LINK_STATUS_GOOD) {
+        return "alive";
+    }
+    if (status == ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR) {
+        return "link error, the device does not respond on the bus";
+    }
+    return "unknown, the liveness of the device could not be determined";
+}
+
+void testSysmanDriverPciDeviceProperties(zes_driver_handle_t driver) {
+    std::cout << std::endl
+              << " ----  PCI device properties tests ---- " << std::endl;
+
+    using zesIntelDriverGetPciDevicePropertiesExp_pfn = ze_result_t(ZE_APICALL *)(zes_driver_handle_t, uint32_t *, zes_intel_driver_pci_device_properties_exp_t *);
+
+    zesIntelDriverGetPciDevicePropertiesExp_pfn zesIntelDriverGetPciDevicePropertiesExpPtr = nullptr;
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driver, "zesIntelDriverGetPciDevicePropertiesExp", reinterpret_cast<void **>(&zesIntelDriverGetPciDevicePropertiesExpPtr)));
+    if (!zesIntelDriverGetPciDevicePropertiesExpPtr) {
+        std::cout << "PCI device properties EXP function pointer not available" << std::endl;
+        return;
+    }
+
+    uint32_t count = 0;
+    VALIDATECALL(zesIntelDriverGetPciDevicePropertiesExpPtr(driver, &count, nullptr));
+    std::cout << "Supported Intel GPU devices present on the PCI bus = " << count << std::endl;
+    if (count == 0) {
+        return;
+    }
+
+    std::vector<zes_intel_driver_pci_device_properties_exp_t> properties(count);
+    for (auto &property : properties) {
+        property.stype = ZES_INTEL_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES_EXP;
+        property.pNext = nullptr;
+    }
+    VALIDATECALL(zesIntelDriverGetPciDevicePropertiesExpPtr(driver, &count, properties.data()));
+
+    uint32_t devicesWithLinkErrorCount = 0;
+    for (uint32_t i = 0; i < count; i++) {
+        const auto &property = properties[i];
+        if (property.status == ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR) {
+            devicesWithLinkErrorCount++;
+        }
+        if (verbose) {
+            std::cout << "[" << i << "]" << std::endl;
+            std::cout << "properties.address.domain = " << std::hex << property.address.domain << std::endl;
+            std::cout << "properties.address.bus = " << std::hex << property.address.bus << std::endl;
+            std::cout << "properties.address.device = " << std::hex << property.address.device << std::endl;
+            std::cout << "properties.address.function = " << std::hex << property.address.function << std::endl;
+            std::cout << "properties.maxSpeed.gen = " << std::dec << property.maxSpeed.gen << std::endl;
+            std::cout << "properties.maxSpeed.width = " << std::dec << property.maxSpeed.width << std::endl;
+            std::cout << "properties.maxSpeed.maxBandwidth = " << std::dec << property.maxSpeed.maxBandwidth << std::endl;
+            std::cout << "properties.configProperties.vendorId = " << std::hex << property.configProperties.vendorId << std::endl;
+            std::cout << "properties.configProperties.deviceId = " << std::hex << property.configProperties.deviceId << std::endl;
+            std::cout << "properties.configProperties.subsystemVendorId = " << std::hex << property.configProperties.subsystemVendorId << std::endl;
+            std::cout << "properties.configProperties.subsystemDeviceId = " << std::hex << property.configProperties.subsystemDeviceId << std::endl;
+            std::cout << "properties.configProperties.revision = " << std::hex << static_cast<uint32_t>(property.configProperties.revision) << std::endl;
+            std::cout << "properties.status = " << std::dec << pciLinkStatusToString(property.status) << std::endl;
+        }
+    }
+    std::cout << "Intel GPU devices which do not respond on the bus = " << devicesWithLinkErrorCount << std::endl;
+}
+
 void printHexData(const uint8_t *data, uint32_t size, uint32_t maxBytes) {
     uint32_t bytesToPrint = std::min(size, maxBytes);
     for (uint32_t i = 0; i < bytesToPrint; i++) {
@@ -3399,7 +3469,7 @@ int enableSysman() {
 int main(int argc, char *argv[]) {
 
     std::vector<ze_device_handle_t> devices;
-    ze_driver_handle_t driver;
+    ze_driver_handle_t driver = nullptr;
 
     if (validateGetenv("ZELLO_SYSMAN_USE_ZESINIT")) {
         if (validateGetenv("ZES_ENABLE_SYSMAN")) {
@@ -3766,6 +3836,10 @@ int main(int argc, char *argv[]) {
 
     if (isParamEnabled(argc, argv, "-D", "--driverproperties", &optind)) {
         testSysmanDriverProperties(driver);
+    }
+
+    if (isParamEnabled(argc, argv, "--pcidevices", "--pcidevices", &optind)) {
+        testSysmanDriverPciDeviceProperties(driver);
     }
 
     if (isParamEnabled(argc, argv, "-L", "--infolog", &optind)) {
