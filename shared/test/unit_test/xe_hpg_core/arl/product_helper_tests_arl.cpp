@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_arl.h"
 #include "shared/test/common/helpers/default_hw_info.h"

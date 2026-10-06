@@ -7,7 +7,11 @@
 
 #include "shared/source/built_ins/registry/built_ins_registry.h"
 
+#include <type_traits>
+
 namespace NEO {
+
+static_assert(std::is_trivially_destructible_v<RegisterEmbeddedResource>);
 
 namespace {
 constinit RegisterEmbeddedResource *firstEmbeddedResource = nullptr;

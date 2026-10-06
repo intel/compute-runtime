@@ -10,11 +10,11 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <functional>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
+#include <vector>
 
 #if defined(_WIN32)
 #if !defined(NEO_HOST_FUNCTION_CALLBACK)

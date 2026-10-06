@@ -14,7 +14,6 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/device_bitfield.h"
-#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"

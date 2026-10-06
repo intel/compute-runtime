@@ -10,6 +10,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper_former.h"
 #include "shared/source/helpers/string.h"
 
 #include "hw_cmds.h"

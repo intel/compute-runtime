@@ -13,6 +13,7 @@
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/helpers/cl_execution_environment_helper.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"

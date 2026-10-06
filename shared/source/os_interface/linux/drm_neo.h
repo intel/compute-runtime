@@ -11,7 +11,6 @@
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
-#include "shared/source/os_interface/linux/drm_fabric.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
@@ -49,6 +48,7 @@ enum class SubmissionStatus : uint32_t;
 
 class BufferObject;
 class DeviceFactory;
+class DrmFabric;
 class MemoryInfo;
 class OsContext;
 class OsContextLinux;

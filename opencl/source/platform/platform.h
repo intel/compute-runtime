@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/device/device_group_sort_key.h"
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 #include "shared/source/utilities/staging_buffer_manager.h"

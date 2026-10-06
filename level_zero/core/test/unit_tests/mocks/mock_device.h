@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/device/device.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"

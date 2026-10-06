@@ -9,7 +9,6 @@
 
 #include <cstddef>
 #include <string_view>
-#include <type_traits>
 
 namespace NEO {
 
@@ -27,7 +26,5 @@ struct RegisterEmbeddedResource {
     size_t resourceLength;
     RegisterEmbeddedResource *next = nullptr;
 };
-
-static_assert(std::is_trivially_destructible_v<RegisterEmbeddedResource>);
 
 } // namespace NEO

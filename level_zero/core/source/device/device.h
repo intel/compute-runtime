@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -36,6 +35,9 @@ enum EngineType : uint32_t;
 } // namespace aub_stream
 
 namespace NEO {
+namespace BuiltIn {
+struct Resource;
+} // namespace BuiltIn
 class AllocationsList;
 class CommandStreamReceiver;
 class CompilerProductHelper;

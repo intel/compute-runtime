@@ -11,7 +11,7 @@
 #include "shared/source/helpers/vec.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/built_ins/builtin_op_params.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 
 #include <algorithm>
@@ -23,6 +23,7 @@ class Kernel;
 class ClDevice;
 struct TimestampPacketDependencies;
 class MemObj;
+struct RootDeviceEnvironment;
 
 class DispatchInfo {
 

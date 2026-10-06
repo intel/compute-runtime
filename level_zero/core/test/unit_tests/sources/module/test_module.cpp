@@ -21,6 +21,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/os_inc_base.h"

@@ -17,6 +17,7 @@
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "opencl/source/command_queue/gpgpu_walker_base.inl"
+#include "opencl/source/kernel/kernel.h"
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {

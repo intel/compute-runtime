@@ -7,9 +7,9 @@
 
 #pragma once
 #include "shared/source/built_ins/built_in_ops_base.h"
-#include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/helpers/vec.h"
 
+#include "opencl/source/built_ins/builtin_op_params.h"
 #include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/program/program.h"
 
@@ -37,30 +37,6 @@ struct MultiDispatchInfo;
 class Program;
 
 namespace BuiltIn {
-
-struct OpParams {
-    void *srcPtr = nullptr;
-    void *dstPtr = nullptr;
-    MemObj *srcMemObj = nullptr;
-    MemObj *dstMemObj = nullptr;
-    GraphicsAllocation *srcSvmAlloc = nullptr;
-    GraphicsAllocation *dstSvmAlloc = nullptr;
-    GraphicsAllocation *transferAllocation = nullptr; // mapAllocation or hostPtrAllocation
-    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::none;
-    bool unifiedMemoryArgsRequireMemSync = true;
-    Vec3<size_t> srcOffset = {0, 0, 0};
-    Vec3<size_t> dstOffset = {0, 0, 0};
-    Vec3<size_t> size = {0, 0, 0};
-    size_t srcRowPitch = 0;
-    size_t dstRowPitch = 0;
-    size_t srcSlicePitch = 0;
-    size_t dstSlicePitch = 0;
-    uint32_t srcMipLevel = 0;
-    uint32_t dstMipLevel = 0;
-    void *userPtrForPostOperationCpuCopy = nullptr;
-    bool bcsSplit = false;
-    TransferDirection direction = TransferDirection::localToLocal;
-};
 
 class DispatchInfoBuilder {
   public:

@@ -12,6 +12,7 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/kernel/kernel.h"
 
 #include <cstdint>
 

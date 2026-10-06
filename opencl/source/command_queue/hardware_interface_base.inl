@@ -18,6 +18,7 @@
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
+#include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 
 namespace NEO {
