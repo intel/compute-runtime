@@ -48,6 +48,14 @@ LNLTEST_F(LnlProductHelperLinux, given57bAddressSpaceWhenConfiguringHwInfoThenSe
     EXPECT_TRUE(outHwInfo.featureTable.flags.ftr57bGPUAddressing);
 }
 
+LNLTEST_F(LnlProductHelperLinux, GivenLnlWhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
+    OSInterface osIface;
+    productHelper->configureHardwareCustom(&pInHwInfo, &osIface);
+    EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
+    EXPECT_EQ(5000ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_FALSE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
+}
+
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnTrue) {
     EXPECT_TRUE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
