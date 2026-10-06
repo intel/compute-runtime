@@ -417,7 +417,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     auto waitStatus = WaitStatus::notReady;
     auto skipWaitOnTaskCount = cmdQueue->waitForTimestamps(states, waitStatus, this->timestampPacketContainer.get(), nullptr);
 
-    if (this->getWaitForTaskCountRequired()) {
+    if (this->getWaitForTaskCountRequired() || this->perfCounterNode) {
         skipWaitOnTaskCount = false;
         this->setWaitForTaskCountRequired(false);
     }
@@ -725,7 +725,7 @@ bool Event::isCompleted() {
         gpuStateWaited = true;
     } else {
         if (this->areTimestampsCompleted()) {
-            if (cmdQueue->getGpgpuCommandStreamReceiver().getDcFlushSupport()) {
+            if (cmdQueue->getGpgpuCommandStreamReceiver().getDcFlushSupport() || this->perfCounterNode) {
                 // also flush L3 and wait for cmd queue when L3 flush required
                 auto waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), false, true, false);
                 if (waitStatus == WaitStatus::ready) {

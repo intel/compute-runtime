@@ -62,7 +62,17 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions, Event *event,
                                                                                CmdListKernelLaunchParams &launchParams) {
 
-    launchParams.inOrderNonWalkerSignalingRequired = isInOrderNonWalkerSignalingRequired(event);
+    auto perfCounterNode = (event != nullptr && !launchParams.makeKernelCommandView)
+                               ? event->getPerfCounterNode()
+                               : nullptr;
+    auto perfCounters = (perfCounterNode != nullptr)
+                            ? this->device->getNEODevice()->getPerformanceCounters()
+                            : nullptr;
+    const bool dispatchPerfCounters = perfCounters != nullptr && perfCounterNode != nullptr;
+    const bool signalEventAfterPerfCountersQueryEnd = dispatchPerfCounters && (!event->isCounterBased() || event->isEventTimestampFlagSet());
+    const bool signalCounterAfterPerfCountersQueryEnd = dispatchPerfCounters && event->isCounterBased() && !event->isEventTimestampFlagSet();
+
+    launchParams.inOrderNonWalkerSignalingRequired = isInOrderNonWalkerSignalingRequired(event) || signalEventAfterPerfCountersQueryEnd;
 
     if (!launchParams.makeKernelCommandView && NEO::debugManager.flags.ForcePipeControlPriorToWalker.get()) {
         NEO::PipeControlArgs args;
@@ -191,12 +201,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             event->setKernelWithPrintfDeviceMutex(kernel->getDevicePrintfKernelMutex());
         }
         isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
-        if (compactL3FlushEvent(getDcFlushRequired(event->isFlushRequiredForSignal()))) {
+        if (signalEventAfterPerfCountersQueryEnd || compactL3FlushEvent(getDcFlushRequired(event->isFlushRequiredForSignal()))) {
             compactEvent = event;
         } else {
             NEO::GraphicsAllocation *eventPoolAlloc = event->getAllocation(this->device);
 
-            if (eventPoolAlloc) {
+            if (eventPoolAlloc && !signalCounterAfterPerfCountersQueryEnd) {
                 if (!launchParams.omitAddingEventResidency) {
                     commandContainer.addToResidencyContainer(eventPoolAlloc);
                 }
@@ -316,7 +326,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                 if (!event->isCounterBased()) {
                     dispatchEventPostSyncOperation(event, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false);
                 }
-            } else {
+            } else if (!signalCounterAfterPerfCountersQueryEnd) {
                 if (!skipWalkerPostSync) {
                     inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
                     if (this->inOrderAtomicSignalingEnabled) {
@@ -416,20 +426,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
     setAdditionalDispatchKernelArgsFromKernel(dispatchKernelArgs, kernel);
 
-    auto *perfCounterNode = (event != nullptr && !launchParams.makeKernelCommandView)
-                                ? event->getPerfCounterNode()
-                                : nullptr;
-    auto *perfCounters = (perfCounterNode != nullptr)
-                             ? this->device->getNEODevice()->getPerformanceCounters()
-                             : nullptr;
-    const bool dispatchPerfCounters = perfCounters != nullptr && perfCounterNode != nullptr;
     MetricsLibraryApi::GpuCommandBufferType perfCounterCmdBufferType = MetricsLibraryApi::GpuCommandBufferType::Render;
     if (dispatchPerfCounters) {
-        auto csr = this->getCsr(false);
-        perfCounterCmdBufferType = NEO::EngineHelpers::isCcs(csr->getOsContext().getEngineType())
-                                       ? MetricsLibraryApi::GpuCommandBufferType::Compute
-                                       : MetricsLibraryApi::GpuCommandBufferType::Render;
-        commandContainer.addToResidencyContainer(perfCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(csr->getRootDeviceIndex()));
+        bool isCcs = false;
+        if (isImmediateType()) {
+            isCcs = NEO::EngineHelpers::isCcs(this->getCsr(false)->getOsContext().getEngineType());
+        } else {
+            isCcs = engineGroupType != NEO::EngineGroupType::renderCompute;
+        }
+        perfCounterCmdBufferType = isCcs ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                         : MetricsLibraryApi::GpuCommandBufferType::Render;
+        commandContainer.addToResidencyContainer(perfCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(neoDevice->getRootDeviceIndex()));
 
         auto beginSize = perfCounters->getGpuCommandsSize(perfCounterCmdBufferType, true);
         if (beginSize > 0) {
@@ -446,6 +453,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (endSize > 0) {
             auto endBuffer = commandContainer.getCommandStream()->getSpace(endSize);
             perfCounters->getGpuCommands(perfCounterCmdBufferType, *perfCounterNode, false, endSize, endBuffer);
+        }
+
+        if (inOrderExecSignalRequired && signalCounterAfterPerfCountersQueryEnd) {
+            appendSignalInOrderDependencyCounter(event, false, true, false, false);
+            if (interruptEvent) {
+                NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+            }
         }
     }
 

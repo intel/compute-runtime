@@ -1424,5 +1424,269 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEventWithPerfCounterNodeWhenAppend
     perfCounterNode->returnTag();
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventWithPerfCounterNodeWhenAppendLaunchKernelThenEventIsSignaledAfterWalkerInsteadOfWalkerPostSync, IsAtLeastXeCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    class MockMetricsLibraryNoCommands : public MockMetricsLibrary {
+      public:
+        bool commandBufferGetSize(const MetricsLibraryApi::CommandBufferData_1_0 &commandBufferData,
+                                  MetricsLibraryApi::CommandBufferSize_1_0 &commandBufferSize) override {
+            commandBufferSize.GpuMemorySize = 0u;
+            return true;
+        }
+    };
+    auto perfCounters = std::make_unique<MockPerformanceCounters>();
+    perfCounters->setMetricsLibraryInterface(std::make_unique<MockMetricsLibraryNoCommands>());
+    neoDevice->setPerfCounters(std::move(perfCounters));
+
+    createKernel();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 1;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_NE(nullptr, event.get());
+
+    const uint32_t gpuReportSize = NEO::HwPerfCounter::getSize(*neoDevice->getPerformanceCounters());
+    auto perfCounterNode = neoDevice->getDefaultEngine().commandStreamReceiver->getEventPerfCountAllocator(gpuReportSize)->getTag();
+    event->setPerfCounterNode(perfCounterNode);
+
+    auto commandStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = commandStream->getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(commandStream->getCpuBase(), usedBefore), commandStream->getUsed() - usedBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+    auto walker = genCmdCast<WalkerType *>(*itorWalker);
+    const auto eventAddress = event->getGpuAddress(device);
+    EXPECT_NE(eventAddress, walker->getPostSync().getDestinationAddress());
+
+    bool eventTimestampWrittenAfterWalker = false;
+    for (auto it : findAll<MI_STORE_REGISTER_MEM *>(itorWalker, cmdList.end())) {
+        auto srm = genCmdCast<MI_STORE_REGISTER_MEM *>(*it);
+        if (srm->getMemoryAddress() >= eventAddress && srm->getMemoryAddress() < eventAddress + event->getSinglePacketSize()) {
+            eventTimestampWrittenAfterWalker = true;
+        }
+    }
+    EXPECT_TRUE(eventTimestampWrittenAfterWalker);
+
+    event->setPerfCounterNode(nullptr);
+    perfCounterNode->returnTag();
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventWithoutPerfCounterNodeWhenAppendLaunchKernelThenEventIsSignaledByWalkerPostSync, IsAtLeastXeCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    neoDevice->setPerfCounters(std::make_unique<MockPerformanceCounters>());
+
+    createKernel();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 1;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_NE(nullptr, event.get());
+    ASSERT_EQ(nullptr, event->getPerfCounterNode());
+    const auto expectedPostSyncAddress = event->getPacketAddress(device);
+
+    auto commandStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = commandStream->getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(commandStream->getCpuBase(), usedBefore), commandStream->getUsed() - usedBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+    auto walker = genCmdCast<WalkerType *>(*itorWalker);
+    const auto eventAddress = event->getGpuAddress(device);
+    EXPECT_EQ(expectedPostSyncAddress, walker->getPostSync().getDestinationAddress());
+
+    bool eventTimestampWrittenAfterWalker = false;
+    for (auto it : findAll<MI_STORE_REGISTER_MEM *>(itorWalker, cmdList.end())) {
+        auto srm = genCmdCast<MI_STORE_REGISTER_MEM *>(*it);
+        if (srm->getMemoryAddress() >= eventAddress && srm->getMemoryAddress() < eventAddress + event->getSinglePacketSize()) {
+            eventTimestampWrittenAfterWalker = true;
+        }
+    }
+    EXPECT_FALSE(eventTimestampWrittenAfterWalker);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenCounterBasedEventWithoutTimestampAndWithPerfCounterNodeWhenAppendLaunchKernelThenCounterIsSignaledAfterPerfCountersEndInsteadOfWalkerPostSync, IsAtLeastXeCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    class MockMetricsLibraryNoCommands : public MockMetricsLibrary {
+      public:
+        bool commandBufferGetSize(const MetricsLibraryApi::CommandBufferData_1_0 &commandBufferData,
+                                  MetricsLibraryApi::CommandBufferSize_1_0 &commandBufferSize) override {
+            commandBufferSize.GpuMemorySize = 0u;
+            return true;
+        }
+    };
+    auto perfCounters = std::make_unique<MockPerformanceCounters>();
+    perfCounters->setMetricsLibraryInterface(std::make_unique<MockMetricsLibraryNoCommands>());
+    neoDevice->setPerfCounters(std::move(perfCounters));
+
+    createKernel();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER));
+    ASSERT_TRUE(commandList->isInOrderExecutionEnabled());
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+    eventPoolDesc.pNext = &counterBasedExtension;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_NE(nullptr, event.get());
+    ASSERT_TRUE(event->isCounterBased());
+    ASSERT_FALSE(event->isEventTimestampFlagSet());
+
+    const uint32_t gpuReportSize = NEO::HwPerfCounter::getSize(*neoDevice->getPerformanceCounters());
+    auto perfCounterNode = neoDevice->getDefaultEngine().commandStreamReceiver->getEventPerfCountAllocator(gpuReportSize)->getTag();
+    event->setPerfCounterNode(perfCounterNode);
+
+    auto commandStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = commandStream->getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(commandStream->getCpuBase(), usedBefore), commandStream->getUsed() - usedBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+    auto walker = genCmdCast<WalkerType *>(*itorWalker);
+    const auto counterAddress = commandList->inOrderExecInfo->getBaseDeviceAddress() + commandList->inOrderExecInfo->getAllocationOffset();
+    EXPECT_NE(counterAddress, walker->getPostSync().getDestinationAddress());
+
+    bool counterSignaledAfterWalker = false;
+    for (auto it : findAll<PIPE_CONTROL *>(itorWalker, cmdList.end())) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl) == counterAddress) {
+            EXPECT_EQ(1u, pipeControl->getImmediateData());
+            counterSignaledAfterWalker = true;
+        }
+    }
+    EXPECT_TRUE(counterSignaledAfterWalker);
+    EXPECT_FALSE(event->isCbEventWithProfiling());
+
+    event->setPerfCounterNode(nullptr);
+    perfCounterNode->returnTag();
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenCounterBasedTimestampEventWithPerfCounterNodeWhenAppendLaunchKernelThenTimestampIsWrittenAfterWalkerAndCounterIsNotSignaledEarly, IsAtLeastXeCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    class MockMetricsLibraryNoCommands : public MockMetricsLibrary {
+      public:
+        bool commandBufferGetSize(const MetricsLibraryApi::CommandBufferData_1_0 &commandBufferData,
+                                  MetricsLibraryApi::CommandBufferSize_1_0 &commandBufferSize) override {
+            commandBufferSize.GpuMemorySize = 0u;
+            return true;
+        }
+    };
+    auto perfCounters = std::make_unique<MockPerformanceCounters>();
+    perfCounters->setMetricsLibraryInterface(std::make_unique<MockMetricsLibraryNoCommands>());
+    neoDevice->setPerfCounters(std::move(perfCounters));
+
+    createKernel();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER));
+    ASSERT_TRUE(commandList->isInOrderExecutionEnabled());
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 1;
+    eventPoolDesc.pNext = &counterBasedExtension;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_NE(nullptr, event.get());
+    ASSERT_TRUE(event->isCounterBased());
+    ASSERT_TRUE(event->isEventTimestampFlagSet());
+
+    const uint32_t gpuReportSize = NEO::HwPerfCounter::getSize(*neoDevice->getPerformanceCounters());
+    auto perfCounterNode = neoDevice->getDefaultEngine().commandStreamReceiver->getEventPerfCountAllocator(gpuReportSize)->getTag();
+    event->setPerfCounterNode(perfCounterNode);
+
+    auto commandStream = commandList->getCmdContainer().getCommandStream();
+    auto usedBefore = commandStream->getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(commandStream->getCpuBase(), usedBefore), commandStream->getUsed() - usedBefore));
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+    auto walker = genCmdCast<WalkerType *>(*itorWalker);
+    const auto counterAddress = commandList->inOrderExecInfo->getBaseDeviceAddress() + commandList->inOrderExecInfo->getAllocationOffset();
+    const auto eventAddress = event->getGpuAddress(device);
+    EXPECT_NE(counterAddress, walker->getPostSync().getDestinationAddress());
+    EXPECT_NE(eventAddress, walker->getPostSync().getDestinationAddress());
+
+    for (auto it : findAll<PIPE_CONTROL *>(itorWalker, cmdList.end())) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        EXPECT_NE(counterAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    }
+
+    bool eventTimestampWrittenAfterWalker = false;
+    for (auto it : findAll<MI_STORE_REGISTER_MEM *>(itorWalker, cmdList.end())) {
+        auto srm = genCmdCast<MI_STORE_REGISTER_MEM *>(*it);
+        if (srm->getMemoryAddress() >= eventAddress && srm->getMemoryAddress() < eventAddress + event->getSinglePacketSize()) {
+            eventTimestampWrittenAfterWalker = true;
+        }
+    }
+    EXPECT_TRUE(eventTimestampWrittenAfterWalker);
+    EXPECT_TRUE(event->isCbEventWithProfiling());
+
+    event->setPerfCounterNode(nullptr);
+    perfCounterNode->returnTag();
+}
+
 } // namespace ult
 } // namespace L0

@@ -916,6 +916,125 @@ HWTEST_F(ProfilingWithPerfCountersTests, givenTimestampPacketsEnabledWhenEnqueue
     clReleaseEvent(event);
 }
 
+HWTEST_F(ProfilingWithPerfCountersTests, givenCompletedTimestampsWhenWaitingOnEventWithPerfCounterNodeThenTaskCountWaitIsNotSkipped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableTimestampWaitForQueues.set(4);
+
+    typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    auto node = csr.getTimestampPacketAllocator()->getTag();
+    for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
+        node->assignDataToAllTimestamps(i, timestampData);
+    }
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), pClDevice.get(), nullptr);
+    cmdQ.setPerfCountersEnabled();
+    cmdQ.waitUntilCompleteReturnValue = WaitStatus::ready;
+
+    MockEvent<Event> eventNoPerfCounterNode(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 1);
+
+    eventNoPerfCounterNode.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    eventNoPerfCounterNode.timestampPacketContainer->add(node);
+
+    EXPECT_EQ(WaitStatus::ready, eventNoPerfCounterNode.wait(false, false));
+    EXPECT_TRUE(cmdQ.latestWaitForTimestampsStatus);
+    EXPECT_TRUE(cmdQ.recordedSkipWait);
+
+    MockEvent<Event> eventPerfCounterNode(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 1);
+
+    eventPerfCounterNode.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    eventPerfCounterNode.timestampPacketContainer->add(node);
+
+    ASSERT_NE(nullptr, eventPerfCounterNode.getHwPerfCounterNode());
+
+    EXPECT_EQ(WaitStatus::ready, eventPerfCounterNode.wait(false, false));
+    EXPECT_TRUE(cmdQ.latestWaitForTimestampsStatus);
+    EXPECT_FALSE(cmdQ.recordedSkipWait);
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, givenCompletedTimestampsAndWaitForTaskCountRequiredWhenWaitingOnEventWithoutPerfCounterNodeThenTaskCountWaitIsNotSkippedAndFlagIsCleared) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableTimestampWaitForQueues.set(4);
+
+    typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    auto node = csr.getTimestampPacketAllocator()->getTag();
+    for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
+        node->assignDataToAllTimestamps(i, timestampData);
+    }
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), pClDevice.get(), nullptr);
+    cmdQ.waitUntilCompleteReturnValue = WaitStatus::ready;
+
+    MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 1);
+    event.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    event.timestampPacketContainer->add(node);
+
+    EXPECT_EQ(WaitStatus::ready, event.wait(false, false));
+    EXPECT_TRUE(cmdQ.latestWaitForTimestampsStatus);
+    EXPECT_TRUE(cmdQ.recordedSkipWait);
+
+    event.setWaitForTaskCountRequired(true);
+
+    EXPECT_EQ(WaitStatus::ready, event.wait(false, false));
+    EXPECT_TRUE(cmdQ.latestWaitForTimestampsStatus);
+    EXPECT_FALSE(cmdQ.recordedSkipWait);
+    EXPECT_FALSE(event.getWaitForTaskCountRequired());
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, givenCompletedTimestampsAndTaskCountNotReachedWhenCheckingCompletionOfEventWithPerfCounterNodeThenWaitForTaskCount) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableTimestampWaitForEvents.set(4);
+
+    typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.dcFlushSupport = false;
+    *csr.getTagAddress() = 0u;
+
+    auto node = csr.getTimestampPacketAllocator()->getTag();
+    for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
+        node->assignDataToAllTimestamps(i, timestampData);
+    }
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), pClDevice.get(), nullptr);
+    cmdQ.setPerfCountersEnabled();
+    const TaskCountType eventTaskCount = 1u;
+    const TaskCountType initialTaskCountWaited = cmdQ.latestTaskCountWaited.load();
+
+    MockEvent<Event> eventNoPerfCounterNode(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, eventTaskCount);
+
+    eventNoPerfCounterNode.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    eventNoPerfCounterNode.timestampPacketContainer->add(node);
+
+    EXPECT_TRUE(eventNoPerfCounterNode.isCompleted());
+    EXPECT_EQ(initialTaskCountWaited, cmdQ.latestTaskCountWaited.load());
+
+    MockEvent<Event> eventPerfCounterNode(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, eventTaskCount);
+
+    eventPerfCounterNode.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    eventPerfCounterNode.timestampPacketContainer->add(node);
+
+    ASSERT_NE(nullptr, eventPerfCounterNode.getHwPerfCounterNode());
+
+    cmdQ.waitUntilCompleteReturnValue = WaitStatus::notReady;
+    EXPECT_FALSE(eventPerfCounterNode.isCompleted());
+    EXPECT_EQ(eventTaskCount, cmdQ.latestTaskCountWaited.load());
+    EXPECT_FALSE(cmdQ.recordedSkipWait);
+
+    cmdQ.waitUntilCompleteReturnValue = WaitStatus::ready;
+    EXPECT_TRUE(eventPerfCounterNode.isCompleted());
+
+    *csr.getTagAddress() = csr.peekTaskCount();
+}
+
 HWTEST2_F(ProfilingWithPerfCountersOnCCSTests, givenCommandQueueBlockedWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS, IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;

@@ -105,6 +105,7 @@ Event::~Event() {
         cmdQ->getPerfCounters()->deleteQuery(perfCounterNode->getQueryHandleRef());
         perfCounterNode->getQueryHandleRef() = {};
         perfCounterNode->returnTag();
+        getL0Object()->setPerfCounterNode(nullptr);
     }
 
     if (this->backing == EventBacking::counterBased) {
