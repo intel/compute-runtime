@@ -1257,7 +1257,7 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrWhenS
     ASSERT_LT(requiredScratchSlot0Size2nd, requiredScratchSlot0Size);
 }
 
-XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenNoPrimaryCsrWhenSetScratchAddressThenLockCsrNotCalled) {
+XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenNoPrimaryCsrWhenSetScratchAddressThenLockCalledOnSubmissionCsr) {
     auto &submissionCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     uint64_t scratchAddress = 0u;
@@ -1270,7 +1270,7 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenNoPrimaryCsrWhe
 
     EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, submissionCsr);
     EXPECT_EQ(nSubmissionCsrMakeResidentCalled + 1, submissionCsr.makeResidentCalledTimes);
-    EXPECT_EQ(lockCounterPrimaryCsr, submissionCsr.recursiveLockCounter);
+    EXPECT_EQ(lockCounterPrimaryCsr + 1, submissionCsr.recursiveLockCounter);
 
     uint64_t expectedScratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
     EXPECT_EQ(expectedScratchAddress, scratchAddress);
@@ -1279,7 +1279,7 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenNoPrimaryCsrWhe
     ASSERT_LT(requiredScratchSlot0Size2nd, requiredScratchSlot0Size);
 }
 
-XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrAsSubmissionCsrWhenSetScratchAddressThenLockCsrNotCalled) {
+XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrAsSubmissionCsrWhenSetScratchAddressThenLockCalledOnSubmissionCsr) {
     auto &submissionCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     uint64_t scratchAddress = 0u;
@@ -1293,7 +1293,7 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrAsSub
 
     EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, submissionCsr);
     EXPECT_EQ(nSubmissionCsrMakeResidentCalled + 1, submissionCsr.makeResidentCalledTimes);
-    EXPECT_EQ(lockCounterPrimaryCsr, submissionCsr.recursiveLockCounter);
+    EXPECT_EQ(lockCounterPrimaryCsr + 1, submissionCsr.recursiveLockCounter);
 
     uint64_t expectedScratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
     EXPECT_EQ(expectedScratchAddress, scratchAddress);

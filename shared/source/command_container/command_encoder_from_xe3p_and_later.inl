@@ -62,12 +62,9 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
 
     if (requiredScratchSlot0Size > 0u || requiredScratchSlot1Size > 0u) {
-        std::unique_lock<NEO::CommandStreamReceiver::MutexType> primaryCsrLock;
         auto primaryCsr = submissionCsr.getPrimaryCsr();
-
-        if (primaryCsr && primaryCsr != &submissionCsr) {
-            primaryCsrLock = primaryCsr->obtainUniqueOwnership();
-        }
+        auto &scratchOwnerCsr = primaryCsr ? *primaryCsr : submissionCsr;
+        auto scratchOwnerLock = scratchOwnerCsr.obtainUniqueOwnership();
 
         auto scratchController = submissionCsr.getPrimaryScratchSpaceController();
         UNRECOVERABLE_IF(scratchController == nullptr);
