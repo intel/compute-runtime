@@ -184,12 +184,11 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     ASSERT_NE(nullptr, secondInfo);
     EXPECT_EQ(pooledPtrs[1], addrToPtr(secondInfo->address));
 
-    using Op = UsmMemAllocPool::ResidencyOperationType;
-
     usmMemAllocPool.pool = pooledPtrs[0];
     usmMemAllocPool.poolInfo.poolSize = 3 * MemoryConstants::pageSize;
     usmMemAllocPool.poolEnd = ptrOffset(usmMemAllocPool.pool, usmMemAllocPool.poolInfo.poolSize);
     auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(mockDevice.getRootDeviceEnvironment().memoryOperationsInterface.get());
+    mockMemoryOperationsHandler->captureGfxAllocationsForMakeResident = true;
     usmMemAllocPool.device = &mockDevice;
     EXPECT_FALSE(usmMemAllocPool.isTrackingResidency());
     usmMemAllocPool.enableResidencyTracking();
@@ -200,35 +199,56 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_TRUE(usmMemAllocPool.isInitialized());
 
     MockDevice mockPeerDevice;
+    MockGraphicsAllocation mockPeerGfxAlloc;
+    auto mockMemoryOperationsHandlerPeer = static_cast<MockMemoryOperations *>(mockPeerDevice.getRootDeviceEnvironment().memoryOperationsInterface.get());
+    mockMemoryOperationsHandlerPeer->captureGfxAllocationsForMakeResident = true;
+    auto expectedMakeResidentCountPeer = mockMemoryOperationsHandlerPeer->makeResidentCalledCount.load();
+    auto expectedEvictCountPeer = mockMemoryOperationsHandlerPeer->evictCalledCount.load();
     // ptr in pool but not allocated -> error
     const auto notAllocatedPtrInPool = pooledPtrs[2];
     EXPECT_TRUE(usmMemAllocPool.isInPoolRange(notAllocatedPtrInPool));
     auto expectedMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount.load();
     auto expectedEvictCount = mockMemoryOperationsHandler->evictCalledCount.load();
-    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.residencyOperation<Op::makeResident>(notAllocatedPtrInPool));
-    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.residencyOperation<Op::evict>(notAllocatedPtrInPool));
-    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.residencyOperation<Op::makeResident>(notAllocatedPtrInPool, &mockPeerDevice));
-    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.residencyOperation<Op::evict>(notAllocatedPtrInPool, &mockPeerDevice));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.makeChunkResident(notAllocatedPtrInPool));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.evictChunk(notAllocatedPtrInPool));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.makeChunkResident(notAllocatedPtrInPool, &mockPeerDevice, &mockPeerGfxAlloc));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, usmMemAllocPool.evictChunk(notAllocatedPtrInPool, &mockPeerDevice));
     EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
     EXPECT_EQ(expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
+
+    ASSERT_EQ(0u, firstInfo->isResident.count(&mockPeerDevice));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.evictChunk(pooledPtrs[0], &mockPeerDevice));
+    EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
+    EXPECT_EQ(0u, firstInfo->isResident.count(&mockPeerDevice));
 
     // ptr in pool, make resident -> make resident
     EXPECT_FALSE(firstInfo->isResident[&mockDevice]);
     EXPECT_FALSE(usmMemAllocPool.residencyCounts[&mockDevice]);
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0]));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[0]));
     EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
-    auto mockMemoryOperationsHandlerPeer = static_cast<MockMemoryOperations *>(mockPeerDevice.getRootDeviceEnvironment().memoryOperationsInterface.get());
-    auto expectedMakeResidentCountPeer = mockMemoryOperationsHandlerPeer->makeResidentCalledCount.load();
-    auto expectedEvictCountPeer = mockMemoryOperationsHandlerPeer->evictCalledCount.load();
     auto expectResidencyCounts = [&]() {
         EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
         EXPECT_EQ(expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
         EXPECT_EQ(expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
         EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
     };
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0], &mockPeerDevice));
+    mockMemoryOperationsHandlerPeer->makeResidentResult = MemoryOperationsStatus::failed;
+    EXPECT_EQ(MemoryOperationsStatus::failed, usmMemAllocPool.makeChunkResident(pooledPtrs[0], &mockPeerDevice, &mockPeerGfxAlloc));
+    EXPECT_EQ(++expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
+    EXPECT_FALSE(firstInfo->isResident[&mockPeerDevice]);
+    EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockPeerDevice]);
+    EXPECT_EQ(0u, usmMemAllocPool.residentPoolAllocations.count(&mockPeerDevice));
+    mockMemoryOperationsHandlerPeer->makeResidentResult = MemoryOperationsStatus::success;
+
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[0], &mockPeerDevice, &mockPeerGfxAlloc));
     EXPECT_EQ(++expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
     EXPECT_EQ(expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
+    ASSERT_EQ(1u, mockMemoryOperationsHandler->gfxAllocationsForMakeResident.size());
+    EXPECT_EQ(&mockGfxAlloc, mockMemoryOperationsHandler->gfxAllocationsForMakeResident[0]);
+    ASSERT_EQ(1u, mockMemoryOperationsHandlerPeer->gfxAllocationsForMakeResident.size());
+    EXPECT_EQ(&mockPeerGfxAlloc, mockMemoryOperationsHandlerPeer->gfxAllocationsForMakeResident[0]);
+    EXPECT_EQ(&mockGfxAlloc, usmMemAllocPool.residentPoolAllocations[&mockDevice]);
+    EXPECT_EQ(&mockPeerGfxAlloc, usmMemAllocPool.residentPoolAllocations[&mockPeerDevice]);
     EXPECT_TRUE(firstInfo->isResident[&mockDevice]);
     EXPECT_TRUE(firstInfo->isResident[&mockPeerDevice]);
     EXPECT_FALSE(secondInfo->isResident[&mockDevice]);
@@ -237,8 +257,8 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(1u, usmMemAllocPool.residencyCounts[&mockPeerDevice]);
 
     // ptr in pool already resident -> skip
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0]));
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[0], &mockPeerDevice));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[0]));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[0], &mockPeerDevice, &mockPeerGfxAlloc));
     expectResidencyCounts();
     EXPECT_TRUE(firstInfo->isResident[&mockDevice]);
     EXPECT_TRUE(firstInfo->isResident[&mockPeerDevice]);
@@ -248,8 +268,8 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(1u, usmMemAllocPool.residencyCounts[&mockPeerDevice]);
 
     // second ptr in pool make resident -> skip
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[1]));
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[1], &mockPeerDevice));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[1]));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[1], &mockPeerDevice, &mockPeerGfxAlloc));
     expectResidencyCounts();
     EXPECT_TRUE(firstInfo->isResident[&mockDevice]);
     EXPECT_TRUE(secondInfo->isResident[&mockDevice]);
@@ -259,8 +279,8 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(2u, usmMemAllocPool.residencyCounts[&mockPeerDevice]);
 
     // first ptr evict -> skip
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[0]));
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[0], &mockPeerDevice));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.evictChunk(pooledPtrs[0]));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.evictChunk(pooledPtrs[0], &mockPeerDevice));
     expectResidencyCounts();
     EXPECT_FALSE(firstInfo->isResident[&mockDevice]);
     EXPECT_FALSE(firstInfo->isResident[&mockPeerDevice]);
@@ -270,10 +290,14 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(1u, usmMemAllocPool.residencyCounts[&mockPeerDevice]);
 
     // second ptr evict -> evict
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[1]));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.evictChunk(pooledPtrs[1]));
     EXPECT_EQ(++expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[1], &mockPeerDevice));
+    EXPECT_EQ(1u, mockMemoryOperationsHandlerPeer->gfxAllocationsForMakeResident.size());
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.evictChunk(pooledPtrs[1], &mockPeerDevice));
     EXPECT_EQ(++expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
+    EXPECT_EQ(0u, mockMemoryOperationsHandler->gfxAllocationsForMakeResident.size());
+    EXPECT_EQ(0u, mockMemoryOperationsHandlerPeer->gfxAllocationsForMakeResident.size());
+    EXPECT_TRUE(usmMemAllocPool.residentPoolAllocations.empty());
     EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
     EXPECT_FALSE(firstInfo->isResident[&mockDevice]);
     EXPECT_FALSE(firstInfo->isResident[&mockPeerDevice]);
@@ -283,8 +307,8 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockPeerDevice]);
 
     // evict already evicted ptr -> skip
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[1]));
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::evict>(pooledPtrs[1], &mockPeerDevice));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.evictChunk(pooledPtrs[1]));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.evictChunk(pooledPtrs[1], &mockPeerDevice));
     expectResidencyCounts();
     EXPECT_FALSE(firstInfo->isResident[&mockDevice]);
     EXPECT_FALSE(secondInfo->isResident[&mockDevice]);
@@ -307,10 +331,10 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
                                                           .size = MemoryConstants::pageSize,
                                                           .requestedSize = MemoryConstants::pageSize,
                                                           .isResident = decltype(UsmMemAllocPool::AllocationInfo::isResident){{&mockDevice, false}}});
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[1]));
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[2]));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[1]));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[2]));
     EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtrs[2], &mockPeerDevice));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtrs[2], &mockPeerDevice, &mockPeerGfxAlloc));
     EXPECT_EQ(++expectedMakeResidentCountPeer, mockMemoryOperationsHandlerPeer->makeResidentCalledCount);
     EXPECT_EQ(expectedEvictCount, mockMemoryOperationsHandler->evictCalledCount);
     ASSERT_FALSE(firstInfo->isResident[&mockDevice]);
@@ -340,6 +364,8 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingResidencyOperations
     EXPECT_EQ(++expectedEvictCountPeer, mockMemoryOperationsHandlerPeer->evictCalledCount);
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockDevice]);
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockPeerDevice]);
+    EXPECT_EQ(0u, mockMemoryOperationsHandlerPeer->gfxAllocationsForMakeResident.size());
+    EXPECT_TRUE(usmMemAllocPool.residentPoolAllocations.empty());
     EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
 
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockDevice]);
@@ -365,15 +391,14 @@ TEST_F(UnifiedMemoryPoolingTest, givenPoolMakeResidentFailsWhenMakingChunkReside
     ASSERT_NE(nullptr, chunkInfo);
     auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(mockDevice.getRootDeviceEnvironment().memoryOperationsInterface.get());
     const auto initialMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount.load();
-    using Op = UsmMemAllocPool::ResidencyOperationType;
 
     mockMemoryOperationsHandler->makeResidentResult = MemoryOperationsStatus::outOfMemory;
-    EXPECT_EQ(MemoryOperationsStatus::outOfMemory, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtr));
+    EXPECT_EQ(MemoryOperationsStatus::outOfMemory, usmMemAllocPool.makeChunkResident(pooledPtr));
     EXPECT_FALSE(chunkInfo->isResident[&mockDevice]);
     EXPECT_EQ(0u, usmMemAllocPool.residencyCounts[&mockDevice]);
 
     mockMemoryOperationsHandler->makeResidentResult = MemoryOperationsStatus::success;
-    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.residencyOperation<Op::makeResident>(pooledPtr));
+    EXPECT_EQ(MemoryOperationsStatus::success, usmMemAllocPool.makeChunkResident(pooledPtr));
     EXPECT_EQ(initialMakeResidentCount + 2, mockMemoryOperationsHandler->makeResidentCalledCount);
     EXPECT_TRUE(chunkInfo->isResident[&mockDevice]);
     EXPECT_EQ(1u, usmMemAllocPool.residencyCounts[&mockDevice]);
@@ -1135,7 +1160,7 @@ TEST_F(DeferredFreeUnifiedMemoryPoolingTest, givenResidencyTrackingPoolWhenChunk
     ASSERT_NE(nullptr, pooledPtr);
     const auto evictCountBeforeFree = mockMemoryOperationsHandler->evictCalledCount.load();
     EXPECT_EQ(MemoryOperationsStatus::success,
-              usmMemAllocPool.residencyOperation<UsmMemAllocPool::ResidencyOperationType::makeResident>(pooledPtr));
+              usmMemAllocPool.makeChunkResident(pooledPtr));
     ASSERT_EQ(1u, usmMemAllocPool.residencyCounts[&mockDevice]);
 
     markPoolUsedByGpu(completedTaskCount + 1);

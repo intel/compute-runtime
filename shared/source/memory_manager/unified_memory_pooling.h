@@ -63,10 +63,6 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         EngineCompletionSnapshot snapshot;
     };
 
-    enum class ResidencyOperationType {
-        makeResident,
-        evict
-    };
     using AllocationsInfoStorage = BaseSortedPointerWithValueVector<AllocationInfo>;
     using CustomCleanupFn = std::function<void(const void *)>;
     using PeerAllocationsFn = std::function<StackVec<GraphicsAllocation *, 4>(const void *)>;
@@ -99,40 +95,14 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     void enableResidencyTracking() { this->trackResidency = true; }
     bool isTrackingResidency() { return this->trackResidency; }
 
-    template <ResidencyOperationType op>
-    MemoryOperationsStatus residencyOperation(const void *ptr) {
-        return this->residencyOperation<op>(ptr, this->device);
+    MemoryOperationsStatus makeChunkResident(const void *ptr) {
+        return this->makeChunkResident(ptr, this->device, this->allocation);
     }
-
-    template <ResidencyOperationType op>
-    MemoryOperationsStatus residencyOperation(const void *ptr, Device *targetDevice) {
-        OPTIONAL_UNRECOVERABLE_IF(nullptr == targetDevice || nullptr == allocation);
-        std::unique_lock<std::mutex> lock(mtx);
-        auto allocationInfo = allocations.get(ptr);
-        if (allocationInfo) {
-            if constexpr (ResidencyOperationType::makeResident == op) {
-                auto &chunkIsResident = allocationInfo->isResident[targetDevice];
-                if (false == chunkIsResident) {
-                    auto &residencyCount = this->residencyCounts[targetDevice];
-                    if (0u == residencyCount) {
-                        auto status = makePoolResident(targetDevice);
-                        if (MemoryOperationsStatus::success != status) {
-                            return status;
-                        }
-                    }
-                    chunkIsResident = true;
-                    ++residencyCount;
-                }
-            } else { // evict
-                if (true == std::exchange(allocationInfo->isResident[targetDevice], false) && 1u == this->residencyCounts[targetDevice]--) {
-                    return evictPool(targetDevice);
-                }
-            }
-            return MemoryOperationsStatus::success;
-        } else { // not allocated chunk
-            return MemoryOperationsStatus::memoryNotFound;
-        }
+    MemoryOperationsStatus makeChunkResident(const void *ptr, Device *targetDevice, GraphicsAllocation *targetAllocation);
+    MemoryOperationsStatus evictChunk(const void *ptr) {
+        return this->evictChunk(ptr, this->device);
     }
+    MemoryOperationsStatus evictChunk(const void *ptr, Device *targetDevice);
 
     void setCustomCleanup(CustomCleanupFn customCleanup) {
         this->customCleanup = std::move(customCleanup);
@@ -146,8 +116,10 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     static constexpr auto poolAlignment = MemoryConstants::pageSize2M;
 
   protected:
-    MemoryOperationsStatus evictPool(Device *targetDevice);
-    MemoryOperationsStatus makePoolResident(Device *targetDevice);
+    MemoryOperationsStatus evictPool(Device *targetDevice, GraphicsAllocation *targetAllocation);
+    MemoryOperationsStatus makePoolResident(Device *targetDevice, GraphicsAllocation *targetAllocation);
+    // Caller must hold mtx.
+    MemoryOperationsStatus dropPoolResidency(Device *targetDevice);
     // Caller must hold mtx.
     bool isEmptyImpl() const;
     // Caller must hold mtx.
@@ -171,6 +143,8 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     SvmAllocationData *allocationData{};
     PoolInfo poolInfo{};
     std::unordered_map<Device *, uint64_t> residencyCounts;
+    // handles are per adapter, so a peer device is resident through its own allocation
+    std::unordered_map<Device *, GraphicsAllocation *> residentPoolAllocations;
     bool trackResidency{false};
 };
 

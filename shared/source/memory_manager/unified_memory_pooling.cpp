@@ -215,8 +215,8 @@ void UsmMemAllocPool::releaseChunk(const AllocationInfo &allocationInfo) {
     if (trackResidency) {
         OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);
         for (const auto &[neoDevice, isResident] : allocationInfo.isResident) {
-            if (isResident && 1u == this->residencyCounts[neoDevice]--) {
-                evictPool(neoDevice);
+            if (isResident) {
+                dropPoolResidency(neoDevice);
             }
         }
     }
@@ -308,14 +308,72 @@ uint64_t UsmMemAllocPool::getPoolAddress() const {
     return castToUint64(this->pool);
 }
 
-MemoryOperationsStatus UsmMemAllocPool::evictPool(Device *targetDevice) {
-    auto memoryOperationsIface = targetDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    return memoryOperationsIface->evict(targetDevice, *allocation);
+MemoryOperationsStatus UsmMemAllocPool::makeChunkResident(const void *ptr, Device *targetDevice, GraphicsAllocation *targetAllocation) {
+    OPTIONAL_UNRECOVERABLE_IF(nullptr == targetDevice || nullptr == targetAllocation);
+    std::unique_lock<std::mutex> lock(mtx);
+    auto allocationInfo = allocations.get(ptr);
+    if (nullptr == allocationInfo) {
+        return MemoryOperationsStatus::memoryNotFound;
+    }
+
+    auto &chunkIsResident = allocationInfo->isResident[targetDevice];
+    if (chunkIsResident) {
+        return MemoryOperationsStatus::success;
+    }
+
+    auto &residencyCount = this->residencyCounts[targetDevice];
+    if (0u == residencyCount) {
+        auto status = makePoolResident(targetDevice, targetAllocation);
+        if (MemoryOperationsStatus::success != status) {
+            return status;
+        }
+        this->residentPoolAllocations[targetDevice] = targetAllocation;
+    }
+
+    chunkIsResident = true;
+    ++residencyCount;
+    return MemoryOperationsStatus::success;
 }
 
-MemoryOperationsStatus UsmMemAllocPool::makePoolResident(Device *targetDevice) {
+MemoryOperationsStatus UsmMemAllocPool::evictChunk(const void *ptr, Device *targetDevice) {
+    OPTIONAL_UNRECOVERABLE_IF(nullptr == targetDevice);
+    std::unique_lock<std::mutex> lock(mtx);
+    auto allocationInfo = allocations.get(ptr);
+    if (nullptr == allocationInfo) {
+        return MemoryOperationsStatus::memoryNotFound;
+    }
+
+    auto isResidentIt = allocationInfo->isResident.find(targetDevice);
+    if (isResidentIt == allocationInfo->isResident.end() || false == isResidentIt->second) {
+        return MemoryOperationsStatus::success;
+    }
+
+    isResidentIt->second = false;
+    return dropPoolResidency(targetDevice);
+}
+
+MemoryOperationsStatus UsmMemAllocPool::evictPool(Device *targetDevice, GraphicsAllocation *targetAllocation) {
+    OPTIONAL_UNRECOVERABLE_IF(targetAllocation->getRootDeviceIndex() != targetDevice->getRootDeviceIndex());
     auto memoryOperationsIface = targetDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    return memoryOperationsIface->makeResident(targetDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), true, true);
+    return memoryOperationsIface->evict(targetDevice, *targetAllocation);
+}
+
+MemoryOperationsStatus UsmMemAllocPool::makePoolResident(Device *targetDevice, GraphicsAllocation *targetAllocation) {
+    OPTIONAL_UNRECOVERABLE_IF(targetAllocation->getRootDeviceIndex() != targetDevice->getRootDeviceIndex());
+    auto memoryOperationsIface = targetDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    return memoryOperationsIface->makeResident(targetDevice, ArrayRef<NEO::GraphicsAllocation *>(&targetAllocation, 1), true, true);
+}
+
+MemoryOperationsStatus UsmMemAllocPool::dropPoolResidency(Device *targetDevice) {
+    OPTIONAL_UNRECOVERABLE_IF(0u == this->residencyCounts[targetDevice]);
+    if (1u != this->residencyCounts[targetDevice]--) {
+        return MemoryOperationsStatus::success;
+    }
+    auto residentPoolAllocationIt = this->residentPoolAllocations.find(targetDevice);
+    OPTIONAL_UNRECOVERABLE_IF(residentPoolAllocationIt == this->residentPoolAllocations.end());
+    auto targetAllocation = residentPoolAllocationIt->second;
+    this->residentPoolAllocations.erase(residentPoolAllocationIt);
+    return evictPool(targetDevice, targetAllocation);
 }
 
 const std::array<const PoolInfo, 3> UsmMemAllocPoolsManager::getPoolInfos() {

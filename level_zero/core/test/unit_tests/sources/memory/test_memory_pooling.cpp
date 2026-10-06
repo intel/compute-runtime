@@ -32,13 +32,24 @@
 
 namespace L0 {
 namespace ult {
-template <int hostUsmPoolFlag = -1, int deviceUsmPoolFlag = -1, int usmPoolManagerFlag = -1, bool multiDevice = false, bool initDriver = true>
+struct DriverHandleFailingPeerImport : public Mock<L0::DriverHandle> {
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType,
+                         bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc,
+                         NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset) override {
+        return nullptr;
+    }
+};
+
+template <int hostUsmPoolFlag = -1, int deviceUsmPoolFlag = -1, int usmPoolManagerFlag = -1, bool multiDevice = false, bool initDriver = true, typename DriverHandleType = Mock<L0::DriverHandle>, int numSubDevices = 0>
 struct AllocUsmPoolMemoryTest : public ::testing::Test {
     void SetUp() override {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(hostUsmPoolFlag);
         NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(deviceUsmPoolFlag);
         NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(usmPoolManagerFlag);
         NEO::debugManager.flags.EnableUsmPoolLazyInit.set(-1);
+        if constexpr (numSubDevices > 0) {
+            NEO::debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        }
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -66,7 +77,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     }
 
     void initDriverImp() {
-        driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+        driverHandle = std::make_unique<DriverHandleType>();
         driverHandle->initialize(std::move(devices));
         setupFabricDriverModels(*driverHandle);
         driverHandle->initUsmPooling();
@@ -94,7 +105,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandle>> driverHandle;
+    std::unique_ptr<DriverHandleType> driverHandle;
     constexpr static uint32_t numRootDevices = multiDevice ? 2u : 1u;
     L0::Context *context = nullptr;
     std::vector<MockProductHelper *> mockProductHelpers;
@@ -460,6 +471,7 @@ TEST_F(AllocUsmMultiDeviceDefaultSinglePoolMemoryTest, givenMultiDeviceWhenIniti
 }
 
 using AllocUsmMultiDeviceEnabledSinglePoolMemoryTest = AllocUsmPoolMemoryTest<0, 1, 0, true, false>;
+using AllocUsmMultiDeviceNoPeerImportSinglePoolMemoryTest = AllocUsmPoolMemoryTest<0, 1, 0, true, false, DriverHandleFailingPeerImport>;
 TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolInitialized) {
     mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
@@ -1102,6 +1114,116 @@ TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhen
     EXPECT_EQ(expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(nonPooledPtr));
+    context->destroy();
+}
+
+TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenPooledChunkWhenMakingItResidentOnPeerDeviceThenPeerPoolAllocationIsUsedOnlyForLiveChunkAndResidencyIsRecordedOnSuccess) {
+    initDriverImp();
+    auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+    mockDeviceMemAllocPool->trackResidency = true;
+    auto poolBase = reinterpret_cast<void *>(mockDeviceMemAllocPool->getPoolAddress());
+
+    void *freedAllocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &freedAllocation));
+    ASSERT_NE(nullptr, freedAllocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freedAllocation));
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(freedAllocation));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->makeMemoryResident(l0Devices[1], freedAllocation, 1u));
+    EXPECT_EQ(nullptr, driverHandle->findPeerAllocation(l0Devices[1], poolBase));
+
+    void *allocation = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &allocation));
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(allocation));
+
+    auto peerNeoDevice = l0Devices[1]->getNEODevice();
+    auto peerMemoryOperationsHandler = static_cast<MockMemoryOperations *>(peerNeoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    peerMemoryOperationsHandler->captureGfxAllocationsForMakeResident = true;
+    peerMemoryOperationsHandler->makeResidentResult = NEO::MemoryOperationsStatus::failed;
+    auto expectedMakeResidentCount = peerMemoryOperationsHandler->makeResidentCalledCount.load();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, context->makeMemoryResident(l0Devices[1], allocation, 1u));
+    EXPECT_EQ(++expectedMakeResidentCount, peerMemoryOperationsHandler->makeResidentCalledCount);
+    EXPECT_EQ(0u, mockDeviceMemAllocPool->residencyCounts[peerNeoDevice]);
+    EXPECT_EQ(0u, mockDeviceMemAllocPool->residentPoolAllocations.count(peerNeoDevice));
+
+    peerMemoryOperationsHandler->makeResidentResult = NEO::MemoryOperationsStatus::success;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[1], allocation, 1u));
+    EXPECT_EQ(++expectedMakeResidentCount, peerMemoryOperationsHandler->makeResidentCalledCount);
+    EXPECT_EQ(1u, mockDeviceMemAllocPool->residencyCounts[peerNeoDevice]);
+
+    auto peerAllocation = driverHandle->findPeerAllocation(l0Devices[1], poolBase);
+    ASSERT_NE(nullptr, peerAllocation);
+    EXPECT_NE(mockDeviceMemAllocPool->allocation, peerAllocation);
+    ASSERT_EQ(1u, peerMemoryOperationsHandler->gfxAllocationsForMakeResident.size());
+    EXPECT_EQ(peerAllocation, peerMemoryOperationsHandler->gfxAllocationsForMakeResident[0]);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[1], allocation, 1u));
+    EXPECT_EQ(0u, peerMemoryOperationsHandler->gfxAllocationsForMakeResident.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(allocation));
+    context->destroy();
+}
+
+using AllocUsmSubDeviceEnabledSinglePoolMemoryTest = AllocUsmPoolMemoryTest<0, 1, 0, false, true, Mock<L0::DriverHandle>, 2>;
+TEST_F(AllocUsmSubDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenMakingItResidentOnSubDeviceThenOwningDeviceAllocationIsUsed) {
+    auto rootL0Device = l0Devices[0];
+    uint32_t subDeviceCount = 0u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, rootL0Device->getSubDevices(&subDeviceCount, nullptr));
+    ASSERT_NE(0u, subDeviceCount);
+    std::vector<ze_device_handle_t> subDeviceHandles(subDeviceCount);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, rootL0Device->getSubDevices(&subDeviceCount, subDeviceHandles.data()));
+    auto subDevice = L0::Device::fromHandle(subDeviceHandles[0]);
+
+    auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(rootL0Device->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+    mockDeviceMemAllocPool->trackResidency = true;
+    EXPECT_EQ(nullptr, subDevice->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+
+    void *allocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(rootL0Device, &deviceDesc, 1u, 0u, &allocation));
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(allocation));
+
+    auto memoryOperationsHandler = static_cast<MockMemoryOperations *>(subDevice->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    memoryOperationsHandler->captureGfxAllocationsForMakeResident = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(subDeviceHandles[0], allocation, 1u));
+
+    ASSERT_EQ(1u, memoryOperationsHandler->gfxAllocationsForMakeResident.size());
+    EXPECT_EQ(mockDeviceMemAllocPool->allocation, memoryOperationsHandler->gfxAllocationsForMakeResident[0]);
+    auto poolBase = reinterpret_cast<void *>(mockDeviceMemAllocPool->getPoolAddress());
+    EXPECT_EQ(nullptr, driverHandle->findPeerAllocation(subDevice, poolBase));
+    EXPECT_EQ(nullptr, driverHandle->findPeerAllocation(rootL0Device, poolBase));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(subDeviceHandles[0], allocation, 1u));
+    EXPECT_EQ(0u, memoryOperationsHandler->gfxAllocationsForMakeResident.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(allocation));
+}
+
+TEST_F(AllocUsmMultiDeviceNoPeerImportSinglePoolMemoryTest, givenPeerAllocationUnavailableWhenMakingPooledAllocationResidentOnPeerDeviceThenErrorIsReturned) {
+    initDriverImp();
+    auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+    mockDeviceMemAllocPool->trackResidency = true;
+
+    void *allocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &allocation));
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(allocation));
+
+    auto peerMemoryOperationsHandler = static_cast<MockMemoryOperations *>(l0Devices[1]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    auto expectedMakeResidentCount = peerMemoryOperationsHandler->makeResidentCalledCount.load();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->makeMemoryResident(l0Devices[1], allocation, 1u));
+    EXPECT_EQ(expectedMakeResidentCount, peerMemoryOperationsHandler->makeResidentCalledCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(allocation));
     context->destroy();
 }
 

@@ -24,6 +24,7 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     using UsmMemAllocPool::poolInfo;
     using UsmMemAllocPool::poolMemoryType;
     using UsmMemAllocPool::residencyCounts;
+    using UsmMemAllocPool::residentPoolAllocations;
     using UsmMemAllocPool::svmMemoryManager;
     using UsmMemAllocPool::trackResidency;
 
