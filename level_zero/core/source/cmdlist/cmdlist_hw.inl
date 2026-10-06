@@ -2036,14 +2036,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     if (!useAdditionalBlitProperties) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
         if (this->isInOrderExecutionEnabled()) {
-            appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
+            appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
         }
     } else if (signalEvent && signalEvent->isSignalWithUserInterrupt()) {
         NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
     }
     CmdListHandleInOrderDependencyParams inOrderDependencyParams{
         .nonWalkerInOrderCmdsChaining = false,
-        .copyOffloadOperation = false,
+        .copyOffloadOperation = memoryCopyParams.copyOffloadAllowed,
         .apiRequiredExternalGraphEvent = false};
     handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
 

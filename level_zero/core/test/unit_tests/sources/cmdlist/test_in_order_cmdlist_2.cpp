@@ -1862,6 +1862,59 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenImageCopyCalledT
     context->freeMem(data);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenImageCopyWithSignalEventCalledThenEventIsMarkedAsDualCopyOffloadAndCounterIsSignaledAfterMiFlush, IsAtLeastXeCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
+    immCmdList->inOrderAtomicSignalingEnabled = false;
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    auto data = allocHostMem(1);
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.width = 10;
+    zeDesc.height = 10;
+    zeDesc.depth = 1;
+    image->initialize(device, &zeDesc);
+    static_cast<MemoryAllocation *>(image->getAllocation())->overrideMemoryPool(NEO::MemoryPool::system64KBPages);
+    ze_image_region_t imgRegion = {0, 0, 0, 1, 1, 1};
+
+    EXPECT_FALSE(events[0]->isDualCopyOffloadEvent);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendImageCopyToMemoryExt(data, image->toHandle(), &imgRegion, 0, 0, eventHandle, 0, nullptr, copyParams);
+
+    EXPECT_TRUE(events[0]->isDualCopyOffloadEvent);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto counterGpuVa = gmmHelper->decanonize(immCmdList->inOrderExecInfo->getBaseDeviceAddress());
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    auto sdiItor = std::find_if(sdiCmds.begin(), sdiCmds.end(), [&](auto &itor) {
+        return gmmHelper->decanonize(genCmdCast<MI_STORE_DATA_IMM *>(*itor)->getAddress()) == counterGpuVa;
+    });
+    ASSERT_NE(sdiCmds.end(), sdiItor);
+    ASSERT_NE(cmdList.begin(), *sdiItor);
+
+    auto prevItor = *sdiItor;
+    --prevItor;
+    EXPECT_NE(nullptr, genCmdCast<MI_FLUSH_DW *>(*prevItor));
+
+    context->freeMem(data);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenFillCalledThenSkipSycCommands, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;

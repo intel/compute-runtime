@@ -51,6 +51,7 @@ struct InOrderFixtureMockEvent : public EventImp<uint32_t> {
     using EventImp<uint32_t>::externalInterruptId;
     using EventImp<uint32_t>::latestUsedCmdQueue;
     using EventImp<uint32_t>::isCompleted;
+    using EventImp<uint32_t>::isDualCopyOffloadEvent;
 
     void makeCounterBasedInitiallyDisabled(MultiGraphicsAllocation &poolAllocation) {
         resetInOrderTimestampNode(nullptr, 0);
