@@ -2891,6 +2891,7 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAn
 TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhenDefaultsAreUsedThenKmdWaitStrategyAndDefaultTimingsAreSet) {
     EXPECT_EQ(3, NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get());
     EXPECT_FALSE(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get());
+    EXPECT_TRUE(NEO::debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWait.get());
     EXPECT_EQ(5000, NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.get());
     EXPECT_EQ(750, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
@@ -6131,6 +6132,7 @@ HWTEST_F(EventTests, GivenWindowsDiscreteKmdWaitFlagWhenCreatingEventThenKmdWait
     rootDeviceEnvironment->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
     ze_result_t result = ZE_RESULT_SUCCESS;
 
+    NEO::debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWait.set(false);
     auto eventWithoutFlag = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(eventWithoutFlag->isWindowsDiscreteKmdWaitEnabled());
