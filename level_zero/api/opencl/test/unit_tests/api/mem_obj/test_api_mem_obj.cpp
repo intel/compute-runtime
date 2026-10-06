@@ -9,6 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -28,6 +29,7 @@
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 
+#include <cstring>
 #include <vector>
 
 namespace NEO {
@@ -1120,6 +1122,12 @@ struct LeoZeroCopyUseHostPtrTest : public Test<OclFixture> {
 
     void setIntegratedDevice(bool integrated) {
         neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = integrated;
+        static_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager())->localMemorySupported[neoDevice->getRootDeviceIndex()] = !integrated;
+    }
+
+    InternalMemoryType getMemoryType(Buffer *buffer) {
+        auto allocData = svmManager->getSVMAlloc(buffer->getUsmPtr());
+        return allocData ? allocData->memoryType : InternalMemoryType::notSpecified;
     }
 
     Buffer *createBufferFromHostPtr(void *ptr, size_t size, cl_mem_flags extraFlags = 0) {
@@ -1169,10 +1177,11 @@ TEST_F(LeoZeroCopyUseHostPtrTest, givenForceHostMemoryOnDiscreteDeviceWhenCreati
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
-TEST_F(LeoZeroCopyUseHostPtrTest, givenHostBufferMemoryAndHostPtrNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+TEST_F(LeoZeroCopyUseHostPtrTest, givenHostBufferMemoryAndHostPtrNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenHostStorageIsAllocatedAndCopiedOnCpu) {
     DebugManagerStateRestore restorer;
     debugManager.flags.LeoBufferMemory.set(1);
 
+    memset(hostPtr, 0x5a, bufferSize);
     auto misalignedPtr = ptrOffset(hostPtr, 1u);
 
     auto buffer = createBufferFromHostPtr(misalignedPtr, MemoryConstants::cacheLineSize);
@@ -1180,18 +1189,18 @@ TEST_F(LeoZeroCopyUseHostPtrTest, givenHostBufferMemoryAndHostPtrNotAlignedToCac
 
     EXPECT_NE(misalignedPtr, buffer->getUsmPtr());
     EXPECT_EQ(misalignedPtr, buffer->getCpuPtr());
-
-    ASSERT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
-    EXPECT_EQ(static_cast<const void *>(misalignedPtr), capturingCmdList.appendMemoryCopyArgs[0].srcptr);
-    EXPECT_EQ(buffer->getUsmPtr(), capturingCmdList.appendMemoryCopyArgs[0].dstptr);
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, getMemoryType(buffer));
+    EXPECT_EQ(0, memcmp(buffer->getUsmPtr(), misalignedPtr, MemoryConstants::cacheLineSize));
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
-TEST_F(LeoZeroCopyUseHostPtrTest, givenHostBufferMemoryAndSizeNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+TEST_F(LeoZeroCopyUseHostPtrTest, givenHostBufferMemoryAndSizeNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenHostStorageIsAllocatedAndCopiedOnCpu) {
     DebugManagerStateRestore restorer;
     debugManager.flags.LeoBufferMemory.set(1);
 
+    memset(hostPtr, 0x5a, bufferSize);
     auto unalignedSize = MemoryConstants::cacheLineSize - 1u;
 
     auto buffer = createBufferFromHostPtr(hostPtr, unalignedSize);
@@ -1199,12 +1208,14 @@ TEST_F(LeoZeroCopyUseHostPtrTest, givenHostBufferMemoryAndSizeNotAlignedToCacheL
 
     EXPECT_NE(hostPtr, buffer->getUsmPtr());
     EXPECT_EQ(hostPtr, buffer->getCpuPtr());
-    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, getMemoryType(buffer));
+    EXPECT_EQ(0, memcmp(buffer->getUsmPtr(), hostPtr, unalignedSize));
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
-TEST_F(LeoZeroCopyUseHostPtrTest, givenDiscreteDeviceWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+TEST_F(LeoZeroCopyUseHostPtrTest, givenDiscreteDeviceWhenCreatingBufferWithUseHostPtrThenDeviceStorageIsAllocatedAndCopiedWithCopyCmdList) {
     setIntegratedDevice(false);
 
     auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
@@ -1212,38 +1223,58 @@ TEST_F(LeoZeroCopyUseHostPtrTest, givenDiscreteDeviceWhenCreatingBufferWithUseHo
 
     EXPECT_NE(hostPtr, buffer->getUsmPtr());
     EXPECT_EQ(hostPtr, buffer->getCpuPtr());
-    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, getMemoryType(buffer));
+    ASSERT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(static_cast<const void *>(hostPtr), capturingCmdList.appendMemoryCopyArgs[0].srcptr);
+    EXPECT_EQ(buffer->getUsmPtr(), capturingCmdList.appendMemoryCopyArgs[0].dstptr);
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(hostPtr));
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
-TEST_F(LeoZeroCopyUseHostPtrTest, givenZeroCopyForUseHostPtrDisabledWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+TEST_F(LeoZeroCopyUseHostPtrTest, givenZeroCopyForUseHostPtrDisabledWhenCreatingBufferWithUseHostPtrThenHostStorageIsAllocatedAndCopiedOnCpu) {
     DebugManagerStateRestore restorer;
     debugManager.flags.LeoBufferMemory.set(1);
     debugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
+
+    memset(hostPtr, 0x5a, bufferSize);
 
     auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
     ASSERT_NE(nullptr, buffer);
 
     EXPECT_NE(hostPtr, buffer->getUsmPtr());
     EXPECT_EQ(hostPtr, buffer->getCpuPtr());
-    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, getMemoryType(buffer));
+    EXPECT_EQ(0, memcmp(buffer->getUsmPtr(), hostPtr, bufferSize));
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoZeroCopyUseHostPtrTest, givenDiscreteDeviceAndHostBufferMemoryAndHostPtrNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenHostStorageIsAllocatedAndCopiedOnCpu) {
+    setIntegratedDevice(false);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LeoBufferMemory.set(1);
+
+    memset(hostPtr, 0x5a, bufferSize);
+    auto misalignedPtr = ptrOffset(hostPtr, 1u);
+
+    auto buffer = createBufferFromHostPtr(misalignedPtr, MemoryConstants::cacheLineSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, getMemoryType(buffer));
+    EXPECT_EQ(0, memcmp(buffer->getUsmPtr(), misalignedPtr, MemoryConstants::cacheLineSize));
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
 struct LeoBufferMemoryTest : public LeoZeroCopyUseHostPtrTest {
-    Buffer *createBuffer(cl_mem_flags extraFlags = 0) {
+    Buffer *createBuffer(cl_mem_flags extraFlags = 0, void *ptr = nullptr) {
         cl_int errcode = CL_INVALID_VALUE;
-        auto buffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | extraFlags, bufferSize, nullptr, &errcode);
+        auto buffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | extraFlags, bufferSize, ptr, &errcode);
         EXPECT_EQ(CL_SUCCESS, errcode);
         return castToObject<Buffer>(buffer);
-    }
-
-    InternalMemoryType getMemoryType(Buffer *buffer) {
-        auto allocData = svmManager->getSVMAlloc(buffer->getUsmPtr());
-        return allocData ? allocData->memoryType : InternalMemoryType::notSpecified;
     }
 
     DebugManagerStateRestore restorer;
@@ -1305,14 +1336,123 @@ TEST_F(LeoBufferMemoryTest, givenForceHostMemoryWhenCreatingBufferThenHostUsmIsA
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
-TEST_F(LeoBufferMemoryTest, givenDefaultLeoBufferMemoryWhenCreatingBufferWithUseHostPtrThenStorageIsAllocatedAndCopied) {
+TEST_F(LeoBufferMemoryTest, givenIntegratedDeviceAndDefaultLeoBufferMemoryAndAlignedHostPtrWhenCreatingBufferWithUseHostPtrThenHostStorageIsImportedAndNoCopyIsDone) {
+    auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(hostPtr, buffer->getUsmPtr());
+    EXPECT_EQ(hostPtr, buffer->getCpuPtr());
+    EXPECT_FALSE(buffer->getUsesSvm());
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+
+    auto allocData = svmManager->getSVMAlloc(hostPtr);
+    ASSERT_NE(nullptr, allocData);
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, allocData->memoryType);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(hostPtr), allocData->allocationFlagsProperty.hostptr);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoBufferMemoryTest, givenIntegratedDeviceAndDefaultLeoBufferMemoryAndHostPtrNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenHostStorageIsAllocatedAndCopiedOnCpu) {
+    memset(hostPtr, 0x5a, bufferSize);
+    auto misalignedPtr = ptrOffset(hostPtr, 1u);
+
+    auto buffer = createBufferFromHostPtr(misalignedPtr, MemoryConstants::cacheLineSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_NE(misalignedPtr, buffer->getUsmPtr());
+    EXPECT_EQ(misalignedPtr, buffer->getCpuPtr());
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, getMemoryType(buffer));
+    EXPECT_EQ(0, memcmp(buffer->getUsmPtr(), misalignedPtr, MemoryConstants::cacheLineSize));
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoBufferMemoryTest, givenIntegratedDeviceAndDefaultLeoBufferMemoryAndZeroCopyDisabledWhenCreatingBufferWithUseHostPtrThenHostStorageIsAllocatedAndCopiedOnCpu) {
+    debugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
+    memset(hostPtr, 0x5a, bufferSize);
+
     auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
     ASSERT_NE(nullptr, buffer);
 
     EXPECT_NE(hostPtr, buffer->getUsmPtr());
+    EXPECT_EQ(hostPtr, buffer->getCpuPtr());
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, getMemoryType(buffer));
+    EXPECT_EQ(0, memcmp(buffer->getUsmPtr(), hostPtr, bufferSize));
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(hostPtr));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoBufferMemoryTest, givenIntegratedDeviceAndLeoBufferMemorySetToDeviceAndAlignedHostPtrWhenCreatingBufferWithUseHostPtrThenDeviceStorageIsAllocatedAndCopiedWithCopyCmdList) {
+    debugManager.flags.LeoBufferMemory.set(0);
+
+    auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_NE(hostPtr, buffer->getUsmPtr());
+    EXPECT_EQ(hostPtr, buffer->getCpuPtr());
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, getMemoryType(buffer));
+    ASSERT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(static_cast<const void *>(hostPtr), capturingCmdList.appendMemoryCopyArgs[0].srcptr);
+    EXPECT_EQ(buffer->getUsmPtr(), capturingCmdList.appendMemoryCopyArgs[0].dstptr);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(hostPtr));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoBufferMemoryTest, givenIntegratedDeviceAndLeoBufferMemorySetToDeviceAndHostPtrNotAlignedToCacheLineWhenCreatingBufferWithUseHostPtrThenDeviceStorageIsAllocatedAndCopiedWithCopyCmdList) {
+    debugManager.flags.LeoBufferMemory.set(0);
+    auto misalignedPtr = ptrOffset(hostPtr, 1u);
+
+    auto buffer = createBufferFromHostPtr(misalignedPtr, MemoryConstants::cacheLineSize);
+    ASSERT_NE(nullptr, buffer);
+
     EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, getMemoryType(buffer));
     EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
-    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(hostPtr));
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoBufferMemoryTest, givenDiscreteDeviceAndDefaultLeoBufferMemoryWhenCreatingBufferWithUseHostPtrThenDeviceStorageIsAllocatedAndCopiedWithCopyCmdList) {
+    setIntegratedDevice(false);
+
+    auto buffer = createBufferFromHostPtr(hostPtr, bufferSize);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, getMemoryType(buffer));
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoBufferMemoryTest, givenForceHostMemoryOnDiscreteDeviceWhenCreatingBufferWithCopyHostPtrThenHostStorageIsAllocatedAndCopiedOnCpu) {
+    setIntegratedDevice(false);
+    memset(hostPtr, 0x5a, bufferSize);
+
+    auto buffer = createBuffer(CL_MEM_FORCE_HOST_MEMORY_INTEL | CL_MEM_COPY_HOST_PTR, hostPtr);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, getMemoryType(buffer));
+    EXPECT_EQ(buffer->getUsmPtr(), buffer->getCpuPtr());
+    EXPECT_EQ(0, memcmp(buffer->getUsmPtr(), hostPtr, bufferSize));
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoBufferMemoryTest, givenDiscreteDeviceAndDefaultLeoBufferMemoryWhenCreatingBufferWithCopyHostPtrThenDeviceStorageIsAllocatedAndCopiedWithCopyCmdList) {
+    setIntegratedDevice(false);
+
+    auto buffer = createBuffer(CL_MEM_COPY_HOST_PTR, hostPtr);
+    ASSERT_NE(nullptr, buffer);
+
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, getMemoryType(buffer));
+    ASSERT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(static_cast<const void *>(hostPtr), capturingCmdList.appendMemoryCopyArgs[0].srcptr);
+    EXPECT_EQ(buffer->getUsmPtr(), capturingCmdList.appendMemoryCopyArgs[0].dstptr);
 
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }

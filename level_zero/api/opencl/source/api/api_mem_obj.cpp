@@ -9,6 +9,8 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
@@ -82,6 +84,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
     bool copyFromHostPtr = memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr;
+    bool hostMemoryAllocated = false;
     bool usesSvm = false;
 
     bool inputMemObjFound = false;
@@ -99,6 +102,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
 
         const bool preferHostMemory = memoryProperties.flags.forceHostMemory ||
                                       (debugManager.flags.LeoBufferMemory.get() == 1);
+        const bool isDiscrete = pCtx->getL0Object()->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pCtx->getClDevice()->getRootDeviceIndex());
+        const bool useHostMemory = preferHostMemory ||
+                                   (memoryProperties.flags.useHostPtr && !isDiscrete && debugManager.flags.LeoBufferMemory.get() != 0);
 
         auto allocData = pCtx->getL0Object()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(hostPtr);
         if (memoryProperties.flags.useHostPtr && allocData) {
@@ -114,14 +120,13 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                 copyFromHostPtr = false;
             }
         } else {
-            ptr = NEO::LEO::Buffer::tryImportUserPtr(pCtx, hostPtr, size, memoryProperties, preferHostMemory);
+            ptr = NEO::LEO::Buffer::tryImportUserPtr(pCtx, hostPtr, size, memoryProperties, useHostMemory);
             if (nullptr != ptr) {
                 copyFromHostPtr = false;
             } else {
-                const bool allocateHostMemory = memoryProperties.flags.forceHostMemory ||
-                                                (preferHostMemory && !memoryProperties.flags.useHostPtr);
-                if (allocateHostMemory) {
-                    ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, compressionHints.flags ? &compressionHints : nullptr, 0};
+                hostMemoryAllocated = useHostMemory;
+                if (hostMemoryAllocated) {
+                    ze_host_mem_alloc_desc_t hostAllocDesc{ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, nullptr, 0};
                     ret = zeMemAllocHost(pCtx->getL0ContextHandle(), &hostAllocDesc, size, 0, &ptr);
                     cpuPtr = ptr;
                 } else {
@@ -143,7 +148,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
 
     auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
     ze_command_list_handle_t internalCopyCmdList = nullptr;
-    if (ret == ZE_RESULT_SUCCESS && copyFromHostPtr) {
+    if (ret == ZE_RESULT_SUCCESS && copyFromHostPtr && !hostMemoryAllocated) {
         ret = pContext->getInternalCopyCmdList(internalCopyCmdList);
         if (ret != ZE_RESULT_SUCCESS && !inputMemObjFound) {
             zeMemFree(pContext->getL0ContextHandle(), ptr);
@@ -160,7 +165,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
         return tracingRetVal;
     }
 
-    if (copyFromHostPtr) {
+    if (copyFromHostPtr && hostMemoryAllocated) {
+        memcpy_s(ptr, size, hostPtr, size);
+    } else if (copyFromHostPtr) {
         {
             auto lock = pContext->lockInternalCopy();
             zeCommandListAppendMemoryCopy(internalCopyCmdList,
