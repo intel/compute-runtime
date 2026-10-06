@@ -43,7 +43,7 @@ void DeviceTime::setDeviceTimerResolution() {
 }
 
 void DeviceTime::initTimestampPtr(OsContext &osContext) {
-    if (timestampPtrInitialized || !debugManager.flags.EnableTimestampMmioRead.getIfNotDefault(false)) {
+    if (timestampPtrInitialized || !debugManager.flags.EnableTimestampMmioRead.getIfNotDefault(isTimestampMmioReadEnabledByDefault())) {
         return;
     }
 

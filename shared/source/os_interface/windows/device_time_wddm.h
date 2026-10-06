@@ -21,6 +21,7 @@ class DeviceTimeWddm : public DeviceTime {
     DeviceTimeWddm(Wddm *wddm);
     TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     MmioTimestampPtrHelper getMmioTimestampPtrHelper(OsContext &osContext) override;
+    bool isTimestampMmioReadEnabledByDefault() const override { return true; }
     double getDynamicDeviceTimerResolution() const override;
     uint64_t getDynamicDeviceTimerClock() const override;
 

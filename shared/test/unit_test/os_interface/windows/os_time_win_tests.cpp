@@ -430,17 +430,26 @@ TEST_F(OSTimeWinTest, givenTimestampPtrAlreadyInitializedWhenInitializingAgainTh
     EXPECT_EQ(0x200000100u, gpuCpuTime.gpuTimeStamp);
 }
 
-TEST_F(OSTimeWinTest, givenDebugKeyNotForcedWhenInitializingTimestampPtrThenKmdIsNotAsked) {
+TEST_F(OSTimeWinTest, givenDebugKeyNotForcedWhenInitializingTimestampPtrThenTimestampPtrIsAvailable) {
     uint32_t timestampDwords[2] = {0x100u, 0x2u};
     auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
     wddm->createMmioTimestampPtrHelperResult = MmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
     osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
 
     osTime->initTimestampPtr(*osContext);
-    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+    EXPECT_TRUE(osTime->isTimestampPtrAvailable());
+    EXPECT_EQ(1u, wddm->createMmioTimestampPtrHelperCalled);
+}
 
+TEST_F(OSTimeWinTest, givenTimestampMmioReadDisabledWhenInitializingTimestampPtrThenKmdIsNotAsked) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableTimestampMmioRead.set(0);
+
+    uint32_t timestampDwords[2] = {0x100u, 0x2u};
+    auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel());
+    wddm->createMmioTimestampPtrHelperResult = MmioTimestampPtrHelper(&timestampDwords[0], &timestampDwords[1]);
+    osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
+
     osTime->initTimestampPtr(*osContext);
     EXPECT_FALSE(osTime->isTimestampPtrAvailable());
     EXPECT_EQ(0u, wddm->createMmioTimestampPtrHelperCalled);

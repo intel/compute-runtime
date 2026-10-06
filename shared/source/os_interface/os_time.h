@@ -67,6 +67,7 @@ class DeviceTime {
     virtual uint64_t getDynamicDeviceTimerClock() const;
     virtual bool isTimestampsRefreshEnabled() const;
     virtual MmioTimestampPtrHelper getMmioTimestampPtrHelper(OsContext &osContext) { return {}; }
+    virtual bool isTimestampMmioReadEnabledByDefault() const { return false; }
     TimeQueryStatus getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
     void initTimestampPtr(OsContext &osContext);
     bool isTimestampPtrAvailable() const { return mmioTimestampPtrHelper.isAvailable(); }
