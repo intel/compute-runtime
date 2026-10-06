@@ -211,10 +211,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBufferObjectsWhenMakeResidentIsCalledThenTheBufferObjectsAreMadeResident) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBufferObjectsWhenMakeResidentIsCalledThenTheBufferObjectsAreMadeResident) {
 
     auto size = 1024u;
     auto bo0 = this->createBO(size);
@@ -241,10 +238,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBuff
     mm->freeGraphicsMemory(allocation);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBufferObjectsAndTileInstancedSetWhenMakeResidentIsCalledThenTheBufferObjectForDeviceCsrIsMadeResident) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBufferObjectsAndTileInstancedSetWhenMakeResidentIsCalledThenTheBufferObjectForDeviceCsrIsMadeResident) {
     auto size = 1024u;
     auto bo0 = this->createBO(size);
     auto bo1 = this->createBO(size);
@@ -361,10 +355,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
     std::unique_ptr<OsContextLinux> osContext;
 };
 
-HWTEST_TEMPLATED_F(DrmCommandStreamForceTileTest, givenForceExecutionTileThenCorrectHandleIdIsSet) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, DrmCommandStreamForceTileTest, givenForceExecutionTileThenCorrectHandleIdIsSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceExecutionTile.set(expectedHandleId);
 
@@ -376,10 +367,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamForceTileTest, givenForceExecutionTileThenCor
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndicesAndContextInfo) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndicesAndContextInfo) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
 
