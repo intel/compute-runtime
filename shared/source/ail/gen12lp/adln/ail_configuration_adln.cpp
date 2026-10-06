@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_N;
 
-#include "shared/source/ail/ail_configuration_tgllp_and_later.inl"
+#include "shared/source/ail/ail_configuration_microsecond_resolution_adjustment.inl"
 
 namespace NEO {
 static EnableAIL<gfxProduct> enableAILADLN;

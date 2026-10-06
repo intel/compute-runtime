@@ -17,7 +17,7 @@
 
 constexpr static auto gfxProduct = IGFX_METEORLAKE;
 
-#include "shared/source/ail/ail_configuration_tgllp_and_later.inl"
+#include "shared/source/ail/ail_configuration_microsecond_resolution_adjustment.inl"
 
 namespace NEO {
 
