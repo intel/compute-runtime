@@ -89,8 +89,14 @@ bool failFcntl = false;
 bool failFcntl1 = false;
 bool failAccess = false;
 
-std::vector<void *> mmapVector(64);
-std::vector<void *> mmapCapturedExtendedPointers(64);
+static std::vector<void *> createPtrVectorWithReservedCapacity() {
+    std::vector<void *> ptrs;
+    ptrs.reserve(64);
+    return ptrs;
+}
+
+std::vector<void *> mmapVector = createPtrVectorWithReservedCapacity();
+std::vector<void *> mmapCapturedExtendedPointers = createPtrVectorWithReservedCapacity();
 bool mmapCaptureExtendedPointers = false;
 bool mmapAllowExtendedPointers = false;
 bool failMmap = false;
