@@ -69,7 +69,8 @@ TEST(EuDebugInterfacePrelimTest, whenGettingInterfaceTypeThenPrelimIsReturned) {
 TEST(EuDebugInterfacePrelimTest, givenValidDrmEuAttentionWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
     EuDebugInterfacePrelim euDebugInterface{};
 
-    prelim_drm_xe_eudebug_event_eu_attention *drmEuAttention = (prelim_drm_xe_eudebug_event_eu_attention *)malloc(sizeof(prelim_drm_xe_eudebug_event_eu_attention) + 4 * sizeof(uint8_t));
+    alignas(prelim_drm_xe_eudebug_event_eu_attention) uint8_t drmEuAttentionStorage[sizeof(prelim_drm_xe_eudebug_event_eu_attention) + 4 * sizeof(uint8_t)] = {};
+    auto drmEuAttention = reinterpret_cast<prelim_drm_xe_eudebug_event_eu_attention *>(drmEuAttentionStorage);
     drmEuAttention->client_handle = 0x32;
     drmEuAttention->exec_queue_handle = 0x64;
     drmEuAttention->lrc_handle = 0x128;
@@ -90,8 +91,6 @@ TEST(EuDebugInterfacePrelimTest, givenValidDrmEuAttentionWhenConvertingToInterfa
     EXPECT_EQ(0x2u, event->bitmask[1]);
     EXPECT_EQ(0x3u, event->bitmask[2]);
     EXPECT_EQ(0x4u, event->bitmask[3]);
-
-    free(drmEuAttention);
 }
 
 TEST(EuDebugInterfacePrelimTest, givenValidDrmClientWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
@@ -119,7 +118,8 @@ TEST(EuDebugInterfacePrelimTest, givenValidDrmVmWhenConvertingToInterfaceTypeThe
 TEST(EuDebugInterfacePrelimTest, givenValidDrmExecQueueWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
     EuDebugInterfacePrelim euDebugInterface{};
 
-    prelim_drm_xe_eudebug_event_exec_queue *drmExecQueue = (prelim_drm_xe_eudebug_event_exec_queue *)malloc(sizeof(prelim_drm_xe_eudebug_event_exec_queue) + 3 * sizeof(uint64_t));
+    alignas(prelim_drm_xe_eudebug_event_exec_queue) uint8_t drmExecQueueStorage[sizeof(prelim_drm_xe_eudebug_event_exec_queue) + 3 * sizeof(uint64_t)] = {};
+    auto drmExecQueue = reinterpret_cast<prelim_drm_xe_eudebug_event_exec_queue *>(drmExecQueueStorage);
     drmExecQueue->client_handle = 0x32;
     drmExecQueue->vm_handle = 0x64;
     drmExecQueue->exec_queue_handle = 0x128;
@@ -138,14 +138,13 @@ TEST(EuDebugInterfacePrelimTest, givenValidDrmExecQueueWhenConvertingToInterface
     EXPECT_EQ(0x1u, event->lrcHandle[0]);
     EXPECT_EQ(0x2u, event->lrcHandle[1]);
     EXPECT_EQ(0x3u, event->lrcHandle[2]);
-
-    free(drmExecQueue);
 }
 
 TEST(EuDebugInterfacePrelimTest, givenValidDrmExecQueuePlacementsWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
     EuDebugInterfacePrelim euDebugInterface{};
 
-    prelim_drm_xe_eudebug_event_exec_queue_placements *drmExecQueuePlacements = (prelim_drm_xe_eudebug_event_exec_queue_placements *)malloc(sizeof(prelim_drm_xe_eudebug_event_exec_queue_placements) + 3 * sizeof(uint64_t));
+    alignas(prelim_drm_xe_eudebug_event_exec_queue_placements) uint8_t drmExecQueuePlacementsStorage[sizeof(prelim_drm_xe_eudebug_event_exec_queue_placements) + 3 * sizeof(uint64_t)] = {};
+    auto drmExecQueuePlacements = reinterpret_cast<prelim_drm_xe_eudebug_event_exec_queue_placements *>(drmExecQueuePlacementsStorage);
     drmExecQueuePlacements->client_handle = 0x32;
     drmExecQueuePlacements->exec_queue_handle = 0x64;
     drmExecQueuePlacements->lrc_handle = 0x128;
@@ -164,8 +163,6 @@ TEST(EuDebugInterfacePrelimTest, givenValidDrmExecQueuePlacementsWhenConvertingT
     EXPECT_EQ(0x1u, event->instances[0]);
     EXPECT_EQ(0x2u, event->instances[1]);
     EXPECT_EQ(0x3u, event->instances[2]);
-
-    free(drmExecQueuePlacements);
 }
 
 TEST(EuDebugInterfacePrelimTest, givenValidDrmMetadataWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
@@ -243,7 +240,8 @@ TEST(EuDebugInterfacePrelimTest, givenValidDrmVmBindUfenceWhenConvertingToInterf
 TEST(EuDebugInterfacePrelimTest, givenValidDrmPageFaultWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
     EuDebugInterfacePrelim euDebugInterface{};
 
-    prelim_drm_xe_eudebug_event_pagefault *drmPageFault = (prelim_drm_xe_eudebug_event_pagefault *)malloc(sizeof(prelim_drm_xe_eudebug_event_pagefault) + 4 * sizeof(uint8_t));
+    alignas(prelim_drm_xe_eudebug_event_pagefault) uint8_t drmPageFaultStorage[sizeof(prelim_drm_xe_eudebug_event_pagefault) + 4 * sizeof(uint8_t)] = {};
+    auto drmPageFault = reinterpret_cast<prelim_drm_xe_eudebug_event_pagefault *>(drmPageFaultStorage);
     drmPageFault->client_handle = 0x32;
     drmPageFault->exec_queue_handle = 0x64;
     drmPageFault->flags = 0x0F;
@@ -266,8 +264,6 @@ TEST(EuDebugInterfacePrelimTest, givenValidDrmPageFaultWhenConvertingToInterface
     EXPECT_EQ(0x2u, event->bitmask[1]);
     EXPECT_EQ(0x3u, event->bitmask[2]);
     EXPECT_EQ(0x4u, event->bitmask[3]);
-
-    free(drmPageFault);
 }
 
 TEST(EuDebugInterfacePrelimTest, givenValidDrmEuControlWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
