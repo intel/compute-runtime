@@ -29,9 +29,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandQueueHw : public CommandQueue {
     using CommandQueue::CommandQueue;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    CommandQueueHw(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : CommandQueue(device, csr, desc) {
-        this->patchPreambleCounter.use32bSemaphore = GfxFamily::isQwordInOrderCounter == false;
-    }
+    CommandQueueHw(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc);
     ze_result_t createFence(const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) override;
     ze_result_t executeCommandLists(uint32_t numCommandLists,
                                     ze_command_list_handle_t *phCommandLists,
@@ -40,7 +38,14 @@ struct CommandQueueHw : public CommandQueue {
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties);
     size_t estimateStateBaseAddressCmdSize();
-    size_t estimatePatchPreambleCrossSyncSize(size_t numberCrossSyncs);
+    size_t estimatePatchPreambleCrossSyncSize(size_t numberCrossSyncs) {
+        size_t waitSize = estimateSingleSynchronizationCommandSize(numberCrossSyncs, numberCrossSyncs);
+        return waitSize;
+    }
+    size_t estimateSingleImmediateCompletionCrossSyncSize(size_t numberCrossSyncs, uint32_t partitions) {
+        size_t waitSize = estimateSingleSynchronizationCommandSize(numberCrossSyncs * partitions, numberCrossSyncs);
+        return waitSize;
+    }
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
     size_t estimateFrontEndCmdSize();
@@ -109,6 +114,9 @@ struct CommandQueueHw : public CommandQueue {
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
     inline size_t estimateCommandListPrimaryStart(bool required);
     size_t estimateCommandListPatchPreambleWaitSyncSize(CommandListExecutionContext &ctx, CommandList *commandList);
+    size_t estimateSingleSynchronizationCommandSize(size_t semaphoreCount, size_t indirectLoadCount);
+    inline void dispatchSingleSynchronizationCommand(void *&inputCommandBuffer, uint64_t waitAddress, uint64_t waitValue, size_t semaphoreCount, uint32_t offset, NEO::GraphicsAllocation *waitAllocation);
+    inline void dispatchSingleSynchronizationCommand(NEO::LinearStream &commandStream, uint64_t waitAddress, uint64_t waitValue, size_t semaphoreCount, uint32_t offset, NEO::GraphicsAllocation *waitAllocation);
     inline size_t estimateCommandListPatchPreambleRequiredSize(CommandListExecutionContext &ctx, CommandList *commandList);
     inline size_t estimateCommandListPatchPreambleInitialSize(CommandListExecutionContext &ctx, uint32_t numCommandLists);
     inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);

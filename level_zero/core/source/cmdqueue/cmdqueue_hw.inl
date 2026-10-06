@@ -47,6 +47,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/fence/fence.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
 
 #include "encode_surface_state_args.h"
@@ -55,6 +56,15 @@
 #include <limits>
 
 namespace L0 {
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+CommandQueueHw<gfxCoreFamily>::CommandQueueHw(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : CommandQueue(device, csr, desc) {
+    this->patchPreambleCounter.use32bSemaphore = GfxFamily::isQwordInOrderCounter == false;
+    this->useSemaphore64Cmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
+    this->isQwordSemaphore = GfxFamily::isQwordInOrderCounter;
+    this->isQwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->isQwordSemaphore, this->useSemaphore64Cmd);
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::createFence(const ze_fence_desc_t *desc,
                                                        ze_fence_handle_t *phFence) {
@@ -890,32 +900,14 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPrimaryStart(bool requi
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSyncSize(CommandListExecutionContext &ctx, CommandList *commandList) {
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     size_t waitSize = 0;
     if (ctx.patchPreambleEnabled && this->saveWaitForPreamble) {
         uint64_t tagGpuAddress = commandList->getLatestTagGpuAddress();
         ctx.patchPreambleWaitSyncNeeded = (tagGpuAddress != 0) && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
         if (ctx.patchPreambleWaitSyncNeeded) {
-            const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-            waitSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * this->partitionCount;
-            if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(GfxFamily::isQwordInOrderCounter, useSemaphore64bCmd)) {
-                waitSize += (2 * sizeof(MI_LOAD_REGISTER_IMM));
-            }
+            waitSize += estimateSingleSynchronizationCommandSize(this->partitionCount, 1);
         }
         ctx.bufferSpaceForPatchPreamble += waitSize;
-    }
-    return waitSize;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimatePatchPreambleCrossSyncSize(size_t numberCrossSyncs) {
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-
-    size_t waitSize = 0;
-    const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-    waitSize += NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * numberCrossSyncs;
-    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(GfxFamily::isQwordInOrderCounter, useSemaphore64bCmd)) {
-        waitSize += (2 * sizeof(MI_LOAD_REGISTER_IMM)) * numberCrossSyncs;
     }
     return waitSize;
 }
@@ -974,9 +966,9 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleIni
         // this part estimates the required size of command buffer - not in the space of patch preamble itself
         // (no adding to ctx.bufferSpaceForPatchPreamble), but before bb start jumps to command lists and including these bb start commands too
         // this is needed only in queue direct mode, for immediate command list high level estimation is enough
-        if (ctx.patchPreambleCountersCrossSyncContainer != nullptr && ctx.containsParentImmediateStream == false) {
+        if (ctx.countersCrossSyncContainer != nullptr && ctx.containsParentImmediateStream == false) {
             // here estimate the sem waits only
-            encodeSize += estimatePatchPreambleCrossSyncSize(ctx.patchPreambleCountersCrossSyncContainer->list.size());
+            encodeSize += estimatePatchPreambleCrossSyncSize(ctx.countersCrossSyncContainer->patchPreambleCrossSyncList.size());
 
             // need to estimate bb_start jumps for the 2nd and subsequent command lists that will be executed after the cross-sync sem wait
             StackVec<CommandList *, 9> alreadyEstimatedCmdLists;
@@ -993,12 +985,18 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleIni
             auto isAlreadyEstimated = [&alreadyEstimatedCmdLists](CommandList *cmdList) -> bool {
                 return std::find(alreadyEstimatedCmdLists.begin(), alreadyEstimatedCmdLists.end(), cmdList) != alreadyEstimatedCmdLists.end();
             };
-            for (auto &crossSyncItem : ctx.patchPreambleCountersCrossSyncContainer->list) {
+            for (auto &crossSyncItem : ctx.countersCrossSyncContainer->patchPreambleCrossSyncList) {
                 if (!isAlreadyEstimated(crossSyncItem.appendedCommandListToSyncBefore)) {
                     encodeSize += bbStartSize;
                     // add to the list of already estimated command lists, as a single command list might have multiple cross-sync items, but we need to estimate bb_start only once per command list
                     alreadyEstimatedCmdLists.push_back(crossSyncItem.appendedCommandListToSyncBefore);
                 }
+            }
+
+            // get the estimate for the immediate cross-syncs, get separate for each one, so each item device partition count is taken into account
+            // estimation should not add to ctx.bufferSpaceForPatchPreamble, since it must be dispatch before the patch preamble begins
+            for (auto &crossSyncItem : ctx.countersCrossSyncContainer->immediateCompletionCrossSyncList) {
+                encodeSize += estimateSingleImmediateCompletionCrossSyncSize(1, crossSyncItem.devicePartitionCount);
             }
         }
     }
@@ -1008,6 +1006,19 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleIni
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream) {
     if (ctx.patchPreambleEnabled) {
+        if (ctx.countersCrossSyncContainer != nullptr) {
+            // immediate cross-syncs must be dispatch before the patch preamble begins
+            const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+            for (auto &immediateCrossSyncItem : ctx.countersCrossSyncContainer->immediateCompletionCrossSyncList) {
+                this->dispatchSingleSynchronizationCommand(commandStream,
+                                                           immediateCrossSyncItem.deviceGpuAddress,
+                                                           immediateCrossSyncItem.counter,
+                                                           immediateCrossSyncItem.devicePartitionCount,
+                                                           immWriteOffset,
+                                                           immediateCrossSyncItem.deviceGraphicsAllocation);
+            }
+        }
+
         ctx.currentPatchPreambleBuffer = commandStream.getSpace(ctx.bufferSpaceForPatchPreamble);
         ctx.basePatchPreambleAddress = reinterpret_cast<uintptr_t>(ctx.currentPatchPreambleBuffer);
         ctx.basePatchPreambleGpuAddress = commandStream.getGpuBase() + ptrDiff(ctx.basePatchPreambleAddress, reinterpret_cast<uint64_t>(commandStream.getCpuBase()));
@@ -1131,89 +1142,24 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleAsyncPatchElems(Command
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCrossSync(CommandListExecutionContext &ctx, CommandList *commandList, NEO::LinearStream &commandStream) {
-    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-
-    if (ctx.patchPreambleEnabled && ctx.patchPreambleCountersCrossSyncContainer) {
-        constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
-        constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
-        constexpr bool switchOnUnsuccessful = false;
-
-        const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-        const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(GfxFamily::isQwordInOrderCounter, useSemaphore64bCmd);
-
-        for (auto &item : ctx.patchPreambleCountersCrossSyncContainer->list) {
+    if (ctx.patchPreambleEnabled && ctx.countersCrossSyncContainer) {
+        for (auto &item : ctx.countersCrossSyncContainer->patchPreambleCrossSyncList) {
             if (item.appendedCommandListToSyncBefore != commandList) {
                 continue;
             }
-            auto waitAddress = item.deviceGpuAddress;
-            auto waitValue = !GfxFamily::isQwordInOrderCounter ? getLowPart(item.counter) : item.counter;
-            this->csr->makeResident(*item.deviceGraphicsAllocation);
-
-            if (qwordIndirect) {
-                NEO::LriHelper<GfxFamily>::program(&commandStream, firstRegister,
-                                                   getLowPart(waitValue),
-                                                   true,
-                                                   this->isCopyOnlyCommandQueue);
-                NEO::LriHelper<GfxFamily>::program(&commandStream, secondRegister,
-                                                   getHighPart(waitValue),
-                                                   true,
-                                                   this->isCopyOnlyCommandQueue);
-            }
-            NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, waitAddress, waitValue,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                       false, GfxFamily::isQwordInOrderCounter, qwordIndirect, switchOnUnsuccessful, useSemaphore64bCmd,
-                                                                       nullptr);
+            dispatchSingleSynchronizationCommand(commandStream, item.deviceGpuAddress, item.counter, 1, 0, item.deviceGraphicsAllocation);
         }
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(CommandListExecutionContext &ctx, CommandList *commandList) {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-
     if (ctx.patchPreambleEnabled) {
         if (ctx.patchPreambleWaitSyncNeeded) {
-            constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
-            constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
-
-            uint64_t waitAddress = commandList->getLatestTagGpuAddress();
+            auto waitAddress = commandList->getLatestTagGpuAddress();
             auto waitValue = commandList->getLatestTaskCount();
 
-            const bool useSemaphore64bCmd = device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport;
-            const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(GfxFamily::isQwordInOrderCounter, useSemaphore64bCmd);
-            if (qwordIndirect) {
-                NEO::LriHelper<GfxFamily>::program(reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ctx.currentPatchPreambleBuffer),
-                                                   firstRegister,
-                                                   getLowPart(waitValue),
-                                                   true,
-                                                   this->isCopyOnlyCommandQueue);
-                ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, sizeof(MI_LOAD_REGISTER_IMM));
-
-                NEO::LriHelper<GfxFamily>::program(reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ctx.currentPatchPreambleBuffer),
-                                                   secondRegister,
-                                                   getHighPart(waitValue),
-                                                   true,
-                                                   this->isCopyOnlyCommandQueue);
-                ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, sizeof(MI_LOAD_REGISTER_IMM));
-            }
-            for (uint32_t i = 0; i < this->partitionCount; i++) {
-                NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(ctx.currentPatchPreambleBuffer),
-                                                                        waitAddress,
-                                                                        waitValue,
-                                                                        COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                        false,
-                                                                        true,
-                                                                        GfxFamily::isQwordInOrderCounter,
-                                                                        qwordIndirect,
-                                                                        false,
-                                                                        useSemaphore64bCmd);
-                ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
-
-                waitAddress += this->csr->getImmWritePostSyncWriteOffset();
-            }
-            this->csr->makeResident(*commandList->getLatestTagGpuAllocation());
+            dispatchSingleSynchronizationCommand(ctx.currentPatchPreambleBuffer, waitAddress, waitValue, this->partitionCount, this->csr->getImmWritePostSyncWriteOffset(), commandList->getLatestTagGpuAllocation());
         }
     }
 }
@@ -2313,6 +2259,76 @@ NEO::PauseOnGpuProperties::PauseSelection CommandQueueHw<gfxCoreFamily>::patchDe
     }
 
     return submissionPauses;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateSingleSynchronizationCommandSize(size_t semaphoreCount, size_t indirectLoadCount) {
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+    size_t size = 0;
+
+    size = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * semaphoreCount;
+    if (this->isQwordIndirect) {
+        size += (2 * sizeof(MI_LOAD_REGISTER_IMM) * indirectLoadCount);
+    }
+    return size;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::dispatchSingleSynchronizationCommand(void *&inputCommandBuffer, uint64_t waitAddress, uint64_t waitValue,
+                                                                         size_t semaphoreCount, uint32_t offset, NEO::GraphicsAllocation *waitAllocation) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+    constexpr bool switchOnUnsuccessful = false;
+    constexpr bool registerPollMode = false;
+    constexpr bool waitMode = true;
+
+    this->csr->makeResident(*waitAllocation);
+
+    waitValue = this->isQwordSemaphore == true ? waitValue : getLowPart(waitValue);
+
+    if (this->isQwordIndirect) {
+        constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
+        constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
+        constexpr bool remap = true;
+
+        NEO::LriHelper<GfxFamily>::program(reinterpret_cast<MI_LOAD_REGISTER_IMM *>(inputCommandBuffer),
+                                           firstRegister,
+                                           getLowPart(waitValue),
+                                           remap,
+                                           this->isCopyOnlyCommandQueue);
+        inputCommandBuffer = ptrOffset(inputCommandBuffer, sizeof(MI_LOAD_REGISTER_IMM));
+
+        NEO::LriHelper<GfxFamily>::program(reinterpret_cast<MI_LOAD_REGISTER_IMM *>(inputCommandBuffer),
+                                           secondRegister,
+                                           getHighPart(waitValue),
+                                           remap,
+                                           this->isCopyOnlyCommandQueue);
+        inputCommandBuffer = ptrOffset(inputCommandBuffer, sizeof(MI_LOAD_REGISTER_IMM));
+    }
+    for (uint32_t i = 0; i < semaphoreCount; i++) {
+        NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(inputCommandBuffer),
+                                                                waitAddress,
+                                                                waitValue,
+                                                                COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                                registerPollMode,
+                                                                waitMode,
+                                                                this->isQwordSemaphore,
+                                                                this->isQwordIndirect,
+                                                                switchOnUnsuccessful,
+                                                                this->useSemaphore64Cmd);
+        inputCommandBuffer = ptrOffset(inputCommandBuffer, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
+        waitAddress += offset;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::dispatchSingleSynchronizationCommand(NEO::LinearStream &commandStream, uint64_t waitAddress, uint64_t waitValue,
+                                                                         size_t semaphoreCount, uint32_t offset, NEO::GraphicsAllocation *waitAllocation) {
+    size_t size = estimateSingleSynchronizationCommandSize(semaphoreCount, 1);
+    void *commandBuffer = commandStream.getSpace(size);
+    dispatchSingleSynchronizationCommand(commandBuffer, waitAddress, waitValue, semaphoreCount, offset, waitAllocation);
 }
 
 } // namespace L0

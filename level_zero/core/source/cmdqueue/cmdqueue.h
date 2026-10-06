@@ -216,6 +216,9 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool saveWaitForPreamble = false;
     bool csrClientRegistered = false;
     bool csrQueueOwnershipTaken = false;
+    bool useSemaphore64Cmd = false;
+    bool isQwordSemaphore = false;
+    bool isQwordIndirect = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandStreamReceiver *csr,

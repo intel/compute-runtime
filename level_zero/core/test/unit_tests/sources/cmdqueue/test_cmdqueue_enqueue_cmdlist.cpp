@@ -1618,15 +1618,15 @@ HWTEST_F(CommandQueueExecuteDefaultCommandLists, givenPatchPreambleCrossSyncWhen
     MockGraphicsAllocation externalAllocForCmdList2(nullptr, externalDeviceGpuAddressForCmdList2, 0x8);
     PatchPreambleCounter externalCounterForCmdList2 = 0x20;
 
-    PatchPreambleCountersCrossSyncContainer crossSyncContainer;
-    crossSyncContainer.list.push_back({externalCounterForCmdList1,
-                                       externalDeviceGpuAddressForCmdList1,
-                                       &externalAllocForCmdList1,
-                                       commandList1});
-    crossSyncContainer.list.push_back({externalCounterForCmdList2,
-                                       externalDeviceGpuAddressForCmdList2,
-                                       &externalAllocForCmdList2,
-                                       commandList2});
+    CountersCrossSyncContainer crossSyncContainer;
+    crossSyncContainer.patchPreambleCrossSyncList.push_back({externalCounterForCmdList1,
+                                                             externalDeviceGpuAddressForCmdList1,
+                                                             &externalAllocForCmdList1,
+                                                             commandList1});
+    crossSyncContainer.patchPreambleCrossSyncList.push_back({externalCounterForCmdList2,
+                                                             externalDeviceGpuAddressForCmdList2,
+                                                             &externalAllocForCmdList2,
+                                                             commandList2});
 
     commandQueue->setPatchingPreamble(true);
 
@@ -1646,7 +1646,7 @@ HWTEST_F(CommandQueueExecuteDefaultCommandLists, givenPatchPreambleCrossSyncWhen
                                            internalDeviceNodeGraphicsAllocation);
 
     CommandListExecutionInternalOptions internalOptions = {};
-    internalOptions.patchPreambleCountersCrossSyncContainer = &crossSyncContainer;
+    internalOptions.countersCrossSyncContainer = &crossSyncContainer;
     internalOptions.patchPreambleRequiredCounter = internalCounterValue;
     internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress = internalDeviceGpuAddress;
 

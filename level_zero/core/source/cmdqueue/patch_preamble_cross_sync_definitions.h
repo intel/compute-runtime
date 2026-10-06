@@ -24,8 +24,4 @@ struct PatchPreambleCountersCrossSync {
 
 using PatchPreambleCountersCrossSyncList = std::vector<PatchPreambleCountersCrossSync>;
 
-struct PatchPreambleCountersCrossSyncContainer {
-    PatchPreambleCountersCrossSyncList list;
-};
-
 } // namespace L0

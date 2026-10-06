@@ -28,7 +28,7 @@ namespace L0 {
 struct CommandList;
 struct CommandListExecutionInternalOptions;
 struct Device;
-struct PatchPreambleCountersCrossSyncContainer;
+struct CountersCrossSyncContainer;
 
 struct CommandListExecutionContext {
 
@@ -66,7 +66,7 @@ struct CommandListExecutionContext {
     NEO::GraphicsAllocation *globalStatelessAllocation = nullptr;
     std::unique_lock<std::mutex> *outerLockForIndirect = nullptr;
     std::unique_lock<NEO::CommandStreamReceiver::MutexType> *lockCSR = nullptr;
-    PatchPreambleCountersCrossSyncContainer *patchPreambleCountersCrossSyncContainer = nullptr;
+    CountersCrossSyncContainer *countersCrossSyncContainer = nullptr;
 
     NEO::PreemptionMode preemptionMode{};
     NEO::PreemptionMode statePreemption{};

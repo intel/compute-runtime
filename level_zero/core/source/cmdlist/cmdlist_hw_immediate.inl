@@ -2219,10 +2219,14 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
             additionalSize += cmdList->getFrontEndPatchSize();
             additionalSize += cmdList->getTotalNoopSpacePatchSize();
         }
-        if (internalOptions.patchPreambleCountersCrossSyncContainer != nullptr) {
-            additionalSize += static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->estimatePatchPreambleCrossSyncSize(internalOptions.patchPreambleCountersCrossSyncContainer->list.size());
+        if (internalOptions.countersCrossSyncContainer != nullptr) {
+            auto cmdQHw = static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate);
+            additionalSize += cmdQHw->estimatePatchPreambleCrossSyncSize(internalOptions.countersCrossSyncContainer->patchPreambleCrossSyncList.size());
             // for immediate command list driver needs high-level estimate for bb_start: each command list will have the jump - here its better to have little overestimate
             additionalSize += bbStartSize * numCommandLists;
+
+            // for immediate command list driver needs high-level estimate immediate completion cross-sync
+            additionalSize += cmdQHw->estimateSingleImmediateCompletionCrossSyncSize(internalOptions.countersCrossSyncContainer->immediateCompletionCrossSyncList.size(), this->partitionCount);
         }
     }
 

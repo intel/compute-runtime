@@ -10,7 +10,7 @@
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "level_zero/core/source/cmdqueue/patch_preamble_cross_sync_definitions.h"
+#include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"
 #include "level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/ze_api.h"
@@ -712,7 +712,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     }
 
     ze_result_t execute(L0::CommandList *executionTarget, const void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
-    ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, PatchPreambleDataContainer *patchPreambleCrossSyncs);
+    ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                               PatchPreambleDataContainer *patchPreambleCrossSyncs, ExecutionSegmentImmediateCountersCrossSyncList *immediateCountersCrossSyncs);
 
     WeaklyShared<ExternalCbEventInfoContainer> getExternalCbEventInfoContainer() {
         return externalCbEventStorage;
@@ -755,8 +756,9 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
-    PatchPreambleCountersCrossSyncContainer internalPatchPreambleCrossSyncs;
+    CountersCrossSyncContainer internalCountersCrossSyncs;
     PatchPreambleDataContainer graphWidePatchPreambleCrossSync;
+    ExecutionSegmentImmediateCountersCrossSyncList graphWideImmediateCountersCrossSyncs;
 
     GraphInternalEvents internalEvents;
 

@@ -16,6 +16,8 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_helpers.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_hw.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/counters_cross_sync_definitions.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/immediate_completion_cross_sync_definitions.h
                ${CMAKE_CURRENT_SOURCE_DIR}/patch_preamble_cross_sync_definitions.h
                ${CMAKE_CURRENT_SOURCE_DIR}/patch_preamble_data_types.h
 )
