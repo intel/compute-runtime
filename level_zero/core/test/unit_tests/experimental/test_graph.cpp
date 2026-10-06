@@ -4322,6 +4322,159 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     zeEventDestroy(signalFromParentExternalEventHandle);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenGraphIsExecutedMoreThanOnceThenInOrderCompletionIsUsedToSynchronizeBeforePatchPreamble) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    GraphsCleanupGuard graphCleanup;
+
+    const bool useSemaphore64bCmd = neoDevice->getDeviceInfo().semaphore64bCmdSupport;
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandListRoot(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandListRoot->setOrdinal(0);
+    auto commandListRootHandle = commandListRoot->toHandle();
+    auto &rootInOrderExecInfo = commandListRoot->getInOrderExecInfo();
+
+    std::unique_ptr<L0::CommandList> subCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    subCommandList->setOrdinal(0);
+    auto subCommandListHandle = subCommandList->toHandle();
+    auto &subInOrderExecInfo = subCommandList->getInOrderExecInfo();
+
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+    ze_event_handle_t internalEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &internalEventHandle));
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListRootHandle, graphHandle, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListRootHandle, internalEventHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(subCommandListHandle, nullptr, 1U, &internalEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(subCommandListHandle, internalEventHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListRootHandle, nullptr, 1U, &internalEventHandle));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListRootHandle, &graphHandle, nullptr));
+    srcGraph->enablePatchPreambleCrossSync();
+
+    GraphInstatiateSettings settings{};
+    settings.forkPolicy = GraphInstatiateSettings::ForkPolicy::ForkPolicyMonolythicLevels;
+    ExecutableGraph execGraph;
+    auto ret = execGraph.instantiateFrom(*(srcGraph.get()), settings);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto execGraphHandle = execGraph.toHandle();
+
+    auto rootCmdListStream = commandListRoot->getCmdContainer().getCommandStream();
+    auto subCmdListStream = subCommandList->getCmdContainer().getCommandStream();
+
+    auto rootCmdListBeforeSize = rootCmdListStream->getUsed();
+    auto subCmdListBeforeSize = subCmdListStream->getUsed();
+    ret = L0::zeCommandListAppendGraphExp(commandListRootHandle, execGraphHandle, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto rootCmdListAfterSize = rootCmdListStream->getUsed();
+    auto subCmdListAfterSize = subCmdListStream->getUsed();
+
+    // verify in order counters increased
+    auto rootInOrderCounterAfterFirst = rootInOrderExecInfo->getCounterValue();
+    EXPECT_NE(0u, rootInOrderCounterAfterFirst);
+    auto rootInOrderCounterGpuAddress = rootInOrderExecInfo->getBaseDeviceAddress() + rootInOrderExecInfo->getAllocationOffset();
+
+    auto subInOrderCounterAfterFirst = subInOrderExecInfo->getCounterValue();
+    EXPECT_NE(0u, subInOrderCounterAfterFirst);
+    auto subInOrderCounterGpuAddress = subInOrderExecInfo->getBaseDeviceAddress() + subInOrderExecInfo->getAllocationOffset();
+
+    GenCmdList cmdListRoot;
+    GenCmdList cmdListChild;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListRoot,
+        ptrOffset(rootCmdListStream->getCpuBase(), rootCmdListBeforeSize),
+        rootCmdListAfterSize - rootCmdListBeforeSize));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListChild,
+        ptrOffset(subCmdListStream->getCpuBase(), subCmdListBeforeSize),
+        subCmdListAfterSize - subCmdListBeforeSize));
+
+    // 1st execution of the graph, no semaphore wait before the ARB_CHECK, since nothing to wait on
+    auto arbCheckCmdsRoot = findAll<MI_ARB_CHECK *>(cmdListRoot.begin(), cmdListRoot.end());
+    ASSERT_EQ(2u, arbCheckCmdsRoot.size());
+    auto semWaitCmdsRoot = findAll<MI_SEMAPHORE_WAIT *>(cmdListRoot.begin(), arbCheckCmdsRoot[0]);
+    EXPECT_EQ(0u, semWaitCmdsRoot.size());
+
+    auto arbCheckCmdsChild = findAll<MI_ARB_CHECK *>(cmdListChild.begin(), cmdListChild.end());
+    ASSERT_EQ(2u, arbCheckCmdsChild.size());
+    auto semWaitCmdsChild = findAll<MI_SEMAPHORE_WAIT *>(cmdListChild.begin(), arbCheckCmdsChild[0]);
+    EXPECT_EQ(0u, semWaitCmdsChild.size());
+
+    cmdListRoot.clear();
+    cmdListChild.clear();
+
+    rootCmdListBeforeSize = rootCmdListStream->getUsed();
+    subCmdListBeforeSize = subCmdListStream->getUsed();
+    ret = L0::zeCommandListAppendGraphExp(commandListRootHandle, execGraphHandle, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    rootCmdListAfterSize = rootCmdListStream->getUsed();
+    subCmdListAfterSize = subCmdListStream->getUsed();
+
+    auto rootInOrderCounterAfterSecond = rootInOrderExecInfo->getCounterValue();
+    EXPECT_GT(rootInOrderCounterAfterSecond, rootInOrderCounterAfterFirst);
+
+    auto subInOrderCounterAfterSecond = subInOrderExecInfo->getCounterValue();
+    EXPECT_GT(subInOrderCounterAfterSecond, subInOrderCounterAfterFirst);
+
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListRoot,
+        ptrOffset(rootCmdListStream->getCpuBase(), rootCmdListBeforeSize),
+        rootCmdListAfterSize - rootCmdListBeforeSize));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdListChild,
+        ptrOffset(subCmdListStream->getCpuBase(), subCmdListBeforeSize),
+        subCmdListAfterSize - subCmdListBeforeSize));
+
+    // 2nd execution of the graph, root cmdlist - semaphore wait before the ARB_CHECK waiting for sub cmdlist in order counter
+    arbCheckCmdsRoot = findAll<MI_ARB_CHECK *>(cmdListRoot.begin(), cmdListRoot.end());
+    ASSERT_EQ(2u, arbCheckCmdsRoot.size());
+    semWaitCmdsRoot = findAll<MI_SEMAPHORE_WAIT *>(cmdListRoot.begin(), arbCheckCmdsRoot[0]);
+    ASSERT_EQ(1u, semWaitCmdsRoot.size());
+    auto semWaitInRootWaitingForSubInOrderCounter = static_cast<MI_SEMAPHORE_WAIT *>(*(semWaitCmdsRoot[0]));
+    EXPECT_EQ(subInOrderCounterGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitInRootWaitingForSubInOrderCounter));
+    if (qwordIndirect) {
+        auto lriCmdRoot = findAll<MI_LOAD_REGISTER_IMM *>(cmdListRoot.begin(), semWaitCmdsRoot[0]);
+        ASSERT_EQ(2u, lriCmdRoot.size());
+        auto lriCmdLower = static_cast<MI_LOAD_REGISTER_IMM *>(*(lriCmdRoot[0]));
+        EXPECT_EQ(rootInOrderCounterAfterFirst, lriCmdLower->getDataDword());
+    } else {
+        EXPECT_EQ(rootInOrderCounterAfterFirst, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitInRootWaitingForSubInOrderCounter));
+    }
+
+    arbCheckCmdsChild = findAll<MI_ARB_CHECK *>(cmdListChild.begin(), cmdListChild.end());
+    ASSERT_EQ(2u, arbCheckCmdsChild.size());
+    semWaitCmdsChild = findAll<MI_SEMAPHORE_WAIT *>(cmdListChild.begin(), arbCheckCmdsChild[0]);
+    ASSERT_EQ(1u, semWaitCmdsChild.size());
+    auto semWaitInChildWaitingForRootInOrderCounter = static_cast<MI_SEMAPHORE_WAIT *>(*(semWaitCmdsChild[0]));
+    EXPECT_EQ(rootInOrderCounterGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitInChildWaitingForRootInOrderCounter));
+    if (qwordIndirect) {
+        auto lriCmdChild = findAll<MI_LOAD_REGISTER_IMM *>(cmdListChild.begin(), semWaitCmdsChild[0]);
+        ASSERT_EQ(2u, lriCmdChild.size());
+        auto lriCmdLower = static_cast<MI_LOAD_REGISTER_IMM *>(*(lriCmdChild[0]));
+        EXPECT_EQ(subInOrderCounterAfterFirst, lriCmdLower->getDataDword());
+    } else {
+        EXPECT_EQ(subInOrderCounterAfterFirst, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitInChildWaitingForRootInOrderCounter));
+    }
+
+    srcGraph.reset();
+    zeEventDestroy(internalEventHandle);
+}
+
 TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventRecordedWithoutApiGraphExternalFlagWhenInstantiateToGraphThenDoNotRecordAsExternalCbEvent) {
     GraphsCleanupGuard graphCleanup;
 

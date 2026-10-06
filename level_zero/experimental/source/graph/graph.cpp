@@ -1761,7 +1761,8 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
 
     graphWidePatchPreambleCrossSync.clear();
 
-    if (this->getSourceGraph()->getPatchPreambleCrossSync() && this->getSourceGraph()->isInOrderGraph() && this->getOrderedCommands()->size() > 1) {
+    bool multipleSegmentInOrderGraph = this->getSourceGraph()->getPatchPreambleCrossSync() && this->getSourceGraph()->isInOrderGraph() && this->getOrderedCommands()->size() > 1;
+    if (multipleSegmentInOrderGraph) {
         auto &rootPatchPreambleCrossSyncItem = graphWidePatchPreambleCrossSync.emplace_back();
         executionTarget->getPatchPreambleFullData(rootPatchPreambleCrossSyncItem.counter(), rootPatchPreambleCrossSyncItem.hostAddress(),
                                                   rootPatchPreambleCrossSyncItem.hostGpuAddress(), rootPatchPreambleCrossSyncItem.hostAllocation(),
@@ -1834,7 +1835,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
 
     // add new (1st execution) or replace previous immediate command list completions for a given executable graph (root/branch segment)
     // and save fresh ones of recent from executeSegment
-    if (this->getSourceGraph()->getPatchPreambleCrossSync() && this->getSourceGraph()->isInOrderGraph() && this->getOrderedCommands()->size() > 1) {
+    if (multipleSegmentInOrderGraph) {
         segmentIt = this->getOrderedCommands()->begin();
         lastSegment = this->getOrderedCommands()->end();
         while (segmentIt != lastSegment) {
