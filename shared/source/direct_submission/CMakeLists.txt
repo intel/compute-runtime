@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,12 +25,6 @@ if(SUPPORT_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_xe_hp_core_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_prefetcher_xe_hp_core_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_prefetch_mitigation_xe_hp_core_and_later.inl
-  )
-endif()
-
-if(SUPPORT_PVC_AND_LATER)
-  list(APPEND NEO_CORE_DIRECT_SUBMISSION
-       ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_prefetcher_pvc_and_later.inl
   )
 endif()
 
