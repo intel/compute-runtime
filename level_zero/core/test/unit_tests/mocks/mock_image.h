@@ -32,6 +32,7 @@ struct WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>
 
     using BaseClass::ImageImp::imageFromBuffer;
     using BaseClass::ImageImp::imgInfo;
+    using BaseClass::ImageImp::implicitArgsTag;
     using BaseClass::ImageImp::isUnifiedMcsSurface;
     using BaseClass::ImageImp::mcsAllocation;
     using BaseClass::ImageImp::mcsMultisampleCount;

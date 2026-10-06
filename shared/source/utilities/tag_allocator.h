@@ -223,7 +223,7 @@ class TagAllocator : public TagAllocatorBase {
 
     void releaseDeferredTags() override;
 
-    void populateFreeTags();
+    bool populateFreeTags();
 
     IDList<NodeType> freeTags;
     IDList<NodeType> usedTags;

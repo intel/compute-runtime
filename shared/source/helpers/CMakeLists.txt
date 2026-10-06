@@ -103,6 +103,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_ip_version.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_mapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_walk_order.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_implicit_args_tag_node.h
     ${CMAKE_CURRENT_SOURCE_DIR}/in_order_cmd_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/in_order_cmd_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/is_pod_v.h

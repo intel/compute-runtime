@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -248,8 +249,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
-        NEO::AllocationProperties imgImplicitArgsAllocProperties(device->getRootDeviceIndex(), NEO::ImageImplicitArgs::getSize(), NEO::AllocationType::buffer, device->getNEODevice()->getDeviceBitfield());
-        implicitArgsAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(imgImplicitArgsAllocProperties);
+        obtainImplicitArgsTag();
     } else if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
         allocateImplicitArgsOnDemand();
     }
@@ -405,10 +405,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     }
 
     if (this->bindlessImage && implicitArgsAllocation) {
-        NEO::ImageImplicitArgs imageImplicitArgs{};
-        populateImageImplicitArgs(imageImplicitArgs);
-
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation), *this->device->getNEODevice(), implicitArgsAllocation, 0u, &imageImplicitArgs, NEO::ImageImplicitArgs::getSize());
+        writeImplicitArgsToTag();
         this->encodeImplicitArgsSurfaceState();
         auto ssInHeap = getBindlessSlot();
         copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false, 0u);
@@ -756,7 +753,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeImplicitArgsSurfaceState() {
     NEO::EncodeSurfaceStateArgs encodeArgs;
     encodeArgs.outMemory = implicitArgsSurfaceStateStorage.data();
     encodeArgs.size = NEO::ImageImplicitArgs::getSize();
-    encodeArgs.graphicsAddress = implicitArgsAllocation->getGpuAddress();
+    encodeArgs.graphicsAddress = implicitArgsTag->getGpuAddress();
     encodeArgs.gmmHelper = gmmHelper;
     encodeArgs.allocation = implicitArgsAllocation;
     encodeArgs.numAvailableDevices = this->device->getNEODevice()->getNumGenericSubDevices();

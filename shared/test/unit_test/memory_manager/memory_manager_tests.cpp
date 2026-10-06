@@ -3857,6 +3857,61 @@ TEST(MemoryManagerTest, givenDuplicateRootDeviceIndicesWhenCreatingMultiGraphics
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST(MemoryManagerTest, givenFailureForLaterRootDeviceFromExistingStorageWhenCreatingMultiGraphicsAllocationInSystemMemoryThenAllAllocationsAreFreedAndRemoved) {
+    class FailExistingStorageMemoryManager : public MockMemoryManager {
+      public:
+        using MockMemoryManager::MockMemoryManager;
+        GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override {
+            return nullptr;
+        }
+    };
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), false, 2u);
+    FailExistingStorageMemoryManager memoryManager(false, false, executionEnvironment);
+
+    AllocationProperties allocationProperties{0u, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield};
+    RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
+    MultiGraphicsAllocation multiGraphicsAllocation(1u);
+
+    auto ptr = memoryManager.createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, multiGraphicsAllocation);
+
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(0u));
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(1u));
+    EXPECT_EQ(1u, memoryManager.freeGraphicsMemoryCalled);
+}
+
+TEST(MemoryManagerTest, givenAllocationFailureForLaterRootDeviceWhenCreatingMultiGraphicsAllocationInSystemMemoryThenEarlierAllocationsAreFreedAndRemoved) {
+    class NoCpuPtrThenFailMemoryManager : public MockMemoryManager {
+      public:
+        using MockMemoryManager::MockMemoryManager;
+        GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+            if (allocationsCount++ > 0) {
+                return nullptr;
+            }
+            auto allocation = MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);
+            allocation->setCpuPtrAndGpuAddress(nullptr, allocation->getGpuAddress());
+            return allocation;
+        }
+        uint32_t allocationsCount = 0u;
+    };
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), false, 2u);
+    NoCpuPtrThenFailMemoryManager memoryManager(false, false, executionEnvironment);
+
+    AllocationProperties allocationProperties{0u, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield};
+    RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
+    MultiGraphicsAllocation multiGraphicsAllocation(1u);
+
+    auto ptr = memoryManager.createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, multiGraphicsAllocation);
+
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(2u, memoryManager.allocationsCount);
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(0u));
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(1u));
+    EXPECT_EQ(1u, memoryManager.freeGraphicsMemoryCalled);
+}
+
 TEST(MemoryManagerTest, givenMemoryAllocationWhenFreedThenFreeCalledOnMemoryOperationsHandler) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();

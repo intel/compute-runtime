@@ -19,6 +19,7 @@
 
 namespace NEO {
 class GraphicsAllocation;
+class TagNodeBase;
 struct SurfaceStateInHeapInfo;
 } // namespace NEO
 
@@ -70,6 +71,8 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     }
 
     void populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitArgs);
+    bool obtainImplicitArgsTag();
+    bool writeImplicitArgsToTag();
     static cl_channel_type overrideChannelTypeForDepthInt24Image(cl_channel_type clChannelType, bool isDepthStencil,
                                                                  NEO::GraphicsAllocation *allocation);
     ze_result_t allocateBindlessSlot() override;
@@ -104,6 +107,7 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
     NEO::GraphicsAllocation *implicitArgsAllocation = nullptr;
+    NEO::TagNodeBase *implicitArgsTag = nullptr;
     NEO::GraphicsAllocation *mcsAllocation = nullptr;
     uint32_t mcsPitch = 0;
     uint32_t mcsQPitch = 0;

@@ -51,7 +51,8 @@ enum class TagNodeType {
     hwPerfCounter,
     counter64b,
     fillPattern,
-    inOrderIpcData
+    inOrderIpcData,
+    imageImplicitArgs
 };
 
 enum class CacheRegion : uint16_t {

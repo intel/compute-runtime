@@ -4369,7 +4369,7 @@ HWTEST_F(ContextTest, givenBindlessModeDisabledWhenMakeImageResidentAndEvictThen
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-HWTEST_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageImplicitArgsAllocationIsMadeResidentAndEvicted) {
+HWTEST_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageImplicitArgsAllocationIsMadeResidentAndNotEvicted) {
     if (!device->getNEODevice()->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
@@ -4418,11 +4418,11 @@ HWTEST_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageIm
 
     {
         contextImp->evictImage(device, image);
-        EXPECT_EQ(2, mockMemoryOperationsInterface->evictCalledCount);
+        EXPECT_EQ(1, mockMemoryOperationsInterface->evictCalledCount);
         auto allocIter = std::find(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.begin(),
                                    mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(),
                                    Image::fromHandle(image)->getImplicitArgsAllocation());
-        EXPECT_EQ(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(), allocIter);
+        EXPECT_NE(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(), allocIter);
     }
 
     Image::fromHandle(image)->destroy();

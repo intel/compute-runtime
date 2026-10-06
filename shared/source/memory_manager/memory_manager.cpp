@@ -323,6 +323,14 @@ void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *gr
 }
 
 void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation, void *ptr) {
+    auto releaseAllocations = [&]() {
+        for (uint32_t index = 0u; index < multiGraphicsAllocation.getGraphicsAllocations().size(); index++) {
+            auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(index);
+            multiGraphicsAllocation.removeAllocation(index);
+            freeGraphicsMemory(graphicsAllocation);
+        }
+    };
+
     properties.flags.forceSystemMemory = true;
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         if (multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)) {
@@ -339,6 +347,7 @@ void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceI
         if (!ptr) {
             auto graphicsAllocation = allocateGraphicsMemoryWithProperties(properties);
             if (!graphicsAllocation) {
+                releaseAllocations();
                 return nullptr;
             }
             multiGraphicsAllocation.addAllocation(graphicsAllocation);
@@ -349,9 +358,7 @@ void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceI
             auto graphicsAllocation = createGraphicsAllocationFromExistingStorage(properties, ptr, multiGraphicsAllocation);
 
             if (!graphicsAllocation) {
-                for (auto &gpuAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
-                    freeGraphicsMemory(gpuAllocation);
-                }
+                releaseAllocations();
                 return nullptr;
             }
             multiGraphicsAllocation.addAllocation(graphicsAllocation);

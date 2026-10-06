@@ -29,10 +29,12 @@
 #include "shared/source/helpers/fill_pattern_tag_node.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/image_implicit_args_tag_node.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/path.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/required_libs_helpers.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/host_function/host_function_allocator.h"
 #include "shared/source/kernel/kernel_properties.h"
@@ -1719,6 +1721,7 @@ void Device::releaseResources() {
     inOrderTimestampAllocator.reset();
     inOrderSharableEventDataAllocator.reset();
     fillPatternAllocator.reset();
+    imageImplicitArgsAllocator.reset();
     hostFunctionAllocator.reset();
 
     if (allocationsForReuse.get()) {
@@ -2509,6 +2512,22 @@ NEO::TagAllocatorBase *Device::getFillPatternAllocator() {
     }
 
     return this->fillPatternAllocator.get();
+}
+
+NEO::TagAllocatorBase *Device::getImageImplicitArgsAllocator() {
+    if (!this->imageImplicitArgsAllocator.get()) {
+        static std::mutex mtx;
+        std::unique_lock<std::mutex> lock(mtx);
+
+        if (!this->imageImplicitArgsAllocator.get()) {
+            RootDeviceIndicesContainer rootDeviceIndices = {getNEODevice()->getRootDeviceIndex()};
+            const size_t tagStride = alignUp(static_cast<size_t>(NEO::ImageImplicitArgs::getSize()), static_cast<size_t>(getHwInfo().caps.cacheLineSize));
+            imageImplicitArgsAllocator = std::make_unique<NEO::TagAllocator<NEO::ImageImplicitArgsNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), static_cast<uint32_t>(MemoryConstants::pageSize64k / tagStride),
+                                                                                                             tagStride, tagStride, 0, false, false, getNEODevice()->getDeviceBitfield());
+        }
+    }
+
+    return this->imageImplicitArgsAllocator.get();
 }
 
 uint32_t Device::getNextSyncDispatchQueueId() {

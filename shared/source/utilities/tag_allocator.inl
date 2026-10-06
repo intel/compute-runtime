@@ -47,7 +47,9 @@ TagNodeBase *TagAllocator<TagType>::getTag() {
     auto node = freeTags.removeFrontOne().release();
     if (!node) {
         std::unique_lock<std::mutex> lock(allocatorMutex);
-        populateFreeTags();
+        if (!populateFreeTags()) {
+            return nullptr;
+        }
         node = freeTags.removeFrontOne().release();
     }
     usedTags.pushFrontOne(*node);
@@ -110,7 +112,7 @@ void TagAllocator<TagType>::releaseDeferredTags() {
 }
 
 template <typename TagType>
-void TagAllocator<TagType>::populateFreeTags() {
+bool TagAllocator<TagType>::populateFreeTags() {
     size_t allocationSizeRequired = tagCount * tagSize;
 
     void *baseCpuAddress = nullptr;
@@ -121,6 +123,10 @@ void TagAllocator<TagType>::populateFreeTags() {
 
     if (rootDeviceIndices.size() == 1) {
         GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+        if (graphicsAllocation == nullptr) {
+            delete multiGraphicsAllocation;
+            return false;
+        }
 
         baseCpuAddress = graphicsAllocation->getUnderlyingBuffer();
         baseGpuAddress = graphicsAllocation->getGpuAddress();
@@ -130,6 +136,10 @@ void TagAllocator<TagType>::populateFreeTags() {
         allocationProperties.subDevicesBitfield = systemMemoryBitfield;
 
         baseCpuAddress = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, *multiGraphicsAllocation);
+        if (baseCpuAddress == nullptr) {
+            delete multiGraphicsAllocation;
+            return false;
+        }
         baseGpuAddress = castToUint64(baseCpuAddress);
     }
 
@@ -152,6 +162,7 @@ void TagAllocator<TagType>::populateFreeTags() {
     }
 
     tagPoolMemory.push_back(std::move(nodesMemory));
+    return true;
 }
 
 template <typename TagType>

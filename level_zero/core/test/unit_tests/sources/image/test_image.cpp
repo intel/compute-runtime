@@ -10,11 +10,13 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/image_implicit_args_tag_node.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
@@ -3840,6 +3842,174 @@ HWTEST_F(ImageCreate, givenNonBindlessImageAndBindlessHeapsHelperPresentWhenImag
     EXPECT_EQ(baseAddr, implicitArgsAlloc->getGpuAddress());
 }
 
+HWTEST_F(ImageCreate, givenImageWhenAllocateImplicitArgsOnDemandCalledThenImplicitArgsAreStoredInTagFromDeviceAllocator) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(nullptr, imageHW->implicitArgsTag);
+
+    ret = imageHW->allocateImplicitArgsOnDemand();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_NE(nullptr, imageHW->implicitArgsTag);
+
+    auto tagAllocation = imageHW->implicitArgsTag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
+    EXPECT_EQ(tagAllocation, imageHW->getImplicitArgsAllocation());
+    EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, tagAllocation->getAllocationType());
+
+    auto imgImplicitArgs = static_cast<ImageImplicitArgs *>(imageHW->implicitArgsTag->getCpuBase());
+    EXPECT_EQ(ImageImplicitArgs::getSize(), imgImplicitArgs->structSize);
+    EXPECT_EQ(desc.width, imgImplicitArgs->imageWidth);
+    EXPECT_EQ(desc.height, imgImplicitArgs->imageHeight);
+    EXPECT_EQ(desc.depth, imgImplicitArgs->imageDepth);
+
+    EXPECT_EQ(imageHW->implicitArgsTag->getGpuAddress(), imageHW->getImplicitArgsSurfaceState().getSurfaceBaseAddress());
+}
+
+TEST(ImageImplicitArgsNodeTypeTest, givenImageImplicitArgsNodeTypeThenItDescribesCacheLineSizedNodesInCpuAccessibleDeviceAllocation) {
+    EXPECT_EQ(NEO::TagNodeType::imageImplicitArgs, NEO::ImageImplicitArgsNodeType::getTagNodeType());
+    EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, NEO::ImageImplicitArgsNodeType::getAllocationType());
+    EXPECT_TRUE(NEO::GraphicsAllocation::isCpuAccessRequired(NEO::ImageImplicitArgsNodeType::getAllocationType()));
+    EXPECT_EQ(MemoryConstants::cacheLineSize, NEO::ImageImplicitArgsNodeType::getSinglePacketSize());
+    EXPECT_GE(NEO::ImageImplicitArgsNodeType::getSinglePacketSize(), static_cast<size_t>(ImageImplicitArgs::getSize()));
+}
+
+HWTEST_F(ImageCreate, givenImageWithImplicitArgsTagWhenImageInitializedThenTagPoolIsPlacedInLocalMemoryWhenSupported) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    desc.width = 73;
+    desc.height = 49;
+    desc.depth = 1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+    ASSERT_NE(nullptr, imageHW->implicitArgsTag);
+
+    auto tagAllocation = imageHW->getImplicitArgsAllocation();
+    ASSERT_NE(nullptr, tagAllocation);
+    EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, tagAllocation->getAllocationType());
+    EXPECT_EQ(neoDevice->getMemoryManager()->isLocalMemorySupported(neoDevice->getRootDeviceIndex()), tagAllocation->isAllocatedInLocalMemoryPool());
+    EXPECT_NE(nullptr, tagAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(ptrOffset(tagAllocation->getUnderlyingBuffer(), imageHW->implicitArgsTag->getGpuAddress() - tagAllocation->getGpuAddress()), imageHW->implicitArgsTag->getCpuBase());
+}
+
+HWTEST_F(ImageCreate, givenBindlessHeapsHelperWhenMultipleImagesCreatedThenImplicitArgsShareOneAllocationWithSeparateTags) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    desc.width = 73;
+    desc.height = 49;
+    desc.depth = 1;
+
+    auto imageHW1 = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW1->initialize(device, &desc));
+
+    desc.width = 146;
+    desc.height = 97;
+    auto imageHW2 = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW2->initialize(device, &desc));
+
+    ASSERT_NE(nullptr, imageHW1->implicitArgsTag);
+    ASSERT_NE(nullptr, imageHW2->implicitArgsTag);
+    EXPECT_NE(imageHW1->implicitArgsTag, imageHW2->implicitArgsTag);
+    EXPECT_EQ(imageHW1->getImplicitArgsAllocation(), imageHW2->getImplicitArgsAllocation());
+    EXPECT_NE(imageHW1->implicitArgsTag->getGpuAddress(), imageHW2->implicitArgsTag->getGpuAddress());
+
+    EXPECT_EQ(imageHW1->implicitArgsTag->getGpuAddress(), imageHW1->getImplicitArgsSurfaceState().getSurfaceBaseAddress());
+    EXPECT_EQ(imageHW2->implicitArgsTag->getGpuAddress(), imageHW2->getImplicitArgsSurfaceState().getSurfaceBaseAddress());
+
+    EXPECT_EQ(73u, static_cast<ImageImplicitArgs *>(imageHW1->implicitArgsTag->getCpuBase())->imageWidth);
+    EXPECT_EQ(146u, static_cast<ImageImplicitArgs *>(imageHW2->implicitArgsTag->getCpuBase())->imageWidth);
+}
+
+HWTEST_F(ImageCreate, givenBindlessHeapsHelperWhenImageIsDestroyedThenItsImplicitArgsTagIsReusedByNextImage) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    desc.width = 73;
+    desc.height = 49;
+    desc.depth = 1;
+
+    auto imageHW1 = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW1->initialize(device, &desc));
+    ASSERT_NE(nullptr, imageHW1->implicitArgsTag);
+    auto firstTag = imageHW1->implicitArgsTag;
+    auto firstAllocation = imageHW1->getImplicitArgsAllocation();
+    imageHW1.reset();
+
+    desc.width = 146;
+    desc.height = 97;
+    auto imageHW2 = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW2->initialize(device, &desc));
+
+    EXPECT_EQ(firstTag, imageHW2->implicitArgsTag);
+    EXPECT_EQ(firstAllocation, imageHW2->getImplicitArgsAllocation());
+    EXPECT_EQ(146u, static_cast<ImageImplicitArgs *>(imageHW2->implicitArgsTag->getCpuBase())->imageWidth);
+    EXPECT_EQ(97u, static_cast<ImageImplicitArgs *>(imageHW2->implicitArgsTag->getCpuBase())->imageHeight);
+}
+
+HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializedThenImplicitArgsAreStoredInTagFromDeviceAllocator) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &bindlessExtDesc;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    desc.width = 73;
+    desc.height = 49;
+    desc.depth = 1;
+
+    auto imageHW1 = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW1->initialize(device, &desc));
+    auto imageHW2 = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW2->initialize(device, &desc));
+
+    ASSERT_NE(nullptr, imageHW1->implicitArgsTag);
+    ASSERT_NE(nullptr, imageHW2->implicitArgsTag);
+    EXPECT_EQ(imageHW1->getImplicitArgsAllocation(), imageHW2->getImplicitArgsAllocation());
+    EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, imageHW1->getImplicitArgsAllocation()->getAllocationType());
+
+    EXPECT_EQ(imageHW2->implicitArgsTag->getGpuAddress(), imageHW2->getImplicitArgsSurfaceState().getSurfaceBaseAddress());
+    EXPECT_EQ(73u, static_cast<ImageImplicitArgs *>(imageHW2->implicitArgsTag->getCpuBase())->imageWidth);
+    EXPECT_EQ(49u, static_cast<ImageImplicitArgs *>(imageHW2->implicitArgsTag->getCpuBase())->imageHeight);
+}
+
 HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageWhenAllocateImplicitArgsOnDemandFailsThenOutOfHostMemoryIsReturned) {
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
     ze_image_desc_t desc = {};
@@ -3865,6 +4035,7 @@ HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageWhenAllocateImplicitArg
     ret = imageHW->allocateImplicitArgsOnDemand();
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
     EXPECT_EQ(nullptr, imageHW->getImplicitArgsAllocation());
+    EXPECT_EQ(nullptr, imageHW->implicitArgsTag);
 }
 
 HWTEST2_F(ImageCreate, givenMipmappedImageWhenAllocatingBindlessSlotWithMipmapThenEachLevelGetsSeededSlotWithItsOwnLod, ImageSupport) {

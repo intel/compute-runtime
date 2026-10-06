@@ -6986,7 +6986,7 @@ class MockSharedHandleMemoryManager : public MockMemoryManager {
     }
 
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
-        if (failPeekInternalHandle) {
+        if (failPeekInternalHandle && properties.allocationType == AllocationType::image) {
             return new ExportImportMockGraphicsAllocation();
         }
         return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);

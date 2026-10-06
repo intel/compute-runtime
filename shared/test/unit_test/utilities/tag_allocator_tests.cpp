@@ -99,6 +99,7 @@ class MockTagAllocator : public TagAllocator<TagType> {
     using BaseClass::TagAllocator;
     using BaseClass::usedTags;
     using BaseClass::TagAllocatorBase::cleanUpResources;
+    using BaseClass::TagAllocatorBase::memoryManager;
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
@@ -228,6 +229,39 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenAllNodesWereUsedThenCreateNewGraph
 
     EXPECT_EQ(2u, tagAllocator.getGraphicsAllocationsCount());
     EXPECT_EQ(2u, tagAllocator.getTagPoolCount());
+}
+
+TEST_F(TagAllocatorTest, givenAllocationFailureWhenTagAllocatorIsCreatedThenNoTagPoolIsCreatedAndGetTagReturnsNullptr) {
+    FailMemoryManager failMemoryManager(0, *executionEnvironment);
+    MockTagAllocator<TimeStamps> tagAllocator(&failMemoryManager, 10, 16, deviceBitfield);
+
+    EXPECT_EQ(0u, tagAllocator.getGraphicsAllocationsCount());
+    EXPECT_EQ(0u, tagAllocator.getTagPoolCount());
+    EXPECT_EQ(nullptr, tagAllocator.getFreeTagsHead());
+
+    EXPECT_EQ(nullptr, tagAllocator.getTag());
+    EXPECT_EQ(nullptr, tagAllocator.getUsedTagsHead());
+}
+
+TEST_F(TagAllocatorTest, givenAllTagsUsedAndAllocationFailureWhenGettingTagThenNullptrIsReturnedAndExistingPoolIsKept) {
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 2, 1024, deviceBitfield);
+
+    auto tag0 = tagAllocator.getTag();
+    auto tag1 = tagAllocator.getTag();
+    ASSERT_NE(nullptr, tag0);
+    ASSERT_NE(nullptr, tag1);
+
+    FailMemoryManager failMemoryManager(0, *executionEnvironment);
+    tagAllocator.memoryManager = &failMemoryManager;
+
+    EXPECT_EQ(nullptr, tagAllocator.getTag());
+    EXPECT_EQ(1u, tagAllocator.getGraphicsAllocationsCount());
+    EXPECT_EQ(1u, tagAllocator.getTagPoolCount());
+
+    tagAllocator.memoryManager = memoryManager;
+
+    tag0->returnTag();
+    tag1->returnTag();
 }
 
 TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThenRequestedNumberOfNodesIsCreated) {

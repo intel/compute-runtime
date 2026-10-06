@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/image/image_imp.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -23,6 +24,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -91,8 +93,8 @@ ImageImp::~ImageImp() {
         if (!isImageView() && !imageFromBuffer) {
             this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
         }
-        if (implicitArgsAllocation) {
-            this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->implicitArgsAllocation);
+        if (implicitArgsTag) {
+            implicitArgsTag->returnTag();
         }
         if (mcsAllocation) {
             this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->mcsAllocation);
@@ -367,42 +369,41 @@ ze_result_t ImageImp::allocateImplicitArgsOnDemand() {
         return ZE_RESULT_SUCCESS;
     }
 
-    auto neoDevice = device->getNEODevice();
-    auto memoryManager = neoDevice->getMemoryManager();
-
-    const size_t implicitArgsSize = NEO::ImageImplicitArgs::getSize();
-    NEO::AllocationProperties properties{
-        neoDevice->getRootDeviceIndex(),
-        implicitArgsSize,
-        NEO::AllocationType::buffer,
-        neoDevice->getDeviceBitfield()};
-
-    implicitArgsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
-    if (implicitArgsAllocation == nullptr) {
+    if (!obtainImplicitArgsTag()) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
-
-    NEO::ImageImplicitArgs imageImplicitArgs{};
-    populateImageImplicitArgs(imageImplicitArgs);
-
-    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
-    auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
-
-    bool success = NEO::MemoryTransferHelper::transferMemoryToAllocation(
-        productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation),
-        *neoDevice,
-        implicitArgsAllocation,
-        0,
-        &imageImplicitArgs,
-        implicitArgsSize);
-
-    if (!success) {
-        memoryManager->freeGraphicsMemory(implicitArgsAllocation);
+    if (!writeImplicitArgsToTag()) {
+        implicitArgsTag->returnTag();
+        implicitArgsTag = nullptr;
         implicitArgsAllocation = nullptr;
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     encodeImplicitArgsSurfaceState();
     return ZE_RESULT_SUCCESS;
+}
+
+bool ImageImp::obtainImplicitArgsTag() {
+    implicitArgsTag = device->getImageImplicitArgsAllocator()->getTag();
+    if (implicitArgsTag == nullptr) {
+        return false;
+    }
+    implicitArgsAllocation = implicitArgsTag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
+    return true;
+}
+
+bool ImageImp::writeImplicitArgsToTag() {
+    NEO::ImageImplicitArgs imageImplicitArgs{};
+    populateImageImplicitArgs(imageImplicitArgs);
+
+    auto cpuBase = implicitArgsTag->getCpuBase();
+    if (cpuBase == nullptr) {
+        return false;
+    }
+    memcpy_s(cpuBase, NEO::ImageImplicitArgs::getSize(), &imageImplicitArgs, NEO::ImageImplicitArgs::getSize());
+
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    csr->writeTagAllocationChunkToSimulation(*implicitArgsTag, 0, NEO::ImageImplicitArgs::getSize());
+    return true;
 }
 
 cl_channel_type ImageImp::overrideChannelTypeForDepthInt24Image(cl_channel_type clChannelType, bool isDepthStencil,
