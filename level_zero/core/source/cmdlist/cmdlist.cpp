@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/cpu_copy_helper.h"
@@ -396,7 +397,11 @@ ze_result_t CommandList::destroy() {
         destroyRecordedBcsSplitResources();
         this->device->bcsSplit->releaseResources();
     }
-
+    if (isImmediateType() && !this->cmdQImmediate) {
+        if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && this->debuggerQueueNotified) {
+            this->device->getL0Debugger()->notifyCommandQueueDestroyed(device->getNEODevice());
+        }
+    }
     if (this->cmdQImmediate && !this->isSyncModeQueue) {
         this->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
@@ -684,6 +689,10 @@ CommandList *CommandList::createImmediate(Device *device,
         return nullptr;
     }
 
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
+        device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
+        commandList->debuggerQueueNotified = true;
+    }
     if (!internalUsage) {
         device->setFirstImmCmdlistCreated();
     }
@@ -820,6 +829,10 @@ void CommandList::enableCopyOperationOffload() {
     }
 
     this->cmdQImmediateCopyOffload = offloadCommandQueue;
+
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
+        device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
+    }
 }
 
 void CommandList::setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties) {

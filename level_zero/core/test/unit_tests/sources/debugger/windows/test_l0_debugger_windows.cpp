@@ -20,6 +20,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
@@ -90,7 +91,7 @@ HWTEST2_F(L0DebuggerWindowsTest, givenWindowsOSWhenL0DebuggerIsCreatedAddressMod
     EXPECT_TRUE(device->getL0Debugger()->getSingleAddressSpaceSbaTracking());
 }
 
-HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndCommandQueuesAreCreatedAndDestroyedThanDebuggerL0IsNotified) {
+HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndCommandQueuesAreCreatedAndDestroyedThenDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
 
     neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
@@ -107,6 +108,27 @@ HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndCommandQueuesAreCreatedA
     EXPECT_EQ(1u, debuggerL0Hw->commandQueueDestroyedCount);
 
     commandQueue2->destroy();
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
+}
+
+HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndImmediateCommandListsAreCreatedAndDestroyedThenDebuggerL0IsNotified) {
+    auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
+
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    auto engineGroupType = NEO::EngineHelpers::engineTypeToEngineGroupType(neoDevice->getDefaultEngine().osContext->getEngineType());
+    auto commandList1 = CommandList::createImmediate(device, &queueDesc, false, engineGroupType, neoDevice->getDefaultEngine().commandStreamReceiver, returnValue);
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
+
+    auto commandList2 = CommandList::createImmediate(device, &queueDesc, false, engineGroupType, neoDevice->getDefaultEngine().commandStreamReceiver, returnValue);
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
+
+    commandList1->destroy();
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueDestroyedCount);
+
+    commandList2->destroy();
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
 }
 

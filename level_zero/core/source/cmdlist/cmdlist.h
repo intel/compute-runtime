@@ -958,6 +958,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool frontEndControllerEnabled = false;
     bool copyOffloadHintRequested = false;
     bool useInternalCopyEngine = false;
+    bool debuggerQueueNotified = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

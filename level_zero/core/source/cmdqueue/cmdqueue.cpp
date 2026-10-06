@@ -103,7 +103,7 @@ ze_result_t CommandQueue::initialize(bool copyOnly, bool isInternal, bool immedi
         if (!isInternal) {
             partitionCount = csr->getActivePartitions();
         }
-        if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
+        if (!immediateCmdListQueue && NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
             device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
         }
         auto &hwInfo = device->getHwInfo();
