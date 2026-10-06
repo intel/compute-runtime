@@ -34,19 +34,13 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
 #include "shared/test/common/test_macros/heapless_matchers.h"
 
 namespace L0 {
 namespace ult {
 
 using CommandListTests = Test<DeviceFixture>;
-HEAPFUL_HWTEST_F(CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
-    auto shouldBeTested = FamilyType::supportsCmdSet(IGFX_XE_HP_CORE);
-    if (shouldBeTested == false) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_F(CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed, IsHeapfulRequiredAndAtLeastXeCore) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.EnableStateBaseAddressTracking.set(0);
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
