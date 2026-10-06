@@ -8,6 +8,7 @@
 #include "shared/source/helpers/array_count.h"
 
 #include "level_zero/api/opencl/source/sharings/d3d/leo_d3d_sharing.h"
+#include "level_zero/api/opencl/source/sharings/d3d/leo_d3d_texture.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 
 #include "dxgi1_2.h"
@@ -254,6 +255,9 @@ std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3D>::retrieveTextureFormats(cl_me
             DXGI_FORMAT_FORCE_UINT};
         cachedFormats.reserve(arrayCount(dxgiFormats));
         for (auto dxgiFormat : dxgiFormats) {
+            if (dxgiToOpenCLImageFormat(dxgiFormat, ImagePlane::noPlane).first == 0) {
+                continue;
+            }
             UINT format = 0;
             if (checkFormatSupport(dxgiFormat, &format)) {
                 if (memObjectFormatSupport(imageType, format)) {

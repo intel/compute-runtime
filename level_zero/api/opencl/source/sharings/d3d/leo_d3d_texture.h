@@ -6,13 +6,19 @@
  */
 
 #pragma once
+#include "shared/source/helpers/surface_format_info.h"
+
 #include "level_zero/api/opencl/source/sharings/d3d/leo_d3d_sharing.h"
+
+#include <utility>
 
 namespace NEO {
 namespace LEO {
 
 class Context;
 class Image;
+
+std::pair<cl_channel_order, cl_channel_type> dxgiToOpenCLImageFormat(DXGI_FORMAT dxgiFormat, ImagePlane plane);
 
 template <typename D3D>
 class D3DTexture : public D3DSharing<D3D> {

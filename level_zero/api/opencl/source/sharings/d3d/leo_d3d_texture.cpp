@@ -42,6 +42,9 @@ dxgiToOpenCLImageFormat(DXGI_FORMAT dxgiFormat, ImagePlane plane) {
     case DXGI_FORMAT_R8_SINT:
         return {CL_R, CL_SIGNED_INT8};
 
+    case DXGI_FORMAT_A8_UNORM:
+        return {CL_A, CL_UNORM_INT8};
+
     case DXGI_FORMAT_R8G8_UNORM:
         return {CL_RG, CL_UNORM_INT8};
     case DXGI_FORMAT_R8G8_SNORM:
@@ -125,6 +128,17 @@ dxgiToOpenCLImageFormat(DXGI_FORMAT dxgiFormat, ImagePlane plane) {
         return {plane == ImagePlane::planeY ? CL_R : CL_RG, CL_UNORM_INT16};
     case DXGI_FORMAT_NV12:
         return {plane == ImagePlane::planeY ? CL_R : CL_RG, CL_UNORM_INT8};
+
+    case DXGI_FORMAT_YUY2:
+        return {CL_YUYV_INTEL, CL_UNORM_INT8};
+    case DXGI_FORMAT_AYUV:
+        return {CL_RGBA, CL_UNORM_INT8};
+    case DXGI_FORMAT_Y210:
+    case DXGI_FORMAT_Y216:
+    case DXGI_FORMAT_Y416:
+        return {CL_RGBA, CL_UNORM_INT16};
+    case DXGI_FORMAT_Y410:
+        return {CL_RGBA, CL_UNORM_INT_101010_2};
 
     default:
         return {0, 0};

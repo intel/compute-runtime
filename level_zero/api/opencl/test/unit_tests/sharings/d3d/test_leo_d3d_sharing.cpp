@@ -10,11 +10,14 @@
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/d3d/leo_d3d_sharing.h"
+#include "level_zero/api/opencl/source/sharings/d3d/leo_d3d_texture.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 
 #include "CL/cl.h"
 
+#include <algorithm>
 #include <memory>
+#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -53,6 +56,11 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
         copySubresourceRegionCalled++;
     }
 
+    bool checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) override {
+        *pFormat = formatSupportToReturn;
+        return true;
+    }
+
     ADDMETHOD_NOBASE_VOIDRETURN(flushAndWait, (D3DQuery * query));
     ADDMETHOD_NOBASE_VOIDRETURN(signalAndWait, (D3DFence * fence));
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceContext, (D3DQuery * query));
@@ -60,6 +68,7 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
 
     D3DQuery *queryToReturn = nullptr;
     D3DFence *fenceToReturn = nullptr;
+    UINT formatSupportToReturn = D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
 
     uint32_t createQueryCalled = 0u;
     uint32_t createFenceCalled = 0u;
@@ -312,6 +321,58 @@ TEST(D3DSharingFunctionsTest, givenNullResourceWhenReleaseIsCalledThenResourceIs
 
     sharingFunctions.release(nullptr);
     EXPECT_EQ(nullptr, sharingFunctions.getDevice());
+}
+
+template <typename D3D>
+struct D3DTextureFormatQueryTest : public ::testing::Test {
+    MockD3DSharingFunctions<D3D> sharingFunctions{};
+};
+
+using D3DTextureFormatQueryTypes = ::testing::Types<D3DTypesHelper::D3D10, D3DTypesHelper::D3D11>;
+TYPED_TEST_SUITE(D3DTextureFormatQueryTest, D3DTextureFormatQueryTypes);
+
+TYPED_TEST(D3DTextureFormatQueryTest, givenAllFormatsSupportedByDeviceWhenRetrievingTextureFormatsThenOnlyFormatsConvertibleToClAreReported) {
+    for (auto imageType : {CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE3D}) {
+        auto &formats = this->sharingFunctions.retrieveTextureFormats(imageType, 0);
+        EXPECT_FALSE(formats.empty());
+
+        for (auto format : formats) {
+            EXPECT_NE(0u, dxgiToOpenCLImageFormat(format, ImagePlane::noPlane).first) << format;
+        }
+
+        for (auto format : {DXGI_FORMAT_YUY2, DXGI_FORMAT_AYUV, DXGI_FORMAT_Y210, DXGI_FORMAT_Y216, DXGI_FORMAT_Y410, DXGI_FORMAT_Y416,
+                            DXGI_FORMAT_NV12, DXGI_FORMAT_P010, DXGI_FORMAT_P016, DXGI_FORMAT_A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM}) {
+            EXPECT_NE(formats.end(), std::find(formats.begin(), formats.end(), format)) << format;
+        }
+
+        for (auto format : {DXGI_FORMAT_R8G8B8A8_TYPELESS, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_D32_FLOAT, DXGI_FORMAT_R11G11B10_FLOAT, DXGI_FORMAT_FORCE_UINT}) {
+            EXPECT_EQ(formats.end(), std::find(formats.begin(), formats.end(), format)) << format;
+        }
+    }
+}
+
+TYPED_TEST(D3DTextureFormatQueryTest, givenAllFormatsSupportedByDeviceWhenRetrievingPlane1TextureFormatsThenOnlyTwoPlaneFormatsAreReported) {
+    auto &formats = this->sharingFunctions.retrieveTextureFormats(CL_MEM_OBJECT_IMAGE2D, 1);
+
+    std::vector<DXGI_FORMAT> expectedFormats = {DXGI_FORMAT_NV12, DXGI_FORMAT_P010, DXGI_FORMAT_P016};
+    EXPECT_EQ(expectedFormats, formats);
+}
+
+TYPED_TEST(D3DTextureFormatQueryTest, givenFormatsNotSupportedByDeviceWhenRetrievingTextureFormatsThenNoFormatsAreReported) {
+    this->sharingFunctions.formatSupportToReturn = 0;
+
+    EXPECT_TRUE(this->sharingFunctions.retrieveTextureFormats(CL_MEM_OBJECT_IMAGE2D, 0).empty());
+    EXPECT_TRUE(this->sharingFunctions.retrieveTextureFormats(CL_MEM_OBJECT_IMAGE2D, 1).empty());
+}
+
+TYPED_TEST(D3DTextureFormatQueryTest, givenReportedAndNotReportedFormatsWhenValidatingFormatSupportThenOnlyReportedFormatsAreAccepted) {
+    for (auto format : {DXGI_FORMAT_YUY2, DXGI_FORMAT_AYUV, DXGI_FORMAT_Y210, DXGI_FORMAT_Y216, DXGI_FORMAT_Y410, DXGI_FORMAT_Y416}) {
+        EXPECT_EQ(CL_SUCCESS, this->sharingFunctions.validateFormatSupport(format, CL_MEM_OBJECT_IMAGE2D)) << format;
+    }
+
+    for (auto format : {DXGI_FORMAT_R8G8B8A8_TYPELESS, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_D32_FLOAT}) {
+        EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, this->sharingFunctions.validateFormatSupport(format, CL_MEM_OBJECT_IMAGE2D)) << format;
+    }
 }
 
 } // namespace ult
