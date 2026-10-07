@@ -1158,37 +1158,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyRegion
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::tryAppendStagingImageTransfer(
-    ze_image_handle_t hImage,
-    const void *ptr,
-    const ze_image_region_t *&pRegion,
-    ze_image_region_t &tmpRegion,
-    uint32_t rowPitch,
-    uint64_t slicePitch,
-    bool isRead,
-    uint32_t numWaitEvents,
-    ze_event_handle_t hSignalEvent,
-    CmdListMemoryCopyParams &memoryCopyParams,
-    ze_result_t &result) {
-    auto image = Image::fromHandle(hImage);
-    if (pRegion == nullptr) {
-        tmpRegion = getRegionFromImageDesc(image->getImageDesc());
-        pRegion = &tmpRegion;
-    }
-
-    uint32_t resolvedRowPitch = rowPitch;
-    uint64_t resolvedSlicePitch = slicePitch;
-    uint64_t totalSize = 0;
-    this->resolveImagePitchesAndBufferSize(image, pRegion, resolvedRowPitch, resolvedSlicePitch, totalSize);
-
-    if (isValidForStagingImageTransfer(ptr, totalSize, numWaitEvents > 0)) {
-        result = this->appendStagingImageTransfer(hImage, ptr, pRegion, resolvedRowPitch, resolvedSlicePitch, isRead, hSignalEvent, memoryCopyParams);
-        return true;
-    }
-    return false;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMemory(
     ze_image_handle_t hDstImage,
     const void *srcPtr,
@@ -1201,12 +1170,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
     auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hDstImage, pDstRegion), false);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
-    }
-
-    ze_image_region_mip_level_exp_desc_t tmpRegion;
-    ze_result_t stagingResult = ZE_RESULT_SUCCESS;
-    if (tryAppendStagingImageTransfer(hDstImage, srcPtr, pDstRegion, tmpRegion, 0, 0, false, numWaitEvents, hSignalEvent, memoryCopyParams, stagingResult)) {
-        return stagingResult;
     }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hSignalEvent,
@@ -1229,12 +1192,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hSrcImage, pSrcRegion), false);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
-    }
-
-    ze_image_region_mip_level_exp_desc_t tmpRegion;
-    ze_result_t stagingResult = ZE_RESULT_SUCCESS;
-    if (tryAppendStagingImageTransfer(hSrcImage, dstPtr, pSrcRegion, tmpRegion, 0, 0, true, numWaitEvents, hSignalEvent, memoryCopyParams, stagingResult)) {
-        return stagingResult;
     }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hSignalEvent,
@@ -1261,12 +1218,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
         return spaceCheckStatus;
     }
 
-    ze_image_region_mip_level_exp_desc_t tmpRegion;
-    ze_result_t stagingResult = ZE_RESULT_SUCCESS;
-    if (tryAppendStagingImageTransfer(hDstImage, srcPtr, pDstRegion, tmpRegion, srcRowPitch, srcSlicePitch, false, numWaitEvents, hSignalEvent, memoryCopyParams, stagingResult)) {
-        return stagingResult;
-    }
-
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(hDstImage, srcPtr, pDstRegion, srcRowPitch, srcSlicePitch,
                                                                                   hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 
@@ -1289,12 +1240,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hSrcImage, pSrcRegion), false);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
-    }
-
-    ze_image_region_mip_level_exp_desc_t tmpRegion;
-    ze_result_t stagingResult = ZE_RESULT_SUCCESS;
-    if (tryAppendStagingImageTransfer(hSrcImage, dstPtr, pSrcRegion, tmpRegion, destRowPitch, destSlicePitch, true, numWaitEvents, hSignalEvent, memoryCopyParams, stagingResult)) {
-        return stagingResult;
     }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(dstPtr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch,
@@ -2214,12 +2159,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
-    return handlePostStagingTransferSync(event, isSingleTransfer, hSignalEvent, relaxedOrdering);
-}
 
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::handlePostStagingTransferSync(Event *event, bool isSingleTransfer, ze_event_handle_t hSignalEvent, bool relaxedOrdering) {
-    ze_result_t ret = ZE_RESULT_SUCCESS;
     if (event && !isSingleTransfer) {
         if (this->isInOrderExecutionEnabled()) {
             this->flushInOrderCounterSignal();
@@ -2245,6 +2185,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::handlePostStagingTran
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies) {
+    if (this->useAdditionalBlitProperties) {
+        return false;
+    }
     if (this->isSharedSystemEnabled()) {
         return false;
     }
@@ -2257,114 +2200,6 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
     auto neoDevice = this->getDevice()->getNEODevice();
     auto driver = this->getDevice()->getDriverHandle();
     return driver->getStagingBufferManager()->isValidForCopy(*neoDevice, cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, hasDependencies);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingImageTransfer(const void *ptr, size_t size, bool hasDependencies) {
-    if (this->isSharedSystemEnabled()) {
-        return false;
-    }
-    auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
-    auto neoDevice = this->getDevice()->getNEODevice();
-    return stagingBufferManager->isValidForStagingTransfer(*neoDevice, ptr, size, hasDependencies);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingImageTransfer(
-    ze_image_handle_t hImage, const void *ptr, const ze_image_region_t *pRegion, size_t rowPitch, size_t slicePitch, bool isRead,
-    ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
-    auto relaxedOrdering = memoryCopyParams.relaxedOrderingDispatch;
-    bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(0, relaxedOrdering);
-
-    Event *event = Event::fromHandle(hSignalEvent);
-
-    auto image = Image::fromHandle(hImage);
-    const auto &imgInfo = image->getImageInfo();
-    auto bytesPerPixel = static_cast<uint32_t>(imgInfo.surfaceFormat->imageElementSizeInBytes);
-    if (image->isMimickedImage()) {
-        // 3-channel images are emulated with 4 (or 8) bytes per pixel, but host memory holds 3 (or 6) bytes per pixel
-        bytesPerPixel = bytesPerPixel / 4 * 3;
-    }
-
-    // Must match decision made by chunk copy, so that staging buffers are tracked on the same CSR as chunks are flushed to
-    bool imageToBuffer = isRead || imgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer;
-    memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadAllowed(nullptr, image->getAllocation(), false, imageToBuffer, imgInfo.imgDesc.numMipLevels) &&
-                                          this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
-
-    size_t globalOrigin[3] = {pRegion->originX, pRegion->originY, pRegion->originZ};
-    size_t globalRegion[3] = {pRegion->width, pRegion->height, pRegion->depth};
-
-    uint32_t resolvedRowPitch = static_cast<uint32_t>(rowPitch);
-    uint64_t resolvedSlicePitch = slicePitch;
-    uint64_t bufferSize = 0;
-    this->resolveImagePitchesAndBufferSize(image, pRegion, resolvedRowPitch, resolvedSlicePitch, bufferSize);
-    rowPitch = resolvedRowPitch;
-    slicePitch = resolvedSlicePitch;
-
-    const auto stagingBufferSize = NEO::getDefaultStagingBufferSize();
-    auto fillRegion = [](ze_image_region_t &imgRegion, const size_t *origin, const size_t *region) {
-        imgRegion.originX = static_cast<uint32_t>(origin[0]);
-        imgRegion.originY = static_cast<uint32_t>(origin[1]);
-        imgRegion.originZ = static_cast<uint32_t>(origin[2]);
-        imgRegion.width = static_cast<uint32_t>(region[0]);
-        imgRegion.height = static_cast<uint32_t>(region[1]);
-        imgRegion.depth = static_cast<uint32_t>(region[2]);
-    };
-
-    auto isSingleTransfer = (static_cast<uint64_t>(pRegion->height) * rowPitch <= stagingBufferSize) &&
-                            (static_cast<uint64_t>(pRegion->depth) * slicePitch <= stagingBufferSize);
-    NEO::ChunkTransferImageFunc chunkTransfer = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
-        ze_image_region_mip_level_exp_desc_t chunkRegion = {};
-        fillRegion(chunkRegion, origin, region);
-        chunkRegion.mipLevel = getRegionMipLevel(pRegion, imgInfo.imgDesc.numMipLevels);
-
-        checkAvailableSpace(0, relaxedOrdering, estimateCommandSizeForImageCopyBlit(hImage, &chunkRegion), false);
-
-        auto isFirstTransfer = (globalOrigin[1] == origin[1] && globalOrigin[2] == origin[2]);
-        auto isLastTransfer = (globalOrigin[1] + globalRegion[1] == origin[1] + region[1]) &&
-                              (globalOrigin[2] + globalRegion[2] == origin[2] + region[2]);
-
-        if (isFirstTransfer && !isSingleTransfer) {
-            this->appendEventForProfiling(event, nullptr, true, false, false, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
-        }
-
-        ze_result_t ret;
-        if (isRead) {
-            ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(stagingBuffer, hImage, &chunkRegion, resolvedRowPitch, static_cast<uint32_t>(resolvedSlicePitch),
-                                                                                   isSingleTransfer ? hSignalEvent : nullptr, 0, nullptr, memoryCopyParams);
-        } else {
-            ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(hImage, stagingBuffer, &chunkRegion, resolvedRowPitch, static_cast<uint32_t>(resolvedSlicePitch),
-                                                                                     isSingleTransfer ? hSignalEvent : nullptr, 0, nullptr, memoryCopyParams);
-        }
-
-        if (ret != ZE_RESULT_SUCCESS) {
-            return ret;
-        }
-
-        if (isLastTransfer && !isSingleTransfer) {
-            this->appendEventForProfiling(event, nullptr, false, false, false, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
-            if (event && event->isInterruptModeEnabled()) {
-                NEO::EncodeUserInterrupt<GfxFamily>::encode(*this->commandContainer.getCommandStream());
-            }
-            if (Event::isAggregatedEvent(event)) {
-                this->appendSignalAggregatedEventAtomic(*event, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
-            }
-        }
-
-        ret = flushImmediate(ret, true, hasStallingCmds, relaxedOrdering, NEO::AppendOperations::kernel, memoryCopyParams.copyOffloadAllowed, hSignalEvent, true, nullptr, nullptr);
-        return ret;
-    };
-
-    if (!isSingleTransfer && !this->handleCounterBasedEventOperations(event, false)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
-    auto ret = stagingStatusToL0(stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, bytesPerPixel, false, chunkTransfer, getCsr(memoryCopyParams.copyOffloadAllowed), isRead));
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
-    return handlePostStagingTransferSync(event, isSingleTransfer, hSignalEvent, relaxedOrdering);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
