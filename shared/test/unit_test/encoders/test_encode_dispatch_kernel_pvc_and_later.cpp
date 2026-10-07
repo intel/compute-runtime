@@ -5,15 +5,11 @@
  *
  */
 
-#include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/kernel/grf_config.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -82,31 +78,6 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousValuesWhenCallingSetBa
         EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd);
         EXPECT_EQ(numBarriersEnum, idd.getNumberOfBarriers());
     }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandContainerWhenNumGrfRequiredIsGreaterThanDefaultThenLargeGrfModeEnabled) {
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    MockExecutionEnvironment executionEnvironment{};
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    if (heaplessEnabled) {
-        GTEST_SKIP();
-    }
-
-    StreamProperties streamProperties{};
-    streamProperties.initSupport(rootDeviceEnvironment);
-    streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::largeGrfNumber, 0u, PreemptionMode::Disabled, false);
-    EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
-    GenCmdList commands;
-    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
-
-    auto itorCmd = find<STATE_COMPUTE_MODE *>(commands.begin(), commands.end());
-    ASSERT_NE(itorCmd, commands.end());
-
-    auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*itorCmd);
-    EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), cmd->getLargeGrfMode());
 }
 
 HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenDebugVariableWhenPostSyncIsProgrammedThenL1IsNotFlushed, IsAtLeastXeHpcCore) {

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
@@ -32,6 +33,8 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/fixtures/front_window_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
+
+#include "test_traits_common.h"
 
 #include <algorithm>
 
@@ -1856,5 +1859,24 @@ HWTEST2_F(CommandEncodeStatesTest, givenWorkloadAndThreadGroupSizeWhenCalculatin
         EXPECT_EQ(calculateThreadGroupCountSharingSubsliceSlm(threadsPerThreadGroup, 1),
                   calculateThreadGroupCountSharingSubsliceSlm(threadsPerThreadGroup, 4096))
             << ", threadsPerThreadGroup: " << threadsPerThreadGroup;
+    }
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
+
+    StreamProperties streamProperties{};
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    streamProperties.initSupport(rootDeviceEnvironment);
+    streamProperties.stateComputeMode.setPropertiesAll(false, 128, 0u, PreemptionMode::Disabled, false);
+    streamProperties.stateComputeMode.setPropertiesAll(false, 128, 0u, PreemptionMode::Disabled, false);
+    EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
+
+    streamProperties.stateComputeMode.setPropertiesAll(false, 256, 0u, PreemptionMode::Disabled, false);
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+        EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
+    } else {
+        EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
     }
 }

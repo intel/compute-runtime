@@ -31,7 +31,6 @@
 using namespace NEO;
 HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc, IGFX_XE3_CORE);
 HWTEST_EXCLUDE_PRODUCT(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing, IGFX_XE3_CORE);
-HWTEST_EXCLUDE_PRODUCT(CommandEncodeStatesTestPvcAndLater, givenCommandContainerWhenNumGrfRequiredIsGreaterThanDefaultThenLargeGrfModeEnabled, IGFX_XE3_CORE);
 
 using CommandEncoderSbaTestXe3 = Test<DeviceFixture>;
 
