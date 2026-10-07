@@ -485,6 +485,10 @@ struct CommandList : _ze_command_list_handle_t {
         return this->partitionCount;
     }
 
+    void setStagingCopiesAllowed(bool allowed) {
+        this->stagingCopiesAllowed = allowed;
+    }
+
     bool isImmediateType() const {
         return (this->cmdListType == CommandListType::typeImmediate);
     }
@@ -941,6 +945,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool kernelWithAssertAppended = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool copyThroughLockedPtrEnabled = false;
+    bool stagingCopiesAllowed = true;
     bool isSmallBarConfigPresent = false;
     bool useOnlyGlobalTimestamps = false;
     bool heaplessModeEnabled = false;

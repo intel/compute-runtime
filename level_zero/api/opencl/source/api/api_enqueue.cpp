@@ -153,13 +153,12 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_READ_BUFFER, pCommandQueue);
 
     auto lock = pCommandQueue->takeOwnership();
-    ze_result_t ret = zeCommandListAppendMemoryCopy(pCommandQueue->getL0Handle(),
-                                                    ptr,
-                                                    ptrOffset(pBuffer->getUsmPtr(), offset),
-                                                    cb,
-                                                    hSignalEvent,
-                                                    waitEvents.size(),
-                                                    waitEvents.data());
+    ze_result_t ret = pCommandQueue->appendHostMemoryCopy(ptr,
+                                                          ptrOffset(pBuffer->getUsmPtr(), offset),
+                                                          cb,
+                                                          hSignalEvent,
+                                                          waitEvents.size(),
+                                                          waitEvents.data());
     if (blockingRead) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
@@ -260,13 +259,12 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_WRITE_BUFFER, pCommandQueue);
 
     auto lock = pCommandQueue->takeOwnership();
-    ze_result_t ret = zeCommandListAppendMemoryCopy(pCommandQueue->getL0Handle(),
-                                                    ptrOffset(pBuffer->getUsmPtr(), offset),
-                                                    ptr,
-                                                    cb,
-                                                    hSignalEvent,
-                                                    waitEvents.size(),
-                                                    waitEvents.data());
+    ze_result_t ret = pCommandQueue->appendHostMemoryCopy(ptrOffset(pBuffer->getUsmPtr(), offset),
+                                                          ptr,
+                                                          cb,
+                                                          hSignalEvent,
+                                                          waitEvents.size(),
+                                                          waitEvents.data());
     if (blockingWrite) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
@@ -863,13 +861,12 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
 
             {
                 auto lock = pCommandQueue->takeOwnership();
-                errcodeHelper.set(L0ToClResultMapper(zeCommandListAppendMemoryCopy(pCommandQueue->getL0Handle(),
-                                                                                   ptrOffset(pBuffer->getCpuPtr(), offset),
-                                                                                   ptrOffset(pBuffer->getUsmPtr(), offset),
-                                                                                   cb,
-                                                                                   hSignalEvent,
-                                                                                   waitEvents.size(),
-                                                                                   waitEvents.data())));
+                errcodeHelper.set(L0ToClResultMapper(pCommandQueue->appendHostMemoryCopy(ptrOffset(pBuffer->getCpuPtr(), offset),
+                                                                                         ptrOffset(pBuffer->getUsmPtr(), offset),
+                                                                                         cb,
+                                                                                         hSignalEvent,
+                                                                                         waitEvents.size(),
+                                                                                         waitEvents.data())));
             }
         }
     } else {
@@ -1545,13 +1542,12 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MEMCPY_INTEL, pCommandQueue);
 
     auto lock = pCommandQueue->takeOwnership();
-    ze_result_t ret = zeCommandListAppendMemoryCopy(pCommandQueue->getL0Handle(),
-                                                    dstPtr,
-                                                    srcPtr,
-                                                    size,
-                                                    hSignalEvent,
-                                                    waitEvents.size(),
-                                                    waitEvents.data());
+    ze_result_t ret = pCommandQueue->appendHostMemoryCopy(dstPtr,
+                                                          srcPtr,
+                                                          size,
+                                                          hSignalEvent,
+                                                          waitEvents.size(),
+                                                          waitEvents.data());
     if (blocking) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());

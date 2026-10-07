@@ -26,6 +26,7 @@
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
 #include "level_zero/core/source/cmdqueue/internal_queue_throttle_ext.h"
 
+#include <algorithm>
 #include <limits>
 
 namespace NEO {
@@ -445,6 +446,19 @@ void CommandQueue::clearDependencies() {
 bool CommandQueue::hasDependencies() {
     auto lock = this->takeOwnership();
     return !this->dependencyEvents.empty();
+}
+
+// A staging copy waits on the host inside the append, so behind a command gated by a user event that is not set yet it
+// would block before the application can set the event. Callers hold queue ownership.
+ze_result_t CommandQueue::appendHostMemoryCopy(void *dstPtr, const void *srcPtr, size_t size, ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    const bool userEventPending = std::any_of(this->dependencyEvents.begin(), this->dependencyEvents.end(), [](Event *pEvent) {
+        return pEvent->isUserEvent() && pEvent->peekExecutionStatus() > CL_COMPLETE;
+    });
+    this->getL0Object()->setStagingCopiesAllowed(!userEventPending);
+    auto result = zeCommandListAppendMemoryCopy(this->cmdListHandle, dstPtr, srcPtr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+    this->getL0Object()->setStagingCopiesAllowed(true);
+    return result;
 }
 
 ze_result_t CommandQueue::hostSynchronize(uint64_t timeout) {

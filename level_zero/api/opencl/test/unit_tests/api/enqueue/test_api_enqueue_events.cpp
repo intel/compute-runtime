@@ -329,6 +329,44 @@ TEST_F(EnqueueEventPlumbingFixture, givenSeveralEnqueuesWithEventsWhenInspecting
     clReleaseEvent(secondEvent);
 }
 
+TEST_F(EnqueueEventPlumbingFixture, givenCommandWaitingOnUserEventNotSetWhenReadBufferIsEnqueuedThenOnlyThatCopyHasStagingDisabled) {
+    auto userEvent = createUserEvent();
+    ASSERT_EQ(CL_SUCCESS, clEnqueueMigrateMemObjects(getCommandQueue(), 1, &buffer, 0, 1, &userEvent, nullptr));
+
+    ASSERT_EQ(CL_SUCCESS, clEnqueueReadBuffer(getCommandQueue(), buffer, CL_FALSE, 0, bufferSize, hostData.data(), 0, nullptr, nullptr));
+    ASSERT_EQ(CL_SUCCESS, clSetUserEventStatus(userEvent, CL_COMPLETE));
+    ASSERT_EQ(CL_SUCCESS, clEnqueueReadBuffer(getCommandQueue(), buffer, CL_FALSE, 0, bufferSize, hostData.data(), 0, nullptr, nullptr));
+
+    ASSERT_EQ(2u, capturingCmdList.stagingCopiesAllowedAtMemoryCopy.size());
+    EXPECT_FALSE(capturingCmdList.stagingCopiesAllowedAtMemoryCopy[0]);
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowedAtMemoryCopy[1]);
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowed);
+}
+
+TEST_F(EnqueueEventPlumbingFixture, givenUserEventNotSetButNotADependencyWhenReadBufferIsEnqueuedThenStagingCopiesAreAllowed) {
+    createUserEvent();
+
+    ASSERT_EQ(CL_SUCCESS, clEnqueueReadBuffer(getCommandQueue(), buffer, CL_FALSE, 0, bufferSize, hostData.data(), 0, nullptr, nullptr));
+
+    ASSERT_EQ(1u, capturingCmdList.stagingCopiesAllowedAtMemoryCopy.size());
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowedAtMemoryCopy[0]);
+}
+
+TEST_F(EnqueueEventPlumbingFixture, givenCommandWaitingOnIncompleteNonUserEventWhenReadBufferIsEnqueuedThenStagingCopiesAreAllowed) {
+    cl_event markerEvent = nullptr;
+    ASSERT_EQ(CL_SUCCESS, clEnqueueMarkerWithWaitList(getCommandQueue(), 0, nullptr, &markerEvent));
+    ASSERT_GT(castToObject<Event>(markerEvent)->peekExecutionStatus(), CL_COMPLETE);
+    ASSERT_EQ(CL_SUCCESS, clEnqueueMigrateMemObjects(getCommandQueue(), 1, &buffer, 0, 1, &markerEvent, nullptr));
+
+    ASSERT_EQ(CL_SUCCESS, clEnqueueReadBuffer(getCommandQueue(), buffer, CL_FALSE, 0, bufferSize, hostData.data(), 0, nullptr, nullptr));
+
+    ASSERT_EQ(1u, capturingCmdList.stagingCopiesAllowedAtMemoryCopy.size());
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowedAtMemoryCopy[0]);
+
+    EXPECT_EQ(CL_SUCCESS, clFinish(getCommandQueue()));
+    clReleaseEvent(markerEvent);
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO

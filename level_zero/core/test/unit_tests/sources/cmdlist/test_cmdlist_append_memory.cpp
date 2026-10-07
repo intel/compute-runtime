@@ -1513,6 +1513,18 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithoutStagingThenImportAll
     EXPECT_FALSE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 }
 
+HWTEST_F(StagingBuffersFixture, givenStagingCopiesNotAllowedWhenAppendMemoryCopyThenImportAllocation) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.setStagingCopiesAllowed(false);
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+}
+
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndNonUsmDstThenImportAllocation) {
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();

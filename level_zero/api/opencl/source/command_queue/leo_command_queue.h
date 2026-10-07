@@ -93,6 +93,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void storeDependencies(cl_uint numEvents, const cl_event *eventWaitList);
     void clearDependencies();
     bool hasDependencies();
+    ze_result_t appendHostMemoryCopy(void *dstPtr, const void *srcPtr, size_t size, ze_event_handle_t hSignalEvent,
+                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     ze_result_t hostSynchronize(uint64_t timeout);
 
   protected:

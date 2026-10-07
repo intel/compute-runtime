@@ -49,12 +49,14 @@ struct CapturedApi {
 };
 struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     using BaseClass = L0::ult::Mock<L0::ult::CommandList>;
+    using BaseClass::stagingCopiesAllowed;
 
     CapturingCommandList() : BaseClass(nullptr) {}
 
     size_t totalCalls() const { return sequence.size(); }
 
     void clearCaptures() {
+        stagingCopiesAllowedAtMemoryCopy.clear();
         sequence.clear();
 #define LEO_CAPTURED_API_CLEAR(name, argsType) name##Args.records.clear();
         LEO_CAPTURED_APIS(LEO_CAPTURED_API_CLEAR)
@@ -62,6 +64,7 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     }
 
     std::vector<ApiId> sequence{};
+    std::vector<bool> stagingCopiesAllowedAtMemoryCopy{};
 
 #define LEO_CAPTURED_API_MEMBER(name, argsType) CapturedApi<argsType> name##Args{};
     LEO_CAPTURED_APIS(LEO_CAPTURED_API_MEMBER)
@@ -71,6 +74,7 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
                                  ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents,
                                  L0::CmdListMemoryCopyParams &memoryCopyParams) override {
+        stagingCopiesAllowedAtMemoryCopy.push_back(this->stagingCopiesAllowed);
         auto result = BaseClass::appendMemoryCopy(dstptr, srcptr, size, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
         return record(this->appendMemoryCopyArgs, ApiId::appendMemoryCopy,
                       AppendMemoryCopyArgs{dstptr, srcptr, size, hEvent, numWaitEvents, phWaitEvents}, result);

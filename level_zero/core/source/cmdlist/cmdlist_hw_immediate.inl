@@ -2191,6 +2191,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies) {
+    if (!this->stagingCopiesAllowed) {
+        return false;
+    }
     if (this->useAdditionalBlitProperties) {
         return false;
     }
