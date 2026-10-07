@@ -3121,7 +3121,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         ze_device_mem_alloc_desc_t deviceDesc = {};
         ze_result_t res = context->allocDeviceMem(device->toHandle(),
                                                   &deviceDesc,
-                                                  16384u,
+                                                  16 * MemoryConstants::kiloByte,
                                                   0u,
                                                   &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3139,7 +3139,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         ze_device_mem_alloc_desc_t deviceDesc = {};
         ze_result_t res = context->allocDeviceMem(device->toHandle(),
                                                   &deviceDesc,
-                                                  16384u,
+                                                  16 * MemoryConstants::kiloByte,
                                                   0u,
                                                   &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3172,7 +3172,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
         ze_result_t res = context->allocDeviceMem(device->toHandle(),
                                                   &deviceDesc,
-                                                  16384u,
+                                                  16 * MemoryConstants::kiloByte,
                                                   0u,
                                                   &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3191,7 +3191,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
         ze_result_t res = context->allocDeviceMem(device->toHandle(),
                                                   &deviceDesc,
-                                                  16384u,
+                                                  16 * MemoryConstants::kiloByte,
                                                   0u,
                                                   &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3224,7 +3224,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
         ze_result_t res = context->allocDeviceMem(device->toHandle(),
                                                   &deviceDesc,
-                                                  16384u,
+                                                  16 * MemoryConstants::kiloByte,
                                                   0u,
                                                   &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3242,7 +3242,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         ze_device_mem_alloc_desc_t deviceDesc = {};
         ze_result_t res = context->allocDeviceMem(device->toHandle(),
                                                   &deviceDesc,
-                                                  16384u,
+                                                  16 * MemoryConstants::kiloByte,
                                                   0u,
                                                   &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3274,7 +3274,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         ze_host_mem_alloc_desc_t hostDesc = {};
         hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
         ze_result_t res = context->allocHostMem(&hostDesc,
-                                                16384u,
+                                                16 * MemoryConstants::kiloByte,
                                                 0u,
                                                 &ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3291,7 +3291,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         void *ptr = nullptr;
         ze_host_mem_alloc_desc_t hostDesc = {};
         ze_result_t res = context->allocHostMem(&hostDesc,
-                                                16384u,
+                                                16 * MemoryConstants::kiloByte,
                                                 0u,
                                                 &ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);

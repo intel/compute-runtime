@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -50,26 +51,24 @@ TEST_F(ReleaseHelperDg2G10Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCo
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
 
-        constexpr uint32_t kB = 1024;
-
         auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
         EXPECT_EQ(0u, preferredSlmValueArray[0].upperLimit);
         EXPECT_EQ(8u, preferredSlmValueArray[0].valueToProgram);
 
-        EXPECT_EQ(16 * kB, preferredSlmValueArray[1].upperLimit);
+        EXPECT_EQ(16 * MemoryConstants::kiloByte, preferredSlmValueArray[1].upperLimit);
         EXPECT_EQ(9u, preferredSlmValueArray[1].valueToProgram);
 
-        EXPECT_EQ(32 * kB, preferredSlmValueArray[2].upperLimit);
+        EXPECT_EQ(32 * MemoryConstants::kiloByte, preferredSlmValueArray[2].upperLimit);
         EXPECT_EQ(10u, preferredSlmValueArray[2].valueToProgram);
 
-        EXPECT_EQ(64 * kB, preferredSlmValueArray[3].upperLimit);
+        EXPECT_EQ(64 * MemoryConstants::kiloByte, preferredSlmValueArray[3].upperLimit);
         EXPECT_EQ(11u, preferredSlmValueArray[3].valueToProgram);
 
         if (ipVersion.value == AOT::DG2_G10_B0) {
             EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[4].upperLimit);
             EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
         } else {
-            EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
+            EXPECT_EQ(96 * MemoryConstants::kiloByte, preferredSlmValueArray[4].upperLimit);
             EXPECT_EQ(12u, preferredSlmValueArray[4].valueToProgram);
 
             EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);

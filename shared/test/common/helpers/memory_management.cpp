@@ -7,6 +7,8 @@
 
 #include "shared/test/common/helpers/memory_management.h"
 
+#include "shared/source/helpers/constants.h"
+
 #include "gtest/gtest.h"
 
 #include <atomic>
@@ -61,7 +63,7 @@ size_t breakOnDeallocationEvent = -1;
 std::atomic_bool detailedAllocationLoggingActive{false};
 
 // limit size of single allocation in ULT
-const size_t maxAllowedAllocationSize = 128 * 1024 * 1024 + 4096;
+const size_t maxAllowedAllocationSize = 128 * MemoryConstants::megaByte + 4 * MemoryConstants::kiloByte;
 
 static void onAllocationEvent() {
     /*

@@ -4382,7 +4382,7 @@ TEST_F(IoctlHelperXeTest, givenDeferBackingDisabledWhenIsDeferBackingEnabledForS
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
-    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(1u << 20));
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(MemoryConstants::megaByte));
 }
 
 TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCreateDrmContextAndLowLatencyHintNotAvailableThenNoFlagIsSet) {

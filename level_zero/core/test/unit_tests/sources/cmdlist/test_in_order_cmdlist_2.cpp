@@ -199,7 +199,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCmdsChainingWhenDispa
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto findSemaphores = [&](size_t expectedNumSemaphores) {
@@ -3878,7 +3878,7 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppend
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyCmdList>(false);

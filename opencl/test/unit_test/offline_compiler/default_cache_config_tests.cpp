@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -39,7 +40,7 @@ TEST(CompilerCache, GivenEnvVariableWhenDefaultConfigIsCreatedThenValuesArePrope
     EXPECT_EQ(std::numeric_limits<size_t>::max(), cacheConfig.cacheSize);
     EXPECT_TRUE(cacheConfig.enabled);
 
-    NEO::debugManager.flags.EnvCacheMaxSize.set(1048576);
+    NEO::debugManager.flags.EnvCacheMaxSize.set(MemoryConstants::megaByte);
     NEO::debugManager.flags.EnvCacheDir.set("");
     cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("", cacheConfig.cacheDir.c_str());

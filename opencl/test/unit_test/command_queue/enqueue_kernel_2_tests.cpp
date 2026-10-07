@@ -386,7 +386,7 @@ HWTEST2_P(EnqueueScratchSpaceTests, GivenKernelRequiringScratchWhenItIsEnqueuedW
     Parse::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 
     // skip if size to big 4MB, no point in stressing memory allocator.
-    if (allocationSize > 4194304) {
+    if (allocationSize > 4 * MemoryConstants::megaByte) {
         return;
     }
 

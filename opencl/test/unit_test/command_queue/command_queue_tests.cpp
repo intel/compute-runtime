@@ -528,7 +528,7 @@ TEST_F(CommandQueueCommandStreamTest, GivenRequiredSizeWhenGettingCommandStreamT
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue commandQueue(context.get(), pClDevice, props, false);
 
-    size_t requiredSize = 16384;
+    size_t requiredSize = 16 * MemoryConstants::kiloByte;
     const auto &commandStream = commandQueue.getCS(requiredSize);
     ASSERT_NE(nullptr, &commandStream);
     EXPECT_GE(commandStream.getMaxAvailableSpace(), requiredSize);
@@ -681,7 +681,7 @@ TEST_F(CommandQueueIndirectHeapTest, GivenRequiredSizeWhenGettingIndirectHeapThe
         const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
         MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
-        size_t requiredSize = 16384;
+        size_t requiredSize = 16 * MemoryConstants::kiloByte;
         const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, requiredSize);
         ASSERT_NE(nullptr, &indirectHeap);
         EXPECT_GE(indirectHeap.getMaxAvailableSpace(), requiredSize);

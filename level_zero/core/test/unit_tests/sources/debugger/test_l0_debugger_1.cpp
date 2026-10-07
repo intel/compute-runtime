@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/program/kernel_info.h"
@@ -343,7 +344,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &dstPtr);
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16 * MemoryConstants::kiloByte, 4096u, &dstPtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_command_queue_desc_t desc = {};
@@ -429,7 +430,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediate
 
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstPtr);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &dstPtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     int pattern = 1;
 
@@ -449,7 +450,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediate
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &dstPtr);
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16 * MemoryConstants::kiloByte, 4096u, &dstPtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     int pattern = 1;
 
@@ -477,7 +478,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForRegularCo
 
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstPtr);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &dstPtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     int pattern = 1;
     CmdListMemoryCopyParams copyParams = {};

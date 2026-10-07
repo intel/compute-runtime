@@ -523,11 +523,11 @@ void CommandListAppendLaunchRayTracingKernelFixture::setUp() {
     contextImp = Context::fromHandle(hContext);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &allocSrc);
+    auto result = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &allocSrc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     buffer1 = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(allocSrc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, buffer1);
-    result = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &allocDst);
+    result = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &allocDst);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     buffer2 = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(allocDst)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, buffer2);

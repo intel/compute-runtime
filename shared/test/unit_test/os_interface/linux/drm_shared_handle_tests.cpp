@@ -826,7 +826,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenUncacheableFlagWhenCreatingAll
     mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::buffer, false, device->getDeviceBitfield());
     properties.flags.uncacheable = true;
 
@@ -853,7 +853,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenSettingNumHandlesThenTheyAreRet
     mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true, nullptr);
@@ -874,7 +874,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenCreatingAllocationFromMultipleS
     mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
 
     memoryManager->failOnfindAndReferenceSharedBufferObject = false;
@@ -907,7 +907,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenCreatingAllocationFromMultipleS
     mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
 
     memoryManager->failOnfindAndReferenceSharedBufferObject = false;
@@ -941,7 +941,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenCreatingAllocationFromMultipleS
     mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
 
     memoryManager->failOnfindAndReferenceSharedBufferObject = false;
@@ -974,7 +974,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenCreatingAllocationFromMultipleS
     mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
 
     memoryManager->failOnfindAndReferenceSharedBufferObject = false;
@@ -1004,7 +1004,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenCreatingAllocationFromMultipleS
     mock->ioctlExpected.gemClose = 1;
 
     std::vector<NEO::osHandle> handles{6};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
 
     memoryManager->failOnfindAndReferenceSharedBufferObject = false;
@@ -1036,7 +1036,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenCreatingAllocationFromMultipleS
     mock->failOnPrimeFdToHandle = true;
 
     std::vector<NEO::osHandle> handles{6, 7};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
 
     memoryManager->failOnfindAndReferenceSharedBufferObject = false;
@@ -1050,7 +1050,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenCreatingAllocationFromMultipleS
     mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
-    size_t size = 65536u * 2;
+    size_t size = 128 * MemoryConstants::kiloByte;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true, nullptr);

@@ -2472,10 +2472,10 @@ bool DrmMemoryManager::isDeferBackingMemoryPressureReached(uint32_t rootDeviceIn
 
     if (debugManager.flags.PrintDeferBackingLogs.get()) {
         PRINT_STRING(true, stderr, "[DeferBackingPressure] used=%lluMB + req=%lluMB -> proj=%lluMB / max=%lluMB (%llu%%) threshold=%d%% -> deferBacking=%s\n",
-                     static_cast<unsigned long long>(getUsedLocalMemorySize(rootDeviceIndex) >> 20),
-                     static_cast<unsigned long long>(static_cast<uint64_t>(allocationSize) >> 20),
-                     static_cast<unsigned long long>(projectedLocalMemory >> 20),
-                     static_cast<unsigned long long>(maxLocalMemory >> 20),
+                     static_cast<unsigned long long>(getUsedLocalMemorySize(rootDeviceIndex) / MemoryConstants::megaByte),
+                     static_cast<unsigned long long>(static_cast<uint64_t>(allocationSize) / MemoryConstants::megaByte),
+                     static_cast<unsigned long long>(projectedLocalMemory / MemoryConstants::megaByte),
+                     static_cast<unsigned long long>(maxLocalMemory / MemoryConstants::megaByte),
                      static_cast<unsigned long long>(projectedLocalMemory * 100ull / maxLocalMemory),
                      thresholdPercent,
                      pressureReached ? "ON" : "off");

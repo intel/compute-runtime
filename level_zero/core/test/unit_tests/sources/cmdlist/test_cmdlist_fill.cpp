@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -211,7 +212,7 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPatternSizeIsOneThenDispatchOn
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
-    const size_t size = 1024 * 1024;
+    const size_t size = 4 * MemoryConstants::kiloByte;
     uint8_t *ptr = new uint8_t[size];
     CmdListMemoryCopyParams copyParams = {};
     ze_result_t result = commandList->appendMemoryFill(ptr, &pattern, 1, size, nullptr, 0, nullptr, copyParams);
@@ -365,7 +366,7 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPatternSizeIsOneThenGroupCount
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
-    const size_t size = 1024 * 1024;
+    const size_t size = 32 * device->getDeviceInfo().maxWorkGroupSize;
     uint8_t *ptr = new uint8_t[size];
     CmdListMemoryCopyParams copyParams = {};
     ze_result_t result = commandList->appendMemoryFill(ptr, &pattern, 1, size, nullptr, 0, nullptr, copyParams);

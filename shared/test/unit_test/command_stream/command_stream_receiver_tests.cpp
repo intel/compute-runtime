@@ -485,7 +485,7 @@ TEST_F(CommandStreamReceiverTest, WhenGettingCommandStreamerThenValidPointerIsRe
 }
 
 TEST_F(CommandStreamReceiverTest, WhenCommandStreamReceiverIsCreatedThenAvailableMemoryIsGreaterOrEqualRequiredSize) {
-    size_t requiredSize = 16384;
+    size_t requiredSize = 16 * MemoryConstants::kiloByte;
     const auto &commandStream = commandStreamReceiver->getCS(requiredSize);
     ASSERT_NE(nullptr, &commandStream);
     EXPECT_GE(commandStream.getAvailableSpace(), requiredSize);

@@ -100,7 +100,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_group_count_t *pThreadGroupDimensions = static_cast<ze_group_count_t *>(ptrOffset(alloc, sizeof(ze_group_count_t)));
@@ -273,7 +273,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_group_count_t *pThreadGroupDimensions = static_cast<ze_group_count_t *>(ptrOffset(alloc, sizeof(ze_group_count_t)));
@@ -1028,7 +1028,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppe
 
     void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &dstBuffer));
 
     int pattern = 1;
     CmdListMemoryCopyParams copyParams = {};
@@ -1632,8 +1632,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogether
 
     auto devInfo = device->getNEODevice()->getDeviceInfo();
     auto kernelsNb = 2u;
-    uint32_t margin1KB = (1 << 10);
-    auto overAllocMinSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) + margin1KB;
+    auto margin1KB = MemoryConstants::kiloByte;
+    auto overAllocMinSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch + margin1KB);
     auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
 
     auto &kernelImmData = this->module->kernelImmData;

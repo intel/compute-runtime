@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -175,7 +176,7 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
     EXPECT_TRUE(result);
 
     void *ptr = reinterpret_cast<void *>(0x123456789);
-    size_t size = 16384;
+    size_t size = 16 * MemoryConstants::kiloByte;
     ze_cache_ext_region_t cacheRegion = ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_REGION_DEFAULT;
 
     result = cache->setCacheAdvice(ptr, size, cacheRegion);
@@ -189,7 +190,7 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
 
     uint64_t gpuAddress = 0x1200;
     void *ptr = reinterpret_cast<void *>(gpuAddress);
-    size_t size = 16384;
+    size_t size = 16 * MemoryConstants::kiloByte;
 
     MockDrmAllocation mockAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, MemoryPool::localMemory);
     MockBufferObject bo(rootDeviceIndex, mockDrm, 3, 0, 0, 1);
@@ -219,7 +220,7 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
 
     uint64_t gpuAddress = 0x1200;
     void *ptr = reinterpret_cast<void *>(gpuAddress);
-    size_t size = 16384;
+    size_t size = 16 * MemoryConstants::kiloByte;
 
     MockDrmAllocation mockAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, MemoryPool::localMemory);
     MockBufferObject bo(rootDeviceIndex, mockDrm, 3, 0, 0, 1);
@@ -260,7 +261,7 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
 
     uint64_t gpuAddress = 0x1200;
     void *ptr = reinterpret_cast<void *>(gpuAddress);
-    size_t size = 16384;
+    size_t size = 16 * MemoryConstants::kiloByte;
 
     MockDrmAllocation mockAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, MemoryPool::localMemory);
     MockBufferObject bo(rootDeviceIndex, mockDrm, 3, 0, 0, 1);
@@ -342,7 +343,7 @@ HWTEST2_F(L2CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCa
 
     constexpr uint64_t gpuAddress{0x1200};
     void *ptr{reinterpret_cast<void *>(gpuAddress)};
-    constexpr size_t size{16384UL};
+    constexpr size_t size{16 * MemoryConstants::kiloByte};
 
     MockDrmAllocation mockAllocation{rootDeviceIndex, AllocationType::unifiedSharedMemory, MemoryPool::localMemory};
     MockBufferObject bo{rootDeviceIndex, mockDrm, 3, 0, 0, 1};

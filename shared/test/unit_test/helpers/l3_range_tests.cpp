@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -260,7 +260,7 @@ TEST(CoverRange, whenAlignedThenCoverWithProperSubranges) {
 
     {
         uint64_t address = 3 * 4096;
-        uint64_t size = 1024 * 1024;
+        uint64_t size = MemoryConstants::megaByte;
 
         L3RangesVec actualRanges;
         coverRangeExact(address, size, actualRanges, 0);

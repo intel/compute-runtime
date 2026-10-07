@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/test_traits.h"
@@ -414,7 +415,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchMultiple
     uint32_t *numLaunchArgs;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     returnValue = context->allocDeviceMem(
-        device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+        device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, &launchKernelArgs, event->toHandle(), 0, nullptr, false);
@@ -452,7 +453,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchIndirect
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(), *static_cast<ze_group_count_t *>(alloc), event->toHandle(), 0, nullptr, false);

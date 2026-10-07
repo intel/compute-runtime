@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -917,7 +918,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3pAndLater, givenHeaplessModeWhenAppend
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto indirectHeap = commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject);

@@ -157,7 +157,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenAppendLaunchM
     const ze_group_count_t launchKernelArgs = {1, 1, 1};
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
-        device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+        device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
     result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, &launchKernelArgs, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 0;
@@ -185,7 +185,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenDispatchArgum
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto pThreadGroupDimensions = static_cast<ze_group_count_t *>(alloc);
 
@@ -242,7 +242,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenLaunchKernelA
     uint32_t *numLaunchArgs = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
-        device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+        device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, &launchKernelArgs, nullptr, 0, nullptr, false);
@@ -273,7 +273,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenAppendLaunchM
     const ze_group_count_t launchKernelArgs[numKernels] = {{1, 1, 1}, {2, 2, 2}, {1, 1, 1}};
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
-        device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+        device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
     result = commandList->appendLaunchMultipleKernelsIndirect(numKernels, launchKernels, numLaunchArgs, launchKernelArgs, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 2;
@@ -1111,7 +1111,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),

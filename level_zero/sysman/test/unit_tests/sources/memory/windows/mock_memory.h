@@ -12,6 +12,7 @@
 #include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"
 #include "level_zero/sysman/source/api/memory/windows/sysman_os_memory_imp.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
+#include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/windows/mock_memory_manager.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
@@ -35,9 +36,9 @@ struct MockMemoryKmdSysManager : public MockKmdSysManager {
 
     uint32_t mockMemoryType = KmdSysman::MemoryType::GDDR6;
     uint32_t mockMemoryLocation = KmdSysman::MemoryLocationsType::DeviceMemory;
-    uint64_t mockMemoryPhysicalSize = 4294967296;
+    uint64_t mockMemoryPhysicalSize = 4 * gigaBytesToBytes;
     uint64_t mockMemoryStolen = 0;
-    uint64_t mockMemorySystem = 17179869184;
+    uint64_t mockMemorySystem = 16 * gigaBytesToBytes;
     uint64_t mockMemoryDedicated = 0;
     uint64_t mockMemoryFree = 4294813696;
     uint32_t mockMemoryBus = 256;

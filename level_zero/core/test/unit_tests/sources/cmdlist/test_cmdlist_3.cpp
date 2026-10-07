@@ -470,7 +470,7 @@ HWTEST2_F(CommandListCreateTests,
 
     void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -524,7 +524,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWith
 
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dstBuffer);
+    result = context->allocHostMem(&hostDesc, 16 * MemoryConstants::kiloByte, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};

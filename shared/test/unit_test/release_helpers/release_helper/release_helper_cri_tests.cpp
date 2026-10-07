@@ -59,37 +59,35 @@ TEST_F(ReleaseHelperCriTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorre
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
 
-        constexpr uint32_t kB = 1024;
-
         auto &preferredSlmValueArrayHeapless = releaseHelper->getSizeToPreferredSlmValue();
         EXPECT_EQ(0u, preferredSlmValueArrayHeapless[0].upperLimit);
         EXPECT_EQ(0u, preferredSlmValueArrayHeapless[0].valueToProgram);
 
-        EXPECT_EQ(16 * kB, preferredSlmValueArrayHeapless[1].upperLimit);
+        EXPECT_EQ(16 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[1].upperLimit);
         EXPECT_EQ(1u, preferredSlmValueArrayHeapless[1].valueToProgram);
 
-        EXPECT_EQ(32 * kB, preferredSlmValueArrayHeapless[2].upperLimit);
+        EXPECT_EQ(32 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[2].upperLimit);
         EXPECT_EQ(2u, preferredSlmValueArrayHeapless[2].valueToProgram);
 
-        EXPECT_EQ(64 * kB, preferredSlmValueArrayHeapless[3].upperLimit);
+        EXPECT_EQ(64 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[3].upperLimit);
         EXPECT_EQ(3u, preferredSlmValueArrayHeapless[3].valueToProgram);
 
-        EXPECT_EQ(96 * kB, preferredSlmValueArrayHeapless[4].upperLimit);
+        EXPECT_EQ(96 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[4].upperLimit);
         EXPECT_EQ(4u, preferredSlmValueArrayHeapless[4].valueToProgram);
 
-        EXPECT_EQ(128 * kB, preferredSlmValueArrayHeapless[5].upperLimit);
+        EXPECT_EQ(128 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[5].upperLimit);
         EXPECT_EQ(5u, preferredSlmValueArrayHeapless[5].valueToProgram);
 
-        EXPECT_EQ(160 * kB, preferredSlmValueArrayHeapless[6].upperLimit);
+        EXPECT_EQ(160 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[6].upperLimit);
         EXPECT_EQ(6u, preferredSlmValueArrayHeapless[6].valueToProgram);
 
-        EXPECT_EQ(192 * kB, preferredSlmValueArrayHeapless[7].upperLimit);
+        EXPECT_EQ(192 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[7].upperLimit);
         EXPECT_EQ(7u, preferredSlmValueArrayHeapless[7].valueToProgram);
 
-        EXPECT_EQ(256 * kB, preferredSlmValueArrayHeapless[8].upperLimit);
+        EXPECT_EQ(256 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[8].upperLimit);
         EXPECT_EQ(8u, preferredSlmValueArrayHeapless[8].valueToProgram);
 
-        EXPECT_EQ(320 * kB, preferredSlmValueArrayHeapless[9].upperLimit);
+        EXPECT_EQ(320 * MemoryConstants::kiloByte, preferredSlmValueArrayHeapless[9].upperLimit);
         EXPECT_EQ(9u, preferredSlmValueArrayHeapless[9].valueToProgram);
 
         EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArrayHeapless[10].upperLimit);

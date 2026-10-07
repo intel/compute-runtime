@@ -2349,7 +2349,7 @@ TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenNonNullPointerIsReturne
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    Gmm *gmm = new Gmm(device->getGmmHelper(), nullptr, 65536, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    Gmm *gmm = new Gmm(device->getGmmHelper(), nullptr, 64 * MemoryConstants::kiloByte, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     EXPECT_NE(nullptr, gmm);
     delete gmm;
 }

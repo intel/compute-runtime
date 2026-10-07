@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ struct MultiTileBuffersXeHPAndLater : public MulticontextOclAubFixture, public :
 HWTEST2_F(MultiTileBuffersXeHPAndLater, givenTwoBuffersAllocatedOnDifferentTilesWhenCopiedThenDataValidates, SupportsMultiTile) {
     if constexpr (is64bit) {
 
-        constexpr size_t bufferSize = 64 * 1024u;
+        constexpr size_t bufferSize = 64 * MemoryConstants::kiloByte;
 
         char bufferTile0Memory[bufferSize] = {};
         char bufferTile1Memory[bufferSize] = {};

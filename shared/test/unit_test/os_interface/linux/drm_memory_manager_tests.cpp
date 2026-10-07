@@ -1463,7 +1463,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenSmallAllocationHostPtrAllocationWh
     ASSERT_NE(nullptr, memoryManager->pinBBs[rootDeviceIndex]);
 
     // one page is too small for early pinning
-    allocationData.size = 4 * 1024;
+    allocationData.size = 4 * MemoryConstants::kiloByte;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
@@ -1483,7 +1483,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, WhenNotAskedButAllowedHostPtrThendoNotP
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
     ASSERT_NE(nullptr, memoryManager->pinBBs[rootDeviceIndex]);
 
-    allocationData.size = 4 * 1024;
+    allocationData.size = 4 * MemoryConstants::kiloByte;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
@@ -1501,7 +1501,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, WhenAskedButNotAllowedHostPtrThenDoNotP
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
-    allocationData.size = 4 * 1024;
+    allocationData.size = 4 * MemoryConstants::kiloByte;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
@@ -2587,7 +2587,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateByKmdThen
     mock->ioctlExpected.gemClose = 1;
 
     allocationData.size = MemoryConstants::pageSize;
-    allocationData.alignment = 8388608;
+    allocationData.alignment = 8 * MemoryConstants::megaByte;
     auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     auto gmm = allocation->getDefaultGmm();
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
@@ -3393,7 +3393,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndUnifiedAuxCapab
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCreateIsCalledThenRealSizeIsUsed) {
-    unsigned int realSize = 64 * 1024;
+    unsigned int realSize = 64 * MemoryConstants::kiloByte;
     VariableBackup<decltype(SysCalls::lseekReturn)> lseekBackup(&SysCalls::lseekReturn, realSize);
     SysCalls::lseekCalledCount = 0;
     mock->ioctlExpected.primeFdToHandle = 1;
@@ -3539,7 +3539,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGr
     mock->ioctlExpected.gemClose = 1;
 
     AllocationData allocationData;
-    allocationData.size = 16384;
+    allocationData.size = 16 * MemoryConstants::kiloByte;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     auto alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
     EXPECT_NE(nullptr, alloc);
@@ -3551,7 +3551,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGr
     mock->ioctlExpected.gemClose = 1;
 
     AllocationData allocationData;
-    allocationData.size = 16384;
+    allocationData.size = 16 * MemoryConstants::kiloByte;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
     allocationData.type = AllocationType::svmCpu;
@@ -3568,7 +3568,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenAllocationBacked
     mock->ioctlExpected.gemClose = 1;
 
     AllocationData allocationData;
-    allocationData.size = 16384;
+    allocationData.size = 16 * MemoryConstants::kiloByte;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     auto alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
 
@@ -3582,7 +3582,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenMmapPtrWhenFreeG
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    const size_t size = 16384;
+    const size_t size = 16 * MemoryConstants::kiloByte;
     AllocationData allocationData;
     allocationData.size = size;
     allocationData.rootDeviceIndex = rootDeviceIndex;
@@ -3603,7 +3603,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests,
 
     AllocationData allocationData;
 
-    size_t allocSize = 16384;
+    size_t allocSize = 16 * MemoryConstants::kiloByte;
     void *hostPtr = alignedMalloc(allocSize, 0);
 
     allocationData.size = allocSize;
@@ -4058,7 +4058,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEna
     ASSERT_NE(nullptr, memoryManager->pinBBs[rootDeviceIndex]);
 
     // one page is too small for early pinning but pinning is used for host memory validation
-    allocationData.size = 4 * 1024;
+    allocationData.size = 4 * MemoryConstants::kiloByte;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
@@ -4235,7 +4235,7 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
-    allocationData.size = 4 * MemoryConstants::megaByte + 16 * 1024;
+    allocationData.size = 4 * MemoryConstants::megaByte + 16 * MemoryConstants::kiloByte;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x10000000);
     auto allocation0 = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
@@ -4244,11 +4244,11 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     memoryManager->freeGraphicsMemory(allocation0);
 
-    allocationData.size = 4 * MemoryConstants::megaByte + 12 * 1024;
+    allocationData.size = 4 * MemoryConstants::megaByte + 12 * MemoryConstants::kiloByte;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x30000000);
     allocation0 = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
-    EXPECT_EQ(static_cast<uint64_t>(allocation0->getBO()->peekSize()), 4 * MemoryConstants::megaByte + 12 * 1024);
+    EXPECT_EQ(static_cast<uint64_t>(allocation0->getBO()->peekSize()), 4 * MemoryConstants::megaByte + 12 * MemoryConstants::kiloByte);
 
     memoryManager->freeGraphicsMemory(allocation0);
     memoryManager->freeGraphicsMemory(allocation1);
@@ -4352,7 +4352,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
     mock->ioctlExpected.gemWait = 1;
 
     AllocationData allocationData;
-    allocationData.size = 4 * 1024;
+    allocationData.size = 4 * MemoryConstants::kiloByte;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
     allocationData.rootDeviceIndex = device->getRootDeviceIndex();
@@ -8674,8 +8674,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBin
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor2ChunksThenActualValueReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.NumberOfBOChunks.set(2);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 1048576;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = MemoryConstants::megaByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
@@ -8683,8 +8683,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor3ChunksThenCorrectedValueReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.NumberOfBOChunks.set(3);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 1048576;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = MemoryConstants::megaByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
@@ -8692,8 +8692,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor6ChunksThenCorrectedValueReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.NumberOfBOChunks.set(6);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 524288;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = 512 * MemoryConstants::kiloByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
@@ -8701,8 +8701,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkForUnevenChunksThenCorrectedValueReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.NumberOfBOChunks.set(2);
-    size_t allocSize = 2162688;
-    size_t expectedSize = 720896;
+    size_t allocSize = 2 * MemoryConstants::megaByte + 64 * MemoryConstants::kiloByte;
+    size_t expectedSize = 704 * MemoryConstants::kiloByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
@@ -8710,8 +8710,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor1ChunkThenDefaultMinimumChunkSizeReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.NumberOfBOChunks.set(1);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 65536;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = 64 * MemoryConstants::kiloByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
@@ -8719,17 +8719,17 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkForTooManyChunksThenDefaultMinimumChunkSizeReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.NumberOfBOChunks.set(10000);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 65536;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = 64 * MemoryConstants::kiloByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenSetChunkSizeThenSameSizeReturned) {
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.SetBOChunkingSize.set(65536);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 65536;
+    debugManager.flags.SetBOChunkingSize.set(64 * MemoryConstants::kiloByte);
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = 64 * MemoryConstants::kiloByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
@@ -8737,8 +8737,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenSetChunkSizeThenCorrectedSizeReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetBOChunkingSize.set(100000);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 65536;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = 64 * MemoryConstants::kiloByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
@@ -8746,8 +8746,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenSetChunkSizeTooLargeThenCorrectedSizeReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetBOChunkingSize.set(4000000);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 1048576;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = MemoryConstants::megaByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
@@ -8755,27 +8755,27 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenSetChunkSizeTooSmallThenCorrectedSizeReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetBOChunkingSize.set(4000);
-    size_t allocSize = 2097152;
-    size_t expectedSize = 65536;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t expectedSize = 64 * MemoryConstants::kiloByte;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingReturnTrue) {
-    size_t allocSize = 2097152;
-    size_t minSize = 2097152;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t minSize = 2 * MemoryConstants::megaByte;
     bool subDeviceEnabled = true;
     bool debugDisabled = true;
     bool modeEnabled = true;
     bool bufferEnabled = true;
     EXPECT_TRUE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
-    minSize = 1048576;
+    minSize = MemoryConstants::megaByte;
     EXPECT_TRUE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingWithImproperAllocSizeReturnFalse) {
     size_t allocSize = 2098000;
-    size_t minSize = 2097152;
+    size_t minSize = 2 * MemoryConstants::megaByte;
     bool subDeviceEnabled = true;
     bool debugDisabled = true;
     bool modeEnabled = true;
@@ -8784,8 +8784,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingWithUnevenNumberChunksReturnsFalse) {
-    size_t allocSize = 2162688;
-    size_t minSize = 2097152;
+    size_t allocSize = 2 * MemoryConstants::megaByte + 64 * MemoryConstants::kiloByte;
+    size_t minSize = 2 * MemoryConstants::megaByte;
     bool subDeviceEnabled = true;
     bool debugDisabled = true;
     bool modeEnabled = true;
@@ -8795,7 +8795,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingWithAllocationLessThanMinSizeReturnsFalse) {
     size_t allocSize = 100000;
-    size_t minSize = 2097152;
+    size_t minSize = 2 * MemoryConstants::megaByte;
     bool subDeviceEnabled = true;
     bool debugDisabled = true;
     bool modeEnabled = true;
@@ -8804,8 +8804,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingWithBooleanInputFalseReturnsFalse) {
-    size_t allocSize = 2097152;
-    size_t minSize = 2097152;
+    size_t allocSize = 2 * MemoryConstants::megaByte;
+    size_t minSize = 2 * MemoryConstants::megaByte;
     bool subDeviceEnabled = true;
     bool debugDisabled = true;
     bool modeEnabled = true;

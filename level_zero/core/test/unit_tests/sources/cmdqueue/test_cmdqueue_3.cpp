@@ -470,7 +470,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &deviceAlloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &deviceAlloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -534,7 +534,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &deviceAlloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &deviceAlloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -596,7 +596,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &deviceAlloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &deviceAlloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -648,7 +648,7 @@ HWTEST_F(CommandQueueIndirectAllocations,
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &deviceAlloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &deviceAlloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -706,7 +706,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &deviceAlloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &deviceAlloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());

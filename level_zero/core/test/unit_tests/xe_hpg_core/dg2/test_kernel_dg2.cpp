@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
@@ -44,7 +45,7 @@ HWTEST2_F(KernelTestDG2, givenKernelImpWhenSetBufferSurfaceStateCalledThenProgra
     ze_device_mem_alloc_desc_t deviceDesc = {};
     res = context->allocDeviceMem(device->toHandle(),
                                   &deviceDesc,
-                                  16384u,
+                                  16 * MemoryConstants::kiloByte,
                                   0u,
                                   &devicePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);

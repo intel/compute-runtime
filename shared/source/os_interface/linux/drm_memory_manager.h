@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/submission_status.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -229,7 +230,7 @@ class DrmMemoryManager : public MemoryManager {
 
     std::vector<BufferObject *> pinBBs;
     std::vector<void *> memoryForPinBBs;
-    size_t pinThreshold = 8 * 1024 * 1024;
+    size_t pinThreshold = 8 * MemoryConstants::megaByte;
     bool forcePinEnabled = false;
     const bool validateHostPtrMemory;
     std::unique_ptr<DrmGemCloseWorker> gemCloseWorker;

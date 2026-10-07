@@ -1060,7 +1060,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
 TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParamsAreCorrect) {
     BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, defaultStatelessMode, *pClDevice);
 
-    size_t size = 1024 * 1024 * 1024;
+    size_t size = MemoryConstants::gigaByte;
     void *systemPtr = &size;
 
     MockBuffer srcBuffer;

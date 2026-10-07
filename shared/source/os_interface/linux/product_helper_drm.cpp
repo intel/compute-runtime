@@ -51,7 +51,7 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
             ways = bitExact(ebx, 31, 22) + 1;
             sets = (uint64_t)ecx + 1;
 
-            size = sets * ways * partitions * linesize / 1024;
+            size = sets * ways * partitions * linesize / MemoryConstants::kiloByte;
             if (cachelevel == 3) {
                 gtSystemInfo->LLCCacheSizeInKb = size;
             }

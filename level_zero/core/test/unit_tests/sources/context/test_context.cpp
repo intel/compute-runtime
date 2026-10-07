@@ -1221,7 +1221,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4090u, &dstBuffer);
+    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16 * MemoryConstants::kiloByte, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     CmdListMemoryCopyParams copyParams = {};
     int one = 1;
@@ -1270,7 +1270,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4090u, &dstBuffer);
+    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16 * MemoryConstants::kiloByte, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(device,

@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/vec.h"
@@ -1229,7 +1230,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),

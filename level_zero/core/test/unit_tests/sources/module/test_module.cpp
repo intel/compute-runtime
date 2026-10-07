@@ -386,7 +386,7 @@ HWTEST2_PRODUCT_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrec
     ze_device_mem_alloc_desc_t deviceDesc = {};
     res = context->allocDeviceMem(device->toHandle(),
                                   &deviceDesc,
-                                  16384u,
+                                  16 * MemoryConstants::kiloByte,
                                   0u,
                                   &devicePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
@@ -429,7 +429,7 @@ HWTEST_F(ModuleTest, givenStatefulBufferWhenOffsetIsPatchedThenAllocBaseAddressI
     ze_device_mem_alloc_desc_t deviceDesc = {};
     res = context->allocDeviceMem(device->toHandle(),
                                   &deviceDesc,
-                                  16384u,
+                                  16 * MemoryConstants::kiloByte,
                                   0u,
                                   &devicePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
@@ -484,7 +484,7 @@ HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenPassedPtrIsSetAsBaseAd
     ze_device_mem_alloc_desc_t deviceDesc = {};
     res = context->allocDeviceMem(device->toHandle(),
                                   &deviceDesc,
-                                  16384u,
+                                  16 * MemoryConstants::kiloByte,
                                   0u,
                                   &devicePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
@@ -521,7 +521,7 @@ HWTEST2_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenSizeIsDecreasedByOffs
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
-    auto allocSize = 16384u;
+    auto allocSize = 16 * MemoryConstants::kiloByte;
     void *devicePtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     res = context->allocDeviceMem(device->toHandle(),
@@ -619,7 +619,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     ze_device_mem_alloc_desc_t deviceDesc = {};
     res = context->allocDeviceMem(device->toHandle(),
                                   &deviceDesc,
-                                  16384u,
+                                  16 * MemoryConstants::kiloByte,
                                   0u,
                                   &devicePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -653,7 +653,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     ze_device_mem_alloc_desc_t deviceDesc = {};
     res = context->allocDeviceMem(device->toHandle(),
                                   &deviceDesc,
-                                  16384u,
+                                  16 * MemoryConstants::kiloByte,
                                   0u,
                                   &devicePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -690,7 +690,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     res = context->allocDeviceMem(device->toHandle(),
                                   &deviceDesc,
-                                  16384u,
+                                  16 * MemoryConstants::kiloByte,
                                   0u,
                                   &devicePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -726,7 +726,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     res = context->allocDeviceMem(device->toHandle(),
                                   &deviceDesc,
-                                  16384u,
+                                  16 * MemoryConstants::kiloByte,
                                   0u,
                                   &devicePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

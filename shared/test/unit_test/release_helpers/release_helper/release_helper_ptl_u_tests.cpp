@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -48,28 +49,26 @@ TEST_F(ReleaseHelperPtlUTests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
 
-        constexpr uint32_t kB = 1024;
-
         auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue();
         EXPECT_EQ(0u, preferredSlmValueArray[0].upperLimit);
         EXPECT_EQ(0u, preferredSlmValueArray[0].valueToProgram);
 
-        EXPECT_EQ(16 * kB, preferredSlmValueArray[1].upperLimit);
+        EXPECT_EQ(16 * MemoryConstants::kiloByte, preferredSlmValueArray[1].upperLimit);
         EXPECT_EQ(1u, preferredSlmValueArray[1].valueToProgram);
 
-        EXPECT_EQ(32 * kB, preferredSlmValueArray[2].upperLimit);
+        EXPECT_EQ(32 * MemoryConstants::kiloByte, preferredSlmValueArray[2].upperLimit);
         EXPECT_EQ(2u, preferredSlmValueArray[2].valueToProgram);
 
-        EXPECT_EQ(64 * kB, preferredSlmValueArray[3].upperLimit);
+        EXPECT_EQ(64 * MemoryConstants::kiloByte, preferredSlmValueArray[3].upperLimit);
         EXPECT_EQ(3u, preferredSlmValueArray[3].valueToProgram);
 
-        EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
+        EXPECT_EQ(96 * MemoryConstants::kiloByte, preferredSlmValueArray[4].upperLimit);
         EXPECT_EQ(4u, preferredSlmValueArray[4].valueToProgram);
 
-        EXPECT_EQ(128 * kB, preferredSlmValueArray[5].upperLimit);
+        EXPECT_EQ(128 * MemoryConstants::kiloByte, preferredSlmValueArray[5].upperLimit);
         EXPECT_EQ(5u, preferredSlmValueArray[5].valueToProgram);
 
-        EXPECT_EQ(160 * kB, preferredSlmValueArray[6].upperLimit);
+        EXPECT_EQ(160 * MemoryConstants::kiloByte, preferredSlmValueArray[6].upperLimit);
         EXPECT_EQ(6u, preferredSlmValueArray[6].valueToProgram);
 
         EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[7].upperLimit);

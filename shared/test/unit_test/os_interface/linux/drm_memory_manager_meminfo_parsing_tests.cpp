@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -31,8 +32,8 @@ Cached:         15536900 kB
     bool result = DrmMemoryManagerParseMeminfoAccessor::parseMeminfo(meminfoContent, totalBytes, freeBytes);
 
     EXPECT_TRUE(result);
-    EXPECT_EQ(32044356 * 1024ULL, totalBytes);
-    EXPECT_EQ(30397864 * 1024ULL, freeBytes);
+    EXPECT_EQ(32044356 * MemoryConstants::kiloByte, totalBytes);
+    EXPECT_EQ(30397864 * MemoryConstants::kiloByte, freeBytes);
 }
 
 TEST(DrmMemoryManagerParseMeminfoTest, givenMeminfoMissingMemTotalWhenParsingThenReturnsFalse) {
@@ -85,6 +86,6 @@ TEST(DrmMemoryManagerParseMeminfoTest, givenMeminfoWithoutTrailingNewlineInTheEn
     bool result = DrmMemoryManagerParseMeminfoAccessor::parseMeminfo(meminfoContent, totalBytes, freeBytes);
 
     EXPECT_TRUE(result);
-    EXPECT_EQ(1024 * 1024ULL, totalBytes);
-    EXPECT_EQ(512 * 1024ULL, freeBytes);
+    EXPECT_EQ(1024 * MemoryConstants::kiloByte, totalBytes);
+    EXPECT_EQ(512 * MemoryConstants::kiloByte, freeBytes);
 }

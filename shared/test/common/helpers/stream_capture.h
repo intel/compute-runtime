@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/constants.h"
+
 #include <cstdio>
 #include <fcntl.h>
 #include <string>
@@ -106,7 +108,7 @@ class StreamCapture {
         return "";
 #endif
     }
-    static constexpr size_t bufferSize = 16384;
+    static constexpr size_t bufferSize = 16 * MemoryConstants::kiloByte;
     int pipefdStdout[2]{-1, -1};
     int pipefdStderr[2]{-1, -1};
     int saveStdout{-1};

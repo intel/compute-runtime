@@ -400,7 +400,7 @@ HWTEST_F(DeviceGetCapsTest, givenDebugFlagSetWhenCreatingDeviceThenOverrideMaxMe
 
     const auto &caps = device->getSharedDeviceInfo();
 
-    EXPECT_EQ(caps.maxMemAllocSize, 5u * 1024u * MemoryConstants::megaByte);
+    EXPECT_EQ(caps.maxMemAllocSize, 5 * MemoryConstants::gigaByte);
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenExtensionsStringEndsWithSpace) {

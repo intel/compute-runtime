@@ -1351,7 +1351,7 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMemoryManagerWhenAllocateByKmdThenAlign
     AllocationData allocationData;
     allocationData.size = 2ULL * MemoryConstants::pageSize64k;
     allocationData.flags.shareable = true;
-    allocationData.alignment = 8388608;
+    allocationData.alignment = 8 * MemoryConstants::megaByte;
     auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(static_cast<WddmMock *>(&memoryManager->getWddm(0u))->mapGpuVirtualAddressResult.alignment, allocationData.alignment);

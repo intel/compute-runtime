@@ -1413,7 +1413,7 @@ ze_result_t Device::getDeviceImageProperties(ze_device_image_properties_t *pDevi
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_PITCHED_ALLOC_2DIMAGE_LINEAR_PITCH_EXP_INFO) {
                 auto *pitchInfo = reinterpret_cast<ze_pitched_alloc_2dimage_linear_pitch_exp_info_t *>(extendedProperties);
                 pitchInfo->pitchAlign = 64u;
-                pitchInfo->maxSupportedPitch = 256u * 1024u;
+                pitchInfo->maxSupportedPitch = 256 * MemoryConstants::kiloByte;
             }
             extendedProperties = reinterpret_cast<ze_base_properties_t *>(extendedProperties->pNext);
         }

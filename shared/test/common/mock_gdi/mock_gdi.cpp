@@ -161,10 +161,10 @@ std::map<D3DKMT_HANDLE, void *> staticStorageMap;
 std::map<D3DKMT_HANDLE, void *> userPtrMap;
 
 constexpr uint32_t numStaticStorages = 128;
-constexpr uint32_t singleStorageSize = 8 * 64 * 1024;
+constexpr uint32_t singleStorageSize = 8 * 64 * MemoryConstants::kiloByte;
 uint8_t staticStorages[(numStaticStorages + 1) * singleStorageSize]{};
 inline void *getStaticStorage(uint32_t slot) {
-    auto baseAddress = alignUp(staticStorages, 64 * 1024);
+    auto baseAddress = alignUp(staticStorages, 64 * MemoryConstants::kiloByte);
     return ptrOffset(baseAddress, slot * singleStorageSize);
 }
 
@@ -396,7 +396,7 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         adapterInfo->MinRenderFreq = 350;
         adapterInfo->MaxRenderFreq = 1150;
 
-        adapterInfo->SizeOfDmaBuffer = 32768;
+        adapterInfo->SizeOfDmaBuffer = 32 * MemoryConstants::kiloByte;
         adapterInfo->GfxMemorySize = 2181038080;
         adapterInfo->SystemSharedMemory = 4249540608;
         adapterInfo->SystemVideoMemory = 0;

@@ -745,7 +745,7 @@ TEST(L0DeviceTest, givenPitchedAllocAndNestedPitchInfoStructuresWhenQueryingDevi
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(64u, pitchInfo.pitchAlign);
-    EXPECT_EQ(256u * 1024u, pitchInfo.maxSupportedPitch);
+    EXPECT_EQ(256 * MemoryConstants::kiloByte, pitchInfo.maxSupportedPitch);
 }
 
 TEST(L0DeviceTest, givenPitchedAllocLinearPitchInfoStructWhenQueryingDeviceImagePropertiesThenCorrectValuesAreReturned) {
@@ -770,7 +770,7 @@ TEST(L0DeviceTest, givenPitchedAllocLinearPitchInfoStructWhenQueryingDeviceImage
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(64u, pitchInfo.pitchAlign);
-    EXPECT_EQ(256u * 1024u, pitchInfo.maxSupportedPitch);
+    EXPECT_EQ(256 * MemoryConstants::kiloByte, pitchInfo.maxSupportedPitch);
 }
 
 struct DeviceRequiredLibsTest : public ::testing::Test {

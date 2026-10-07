@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
 #include "shared/test/common/os_interface/linux/xe/mock_drm_xe.h"
 
 using NEO::XeDrm::DrmMockXe;
@@ -22,7 +23,7 @@ struct DrmMockXePerf : public DrmMockXe {
     uint32_t perfQueryCallCount = 0;
     uint32_t failPerfQueryOnCall = 0;
     uint64_t recordSize = 64u;
-    uint64_t perXecoreBufSize = 512u * 1024u;
+    uint64_t perXecoreBufSize = 512 * MemoryConstants::kiloByte;
 
   protected:
     // Don't call directly, use the create() function

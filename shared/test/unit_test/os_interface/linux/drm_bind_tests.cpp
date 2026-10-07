@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
@@ -215,7 +216,7 @@ TEST_F(DrmBindCapabilityTest, givenSharedChunkingRequestedWhenQueryingChunkingAv
 }
 
 TEST_F(DrmBindCapabilityTest, givenMinimalAllocationSizeForChunkingSetWhenQueryingChunkingAvailabilityThenMinimalChunkingSizeIsOverridden) {
-    const uint64_t minimalSizeForChunking = 65536;
+    const uint64_t minimalSizeForChunking = 64 * MemoryConstants::kiloByte;
     debugManager.flags.EnableBOChunking.set(1);
     debugManager.flags.UseKmdMigration.set(1);
     debugManager.flags.MinimalAllocationSizeForChunking.set(minimalSizeForChunking);

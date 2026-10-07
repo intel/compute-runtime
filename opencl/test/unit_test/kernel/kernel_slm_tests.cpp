@@ -96,20 +96,20 @@ HWTEST2_F(KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgrammingSlmThenProgr
 
         uint32_t expectedSlmSize = 0;
 
-        if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (1 * 1024)) // its a power of "2" +1 for example 1 is 2^0 ( 0+1); 2 is 2^1 is (1+1) etc.
+        if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (1 * MemoryConstants::kiloByte)) // its a power of "2" +1 for example 1 is 2^0 ( 0+1); 2 is 2^1 is (1+1) etc.
         {
             expectedSlmSize = 1;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (2 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (2 * MemoryConstants::kiloByte)) {
             expectedSlmSize = 2;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * MemoryConstants::kiloByte)) {
             expectedSlmSize = 3;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * MemoryConstants::kiloByte)) {
             expectedSlmSize = 4;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * MemoryConstants::kiloByte)) {
             expectedSlmSize = 5;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * MemoryConstants::kiloByte)) {
             expectedSlmSize = 6;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * MemoryConstants::kiloByte)) {
             expectedSlmSize = 7;
         }
         ASSERT_GT(expectedSlmSize, 0u);

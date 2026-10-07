@@ -2264,7 +2264,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchi
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto findSemaphores = [&](size_t expectedNumSemaphores) {
@@ -2374,7 +2374,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     bool dcFlushRequired = immCmdList->getDcFlushRequired(true);
@@ -2583,7 +2583,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenNonInOrderCmdListWhenPass
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     NEO::MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
@@ -2774,7 +2774,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingFromAppendCop
     auto offset = cmdStream->getUsed();
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
 
-    void *alloc = allocDeviceMem(16384u);
+    void *alloc = allocDeviceMem(16 * MemoryConstants::kiloByte);
 
     auto findSemaphores = [&](size_t expectedNumSemaphores) {
         GenCmdList cmdList;
@@ -2874,7 +2874,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
 
     auto eventHandle = events[0]->toHandle();
 
-    void *alloc = allocDeviceMem(16384u);
+    void *alloc = allocDeviceMem(16 * MemoryConstants::kiloByte);
 
     auto offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopy(alloc, alloc, 1, eventHandle, 0, nullptr, copyParams);
@@ -4601,7 +4601,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    void *alloc = allocDeviceMem(16384u);
+    void *alloc = allocDeviceMem(16 * MemoryConstants::kiloByte);
 
     immCmdList->appendMemoryCopy(alloc, alloc, 1, nullptr, 0, nullptr, copyParams);
 

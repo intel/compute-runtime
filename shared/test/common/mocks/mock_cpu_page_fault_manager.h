@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
@@ -149,5 +150,5 @@ class MockPageFaultManagerHandlerInvoke : public T {
     bool returnStatus = true;
     bool allowCPUMemoryAccessOnPageFault = false;
     bool handlerInvoked = false;
-    size_t size = 65536;
+    size_t size = 64 * MemoryConstants::kiloByte;
 };
