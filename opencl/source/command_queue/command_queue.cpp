@@ -1160,11 +1160,23 @@ bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
         UNRECOVERABLE_IF(args.dstResource.image == nullptr);
         return blitEnqueueImageAllowed(args.dstResource.imageOrigin, args.size, *args.dstResource.image);
 
-    case CL_COMMAND_COPY_IMAGE:
+    case CL_COMMAND_COPY_IMAGE: {
         UNRECOVERABLE_IF(args.srcResource.image == nullptr);
         UNRECOVERABLE_IF(args.dstResource.image == nullptr);
-        return blitEnqueueImageAllowed(args.srcResource.imageOrigin, args.size, *args.srcResource.image) &&
-               blitEnqueueImageAllowed(args.dstResource.imageOrigin, args.size, *args.dstResource.image);
+        const auto &srcImage = *args.srcResource.image;
+        const auto &dstImage = *args.dstResource.image;
+        const bool src1DBuffer = srcImage.getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER;
+        const bool dst1DBuffer = dstImage.getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER;
+        if (src1DBuffer != dst1DBuffer) {
+            // copy engine copies 1D image buffer as linear memory, so the other image has to be linear 1D image
+            const auto &image = src1DBuffer ? dstImage : srcImage;
+            if (image.getImageDesc().image_type != CL_MEM_OBJECT_IMAGE1D || image.isTiledAllocation()) {
+                return false;
+            }
+        }
+        return blitEnqueueImageAllowed(args.srcResource.imageOrigin, args.size, srcImage) &&
+               blitEnqueueImageAllowed(args.dstResource.imageOrigin, args.size, dstImage);
+    }
 
     default:
         return false;

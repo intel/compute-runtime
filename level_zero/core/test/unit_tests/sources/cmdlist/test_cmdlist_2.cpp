@@ -172,6 +172,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
         appendCopyImageSrcSlicePitch = srcSlicePitch;
         appendCopyImageDstRowPitch = dstRowPitch;
         appendCopyImageDstSlicePitch = dstSlicePitch;
+        appendCopyImageBytesPerPixel = bytesPerPixel;
         appendImageRegionCopySize = copySize;
         appendImageRegionSrcOrigin = srcOffsets;
         appendImageRegionDstOrigin = dstOffsets;
@@ -194,6 +195,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     size_t appendCopyImageSrcSlicePitch = 0;
     size_t appendCopyImageDstRowPitch = 0;
     size_t appendCopyImageDstSlicePitch = 0;
+    size_t appendCopyImageBytesPerPixel = 0;
     Vec3<size_t> appendImageRegionCopySize = {0, 0, 0};
     Vec3<size_t> appendImageRegionSrcOrigin = {9, 9, 9};
     Vec3<size_t> appendImageRegionDstOrigin = {9, 9, 9};
@@ -3270,6 +3272,59 @@ HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyBetweenImage1dBuffersTh
     cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, copyParams);
     EXPECT_GT(cmdList.appendCopyImageBlitCalledTimes, 0u);
     EXPECT_TRUE(cmdList.appendCopyImageBlitIsImageFromBuffer);
+}
+
+HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyBetweenImage1dBufferAndImage1dThenOffsetsAndSizesOfBothImagesAreInBytes, ImageSupport) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_1D,
+                              {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                              20,
+                              1,
+                              1,
+                              0,
+                              0};
+    auto image1dBuffer = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    image1dBuffer->initialize(device, &zeDesc);
+    image1dBuffer->imgInfo.imgDesc.imageType = NEO::ImageType::image1DBuffer;
+    zeDesc.width = 12;
+    auto image1d = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    image1d->initialize(device, &zeDesc);
+
+    const size_t bytesPerPixel = image1d->getImageInfo().surfaceFormat->imageElementSizeInBytes;
+    ASSERT_LT(1u, bytesPerPixel);
+
+    ze_image_region_t bufferRegion = {2, 0, 0, 4, 1, 1};
+    ze_image_region_t imageRegion = {5, 0, 0, 4, 1, 1};
+    const Vec3<size_t> expectedCopySize = {4 * bytesPerPixel, 1, 1};
+    const Vec3<size_t> expectedBufferOrigin = {2 * bytesPerPixel, 0, 0};
+    const Vec3<size_t> expectedImageOrigin = {5 * bytesPerPixel, 0, 0};
+
+    cmdList.appendImageCopyRegion(image1d->toHandle(), image1dBuffer->toHandle(), &imageRegion, &bufferRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(1u, cmdList.appendCopyImageBlitCalledTimes);
+    EXPECT_TRUE(cmdList.appendCopyImageBlitIsImageFromBuffer);
+    EXPECT_EQ(1u, cmdList.appendCopyImageBytesPerPixel);
+    EXPECT_EQ(expectedCopySize, cmdList.appendImageRegionCopySize);
+    EXPECT_EQ(expectedBufferOrigin, cmdList.appendImageRegionSrcOrigin);
+    EXPECT_EQ(expectedImageOrigin, cmdList.appendImageRegionDstOrigin);
+    EXPECT_EQ(20 * bytesPerPixel, cmdList.appendCopyImageSrcSize.x);
+    EXPECT_EQ(12 * bytesPerPixel, cmdList.appendCopyImageDstSize.x);
+
+    cmdList.appendImageCopyRegion(image1dBuffer->toHandle(), image1d->toHandle(), &bufferRegion, &imageRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(2u, cmdList.appendCopyImageBlitCalledTimes);
+    EXPECT_TRUE(cmdList.appendCopyImageBlitIsImageFromBuffer);
+    EXPECT_EQ(1u, cmdList.appendCopyImageBytesPerPixel);
+    EXPECT_EQ(expectedCopySize, cmdList.appendImageRegionCopySize);
+    EXPECT_EQ(expectedImageOrigin, cmdList.appendImageRegionSrcOrigin);
+    EXPECT_EQ(expectedBufferOrigin, cmdList.appendImageRegionDstOrigin);
+    EXPECT_EQ(12 * bytesPerPixel, cmdList.appendCopyImageSrcSize.x);
+    EXPECT_EQ(20 * bytesPerPixel, cmdList.appendCopyImageDstSize.x);
 }
 
 HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromRegular1dImageToMemoryThenImageBlitCalledWithoutLinearCopy, ImageSupport) {

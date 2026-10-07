@@ -2029,6 +2029,52 @@ HWTEST_F(BcsTestsImages, givenImage1DBufferWhenSetBlitPropertiesForImageIsCalled
     EXPECT_EQ(blitProperties.bytesPerPixel, 1u);
 }
 
+HWTEST_F(BcsTestsImages, givenImage1DBufferAndImage1DWhenSetBlitPropertiesForImageToImageIsCalledThenOffsetsAndSizesOfBothImagesAreInBytes) {
+    cl_image_format imgFormat{};
+    imgFormat.image_channel_order = CL_RGBA;
+    imgFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    cl_image_desc bufferImgDesc = Image1dBufferDefaults::imageDesc;
+    std::unique_ptr<Image> image1DBuffer(Image1dHelperUlt<>::create(context.get(), &bufferImgDesc, &imgFormat));
+    cl_image_desc imgDesc = Image1dDefaults::imageDesc;
+    imgDesc.image_width = 9u;
+    std::unique_ptr<Image> image1D(Image1dHelperUlt<>::create(context.get(), &imgDesc, &imgFormat));
+    size_t bytesPerPixel = image1D->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    ASSERT_LT(1u, bytesPerPixel);
+
+    BlitProperties initBlitProperties{};
+    initBlitProperties.blitDirection = BlitterConstants::BlitDirection::imageToImage;
+    initBlitProperties.srcOffset = {2, 0, 0};
+    initBlitProperties.dstOffset = {5, 0, 0};
+    initBlitProperties.copySize = {1, 1, 1};
+
+    BuiltIn::OpParams builtinOpParams{};
+    builtinOpParams.srcMemObj = image1DBuffer.get();
+    builtinOpParams.dstMemObj = image1D.get();
+    auto blitProperties = initBlitProperties;
+    ClBlitProperties::setBlitPropertiesForImage(blitProperties, builtinOpParams);
+
+    EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, blitProperties.blitDirection);
+    EXPECT_EQ(1u, blitProperties.bytesPerPixel);
+    EXPECT_EQ(bufferImgDesc.image_width * bytesPerPixel, blitProperties.srcSize.x);
+    EXPECT_EQ(imgDesc.image_width * bytesPerPixel, blitProperties.dstSize.x);
+    EXPECT_EQ(initBlitProperties.srcOffset.x * bytesPerPixel, blitProperties.srcOffset.x);
+    EXPECT_EQ(initBlitProperties.dstOffset.x * bytesPerPixel, blitProperties.dstOffset.x);
+    EXPECT_EQ(initBlitProperties.copySize.x * bytesPerPixel, blitProperties.copySize.x);
+
+    builtinOpParams.srcMemObj = image1D.get();
+    builtinOpParams.dstMemObj = image1DBuffer.get();
+    blitProperties = initBlitProperties;
+    ClBlitProperties::setBlitPropertiesForImage(blitProperties, builtinOpParams);
+
+    EXPECT_EQ(BlitterConstants::BlitDirection::hostPtrToBuffer, blitProperties.blitDirection);
+    EXPECT_EQ(1u, blitProperties.bytesPerPixel);
+    EXPECT_EQ(imgDesc.image_width * bytesPerPixel, blitProperties.srcSize.x);
+    EXPECT_EQ(bufferImgDesc.image_width * bytesPerPixel, blitProperties.dstSize.x);
+    EXPECT_EQ(initBlitProperties.srcOffset.x * bytesPerPixel, blitProperties.srcOffset.x);
+    EXPECT_EQ(initBlitProperties.dstOffset.x * bytesPerPixel, blitProperties.dstOffset.x);
+    EXPECT_EQ(initBlitProperties.copySize.x * bytesPerPixel, blitProperties.copySize.x);
+}
+
 HWTEST_F(BcsTestsImages, givenImage2DArrayWhenSetBlitPropertiesForImageIsCalledThenValuesAreSetCorrectly) {
     cl_image_desc imgDesc = Image1dDefaults::imageDesc;
     imgDesc.image_width = 10u;

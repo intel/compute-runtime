@@ -1889,6 +1889,47 @@ TEST(CommandQueue, givenImageTransferClCommandWhenCallingBlitEnqueueAllowedThenR
     }
 }
 
+TEST(CommandQueue, givenCopyImageWithSingleImage1DBufferWhenCallingBlitEnqueueAllowedThenReturnTrueOnlyForLinearImage1D) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+
+    struct MockImageWithTiling : public MockImageBase {
+        bool isTiledAllocation() const override { return tiled; }
+        bool tiled = false;
+    };
+
+    MockContext context{};
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
+
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {1, 1, 1};
+    auto isBlitAllowed = [&](Image &srcImage, Image &dstImage) {
+        CsrSelectionArgs args{CL_COMMAND_COPY_IMAGE, &srcImage, &dstImage, 0u, region, origin, origin};
+        return queue.blitEnqueueAllowed(args);
+    };
+
+    MockImageWithTiling image1DBuffer{};
+    image1DBuffer.imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    MockImageWithTiling image{};
+    image.imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+
+    EXPECT_TRUE(isBlitAllowed(image1DBuffer, image));
+    EXPECT_TRUE(isBlitAllowed(image, image1DBuffer));
+    EXPECT_TRUE(isBlitAllowed(image1DBuffer, image1DBuffer));
+
+    image.tiled = true;
+    EXPECT_FALSE(isBlitAllowed(image1DBuffer, image));
+    EXPECT_FALSE(isBlitAllowed(image, image1DBuffer));
+    EXPECT_TRUE(isBlitAllowed(image, image));
+
+    image.tiled = false;
+    image.imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    EXPECT_FALSE(isBlitAllowed(image1DBuffer, image));
+    EXPECT_FALSE(isBlitAllowed(image, image1DBuffer));
+    EXPECT_TRUE(isBlitAllowed(image, image));
+}
+
 TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);

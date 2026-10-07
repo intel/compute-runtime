@@ -1525,29 +1525,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         auto dstRowPitch = dstImgInfo.rowPitch;
         auto dstSlicePitch = dstImgInfo.slicePitch;
 
-        bool src1DBuffer = (srcImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
-        bool dst1DBuffer = (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
-        bool isImageFromBuffer = src1DBuffer || dst1DBuffer;
         Vec3<size_t> srcOff = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
         Vec3<size_t> dstOff = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
         Vec3<size_t> copySz = {srcRegion.width, srcRegion.height, srcRegion.depth};
         auto bpp = bytesPerPixel;
-        if (isImageFromBuffer) {
-            if (src1DBuffer) {
-                srcOff.x *= bpp;
-                srcImgSize.x *= bpp;
-            }
-            if (dst1DBuffer) {
-                dstOff.x *= bpp;
-                dstImgSize.x *= bpp;
-            }
+        if (imageToBuffer) {
+            srcOff.x *= bpp;
+            srcImgSize.x *= bpp;
+            dstOff.x *= bpp;
+            dstImgSize.x *= bpp;
             copySz.x *= bpp;
             bpp = 1;
         }
         auto status = appendCopyImageBlit(ptrOffset(srcImage->getAllocation()->getGpuAddress(), srcImgInfo.offset), srcImage->getAllocation(), ptrOffset(dstImage->getAllocation()->getGpuAddress(), dstImgInfo.offset), dstImage->getAllocation(),
                                           srcOff, dstOff, srcRowPitch, srcSlicePitch,
                                           dstRowPitch, dstSlicePitch, bpp, copySz, srcImgSize, dstImgSize,
-                                          event, numWaitEvents, phWaitEvents, memoryCopyParams, isImageFromBuffer);
+                                          event, numWaitEvents, phWaitEvents, memoryCopyParams, imageToBuffer);
         addToMappedEventList(event);
         return status;
     }
