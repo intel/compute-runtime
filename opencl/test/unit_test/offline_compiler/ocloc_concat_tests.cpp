@@ -139,15 +139,16 @@ TEST(OclocConcatTest, GivenZebinWithAOTNoteAndFatBinaryWhenConcatenatingThenCorr
         fatBinary = arEncoder.encode();
     }
 
-    ZebinTestData::ValidEmptyProgram zebin;
-    {
-        AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL; // 12.0.0
-        zebin.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT,
-                            ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion), productConfig));
-    }
+    const AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL; // 12.0.0
+    const auto intelGTNote = ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion), productConfig);
+    ZebinTestData::ValidEmptyProgram zebin64;
+    zebin64.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, intelGTNote);
+    ZebinTestData::ValidEmptyProgram<Elf::EI_CLASS_32> zebin32;
+    zebin32.appendSection(Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, intelGTNote);
 
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{
-        {"binary.bin", std::string(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size())},
+        {"binary64.bin", std::string(reinterpret_cast<const char *>(zebin64.storage.data()), zebin64.storage.size())},
+        {"binary32.bin", std::string(reinterpret_cast<const char *>(zebin32.storage.data()), zebin32.storage.size())},
         {"fatBinary.ar", std::string(reinterpret_cast<const char *>(fatBinary.data()), fatBinary.size())}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     mockArgHelper.interceptOutput = true;
@@ -156,7 +157,8 @@ TEST(OclocConcatTest, GivenZebinWithAOTNoteAndFatBinaryWhenConcatenatingThenCorr
     auto oclocConcat = MockOclocConcat(&mockArgHelper);
     oclocConcat.fileNamesToConcat = {
         "fatBinary.ar",
-        "binary.bin",
+        "binary64.bin",
+        "binary32.bin",
     };
 
     auto error = oclocConcat.concatenate();
@@ -171,10 +173,11 @@ TEST(OclocConcatTest, GivenZebinWithAOTNoteAndFatBinaryWhenConcatenatingThenCorr
     auto concatedAr = NEO::Ar::decodeAr(ArrayRef<const uint8_t>::fromAny(reinterpret_cast<const uint8_t *>(concatedFatBinary.data()), concatedFatBinary.size()), errors, warnings);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
-    ASSERT_EQ(6U, concatedAr.files.size());
+    ASSERT_EQ(8U, concatedAr.files.size());
     EXPECT_EQ("10.0.0", concatedAr.files[1].fileName);
     EXPECT_EQ("11.0.0", concatedAr.files[3].fileName);
-    EXPECT_EQ("12.0.0", concatedAr.files[5].fileName);
+    EXPECT_EQ("64.12.0.0", concatedAr.files[5].fileName);
+    EXPECT_EQ("32.12.0.0", concatedAr.files[7].fileName);
 }
 
 } // namespace NEO

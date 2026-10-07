@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,8 @@ OclocConcat::ErrorCode OclocConcat::concatenate() {
                 printMsg(fileName, errors);
                 return OCLOC_INVALID_FILE;
             }
-            auto entryName = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
+            const std::string pointerSize = Elf::isElf<Elf::EI_CLASS_64>(fileRef) ? "64" : "32";
+            auto entryName = pointerSize + "." + ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
             arEncoder.appendFileEntry(entryName, fileRef);
         }
     }
