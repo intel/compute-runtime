@@ -37,7 +37,7 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 196
+#define MD_API_BUILD_NUMBER_CURRENT 197
 
 namespace MetricsDiscovery
 {
@@ -901,6 +901,7 @@ namespace MetricsDiscovery
         DISAGGREGATION_MODE_SQIDI      = 4,
         DISAGGREGATION_MODE_L3NODE     = 5,
         DISAGGREGATION_MODE_COPYENGINE = 6,
+        DISAGGREGATION_MODE_CXL        = 7,
         DISAGGREGATION_MODE_LAST
     } TDisaggregationMode;
 
