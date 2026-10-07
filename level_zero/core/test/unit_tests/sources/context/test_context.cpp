@@ -6044,7 +6044,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueIpcHandleThenUnregisterIpcHandle
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
 
-    size_t size = 4096;
+    size_t size = 4 * MemoryConstants::megaByte;
     size_t alignment = 4096;
     void *ptr = nullptr;
 
@@ -6092,7 +6092,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithNonOpaqueIpcHandleThenUnregisterIpcHan
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
     contextImp->settings.handleType = IpcHandleType::maxHandle;
 
-    size_t size = 4096;
+    size_t size = 4 * MemoryConstants::megaByte;
     size_t alignment = 4096;
     void *ptr = nullptr;
 
@@ -6139,7 +6139,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueNtHandleThenUnregisterIpcHandleW
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     contextImp->settings.handleType = IpcHandleType::ntHandle;
 
-    size_t size = 4096;
+    size_t size = 4 * MemoryConstants::megaByte;
     size_t alignment = 4096;
     void *ptr = nullptr;
 
@@ -6230,7 +6230,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNullUsmPoolThenHandleIsRem
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
 
-    size_t size = 4096;
+    size_t size = 4 * MemoryConstants::megaByte;
     size_t alignment = 4096;
     void *ptr = nullptr;
 
@@ -6462,9 +6462,8 @@ TEST_F(ContextTest, whenTrackingIpcEventPoolHandleWithExistingHandleThenRefCount
     ipcHandleMap.clear();
 }
 
-TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNonNullUsmPoolAndRefCountGreaterThanZeroThenHandleIsNotRemoved) {
+TEST_F(ContextTest, givenIpcHandleTrackingOfPooledAllocationWhenCallingFreeMemThenTrackingIsNotChanged) {
     DebugManagerStateRestore restorer;
-    // Enable USM pooling to create allocations with usmPool
     debugManager.flags.EnableHostUsmAllocationPool.set(1);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
     debugManager.flags.EnableUsmAllocationPoolManager.set(1);
@@ -6477,73 +6476,33 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNonNullUsmPoolAndRefCountG
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
-    size_t size = 4096;
-    size_t alignment = 4096;
     void *ptr = nullptr;
-
-    // Allocate device memory with pooling enabled
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
-
-    res = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_NE(nullptr, ptr);
-
-    // Create IPC handle tracking with refcount = 2
-    // After freeMem decrements it to 1, and if usmPool exists, the handle should NOT be removed
-    uint64_t testHandle = 88888;
-    std::unique_ptr<L0::IpcHandleTracking> handleTrackingOwner(new L0::IpcHandleTracking());
-    L0::IpcHandleTracking *handleTracking = handleTrackingOwner.get();
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    res = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, 4096u, 4096u, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, allocData);
-    auto *gpuAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    auto poolLookup = contextImp->getUsmPoolOwningPtr(ptr, allocData);
+    ASSERT_NE(nullptr, poolLookup.pool);
 
-    handleTracking->alloc = gpuAllocation;
-    handleTracking->refcnt = 2; // Set refcount = 2
-    handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
+    constexpr uint64_t testHandle = 88888;
+    std::unique_ptr<L0::IpcHandleTracking> handleTracking(new L0::IpcHandleTracking());
+    handleTracking->alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    handleTracking->refcnt = 2;
+    handleTracking->ptr = poolLookup.pool->getPoolAddress();
     handleTracking->handle = testHandle;
-    handleTracking->handleId = 0;
-    handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
+    handleTracking->pooled = true;
+    driverHandle->getIPCHandleMap()[testHandle] = handleTracking.get();
 
-    {
-        auto lock = driverHandle->lockIPCHandleMap();
-        driverHandle->getIPCHandleMap()[testHandle] = handleTracking;
-    }
-
-    // Free the memory - with pooling enabled, usmPool should exist
-    // With refcnt = 2, it decrements to 1
-    // Condition: refcnt == 0 || usmPool == nullptr
-    // If usmPool != nullptr AND refcnt > 0 (becomes 1), the condition is FALSE
-    // So the handle should NOT be removed
     res = contextImp->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    // Verify handle state based on whether usmPool actually exists
-    {
-        auto lock = driverHandle->lockIPCHandleMap();
-        auto it = driverHandle->getIPCHandleMap().find(testHandle);
-
-        // Get the allocation again to check if pooling actually created a usmPool
-        auto allocDataAfter = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
-
-        if (allocDataAfter) {
-            // If allocation still exists and has usmPool, handle should remain with refcnt = 1
-            // Otherwise it was removed
-            if (it != driverHandle->getIPCHandleMap().end()) {
-                EXPECT_EQ(1u, it->second->refcnt);
-                driverHandle->getIPCHandleMap().erase(it);
-                handleTrackingOwner.reset();
-            }
-        } else {
-            // If allocation was freed (pooled), handle might have been removed
-            EXPECT_TRUE(driverHandle->getIPCHandleMap().empty() || it->second->refcnt == 1);
-            if (it != driverHandle->getIPCHandleMap().end()) {
-                driverHandle->getIPCHandleMap().erase(it);
-                handleTrackingOwner.reset();
-            }
-        }
-    }
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    auto it = ipcHandleMap.find(testHandle);
+    ASSERT_NE(ipcHandleMap.end(), it);
+    EXPECT_EQ(2u, it->second->refcnt);
+    ipcHandleMap.erase(it);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -6606,7 +6565,7 @@ TEST_F(ContextIpcSocketTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandl
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
 
-    size_t size = 4096;
+    size_t size = 4 * MemoryConstants::megaByte;
     size_t alignment = 4096;
     void *ptr = nullptr;
 
@@ -6728,7 +6687,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithCachedImportThenCacheIsCleared) {
     // Verify cache has the entry
     EXPECT_EQ(1u, driverHandle->opaqueHandleImportCache.count(cacheID));
 
-    size_t size = 4096;
+    size_t size = 4 * MemoryConstants::megaByte;
     size_t alignment = 4096;
     void *ptr = nullptr;
 
@@ -6920,7 +6879,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithSocketsOpaqueHandleButNtHandleTypeThen
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::ntHandle;
 
-    size_t size = 4096;
+    size_t size = 4 * MemoryConstants::megaByte;
     size_t alignment = 4096;
     void *ptr = nullptr;
 

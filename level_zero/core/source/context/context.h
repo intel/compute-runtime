@@ -133,6 +133,7 @@ struct IpcHandleTracking {
     struct IpcMemoryData ipcData = {};
     struct IpcOpaqueMemoryData opaqueData = {};
     bool hasReservedHandleData = false;
+    bool pooled = false;
 };
 
 #ifndef BIT
@@ -352,6 +353,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     }
 
     MOCKABLE_VIRTUAL void freePeerAllocationsFromAll(const void *ptr, bool blocking);
+    void releasePooledIpcHandles(const void *poolPtr);
     void freePeerAllocations(const void *ptr, bool blocking, Device *device);
 
     ze_result_t handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type,

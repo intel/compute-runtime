@@ -389,7 +389,11 @@ void DriverHandle::initHostUsmAllocPoolOnce() {
 }
 
 NEO::UsmMemAllocPool::CustomCleanupFn DriverHandle::getPoolCleanupFn() {
-    return [this](const void *ptr) { Context::fromHandle(this->defaultContext)->freePeerAllocationsFromAll(ptr, false); };
+    return [this](const void *ptr) {
+        auto context = Context::fromHandle(this->defaultContext);
+        context->releasePooledIpcHandles(ptr);
+        context->freePeerAllocationsFromAll(ptr, false);
+    };
 }
 
 namespace {

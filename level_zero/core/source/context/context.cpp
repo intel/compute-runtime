@@ -563,26 +563,35 @@ void Context::invokeMemFreeCallbacks(const void *ptr, NEO::SvmAllocationData &sv
     }
 }
 
-// call this before the chunk goes back to the pool: freeing the last chunk can trim
-// the pool away, and with it the address
 void Context::releaseIpcHandle(const void *ptr, NEO::UsmMemAllocPool *usmPool) {
-    const bool pooled = nullptr != usmPool;
-    const uint64_t addressForIpc = pooled ? usmPool->getPoolAddress() : reinterpret_cast<uint64_t>(ptr);
+    if (usmPool) {
+        return;
+    }
+    const uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lockIPC = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().begin();
     while (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         if (ipcHandleIterator->second->ptr == addressForIpc) {
-            ipcHandleIterator->second->refcnt -= 1;
-            // pooled: close when the last export of this pool BO is released
-            // non-pooled: the allocation is going away, so its entry must not outlive it
-            if (ipcHandleIterator->second->refcnt == 0 || false == pooled) {
-                this->destroyIpcHandleTracking(ipcHandleIterator->second);
-                this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator);
-            }
+            this->destroyIpcHandleTracking(ipcHandleIterator->second);
+            this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator);
             break;
         }
         ipcHandleIterator++;
+    }
+}
+
+void Context::releasePooledIpcHandles(const void *poolPtr) {
+    const uint64_t poolAddress = castToUint64(poolPtr);
+    auto lockIPC = this->driverHandle->lockIPCHandleMap();
+    auto &ipcMap = this->driverHandle->getIPCHandleMap();
+    for (auto ipcHandleIterator = ipcMap.begin(); ipcHandleIterator != ipcMap.end();) {
+        if (ipcHandleIterator->second->pooled && ipcHandleIterator->second->ptr == poolAddress) {
+            this->destroyIpcHandleTracking(ipcHandleIterator->second);
+            ipcHandleIterator = ipcMap.erase(ipcHandleIterator);
+        } else {
+            ipcHandleIterator++;
+        }
     }
 }
 
@@ -871,7 +880,7 @@ uint64_t Context::getIpcHandleKey(const ze_ipc_mem_handle_t &ipcHandle) const {
 void Context::closeIpcHandleTracking(uint64_t handle) {
     auto &ipcMap = driverHandle->getIPCHandleMap();
     auto ipcIter = ipcMap.find(handle);
-    if (ipcIter != ipcMap.end()) {
+    if (ipcIter != ipcMap.end() && false == ipcIter->second->pooled) {
         IpcHandleTracking *trackIPC = ipcIter->second;
         trackIPC->refcnt -= 1;
         if (trackIPC->refcnt == 0) {
@@ -2859,6 +2868,7 @@ void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint
         handleTracking->ptr = ptrAddress;
         handleTracking->handle = handle;
         handleTracking->hasReservedHandleData = hasReservedData;
+        handleTracking->pooled = usmPool != nullptr;
         if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
             handleTracking->ipcData = ipcData;
         } else {
