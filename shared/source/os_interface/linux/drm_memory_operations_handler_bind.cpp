@@ -43,7 +43,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *devi
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::decompress(Device *device, GraphicsAllocation &gfxAllocation) {
     auto drmAllocation = static_cast<DrmAllocation *>(&gfxAllocation);
     auto &engines = device->getAllEngines();
-    device->getMemoryManager()->waitForEnginesCompletion(gfxAllocation);
     const auto drm = rootDeviceEnvironment.osInterface->getDriverModel()->as<Drm>();
 
     std::lock_guard<std::mutex> lock(mutex);

@@ -1657,7 +1657,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindPerContextVmDecompressTest, givenPerConte
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWithPendingGpuWorkWhenDecompressCalledThenWaitForEnginesCompletionIsInvoked) {
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWithPendingGpuWorkWhenDecompressCalledThenItDoesNotWaitForEnginesAndIssuesDecompressBind) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);
 
@@ -1671,12 +1671,13 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWithPendingGpuWorkWh
     allocation->updateTaskCount(1u, engine.osContext->getContextId());
 
     auto waitCalledBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    auto vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
 
     auto status = operationHandler->decompress(device, *allocation);
-    EXPECT_EQ(MemoryOperationsStatus::success, status);
 
-    EXPECT_EQ(waitCalledBefore + 1u, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
-    EXPECT_EQ(1u, csr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(waitCalledBefore, csr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(MemoryOperationsStatus::success, status);
+    EXPECT_LT(vmBindCalledBefore, mock->getMockIoctlHelper()->vmBindCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
