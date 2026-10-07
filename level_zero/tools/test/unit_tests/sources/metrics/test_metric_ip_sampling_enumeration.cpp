@@ -187,6 +187,7 @@ using DriverExtensionsTest = Test<ExtensionFixture>;
 TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnCorrectVersions) {
     verifyExtensionDefinition(ZET_INTEL_METRIC_CALCULATION_EXP_NAME, ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZET_METRIC_GROUP_MARKER_EXP_NAME, ZET_METRIC_GROUP_MARKER_EXP_VERSION_CURRENT);
+    verifyExtensionDefinition(ZET_METRIC_SOURCE_ID_EXP_NAME, ZET_METRIC_SOURCE_ID_EXP_VERSION_CURRENT);
 }
 
 HWTEST2_PRODUCT_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenCorrectMetricsAreReturned, HasIPSamplingSupport) {

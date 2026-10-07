@@ -81,6 +81,7 @@ const std::vector<std::pair<std::string, uint32_t>> DriverHandle::extensionsSupp
     // Metrics experimental extensions
     {ZET_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME, ZET_METRICS_RUNTIME_ENABLE_DISABLE_EXP_VERSION_1_0},
     {ZET_METRIC_GROUP_MARKER_EXP_NAME, ZET_METRIC_GROUP_MARKER_EXP_VERSION_1_0},
+    {ZET_METRIC_SOURCE_ID_EXP_NAME, ZET_METRIC_SOURCE_ID_EXP_VERSION_1_0},
 
     // Intel specific Metrics experimental extensions
     {ZET_INTEL_METRIC_CALCULATION_EXP_NAME, ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_1_1},
