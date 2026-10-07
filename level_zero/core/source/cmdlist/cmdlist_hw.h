@@ -30,6 +30,7 @@ enum class BufferBuiltIn : uint32_t;
 
 struct Event;
 struct EventPool;
+struct Image;
 struct CmdListHostFunctionParameters;
 template <typename GfxFamily>
 class SWTagScope;
@@ -437,6 +438,7 @@ struct CommandListCoreFamily : public CommandList {
     void appendDispatchOffsetRegister(bool workloadPartitionEvent, bool beforeProfilingCmds);
     size_t estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint32_t bufferRowPitch, uint64_t bufferSlicePitch, const ze_image_region_t *region, size_t pixelSize);
+    void resolveImagePitchesAndBufferSize(Image *image, const ze_image_region_t *pRegion, uint32_t &rowPitch, uint64_t &slicePitch, uint64_t &bufferSize);
     MOCKABLE_VIRTUAL AlignedAllocationData resolveAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, const MemAllocInfo *bufferAllocInfo, const ResolveAlignedAllocationFlags &flags);
     AlignedAllocationData alignSvmAllocationData(Device *device, NEO::SvmAllocationData *svmAlloc, const void *buffer, uint64_t bufferSize, uintptr_t sourcePtr, size_t sshAlignmentOffset);
     AlignedAllocationData alignImportedHostAllocationData(NEO::GraphicsAllocation *importedHostAlloc, void *ptr);

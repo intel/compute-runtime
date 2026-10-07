@@ -142,6 +142,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::resetBcsSplitEvents;
     using BaseClass::resolveAlignedAllocation;
+    using BaseClass::resolveImagePitchesAndBufferSize;
     using BaseClass::scratchAddressPatchingEnabled;
     using BaseClass::setAdditionalBlitProperties;
     using BaseClass::setupTimestampEventForMultiTile;
@@ -285,6 +286,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::relaxedOrderingCounter;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
+    using BaseClass::resolveImagePitchesAndBufferSize;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::statelessBuiltinsEnabled;
@@ -843,6 +845,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass::isSmallBarConfigPresent;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
+    using BaseClass::isValidForStagingImageTransfer;
     using BaseClass::obtainAllocData;
     using BaseClass::setupFillKernelArguments;
 
@@ -904,6 +907,18 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
                           uint32_t sizePerHwThread),
                          (kernel, sizePerHwThread));
 
+    ze_result_t appendStagingImageTransfer(ze_image_handle_t hImage, const void *ptr, const ze_image_region_t *pRegion,
+                                           size_t rowPitch, size_t slicePitch, bool isRead,
+                                           ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) override {
+        ++appendStagingImageTransferCalledCount;
+        return BaseClass::appendStagingImageTransfer(hImage, ptr, pRegion, rowPitch, slicePitch, isRead, hSignalEvent, memoryCopyParams);
+    }
+
+    ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) override {
+        ++appendStagingMemoryCopyCalledCount;
+        return BaseClass::appendStagingMemoryCopy(cpuMemCopyInfo, hSignalEvent, memoryCopyParams);
+    }
+
     uint32_t checkAssertCalled = 0;
     bool callBaseExecute = false;
 
@@ -917,6 +932,9 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     bool callAppendMemoryCopyKernelWithGABase = true;
     ze_result_t appendMemoryCopyKernelWithGACalledCountReturnValue = ZE_RESULT_SUCCESS;
     uint32_t appendMemoryCopyKernelWithGACalledCount = 0;
+
+    uint32_t appendStagingImageTransferCalledCount = 0;
+    uint32_t appendStagingMemoryCopyCalledCount = 0;
 };
 
 struct CmdListHelper {
