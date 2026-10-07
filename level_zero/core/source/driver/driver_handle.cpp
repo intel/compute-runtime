@@ -878,7 +878,7 @@ NEO::GraphicsAllocation *DriverHandle::resolveMemoryAllocation(Device *device, v
     return allocation;
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     NEO::MemoryManager::OsHandleData osHandleData{handle};
@@ -889,7 +889,13 @@ std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_dev
                                          allocationType,
                                          neoDevice->getDeviceBitfield()};
     properties.flags.preferCompressed = compressedMemory;
-    auto alloc = this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
+    NEO::GraphicsAllocation *alloc = nullptr;
+    if (name != nullptr) {
+        NEO::MemoryManager::AllocationStatus status;
+        alloc = this->getMemoryManager()->createGraphicsAllocationFromSharedName(name, type, osHandleData, properties, false, status);
+    } else {
+        alloc = this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
+    }
 
     if (alloc == nullptr) {
         return {nullptr, nullptr};

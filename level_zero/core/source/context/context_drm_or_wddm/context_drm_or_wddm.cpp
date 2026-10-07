@@ -88,6 +88,8 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
     if (isNTHandle) {
         return this->driverHandle->importNTHandle(hDevice,
                                                   reinterpret_cast<void *>(handle),
+                                                  nullptr,
+                                                  NEO::ExternalMemoryType::opaqueWin32,
                                                   allocationType,
                                                   isHostIpcAllocation,
                                                   processId,

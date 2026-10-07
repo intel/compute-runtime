@@ -1120,6 +1120,64 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenNameWhenCreatingAllocationFromSharedNameThenHandleOpenedByNameIsImported) {
+    wddm->openNTHandleFromNameCallBase = false;
+    wddm->openNTHandleFromNameResult = reinterpret_cast<HANDLE>(0x4321);
+    AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
+    auto status = MemoryManager::AllocationStatus::Success;
+    VariableBackup<UINT> numAllocationsBackup(&gdi->getQueryResourceInfoArgOut().NumAllocations, 1u);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, GmmRequirements{});
+    D3DDDI_OPENALLOCATIONINFO allocationInfo = {};
+    allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
+    allocationInfo.hAllocation = ALLOCATION_HANDLE;
+    allocationInfo.PrivateDriverDataSize = sizeof(GMM_RESOURCE_INFO);
+    VariableBackup<D3DDDI_OPENALLOCATIONINFO *> openResourceBackup(&gdi->getOpenResourceArgOut().pOpenAllocationInfo, &allocationInfo);
+
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedName(L"myMemory", ExternalMemoryType::opaqueWin32, MemoryManager::OsHandleData{0u}, properties, true, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    auto [openedName, forceGlobal] = wddm->openNTHandleFromNameLastArgs;
+    EXPECT_STREQ(L"myMemory", static_cast<const wchar_t *>(openedName));
+    EXPECT_TRUE(forceGlobal);
+    EXPECT_EQ(toOsHandle(wddm->openNTHandleFromNameResult), static_cast<WddmAllocation *>(allocation)->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenD3DExternalMemoryTypeWhenCreatingAllocationFromSharedNameThenNameIsNotLookedUpGlobally) {
+    wddm->openNTHandleFromNameCallBase = false;
+    AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
+    auto status = MemoryManager::AllocationStatus::Success;
+
+    for (auto type : {ExternalMemoryType::d3d11Texture, ExternalMemoryType::d3d12Heap, ExternalMemoryType::d3d12Resource}) {
+        EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSharedName(L"myMemory", type, MemoryManager::OsHandleData{0u}, properties, true, status));
+        auto [openedName, forceGlobal] = wddm->openNTHandleFromNameLastArgs;
+        EXPECT_FALSE(forceGlobal);
+    }
+    EXPECT_EQ(3u, wddm->openNTHandleFromNameCalled);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenOpeningByNameFailsWhenCreatingAllocationFromSharedNameThenInvalidNameIsReturned) {
+    wddm->openNTHandleFromNameCallBase = false;
+    AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
+    auto status = MemoryManager::AllocationStatus::Success;
+
+    EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSharedName(L"myMemory", ExternalMemoryType::d3d12Resource, MemoryManager::OsHandleData{0u}, properties, true, status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::InvalidName, status);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenImportFailsWhenCreatingAllocationFromSharedNameThenErrorIsReturned) {
+    wddm->openNTHandleFromNameCallBase = false;
+    wddm->openNTHandleFromNameResult = reinterpret_cast<HANDLE>(0x4321);
+    AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
+    auto status = MemoryManager::AllocationStatus::Success;
+    VariableBackup<UINT> numAllocationsBackup(&gdi->getQueryResourceInfoArgOut().NumAllocations, 0u);
+
+    EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSharedName(L"myMemory", ExternalMemoryType::d3d12Resource, MemoryManager::OsHandleData{0u}, properties, true, status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenSharedHandleWhenCreateGraphicsAllocationFromMultipleSharedHandlesIsCalledThenNullptrIsReturned) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     auto handle = 1u;

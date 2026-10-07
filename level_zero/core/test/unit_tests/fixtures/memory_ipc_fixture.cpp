@@ -135,7 +135,7 @@ void MemoryExportImportTest::SetUp() {
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
     if (mockHandle == allocationHandleMap.second) {
         return {nullptr, allocationHandleMap.first};
     }
@@ -226,7 +226,7 @@ void MemoryExportImportWSLTest::TearDown() {
     delete currMemoryManager;
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
     if (mockHandle == allocationMap.second) {
         return {nullptr, allocationMap.first};
     }

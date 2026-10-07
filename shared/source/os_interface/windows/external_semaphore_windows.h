@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 
-#include <limits>
 #include <memory>
 #include <string>
 
@@ -47,16 +46,6 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
     }
 
   protected:
-    // Resolves the NT object-manager directory for a Win32-style named object, honoring an
-    // optional "Global\\" / "Local\\" prefix the same way kernelbase does. relativeName is set
-    // to the portion of name to open under the returned directory. sessionId is the caller's
-    // session; session 0 has no \Sessions\0 directory, so it collapses to \BaseNamedObjects.
-    static std::wstring getNamedObjectDirectoryPath(uint32_t sessionId, const wchar_t *name, const wchar_t **relativeName);
-
-    // RtlInitUnicodeString stores Length and MaximumLength as USHORT byte counts, with
-    // MaximumLength including a terminator, so this is the longest name it can represent.
-    static constexpr size_t maxNameLengthInWideChars = (static_cast<size_t>(std::numeric_limits<USHORT>::max()) - sizeof(wchar_t)) / sizeof(wchar_t);
-
     static std::wstring convertUtf8NameToWide(const char *name);
 
     // Opens the named sync object, resolving its namespace via getNamedObjectDirectoryPath, and

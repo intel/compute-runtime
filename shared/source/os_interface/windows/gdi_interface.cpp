@@ -69,6 +69,7 @@ bool Gdi::getAllProcAddresses() {
     signalSynchronizationObjectFromGpu = gdiDll->getProcAddress("D3DKMTSignalSynchronizationObjectFromGpu");
     openSyncObjectFromNtHandle2 = gdiDll->getProcAddress("D3DKMTOpenSyncObjectFromNtHandle2");
     openSyncObjectNtHandleFromName = gdiDll->getProcAddress("D3DKMTOpenSyncObjectNtHandleFromName");
+    openNtHandleFromName = gdiDll->getProcAddress("D3DKMTOpenNtHandleFromName");
     createPagingQueue = gdiDll->getProcAddress("D3DKMTCreatePagingQueue");
     destroyPagingQueue = gdiDll->getProcAddress("D3DKMTDestroyPagingQueue");
     lock2 = gdiDll->getProcAddress("D3DKMTLock2");

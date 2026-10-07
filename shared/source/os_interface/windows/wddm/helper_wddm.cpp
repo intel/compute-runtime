@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/named_object_windows.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -169,6 +170,18 @@ HANDLE Wddm::getSharedHandle(const MemoryManager::OsHandleData &osHandleData) {
         sharedNtHandle = duplicatedHandle;
     }
     return sharedNtHandle;
+}
+
+HANDLE Wddm::openNTHandleFromName(const void *name, bool forceGlobal) {
+    return NamedObjectWindows::openNamedObject(static_cast<const wchar_t *>(name), forceGlobal, [this](OBJECT_ATTRIBUTES *objectAttributes) -> HANDLE {
+        D3DKMT_OPENNTHANDLEFROMNAME openNtHandleFromName = {};
+        openNtHandleFromName.dwDesiredAccess = SHARED_ALLOCATION_ALL_ACCESS;
+        openNtHandleFromName.pObjAttrib = objectAttributes;
+        if (getGdi()->openNtHandleFromName(&openNtHandleFromName) != STATUS_SUCCESS) {
+            return nullptr;
+        }
+        return openNtHandleFromName.hNtHandle;
+    });
 }
 
 bool Wddm::isLatePreemptionStartSupported(const HardwareInfo &hwInfo) {

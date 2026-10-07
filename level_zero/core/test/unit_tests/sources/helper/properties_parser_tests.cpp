@@ -92,6 +92,7 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithOpaqueFDWhenPrepareLooku
     EXPECT_TRUE(l0LookupTable.sharedHandleType.isSupportedHandle);
     EXPECT_TRUE(l0LookupTable.sharedHandleType.isOpaqueFDHandle);
     EXPECT_EQ(l0LookupTable.sharedHandleType.fd, fdStructure.fd);
+    EXPECT_EQ(l0LookupTable.sharedHandleType.externalMemoryType, NEO::ExternalMemoryType::opaqueFd);
 
     EXPECT_TRUE(l0LookupTable.areImageProperties);
 
@@ -129,6 +130,7 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithDmaBufWhenPrepareLookupT
     EXPECT_TRUE(l0LookupTable.sharedHandleType.isSupportedHandle);
     EXPECT_TRUE(l0LookupTable.sharedHandleType.isDMABUFHandle);
     EXPECT_EQ(l0LookupTable.sharedHandleType.fd, fdStructure.fd);
+    EXPECT_EQ(l0LookupTable.sharedHandleType.externalMemoryType, NEO::ExternalMemoryType::dmaBuf);
 
     EXPECT_TRUE(l0LookupTable.areImageProperties);
 
@@ -164,6 +166,75 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithNTHandleWhenPrepareLooku
     EXPECT_TRUE(l0LookupTable.sharedHandleType.isSupportedHandle);
     EXPECT_TRUE(l0LookupTable.sharedHandleType.isNTHandle);
     EXPECT_EQ(l0LookupTable.sharedHandleType.ntHandle, importNTHandle.handle);
+    EXPECT_EQ(l0LookupTable.sharedHandleType.ntHandleName, nullptr);
+}
+
+TEST(L0StructuresLookupTableTests, givenL0StructuresWithNamedNTHandleWhenPrepareLookupTableThenNameIsSetInLookupTable) {
+    const char16_t name[] = u"caf\u00e9";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.name = name;
+
+    const std::pair<ze_external_memory_type_flags_t, NEO::ExternalMemoryType> supportedFlags[] = {
+        {ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32, NEO::ExternalMemoryType::opaqueWin32},
+        {ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP, NEO::ExternalMemoryType::d3d12Heap},
+        {ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE, NEO::ExternalMemoryType::d3d12Resource},
+        {ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE, NEO::ExternalMemoryType::d3d11Texture}};
+    for (auto [flags, externalMemoryType] : supportedFlags) {
+        importNTHandle.flags = flags;
+
+        StructuresLookupTable l0LookupTable = {};
+        auto result = prepareL0StructuresLookupTable(l0LookupTable, &importNTHandle);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_TRUE(l0LookupTable.isSharedHandle);
+        EXPECT_TRUE(l0LookupTable.sharedHandleType.isSupportedHandle);
+        EXPECT_TRUE(l0LookupTable.sharedHandleType.isNTHandle);
+        EXPECT_EQ(l0LookupTable.sharedHandleType.ntHandle, nullptr);
+        EXPECT_EQ(l0LookupTable.sharedHandleType.ntHandleName, static_cast<const void *>(name));
+        EXPECT_EQ(l0LookupTable.sharedHandleType.externalMemoryType, externalMemoryType);
+    }
+}
+
+TEST(L0StructuresLookupTableTests, givenExternalMemoryTypeFlagWhenConvertingToExternalMemoryTypeThenMatchingTypeIsReturned) {
+    EXPECT_EQ(NEO::ExternalMemoryType::opaqueFd, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD));
+    EXPECT_EQ(NEO::ExternalMemoryType::dmaBuf, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF));
+    EXPECT_EQ(NEO::ExternalMemoryType::opaqueWin32, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32));
+    EXPECT_EQ(NEO::ExternalMemoryType::opaqueWin32Kmt, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32_KMT));
+    EXPECT_EQ(NEO::ExternalMemoryType::d3d11Texture, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE));
+    EXPECT_EQ(NEO::ExternalMemoryType::d3d11TextureKmt, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE_KMT));
+    EXPECT_EQ(NEO::ExternalMemoryType::d3d12Heap, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP));
+    EXPECT_EQ(NEO::ExternalMemoryType::d3d12Resource, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE));
+}
+
+TEST(L0StructuresLookupTableTests, givenUnknownExternalMemoryTypeFlagWhenConvertingToExternalMemoryTypeThenInvalidIsReturned) {
+    EXPECT_EQ(NEO::ExternalMemoryType::invalid, toExternalMemoryType(ZE_EXTERNAL_MEMORY_TYPE_FLAG_FORCE_UINT32));
+}
+
+TEST(L0StructuresLookupTableTests, givenL0StructuresWithBothNTHandleAndNameWhenPrepareLookupTableThenInvalidArgumentIsReturned) {
+    uint64_t handle = 0x02;
+    const char16_t name[] = u"myMemory";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.handle = &handle;
+    importNTHandle.name = name;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &importNTHandle);
+
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(L0StructuresLookupTableTests, givenL0StructuresWithNeitherNTHandleNorNameWhenPrepareLookupTableThenInvalidArgumentIsReturned) {
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+
+    StructuresLookupTable l0LookupTable = {};
+    auto result = prepareL0StructuresLookupTable(l0LookupTable, &importNTHandle);
+
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
 TEST(L0StructuresLookupTableTests, givenL0StructuresWithSupportedExportHandlesWhenPrepareLookupTableThenProperFieldsInLookupTableAreSet) {
@@ -385,9 +456,11 @@ TEST(L0StructuresLookupTableTests, givenExternalD3DTextureExtDescWhenPrepareLook
     ze_image_desc_t imageDesc = {};
     imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
 
+    uint64_t handle = 0x02;
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.handle = &handle;
 
     ze_external_d3d_texture_ext_desc_t d3dTextureDesc = {};
     d3dTextureDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_D3D_TEXTURE_EXT_DESC;

@@ -36,6 +36,7 @@ class StagingBufferManager;
 class IpcSocketServer;
 struct SvmAllocationData;
 enum class AllocationType;
+enum class ExternalMemoryType;
 
 struct IpcSocketServerDeleter {
     void operator()(IpcSocketServer *ptr) const;
@@ -141,7 +142,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, uint64_t physicalOffset);
     MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, const std::vector<uint64_t> &physicalOffsets);
-    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset);
+    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset);
     MOCKABLE_VIRTUAL bool initializeIpcSocketServer();
     MOCKABLE_VIRTUAL bool registerIpcHandleWithServer(uint64_t handleId, int fd);
 

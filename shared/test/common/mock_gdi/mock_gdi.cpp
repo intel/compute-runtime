@@ -754,6 +754,11 @@ NTSTATUS __stdcall mockD3DKMTOpenSyncObjectNtHandleFromName(IN OUT D3DKMT_OPENSY
     return STATUS_SUCCESS;
 }
 
+NTSTATUS __stdcall mockD3DKMTOpenNtHandleFromName(IN OUT D3DKMT_OPENNTHANDLEFROMNAME *openNtHandle) {
+    openNtHandle->hNtHandle = reinterpret_cast<HANDLE>(0x1);
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS __stdcall mockD3DKMTFreeGpuVirtualAddress(IN CONST D3DKMT_FREEGPUVIRTUALADDRESS *) {
     return STATUS_SUCCESS;
 }

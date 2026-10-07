@@ -210,6 +210,15 @@ TEST(DrmOrWddmTest, givenWslWhenCreatingPdhInterfaceThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, pdhInterface);
 }
 
+TEST(DrmOrWddmTest, givenWslWhenOpeningNTHandleFromNameThenNullptrIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto wddm = std::make_unique<WddmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    const char16_t name[] = u"myMemory";
+    EXPECT_EQ(nullptr, wddm->openNTHandleFromName(name, false));
+    EXPECT_EQ(1u, wddm->openNTHandleFromNameCalled);
+}
+
 namespace {
 struct ShareObjectsCapture {
     static NTSTATUS APIENTRY shareObjects(UINT cObjects, const D3DKMT_HANDLE *hObjects,

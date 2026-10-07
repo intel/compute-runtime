@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/address_range.h"
 #include "shared/source/memory_manager/alignment_selector.h"
 #include "shared/source/memory_manager/definitions/storage_info.h"
+#include "shared/source/memory_manager/external_memory_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
@@ -140,7 +141,8 @@ class MemoryManager {
         Success = 0,
         Error,
         InvalidHostPointer,
-        RetryInNonDevicePool
+        RetryInNonDevicePool,
+        InvalidName
     };
 
     struct OsHandleData {
@@ -183,6 +185,7 @@ class MemoryManager {
     // Host reserved-memory range import: host USM uses CPU mmap and cannot go through the device merge above. Unsupported on non-DRM back-ends.
     virtual GraphicsAllocation *createHostAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, const std::vector<uint64_t> &physicalOffsets, bool reuseSharedAllocation) { return nullptr; }
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
+    virtual GraphicsAllocation *createGraphicsAllocationFromSharedName(const void *name, ExternalMemoryType type, const OsHandleData &osHandleData, const AllocationProperties &properties, bool reuseSharedAllocation, AllocationStatus &status);
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandleWithReservedData(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation, void *reservedHandleData) { closeInternalHandle(handle, handleId, graphicsAllocation); };

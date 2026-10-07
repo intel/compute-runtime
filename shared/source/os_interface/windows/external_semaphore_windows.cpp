@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/named_object_windows.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
@@ -44,37 +45,10 @@ std::unique_ptr<ExternalSemaphoreWindows> ExternalSemaphoreWindows::create(OSInt
     return extSemWindows;
 }
 
-std::wstring ExternalSemaphoreWindows::getNamedObjectDirectoryPath(uint32_t sessionId, const wchar_t *name, const wchar_t **relativeName) {
-    constexpr wchar_t globalPrefix[] = L"Global\\";
-    constexpr wchar_t localPrefix[] = L"Local\\";
-    constexpr size_t globalPrefixLength = (sizeof(globalPrefix) / sizeof(wchar_t)) - 1;
-    constexpr size_t localPrefixLength = (sizeof(localPrefix) / sizeof(wchar_t)) - 1;
-
-    *relativeName = name;
-
-    if (wcsncmp(name, globalPrefix, globalPrefixLength) == 0) {
-        *relativeName = name + globalPrefixLength;
-        return std::wstring(L"\\BaseNamedObjects");
-    }
-
-    if (wcsncmp(name, localPrefix, localPrefixLength) == 0) {
-        *relativeName = name + localPrefixLength;
-    }
-
-    // Session 0 (services) has no \Sessions\0 subtree; its base directory is \BaseNamedObjects.
-    if (sessionId == 0) {
-        return std::wstring(L"\\BaseNamedObjects");
-    }
-
-    wchar_t buffer[64];
-    swprintf_s(buffer, L"\\Sessions\\%u\\BaseNamedObjects", sessionId);
-    return std::wstring(buffer);
-}
-
 std::wstring ExternalSemaphoreWindows::convertUtf8NameToWide(const char *name) {
     const int lengthWithTerminator = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, name, -1, nullptr, 0);
     if ((lengthWithTerminator <= 1) ||
-        (static_cast<size_t>(lengthWithTerminator - 1) > maxNameLengthInWideChars)) {
+        (static_cast<size_t>(lengthWithTerminator - 1) > NamedObjectWindows::maxNameLengthInWideChars)) {
         return {};
     }
 
@@ -93,39 +67,16 @@ void *ExternalSemaphoreWindows::openSyncObjectByName(Gdi *gdi, const char *name,
         return nullptr;
     }
 
-    DWORD sessionId = 0;
-    if (!forceGlobal) {
-        SysCalls::processIdToSessionId(GetCurrentProcessId(), &sessionId);
-    }
+    return NamedObjectWindows::openNamedObject(wideName.c_str(), forceGlobal, [gdi, desiredAccess](OBJECT_ATTRIBUTES *objectAttributes) -> HANDLE {
+        D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME openName = {};
+        openName.dwDesiredAccess = desiredAccess;
+        openName.pObjAttrib = objectAttributes;
+        if (gdi->openSyncObjectNtHandleFromName(&openName) != STATUS_SUCCESS) {
+            return nullptr;
+        }
 
-    const wchar_t *relativeName = nullptr;
-    std::wstring directoryPath = getNamedObjectDirectoryPath(sessionId, wideName.c_str(), &relativeName);
-
-    UNICODE_STRING unicodeDirectory;
-    SysCalls::rtlInitUnicodeString(&unicodeDirectory, directoryPath.c_str());
-    OBJECT_ATTRIBUTES directoryAttributes;
-    InitializeObjectAttributes(&directoryAttributes, &unicodeDirectory, 0, nullptr, nullptr);
-
-    HANDLE rootDirectory = nullptr;
-    if (SysCalls::ntOpenDirectoryObject(&rootDirectory, 0x0002 /* DIRECTORY_TRAVERSE */, &directoryAttributes) != STATUS_SUCCESS) {
-        return nullptr;
-    }
-
-    UNICODE_STRING unicodeName;
-    SysCalls::rtlInitUnicodeString(&unicodeName, relativeName);
-    OBJECT_ATTRIBUTES objectAttributes;
-    InitializeObjectAttributes(&objectAttributes, &unicodeName, 0, rootDirectory, nullptr);
-
-    D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME openName = {};
-    openName.dwDesiredAccess = desiredAccess;
-    openName.pObjAttrib = &objectAttributes;
-    auto status = gdi->openSyncObjectNtHandleFromName(&openName);
-    SysCalls::closeHandle(rootDirectory);
-    if (status != STATUS_SUCCESS) {
-        return nullptr;
-    }
-
-    return openName.hNtHandle;
+        return openName.hNtHandle;
+    });
 }
 
 ExternalSemaphore::ImportResult ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) {

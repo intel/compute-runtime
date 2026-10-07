@@ -38,6 +38,7 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
 
     GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; }
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
+    GraphicsAllocation *createGraphicsAllocationFromSharedName(const void *name, ExternalMemoryType type, const OsHandleData &osHandleData, const AllocationProperties &properties, bool reuseSharedAllocation, AllocationStatus &status) override;
 
     void addAllocationToHostPtrManager(GraphicsAllocation *memory) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override;

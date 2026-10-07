@@ -253,6 +253,9 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "D3DKMTOpenSyncObjectNtHandleFromName") {
         return reinterpret_cast<void *>(mockD3DKMTOpenSyncObjectNtHandleFromName);
     }
+    if (procName == "D3DKMTOpenNtHandleFromName") {
+        return reinterpret_cast<void *>(mockD3DKMTOpenNtHandleFromName);
+    }
     if (procName == "D3DKMTFreeGpuVirtualAddress") {
         return reinterpret_cast<void *>(mockD3DKMTFreeGpuVirtualAddress);
     }

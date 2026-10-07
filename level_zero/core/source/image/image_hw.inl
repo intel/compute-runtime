@@ -171,7 +171,15 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                                                       : 0u;
                 NEO::MemoryManager::OsHandleData osHandleData{lookupTable.sharedHandleType.ntHandle, importArrayIndex};
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
-                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+                if (lookupTable.sharedHandleType.ntHandleName != nullptr) {
+                    NEO::MemoryManager::AllocationStatus status;
+                    allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedName(lookupTable.sharedHandleType.ntHandleName, lookupTable.sharedHandleType.externalMemoryType, osHandleData, properties, true, status);
+                    if (status == NEO::MemoryManager::AllocationStatus::InvalidName) {
+                        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                    }
+                } else {
+                    allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+                }
                 if (allocation != nullptr && lookupTable.glTextureExt.present) {
                     this->device = device;
                     if (lookupTable.glTextureExt.numberOfSamples > 1) {

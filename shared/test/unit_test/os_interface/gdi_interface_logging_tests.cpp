@@ -1078,6 +1078,31 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenSyncObject
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
+TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenNtHandleFromNameThenExpectCorrectStrings) {
+    D3DKMT_OPENNTHANDLEFROMNAME param = {};
+    param.dwDesiredAccess = 0x1;
+
+    std::stringstream expectedOutput;
+    expectedOutput << logEnterBegin
+                   << "D3DKMT_OPENNTHANDLEFROMNAME dwDesiredAccess 0x1"
+                   << std::endl;
+
+    StreamCapture capture;
+    capture.captureStdout();
+    GdiLogging::logEnter<D3DKMT_OPENNTHANDLEFROMNAME *>(&param);
+    std::string logEnterStr = capture.getCapturedStdout();
+    EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
+
+    expectedOutput.str(std::string());
+    expectedOutput << logExitBegin
+                   << std::hex << status
+                   << " " << std::endl;
+    capture.captureStdout();
+    GdiLogging::logExit<D3DKMT_OPENNTHANDLEFROMNAME *>(status, &param);
+    std::string logExitStr = capture.getCapturedStdout();
+    EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
+}
+
 TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroyAllocation2ThenExpectCorrectStrings) {
     D3DKMT_DESTROYALLOCATION2 param = {};
     param.Flags.SynchronousDestroy = 1;

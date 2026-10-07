@@ -758,6 +758,87 @@ TEST_F(WddmTestWithMockGdiDll, givenOsHandleDataWithParentProcessWhenDuplicateHa
     SysCalls::sysCallsDuplicateHandle = nullptr;
 }
 
+namespace {
+struct OpenNtHandleFromNameCapture {
+    static NTSTATUS __stdcall openNtHandleFromName(IN OUT D3DKMT_OPENNTHANDLEFROMNAME *openNtHandle) {
+        callCount++;
+        lastDesiredAccess = openNtHandle->dwDesiredAccess;
+        lastRootDirectory = openNtHandle->pObjAttrib->RootDirectory;
+        if (fail) {
+            return STATUS_OBJECT_NAME_NOT_FOUND;
+        }
+        openNtHandle->hNtHandle = handleToReturn;
+        return STATUS_SUCCESS;
+    }
+
+    static void reset() {
+        callCount = 0u;
+        lastDesiredAccess = 0u;
+        lastRootDirectory = nullptr;
+        fail = false;
+    }
+
+    inline static uint32_t callCount = 0u;
+    inline static DWORD lastDesiredAccess = 0u;
+    inline static HANDLE lastRootDirectory = nullptr;
+    inline static bool fail = false;
+    inline static HANDLE handleToReturn = reinterpret_cast<HANDLE>(0x4321);
+};
+
+struct WddmOpenNTHandleFromNameTest : public WddmTest {
+    void SetUp() override {
+        WddmTest::SetUp();
+        OpenNtHandleFromNameCapture::reset();
+        gdi->openNtHandleFromName = OpenNtHandleFromNameCapture::openNtHandleFromName;
+    }
+
+    void TearDown() override {
+        OpenNtHandleFromNameCapture::reset();
+        WddmTest::TearDown();
+    }
+};
+} // namespace
+
+TEST_F(WddmOpenNTHandleFromNameTest, givenNameWhenOpeningNTHandleFromNameThenGdiIsCalledWithAllAccessUnderNamedObjectDirectoryAndHandleIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsNtOpenDirectoryObject)> backupOpenDir(&SysCalls::sysCallsNtOpenDirectoryObject, [](PHANDLE directoryHandle, ACCESS_MASK, POBJECT_ATTRIBUTES) -> NTSTATUS {
+        *directoryHandle = reinterpret_cast<HANDLE>(0x7);
+        return STATUS_SUCCESS;
+    });
+
+    auto handle = wddm->openNTHandleFromName(L"myMemory", false);
+
+    EXPECT_EQ(OpenNtHandleFromNameCapture::handleToReturn, handle);
+    EXPECT_EQ(1u, OpenNtHandleFromNameCapture::callCount);
+    EXPECT_EQ(static_cast<DWORD>(SHARED_ALLOCATION_ALL_ACCESS), OpenNtHandleFromNameCapture::lastDesiredAccess);
+    EXPECT_EQ(reinterpret_cast<HANDLE>(0x7), OpenNtHandleFromNameCapture::lastRootDirectory);
+}
+
+TEST_F(WddmOpenNTHandleFromNameTest, givenForceGlobalWhenOpeningNTHandleFromNameThenNameIsLookedUpInGlobalOrSessionDirectory) {
+    static wchar_t openedDirectory[64];
+    VariableBackup<decltype(SysCalls::sysCallsProcessIdToSessionId)> backupSessionId(&SysCalls::sysCallsProcessIdToSessionId, [](DWORD, DWORD *sessionId) -> BOOL {
+        *sessionId = 1;
+        return TRUE;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsNtOpenDirectoryObject)> backupOpenDir(&SysCalls::sysCallsNtOpenDirectoryObject, [](PHANDLE directoryHandle, ACCESS_MASK, POBJECT_ATTRIBUTES objectAttributes) -> NTSTATUS {
+        wcsncpy_s(openedDirectory, objectAttributes->ObjectName->Buffer, objectAttributes->ObjectName->Length / sizeof(wchar_t));
+        *directoryHandle = reinterpret_cast<HANDLE>(0x7);
+        return STATUS_SUCCESS;
+    });
+
+    EXPECT_NE(nullptr, wddm->openNTHandleFromName(L"myMemory", true));
+    EXPECT_STREQ(L"\\BaseNamedObjects", openedDirectory);
+
+    EXPECT_NE(nullptr, wddm->openNTHandleFromName(L"myMemory", false));
+    EXPECT_STREQ(L"\\Sessions\\1\\BaseNamedObjects", openedDirectory);
+}
+
+TEST_F(WddmOpenNTHandleFromNameTest, givenGdiFailsWhenOpeningNTHandleFromNameThenNullptrIsReturned) {
+    OpenNtHandleFromNameCapture::fail = true;
+
+    EXPECT_EQ(nullptr, wddm->openNTHandleFromName(L"myMemory", false));
+    EXPECT_EQ(1u, OpenNtHandleFromNameCapture::callCount);
+}
+
 TEST_F(WddmTest, GivenWddmWhenMapGpuVaCalledWithMemoryFlagsWithNoAccessThenMemoryAccessFlagsPassedToGmmHasNoAccessSet) {
     wddm->callBaseDestroyAllocations = false;
     wddm->pagingQueue = PAGINGQUEUE_HANDLE;

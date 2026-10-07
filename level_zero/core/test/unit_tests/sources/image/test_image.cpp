@@ -1389,11 +1389,17 @@ HWTEST_F(ImageCreate, givenExportStructWhenCreatingImageThenUnsupportedErrorIsRe
     ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, ret);
 }
 
+namespace {
 class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
   public:
     MemoryManagerNTHandleMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::OsAgnosticMemoryManager(executionEnvironment) {}
 
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
+        ++importCalled;
+        lastImportedHandle = osHandleData.handle;
+        if (failImport) {
+            return nullptr;
+        }
         auto graphicsAllocation = createMemoryAllocation(AllocationType::internalHostMemory, nullptr, reinterpret_cast<void *>(1), 1,
                                                          4096u, osHandleData.handle, MemoryPool::systemCpuInaccessible,
                                                          properties.rootDeviceIndex, false, false, false);
@@ -1405,7 +1411,29 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
         graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
         return graphicsAllocation;
     }
+
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedName(const void *name, ExternalMemoryType type, const OsHandleData &osHandleData, const AllocationProperties &properties, bool reuseSharedAllocation, AllocationStatus &status) override {
+        ++sharedNameCalled;
+        lastSharedName = name;
+        lastExternalMemoryType = type;
+        if (failSharedName) {
+            status = AllocationStatus::InvalidName;
+            return nullptr;
+        }
+        auto allocation = createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, reuseSharedAllocation, nullptr);
+        status = allocation != nullptr ? AllocationStatus::Success : AllocationStatus::Error;
+        return allocation;
+    }
+
+    uint32_t importCalled = 0u;
+    NEO::osHandle lastImportedHandle = 0u;
+    uint32_t sharedNameCalled = 0u;
+    const void *lastSharedName = nullptr;
+    NEO::ExternalMemoryType lastExternalMemoryType = NEO::ExternalMemoryType::opaqueFd;
+    bool failSharedName = false;
+    bool failImport = false;
 };
+} // namespace
 
 class ImageCreateExternalMemory : public DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock> {
   public:
@@ -1510,6 +1538,103 @@ HWTEST_F(ImageCreateExternalMemoryTest, givenD3D11TextureHandleWhenCreatingImage
     ASSERT_EQ(imageHW->getAllocation()->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
 
     imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenNamedNTHandleWhenCreatingImageThenAllocationIsCreatedFromSharedNameAndSuccessIsReturned) {
+    const char16_t name[] = u"myTexture";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.name = name;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_NE(nullptr, imageHW->getAllocation());
+    EXPECT_EQ(1u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(static_cast<const void *>(name), memoryManager->lastSharedName);
+    EXPECT_EQ(NEO::ExternalMemoryType::d3d11Texture, memoryManager->lastExternalMemoryType);
+    EXPECT_EQ(1u, memoryManager->importCalled);
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenNamedOpaqueWin32HandleWhenCreatingImageThenOpaqueWin32TypeIsPassed) {
+    const char16_t name[] = u"myTexture";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.name = name;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(1u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(NEO::ExternalMemoryType::opaqueWin32, memoryManager->lastExternalMemoryType);
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenBothNTHandleAndNameWhenCreatingImageThenInvalidArgumentIsReturned) {
+    const char16_t name[] = u"myTexture";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.name = name;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+    EXPECT_EQ(0u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(0u, memoryManager->importCalled);
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenNameThatCannotBeOpenedWhenCreatingImageThenInvalidArgumentIsReturned) {
+    memoryManager->failSharedName = true;
+    const char16_t name[] = u"myTexture";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.name = name;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, imageHW->initialize(device, &desc));
+    EXPECT_EQ(1u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(0u, memoryManager->importCalled);
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenNameAndImportFailsWhenCreatingImageThenOutOfDeviceMemoryIsReturned) {
+    memoryManager->failImport = true;
+    const char16_t name[] = u"myTexture";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.name = name;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, imageHW->initialize(device, &desc));
+    EXPECT_EQ(1u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(1u, memoryManager->importCalled);
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenNTHandleWithoutNameAndImportFailsWhenCreatingImageThenOutOfDeviceMemoryIsReturned) {
+    memoryManager->failImport = true;
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, imageHW->initialize(device, &desc));
+    EXPECT_EQ(1u, memoryManager->importCalled);
+    EXPECT_EQ(0u, memoryManager->sharedNameCalled);
 }
 
 using ImageCreateWithMemoryManagerNTHandleMock = Test<DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>>;
@@ -3915,9 +4040,11 @@ HWTEST_F(ImageView, given3ChannelImageWhenCreateImageViewWithNtHandleIsCalledThe
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_image_handle_t imgHandle = imagePtr->toHandle();
 
+    uint64_t ntHandle = 0x1;
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
     importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.handle = &ntHandle;
     srcImgDesc.pNext = &importNTHandle;
 
     ze_image_handle_t viewHandle;

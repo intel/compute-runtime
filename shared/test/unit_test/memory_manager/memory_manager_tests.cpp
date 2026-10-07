@@ -68,6 +68,18 @@ TEST(MemoryManagerTest, WhenCallingSetSharedSystemAtomicAccessThenReturnTrue) {
     EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, AtomicAccessMode::none, subDeviceId, 0u));
 }
 
+TEST(MemoryManagerTest, givenNameWhenCreatingAllocationFromSharedNameThenNullptrAndInvalidNameAreReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    const char16_t name[] = u"myMemory";
+    MemoryManager::OsHandleData osHandleData{0u};
+    AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
+    auto status = MemoryManager::AllocationStatus::Success;
+
+    EXPECT_EQ(nullptr, memoryManager.createGraphicsAllocationFromSharedName(name, ExternalMemoryType::opaqueWin32, osHandleData, properties, false, status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::InvalidName, status);
+}
+
 TEST(MemoryManagerTest, givenMemAdviseFlagsWhenCallingSetMemAdviseThenFlagsAreStoredOnAllocation) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);

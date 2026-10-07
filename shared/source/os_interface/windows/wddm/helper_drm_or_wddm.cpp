@@ -59,6 +59,9 @@ HANDLE Wddm::getSharedHandle(const MemoryManager::OsHandleData &osHandleData) {
     HANDLE sharedNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
     return sharedNtHandle;
 }
+HANDLE Wddm::openNTHandleFromName(const void *name, bool forceGlobal) {
+    return nullptr;
+}
 bool Wddm::isLatePreemptionStartSupported(const HardwareInfo &hwInfo) {
     if (debugManager.flags.OverrideLatePreemptionStart.get() != -1) {
         return debugManager.flags.OverrideLatePreemptionStart.get();

@@ -368,6 +368,11 @@ void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceI
     return ptr;
 }
 
+GraphicsAllocation *MemoryManager::createGraphicsAllocationFromSharedName(const void *name, ExternalMemoryType type, const OsHandleData &osHandleData, const AllocationProperties &properties, bool reuseSharedAllocation, AllocationStatus &status) {
+    status = AllocationStatus::InvalidName;
+    return nullptr;
+}
+
 GraphicsAllocation *MemoryManager::createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) {
     return allocateGraphicsMemoryWithProperties(properties, ptr);
 }

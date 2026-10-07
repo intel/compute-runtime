@@ -481,11 +481,17 @@ TEST_F(DriverVersionTest, whenCallingGetDriverPropertiesRepeatedlyThenTheSameUui
 
 using ImportNTHandle = Test<DeviceFixture>;
 
+namespace {
 class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
   public:
     MemoryManagerNTHandleMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::OsAgnosticMemoryManager(executionEnvironment) {}
 
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
+        ++importCalled;
+        lastImportedHandle = osHandleData.handle;
+        if (failImport) {
+            return nullptr;
+        }
         auto graphicsAllocation = createMemoryAllocation(properties.allocationType, nullptr, reinterpret_cast<void *>(1), 1,
                                                          4096u, osHandleData.handle, MemoryPool::systemCpuInaccessible,
                                                          properties.rootDeviceIndex, false, false, false);
@@ -497,7 +503,29 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
         graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
         return graphicsAllocation;
     }
+
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedName(const void *name, ExternalMemoryType type, const OsHandleData &osHandleData, const AllocationProperties &properties, bool reuseSharedAllocation, AllocationStatus &status) override {
+        ++sharedNameCalled;
+        lastSharedName = name;
+        lastExternalMemoryType = type;
+        if (failSharedName) {
+            status = AllocationStatus::InvalidName;
+            return nullptr;
+        }
+        auto allocation = createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, reuseSharedAllocation, nullptr);
+        status = allocation != nullptr ? AllocationStatus::Success : AllocationStatus::Error;
+        return allocation;
+    }
+
+    uint32_t importCalled = 0u;
+    NEO::osHandle lastImportedHandle = 0u;
+    uint32_t sharedNameCalled = 0u;
+    const void *lastSharedName = nullptr;
+    NEO::ExternalMemoryType lastExternalMemoryType = NEO::ExternalMemoryType::opaqueFd;
+    bool failSharedName = false;
+    bool failImport = false;
 };
+} // namespace
 
 using ImportNTHandleWithMockMemoryManager = Test<DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>>;
 
@@ -508,7 +536,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithHostB
 
     uint64_t imageHandle = 0x1;
     NEO::AllocationType allocationType = NEO::AllocationType::bufferHostMemory;
-    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType, true, 0u, false, 0u).second;
+    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, allocationType, true, 0u, false, 0u).second;
     EXPECT_NE(ptr, nullptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -526,7 +554,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithBuffe
 
     uint64_t imageHandle = 0x1;
     NEO::AllocationType allocationType = NEO::AllocationType::buffer;
-    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType, false, 0u, false, 0u).second;
+    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, allocationType, false, 0u, false, 0u).second;
     EXPECT_NE(ptr, nullptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -583,6 +611,192 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingHostMemor
     ASSERT_EQ(alloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
     result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ImportNTHandleWithMockMemoryManager, givenNamedNTHandleWhenCreatingDeviceMemoryThenAllocationIsCreatedFromSharedNameAndSuccessIsReturned) {
+    const char16_t name[] = u"caf\u00e9";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
+    importNTHandle.name = name;
+    ze_device_mem_alloc_desc_t devDesc = {};
+    devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    devDesc.pNext = &importNTHandle;
+
+    void *ptr = nullptr;
+    auto result = context->allocDeviceMem(device, &devDesc, 100, 1, &ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_NE(ptr, nullptr);
+    EXPECT_EQ(1u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(static_cast<const void *>(name), memoryManager->lastSharedName);
+    EXPECT_EQ(NEO::ExternalMemoryType::d3d12Resource, memoryManager->lastExternalMemoryType);
+    EXPECT_EQ(1u, memoryManager->importCalled);
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(allocData, nullptr);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::deviceUnifiedMemory);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ImportNTHandleWithMockMemoryManager, givenNamedOpaqueWin32HandleWhenCreatingDeviceMemoryThenOpaqueWin32TypeIsPassed) {
+    const char16_t name[] = u"myMemory";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.name = name;
+    ze_device_mem_alloc_desc_t devDesc = {};
+    devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    devDesc.pNext = &importNTHandle;
+
+    void *ptr = nullptr;
+    auto result = context->allocDeviceMem(device, &devDesc, 100, 1, &ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(NEO::ExternalMemoryType::opaqueWin32, memoryManager->lastExternalMemoryType);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ImportNTHandleWithMockMemoryManager, givenNamedD3D12ResourceWhenCreatingHostMemoryThenD3D12ResourceTypeIsPassed) {
+    const char16_t name[] = u"myMemory";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
+    importNTHandle.name = name;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = &importNTHandle;
+
+    void *ptr = nullptr;
+    auto result = context->allocHostMem(&hostDesc, 100, 1, &ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(NEO::ExternalMemoryType::d3d12Resource, memoryManager->lastExternalMemoryType);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ImportNTHandleWithMockMemoryManager, givenNamedNTHandleWhenCreatingHostMemoryThenAllocationIsCreatedFromSharedNameAndSuccessIsReturned) {
+    const char16_t name[] = u"myMemory";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.name = name;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = &importNTHandle;
+
+    void *ptr = nullptr;
+    auto result = context->allocHostMem(&hostDesc, 100, 1, &ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_NE(ptr, nullptr);
+    EXPECT_EQ(1u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(static_cast<const void *>(name), memoryManager->lastSharedName);
+    EXPECT_EQ(NEO::ExternalMemoryType::opaqueWin32, memoryManager->lastExternalMemoryType);
+    EXPECT_EQ(1u, memoryManager->importCalled);
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(allocData, nullptr);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::hostUnifiedMemory);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ImportNTHandleWithMockMemoryManager, givenBothNTHandleAndNameWhenCreatingDeviceOrHostMemoryThenInvalidArgumentIsReturnedAndNothingIsImported) {
+    uint64_t ntHandle = 0x1;
+    const char16_t name[] = u"myMemory";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.handle = &ntHandle;
+    importNTHandle.name = name;
+
+    ze_device_mem_alloc_desc_t devDesc = {};
+    devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    devDesc.pNext = &importNTHandle;
+    void *ptr = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocDeviceMem(device, &devDesc, 100, 1, &ptr));
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = &importNTHandle;
+    ptr = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocHostMem(&hostDesc, 100, 1, &ptr));
+
+    EXPECT_EQ(0u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(0u, memoryManager->importCalled);
+}
+
+TEST_F(ImportNTHandleWithMockMemoryManager, givenNameThatCannotBeOpenedWhenCreatingDeviceOrHostMemoryThenInvalidArgumentIsReturned) {
+    memoryManager->failSharedName = true;
+    const char16_t name[] = u"myMemory";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.name = name;
+
+    ze_device_mem_alloc_desc_t devDesc = {};
+    devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    devDesc.pNext = &importNTHandle;
+    void *ptr = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocDeviceMem(device, &devDesc, 100, 1, &ptr));
+    EXPECT_EQ(nullptr, ptr);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = &importNTHandle;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocHostMem(&hostDesc, 100, 1, &ptr));
+    EXPECT_EQ(nullptr, ptr);
+
+    EXPECT_EQ(2u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(0u, memoryManager->importCalled);
+}
+
+TEST_F(ImportNTHandleWithMockMemoryManager, givenNameAndImportFailsWhenCreatingDeviceOrHostMemoryThenInvalidArgumentIsReturned) {
+    memoryManager->failImport = true;
+    const char16_t name[] = u"myMemory";
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.name = name;
+
+    ze_device_mem_alloc_desc_t devDesc = {};
+    devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    devDesc.pNext = &importNTHandle;
+    void *ptr = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocDeviceMem(device, &devDesc, 100, 1, &ptr));
+    EXPECT_EQ(nullptr, ptr);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = &importNTHandle;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocHostMem(&hostDesc, 100, 1, &ptr));
+    EXPECT_EQ(nullptr, ptr);
+
+    EXPECT_EQ(2u, memoryManager->sharedNameCalled);
+    EXPECT_EQ(2u, memoryManager->importCalled);
+}
+
+TEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWithoutNameWhenCreatingDeviceMemoryThenAllocationIsCreatedFromSharedHandle) {
+    uint64_t handle = 0x1;
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.handle = &handle;
+    ze_device_mem_alloc_desc_t devDesc = {};
+    devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    devDesc.pNext = &importNTHandle;
+
+    void *ptr = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &devDesc, 100, 1, &ptr));
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(NEO::toOsHandle(&handle), memoryManager->lastImportedHandle);
+    EXPECT_EQ(0u, memoryManager->sharedNameCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
 }
 
 HWTEST_F(ImportNTHandleWithMockMemoryManager, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {

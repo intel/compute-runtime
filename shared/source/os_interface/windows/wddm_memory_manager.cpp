@@ -764,6 +764,25 @@ uint64_t WddmMemoryManager::getCurrentUsedSystemSharedMemorySize(uint32_t rootDe
     return pdhInterface->getCurrentMemoryUsage(rootDeviceIndex, false);
 }
 
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedName(const void *name, ExternalMemoryType type, const OsHandleData &osHandleData, const AllocationProperties &properties, bool reuseSharedAllocation, AllocationStatus &status) {
+    auto &wddm = getWddm(properties.rootDeviceIndex);
+    auto handle = wddm.openNTHandleFromName(name, type == ExternalMemoryType::opaqueWin32);
+    if (handle == nullptr) {
+        status = AllocationStatus::InvalidName;
+        return nullptr;
+    }
+
+    OsHandleData namedOsHandleData = osHandleData;
+    namedOsHandleData.handle = toOsHandle(handle);
+
+    auto allocation = createGraphicsAllocationFromSharedHandle(namedOsHandleData, properties, false, false, reuseSharedAllocation, nullptr);
+    [[maybe_unused]] auto closeStatus = SysCalls::closeHandle(handle);
+    DEBUG_BREAK_IF(!closeStatus);
+
+    status = allocation != nullptr ? AllocationStatus::Success : AllocationStatus::Error;
+    return allocation;
+}
+
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
     auto allocation = std::make_unique<WddmAllocation>(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, nullptr, 0, osHandleData.handle, MemoryPool::systemCpuInaccessible, maxOsContextCount, 0llu);
     bool status;

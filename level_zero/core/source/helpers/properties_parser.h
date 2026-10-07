@@ -8,7 +8,9 @@
 #pragma once
 
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/external_memory_type.h"
 
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/source/memory/internal_mem_alloc_ext.h"
@@ -56,6 +58,30 @@ inline NEO::ImageDescriptor convertDescriptor(const ze_image_desc_t &imageDesc) 
     return desc;
 }
 
+inline NEO::ExternalMemoryType toExternalMemoryType(ze_external_memory_type_flags_t flags) {
+    switch (flags) {
+    case ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD:
+        return NEO::ExternalMemoryType::opaqueFd;
+    case ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF:
+        return NEO::ExternalMemoryType::dmaBuf;
+    case ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32_KMT:
+        return NEO::ExternalMemoryType::opaqueWin32Kmt;
+    case ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE:
+        return NEO::ExternalMemoryType::d3d11Texture;
+    case ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE_KMT:
+        return NEO::ExternalMemoryType::d3d11TextureKmt;
+    case ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP:
+        return NEO::ExternalMemoryType::d3d12Heap;
+    case ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32:
+        return NEO::ExternalMemoryType::opaqueWin32;
+    case ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE:
+        return NEO::ExternalMemoryType::d3d12Resource;
+    default:
+        DEBUG_BREAK_IF(true);
+        return NEO::ExternalMemoryType::invalid;
+    }
+}
+
 struct StructuresLookupTable {
     struct ImageProperties {
         NEO::ImageDescriptor imageDescriptor;
@@ -70,11 +96,13 @@ struct StructuresLookupTable {
 
     struct SharedHandleType {
         void *ntHandle;
+        const void *ntHandleName;
         int fd;
         bool isSupportedHandle;
         bool isOpaqueFDHandle;
         bool isDMABUFHandle;
         bool isNTHandle;
+        NEO::ExternalMemoryType externalMemoryType;
     } sharedHandleType;
 
     struct ExternalMemmapSystem {
@@ -142,10 +170,12 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
                 lookupTable.sharedHandleType.isSupportedHandle = true;
                 lookupTable.sharedHandleType.isOpaqueFDHandle = true;
                 lookupTable.sharedHandleType.fd = linuxExternalMemoryImportDesc->fd;
+                lookupTable.sharedHandleType.externalMemoryType = toExternalMemoryType(linuxExternalMemoryImportDesc->flags);
             } else if (linuxExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF) {
                 lookupTable.sharedHandleType.isSupportedHandle = true;
                 lookupTable.sharedHandleType.isDMABUFHandle = true;
                 lookupTable.sharedHandleType.fd = linuxExternalMemoryImportDesc->fd;
+                lookupTable.sharedHandleType.externalMemoryType = toExternalMemoryType(linuxExternalMemoryImportDesc->flags);
             } else {
                 lookupTable.sharedHandleType.isSupportedHandle = false;
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
@@ -157,9 +187,14 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
                 (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP) ||
                 (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE) ||
                 (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE)) {
+                if ((windowsExternalMemoryImportDesc->handle == nullptr) == (windowsExternalMemoryImportDesc->name == nullptr)) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
                 lookupTable.sharedHandleType.isSupportedHandle = true;
                 lookupTable.sharedHandleType.isNTHandle = true;
                 lookupTable.sharedHandleType.ntHandle = windowsExternalMemoryImportDesc->handle;
+                lookupTable.sharedHandleType.ntHandleName = windowsExternalMemoryImportDesc->name;
+                lookupTable.sharedHandleType.externalMemoryType = toExternalMemoryType(windowsExternalMemoryImportDesc->flags);
             } else {
                 lookupTable.sharedHandleType.isSupportedHandle = false;
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;

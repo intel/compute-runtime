@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/windows/windows_defs.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/mocks/wddm_mock_helpers.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <limits>
 #include <memory>
@@ -36,6 +37,7 @@ inline constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF00000
 
 class WddmMock : public Wddm {
   public:
+    using BaseClass = Wddm;
     using Wddm::adapterBDF;
     using Wddm::additionalAdapterInfoOptions;
     using Wddm::adjustEvictNeededParameter;
@@ -169,6 +171,8 @@ class WddmMock : public Wddm {
         ++counterVerifySharedHandle;
         return Wddm::verifySharedHandle(osHandle);
     }
+
+    ADDMETHOD_WITH_ARGS(openNTHandleFromName, HANDLE, true, nullptr, (const void *name, bool forceGlobal), (name, forceGlobal));
 
     bool isShutdownInProgress() override {
         return shutdownStatus;

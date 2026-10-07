@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/external_semaphore_windows.h"
+#include "shared/source/os_interface/windows/named_object_windows.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -27,8 +28,6 @@ namespace NEO {
 class MockWindowsExternalSemaphore : public ExternalSemaphoreWindows {
   public:
     using ExternalSemaphoreWindows::convertUtf8NameToWide;
-    using ExternalSemaphoreWindows::getNamedObjectDirectoryPath;
-    using ExternalSemaphoreWindows::maxNameLengthInWideChars;
     using ExternalSemaphoreWindows::syncHandle;
 
     MockWindowsExternalSemaphore(OSInterface *osInterface, ExternalSemaphore::Type type, uint64_t *signalVal) {
@@ -374,48 +373,6 @@ TEST_F(WddmExternalSemaphoreTest, givenD3d11FenceWithNameWhenOpenSyncObjectFromN
     MockSyncGdi::failOpenSyncObjectFromNtHandle = true;
 }
 
-TEST(WddmExternalSemaphoreNamespaceTest, givenGlobalPrefixedNameWhenResolvingDirectoryThenGlobalBaseNamedObjectsIsUsedAndPrefixIsStripped) {
-    const wchar_t *relativeName = nullptr;
-    auto directoryPath = MockWindowsExternalSemaphore::getNamedObjectDirectoryPath(4u, L"Global\\myFence", &relativeName);
-    EXPECT_EQ(directoryPath, std::wstring(L"\\BaseNamedObjects"));
-    EXPECT_STREQ(relativeName, L"myFence");
-}
-
-TEST(WddmExternalSemaphoreNamespaceTest, givenGlobalPrefixedNameInSessionZeroWhenResolvingDirectoryThenGlobalBaseNamedObjectsIsUsed) {
-    const wchar_t *relativeName = nullptr;
-    auto directoryPath = MockWindowsExternalSemaphore::getNamedObjectDirectoryPath(0u, L"Global\\myFence", &relativeName);
-    EXPECT_EQ(directoryPath, std::wstring(L"\\BaseNamedObjects"));
-    EXPECT_STREQ(relativeName, L"myFence");
-}
-
-TEST(WddmExternalSemaphoreNamespaceTest, givenLocalPrefixedNameWithNonZeroSessionWhenResolvingDirectoryThenSessionDirectoryIsUsedAndPrefixIsStripped) {
-    const wchar_t *relativeName = nullptr;
-    auto directoryPath = MockWindowsExternalSemaphore::getNamedObjectDirectoryPath(3u, L"Local\\myFence", &relativeName);
-    EXPECT_EQ(directoryPath, std::wstring(L"\\Sessions\\3\\BaseNamedObjects"));
-    EXPECT_STREQ(relativeName, L"myFence");
-}
-
-TEST(WddmExternalSemaphoreNamespaceTest, givenLocalPrefixedNameInSessionZeroWhenResolvingDirectoryThenBaseNamedObjectsIsUsedAndPrefixIsStripped) {
-    const wchar_t *relativeName = nullptr;
-    auto directoryPath = MockWindowsExternalSemaphore::getNamedObjectDirectoryPath(0u, L"Local\\myFence", &relativeName);
-    EXPECT_EQ(directoryPath, std::wstring(L"\\BaseNamedObjects"));
-    EXPECT_STREQ(relativeName, L"myFence");
-}
-
-TEST(WddmExternalSemaphoreNamespaceTest, givenUnprefixedNameWithNonZeroSessionWhenResolvingDirectoryThenSessionDirectoryIsUsedAndNameIsUnchanged) {
-    const wchar_t *relativeName = nullptr;
-    auto directoryPath = MockWindowsExternalSemaphore::getNamedObjectDirectoryPath(7u, L"myFence", &relativeName);
-    EXPECT_EQ(directoryPath, std::wstring(L"\\Sessions\\7\\BaseNamedObjects"));
-    EXPECT_STREQ(relativeName, L"myFence");
-}
-
-TEST(WddmExternalSemaphoreNamespaceTest, givenUnprefixedNameInSessionZeroWhenResolvingDirectoryThenBaseNamedObjectsIsUsedAndNameIsUnchanged) {
-    const wchar_t *relativeName = nullptr;
-    auto directoryPath = MockWindowsExternalSemaphore::getNamedObjectDirectoryPath(0u, L"myFence", &relativeName);
-    EXPECT_EQ(directoryPath, std::wstring(L"\\BaseNamedObjects"));
-    EXPECT_STREQ(relativeName, L"myFence");
-}
-
 TEST(WddmExternalSemaphoreUtf8Test, givenValidUtf8NameWhenConvertingToWideThenCodePointsAreDecoded) {
     struct NameCase {
         const char *utf8Name;
@@ -453,11 +410,11 @@ TEST(WddmExternalSemaphoreUtf8Test, givenMalformedOrEmptyUtf8NameWhenConvertingT
 }
 
 TEST(WddmExternalSemaphoreUtf8Test, givenNameExceedingMaxLengthWhenConvertingToWideThenConversionFails) {
-    const std::string tooLongName(MockWindowsExternalSemaphore::maxNameLengthInWideChars + 1, 'a');
+    const std::string tooLongName(NamedObjectWindows::maxNameLengthInWideChars + 1, 'a');
     EXPECT_TRUE(MockWindowsExternalSemaphore::convertUtf8NameToWide(tooLongName.c_str()).empty());
 
-    const std::string maxLengthName(MockWindowsExternalSemaphore::maxNameLengthInWideChars, 'a');
-    EXPECT_EQ(MockWindowsExternalSemaphore::maxNameLengthInWideChars,
+    const std::string maxLengthName(NamedObjectWindows::maxNameLengthInWideChars, 'a');
+    EXPECT_EQ(NamedObjectWindows::maxNameLengthInWideChars,
               MockWindowsExternalSemaphore::convertUtf8NameToWide(maxLengthName.c_str()).size());
 }
 
