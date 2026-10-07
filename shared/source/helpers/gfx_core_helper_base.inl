@@ -704,6 +704,11 @@ bool GfxCoreHelperHw<GfxFamily>::isTimestampShiftRequired() const {
 }
 
 template <typename GfxFamily>
+std::optional<uint32_t> GfxCoreHelperHw<GfxFamily>::getTimestampMmioOffset() const {
+    return std::nullopt;
+}
+
+template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isRelaxedOrderingSupported() const {
     return false;
 }

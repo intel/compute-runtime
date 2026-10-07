@@ -23,6 +23,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
+#include "shared/source/os_interface/device_time_tbx.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -142,6 +143,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
                         return false;
                     }
                 }
+                rootDeviceEnvironment.osTime = OSTimeTbx::create(*aubCenter->getAubManager(), gfxCoreHelper.getTimestampMmioOffset());
             }
         }
 

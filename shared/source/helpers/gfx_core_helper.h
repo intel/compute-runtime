@@ -21,6 +21,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 struct RTDispatchGlobals;
 enum class InternalMemoryType : uint32_t;
@@ -162,6 +163,7 @@ class GfxCoreHelper {
     virtual uint32_t getAmountOfAllocationsToFill() const = 0;
     virtual bool isChipsetUniqueUUIDSupported() const = 0;
     virtual bool isTimestampShiftRequired() const = 0;
+    virtual std::optional<uint32_t> getTimestampMmioOffset() const = 0;
     virtual bool isRelaxedOrderingSupported() const = 0;
     virtual uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const = 0;
@@ -410,6 +412,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getAmountOfAllocationsToFill() const override;
     bool isChipsetUniqueUUIDSupported() const override;
     bool isTimestampShiftRequired() const override;
+    std::optional<uint32_t> getTimestampMmioOffset() const override;
     bool isRelaxedOrderingSupported() const override;
     uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const override;

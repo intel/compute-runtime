@@ -11,6 +11,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/device_time_tbx_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/device_uuid_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_tests.h

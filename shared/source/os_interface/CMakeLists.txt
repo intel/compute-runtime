@@ -22,6 +22,8 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_time_tbx.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_time_tbx.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore.h
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.cpp

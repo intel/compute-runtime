@@ -3768,7 +3768,7 @@ TEST(DeviceTimestampPtrTest, givenTimestampMmioReadEnabledWhenCreatingDeviceThen
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
 
-    EXPECT_TRUE(device->getOSTime()->isTimestampPtrAvailable());
+    EXPECT_TRUE(device->getOSTime()->isTimestampMmioReadAvailable());
     EXPECT_EQ(1u, deviceTime->getMmioTimestampPtrHelperCalled);
     EXPECT_EQ(device->getDefaultEngine().osContext, deviceTime->passedOsContext);
 }

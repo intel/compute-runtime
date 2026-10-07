@@ -50,7 +50,7 @@ void DeviceTime::initTimestampPtr(OsContext &osContext) {
     timestampPtrInitialized = true;
     mmioTimestampPtrHelper = getMmioTimestampPtrHelper(osContext);
 
-    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using timestamp pointer: %d\n", isTimestampPtrAvailable());
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using timestamp MMIO read: %d\n", isTimestampMmioReadAvailable());
 }
 
 bool DeviceTime::isTimestampsRefreshEnabled() const {

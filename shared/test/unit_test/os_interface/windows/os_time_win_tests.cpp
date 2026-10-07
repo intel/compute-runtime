@@ -384,7 +384,7 @@ TEST_F(OSTimeWinTest, givenNoKmdSupportWhenInitializingTimestampPtrThenItIsNotAv
     osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
 
     osTime->initTimestampPtr(*osContext);
-    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+    EXPECT_FALSE(osTime->isTimestampMmioReadAvailable());
 
     osTime->initTimestampPtr(*osContext);
     EXPECT_EQ(1u, wddm->createMmioTimestampPtrHelperCalled);
@@ -402,7 +402,7 @@ TEST_F(OSTimeWinTest, givenTimestampPtrWhenGettingGpuCpuTimeThenValueIsReadFromP
 
     osContext->setWddmContextHandle(0x1234u);
     osTime->initTimestampPtr(*osContext);
-    EXPECT_TRUE(osTime->isTimestampPtrAvailable());
+    EXPECT_TRUE(osTime->isTimestampMmioReadAvailable());
     EXPECT_EQ(0x1234u, wddm->createMmioTimestampPtrHelperContext);
 
     TimeStampData gpuCpuTime{};
@@ -437,7 +437,7 @@ TEST_F(OSTimeWinTest, givenDebugKeyNotForcedWhenInitializingTimestampPtrThenTime
     osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
 
     osTime->initTimestampPtr(*osContext);
-    EXPECT_TRUE(osTime->isTimestampPtrAvailable());
+    EXPECT_TRUE(osTime->isTimestampMmioReadAvailable());
     EXPECT_EQ(1u, wddm->createMmioTimestampPtrHelperCalled);
 }
 
@@ -451,6 +451,6 @@ TEST_F(OSTimeWinTest, givenTimestampMmioReadDisabledWhenInitializingTimestampPtr
     osTime->deviceTime.reset(new DeviceTimeWddm(wddm));
 
     osTime->initTimestampPtr(*osContext);
-    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+    EXPECT_FALSE(osTime->isTimestampMmioReadAvailable());
     EXPECT_EQ(0u, wddm->createMmioTimestampPtrHelperCalled);
 }

@@ -31,6 +31,20 @@ enum class TimeQueryStatus : uint32_t {
 
 class OSTime;
 
+template <typename DwordReader>
+inline uint64_t readSplitTimestamp(const DwordReader &reader) {
+    uint32_t high = 0u;
+    uint32_t low = 0u;
+
+    // Read again to ensure a consistent high and low 32-bit pair
+    do {
+        high = reader.readHighDword();
+        low = reader.readLowDword();
+    } while (high != reader.readHighDword());
+
+    return (static_cast<uint64_t>(high) << 32) | low;
+}
+
 class MmioTimestampPtrHelper {
   public:
     MmioTimestampPtrHelper() = default;
@@ -38,22 +52,11 @@ class MmioTimestampPtrHelper {
 
     bool isAvailable() const { return lowDword != nullptr && highDword != nullptr; }
 
-    uint64_t read() const {
-        uint32_t high = 0u;
-        uint32_t low = 0u;
-
-        // Read again to ensure a consistent high and low 32-bit pair
-        do {
-            high = readHighDword();
-            low = *lowDword;
-        } while (high != readHighDword());
-
-        return (static_cast<uint64_t>(high) << 32) | low;
-    }
-
-  protected:
+    uint64_t read() const { return readSplitTimestamp(*this); }
+    uint32_t readLowDword() const { return *lowDword; }
     MOCKABLE_VIRTUAL uint32_t readHighDword() const { return *highDword; }
 
+  protected:
     const volatile uint32_t *lowDword = nullptr;
     const volatile uint32_t *highDword = nullptr;
 };
@@ -70,7 +73,7 @@ class DeviceTime {
     virtual bool isTimestampMmioReadEnabledByDefault() const { return false; }
     TimeQueryStatus getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
     void initTimestampPtr(OsContext &osContext);
-    bool isTimestampPtrAvailable() const { return mmioTimestampPtrHelper.isAvailable(); }
+    virtual bool isTimestampMmioReadAvailable() const { return mmioTimestampPtrHelper.isAvailable(); }
     void setDeviceTimerResolution();
     void setRefreshTimestampsFlag() {
         refreshTimestamps = true;
@@ -136,8 +139,8 @@ class OSTime {
         deviceTime->initTimestampPtr(osContext);
     }
 
-    bool isTimestampPtrAvailable() const {
-        return deviceTime->isTimestampPtrAvailable();
+    bool isTimestampMmioReadAvailable() const {
+        return deviceTime->isTimestampMmioReadAvailable();
     }
 
     uint64_t getTimestampRefreshTimeout() const {

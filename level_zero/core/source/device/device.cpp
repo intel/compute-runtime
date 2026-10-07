@@ -1152,7 +1152,7 @@ ze_result_t Device::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *devic
     auto csrType = obtainCsrTypeFromIntegerValue(NEO::debugManager.flags.SetCommandStreamReceiver.get(), NEO::CommandStreamReceiverType::hardware);
     const bool tbxCsr = csrType == NEO::CommandStreamReceiverType::tbx ||
                         csrType == NEO::CommandStreamReceiverType::tbxWithAub;
-    if ((tbxCsr && !this->neoDevice->getOSTime()->isTimestampPtrAvailable()) ||
+    if ((tbxCsr && !this->neoDevice->getOSTime()->isTimestampMmioReadAvailable()) ||
         NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get() == 1) {
         useTimestampViaSubmission = true;
     }

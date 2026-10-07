@@ -465,7 +465,7 @@ TEST_F(DrmTimeTest, givenNoKmdSupportWhenInitializingTimestampPtrThenItIsNotAvai
 
     osTime->initTimestampPtr(osContext);
     EXPECT_EQ(1u, mockIoctlHelper->getMmioTimestampPtrHelperCalled);
-    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+    EXPECT_FALSE(osTime->isTimestampMmioReadAvailable());
 
     osTime->initTimestampPtr(osContext);
     EXPECT_EQ(1u, mockIoctlHelper->getMmioTimestampPtrHelperCalled);
@@ -482,7 +482,7 @@ TEST_F(DrmTimeTest, givenTimestampPtrWhenGettingGpuCpuTimeThenKmdIsNotCalled) {
     drm->ioctlHelper.reset(mockIoctlHelper);
 
     osTime->initTimestampPtr(osContext);
-    EXPECT_TRUE(osTime->isTimestampPtrAvailable());
+    EXPECT_TRUE(osTime->isTimestampMmioReadAvailable());
 
     deviceTime->callBaseGetGpuCpuTimeImpl = false;
     TimeStampData gpuCpuTime{};
@@ -501,11 +501,11 @@ TEST_F(DrmTimeTest, givenDebugKeyNotForcedWhenInitializingTimestampPtrThenKmdIsN
 
     osTime->initTimestampPtr(osContext);
     EXPECT_FALSE(mockIoctlHelper->getMmioTimestampPtrHelperCalled);
-    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+    EXPECT_FALSE(osTime->isTimestampMmioReadAvailable());
 
     DebugManagerStateRestore restore;
     debugManager.flags.EnableTimestampMmioRead.set(0);
     osTime->initTimestampPtr(osContext);
     EXPECT_FALSE(mockIoctlHelper->getMmioTimestampPtrHelperCalled);
-    EXPECT_FALSE(osTime->isTimestampPtrAvailable());
+    EXPECT_FALSE(osTime->isTimestampMmioReadAvailable());
 }
