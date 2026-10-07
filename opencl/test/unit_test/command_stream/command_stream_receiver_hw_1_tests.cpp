@@ -1782,3 +1782,19 @@ HWTEST2_F(UltCommandStreamReceiverTest, givenBarrierNodeSetWhenProgrammingBarrie
     EXPECT_EQ(0u, pipeControl->getImmediateData());
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 }
+
+HWTEST2_F(UltCommandStreamReceiverTest, whenCheckingNewResourceImplicitFlushThenReturnFalse, IsNotXeHpgCore) {
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto osContext = pDevice->getDefaultEngine().osContext;
+    commandStreamReceiver.setupContext(*osContext);
+
+    EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsNewResourceImplicitFlush());
+}
+
+HWTEST2_F(UltCommandStreamReceiverTest, whenCheckingNewResourceGpuIdleThenReturnFalse, IsAtLeastXeCore) {
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto osContext = pDevice->getDefaultEngine().osContext;
+    commandStreamReceiver.setupContext(*osContext);
+
+    EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsGpuIdleImplicitFlush());
+}
