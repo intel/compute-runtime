@@ -1159,7 +1159,9 @@ void EncodeMiFlushDW<Family>::programWithWa(void *&cmdBuffer, uint64_t immediate
     }
     miFlush.setNotifyEnable(args.notifyEnable);
     miFlush.setTlbInvalidate(args.tlbFlush);
-    adjust(&miFlush, args.waArgs.rootDeviceEnvironment->getProductHelper());
+    setFlushes(&miFlush, args.waArgs.rootDeviceEnvironment->getProductHelper());
+    adjust(&miFlush);
+    EncodeCommandLevelMocs<Family>::apply(miFlush);
     *miFlushDwCmd = miFlush;
 
     cmdBuffer = ptrOffset(cmdBuffer, sizeof(MI_FLUSH_DW));
@@ -1187,6 +1189,9 @@ void EncodeMiArbCheck<Family>::program(MI_ARB_CHECK *arbCheckCmd, std::optional<
     EncodeMiArbCheck<Family>::adjust(cmd, preParserDisable);
     *arbCheckCmd = cmd;
 }
+
+template <typename Family>
+void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd) {}
 
 template <typename Family>
 inline void EncodeNoop<Family>::alignToCacheLine(LinearStream &commandStream) {

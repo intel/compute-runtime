@@ -200,14 +200,12 @@ size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const
 }
 
 template <typename Family>
-inline void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
+inline void EncodeMiFlushDW<Family>::setFlushes(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
     miFlushDwCmd->setFlushLlc(1);
 
     if (productHelper.isDcFlushAllowed()) {
         miFlushDwCmd->setFlushCcs(1);
     }
-
-    EncodeCommandLevelMocs<Family>::apply(*miFlushDwCmd);
 }
 
 template <typename Family>

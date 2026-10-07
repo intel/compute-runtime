@@ -714,7 +714,8 @@ struct EncodeMiFlushDW {
   protected:
     static size_t getWaSize(const EncodeDummyBlitWaArgs &waArgs);
     static void appendWa(void *&cmdBuffer, MiFlushArgs &args);
-    static void adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper);
+    static void adjust(MI_FLUSH_DW *miFlushDwCmd);
+    static void setFlushes(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper);
 };
 
 template <typename GfxFamily>

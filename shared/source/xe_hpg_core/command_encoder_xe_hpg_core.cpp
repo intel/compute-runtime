@@ -176,7 +176,7 @@ size_t EncodeMiFlushDW<Family>::getWaSize(const EncodeDummyBlitWaArgs &waArgs) {
 }
 
 template <typename Family>
-void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
+void EncodeMiFlushDW<Family>::setFlushes(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
     miFlushDwCmd->setFlushCcs(1);
     miFlushDwCmd->setFlushLlc(1);
 }

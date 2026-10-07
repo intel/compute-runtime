@@ -83,7 +83,7 @@ size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const
 }
 
 template <>
-inline void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
+inline void EncodeMiFlushDW<Family>::setFlushes(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
     miFlushDwCmd->setFlushLlc(1);
 }
 

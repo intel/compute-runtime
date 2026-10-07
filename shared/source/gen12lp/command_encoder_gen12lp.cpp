@@ -538,7 +538,7 @@ size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device
 }
 
 template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {}
+void EncodeMiFlushDW<GfxFamily>::setFlushes(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {}
 
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
