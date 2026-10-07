@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <bit>
 #include <chrono>
+#include <limits>
 #include <unordered_set>
 
 namespace L0 {
@@ -29,11 +30,11 @@ constexpr static auto gfxProduct = IGFX_CRI;
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
-constexpr static uint32_t memoryMsuCount = 20;
 constexpr static uint32_t busWidthPerMsuInBits = 64;
-constexpr static uint32_t channelCountPerMemoryMsu = 4;
 constexpr static uint32_t transactionSize = 64;
 constexpr static uint32_t memoryBridgeCount = 2;
+constexpr static uint32_t maxMemoryMsuCount = 20;
+constexpr static uint32_t msuBitmaskMask = (1u << maxMemoryMsuCount) - 1;
 constexpr static uint32_t vramFrequencyClockRatio = 4;
 constexpr static uint32_t maxVrTemperatureSensorCount = 4;
 constexpr static uint32_t maxGpuBoardTemperatureSensorCount = 2;
@@ -157,6 +158,8 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240}}},
     {"0x5e2fa270", // CRI GFSP Rev 0
      {{"ECC_STATE", 56},
+      {"NUM_OF_MEM_CHANNEL", 80},
+      {"MSU_BITMASK", 108},
       {"MEM_VENDOR_ID", 132}}}};
 
 static ze_result_t getErrorCode(ze_result_t result) {
@@ -1078,14 +1081,100 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCompositeTemperature(LinuxSysm
     return ZE_RESULT_SUCCESS;
 }
 
+static ze_result_t getMsuBitmask(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                 uint32_t &msuBitmask) {
+
+    uint64_t telemOffset = 0;
+    std::string key("MSU_BITMASK");
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, msuBitmask);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+        return result;
+    }
+
+    msuBitmask &= msuBitmaskMask;
+    if (msuBitmask == 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No MSU is enabled in the MSU bitmask, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+static ze_result_t getChannelCountPerMsu(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                         uint32_t &channelCountPerMsu) {
+
+    uint64_t telemOffset = 0;
+    std::string key("NUM_OF_MEM_CHANNEL");
+    ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, channelCountPerMsu);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+        return result;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+static ze_result_t getChannelCountAndBusWidth(LinuxSysmanImp *pLinuxSysmanImp, int32_t &numChannels, int32_t &busWidth) {
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    uint32_t msuBitmask = 0;
+    result = getMsuBitmask(keyOffsetMap, keyTelemInfoMap, msuBitmask);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the MSU bitmask, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    uint32_t channelCountPerMsu = 0;
+    result = getChannelCountPerMsu(keyOffsetMap, keyTelemInfoMap, channelCountPerMsu);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the channel count per MSU, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    if (channelCountPerMsu == 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Channel count per MSU is 0, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint32_t msuCount = static_cast<uint32_t>(std::popcount(msuBitmask));
+
+    // channelCountPerMsu is raw telemetry with no defined reserved bits to mask off, so the
+    // product is computed in 64 bits and range checked. Reporting a wrapped negative value
+    // would be worse than reporting unknown, because -1 is the spec's "unknown" sentinel.
+    uint64_t totalChannelCount = static_cast<uint64_t>(msuCount) * static_cast<uint64_t>(channelCountPerMsu);
+    if (totalChannelCount > static_cast<uint64_t>(std::numeric_limits<int32_t>::max())) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): MSU count %u and channel count per MSU %u exceed the reportable channel count, returning error:0x%x \n", NEO_FUNCTION_NAME, msuCount, channelCountPerMsu, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    numChannels = static_cast<int32_t>(totalChannelCount);
+    busWidth = static_cast<int32_t>(msuCount * busWidthPerMsuInBits);
+
+    return ZE_RESULT_SUCCESS;
+}
+
 static ze_result_t getMemoryBandwidthCounterValues(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
-                                                   zes_mem_bandwidth_t *pBandwidth) {
+                                                   uint32_t msuBitmask, zes_mem_bandwidth_t *pBandwidth) {
 
     uint64_t readCounter = 0;
     uint64_t writeCounter = 0;
     uint64_t telemOffset = 0;
 
-    for (uint32_t i = 0; i < memoryMsuCount; i++) {
+    for (uint32_t i = 0; i < maxMemoryMsuCount; i++) {
+        if (!(msuBitmask & (1u << i))) {
+            continue;
+        }
+
         uint64_t msuReadCounter = 0;
         uint64_t msuWriteCounter = 0;
 
@@ -1183,7 +1272,14 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
         return result;
     }
 
-    if (ZE_RESULT_SUCCESS != getMemoryBandwidthCounterValues(keyOffsetMap, keyTelemInfoMap, pBandwidth)) {
+    uint32_t msuBitmask = 0;
+    result = getMsuBitmask(keyOffsetMap, keyTelemInfoMap, msuBitmask);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the MSU bitmask, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    if (ZE_RESULT_SUCCESS != getMemoryBandwidthCounterValues(keyOffsetMap, keyTelemInfoMap, msuBitmask, pBandwidth)) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the Read and Write Counter Values, returning error 0x%x>\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -1277,9 +1373,15 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     pProperties->type = ZES_MEM_TYPE_LPDDR5X;
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subDeviceId;
-    pProperties->numChannels = memoryMsuCount * channelCountPerMemoryMsu;
-    pProperties->busWidth = memoryMsuCount * busWidthPerMsuInBits;
     pProperties->physicalSize = physicalMemorySize;
+
+    // Channel count and bus width come from telemetry, which may be unavailable. Per the spec
+    // -1 reports them as unknown, so a telemetry failure must not fail the whole call. The
+    // helper logs the reason on every failure path, so the result is intentionally discarded.
+    pProperties->numChannels = -1;
+    pProperties->busWidth = -1;
+    [[maybe_unused]] auto telemetryResult = getChannelCountAndBusWidth(pLinuxSysmanImp, pProperties->numChannels, pProperties->busWidth);
+
     return ZE_RESULT_SUCCESS;
 }
 
