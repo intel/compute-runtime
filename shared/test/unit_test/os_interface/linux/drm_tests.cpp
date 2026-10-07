@@ -1681,64 +1681,6 @@ class MockIoctlHelperContextHealth : public MockIoctlHelper {
     ContextFault faultReturnValue{};
 };
 
-struct DrmBanReasonTest : public ::testing::Test {
-    void SetUp() override {
-        drm = std::make_unique<DrmMock>(*executionEnvironment.rootDeviceEnvironments[0]);
-        auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular});
-        osContext = std::make_unique<MockOsContextLinux>(*drm, 0, 0u, engineDescriptor);
-        osContext->drmContextIds.push_back(8);
-        auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-        ioctlHelperPtr = ioctlHelper.get();
-        drm->ioctlHelper = std::move(ioctlHelper);
-        executionEnvironment.clearErrorDescription();
-    }
-
-    std::string checkResetStatusAndCaptureStderr() {
-        StreamCapture capture;
-        capture.captureStderr();
-        EXPECT_TRUE(drm->checkResetStatus(*osContext));
-        EXPECT_TRUE(osContext->isHangDetected());
-        return capture.getCapturedStderr();
-    }
-
-    const char *getErrorDescription() {
-        const char *errorDescription = nullptr;
-        executionEnvironment.getErrorDescription(&errorDescription);
-        return errorDescription;
-    }
-
-    DebugManagerStateRestore restore;
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<DrmMock> drm;
-    std::unique_ptr<MockOsContextLinux> osContext;
-    MockIoctlHelper *ioctlHelperPtr = nullptr;
-    const char *expectedPageOfflineMessage = "ERROR: GPU memory page offlined, ctx_id: 8 (BCS) banned, device lost.\n";
-};
-
-TEST_F(DrmBanReasonTest, givenPageOfflineBanReasonWhenCheckResetStatusIsCalledThenDeviceLostMessageIsPrintedAndErrorDescriptionIsSet) {
-    debugManager.flags.PrintDebugMessages.set(true);
-    ioctlHelperPtr->contextBanReasonToReturn = ContextBanReason::pageOffline;
-
-    EXPECT_STREQ(expectedPageOfflineMessage, checkResetStatusAndCaptureStderr().c_str());
-    EXPECT_STREQ(expectedPageOfflineMessage, getErrorDescription());
-}
-
-TEST_F(DrmBanReasonTest, givenPageOfflineBanReasonAndPrintDebugMessagesDisabledWhenCheckResetStatusIsCalledThenNothingIsPrintedButErrorDescriptionIsSet) {
-    debugManager.flags.PrintDebugMessages.set(false);
-    ioctlHelperPtr->contextBanReasonToReturn = ContextBanReason::pageOffline;
-
-    EXPECT_TRUE(checkResetStatusAndCaptureStderr().empty());
-    EXPECT_STREQ(expectedPageOfflineMessage, getErrorDescription());
-}
-
-TEST_F(DrmBanReasonTest, givenGpuHangBanReasonWhenCheckResetStatusIsCalledThenGpuHangIsReportedAndErrorDescriptionIsNotSet) {
-    debugManager.flags.PrintDebugMessages.set(true);
-    ioctlHelperPtr->contextBanReasonToReturn = ContextBanReason::gpuHang;
-
-    EXPECT_STREQ("ERROR: GPU HANG detected!\n", checkResetStatusAndCaptureStderr().c_str());
-    EXPECT_STREQ("", getErrorDescription());
-}
-
 TEST(DrmTest, GivenResetStatsWithValidFaultAndContextNotBannedAndDebuggingEnabledWhenIsGpuHangIsCalledThenProcessNotTerminated) {
     DebugManagerStateRestore restore;
     debugManager.flags.DisableScratchPages.set(true);

@@ -1406,13 +1406,7 @@ int IoctlHelperXe::getContextHealth(ContextHealth &contextHealth) {
         return ret;
     }
     contextHealth.banned = getProperty.value != 0;
-    if (!contextHealth.banned) {
-        contextHealth.banReason = ContextBanReason::none;
-    } else if ((getProperty.value & DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE) != 0) {
-        contextHealth.banReason = ContextBanReason::pageOffline;
-    } else {
-        contextHealth.banReason = ContextBanReason::gpuHang;
-    }
+    contextHealth.banReason = contextHealth.banned ? ContextBanReason::gpuHang : ContextBanReason::none;
 
     return 0;
 }
