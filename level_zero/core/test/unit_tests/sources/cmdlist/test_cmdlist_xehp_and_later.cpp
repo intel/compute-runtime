@@ -3182,11 +3182,11 @@ HWTEST2_F(ContainsAllocationHelpersTest, givenZeroCopySvmAllocationWhenAligningS
     auto sourcePtr = static_cast<uintptr_t>(svmAllocation.getGpuAddress());
 
     svmAllocation.setAllocationType(NEO::AllocationType::svmGpu);
-    auto deviceStorageData = commandList->alignSvmAllocationData(device, &allocData, buffer, sourcePtr, 0u);
+    auto deviceStorageData = commandList->alignSvmAllocationData(device, &allocData, buffer, sizeof(storage), sourcePtr, 0u);
     EXPECT_FALSE(deviceStorageData.needsFlush);
 
     svmAllocation.setAllocationType(NEO::AllocationType::svmZeroCopy);
-    auto zeroCopyData = commandList->alignSvmAllocationData(device, &allocData, buffer, sourcePtr, 0u);
+    auto zeroCopyData = commandList->alignSvmAllocationData(device, &allocData, buffer, sizeof(storage), sourcePtr, 0u);
     EXPECT_TRUE(zeroCopyData.needsFlush);
 }
 

@@ -21,11 +21,11 @@ namespace ult {
 
 using CommandListVirtualReservationMtTest = Test<DeviceFixture>;
 
-// addVirtualReservationToResidency() walks every mapping of the reservation backing the appended
-// pointer, including the ones the application is still free to unmap. Race a resolve of one
-// sub-range against map/unmap of a sibling sub-range: without the reservation map lock held for the
-// traversal, the walk observes mappedAllocations while zeVirtualMemUnmap erases from it and deletes
-// the MemoryMappedRange it is reading.
+// addVirtualReservationToResidency() walks the mappings of the reservation that follow the appended
+// pointer, while the application is still free to unmap the ones outside the appended range. Race a
+// resolve of one sub-range against map/unmap of a sibling sub-range: without the reservation map
+// lock held for the traversal, the walk reads mappedAllocations while zeVirtualMemUnmap erases the
+// sibling entry from it.
 HWTEST_F(CommandListVirtualReservationMtTest, givenSiblingMappingRemappedWhileResolvingReservedAllocationThenReservationMapTraversalIsSerialized) {
     driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();

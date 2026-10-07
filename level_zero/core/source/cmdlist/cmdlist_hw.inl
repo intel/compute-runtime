@@ -3514,7 +3514,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::resolveAligne
     }
 
     if (svmAllocFound) {
-        return alignSvmAllocationData(device, svmAlloc, buffer, sourcePtr, sshAlignmentOffset);
+        return alignSvmAllocationData(device, svmAlloc, buffer, bufferSize, sourcePtr, sshAlignmentOffset);
     }
 
     if (!importedHostAlloc && !cachedHostAlloc) {
@@ -3540,7 +3540,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::resolveAligne
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::alignSvmAllocationData(Device *device, NEO::SvmAllocationData *svmAlloc, const void *buffer, uintptr_t sourcePtr, size_t sshAlignmentOffset) {
+AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::alignSvmAllocationData(Device *device, NEO::SvmAllocationData *svmAlloc, const void *buffer, uint64_t bufferSize, uintptr_t sourcePtr, size_t sshAlignmentOffset) {
     auto alloc = svmAlloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     DriverHandle *driverHandle = device->getDriverHandle();
     uintptr_t alignedPtr = 0u;
@@ -3564,20 +3564,21 @@ AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::alignSvmAllocationDa
         isUsingSystemAllocation(svmAlloc->gpuAllocations.getAllocationType())) {
         hostPointerNeedsFlush = true;
     }
-    addVirtualReservationToResidency(svmAlloc, buffer);
+    addVirtualReservationToResidency(svmAlloc, buffer, bufferSize);
     return AlignedAllocationData::fromAllocation(svmAlloc, alignedPtr, sshAlignmentOffset, alloc, hostPointerNeedsFlush);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addVirtualReservationToResidency(NEO::SvmAllocationData *svmAlloc, const void *buffer) {
+void CommandListCoreFamily<gfxCoreFamily>::addVirtualReservationToResidency(NEO::SvmAllocationData *svmAlloc, const void *buffer, uint64_t bufferSize) {
     if (!svmAlloc->virtualReservationData) {
         return;
     }
     auto lock = device->getDriverHandle()->getMemoryManager()->lockVirtualMemoryReservationMap();
-    for (const auto &mappedAllocationData : svmAlloc->virtualReservationData->mappedAllocations) {
-        if (buffer != mappedAllocationData.second->ptr) {
-            commandContainer.addToResidencyContainer(mappedAllocationData.second->mappedAllocation.allocation);
-        }
+    const auto &mappedAllocations = svmAlloc->virtualReservationData->mappedAllocations;
+    const uint64_t rangeEnd = castToUint64(buffer) + bufferSize;
+    // the mapping containing buffer is the alloc returned to the caller, so only later mappings are added here
+    for (auto it = mappedAllocations.upper_bound(const_cast<void *>(buffer)); it != mappedAllocations.end() && castToUint64(it->first) < rangeEnd; ++it) {
+        this->commandContainer.addToResidencyContainer(it->second->mappedAllocation.allocation);
     }
 }
 

@@ -1890,7 +1890,7 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAlloca
     context->freeMem(dstBuffer);
 }
 
-HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDeviceAllocationThenResidencyContainerHasImplicitMappedAllocations) {
+HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDeviceAllocationThenResidencyContainerHasNoUntouchedMappedAllocations) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -1919,16 +1919,23 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevic
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
-    commandList->appendMemoryCopy(dstBuffer, srcPtr, size, nullptr, 0, nullptr, copyParams);
-
-    bool phys2Resident = false;
-    for (auto alloc : commandList->getCmdContainer().getResidencyContainer()) {
-        if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
-            phys2Resident = true;
+    auto isPhys2Resident = [&](auto &cmdList) {
+        for (auto alloc : cmdList->getCmdContainer().getResidencyContainer()) {
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
+                return true;
+            }
         }
-    }
+        return false;
+    };
 
-    EXPECT_TRUE(phys2Resident);
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, size, nullptr, 0, nullptr, copyParams);
+    EXPECT_FALSE(isPhys2Resident(commandList));
+
+    auto commandList2 = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList2->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList2->appendMemoryCopy(dstBuffer, srcPtr, 2 * size, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(isPhys2Resident(commandList2));
+
     res = context->unMapVirtualMem(dstBuffer, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = context->unMapVirtualMem(offsetAddress, size);
@@ -1962,13 +1969,7 @@ HWTEST_F(CommandListTest, givenReservedDeviceAllocationWhenResolvingAlignedAlloc
     ze_physical_mem_handle_t phPhysicalMemory = nullptr;
     res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
-    ze_physical_mem_handle_t phPhysicalMemory2 = nullptr;
-    res = context->createPhysicalMem(device->toHandle(), &desc, &phPhysicalMemory2);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     res = context->mapVirtualMem(dstBuffer, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
-    void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(dstBuffer) + size);
-    res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto lockCountBefore = memoryManager->lockVirtualMemoryReservationMapCalled.load();
@@ -1976,23 +1977,11 @@ HWTEST_F(CommandListTest, givenReservedDeviceAllocationWhenResolvingAlignedAlloc
     EXPECT_EQ(lockCountBefore + 1u, memoryManager->lockVirtualMemoryReservationMapCalled.load());
     EXPECT_NE(nullptr, outData.alloc);
 
-    bool phys2Resident = false;
-    for (auto alloc : commandList->getCmdContainer().getResidencyContainer()) {
-        if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
-            phys2Resident = true;
-        }
-    }
-    EXPECT_TRUE(phys2Resident);
-
     res = context->unMapVirtualMem(dstBuffer, size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    res = context->unMapVirtualMem(offsetAddress, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = context->freeVirtualMem(dstBuffer, reservationSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = context->destroyPhysicalMem(phPhysicalMemory);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    res = context->destroyPhysicalMem(phPhysicalMemory2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
@@ -2077,6 +2066,98 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedDe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = context->destroyPhysicalMem(phPhysicalMemory);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+struct CommandListReservationResidencyTest : CommandListTest {
+    void SetUp() override {
+        CommandListTest::SetUp();
+        driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+            std::make_unique<NEO::MockMemoryOperations>();
+    }
+
+    void TearDown() override {
+        for (size_t i = 0; i < this->physicalMemory.size(); i++) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, this->context->unMapVirtualMem(ptrOffset(this->reservedBuffer, i * this->chunkSize), this->chunkSize));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, this->context->destroyPhysicalMem(this->physicalMemory[i]));
+        }
+        if (this->reservedBuffer != nullptr) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, this->context->freeVirtualMem(this->reservedBuffer, this->reservationSize));
+        }
+        CommandListTest::TearDown();
+    }
+
+    void reserveAndMapChunks(size_t size, size_t count, ze_physical_mem_flags_t flags) {
+        this->chunkSize = size;
+        this->reservationSize = size * count;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, this->context->reserveVirtualMem(nullptr, this->reservationSize, &this->reservedBuffer));
+
+        ze_physical_mem_desc_t desc = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, flags, size};
+        for (size_t i = 0; i < count; i++) {
+            void *chunkPtr = ptrOffset(this->reservedBuffer, i * size);
+            ze_physical_mem_handle_t physicalHandle = nullptr;
+            ASSERT_EQ(ZE_RESULT_SUCCESS, this->context->createPhysicalMem(this->device->toHandle(), &desc, &physicalHandle));
+            this->physicalMemory.push_back(physicalHandle);
+            ASSERT_EQ(ZE_RESULT_SUCCESS, this->context->mapVirtualMem(chunkPtr, size, physicalHandle, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+            this->chunkAllocations.push_back(this->driverHandle->getSvmAllocsManager()->getSVMAlloc(chunkPtr)->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex()));
+        }
+    }
+
+    void expectOnlyChunksResident(L0::CommandList &commandList, size_t firstChunk, size_t lastChunk) const {
+        const auto &residencyContainer = commandList.getCmdContainer().getResidencyContainer();
+        for (size_t i = 0; i < this->chunkAllocations.size(); i++) {
+            const bool expectedResident = (i >= firstChunk) && (i <= lastChunk);
+            const bool resident = std::find(residencyContainer.begin(), residencyContainer.end(), this->chunkAllocations[i]) != residencyContainer.end();
+            EXPECT_EQ(expectedResident, resident) << "chunk " << i << ", expected chunks [" << firstChunk << ", " << lastChunk << "]";
+        }
+    }
+
+    void *reservedBuffer = nullptr;
+    size_t chunkSize = 0u;
+    size_t reservationSize = 0u;
+    std::vector<ze_physical_mem_handle_t> physicalMemory;
+    std::vector<NEO::GraphicsAllocation *> chunkAllocations;
+};
+
+HWTEST_F(CommandListReservationResidencyTest, givenReservationWithManyDeviceMappingsWhenResolvingAlignedAllocationThenOnlyTouchedChunksAreAddedToResidency) {
+    constexpr size_t deviceChunkSize = MemoryConstants::pageSize64k;
+    constexpr size_t chunkCount = 8u;
+    reserveAndMapChunks(deviceChunkSize, chunkCount, 0u);
+    ASSERT_EQ(chunkCount, chunkAllocations.size());
+
+    struct {
+        size_t offset;
+        size_t size;
+        size_t firstChunk;
+        size_t lastChunk;
+    } testCases[] = {
+        {3 * deviceChunkSize + MemoryConstants::pageSize, MemoryConstants::pageSize, 3, 3},
+        {3 * deviceChunkSize + deviceChunkSize / 2, deviceChunkSize, 3, 4},
+        {3 * deviceChunkSize + deviceChunkSize / 2, 2 * deviceChunkSize, 3, 5},
+    };
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    for (const auto &testCase : testCases) {
+        commandList->getCmdContainer().clearResidencyContainer();
+        auto outData = commandList->resolveAlignedAllocation(device, ptrOffset(reservedBuffer, testCase.offset), testCase.size, nullptr, {});
+        commandList->getCmdContainer().addToResidencyContainer(outData.alloc);
+        expectOnlyChunksResident(*commandList, testCase.firstChunk, testCase.lastChunk);
+    }
+}
+
+HWTEST_F(CommandListReservationResidencyTest, givenReservationWithHostMappingsWhenResolvingAlignedAllocationAcrossChunkBoundaryThenOnlyTouchedChunksAreAddedToResidency) {
+    constexpr size_t chunkCount = 3u;
+    reserveAndMapChunks(MemoryConstants::pageSize2M, chunkCount, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_HOST);
+    ASSERT_EQ(chunkCount, chunkAllocations.size());
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    auto outData = commandList->resolveAlignedAllocation(device, ptrOffset(reservedBuffer, MemoryConstants::pageSize2M - MemoryConstants::pageSize), 2 * MemoryConstants::pageSize, nullptr, {});
+    commandList->getCmdContainer().addToResidencyContainer(outData.alloc);
+
+    expectOnlyChunksResident(*commandList, 0, 1);
 }
 
 HWTEST2_F(CommandListTest, givenStatelessWhenAppendMemoryFillIsCalledThenCorrectBuiltinIsUsed, IsAtLeastXeHpcCore) {
