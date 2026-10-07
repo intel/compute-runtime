@@ -628,6 +628,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateFull(const SurfaceStateSl
 
         if (numSamplesForSurfaceState <= 1 && allocation->isCompressionEnabled()) {
             NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&dst, gmm);
+            NEO::EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(&dst, allocation, gmmHelper, this->imageFromBuffer, imgInfo.plane);
         }
 
         if (gmm) {
@@ -667,6 +668,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateFull(const SurfaceStateSl
 
         if (numSamplesForSurfaceState <= 1 && allocation->isCompressionEnabled()) {
             NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&dst, gmm);
+            NEO::EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(&dst, allocation, gmmHelper, this->imageFromBuffer, imgInfo.plane);
         }
 
         if (gmm) {

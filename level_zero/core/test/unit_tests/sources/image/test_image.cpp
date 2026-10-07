@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/image_implicit_args_tag_node.h"
@@ -20,6 +21,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -2258,6 +2261,197 @@ HWTEST_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingLinearImageThenD
     std::unique_ptr<L0::Image> image(imagePtr);
 
     EXPECT_FALSE(image->getAllocation()->isCompressionEnabled());
+}
+
+template <typename FamilyType>
+uint32_t getCompressionFormatInSlot(L0::Image *image, uint32_t bindlessSlot) {
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    image->copySurfaceStateToSSH(&surfaceState, 0u, bindlessSlot, false, 0u);
+    return static_cast<uint32_t>(surfaceState.getCompressionFormat());
+}
+
+HWTEST2_F(ImageCreate, givenCompressedImageWhenCreatingImageThenCompressionFormatIsProgrammedInAllSurfaceStates, IsAtLeastXeCore) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.RenderCompressedImagesEnabled.set(1);
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = true;
+
+    constexpr uint32_t compressionFormat = 0xA;
+    auto gmmClientContext = static_cast<NEO::MockGmmClientContext *>(device->getNEODevice()->getGmmHelper()->getClientContext());
+    gmmClientContext->compressionFormatToReturn = static_cast<uint8_t>(compressionFormat);
+    ASSERT_NE(compressionFormat, static_cast<uint32_t>(FamilyType::cmdInitRenderSurfaceState.getCompressionFormat()));
+
+    ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                            nullptr,
+                            ZE_IMAGE_FLAG_KERNEL_WRITE,
+                            ZE_IMAGE_TYPE_2D,
+                            {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                             ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                             ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                            64,
+                            64,
+                            1,
+                            0,
+                            0};
+
+    Image *imagePtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(device, &desc, &imagePtr));
+    std::unique_ptr<L0::Image> image(imagePtr);
+    ASSERT_TRUE(image->getAllocation()->isCompressionEnabled());
+
+    EXPECT_EQ(compressionFormat, getCompressionFormatInSlot<FamilyType>(image.get(), NEO::BindlessImageSlot::image));
+    EXPECT_EQ(compressionFormat, getCompressionFormatInSlot<FamilyType>(image.get(), NEO::BindlessImageSlot::redescribedImage));
+    if (device->getProductHelper().isPackedCopyFormatSupported()) {
+        EXPECT_EQ(compressionFormat, getCompressionFormatInSlot<FamilyType>(image.get(), NEO::BindlessImageSlot::packedImage));
+    }
+}
+
+HWTEST2_F(ImageCreate, givenUncompressedImageWhenCreatingImageThenCompressionFormatIsNotProgrammed, IsAtLeastXeCore) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.RenderCompressedImagesEnabled.set(0);
+
+    const auto defaultCompressionFormat = static_cast<uint32_t>(FamilyType::cmdInitRenderSurfaceState.getCompressionFormat());
+    auto gmmClientContext = static_cast<NEO::MockGmmClientContext *>(device->getNEODevice()->getGmmHelper()->getClientContext());
+    gmmClientContext->compressionFormatToReturn = static_cast<uint8_t>(defaultCompressionFormat + 1);
+
+    ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                            nullptr,
+                            ZE_IMAGE_FLAG_KERNEL_WRITE,
+                            ZE_IMAGE_TYPE_2D,
+                            {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                             ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                             ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                            64,
+                            64,
+                            1,
+                            0,
+                            0};
+
+    Image *imagePtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(device, &desc, &imagePtr));
+    std::unique_ptr<L0::Image> image(imagePtr);
+    ASSERT_FALSE(image->getAllocation()->isCompressionEnabled());
+
+    EXPECT_EQ(defaultCompressionFormat, getCompressionFormatInSlot<FamilyType>(image.get(), NEO::BindlessImageSlot::image));
+    EXPECT_EQ(defaultCompressionFormat, getCompressionFormatInSlot<FamilyType>(image.get(), NEO::BindlessImageSlot::redescribedImage));
+    if (device->getProductHelper().isPackedCopyFormatSupported()) {
+        EXPECT_EQ(defaultCompressionFormat, getCompressionFormatInSlot<FamilyType>(image.get(), NEO::BindlessImageSlot::packedImage));
+    }
+}
+
+HWTEST2_F(ImageView, givenMediaCompressedPlanarImageWhenCreatingPlaneViewsThenCompressionFormatIsAdjustedForEachPlane, IsXeHpgCore) {
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  nullptr,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  32,
+                                  32,
+                                  1,
+                                  0,
+                                  0};
+
+    Image *imagePtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(device, &srcImgDesc, &imagePtr));
+    std::unique_ptr<L0::Image> image(imagePtr);
+
+    auto gmm = image->getAllocation()->getDefaultGmm();
+    ASSERT_NE(nullptr, gmm);
+    gmm->setCompressionEnabled(true);
+    static_cast<NEO::MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->getResourceFlags()->Info.MediaCompressed = true;
+    auto gmmClientContext = static_cast<NEO::MockGmmClientContext *>(device->getNEODevice()->getGmmHelper()->getClientContext());
+
+    struct {
+        uint32_t planeIndex;
+        ze_image_format_layout_t layout;
+        uint8_t mediaCompressionFormat;
+        uint32_t expectedCompressionFormat;
+    } planeCases[] = {
+        {0u, ZE_IMAGE_FORMAT_LAYOUT_8, 0x17, 0x07},   // luma keeps the low 4 bits
+        {1u, ZE_IMAGE_FORMAT_LAYOUT_8_8, 0x07, 0x17}, // chroma sets bit 4
+    };
+
+    for (const auto &planeCase : planeCases) {
+        gmmClientContext->compressionFormatToReturn = planeCase.mediaCompressionFormat;
+        const auto mediaCompressionFormatCalls = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled;
+
+        ze_image_view_planar_exp_desc_t planeDesc = {};
+        planeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+        planeDesc.planeIndex = planeCase.planeIndex;
+
+        ze_image_desc_t viewDesc = srcImgDesc;
+        viewDesc.pNext = &planeDesc;
+        viewDesc.format.layout = planeCase.layout;
+
+        ze_image_handle_t planeView = nullptr;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, image->createView(device, &viewDesc, &planeView));
+        auto planeImage = Image::fromHandle(planeView);
+
+        EXPECT_LT(mediaCompressionFormatCalls, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled) << planeCase.planeIndex;
+        EXPECT_EQ(planeCase.expectedCompressionFormat, getCompressionFormatInSlot<FamilyType>(planeImage, NEO::BindlessImageSlot::image)) << planeCase.planeIndex;
+        EXPECT_EQ(planeCase.expectedCompressionFormat, getCompressionFormatInSlot<FamilyType>(planeImage, NEO::BindlessImageSlot::redescribedImage)) << planeCase.planeIndex;
+
+        zeImageDestroy(planeView);
+    }
+}
+
+HWTEST2_F(ImageCreate, givenImageFromCompressedBufferWhenCreatingImageThenBufferCompressionFormatIsProgrammed, IsXeHpgCore) {
+    DebugManagerStateRestore restore;
+
+    constexpr uint32_t width = 64;
+    constexpr uint32_t height = 64;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &deviceDesc, width * height * sizeof(uint32_t), 0, &ptr));
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    auto bufferGmm = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm();
+    ASSERT_NE(nullptr, bufferGmm);
+    bufferGmm->setCompressionEnabled(true);
+
+    constexpr uint32_t imageCompressionFormat = 0xA;
+    auto gmmClientContext = static_cast<NEO::MockGmmClientContext *>(device->getNEODevice()->getGmmHelper()->getClientContext());
+    gmmClientContext->compressionFormatToReturn = static_cast<uint8_t>(imageCompressionFormat);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr;
+
+    ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                            &pitchedDesc,
+                            ZE_IMAGE_FLAG_KERNEL_WRITE,
+                            ZE_IMAGE_TYPE_2D,
+                            {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                             ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                             ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                            width,
+                            height,
+                            1,
+                            0,
+                            0};
+
+    struct {
+        int32_t forcedBufferCompressionFormat;
+        uint32_t expectedCompressionFormat;
+    } overrideCases[] = {
+        {-1, imageCompressionFormat},
+        {0xC, 0xC},
+    };
+
+    for (const auto &overrideCase : overrideCases) {
+        NEO::debugManager.flags.ForceBufferCompressionFormat.set(overrideCase.forcedBufferCompressionFormat);
+
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+        ASSERT_TRUE(imageHW->imageFromBuffer);
+
+        EXPECT_EQ(overrideCase.expectedCompressionFormat, getCompressionFormatInSlot<FamilyType>(imageHW.get(), NEO::BindlessImageSlot::image)) << overrideCase.forcedBufferCompressionFormat;
+        EXPECT_EQ(overrideCase.expectedCompressionFormat, getCompressionFormatInSlot<FamilyType>(imageHW.get(), NEO::BindlessImageSlot::redescribedImage)) << overrideCase.forcedBufferCompressionFormat;
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
 }
 
 HWTEST2_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMostXeHpgCore) {
