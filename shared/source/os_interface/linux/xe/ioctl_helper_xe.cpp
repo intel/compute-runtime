@@ -411,12 +411,11 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         const auto &engine = queryEngines->engines[i].instance;
 
         uint16_t tile = 0;
-        const bool mediaEngine = isMediaEngine(engine.engine_class);
         const bool videoEngine = (engine.engine_class == getDrmParamValue(DrmParam::engineClassVideo) || engine.engine_class == getDrmParamValue(DrmParam::engineClassVideoEnhance));
 
-        if (gtIdToTileId.contains(engine.gt_id) && !mediaEngine) {
+        if (gtIdToTileId.contains(engine.gt_id)) {
             tile = static_cast<uint16_t>(gtIdToTileId.at(engine.gt_id));
-        } else if (mediaGtIdToTileId.contains(engine.gt_id) && (mediaEngine || videoEngine)) {
+        } else if (mediaGtIdToTileId.contains(engine.gt_id) && videoEngine) {
             tile = static_cast<uint16_t>(mediaGtIdToTileId.at(engine.gt_id));
         } else {
             continue;
@@ -434,7 +433,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
 
         const bool isSysmanEngineClass = isSysmanEnabled && videoEngine;
 
-        if (isBaseEngineClass || isSysmanEngineClass || mediaEngine) {
+        if (isBaseEngineClass || isSysmanEngineClass) {
             if (enginesPerTile.size() <= tile) {
                 enginesPerTile.resize(tile + 1);
             }

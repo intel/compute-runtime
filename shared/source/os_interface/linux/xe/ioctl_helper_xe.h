@@ -188,7 +188,6 @@ class IoctlHelperXe : public IoctlHelper {
     int getEudebugExtProperty();
     uint64_t getEudebugExtPropertyValue();
     uint64_t convertDrmResourceClassToXeDebugPseudoPath(DrmResourceClass resourceClass);
-    virtual bool isMediaEngine(uint16_t engineClass) const { return false; }
     virtual bool isMediaGt(uint16_t gtType) const;
     virtual void setContextPropertiesForRootDeviceContext(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut) {};
 
