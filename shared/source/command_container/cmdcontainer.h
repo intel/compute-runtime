@@ -131,6 +131,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     GraphicsAllocation *obtainNextCommandBufferAllocation(bool forceHostMemory);
 
     bool swapStreams();
+    void swapCommandStreamState(CommandContainer &other);
 
     void reset();
 

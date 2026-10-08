@@ -646,6 +646,8 @@ struct CommandList : _ze_command_list_handle_t {
         return activeScratchSizePatchElements;
     }
     bool isDualStreamCopyOffloadOperation(bool offloadOperation) const { return (getCopyOffloadModeForOperation(offloadOperation) == CopyOffloadModes::dualStream); }
+    bool isRegularDualStreamCopyOffloadOperation(bool offloadOperation) const { return !isImmediateType() && isDualStreamCopyOffloadOperation(offloadOperation); }
+    CommandList *getCopyOffloadSubCmdList() const { return copyOffloadStreamUsed ? copyOffloadSubCmdList : nullptr; }
     void saveLatestTagAndTaskCount(NEO::GraphicsAllocation *tagGpuAllocation, TaskCountType submittedTaskCount) {
         this->latesTagGpuAllocation = tagGpuAllocation;
         this->latestTaskCount = submittedTaskCount;
@@ -695,6 +697,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
     void enableCopyOperationOffload();
     void setInterruptEventsCsr(NEO::CommandStreamReceiver &csr);
+    void addInterruptEvent(Event *event) { interruptEvents.push_back(event); }
     std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
     size_t getInOrderExecDeviceRequiredSize() const;
     uint64_t getInOrderExecDeviceGpuAddress() const;
@@ -814,6 +817,7 @@ struct CommandList : _ze_command_list_handle_t {
     void resetBcsSplitEvents(bool release);
     void ensureSubCmdLists(size_t count);
     void destroyRecordedBcsSplitResources();
+    void ensureCopyOffloadSubCmdList();
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     NEO::PrivateAllocsToReuseContainer ownedPrivateAllocations;
@@ -825,6 +829,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<Event *> interruptEvents;
     std::vector<BcsSplitParams::SplitEventPackage *> eventsForRecordedBcsSplit;
     std::vector<CommandList *> subCmdListsForRecordedBcsSplit;
+    CommandList *copyOffloadSubCmdList = nullptr; // regular cmd list: copy engine stream for dual stream copy offload operations
 
     struct ExternalSemaphoreHostFunctionData {
         CommandList &cmdList;
@@ -957,6 +962,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool patchPreambleEnabled = false;
     bool frontEndControllerEnabled = false;
     bool copyOffloadHintRequested = false;
+    bool copyOffloadStreamUsed = false;
+    bool copyOffloadStreamRecordingActive = false;
     bool useInternalCopyEngine = false;
     bool debuggerQueueNotified = false;
 };

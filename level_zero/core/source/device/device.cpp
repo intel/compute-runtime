@@ -176,8 +176,9 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
 
     auto &productHelper = getProductHelper();
     auto isBcsPreferredForCopyOffload = NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(productHelper.blitEnqueuePreferred(false));
-    const bool copyOffloadAllowed = cmdList->isInOrderExecutionEnabled() && !getGfxCoreHelper().crossEngineCacheFlushRequired() && isBcsPreferredForCopyOffload &&
-                                    (getL0GfxCoreHelper().getDefaultCopyOffloadMode(productHelper.useAdditionalBlitProperties()) != CopyOffloadModes::dualStream);
+    const bool copyOffloadModeSupported = (getL0GfxCoreHelper().getDefaultCopyOffloadMode(productHelper.useAdditionalBlitProperties()) != CopyOffloadModes::dualStream) ||
+                                          getL0GfxCoreHelper().isDualStreamCopyOffloadForRegularCmdListSupported();
+    const bool copyOffloadAllowed = cmdList->isInOrderExecutionEnabled() && !getGfxCoreHelper().crossEngineCacheFlushRequired() && isBcsPreferredForCopyOffload && copyOffloadModeSupported;
 
     if (copyOffloadHint && copyOffloadAllowed) {
         cmdList->enableCopyOperationOffload();

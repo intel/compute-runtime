@@ -1581,7 +1581,10 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
 
-        EXPECT_EQ(CopyOffloadModes::disabled, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
+        const bool regularCmdListDualStreamSupported = device->getL0GfxCoreHelper().isDualStreamCopyOffloadForRegularCmdListSupported() &&
+                                                       !device->getGfxCoreHelper().crossEngineCacheFlushRequired();
+        const auto expectedMode = regularCmdListDualStreamSupported ? CopyOffloadModes::dualStream : CopyOffloadModes::disabled;
+        EXPECT_EQ(expectedMode, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
 
         zeCommandListDestroy(hCmdList);
     }
@@ -1625,7 +1628,10 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
 
-        EXPECT_EQ(CopyOffloadModes::disabled, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
+        const bool regularCmdListDualStreamSupported = device->getL0GfxCoreHelper().isDualStreamCopyOffloadForRegularCmdListSupported() &&
+                                                       !device->getGfxCoreHelper().crossEngineCacheFlushRequired();
+        const auto expectedMode = regularCmdListDualStreamSupported ? CopyOffloadModes::dualStream : CopyOffloadModes::disabled;
+        EXPECT_EQ(expectedMode, CommandList::fromHandle(hCmdList)->getCopyOffloadModeForOperation(true));
 
         zeCommandListDestroy(hCmdList);
     }

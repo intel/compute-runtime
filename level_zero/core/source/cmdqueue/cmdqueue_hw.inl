@@ -101,6 +101,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         this->csr->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
     }
 
+    ret = this->ensureCopyOffloadQueue(numCommandLists, phCommandLists);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
     std::unique_lock<NEO::CommandStreamReceiver::MutexType> lockCSR;
 
     if (internalOptions.parentImmediateCommandlistLinearStream != nullptr) {
@@ -747,12 +752,19 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         this->isWalkerWithProfilingEnqueued = commandList->getIsWalkerWithProfilingEnqueued();
     }
 
+    this->ensurePatchPreambleCounterForCopyOffload(ctx, phCommandLists, numCommandLists);
+
     this->getCsr()->getResidencyAllocations().reserve(ctx.spaceForResidency);
 
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         makeResidentAndMigrate(ctx.isMigrationRequested, commandList->getCmdContainer().getResidencyContainer());
         commandList->dispatchRecordedBcsSplit();
+
+        auto copyOffloadDispatchResult = this->dispatchCopyOffloadCmdList(commandList, ctx);
+        if (copyOffloadDispatchResult != ZE_RESULT_SUCCESS) {
+            return copyOffloadDispatchResult;
+        }
     }
 
     if (ctx.parentImmediateCommandlistLinearStream) {
@@ -1125,6 +1137,27 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleInOrderNoop(CommandList
         auto hostNodeGpuAddress = commandList->getInOrderExecHostGpuAddress();
         if (hostNodeGpuAddress != 0) {
             NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, hostNodeGpuAddress, commandList->getInOrderExecHostRequiredSize());
+        }
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::ensurePatchPreambleCounterForCopyOffload(CommandListExecutionContext &ctx, ze_command_list_handle_t *phCommandLists, uint32_t numCommandLists) {
+    if (!ctx.patchPreambleEnabled || ctx.patchPreambleRequiredCounter > 0) {
+        return;
+    }
+    for (auto i = 0u; i < numCommandLists; i++) {
+        if (CommandList::fromHandle(phCommandLists[i])->getCopyOffloadSubCmdList() != nullptr) {
+            // In-order counters are reset in patch preamble, so copy offload stream has to wait for patch preamble counter signaled after the reset.
+            // Counter is not required by upper layers, so queue acquires it on its own.
+            uint64_t *hostAddress = nullptr;
+            uint64_t hostGpuAddress = 0;
+            NEO::GraphicsAllocation *hostAllocation = nullptr;
+            NEO::GraphicsAllocation *deviceAllocation = nullptr;
+            this->getPatchPreambleFullData(ctx.patchPreambleRequiredCounter, hostAddress, hostGpuAddress, hostAllocation,
+                                           ctx.patchPreambleRequiredDevicePostSyncGpuAddress, deviceAllocation);
+            ctx.spaceForResidency += 2;
+            return;
         }
     }
 }

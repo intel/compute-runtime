@@ -28,6 +28,9 @@
 #include "shared/source/utilities/pool_allocators.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
+#include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"
 #include "level_zero/core/source/cmdqueue/internal_queue_throttle_ext.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -67,6 +70,14 @@ CommandQueue::CommandQueue(Device *device, NEO::CommandStreamReceiver *csr, cons
 }
 
 ze_result_t CommandQueue::destroy() {
+    if (copyOffloadQueue) {
+        if (const auto copyOffloadTaskCount = copyOffloadQueue->getTaskCount(); copyOffloadTaskCount != 0) {
+            copyOffloadQueue->getCsr()->waitForCompletionWithTimeout(NEO::WaitParams{false, false, false, NEO::TimeoutControls::maxTimeout}, copyOffloadTaskCount);
+        }
+        copyOffloadQueue->destroy();
+        copyOffloadQueue = nullptr;
+    }
+
     unregisterCsrClient();
 
     if (csrQueueOwnershipTaken) {
@@ -123,6 +134,112 @@ ze_result_t CommandQueue::initialize(bool copyOnly, bool isInternal, bool immedi
     return returnValue;
 }
 
+ze_result_t CommandQueue::createCopyOffloadQueue() {
+    std::lock_guard<std::mutex> lock(this->copyOffloadQueueCreationMutex);
+    if (this->copyOffloadQueue != nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    const auto ordinal = device->getCopyEngineOrdinal();
+
+    NEO::CommandStreamReceiver *copyCsr = nullptr;
+    bool queueOwnershipTaken = false;
+    ze_result_t returnValue = device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, desc.priority, std::nullopt, 0u, &queueOwnershipTaken);
+    if (returnValue != ZE_RESULT_SUCCESS) {
+        return returnValue;
+    }
+
+    ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    copyQueueDesc.ordinal = ordinal;
+    copyQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    copyQueueDesc.priority = desc.priority;
+
+    auto newCopyOffloadQueue = CommandQueue::create(device, copyCsr, &copyQueueDesc, true, true, false, returnValue);
+    if (newCopyOffloadQueue == nullptr) {
+        if (queueOwnershipTaken) {
+            copyCsr->releaseQueueOwnership();
+        }
+        return returnValue;
+    }
+    if (queueOwnershipTaken) {
+        newCopyOffloadQueue->takeCsrQueueOwnership();
+    }
+    this->copyOffloadQueue = newCopyOffloadQueue;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandQueue::ensureCopyOffloadQueue(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
+    if (this->copyOffloadQueue != nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+    for (auto i = 0u; i < numCommandLists; i++) {
+        if (CommandList::fromHandle(phCommandLists[i])->getCopyOffloadSubCmdList() != nullptr) {
+            // copy queue creation initializes direct submission, which locks direct submission controller.
+            // Controller thread locks csrs while holding it, so this can't be done under ownership of this queue's csr.
+            return createCopyOffloadQueue();
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandQueue::dispatchCopyOffloadCmdList(CommandList *commandList, const CommandListExecutionContext &ctx) {
+    auto copyOffloadCmdList = commandList->getCopyOffloadSubCmdList();
+    if (copyOffloadCmdList == nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    if (this->copyOffloadQueue == nullptr) {
+        // copy queue is expected to be created by ensureCopyOffloadQueue() before csr ownership is taken
+        DEBUG_BREAK_IF(true);
+        returnValue = createCopyOffloadQueue();
+        if (returnValue != ZE_RESULT_SUCCESS) {
+            return returnValue;
+        }
+    }
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.performMigration = ctx.isMigrationRequested;
+    CountersCrossSyncContainer patchPreambleCounterSync;
+
+    copyOffloadCmdList->setupPatchPreambleEnabled(ctx.patchPreambleEnabled);
+    if (ctx.patchPreambleEnabled) {
+        // In-order counter is reset by compute stream patch preamble, so copy offload stream could observe values from previous execution.
+        // Copy offload stream starts after compute stream patch preamble signals patch preamble counter for current execution.
+        UNRECOVERABLE_IF(ctx.patchPreambleRequiredCounter == 0 || ctx.patchPreambleRequiredDevicePostSyncGpuAddress == 0);
+        NEO::GraphicsAllocation *counterHostAllocation = nullptr;
+        uint64_t counterHostGpuAddress = 0;
+        NEO::GraphicsAllocation *counterDeviceAllocation = nullptr;
+        uint64_t counterDeviceGpuAddress = 0;
+        patchPreambleCounter.getPatchPreambleNodeData(counterHostAllocation, counterHostGpuAddress, counterDeviceAllocation, counterDeviceGpuAddress);
+        UNRECOVERABLE_IF(counterDeviceAllocation == nullptr);
+
+        patchPreambleCounterSync.patchPreambleCrossSyncList.push_back({.counter = ctx.patchPreambleRequiredCounter,
+                                                                       .deviceGpuAddress = ctx.patchPreambleRequiredDevicePostSyncGpuAddress,
+                                                                       .deviceGraphicsAllocation = counterDeviceAllocation,
+                                                                       .appendedCommandListToSyncBefore = copyOffloadCmdList});
+        internalOptions.countersCrossSyncContainer = &patchPreambleCounterSync;
+
+        // compute stream patch preamble may patch commands in copy offload stream
+        for (auto cmdBuffer : copyOffloadCmdList->getCmdContainer().getCmdBufferAllocations()) {
+            this->csr->makeResident(*cmdBuffer);
+        }
+    }
+
+    auto copyOffloadCmdListHandle = copyOffloadCmdList->toHandle();
+    return this->copyOffloadQueue->executeCommandLists(1, &copyOffloadCmdListHandle, nullptr, internalOptions);
+}
+
+void CommandQueue::downloadAllocations() {
+    csr->downloadAllocations(true);
+
+    // destinations of operations offloaded from regular cmd lists are resident only on copy queue csr
+    if (copyOffloadQueue) {
+        copyOffloadQueue->getCsr()->downloadAllocations(true);
+    }
+}
+
 NEO::WaitStatus CommandQueue::reserveLinearStreamSize(size_t size) {
     auto waitStatus{NEO::WaitStatus::ready};
 
@@ -174,6 +291,9 @@ ze_result_t CommandQueue::synchronize(uint64_t timeout) {
             postSyncOperations(true);
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
+        if (csr->isTbxMode()) {
+            downloadAllocations();
+        }
         postSyncOperations(false);
 
         return ZE_RESULT_SUCCESS;
@@ -203,6 +323,9 @@ ze_result_t CommandQueue::synchronizeByPollingForTaskCount(uint64_t timeoutNanos
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
+    if (csr->isTbxMode()) {
+        downloadAllocations();
+    }
     postSyncOperations(false);
     getCsr()->pollForAubCompletion();
 

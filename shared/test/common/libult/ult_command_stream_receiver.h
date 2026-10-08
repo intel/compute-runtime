@@ -356,6 +356,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     void downloadAllocations(bool blockingWait, TaskCountType taskCount) override {
         downloadAllocationsCalledCount++;
         latestDownloadAllocationsBlocking = blockingWait;
+        latestDownloadAllocationsTaskCount = taskCount;
         if (onDownloadAllocations) {
             onDownloadAllocations();
         }
@@ -814,6 +815,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
     std::atomic<bool> latestDownloadAllocationsBlocking = false;
+    std::atomic<TaskCountType> latestDownloadAllocationsTaskCount = 0;
     std::function<void()> onDownloadAllocations;
     std::function<void()> onWaitForCompletionWithTimeout;
     OsContext *initialOsContext = nullptr;

@@ -38,6 +38,7 @@ using ResidencyContainer = std::vector<GraphicsAllocation *>;
 struct UnifiedMemoryControls;
 
 namespace L0 {
+struct CommandListExecutionContext;
 struct CommandListExecutionInternalOptions;
 struct Kernel;
 
@@ -97,6 +98,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
 
     TaskCountType getTaskCount() const { return taskCount; }
     void setTaskCount(TaskCountType newTaskCount) { taskCount = newTaskCount; }
+    void downloadAllocations();
     NEO::FlushStamp getFlushStamp() const { return flushStamp; }
     void setFlushStamp(NEO::FlushStamp newFlushStamp) { flushStamp = newFlushStamp; }
 
@@ -154,6 +156,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
         forceBbStartJump = true;
     }
     void makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer);
+    ze_result_t dispatchCopyOffloadCmdList(CommandList *commandList, const CommandListExecutionContext &ctx);
+    ze_result_t ensureCopyOffloadQueue(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists);
 
     void getPatchPreambleFullData(uint64_t &outCounterValue,
                                   uint64_t *&outHostAddress,
@@ -173,6 +177,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeoutNanoseconds);
 
     void postSyncOperations(bool hangDetected);
+    ze_result_t createCopyOffloadQueue();
 
     CommandListStateChangeList stateChanges;
     CommandBufferManager buffers;
@@ -186,6 +191,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
     NEO::LinearStream *startingCmdBuffer = nullptr;
+    CommandQueue *copyOffloadQueue = nullptr; // executes copy offload streams recorded in regular cmd lists
+    std::mutex copyOffloadQueueCreationMutex;
     NEO::GraphicsAllocation *cachedSipAllocation = nullptr;
 
     uint32_t partitionCount = 1;

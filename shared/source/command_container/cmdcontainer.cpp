@@ -236,6 +236,22 @@ bool CommandContainer::swapStreams() {
     return false;
 }
 
+void CommandContainer::swapCommandStreamState(CommandContainer &other) {
+    this->commandStream.swap(other.commandStream);
+    this->cmdBufferAllocations.swap(other.cmdBufferAllocations);
+    this->residencyContainer.swap(other.residencyContainer);
+    std::swap(this->residencyContainerStamp, other.residencyContainerStamp);
+    std::swap(this->currentLinearStreamStartOffset, other.currentLinearStreamStartOffset);
+    std::swap(this->alignedPrimarySize, other.alignedPrimarySize);
+
+    if (this->commandStream) {
+        this->commandStream->setCmdContainer(this);
+    }
+    if (other.commandStream) {
+        other.commandStream->setCmdContainer(&other);
+    }
+}
+
 void CommandContainer::removeDuplicatesFromResidencyContainer() {
     std::sort(this->residencyContainer.begin(), this->residencyContainer.end());
     this->residencyContainer.erase(std::unique(this->residencyContainer.begin(), this->residencyContainer.end()), this->residencyContainer.end());

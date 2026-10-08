@@ -75,6 +75,9 @@ CommandList::~CommandList() {
     if (cmdQImmediateCopyOffload) {
         cmdQImmediateCopyOffload->destroy();
     }
+    if (copyOffloadSubCmdList) {
+        copyOffloadSubCmdList->destroy();
+    }
     removeDeallocationContainerData();
     if (!isImmediateType()) {
         removeHostPtrAllocations();
@@ -786,6 +789,15 @@ void CommandList::enableCopyOperationOffload() {
 
     this->copyOffloadMode = device->getL0GfxCoreHelper().getDefaultCopyOffloadMode(device->getProductHelper().useAdditionalBlitProperties());
 
+    if (this->copyOffloadMode == CopyOffloadModes::dualStream && !isImmediateType()) {
+        // Regular cmd list records copy operations into separate copy engine stream, synchronized with in-order counter.
+        // Mutable cmd lists are not supported, commands recorded into copy offload stream are not mutable.
+        if (!isInOrderExecutionEnabled() || asMutable() != nullptr) {
+            this->copyOffloadMode = CopyOffloadModes::disabled;
+        }
+        return;
+    }
+
     if (this->copyOffloadMode != CopyOffloadModes::dualStream || !isImmediateType()) {
         // No need to create internal bcs queue
         return;
@@ -1001,6 +1013,15 @@ void CommandList::ensureSubCmdLists(size_t count) {
 
         subCmdListsForRecordedBcsSplit.push_back(subCmdList);
     }
+}
+
+void CommandList::ensureCopyOffloadSubCmdList() {
+    if (this->copyOffloadSubCmdList == nullptr) {
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        this->copyOffloadSubCmdList = CommandList::create(device, NEO::EngineGroupType::copy, 0, returnValue, true);
+        UNRECOVERABLE_IF(returnValue != ZE_RESULT_SUCCESS);
+    }
+    this->copyOffloadStreamUsed = true;
 }
 
 void CommandList::storeEventsForBcsSplit(BcsSplitParams::SplitEventPackage *package) {

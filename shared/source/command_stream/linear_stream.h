@@ -31,6 +31,7 @@ class LinearStream : NEO::NonCopyableAndNonMovableClass {
     size_t getAvailableSpace() const;
     size_t getUsed() const;
     void *getCmdContainer() const { return cmdContainer; }
+    void setCmdContainer(CommandContainer *newCmdContainer) { cmdContainer = newCmdContainer; }
 
     uint64_t getGpuBase() const;
     void setGpuBase(uint64_t gpuAddress);

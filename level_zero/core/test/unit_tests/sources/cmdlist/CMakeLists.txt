@@ -35,6 +35,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_in_order_cmdlist_2.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_in_order_cmdlist_3.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_regular_cmdlist_bcs_split.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_regular_cmdlist_copy_offload.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)

@@ -1468,7 +1468,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     if (status != ZE_RESULT_NOT_READY) {
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
-            mainQueueCsr->downloadAllocations(true);
+            this->cmdQImmediate->downloadAllocations();
             if (dualStreamCopyOffload) {
                 copyOffloadCsr->downloadAllocations(true);
             }
@@ -2052,6 +2052,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                                 this->dispatchCmdListBatchBufferAsPrimary);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
+    }
+    auto copyOffloadQueueStatus = this->cmdQImmediate->ensureCopyOffloadQueue(numCommandLists, phCommandLists);
+    if (copyOffloadQueueStatus != ZE_RESULT_SUCCESS) {
+        return copyOffloadQueueStatus;
     }
     auto mainAppendLock = this->cmdQImmediate->getCsr()->obtainUniqueOwnership();
 

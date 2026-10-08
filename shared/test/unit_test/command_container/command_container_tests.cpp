@@ -154,6 +154,92 @@ TEST_F(CommandContainerTest, whenInitializeThenNotCreateAdditionalLinearStream) 
     EXPECT_EQ(cmdContainer.getCommandStream(), cmdStream);
 }
 
+TEST_F(CommandContainerTest, givenTwoCmdContainersWhenSwappingCommandStreamStateThenStreamsCmdBuffersAndResidencyAreExchanged) {
+    CommandContainer firstContainer;
+    firstContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    CommandContainer secondContainer;
+    secondContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false);
+
+    auto firstStream = firstContainer.getCommandStream();
+    auto secondStream = secondContainer.getCommandStream();
+    auto firstCmdBuffer = firstContainer.getCmdBufferAllocations()[0];
+    auto secondCmdBuffer = secondContainer.getCmdBufferAllocations()[0];
+
+    MockGraphicsAllocation firstResidentAllocation;
+    MockGraphicsAllocation secondResidentAllocation;
+    firstContainer.clearResidencyContainer();
+    secondContainer.clearResidencyContainer();
+    firstContainer.addToResidencyContainer(&firstResidentAllocation);
+    secondContainer.addToResidencyContainer(&secondResidentAllocation);
+
+    firstContainer.swapCommandStreamState(secondContainer);
+
+    EXPECT_EQ(secondStream, firstContainer.getCommandStream());
+    EXPECT_EQ(firstStream, secondContainer.getCommandStream());
+    EXPECT_EQ(&firstContainer, secondStream->getCmdContainer());
+    EXPECT_EQ(&secondContainer, firstStream->getCmdContainer());
+
+    ASSERT_EQ(1u, firstContainer.getCmdBufferAllocations().size());
+    ASSERT_EQ(1u, secondContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(secondCmdBuffer, firstContainer.getCmdBufferAllocations()[0]);
+    EXPECT_EQ(firstCmdBuffer, secondContainer.getCmdBufferAllocations()[0]);
+
+    ASSERT_EQ(1u, firstContainer.getResidencyContainer().size());
+    ASSERT_EQ(1u, secondContainer.getResidencyContainer().size());
+    EXPECT_EQ(&secondResidentAllocation, firstContainer.getResidencyContainer()[0]);
+    EXPECT_EQ(&firstResidentAllocation, secondContainer.getResidencyContainer()[0]);
+
+    // allocation already present in swapped residency container is not duplicated
+    firstContainer.addToResidencyContainer(&secondResidentAllocation);
+    EXPECT_EQ(1u, firstContainer.getResidencyContainer().size());
+
+    // swapped stream requests next command buffer from container it is currently owned by
+    secondStream->getSpace(secondStream->getAvailableSpace());
+    EXPECT_EQ(2u, firstContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(1u, secondContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(firstContainer.getCmdBufferAllocations()[1], secondStream->getGraphicsAllocation());
+
+    firstContainer.swapCommandStreamState(secondContainer);
+
+    EXPECT_EQ(firstStream, firstContainer.getCommandStream());
+    EXPECT_EQ(secondStream, secondContainer.getCommandStream());
+    EXPECT_EQ(&firstContainer, firstStream->getCmdContainer());
+    EXPECT_EQ(&secondContainer, secondStream->getCmdContainer());
+    EXPECT_EQ(1u, firstContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(2u, secondContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(&firstResidentAllocation, firstContainer.getResidencyContainer()[0]);
+    EXPECT_EQ(&secondResidentAllocation, secondContainer.getResidencyContainer()[0]);
+
+    firstContainer.clearResidencyContainer();
+    secondContainer.clearResidencyContainer();
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWithoutCommandStreamWhenSwappingCommandStreamStateThenStreamIsMovedToOtherContainer) {
+    CommandContainer initializedContainer;
+    initializedContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    CommandContainer emptyContainer;
+
+    auto stream = initializedContainer.getCommandStream();
+    ASSERT_NE(nullptr, stream);
+    ASSERT_EQ(nullptr, emptyContainer.getCommandStream());
+
+    initializedContainer.swapCommandStreamState(emptyContainer);
+
+    EXPECT_EQ(nullptr, initializedContainer.getCommandStream());
+    EXPECT_EQ(stream, emptyContainer.getCommandStream());
+    EXPECT_EQ(&emptyContainer, stream->getCmdContainer());
+    EXPECT_EQ(0u, initializedContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(1u, emptyContainer.getCmdBufferAllocations().size());
+
+    emptyContainer.swapCommandStreamState(initializedContainer);
+
+    EXPECT_EQ(stream, initializedContainer.getCommandStream());
+    EXPECT_EQ(nullptr, emptyContainer.getCommandStream());
+    EXPECT_EQ(&initializedContainer, stream->getCmdContainer());
+    EXPECT_EQ(1u, initializedContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(0u, emptyContainer.getCmdBufferAllocations().size());
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectAllocationTypes) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);

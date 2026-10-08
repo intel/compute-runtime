@@ -104,6 +104,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::waitForCommandQueueCompletion;
     using L0::CommandQueue::activeSubDevices;
     using L0::CommandQueue::cmdListHeapAddressModel;
+    using L0::CommandQueue::copyOffloadQueue;
     using L0::CommandQueue::csr;
     using L0::CommandQueue::dispatchCmdListBatchBufferAsPrimary;
     using L0::CommandQueue::doubleSbaWa;
@@ -118,6 +119,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::saveWaitForPreamble;
     using L0::CommandQueue::stateBaseAddressTracking;
     using L0::CommandQueue::stateComputeModeTracking;
+    using L0::CommandQueue::useKmdWaitFunction;
 
     MockCommandQueueHw(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : L0::CommandQueueHw<gfxCoreFamily>(device, csr, desc) {
     }

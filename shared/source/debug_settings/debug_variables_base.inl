@@ -346,6 +346,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PipelinedEuThreadArbitration, -1, "-1: default. 
 DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0: default disabled, 1: enable use only global timestamp")
 DECLARE_DEBUG_VARIABLE(int32_t, GetSipBinaryFromExternalLib, -1, "-1: default, 0: disabled, 1: enabled. If enabled, then retrieve Sip from external library")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCopyOffloadMode, -1, "-1: default, 0: disabled, >=1: if enabled, override to any value from CopyOffloadModes enum")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideDualStreamCopyOffloadForRegularSupport, -1, "-1: default, 0: disabled, 1: enabled. If enabled, regular in-order compute cmd lists may offload copy operations to separate copy engine stream in dual stream copy offload mode")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideFillCopyOffloadThresholdKb, -1, "-1: default, >0: if copy offload is enabled, offload fill operations if size is below this threshold (in kb)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxMemAllocSizeMb, -1, "-1: default, >=0 override reported max mem alloc size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, DetectIncorrectPointersOnSetArgCalls, -1, "-1: default do not detect, 0: do not detect, 1: detect incorrect pointers and return error")

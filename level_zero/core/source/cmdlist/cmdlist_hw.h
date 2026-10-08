@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_mapper.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
@@ -543,6 +544,25 @@ struct CommandListCoreFamily : public CommandList {
     bool isCopyOffloadForFillPreferred(size_t size) const;
 
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
+
+    bool beginCopyOffloadStreamRecording(bool copyOffloadOperation);
+    void endCopyOffloadStreamRecording();
+    void appendWaitOnCopyOffloadStreamCompletion();
+
+    // Regular cmd list records dual stream copy offload operations into separate copy engine command stream
+    class CopyOffloadStreamScope : NEO::NonCopyableAndNonMovableClass {
+      public:
+        CopyOffloadStreamScope(CommandListCoreFamily &cmdList, bool copyOffloadOperation) : cmdList(cmdList), active(cmdList.beginCopyOffloadStreamRecording(copyOffloadOperation)) {}
+        ~CopyOffloadStreamScope() {
+            if (active) {
+                cmdList.endCopyOffloadStreamRecording();
+            }
+        }
+
+      protected:
+        CommandListCoreFamily &cmdList;
+        const bool active;
+    };
 
     NEO::PauseOnGpuProperties::PendingSubmissionPauses pendingSubmissionPauses{};
     bool latestOperationHasCbEventWithProfiling = false;

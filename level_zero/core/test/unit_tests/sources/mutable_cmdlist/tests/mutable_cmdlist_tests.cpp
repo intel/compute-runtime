@@ -8,6 +8,8 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -26,6 +28,8 @@
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_store_data_imm_hw.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_store_register_mem_hw.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_variable.h"
+
+#include "copy_offload_mode.h"
 
 namespace L0 {
 namespace ult {
@@ -4630,6 +4634,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         mutableLri = waitExternalVariable->getLoadRegImmList()[3];
         EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, mutableLri->getType());
     }
+}
+
+struct MutableCommandListDualStreamCopyOffloadFixture : public MutableCommandListFixture<true, 0> {
+    void setUp() {
+        NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(2);
+        NEO::debugManager.flags.OverrideCopyOffloadMode.set(static_cast<int32_t>(CopyOffloadModes::dualStream));
+        NEO::debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(1);
+        NEO::debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+        hwInfoBackup = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        defaultHwInfo->featureTable.ftrBcsInfo = 0b111;
+
+        MutableCommandListFixture<true, 0>::setUp();
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<VariableBackup<NEO::HardwareInfo>> hwInfoBackup;
+};
+
+using MutableCommandListDualStreamCopyOffloadTest = Test<MutableCommandListDualStreamCopyOffloadFixture>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListDualStreamCopyOffloadTest,
+            givenDualStreamCopyOffloadModeWhenCreatingInOrderMutableCmdListThenCopyOffloadIsDisabled) {
+    auto baseCmdList = mutableCommandList->getBase();
+    EXPECT_TRUE(baseCmdList->isInOrderExecutionEnabled());
+    EXPECT_FALSE(baseCmdList->isCopyOffloadEnabled());
+    EXPECT_EQ(CopyOffloadModes::disabled, baseCmdList->getCopyOffloadModeForOperation(true));
 }
 
 } // namespace ult

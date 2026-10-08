@@ -61,6 +61,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::arePostBlitWACmdsRequired;
     using BaseClass::bcsSplitMode;
+    using BaseClass::beginCopyOffloadStreamRecording;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;
@@ -78,6 +79,9 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::containsExternalAllocation;
     using BaseClass::containsSystemAllocation;
     using BaseClass::copyOffloadMode;
+    using BaseClass::copyOffloadStreamRecordingActive;
+    using BaseClass::copyOffloadStreamUsed;
+    using BaseClass::copyOffloadSubCmdList;
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;
@@ -90,6 +94,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::dispatchHostFunction;
     using BaseClass::doubleSbaWa;
     using BaseClass::duplicatedInOrderCounterStorageEnabled;
+    using BaseClass::endCopyOffloadStreamRecording;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
     using BaseClass::eventsForRecordedBcsSplit;
@@ -127,6 +132,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isUsingSystemAllocation;
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::l3FlushAfterPostSyncEnabled;
+    using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestOperationHasCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
