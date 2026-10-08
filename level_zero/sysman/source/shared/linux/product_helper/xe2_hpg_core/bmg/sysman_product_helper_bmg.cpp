@@ -1328,46 +1328,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorTemperature(Li
     return readVoltageRegulatorTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature, sensorIndex);
 }
 
-static ze_result_t readVoltageRegulatorMaxTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
-                                                      double *pTemperature) {
-    ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    bool isAnySensorAvailable = false;
-    double vrMaxTemperature = 0;
-    for (uint32_t sensorIndex = 0; sensorIndex < maxVrTemperatureSensorCount; sensorIndex++) {
-        double vrTemperature = 0;
-        result = readVoltageRegulatorTemperature(keyOffsetMap, keyTelemInfoMap, &vrTemperature, sensorIndex);
-        if (result != ZE_RESULT_SUCCESS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Info@ %s(): VR temperature sensor %u is not available, ignoring it for the max VR temperature, error:0x%x \n", NEO_FUNCTION_NAME, sensorIndex, result);
-            continue;
-        }
-        vrMaxTemperature = std::max(vrMaxTemperature, vrTemperature);
-        isAnySensorAvailable = true;
-    }
-
-    if (!isAnySensorAvailable) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): None of the VR temperature sensors are available, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
-
-    *pTemperature = vrMaxTemperature;
-    return ZE_RESULT_SUCCESS;
-}
-
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getVoltageRegulatorMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
-    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
-    std::map<std::string, uint64_t> keyOffsetMap;
-    std::unordered_map<std::string, std::string> keyTelemInfoMap;
-
-    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
-
-    return readVoltageRegulatorMaxTemperature(keyOffsetMap, keyTelemInfoMap, pTemperature);
-}
-
 static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemNodeDir) {
     uint32_t rxCounterLsb = 0;
     ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "reg_PCIESS_rx_bytecount_lsb", 0, rxCounterLsb);
@@ -1542,8 +1502,7 @@ void SysmanProductHelperHw<gfxProduct>::getSupportedSensors(std::map<zes_temp_se
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GLOBAL] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_GPU] = 1;
     supportedSensorTypeMap[ZES_TEMP_SENSORS_MEMORY] = 1;
-    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = 1;
-    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR_SINGLE] = maxVrTemperatureSensorCount;
+    supportedSensorTypeMap[ZES_TEMP_SENSORS_VOLTAGE_REGULATOR] = maxVrTemperatureSensorCount;
 }
 
 template <>
@@ -1572,9 +1531,13 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     }
 
     double vrMaxTemperature = 0;
-    result = readVoltageRegulatorMaxTemperature(keyOffsetMap, keyTelemInfoMap, &vrMaxTemperature);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
+    for (uint32_t sensorIndex = 0; sensorIndex < maxVrTemperatureSensorCount; sensorIndex++) {
+        double vrTemperature = 0;
+        result = readVoltageRegulatorTemperature(keyOffsetMap, keyTelemInfoMap, &vrTemperature, sensorIndex);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+        vrMaxTemperature = std::max(vrMaxTemperature, vrTemperature);
     }
 
     *pTemperature = std::max({gpuMaxTemperature, memoryMaxTemperature, vrMaxTemperature});
