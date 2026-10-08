@@ -36,6 +36,7 @@ struct MutableStoreDataImm;
 struct MutableStoreRegisterMem;
 struct Variable;
 struct VariableDispatch;
+struct WaitEventVariableDescriptor;
 
 struct InterfaceVariableDescriptor {
     const char *name = nullptr;
@@ -169,7 +170,7 @@ struct Variable : public VariableHandle {
     ze_result_t setAsKernelArg(ze_kernel_handle_t hKernel, uint32_t argIndex);
     ze_result_t setAsKernelGroupSize(ze_kernel_handle_t hKernel);
     ze_result_t setAsSignalEvent(Event *event, MutableComputeWalker *walkerCmd, MutablePipeControl *postSyncCmd);
-    ze_result_t setAsWaitEvent(Event *event);
+    ze_result_t setAsWaitEvent(WaitEventVariableDescriptor &waitEventVarDesc);
     //  --------------------
 
     // ------Usages---------

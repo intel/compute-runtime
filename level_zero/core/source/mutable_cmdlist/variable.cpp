@@ -35,6 +35,7 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_semaphore_wait.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_store_data_imm.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_store_register_mem.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_variable_descriptor.h"
 #include "level_zero/core/source/mutable_cmdlist/usage.h"
 #include "level_zero/core/source/mutable_cmdlist/variable_dispatch.h"
 
@@ -150,16 +151,16 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t Variable::setAsWaitEvent(Event *event) {
+ze_result_t Variable::setAsWaitEvent(WaitEventVariableDescriptor &waitEventVarDesc) {
     if (false == isType(VariableType::waitEvent)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     uint32_t semWaitReserve = 0;
-    this->desc.eventValue.event = event;
-    this->desc.eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
-    this->desc.eventValue.counterBasedEvent = event->isCounterBased();
-    this->desc.eventValue.packetCount = event->getPacketsInUse();
+    this->desc.eventValue.event = waitEventVarDesc.event;
+    this->desc.eventValue.eventPoolAllocation = waitEventVarDesc.event->getAllocation(cmdList->getBase()->getDevice());
+    this->desc.eventValue.counterBasedEvent = waitEventVarDesc.event->isCounterBased();
+    this->desc.eventValue.packetCount = waitEventVarDesc.event->getPacketsInUse();
 
     this->desc.eventValue.qwordInUse = cmdList->isQwordInOrderCounter();
     this->desc.eventValue.useSemaphore64bCmd = cmdList->isSemaphore64bCmdSupported();
@@ -168,20 +169,20 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
     if (this->desc.eventValue.counterBasedEvent) {
         uint32_t lriMultiplier = this->desc.eventValue.qwordIndirect ? 2 : 0;
 
-        auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
+        auto deviceCounterAlloc = waitEventVarDesc.event->getInOrderExecEventHelper().getDeviceCounterAllocation();
         this->desc.eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
 
-        this->desc.eventValue.waitPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
-        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(event) || !event->getInOrderExecEventHelper().isDataAssigned();
-        this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(event);
-        this->desc.eventValue.isExternalFlag |= event->isExternalEvent();
+        this->desc.eventValue.waitPackets = waitEventVarDesc.waitEventPackets;
+        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(waitEventVarDesc.event) || !waitEventVarDesc.event->getInOrderExecEventHelper().isDataAssigned();
+        this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(waitEventVarDesc.event);
+        this->desc.eventValue.isExternalFlag |= waitEventVarDesc.event->isExternalEvent();
 
         // standard CB events that are not external, but for that append upon requirement to assign patch preamble, can act as external - save the patch preamble values for the variable
-        this->desc.eventValue.patchPreambleCounterValue = event->getInOrderExecEventHelper().getPatchPreambleCounter();
+        this->desc.eventValue.patchPreambleCounterValue = waitEventVarDesc.event->getInOrderExecEventHelper().getPatchPreambleCounter();
         this->desc.eventValue.patchPreambleNoopState = this->desc.eventValue.patchPreambleCounterValue == 0;
 
-        this->desc.eventValue.patchPreambleCounterDeviceAllocation = event->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation();
-        this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
+        this->desc.eventValue.patchPreambleCounterDeviceAllocation = waitEventVarDesc.event->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation();
+        this->desc.eventValue.patchPreambleCounterDeviceGpuAddress = waitEventVarDesc.event->getInOrderExecEventHelper().getPatchPreambleDeviceGpuAddress();
 
         if (this->desc.eventValue.isExternalFlag || this->desc.eventValue.patchPreambleNoopState == false) {
             semWaitReserve += this->desc.eventValue.waitPackets;
@@ -192,7 +193,7 @@ ze_result_t Variable::setAsWaitEvent(Event *event) {
             this->desc.eventValue.loadRegImmCmds.reserve(lriMultiplier * this->desc.eventValue.waitPackets);
         }
     } else {
-        this->desc.eventValue.waitPackets = event->getPacketsToWait();
+        this->desc.eventValue.waitPackets = waitEventVarDesc.waitEventPackets;
     }
     semWaitReserve += this->desc.eventValue.waitPackets;
     this->desc.eventValue.semWaitCmds.reserve(semWaitReserve);

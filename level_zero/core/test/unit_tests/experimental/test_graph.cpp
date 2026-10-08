@@ -4092,6 +4092,108 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             GraphTestInstantiationTest,
+            givenRegularCbEventIsRecordedAsSignalInternalAndAsSignalWithApiGraphExternalFlagWhenInstantiateExecutableGraphThenCorrectEventIsSavedIntoExternalSignalStorage) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> rootCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    rootCommandList->setOrdinal(0);
+    auto rootCommandListHandle = rootCommandList->toHandle();
+
+    std::unique_ptr<L0::CommandList> forkCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    forkCommandList->setOrdinal(0);
+    auto forkCommandListHandle = forkCommandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+
+    std::unique_ptr<L0::Graph> graph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = graph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(rootCommandListHandle, graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(rootCommandListHandle, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(forkCommandListHandle, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(forkCommandListHandle, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(rootCommandListHandle, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(rootCommandListHandle, &eventFlagsDesc, eventHandle)); // here it is used as external
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(rootCommandListHandle, &graphHandle, nullptr));
+    ExecutableGraph execGraph;
+    auto ret = execGraph.instantiateFrom(*(graph.get()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    ASSERT_EQ(1u, externalCbSignalEventContainer.size());
+    auto itSignalOutside = std::find_if(externalCbSignalEventContainer.begin(),
+                                        externalCbSignalEventContainer.end(),
+                                        [event](const ExternalSignalCbEventInfo &info) { return info.event == event; });
+    ASSERT_NE(externalCbSignalEventContainer.end(), itSignalOutside);
+    EXPECT_TRUE((*itSignalOutside).apiRequiredSignalEvent);
+
+    graph.reset();
+    zeEventDestroy(eventHandle);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            givenRegularCbEventIsRecordedAsWaitInternalAndAsWaitWithApiGraphExternalFlagWhenInstantiateExecutableGraphThenCorrectEventIsSavedIntoExternalWaitStorage) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> rootCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    rootCommandList->setOrdinal(0);
+    auto rootCommandListHandle = rootCommandList->toHandle();
+
+    std::unique_ptr<L0::CommandList> forkCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    forkCommandList->setOrdinal(0);
+    auto forkCommandListHandle = forkCommandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+
+    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+
+    std::unique_ptr<L0::Graph> graph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = graph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(rootCommandListHandle, graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEventsWithParameters(rootCommandListHandle, &eventFlagsDesc, 1, &eventHandle)); // here it is used as external
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(rootCommandListHandle, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(forkCommandListHandle, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(forkCommandListHandle, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(rootCommandListHandle, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(rootCommandListHandle, &graphHandle, nullptr));
+    ExecutableGraph execGraph;
+    auto ret = execGraph.instantiateFrom(*(graph.get()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto &externalCbWaitEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbWaitEventInfos();
+    ASSERT_EQ(1u, externalCbWaitEventContainer.size());
+    auto itWaitOutside = std::find_if(externalCbWaitEventContainer.begin(),
+                                      externalCbWaitEventContainer.end(),
+                                      [eventHandle](const ExternalWaitCbEventsInfo &info) {
+                                          return std::find(info.waitEvents.begin(), info.waitEvents.end(), eventHandle) != info.waitEvents.end();
+                                      });
+    ASSERT_NE(externalCbWaitEventContainer.end(), itWaitOutside);
+
+    graph.reset();
+    zeEventDestroy(eventHandle);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
             givenInOrderCmdListAndRegularCbEventRecordedWithApiGraphExternalFlagWhenInstantiateToGraphAndRunningOnOutsideImmediateCmdListThenRecordAsExternalCbEventAndDispatchCommands) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;

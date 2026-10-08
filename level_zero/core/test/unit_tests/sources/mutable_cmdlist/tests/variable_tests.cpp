@@ -1430,7 +1430,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false, false);
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(this->variable->desc.eventValue.event, event);
     this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
@@ -1466,7 +1468,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createMutableSemaphoreWait<FamilyType>(offset, L0::MCL::MutableSemaphoreWait::Type::regularEventWait, false, false);
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(this->variable->desc.eventValue.event, event);
     this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
@@ -1504,7 +1508,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     event->getInOrderExecEventHelper().assignData(1, 0, 1, 1, &peerCounterDeviceAlloc, &peerCounterDeviceAlloc, 1, 0, nullptr, 0, 0, false, true);
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(peerCounterDeviceAlloc.getGpuAddress(), this->variable->desc.eventValue.cbEventDeviceCounterAllocation->getGpuAddress());
 }
@@ -1576,7 +1582,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
 
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
 }
 
@@ -1779,7 +1787,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     prepareInOrderWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     if (this->qwordIndirect) {
         this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
         this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
@@ -1816,7 +1826,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     prepareInOrderWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     if (this->qwordIndirect) {
         this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[0].get());
         this->variable->getLoadRegImmList().push_back(this->mutableLoadRegisterImms[1].get());
@@ -1884,7 +1896,9 @@ void VariableInOrderFixture::testAsyncMutationWaitEventTest(bool indirect) {
     }
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     if (this->qwordIndirect) {
         this->mutableLoadRegisterImms[0]->restore();
@@ -1973,7 +1987,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     preparePatchPreambleWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto &eventValue = this->variable->getDesc().eventValue;
@@ -2033,7 +2049,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     preparePatchPreambleWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto &eventValue = this->variable->getDesc().eventValue;
@@ -2110,7 +2128,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     preparePatchPreambleWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // adding counter allocation to residency container is done at MCL level
     mutableCommandList->addToResidencyContainer(&counterAlloc);
@@ -2182,7 +2202,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     preparePatchPreambleWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // adding counter allocation to residency container is done at MCL level
     mutableCommandList->addToResidencyContainer(&counterAlloc);
@@ -2275,7 +2297,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     preparePatchPreambleWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // adding counter allocation to residency container is done at MCL level
     mutableCommandList->addToResidencyContainer(&counterAlloc);
@@ -2376,7 +2400,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     preparePatchPreambleWaitCommands<FamilyType>();
 
     createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
-    auto ret = this->variable->setAsWaitEvent(event);
+    L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+    waitEventVarDesc.event = event;
+    auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // adding counter allocation to residency container is done at MCL level
     mutableCommandList->addToResidencyContainer(&counterAlloc);

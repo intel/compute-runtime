@@ -1098,8 +1098,6 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
                 varDesc.apiRequestEventGraphExternal = mutableEventParams.apiRequestGraphExternal;
                 getVariable(&varDesc, &variable);
 
-                variable->setAsWaitEvent(event);
-
                 mutableWaitEventDesc.event = event;
                 mutableWaitEventDesc.eventVariable = variable;
                 mutableWaitEventDesc.waitEventIndex = i;
@@ -1121,6 +1119,7 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
                 } else {
                     mutableWaitEventDesc.waitEventPackets = event->getPacketsToWait();
                 }
+                variable->setAsWaitEvent(mutableWaitEventDesc);
                 currentAppend.waitEvents.push_back(mutableWaitEventDesc);
 
                 NEO::GraphicsAllocation *eventPoolAlloc = event->getAllocation(this->device);

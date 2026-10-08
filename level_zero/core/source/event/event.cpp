@@ -301,7 +301,7 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
     constexpr uint32_t cmdListTypeFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE);
     constexpr uint32_t allCounterBasedFlags = (cmdListTypeFlags | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE | ZE_EVENT_COUNTER_BASED_FLAG_IPC |
                                                ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP | ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP |
-                                               ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+                                               ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL);
 
     auto device = Device::fromHandle(hDevice);
     auto counterBasedEventDesc = desc ? desc : &defaultIntelCounterBasedEventDesc;
@@ -317,7 +317,7 @@ ze_result_t Event::counterBasedCreate(ze_context_handle_t hContext, ze_device_ha
     const bool ipcFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_IPC);
     const bool timestampFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP);
     const bool mappedTimestampFlag = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP);
-    const bool externalEvent = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
+    const bool externalEvent = !!(counterBasedEventDesc->flags & ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL);
 
     uint32_t inputCbFlags = counterBasedEventDesc->flags;
     if ((counterBasedEventDesc->flags & cmdListTypeFlags) == 0) {

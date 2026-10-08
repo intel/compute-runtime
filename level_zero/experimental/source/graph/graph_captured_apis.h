@@ -721,11 +721,13 @@ struct Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters> {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
         IndirectArgs(IndirectArgs &&other) noexcept
             : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
-              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)),
+              isGraphExternalFlagSet(other.isGraphExternalFlagSet) {
         }
         IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
         void *clonedPNext = nullptr;
+        bool isGraphExternalFlagSet = false;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -1051,11 +1053,13 @@ struct Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
         IndirectArgs(IndirectArgs &&other) noexcept
             : EmptyIndirectArgs(std::move(static_cast<EmptyIndirectArgs &>(other))),
-              clonedPNext(std::exchange(other.clonedPNext, nullptr)) {
+              clonedPNext(std::exchange(other.clonedPNext, nullptr)),
+              isGraphExternalFlagSet(other.isGraphExternalFlagSet) {
         }
         IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
         void *clonedPNext = nullptr;
+        bool isGraphExternalFlagSet = false;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
