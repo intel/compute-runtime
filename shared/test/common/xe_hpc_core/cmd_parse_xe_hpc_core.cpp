@@ -66,10 +66,10 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
 
     return "UNKNOWN";
 }
-#include "shared/test/common/cmd_parse/cmd_parse_xe_hpg_and_later.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_from_xe_hpg_to_xe3.inl"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse_base.inl"
-#include "shared/test/common/cmd_parse/hw_parse_xe_hpg_and_later.inl"
+#include "shared/test/common/cmd_parse/hw_parse_from_xe_hpg_to_xe3.inl"
 
 template const typename GenGfxFamily::RENDER_SURFACE_STATE *NEO::HardwareParse::getSurfaceState<GenGfxFamily>(IndirectHeap *ssh, uint32_t index);
 template void HardwareParse::verifyL1FlushOnStallingBarrier<GenGfxFamily>(bool, bool);

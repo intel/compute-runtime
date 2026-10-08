@@ -18,6 +18,7 @@ using GenGfxFamily = NEO::Xe2HpgCoreFamily;
 #include "shared/test/common/cmd_parse/cmd_parse_system_mem_fence_address.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_xy_block_copy.inl"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse_xe2_hpg_and_later.inl"
 
 using MI_MEM_FENCE = GenStruct::MI_MEM_FENCE;
 using STATE_SYSTEM_MEM_FENCE_ADDRESS = GenStruct::STATE_SYSTEM_MEM_FENCE_ADDRESS;
@@ -82,10 +83,9 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
 
     return "UNKNOWN";
 }
-#include "shared/test/common/cmd_parse/cmd_parse_xe_hpg_and_later.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_from_xe_hpg_to_xe3.inl"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse_base.inl"
-#include "shared/test/common/cmd_parse/hw_parse_xe2_hpg_and_later.inl"
-#include "shared/test/common/cmd_parse/hw_parse_xe_hpg_and_later.inl"
+#include "shared/test/common/cmd_parse/hw_parse_from_xe_hpg_to_xe3.inl"
 
 template const typename GenGfxFamily::RENDER_SURFACE_STATE *NEO::HardwareParse::getSurfaceState<GenGfxFamily>(IndirectHeap *ssh, uint32_t index);

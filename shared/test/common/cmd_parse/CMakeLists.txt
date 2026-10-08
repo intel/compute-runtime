@@ -21,8 +21,8 @@ target_sources(neo_libult_common PRIVATE
 
 if(TESTS_DG2_AND_LATER)
   target_sources(neo_libult_common PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_xe_hpg_and_later.inl
-                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse_xe_hpg_and_later.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_from_xe_hpg_to_xe3.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse_from_xe_hpg_to_xe3.inl
   )
 endif()
 
