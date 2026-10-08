@@ -436,7 +436,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     appendWaitOnCopyOffloadStreamCompletion();
 
-    commandContainer.removeDuplicatesFromResidencyContainer();
     if (this->dispatchCmdListBatchBufferAsPrimary) {
         commandContainer.endAlignedPrimaryBuffer();
     } else {
@@ -448,7 +447,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     }
     if (auto copyOffloadCmdList = this->getCopyOffloadSubCmdList()) {
         copyOffloadCmdList->close();
+
+        // compute stream patch preamble may patch commands in copy offload stream
+        auto &dstResidencyContainer = commandContainer.getResidencyContainer();
+        dstResidencyContainer.insert(dstResidencyContainer.end(),
+                                     copyOffloadCmdList->getCmdContainer().getCmdBufferAllocations().begin(),
+                                     copyOffloadCmdList->getCmdContainer().getCmdBufferAllocations().end());
     }
+
+    commandContainer.removeDuplicatesFromResidencyContainer();
+
     calculateHostFunctionsPatchSize();
     calculateAsyncPatchlistPatchSize();
     calculateActiveScratchPatchElemsPatchSize();

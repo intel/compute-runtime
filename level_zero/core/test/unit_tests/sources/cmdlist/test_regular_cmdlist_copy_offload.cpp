@@ -915,6 +915,22 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleWhenExecutingCmdList
     }
 }
 
+HWTEST2_F(RegularCmdListCopyOffloadTests,
+          givenComputeWithCopyOffloadCommandListWhenCopyOffloadIsPresentThenCopyOffloadCommandBufferBelongsToComputeResidency,
+          IsAtLeastXeCore) {
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto copyCmdList = getCopyOffloadCmdList(*cmdList);
+    auto &mainContainer = cmdList->getCmdContainer();
+    auto &copyContainer = copyCmdList->getCmdContainer();
+
+    for (auto &copyOffloadCmdBuffer : copyContainer.getCmdBufferAllocations()) {
+        EXPECT_NE(mainContainer.getResidencyContainer().end(), std::find(mainContainer.getResidencyContainer().begin(), mainContainer.getResidencyContainer().end(), copyOffloadCmdBuffer));
+    }
+}
+
 HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleRequiredCounterFromUpperLayerWhenExecutingCmdListThenQueueDoesNotAcquireCounterAndCopyOffloadStreamWaitsForProvidedCounter, IsAtLeastXeCore) {
     auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
@@ -959,7 +975,85 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleRequiredCounterFromU
     auto patchPreambleCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, requiredDeviceGpuAddress);
     ASSERT_EQ(1u, patchPreambleCounterWaits.size());
     EXPECT_EQ(requiredCounter, patchPreambleCounterWaits[0]);
-    EXPECT_EQ(0u, getSemaphoreWaitValues<FamilyType>(copyQueueCmds, crossSyncAllocation->getGpuAddress()).size());
+    EXPECT_EQ(1u, getSemaphoreWaitValues<FamilyType>(copyQueueCmds, crossSyncAllocation->getGpuAddress()).size());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadTests,
+          givenPatchPreambleExternalCrossSyncPresentWhenExecutionComputeWithCopyOffloadCommandListThenExternalCrossSyncIsWaitedOnCopyOffloadQueue,
+          IsAtLeastXeCore) {
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    cmdQueue->setPatchingPreamble(true);
+
+    // graph acquires patch preamble counter of the executing queue and uses it for cross sync between segments
+    uint64_t requiredCounter = 0;
+    uint64_t *hostAddress = nullptr;
+    uint64_t hostGpuAddress = 0;
+    NEO::GraphicsAllocation *hostAllocation = nullptr;
+    uint64_t requiredDeviceGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceAllocation = nullptr;
+    cmdQueue->getPatchPreambleFullData(requiredCounter, hostAddress, hostGpuAddress, hostAllocation, requiredDeviceGpuAddress, deviceAllocation);
+
+    uint64_t firstExecutionExternalCounter = 5;
+    uint64_t firstExecutionExternalDeviceGpuAddress = 0xABC000;
+    MockGraphicsAllocation firstExecutionExternalAllocation(nullptr, firstExecutionExternalDeviceGpuAddress, 0x1000);
+
+    CountersCrossSyncContainer crossSyncContainer;
+    crossSyncContainer.patchPreambleCrossSyncList.push_back({.counter = firstExecutionExternalCounter,
+                                                             .deviceGpuAddress = firstExecutionExternalDeviceGpuAddress,
+                                                             .deviceGraphicsAllocation = &firstExecutionExternalAllocation,
+                                                             .appendedCommandListToSyncBefore = cmdList.get()});
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.countersCrossSyncContainer = &crossSyncContainer;
+    internalOptions.patchPreambleRequiredCounter = requiredCounter;
+    internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress = requiredDeviceGpuAddress;
+
+    auto cmdListHandle = cmdList->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+
+    // cross sync is resolved by compute stream, copy offload stream waits also for external patch preamble counters
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
+
+    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueue);
+    auto copyQueueCmds = parseStream<FamilyType>(copyQueue->commandStream, 0);
+
+    auto patchPreambleInternalCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, requiredDeviceGpuAddress);
+    ASSERT_EQ(1u, patchPreambleInternalCounterWaits.size());
+    EXPECT_EQ(requiredCounter, patchPreambleInternalCounterWaits[0]);
+    auto patchPreambleExternalCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, firstExecutionExternalDeviceGpuAddress);
+    ASSERT_EQ(1u, patchPreambleExternalCounterWaits.size());
+    EXPECT_EQ(firstExecutionExternalCounter, patchPreambleExternalCounterWaits[0]);
+
+    auto sizeAfterFirstExecution = copyQueue->commandStream.getUsed();
+    crossSyncContainer.patchPreambleCrossSyncList.clear();
+
+    uint64_t secondExecutionExternalCounter = 10;
+    uint64_t secondExecutionExternalDeviceGpuAddress = 0xDEF000;
+    MockGraphicsAllocation secondExecutionExternalAllocation(nullptr, secondExecutionExternalDeviceGpuAddress, 0x1000);
+    crossSyncContainer.patchPreambleCrossSyncList.push_back({.counter = secondExecutionExternalCounter,
+                                                             .deviceGpuAddress = secondExecutionExternalDeviceGpuAddress,
+                                                             .deviceGraphicsAllocation = &secondExecutionExternalAllocation,
+                                                             .appendedCommandListToSyncBefore = cmdList.get()});
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    copyQueueCmds = parseStream<FamilyType>(copyQueue->commandStream, sizeAfterFirstExecution);
+
+    patchPreambleInternalCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, requiredDeviceGpuAddress);
+    ASSERT_EQ(1u, patchPreambleInternalCounterWaits.size());
+    EXPECT_EQ(requiredCounter, patchPreambleInternalCounterWaits[0]);
+
+    // 1st execution external counter was not present at 2nd execution, so it should not be waited on copy offload stream
+    patchPreambleExternalCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, firstExecutionExternalDeviceGpuAddress);
+    ASSERT_EQ(0u, patchPreambleExternalCounterWaits.size());
+
+    // but verify that 2nd execution external counter is waited on copy offload stream
+    patchPreambleExternalCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, secondExecutionExternalDeviceGpuAddress);
+    ASSERT_EQ(1u, patchPreambleExternalCounterWaits.size());
+    EXPECT_EQ(secondExecutionExternalCounter, patchPreambleExternalCounterWaits[0]);
 }
 
 HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleAndMultipleCmdListsWithCopyOffloadWhenExecutingThenSinglePatchPreambleCounterIsAcquiredAndAllCopyOffloadStreamsWaitForIt, IsAtLeastXeCore) {

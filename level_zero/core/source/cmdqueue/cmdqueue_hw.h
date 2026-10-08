@@ -119,6 +119,7 @@ struct CommandQueueHw : public CommandQueue {
     inline void dispatchSingleSynchronizationCommand(NEO::LinearStream &commandStream, uint64_t waitAddress, uint64_t waitValue, size_t semaphoreCount, uint32_t offset, NEO::GraphicsAllocation *waitAllocation);
     inline size_t estimateCommandListPatchPreambleRequiredSize(CommandListExecutionContext &ctx, CommandList *commandList);
     inline size_t estimateCommandListPatchPreambleInitialSize(CommandListExecutionContext &ctx, uint32_t numCommandLists);
+    size_t estimateCommandListCrossSyncCommands(CommandListExecutionContext &ctx);
     inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);
     inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);
     inline void dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList);

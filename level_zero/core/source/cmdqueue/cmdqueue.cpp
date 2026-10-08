@@ -201,10 +201,10 @@ ze_result_t CommandQueue::dispatchCopyOffloadCmdList(CommandList *commandList, c
 
     CommandListExecutionInternalOptions internalOptions = {};
     internalOptions.performMigration = ctx.isMigrationRequested;
-    CountersCrossSyncContainer patchPreambleCounterSync;
 
     copyOffloadCmdList->setupPatchPreambleEnabled(ctx.patchPreambleEnabled);
     if (ctx.patchPreambleEnabled) {
+        this->copyOffloadPatchPreambleCounterSync.patchPreambleCrossSyncList.clear();
         // In-order counter is reset by compute stream patch preamble, so copy offload stream could observe values from previous execution.
         // Copy offload stream starts after compute stream patch preamble signals patch preamble counter for current execution.
         UNRECOVERABLE_IF(ctx.patchPreambleRequiredCounter == 0 || ctx.patchPreambleRequiredDevicePostSyncGpuAddress == 0);
@@ -215,16 +215,19 @@ ze_result_t CommandQueue::dispatchCopyOffloadCmdList(CommandList *commandList, c
         patchPreambleCounter.getPatchPreambleNodeData(counterHostAllocation, counterHostGpuAddress, counterDeviceAllocation, counterDeviceGpuAddress);
         UNRECOVERABLE_IF(counterDeviceAllocation == nullptr);
 
-        patchPreambleCounterSync.patchPreambleCrossSyncList.push_back({.counter = ctx.patchPreambleRequiredCounter,
-                                                                       .deviceGpuAddress = ctx.patchPreambleRequiredDevicePostSyncGpuAddress,
-                                                                       .deviceGraphicsAllocation = counterDeviceAllocation,
-                                                                       .appendedCommandListToSyncBefore = copyOffloadCmdList});
-        internalOptions.countersCrossSyncContainer = &patchPreambleCounterSync;
-
-        // compute stream patch preamble may patch commands in copy offload stream
-        for (auto cmdBuffer : copyOffloadCmdList->getCmdContainer().getCmdBufferAllocations()) {
-            this->csr->makeResident(*cmdBuffer);
+        this->copyOffloadPatchPreambleCounterSync.patchPreambleCrossSyncList.push_back({.counter = ctx.patchPreambleRequiredCounter,
+                                                                                        .deviceGpuAddress = ctx.patchPreambleRequiredDevicePostSyncGpuAddress,
+                                                                                        .deviceGraphicsAllocation = counterDeviceAllocation,
+                                                                                        .appendedCommandListToSyncBefore = copyOffloadCmdList});
+        if (ctx.countersCrossSyncContainer) {
+            for (const auto &crossSync : ctx.countersCrossSyncContainer->patchPreambleCrossSyncList) {
+                this->copyOffloadPatchPreambleCounterSync.patchPreambleCrossSyncList.push_back({.counter = crossSync.counter,
+                                                                                                .deviceGpuAddress = crossSync.deviceGpuAddress,
+                                                                                                .deviceGraphicsAllocation = crossSync.deviceGraphicsAllocation,
+                                                                                                .appendedCommandListToSyncBefore = copyOffloadCmdList});
+            }
         }
+        internalOptions.countersCrossSyncContainer = &this->copyOffloadPatchPreambleCounterSync;
     }
 
     auto copyOffloadCmdListHandle = copyOffloadCmdList->toHandle();

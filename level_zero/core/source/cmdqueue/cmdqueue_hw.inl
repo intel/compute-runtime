@@ -974,42 +974,49 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleIni
         ctx.bufferSpaceForPatchPreamble += encodeSize;
         // patch preamble dispatched into queue's buffer forces not to use cmdlist as a starting buffer
         this->forceBbStartJump = true;
+    }
+    return encodeSize;
+}
 
-        // this part estimates the required size of command buffer - not in the space of patch preamble itself
-        // (no adding to ctx.bufferSpaceForPatchPreamble), but before bb start jumps to command lists and including these bb start commands too
-        // this is needed only in queue direct mode, for immediate command list high level estimation is enough
-        if (ctx.countersCrossSyncContainer != nullptr && ctx.containsParentImmediateStream == false) {
-            // here estimate the sem waits only
-            encodeSize += estimatePatchPreambleCrossSyncSize(ctx.countersCrossSyncContainer->patchPreambleCrossSyncList.size());
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListCrossSyncCommands(CommandListExecutionContext &ctx) {
+    size_t encodeSize = 0;
+    // this part estimates the required size of command buffer - not in the space of patch preamble itself
+    // (no adding to ctx.bufferSpaceForPatchPreamble), but before bb start jumps to command lists and including these bb start commands too
+    // this is needed only in queue direct mode, for immediate command list high level estimation is enough
+    if (ctx.countersCrossSyncContainer != nullptr && ctx.containsParentImmediateStream == false) {
+        // here estimate the sem waits only
+        encodeSize += estimatePatchPreambleCrossSyncSize(ctx.countersCrossSyncContainer->patchPreambleCrossSyncList.size());
 
-            // need to estimate bb_start jumps for the 2nd and subsequent command lists that will be executed after the cross-sync sem wait
-            StackVec<CommandList *, 9> alreadyEstimatedCmdLists;
-            // the first command list is always estimated - patch preamble forces 1st bb_start to be estimated anyway
-            alreadyEstimatedCmdLists.push_back(ctx.firstCommandList);
-            if (ctx.regularHeapful) {
-                // in heapful mode each command list might have already estimated bb_start if the state was deem dirty
-                for (auto &state : this->stateChanges) {
-                    alreadyEstimatedCmdLists.push_back(state.commandList);
-                }
+        // need to estimate bb_start jumps for the 2nd and subsequent command lists that will be executed after the cross-sync sem wait
+        StackVec<CommandList *, 9> alreadyEstimatedCmdLists;
+        // the first command list is always estimated - patch preamble forces 1st bb_start to be estimated anyway by setting forceBbStartJump to true
+        this->forceBbStartJump = true;
+        alreadyEstimatedCmdLists.push_back(ctx.firstCommandList);
+        if (ctx.regularHeapful) {
+            // in heapful mode each command list might have already estimated bb_start if the state was deem dirty
+            for (auto &state : this->stateChanges) {
+                alreadyEstimatedCmdLists.push_back(state.commandList);
             }
-            // heapless and copy-engine mode do not have state changes between command lists
+        }
+        // heapless and copy-engine mode do not have state changes between command lists
 
-            auto isAlreadyEstimated = [&alreadyEstimatedCmdLists](CommandList *cmdList) -> bool {
-                return std::find(alreadyEstimatedCmdLists.begin(), alreadyEstimatedCmdLists.end(), cmdList) != alreadyEstimatedCmdLists.end();
-            };
-            for (auto &crossSyncItem : ctx.countersCrossSyncContainer->patchPreambleCrossSyncList) {
-                if (!isAlreadyEstimated(crossSyncItem.appendedCommandListToSyncBefore)) {
-                    encodeSize += bbStartSize;
-                    // add to the list of already estimated command lists, as a single command list might have multiple cross-sync items, but we need to estimate bb_start only once per command list
-                    alreadyEstimatedCmdLists.push_back(crossSyncItem.appendedCommandListToSyncBefore);
-                }
+        auto isAlreadyEstimated = [&alreadyEstimatedCmdLists](CommandList *cmdList) -> bool {
+            return std::find(alreadyEstimatedCmdLists.begin(), alreadyEstimatedCmdLists.end(), cmdList) != alreadyEstimatedCmdLists.end();
+        };
+        for (auto &crossSyncItem : ctx.countersCrossSyncContainer->patchPreambleCrossSyncList) {
+            constexpr size_t bbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
+            if (!isAlreadyEstimated(crossSyncItem.appendedCommandListToSyncBefore)) {
+                encodeSize += bbStartSize;
+                // add to the list of already estimated command lists, as a single command list might have multiple cross-sync items, but we need to estimate bb_start only once per command list
+                alreadyEstimatedCmdLists.push_back(crossSyncItem.appendedCommandListToSyncBefore);
             }
+        }
 
-            // get the estimate for the immediate cross-syncs, get separate for each one, so each item device partition count is taken into account
-            // estimation should not add to ctx.bufferSpaceForPatchPreamble, since it must be dispatch before the patch preamble begins
-            for (auto &crossSyncItem : ctx.countersCrossSyncContainer->immediateCompletionCrossSyncList) {
-                encodeSize += estimateSingleImmediateCompletionCrossSyncSize(1, crossSyncItem.devicePartitionCount);
-            }
+        // get the estimate for the immediate cross-syncs, get separate for each one, so each item device partition count is taken into account
+        // estimation should not add to ctx.bufferSpaceForPatchPreamble, since it must be dispatch before the patch preamble begins
+        for (auto &crossSyncItem : ctx.countersCrossSyncContainer->immediateCompletionCrossSyncList) {
+            encodeSize += estimateSingleImmediateCompletionCrossSyncSize(1, crossSyncItem.devicePartitionCount);
         }
     }
     return encodeSize;
@@ -1017,20 +1024,19 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleIni
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream) {
-    if (ctx.patchPreambleEnabled) {
-        if (ctx.countersCrossSyncContainer != nullptr) {
-            // immediate cross-syncs must be dispatch before the patch preamble begins
-            const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
-            for (auto &immediateCrossSyncItem : ctx.countersCrossSyncContainer->immediateCompletionCrossSyncList) {
-                this->dispatchSingleSynchronizationCommand(commandStream,
-                                                           immediateCrossSyncItem.deviceGpuAddress,
-                                                           immediateCrossSyncItem.counter,
-                                                           immediateCrossSyncItem.devicePartitionCount,
-                                                           immWriteOffset,
-                                                           immediateCrossSyncItem.deviceGraphicsAllocation);
-            }
+    if (ctx.countersCrossSyncContainer != nullptr) {
+        // immediate cross-syncs must be dispatch before the patch preamble begins
+        const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+        for (auto &immediateCrossSyncItem : ctx.countersCrossSyncContainer->immediateCompletionCrossSyncList) {
+            this->dispatchSingleSynchronizationCommand(commandStream,
+                                                       immediateCrossSyncItem.deviceGpuAddress,
+                                                       immediateCrossSyncItem.counter,
+                                                       immediateCrossSyncItem.devicePartitionCount,
+                                                       immWriteOffset,
+                                                       immediateCrossSyncItem.deviceGraphicsAllocation);
         }
-
+    }
+    if (ctx.patchPreambleEnabled) {
         ctx.currentPatchPreambleBuffer = commandStream.getSpace(ctx.bufferSpaceForPatchPreamble);
         ctx.basePatchPreambleAddress = reinterpret_cast<uintptr_t>(ctx.currentPatchPreambleBuffer);
         ctx.basePatchPreambleGpuAddress = commandStream.getGpuBase() + ptrDiff(ctx.basePatchPreambleAddress, reinterpret_cast<uint64_t>(commandStream.getCpuBase()));
@@ -1321,6 +1327,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPostCmdList(
     size_t linearStreamSizeEstimate = 0u;
 
     linearStreamSizeEstimate += this->estimateCommandListPatchPreambleInitialSize(ctx, numCommandLists);
+    linearStreamSizeEstimate += this->estimateCommandListCrossSyncCommands(ctx);
 
     bool additionalCondition = true;
     if (ctx.regularHeapful) {

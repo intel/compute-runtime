@@ -15,6 +15,7 @@
 #include "shared/source/utilities/software_tags.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_helpers.h"
+#include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 
@@ -187,6 +188,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     NEO::HeapContainer heapContainer;
     ze_command_queue_desc_t desc;
     std::vector<std::weak_ptr<Kernel>> printfKernelContainer;
+    CountersCrossSyncContainer copyOffloadPatchPreambleCounterSync;
 
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
