@@ -4841,7 +4841,8 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenDebugFlagEnabledWhenOverridingIn
     DebugManagerStateRestore restore;
     debugManager.flags.PrintSecondaryContextEngineInfo.set(1);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
     osContext.setContextGroupCount(8);
@@ -4850,12 +4851,13 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenDebugFlagEnabledWhenOverridingIn
     osContext.overridePriority(initialPriority);
 
     osContext.ensureContextInitialized();
-    ASSERT_GT(osContext.getDrmContextIds().size(), 0u);
+    const auto drmContextIdsCount = osContext.getDrmContextIds().size();
 
     const uint32_t newPriority = 5;
     osContext.overridePriority(newPriority);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
+    ASSERT_GT(drmContextIdsCount, 0u);
 
     EXPECT_NE(std::string::npos, output.find("Overriding priority osContextId:"));
     EXPECT_NE(std::string::npos, output.find("previous priorityLevel:"));
@@ -4866,7 +4868,8 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenDebugFlagDisabledWhenOverridingI
     DebugManagerStateRestore restore;
     debugManager.flags.PrintSecondaryContextEngineInfo.set(0);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     OsContextLinux osContext(*drm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
     osContext.setContextGroupCount(8);
@@ -4875,12 +4878,13 @@ TEST_F(OsContextLinuxOverridePriorityTest, givenDebugFlagDisabledWhenOverridingI
     osContext.overridePriority(initialPriority);
 
     osContext.ensureContextInitialized();
-    ASSERT_GT(osContext.getDrmContextIds().size(), 0u);
+    const auto drmContextIdsCount = osContext.getDrmContextIds().size();
 
     const uint32_t newPriority = 5;
     osContext.overridePriority(newPriority);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
+    ASSERT_GT(drmContextIdsCount, 0u);
 
     EXPECT_EQ(std::string::npos, output.find("Overriding priority osContextId:"));
 }

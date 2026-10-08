@@ -3732,9 +3732,10 @@ TEST_F(DrmMemoryManagerBasic, givenPrintDeferBackingLogsEnabledWhenCheckingDefer
     memoryManager.cacheMaxLocalMemorySize(rootDeviceIndex);
     memoryManager.setUsedLocalMemory(rootDeviceIndex, 900u);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_TRUE(memoryManager.isDeferBackingMemoryPressureReached(rootDeviceIndex, 0u, 80));
-    const std::string output = testing::internal::GetCapturedStderr();
+    const std::string output = capture.getCapturedStderr();
 
     EXPECT_NE(std::string::npos, output.find("[DeferBackingPressure]"));
 
@@ -5768,9 +5769,10 @@ TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPrimeFdToHandleFailingAnd
     std::vector<osHandle> handles = {11u};
     AllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, systemMemoryBitfield);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
-    ::testing::internal::GetCapturedStderr();
+    capture.getCapturedStderr();
     EXPECT_EQ(nullptr, gfxAllocation);
 }
 
