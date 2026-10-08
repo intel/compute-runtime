@@ -78,7 +78,6 @@ struct KernelMutableStateDefaultCopyableParams {
 
     bool kernelHasIndirectAccess = false;
     bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
-    bool groupSizeSet = false;
 };
 
 struct KernelMutableState : public KernelMutableStateDefaultCopyableParams {

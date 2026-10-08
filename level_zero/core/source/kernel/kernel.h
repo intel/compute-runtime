@@ -137,7 +137,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
     virtual ze_result_t setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal, bool isPacked, uint32_t mipLevel) = 0;
     virtual ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                      uint32_t groupSizeZ) = 0;
-    virtual bool isGroupSizeSet() const = 0;
     virtual ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
                                          uint32_t globalSizeZ, uint32_t *groupSizeX,
                                          uint32_t *groupSizeY, uint32_t *groupSizeZ) = 0;

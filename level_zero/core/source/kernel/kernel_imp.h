@@ -62,7 +62,6 @@ struct KernelImp : Kernel {
 
     ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                              uint32_t groupSizeZ) override;
-    bool isGroupSizeSet() const override { return privateState.groupSizeSet; }
 
     ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY, uint32_t globalSizeZ,
                                  uint32_t *groupSizeX, uint32_t *groupSizeY,

@@ -487,7 +487,6 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     if (this->privateState.groupSize[0] == groupSizeX &&
         this->privateState.groupSize[1] == groupSizeY &&
         this->privateState.groupSize[2] == groupSizeZ) {
-        this->privateState.groupSizeSet = true;
         return ZE_RESULT_SUCCESS;
     }
 
@@ -504,22 +503,21 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
     }
 
+    this->privateState.groupSize[0] = groupSizeX;
+    this->privateState.groupSize[1] = groupSizeY;
+    this->privateState.groupSize[2] = groupSizeZ;
     for (uint32_t i = 0u; i < 3u; i++) {
         if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != 0 &&
-            kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != groupSize[i]) {
+            kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != this->privateState.groupSize[i]) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                          "Invalid group size {%d, %d, %d} specified, requiredWorkGroupSize = {%d, %d, %d}\n",
-                         groupSizeX, groupSizeY, groupSizeZ,
+                         this->privateState.groupSize[0], this->privateState.groupSize[1], this->privateState.groupSize[2],
                          kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0],
                          kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1],
                          kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
             return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
         }
     }
-
-    this->privateState.groupSize[0] = groupSizeX;
-    this->privateState.groupSize[1] = groupSizeY;
-    this->privateState.groupSize[2] = groupSizeZ;
 
     patchWorkgroupSizeInCrossThreadData(groupSizeX, groupSizeY, groupSizeZ);
 
@@ -574,7 +572,6 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         this->privateState.perThreadDataSize = 0;
     }
 
-    this->privateState.groupSizeSet = true;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1341,7 +1338,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
-        privateState.groupSizeSet = false;
     }
 
     privateState.argumentsResidencyContainer.resize(this->privateState.kernelArgHandlers.size(), nullptr);
