@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,11 @@ constexpr static auto gfxProduct = IGFX_PTL;
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
+
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
+    return "xe3";
+}
 
 template class SysmanProductHelperHw<gfxProduct>;
 

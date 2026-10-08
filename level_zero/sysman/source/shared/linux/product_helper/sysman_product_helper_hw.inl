@@ -551,5 +551,10 @@ bool SysmanProductHelperHw<gfxProduct>::isNetlinkEventSupported() {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
+    return "unknown";
+}
+
 } // namespace Sysman
 } // namespace L0

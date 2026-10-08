@@ -444,6 +444,17 @@ TEST_F(SysmanDevicePropertiesFixture,
     EXPECT_EQ(device->getRootDeviceIndex(), deviceIndexProperties.deviceIndex);
 }
 
+TEST_F(SysmanDevicePropertiesFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForDeviceGenerationThenUnknownGenerationNameIsReturned) {
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_generation_exp_properties_t generationProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES};
+    properties.pNext = &generationProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_STREQ("unknown", generationProperties.generationName);
+}
+
 HWTEST2_F(SysmanDevicePropertiesFixture,
           GivenValidDeviceHandleWhenCallingGetPropertiesnAndIsNotIntegratedDeviceThenFlagIsNotSetInCoreProperties, IsXeHpgCore) {
     auto mockHardwareInfo = device->getHardwareInfo();

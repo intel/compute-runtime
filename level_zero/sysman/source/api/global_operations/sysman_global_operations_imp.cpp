@@ -152,6 +152,12 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
         } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES) {
             auto deviceIndexProperties = reinterpret_cast<zes_intel_device_index_exp_properties_t *>(pNext);
             deviceIndexProperties->deviceIndex = pOsSysman->getRootDeviceIndex();
+        } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES) {
+            auto generationProperties = reinterpret_cast<zes_intel_device_generation_exp_properties_t *>(pNext);
+            const std::string generationName = pOsGlobalOperations->getGpuGeneration();
+            auto length = std::min(generationName.length(), static_cast<size_t>(ZES_STRING_PROPERTY_SIZE - 1));
+            memset(generationProperties->generationName, 0, ZES_STRING_PROPERTY_SIZE);
+            memcpy_s(generationProperties->generationName, ZES_STRING_PROPERTY_SIZE, generationName.data(), length);
         } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP) {
             auto memPageOfflineProperties = reinterpret_cast<zes_intel_mem_page_offline_properties_exp_t *>(pNext);
             ze_result_t result = pOsGlobalOperations->getMaxMemoryOfflinePages(&memPageOfflineProperties->maxOfflinePages);

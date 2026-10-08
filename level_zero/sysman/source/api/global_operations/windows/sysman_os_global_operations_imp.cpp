@@ -198,6 +198,10 @@ ze_result_t WddmGlobalOperationsImp::getPowerOffReasonExp(zes_intel_device_power
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+std::string WddmGlobalOperationsImp::getGpuGeneration() {
+    return "unknown";
+}
+
 WddmGlobalOperationsImp::WddmGlobalOperationsImp(OsSysman *pOsSysman) {
     pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();

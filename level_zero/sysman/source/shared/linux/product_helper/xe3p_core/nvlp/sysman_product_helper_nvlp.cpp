@@ -15,6 +15,11 @@ constexpr static auto gfxProduct = IGFX_NVL;
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
+    return "xe3p";
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

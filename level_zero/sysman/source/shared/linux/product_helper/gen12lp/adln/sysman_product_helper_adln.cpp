@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,11 @@
 namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_N;
+
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
+    return "xe";
+}
 
 template class SysmanProductHelperHw<gfxProduct>;
 

@@ -100,5 +100,6 @@ typedef struct _ze_device_readonly_memory_ext_properties_t {
 #define ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040016)
 #define ZES_INTEL_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES_EXP static_cast<zes_structure_type_ext_t>(0x00040017)
 #define ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1 static_cast<zes_structure_type_ext_t>(0x00040018)
+#define ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040019)
 
 #endif

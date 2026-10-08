@@ -939,6 +939,10 @@ ze_result_t LinuxGlobalOperationsImp::getPowerOffReasonExp(zes_intel_device_powe
     return ZE_RESULT_SUCCESS;
 }
 
+std::string LinuxGlobalOperationsImp::getGpuGeneration() {
+    return pLinuxSysmanImp->getSysmanProductHelper()->getGpuGeneration();
+}
+
 ze_result_t LinuxGlobalOperationsImp::memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) {
     return pSysmanProductHelper->memoryGetPageOfflineStateExp(pSysfsAccess, pageStatus, pCount, memPageInfoList, pPageOfflineInfo);
 }

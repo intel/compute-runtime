@@ -259,6 +259,11 @@ bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
     return true;
 }
 
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
+    return "xe";
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

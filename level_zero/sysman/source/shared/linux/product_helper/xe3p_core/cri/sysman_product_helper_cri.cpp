@@ -1519,6 +1519,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setStandbyMode(SysFsAccessInterfa
     return pSysfsAccess->write(standbyModeFile, (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) ? standbyPowerControlDefault : standbyPowerControlNever);
 }
 
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
+    return "xe3p";
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

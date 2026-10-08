@@ -731,6 +731,76 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_STREQ("i915", drvName.driverName);
 }
 
+struct MockSysmanProductHelperGpuGeneration : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+    std::string mockGpuGeneration = "unknown";
+    std::string getGpuGeneration() override { return mockGpuGeneration; }
+};
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenProductHelperReportingGenerationNameWhenCallingZesDeviceGetPropertiesForDeviceGenerationThenSameGenerationNameIsReturned) {
+    auto pMockProductHelper = std::make_unique<MockSysmanProductHelperGpuGeneration>();
+    auto pMockProductHelperRaw = pMockProductHelper.get();
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::move(pMockProductHelper);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    for (const auto &generationName : {"xe", "xe2", "xe3", "xe3p", "unknown", "newGeneration"}) {
+        pMockProductHelperRaw->mockGpuGeneration = generationName;
+
+        zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        zes_intel_device_generation_exp_properties_t generationProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES};
+        properties.pNext = &generationProperties;
+
+        ze_result_t result = zesDeviceGetProperties(device, &properties);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_STREQ(generationName, generationProperties.generationName);
+    }
+
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenProductHelperReportingGenerationNameLongerThanPropertySizeWhenCallingZesDeviceGetPropertiesForDeviceGenerationThenNameIsTruncatedAndNullTerminated) {
+    auto pMockProductHelper = std::make_unique<MockSysmanProductHelperGpuGeneration>();
+    pMockProductHelper->mockGpuGeneration = std::string(ZES_STRING_PROPERTY_SIZE + 10, 'x');
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::move(pMockProductHelper);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_generation_exp_properties_t generationProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES};
+    properties.pNext = &generationProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_STREQ(std::string(ZES_STRING_PROPERTY_SIZE - 1, 'x').c_str(), generationProperties.generationName);
+
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesWithDeviceGenerationChainedWithOtherExtensionsThenAllExtensionsArePopulated) {
+    pLinuxSysmanImp->setDriverName("i915");
+    auto pMockProductHelper = std::make_unique<MockSysmanProductHelperGpuGeneration>();
+    pMockProductHelper->mockGpuGeneration = "xe3";
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::move(pMockProductHelper);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    zes_intel_device_generation_exp_properties_t generationProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES};
+    zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
+    properties.pNext = &deviceIndexProperties;
+    deviceIndexProperties.pNext = &generationProperties;
+    generationProperties.pNext = &drvName;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(pSysmanDeviceImp->getRootDeviceIndex(), deviceIndexProperties.deviceIndex);
+    EXPECT_STREQ("i915", drvName.driverName);
+    EXPECT_STREQ("xe3", generationProperties.generationName);
+
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+}
+
 TEST_F(SysmanGlobalOperationsFixture,
        GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForCheckingDevicePropertiesWhenVendorIsUnKnownThenVerifyzesDeviceGetPropertiesCallSucceeds) {
     pSysfsAccess->mockReadVal[static_cast<int>(MockGlobalOperationsSysfsAccess::Index::mockSubsystemVendor)] = "0xa086";

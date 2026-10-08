@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,11 @@ namespace Sysman {
 constexpr static auto gfxProduct = IGFX_METEORLAKE;
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
+
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
+    return "xe";
+}
 
 template class SysmanProductHelperHw<gfxProduct>;
 

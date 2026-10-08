@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
@@ -292,6 +293,41 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidExtensionStructureWhenCallingZesDeviceG
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(expectedMaxOfflinePages, memPageOfflineProperties.maxOfflinePages);
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenQueryingGpuGenerationThenXeIsReturned, IsGen12LP) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_STREQ("xe", pSysmanProductHelper->getGpuGeneration().c_str());
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenQueryingGpuGenerationThenXeIsReturned, IsXeHpgCore) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_STREQ("xe", pSysmanProductHelper->getGpuGeneration().c_str());
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenQueryingGpuGenerationThenXeIsReturned, IsXeHpcCore) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_STREQ("xe", pSysmanProductHelper->getGpuGeneration().c_str());
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenQueryingGpuGenerationThenXe2IsReturned, IsXe2HpgCore) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_STREQ("xe2", pSysmanProductHelper->getGpuGeneration().c_str());
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenQueryingGpuGenerationThenXe3IsReturned, IsXe3Core) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_STREQ("xe3", pSysmanProductHelper->getGpuGeneration().c_str());
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenQueryingGpuGenerationThenXe3pIsReturned, IsXe3pCore) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_STREQ("xe3p", pSysmanProductHelper->getGpuGeneration().c_str());
+}
+
+TEST_F(SysmanProductHelperGlobalOperationsTest, GivenProductHelperWithoutGpuGenerationWhenQueryingGpuGenerationThenUnknownIsReturned) {
+    auto pSysmanProductHelper = std::make_unique<L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN>>();
+    EXPECT_STREQ("unknown", pSysmanProductHelper->getGpuGeneration().c_str());
 }
 
 } // namespace ult

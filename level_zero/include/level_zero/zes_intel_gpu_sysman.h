@@ -275,6 +275,31 @@ typedef struct _zes_intel_device_index_exp_properties_t {
 } zes_intel_device_index_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DEVICE_GENERATION_EXP_PROPERTY_NAME
+/// @brief Device generation property extension name
+#define ZES_INTEL_DEVICE_GENERATION_EXP_PROPERTY_NAME "ZES_intel_experimental_device_generation_property"
+#endif // ZES_INTEL_DEVICE_GENERATION_EXP_PROPERTY_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query device generation extension Version(s)
+typedef enum _zes_intel_device_generation_exp_properties_version_t {
+    ZES_INTEL_DEVICE_GENERATION_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DEVICE_GENERATION_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DEVICE_GENERATION_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_generation_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query the GPU generation of a device.
+/// This structure can be passed in the 'pNext' of zes_device_properties_t
+typedef struct _zes_intel_device_generation_exp_properties_t {
+    zes_structure_type_ext_t stype;                ///< [in] type of this structure
+    void *pNext;                                   ///< [in][optional] must be null or a pointer to an extension-specific
+                                                   ///< structure (i.e. contains stype and pNext).
+    char generationName[ZES_STRING_PROPERTY_SIZE]; ///< [out] Null terminated name of the GPU generation. Reports "unknown"
+                                                   ///< when the generation cannot be determined.
+} zes_intel_device_generation_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME
 /// @brief Frequency throttle reason extension name
 #define ZES_INTEL_FREQ_THROTTLE_REASON_EXP_NAME "ZES_intel_experimental_frequency_throttle_reason"
