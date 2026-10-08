@@ -484,8 +484,9 @@ TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenMultiDeviceWhenIniti
     context->destroy();
 }
 
-TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenCompressionSupportedAndMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolIsNotCompressed) {
+TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenCompressionSupportedAndMultiDeviceWithPeerAccessWhenInitializingDriverHandleThenDeviceUsmPoolIsNotCompressed) {
     NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
     if (!devices[0]->getGfxCoreHelper().usmCompressionSupported(devices[0]->getHardwareInfo())) {
         GTEST_SKIP();
     }
@@ -498,6 +499,48 @@ TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenCompressionSupported
         auto poolAllocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockDeviceMemAllocPool->pool);
         ASSERT_NE(nullptr, poolAllocationData);
         EXPECT_FALSE(poolAllocationData->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled());
+    }
+    context->destroy();
+}
+
+TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenCompressionEnabledByDefaultAndMultiDeviceWithoutPeerAccessWhenInitializingDriverHandleThenDeviceUsmPoolIsCompressed) {
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
+    auto &l0GfxCoreHelper = devices[0]->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    if (!l0GfxCoreHelper.usmCompressionSupported(devices[0]->getHardwareInfo()) || !l0GfxCoreHelper.forceDefaultUsmCompressionSupport()) {
+        GTEST_SKIP();
+    }
+    mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    initDriverImp();
+    for (auto l0Device : l0Devices) {
+        auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Device->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+        ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+        auto poolAllocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockDeviceMemAllocPool->pool);
+        ASSERT_NE(nullptr, poolAllocationData);
+        EXPECT_TRUE(poolAllocationData->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled());
+    }
+    context->destroy();
+}
+
+TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenCompressionEnabledByDefaultAndOnlyOneDeviceAccessibleByPeerWhenInitializingDriverHandleThenOnlyItsDeviceUsmPoolIsNotCompressed) {
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    auto &l0GfxCoreHelper = devices[0]->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    if (!l0GfxCoreHelper.usmCompressionSupported(devices[0]->getHardwareInfo()) || !l0GfxCoreHelper.forceDefaultUsmCompressionSupport()) {
+        GTEST_SKIP();
+    }
+    devices[0]->crossAccessEnabledDevices[1] = false;
+    devices[1]->crossAccessEnabledDevices[0] = true;
+    mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    initDriverImp();
+    for (auto l0Device : l0Devices) {
+        auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Device->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+        ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+        auto poolAllocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockDeviceMemAllocPool->pool);
+        ASSERT_NE(nullptr, poolAllocationData);
+        const bool expectCompressed = l0Device != l0Devices[0];
+        EXPECT_EQ(expectCompressed, poolAllocationData->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled());
     }
     context->destroy();
 }

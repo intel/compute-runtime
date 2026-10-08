@@ -39,6 +39,7 @@
 
 #include "driver_version.h"
 
+#include <algorithm>
 #include <vector>
 
 namespace L0 {
@@ -400,6 +401,12 @@ void collectPeerAllocations(DriverHandle &driverHandle, Device *device, const vo
         collectPeerAllocations(driverHandle, subDevice, ptr, peerAllocations);
     }
 }
+
+bool isAccessedByAnyPeer(const std::vector<Device *> &devices, NEO::Device &device) {
+    return std::any_of(devices.begin(), devices.end(), [&device](Device *peerDevice) {
+        return peerDevice->getNEODevice() != &device && peerDevice->getNEODevice()->canAccessPeer(&device);
+    });
+}
 } // namespace
 
 NEO::UsmMemAllocPool::PeerAllocationsFn DriverHandle::getPoolPeerAllocationsFn() {
@@ -454,9 +461,10 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
     }
 
     if (enabled) {
+        const bool uncompressedPool = isAccessedByAnyPeer(this->devices, device);
         device.getDeviceUsmMemAllocPoolFacade().initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields,
                                                            &device, this->svmAllocsManager,
-                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault, getPoolPeerAllocationsFn(), multiDevice});
+                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault, getPoolPeerAllocationsFn(), uncompressedPool});
     }
 }
 
