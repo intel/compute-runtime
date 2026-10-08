@@ -14,6 +14,17 @@
 
 namespace NEO {
 
+#ifdef SUPPORT_CRI
+template <>
+uint32_t L1CachePolicyHelper<IGFX_CRI>::getDefaultL1CachePolicy(bool isDebuggerActive) {
+    using GfxFamily = HwMapper<IGFX_CRI>::GfxFamily;
+    if (isDebuggerActive) {
+        return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
+    }
+    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WS;
+}
+#endif
+
 #include "enable_xe3p_core.inl"
 
 } // namespace NEO
