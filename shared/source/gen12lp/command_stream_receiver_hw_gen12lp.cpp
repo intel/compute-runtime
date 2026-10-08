@@ -18,7 +18,7 @@ using Family = NEO::Gen12LpFamily;
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/blit_commands_helper_base.inl"
-#include "shared/source/helpers/blit_commands_helper_from_gen12lp_to_xe3.inl"
+#include "shared/source/helpers/blit_commands_helper_from_gen12lp_to_xe3p.inl"
 #include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {

@@ -27,6 +27,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/bindless_heaps_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_from_gen12lp_to_xe3p.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_helper.h
@@ -261,12 +262,6 @@ if(SUPPORT_XE3_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe3_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xe3_and_later.inl
-  )
-endif()
-
-if(SUPPORT_XE3_AND_BEFORE)
-  list(APPEND NEO_CORE_HELPERS
-       ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_from_gen12lp_to_xe3.inl
   )
 endif()
 
