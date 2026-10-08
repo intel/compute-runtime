@@ -106,7 +106,7 @@ HWTEST_F(KernelArgSvmTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumentsA
 
     EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize());
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->argAsPtr(0).bindful));
@@ -139,7 +139,7 @@ HWTEST_F(KernelArgSvmTest, GivenSvmPtrBindlessWhenSettingKernelArgThenArgumentsA
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   ssOffset));
@@ -243,7 +243,7 @@ HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocStatefulWhenSettingKernelArgThenArg
 
     EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize());
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->argAsPtr(0).bindful));
@@ -268,7 +268,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetSvmPointerWhenSetArgSvmAllocIsCalledThenPr
     pKernelInfo->argAsPtr(0).bindful = 0;
     pKernel->setArgSvmAlloc(0, offsetPtr, &svmAlloc, 0u);
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->argAsPtr(0).bindful));
@@ -302,7 +302,7 @@ HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocBindlessWhenSettingKernelArgThenArg
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   ssOffset));
@@ -335,7 +335,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetSvmPointerBindlessWhenSetArgSvmAllocIsCall
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   ssOffset));
@@ -384,16 +384,18 @@ HWTEST_F(KernelArgSvmTest, givenDeviceSupportingSharedSystemAllocationsWhenSetAr
     pKernelInfo->argAsPtr(0).bindful = 0;
     pKernel->setArgSvmAlloc(0, systemPointer, nullptr, 0u);
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->argAsPtr(0).bindful));
 
     void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
     EXPECT_EQ(systemPointer, surfaceAddress);
-    EXPECT_EQ(128u, surfaceState->getWidth());
-    EXPECT_EQ(2048u, surfaceState->getDepth());
-    EXPECT_EQ(16384u, surfaceState->getHeight());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(128u, surfaceState->getWidth());
+        EXPECT_EQ(2048u, surfaceState->getDepth());
+        EXPECT_EQ(16384u, surfaceState->getHeight());
+    }
 }
 
 HWTEST_F(KernelArgSvmTest, givenBindlessArgAndDeviceSupportingSharedSystemAllocationsWhenSetArgSvmIsCalledWithSurfaceStateThenSizeIsMaxAndAddressIsProgrammed) {
@@ -415,11 +417,10 @@ HWTEST_F(KernelArgSvmTest, givenBindlessArgAndDeviceSupportingSharedSystemAlloca
 
     pKernel->setArgSvmAlloc(0, systemPointer, nullptr, 0u);
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   ssOffset));
@@ -427,9 +428,11 @@ HWTEST_F(KernelArgSvmTest, givenBindlessArgAndDeviceSupportingSharedSystemAlloca
     void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
 
     EXPECT_EQ(systemPointer, surfaceAddress);
-    EXPECT_EQ(128u, surfaceState->getWidth());
-    EXPECT_EQ(2048u, surfaceState->getDepth());
-    EXPECT_EQ(16384u, surfaceState->getHeight());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(128u, surfaceState->getWidth());
+        EXPECT_EQ(2048u, surfaceState->getDepth());
+        EXPECT_EQ(16384u, surfaceState->getHeight());
+    }
 }
 
 TEST_F(KernelArgSvmTest, WhenSettingKernelArgImmediateThenInvalidArgValueErrorIsReturned) {

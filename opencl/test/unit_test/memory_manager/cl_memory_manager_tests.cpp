@@ -65,7 +65,7 @@ HWTEST_F(ClMemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIs
 
     EXPECT_NE(0u, kernel.mockKernel->getSurfaceStateHeapSize());
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(kernel.mockKernel->getSurfaceStateHeap(),
                   kernel.mockKernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.bindful));

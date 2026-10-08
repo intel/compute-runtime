@@ -82,22 +82,20 @@ struct CommandEnqueueFixture : public CommandEnqueueBaseFixture,
 };
 
 struct SurfaceStateAccessor : virtual public ClHardwareParse {
-    template <typename FamilyType>
-    const FamilyType::RENDER_SURFACE_STATE *getSurfaceState(std::unique_ptr<MockCommandQueueHw<FamilyType>> &mockCmdQ, uint32_t index) {
-        typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
-
-        const RENDER_SURFACE_STATE *surfaceState = nullptr;
+    template <typename FamilyType, typename SurfaceStateType>
+    const SurfaceStateType *getSurfaceState(std::unique_ptr<MockCommandQueueHw<FamilyType>> &mockCmdQ, uint32_t index) {
+        const SurfaceStateType *surfaceState = nullptr;
 
         auto kernel = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel();
         const auto &kernelInfo = kernel->getKernelInfo();
         if (kernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode == KernelDescriptor::AddressingMode::Bindless) {
             auto bindlessOffset = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(index).template as<ArgDescImage>().bindless);
             auto bindlessSurfaceStateIndex = kernel->getSurfaceStateIndexForBindlessOffset(bindlessOffset);
-            void *surfaceStateAddress = ptrOffset(kernel->getSurfaceStateHeap(), bindlessSurfaceStateIndex * sizeof(RENDER_SURFACE_STATE));
-            surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateAddress);
+            void *surfaceStateAddress = ptrOffset(kernel->getSurfaceStateHeap(), bindlessSurfaceStateIndex * sizeof(SurfaceStateType));
+            surfaceState = reinterpret_cast<SurfaceStateType *>(surfaceStateAddress);
         } else {
-            uint32_t bindfulIndex = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(index).template as<ArgDescImage>().bindful) / sizeof(RENDER_SURFACE_STATE);
-            surfaceState = HardwareParse::getSurfaceState<FamilyType>(&mockCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), bindfulIndex);
+            uint32_t bindfulIndex = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(index).template as<ArgDescImage>().bindful) / sizeof(SurfaceStateType);
+            surfaceState = reinterpret_cast<const SurfaceStateType *>(HardwareParse::getSurfaceState<FamilyType>(&mockCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), bindfulIndex));
         }
 
         return surfaceState;

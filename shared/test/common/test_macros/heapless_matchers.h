@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,3 +58,4 @@ using IsSbaRequiredAndAtLeastXeCore = IsSbaRequiredAnd<IsAtLeastXeCore>;
 using IsHeapfulRequiredAndAtLeastXeHpcCore = IsHeapfulRequiredAnd<IsAtLeastXeHpcCore>;
 using IsHeapfulRequiredAndAtLeastXe2HpgCore = IsHeapfulRequiredAnd<IsAtLeastXe2HpgCore>;
 using IsHeapfulRequiredAndAtLeastXe3Core = IsHeapfulRequiredAnd<IsAtLeastXe3Core>;
+using IsHeapfulRequiredAndImageSupport = IsHeapfulRequiredAnd<ImageSupport>;

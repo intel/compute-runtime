@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ HWTEST_F(EnqueueCopyImageTest, whenImagesCheckedForPackageFormatThenFalseIsRetur
 }
 
 HWTEST_F(EnqueueCopyImageTest, givenPackedSurfaceStateWhenCopyingImageThenSurfaceStateIsNotModified) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     typedef typename RENDER_SURFACE_STATE::SURFACE_FORMAT SURFACE_FORMAT;
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
@@ -70,7 +70,7 @@ HWTEST_F(EnqueueCopyImageTest, givenPackedSurfaceStateWhenCopyingImageThenSurfac
     parseCommands<FamilyType>(*pCmdQ);
 
     for (uint32_t i = 0; i < 2; ++i) {
-        const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, i);
+        const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType, RENDER_SURFACE_STATE>(mockCmdQ, i);
 
         EXPECT_EQ(SURFACE_FORMAT::SURFACE_FORMAT_R32_UINT, surfaceState->getSurfaceFormat());
 
@@ -80,9 +80,9 @@ HWTEST_F(EnqueueCopyImageTest, givenPackedSurfaceStateWhenCopyingImageThenSurfac
         EXPECT_EQ(imageDesc.image_height, surfaceState->getHeight());
     }
 
-    const auto srcSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 0);
+    const auto srcSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType, RENDER_SURFACE_STATE>(mockCmdQ, 0);
     EXPECT_EQ(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), srcSurfaceState->getSurfaceBaseAddress());
 
-    const auto dstSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 1);
+    const auto dstSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType, RENDER_SURFACE_STATE>(mockCmdQ, 1);
     EXPECT_EQ(dstImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstSurfaceState->getSurfaceBaseAddress());
 }

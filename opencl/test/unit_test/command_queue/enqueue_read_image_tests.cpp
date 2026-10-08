@@ -646,7 +646,7 @@ HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenInterfaceDescriptorData, IsG
 }
 
 HWTEST_F(EnqueueReadImageTest, WhenReadingImageThenSurfaceStateIsCorrect) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
@@ -656,7 +656,7 @@ HWTEST_F(EnqueueReadImageTest, WhenReadingImageThenSurfaceStateIsCorrect) {
 
     // BufferToImage kernel uses BTI=1 for destSurface
     uint32_t bindingTableIndex = 0;
-    const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, bindingTableIndex);
+    const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType, RENDER_SURFACE_STATE>(mockCmdQ, bindingTableIndex);
 
     // EnqueueReadImage uses multi-byte copies depending on per-pixel-size-in-bytes
     const auto &imageDesc = srcImage->getImageDesc();
@@ -666,7 +666,7 @@ HWTEST_F(EnqueueReadImageTest, WhenReadingImageThenSurfaceStateIsCorrect) {
     EXPECT_NE(0u, surfaceState->getSurfaceType());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_UINT, surfaceState->getSurfaceFormat());
     EXPECT_EQ(MockGmmResourceInfo::getHAlignSurfaceStateResult, surfaceState->getSurfaceHorizontalAlignment());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState->getSurfaceVerticalAlignment());
+    EXPECT_EQ(static_cast<uint32_t>(FamilyType::RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4), static_cast<uint32_t>(surfaceState->getSurfaceVerticalAlignment()));
     EXPECT_EQ(srcAllocation->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 

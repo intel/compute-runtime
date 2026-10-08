@@ -23,7 +23,7 @@ using namespace NEO;
 
 using XeHPAndLaterBufferTests = ::testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgramingSurfaceStateThenForceCompressionFormat) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgramingSurfaceStateThenForceCompressionFormat, SupportsLegacyRenderSurfaceStateAndAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore restorer;

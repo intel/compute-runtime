@@ -107,7 +107,7 @@ TEST_F(BufferSetArgTest, givenInvalidSizeWhenSettingKernelArgBufferThenReturnClI
 }
 
 HWTEST_F(BufferSetArgTest, givenSetArgBufferWhenNullArgStatefulThenProgramNullSurfaceState) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
 
     pKernelInfo->argAsPtr(0).bindful = 0;
@@ -116,11 +116,13 @@ HWTEST_F(BufferSetArgTest, givenSetArgBufferWhenNullArgStatefulThenProgramNullSu
     EXPECT_EQ(CL_SUCCESS, ret);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->argAsPtr(0).bindful));
-    auto surfaceFormat = surfaceState->getSurfaceType();
     auto surfacetype = surfaceState->getSurfaceFormat();
-
-    EXPECT_EQ(surfaceFormat, RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
     EXPECT_EQ(surfacetype, SURFACE_FORMAT::SURFACE_FORMAT_RAW);
+
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        auto surfaceFormat = surfaceState->getSurfaceType();
+        EXPECT_EQ(surfaceFormat, RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
+    }
 }
 
 HWTEST_F(BufferSetArgTest, givenSetKernelArgOnReadOnlyBufferThatIsMisalingedWhenSurfaceStateIsSetThenCachingIsOn) {

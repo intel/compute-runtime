@@ -105,7 +105,7 @@ HWTEST_F(GfxCoreHelperTest, givenForceExtendedKernelIsaSizeSetWhenGettingISAPadd
     }
 }
 
-HWTEST2_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet, IsAtLeastXeCore) {
+HWTEST2_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet, SupportsLegacyRenderSurfaceStateAndAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
@@ -469,11 +469,11 @@ HWTEST_F(GfxCoreHelperTest, givenDefaultSettingsWhenGettingScratchSurfaceStateSi
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
 
     auto scratchSurfaceStateSize = gfxCoreHelper.getScratchSurfaceStateSize(rootDeviceEnvironment);
-    EXPECT_EQ(gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment), scratchSurfaceStateSize);
+    EXPECT_EQ(alignUp(gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment), 64u), scratchSurfaceStateSize);
     EXPECT_TRUE(isAligned<64u>(scratchSurfaceStateSize));
 }
 
-HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThenUseArgumentsasInput) {
+HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThenUseArgumentsasInput, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
@@ -541,7 +541,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     alignedFree(stateBuffer);
 }
 
-HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput, MatchAny) {
+HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -657,7 +657,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompre
     alignedFree(stateBuffer);
 }
 
-HWTEST_F(GfxCoreHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceStateIsProgrammedForScratchSpaceThenOverrideMocsIndexWithCorrectValue) {
+HWTEST2_F(GfxCoreHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceStateIsProgrammedForScratchSpaceThenOverrideMocsIndexWithCorrectValue, SupportsLegacyRenderSurfaceState) {
     DebugManagerStateRestore restore;
     debugManager.flags.OverrideMocsIndexForScratchSpace.set(1);
 
@@ -1144,7 +1144,7 @@ HWTEST2_F(GfxCoreHelperTest, givenAtLeastXeHpPlatformWhenCheckingIfScratchSpaceS
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorrectValueIsReturned) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     RENDER_SURFACE_STATE renderSurfaceState;
     uint64_t expectedBaseAddress = 0x1122334455667788;
@@ -1153,7 +1153,7 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorre
     EXPECT_EQ(expectedBaseAddress, gfxCoreHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState, pDevice->getRootDeviceEnvironment()));
 }
 
-HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValueIsReturned) {
+HWTEST2_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValueIsReturned, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     RENDER_SURFACE_STATE renderSurfaceState;

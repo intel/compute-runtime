@@ -233,7 +233,7 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenTwoComma
 }
 
 HWTEST_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
@@ -262,17 +262,20 @@ HWTEST_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommand
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
     auto debugSurface = static_cast<L0::Device *>(device)->getDebugSurface();
 
-    SurfaceStateBufferLength length;
-    length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
-
-    EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
-    EXPECT_EQ(length.surfaceState.width + 1u, debugSurfaceState->getWidth());
-    EXPECT_EQ(length.surfaceState.height + 1u, debugSurfaceState->getHeight());
     EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
-    if constexpr (FamilyType::gfxCoreFamily <= IGFX_XE_HPC_CORE) {
-        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, debugSurfaceState->getCoherencyType());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        SurfaceStateBufferLength length;
+        length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
+
+        EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
+        EXPECT_EQ(length.surfaceState.width + 1u, debugSurfaceState->getWidth());
+        EXPECT_EQ(length.surfaceState.height + 1u, debugSurfaceState->getHeight());
+
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
+        if constexpr (FamilyType::gfxCoreFamily <= IGFX_XE_HPC_CORE) {
+            EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, debugSurfaceState->getCoherencyType());
+        }
     }
 }
 
@@ -546,12 +549,14 @@ HWTEST2_PRODUCT_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppe
     }
 
     ASSERT_NE(ssh, nullptr);
-    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
+    auto debugSurfaceState = reinterpret_cast<typename FamilyType::DefaultRenderSurfaceState *>(ssh->getCpuBase());
     ASSERT_NE(debugSurfaceState, nullptr);
     auto debugSurface = static_cast<L0::Device *>(device)->getDebugSurface();
     ASSERT_NE(debugSurface, nullptr);
     ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(debugSurfaceState->getL1CacheControlCachePolicy(), RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(debugSurfaceState->getL1CacheControlCachePolicy(), RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
+    }
 }
 
 HWTEST2_F(L0DebuggerTest, givenNotXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, IsNotXeHpgCore) {
@@ -574,7 +579,7 @@ struct MockKernelImmutableData : public KernelImmutableData {
 };
 
 HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppendingKernelUsingNewHeapThenDebugSurfaceIsProgrammedOnce) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     DebugManagerStateRestore restorer;
 
@@ -638,7 +643,7 @@ HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppend
 }
 
 HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeapThenDebugSurfaceIsProgrammedOnce, IsAtLeastXeCore) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     DebugManagerStateRestore restorer;
 
@@ -726,7 +731,7 @@ struct DebuggerWithGlobalBindlessFixture : public L0DebuggerFixture {
 using DebuggerWithGlobalBindlessTest = Test<DebuggerWithGlobalBindlessFixture>;
 
 HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCreatedThenDebugSurfaceStateIsProgrammedAtBindlessOffsetZero) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     auto globalBindlessBase = bindlessHelper->getGlobalHeapsBase();
 
@@ -735,12 +740,14 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCrea
 
     EXPECT_EQ(globalBindlessBase, bindlessHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getHeapGpuBase());
 
-    SurfaceStateBufferLength length;
-    length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        SurfaceStateBufferLength length;
+        length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
 
-    EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
-    EXPECT_EQ(length.surfaceState.width + 1u, debugSurfaceState->getWidth());
-    EXPECT_EQ(length.surfaceState.height + 1u, debugSurfaceState->getHeight());
+        EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
+        EXPECT_EQ(length.surfaceState.width + 1u, debugSurfaceState->getWidth());
+        EXPECT_EQ(length.surfaceState.height + 1u, debugSurfaceState->getHeight());
+    }
     EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 }
 

@@ -175,7 +175,7 @@ HWTEST2_F(EnqueueCopyImageTest, WhenCopyingImageThenInterfaceDescriptorDataIsCor
 }
 
 HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
@@ -184,7 +184,7 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
     enqueueCopyImage<FamilyType>();
 
     for (uint32_t i = 0; i < 2; ++i) {
-        const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, i);
+        const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType, RENDER_SURFACE_STATE>(mockCmdQ, i);
 
         const auto &imageDesc = dstImage->getImageDesc();
         EXPECT_EQ(imageDesc.image_width, surfaceState->getWidth());
@@ -200,13 +200,13 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
             surfaceFormat == RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_UINT;
         EXPECT_TRUE(isRedescribedFormat);
         EXPECT_EQ(MockGmmResourceInfo::getHAlignSurfaceStateResult, surfaceState->getSurfaceHorizontalAlignment());
-        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState->getSurfaceVerticalAlignment());
+        EXPECT_EQ(static_cast<uint32_t>(FamilyType::RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4), static_cast<uint32_t>(surfaceState->getSurfaceVerticalAlignment()));
     }
 
-    const auto srcSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 0);
+    const auto srcSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType, RENDER_SURFACE_STATE>(mockCmdQ, 0);
     EXPECT_EQ(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), srcSurfaceState->getSurfaceBaseAddress());
 
-    const auto dstSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 1);
+    const auto dstSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType, RENDER_SURFACE_STATE>(mockCmdQ, 1);
     EXPECT_EQ(dstImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstSurfaceState->getSurfaceBaseAddress());
 }
 

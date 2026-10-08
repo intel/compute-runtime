@@ -413,7 +413,7 @@ HWTEST2_PRODUCT_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrec
 HWTEST_F(ModuleTest, givenStatefulBufferWhenOffsetIsPatchedThenAllocBaseAddressIsSet) {
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
@@ -468,7 +468,7 @@ HWTEST_F(ModuleTest, givenStatefulBufferWhenOffsetIsPatchedThenAllocBaseAddressI
 }
 
 HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenPassedPtrIsSetAsBaseAddress) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
@@ -509,7 +509,7 @@ HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenPassedPtrIsSetAsBaseAd
     context->freeMem(devicePtr);
 }
 
-HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenSizeIsDecreasedByOffset) {
+HWTEST2_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenSizeIsDecreasedByOffset, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     ze_kernel_handle_t kernelHandle;
 
@@ -557,7 +557,7 @@ HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenSizeIsDecreasedByOffse
     context->freeMem(devicePtr);
 }
 
-HWTEST_F(ModuleTest, givenUnalignedHostBufferWhenSurfaceStateProgrammedThenUnalignedSizeIsAdded) {
+HWTEST2_F(ModuleTest, givenUnalignedHostBufferWhenSurfaceStateProgrammedThenUnalignedSizeIsAdded, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     ze_kernel_handle_t kernelHandle;
 
@@ -3042,14 +3042,16 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
                 phys2Resident = true;
             }
         }
-        auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
-        auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
-        auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-        SurfaceStateBufferLength length = {0};
-        length.length = static_cast<uint32_t>((MemoryConstants::fullStatefulRegion)-1);
-        EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
-        EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
-        EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+            auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+            auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
+            auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+            SurfaceStateBufferLength length = {0};
+            length.length = static_cast<uint32_t>((MemoryConstants::fullStatefulRegion)-1);
+            EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
+            EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+            EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        }
         EXPECT_TRUE(phys1Resident);
         EXPECT_FALSE(phys2Resident);
 
@@ -3127,14 +3129,16 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
                 phys2Resident = true;
             }
         }
-        auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
-        auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
-        auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-        SurfaceStateBufferLength length = {0};
-        length.length = static_cast<uint32_t>((MemoryConstants::fullStatefulRegion)-1);
-        EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
-        EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
-        EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+            auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+            auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
+            auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+            SurfaceStateBufferLength length = {0};
+            length.length = static_cast<uint32_t>((MemoryConstants::fullStatefulRegion)-1);
+            EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
+            EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+            EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        }
         EXPECT_FALSE(phys1Resident);
         EXPECT_TRUE(phys2Resident);
 
@@ -3196,14 +3200,16 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
                 phys1Resident = true;
             }
         }
-        auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
-        auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
-        auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-        SurfaceStateBufferLength length = {0};
-        length.length = static_cast<uint32_t>((MemoryConstants::fullStatefulRegion)-1);
-        EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
-        EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
-        EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+            auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+            auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
+            auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+            SurfaceStateBufferLength length = {0};
+            length.length = static_cast<uint32_t>((MemoryConstants::fullStatefulRegion)-1);
+            EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
+            EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+            EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        }
         EXPECT_TRUE(phys1Resident);
         res = context->unMapVirtualMem(ptr, reservationSize);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3273,14 +3279,16 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
                 phys2Resident = true;
             }
         }
-        auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
-        auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
-        auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-        SurfaceStateBufferLength length = {0};
-        length.length = static_cast<uint32_t>((MemoryConstants::fullStatefulRegion)-1);
-        EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
-        EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
-        EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+            auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+            auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
+            auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+            SurfaceStateBufferLength length = {0};
+            length.length = static_cast<uint32_t>((MemoryConstants::fullStatefulRegion)-1);
+            EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
+            EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
+            EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
+        }
         EXPECT_TRUE(phys1Resident);
         EXPECT_FALSE(phys2Resident);
         res = context->unMapVirtualMem(ptr, size);

@@ -367,7 +367,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherenc
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenTemplateSurfaceStateBufferWhenEncodingSurfaceStateAndTemplatePointerSetThenUseTemplateMemory) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     void *templateStateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, templateStateBuffer);

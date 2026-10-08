@@ -457,7 +457,7 @@ TEST_F(BindlessKernelTests, GivenBindlessAddressingKernelWhenInitializeThenSurfa
     EXPECT_NE(nullptr, ssHeap);
 }
 
-TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {
+HWTEST2_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten, IsHeapfulRequired) {
     auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
@@ -1037,7 +1037,7 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
 
     auto bufferAddress = kernel->privateSurface->getGpuAddress();
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(kernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindful));
@@ -1187,7 +1187,7 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
 
     EXPECT_NE(0u, kernel->getSurfaceStateHeapSize());
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(kernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful));
@@ -1304,7 +1304,7 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
 
     EXPECT_NE(0u, kernel->getSurfaceStateHeapSize());
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(kernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful));
@@ -3399,7 +3399,7 @@ HWTEST_F(KernelTest, givenBindlessArgBufferWhenPatchWithImplicitSurfaceThenSurfa
     const auto ssIndex = kernel.kernelInfo.kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     const auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(kernel.mockKernel->getSurfaceStateHeap(), ssOffset));
     const auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 

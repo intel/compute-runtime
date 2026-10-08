@@ -1883,13 +1883,15 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTh
     auto sizeOffset = 1;
     auto offsetSize = size + sizeOffset;
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetSize, ptr, 0, nullptr, 0, 0, false);
 
-    auto width = surfaceState.getWidth();
-    EXPECT_EQ(alignUp(width, 4), width);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        auto width = surfaceState.getWidth();
+        EXPECT_EQ(alignUp(width, 4), width);
+    }
 
     alignedFree(ptr);
 }
@@ -1901,7 +1903,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceWhenOffsetIsSpecifiedForSvm
     auto offset = 4;
     MockGraphicsAllocation svmAlloc(ptr, size);
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, ptr, offset, &svmAlloc, 0, 0, false);
@@ -1917,26 +1919,30 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsNotNullThenB
     auto size = MemoryConstants::pageSize;
     auto ptr = alignedMalloc(size * 2, MemoryConstants::pageSize);
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, ptr, 0, nullptr, 0, 0, false);
 
-    auto surfType = surfaceState.getSurfaceType();
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfType);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        auto surfType = surfaceState.getSurfaceType();
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfType);
+    }
 
     alignedFree(ptr);
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsNullThenNullSurfaceShouldBeUsed) {
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(device.get(), &surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0, false);
 
-    auto surfType = surfaceState.getSurfaceType();
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, surfType);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        auto surfType = surfaceState.getSurfaceType();
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, surfType);
+    }
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledThenSurfaceBaseAddressIsProperlyOffset) {
@@ -1960,7 +1966,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     ASSERT_NE(nullptr, subBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     RENDER_SURFACE_STATE surfaceState = {};
 
     subBuffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
@@ -1988,16 +1994,18 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisable
         retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     RENDER_SURFACE_STATE surfaceState = {};
 
     buffer->setArgStateful(&surfaceState, false, true, true, false, context.getDevice(0)->getDevice(), false);
 
-    auto mocs = surfaceState.getMemoryObjectControlState();
-    auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getUncachedMOCS(), mocs);
-    EXPECT_EQ(128u, surfaceState.getWidth());
-    EXPECT_EQ(4u, surfaceState.getHeight());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        auto mocs = surfaceState.getMemoryObjectControlState();
+        auto gmmHelper = device->getGmmHelper();
+        EXPECT_EQ(gmmHelper->getUncachedMOCS(), mocs);
+        EXPECT_EQ(128u, surfaceState.getWidth());
+        EXPECT_EQ(4u, surfaceState.getHeight());
+    }
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedButIsAReadOnlyArgumentWhenSurfaceStateIsSetThenL3IsOn) {
@@ -2131,7 +2139,7 @@ HWTEST2_PRODUCT_F(BufferSetSurfaceTests, givenNonCompressedGmmResourceWhenSurfac
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgrammedThenBaseAddressAndLengthAreAlignedToDword) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     RENDER_SURFACE_STATE surfaceState = {};
     MockContext context;
@@ -2141,11 +2149,13 @@ HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgramm
     Buffer::setSurfaceState(device.get(), &surfaceState, false, false, 5, svmPtr, 0, nullptr, 0, 0, false);
 
     EXPECT_EQ(castToUint64(svmPtr), surfaceState.getSurfaceBaseAddress());
-    SurfaceStateBufferLength length = {};
-    length.surfaceState.width = surfaceState.getWidth() - 1;
-    length.surfaceState.height = surfaceState.getHeight() - 1;
-    length.surfaceState.depth = surfaceState.getDepth() - 1;
-    EXPECT_EQ(alignUp(5u, 4u), length.length + 1);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        SurfaceStateBufferLength length = {};
+        length.surfaceState.width = surfaceState.getWidth() - 1;
+        length.surfaceState.height = surfaceState.getHeight() - 1;
+        length.surfaceState.depth = surfaceState.getDepth() - 1;
+        EXPECT_EQ(alignUp(5u, 4u), length.length + 1);
+    }
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBeingProgrammedThenL3CacheIsOff) {

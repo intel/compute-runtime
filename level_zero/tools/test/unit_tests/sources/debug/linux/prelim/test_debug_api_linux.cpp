@@ -7636,12 +7636,14 @@ TEST_F(DebugApiRegistersAccessTest, GivenVmHandleNotFoundWhenReadSbaBufferCalled
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readSbaBuffer(session->convertToThreadId(thread), sba));
 }
 
-struct MockRenderSurfaceState {
-    uint32_t unused0[8];
-    uint64_t surfaceBaseAddress;
-    uint32_t unused1[6];
-};
-static_assert(64 == sizeof(MockRenderSurfaceState));
+void programScratchSurfaceStateBaseAddress(L0::Device *device, void *surfaceState, uint64_t scratchBaseAddress) {
+    constexpr size_t scratchBufferSize = 1u;
+    constexpr uint32_t perThreadScratchSize = 128u;
+    constexpr uint32_t scratchSurfaceType = 6u;
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    device->getGfxCoreHelper().setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, surfaceState, scratchBufferSize, scratchBaseAddress, 0,
+                                                                       perThreadScratchSize, nullptr, false, scratchSurfaceType, false, false);
+}
 
 void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaTrackedAddresses &sba, uint32_t r0[8], L0::Device *device) {
     auto maxDbgSurfaceSize = MemoryConstants::pageSize;
@@ -7661,7 +7663,7 @@ void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaT
     char *sbaCpuPtr = stateSaveArea.data() + maxDbgSurfaceSize;
     char *rssCpuPtr = sbaCpuPtr + sizeof(SbaTrackedAddresses) + renderSurfaceStateOffset;
     memcpy(sbaCpuPtr, &sba, sizeof(sba));
-    reinterpret_cast<MockRenderSurfaceState *>(rssCpuPtr)->surfaceBaseAddress = 0xBA5EBA5E;
+    programScratchSurfaceStateBaseAddress(device, rssCpuPtr, 0xBA5EBA5E);
 }
 
 TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead) {
@@ -7797,7 +7799,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenScratchPointerAndZeroAddressInSurfaceSt
     char *sbaCpuPtr = session->stateSaveAreaHeader.data() + maxDbgSurfaceSize;
     char *rssCpuPtr = sbaCpuPtr + sizeof(SbaTrackedAddresses) + renderSurfaceStateOffset;
     memcpy(sbaCpuPtr, &sbaExpected, sizeof(sbaExpected));
-    reinterpret_cast<MockRenderSurfaceState *>(rssCpuPtr)->surfaceBaseAddress = 0;
+    programScratchSurfaceStateBaseAddress(device, rssCpuPtr, 0);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), thread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0));
 

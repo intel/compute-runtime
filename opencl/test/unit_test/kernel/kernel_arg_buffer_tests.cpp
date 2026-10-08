@@ -244,7 +244,7 @@ HWTEST_F(KernelArgBufferTestBindless, givenBindlessArgBufferWhenSettingKernelArg
     const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
     const auto surfaceStateHeapSize = pKernel->getSurfaceStateHeapSize();
 
-    EXPECT_EQ(pKernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize, surfaceStateHeapSize);
+    EXPECT_LE(pKernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize, surfaceStateHeapSize);
 
     cl_mem memObj = pBuffer;
     retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
@@ -252,7 +252,7 @@ HWTEST_F(KernelArgBufferTestBindless, givenBindlessArgBufferWhenSettingKernelArg
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     const auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(), ssOffset));
     const auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 

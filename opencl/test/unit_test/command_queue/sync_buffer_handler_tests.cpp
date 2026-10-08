@@ -194,7 +194,7 @@ HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenSyncBufferFullWhenEnqueuingKerne
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBufferThenSshIsProperlyPatched) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     kernelInternals->kernelInfo.setBufferAddressingMode(KernelDescriptor::BindfulAndStateless);
 
     patchAllocateSyncBuffer();

@@ -101,6 +101,7 @@ struct Xe2HpgCoreFamily : public Xe2HpgCore {
     using Parse = CmdParse<Xe2HpgCoreFamily>;
     using GfxFamily = Xe2HpgCoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER;
+    using DefaultRenderSurfaceState = typename GfxFamily::RENDER_SURFACE_STATE;
     using PorWalkerType = COMPUTE_WALKER;
     using FrontEndStateCommand = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;

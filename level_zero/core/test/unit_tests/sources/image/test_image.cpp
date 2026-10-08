@@ -320,7 +320,7 @@ HWTEST2_P(ImageCreateUsmPool, Given2dTypeWithPitchedPtrWhenImageCreatedThenImage
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_P(ImageCreateUsmPool, Given2dTypeWithPitchedPtrWhenImageCreatedThenQPitchIsNotProgrammed, ImageSupport) {
+HWTEST2_P(ImageCreateUsmPool, Given2dTypeWithPitchedPtrWhenImageCreatedThenQPitchIsNotProgrammed, SupportsLegacyRenderSurfaceStateAndImageSupport) {
     // A non-array 2D surface has a single slice, so there is no slice distance
     // to describe and QPitch stays out of the surface state.
     const size_t width = 256;
@@ -362,7 +362,7 @@ HWTEST2_P(ImageCreateUsmPool, Given2dTypeWithPitchedPtrWhenImageCreatedThenQPitc
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrWhenImageCreatedThenQPitchDescribesTheSlicePitch, ImageSupport) {
+HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrWhenImageCreatedThenQPitchDescribesTheSlicePitch, SupportsLegacyRenderSurfaceStateAndImageSupport) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     // A 3D surface reaches its slices through QPitch rather than a byte slice
@@ -421,7 +421,7 @@ HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrWhenImageCreatedThenQPitc
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrAndCustomPitchesWhenImageCreatedThenQPitchDescribesTheCustomSlicePitch, ImageSupport) {
+HWTEST2_P(ImageCreateUsmPool, Given3dTypeWithPitchedPtrAndCustomPitchesWhenImageCreatedThenQPitchDescribesTheCustomSlicePitch, SupportsLegacyRenderSurfaceStateAndImageSupport) {
     const size_t width = 256;
     const size_t height = 64;
     const size_t depth = 8;
@@ -573,7 +573,7 @@ class TestImageFormats : public DeviceFixture, public testing::TestWithParam<std
     }
 };
 
-HWTEST_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet) {
+HWTEST2_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -607,7 +607,7 @@ HWTEST_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectS
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
 }
 
-HWTEST_F(ImageCreate, givenYuvFormatWhenImageInitializeThenChannelSelectIsFixedRegardlessOfSwizzles) {
+HWTEST2_F(ImageCreate, givenYuvFormatWhenImageInitializeThenChannelSelectIsFixedRegardlessOfSwizzles, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     // Zero initialised swizzles read as R in every channel, which would replicate the luma
@@ -722,7 +722,7 @@ HWTEST_F(ImageCreate, givenOutOfRangeFormatLayoutOrTypeWhenImageInitializeThenUn
     }
 }
 
-HWTEST_F(ImageCreate, givenDepthSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet) {
+HWTEST2_F(ImageCreate, givenDepthSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -756,7 +756,7 @@ HWTEST_F(ImageCreate, givenDepthSwizzleFormatWhenImageInitializeThenCorrectSwizz
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
 }
 
-HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgsAreCorrectlyStoredInNewSeparateAllocation) {
+HWTEST2_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgsAreCorrectlyStoredInNewSeparateAllocation, SupportsLegacyRenderSurfaceState) {
 
     auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
                                                      neoDevice->getNumGenericSubDevices() > 1);
@@ -1514,7 +1514,7 @@ HWTEST_F(ImageCreateExternalMemoryTest, givenD3D11TextureHandleWhenCreatingImage
 
 using ImageCreateWithMemoryManagerNTHandleMock = Test<DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>>;
 
-HWTEST_F(ImageCreateWithMemoryManagerNTHandleMock, givenNTHandleWhenCreatingNV12ImageThenSuccessIsReturnedAndUVOffsetIsSet) {
+HWTEST2_F(ImageCreateWithMemoryManagerNTHandleMock, givenNTHandleWhenCreatingNV12ImageThenSuccessIsReturnedAndUVOffsetIsSet, SupportsLegacyRenderSurfaceState) {
     constexpr uint32_t yOffsetForUVPlane = 8u; // mock sets reqOffsetInfo.Lock.Offset to 16 and reqOffsetInfo.Lock.Pitch to 2
 
     ze_image_desc_t desc = {};
@@ -1593,7 +1593,7 @@ HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageDescWhenFailImageAlloca
     EXPECT_EQ(imageHandle, nullptr);
 }
 
-HWTEST_F(ImageCreate, givenMediaBlockOptionWhenCopySurfaceStateThenSurfaceStateIsSet) {
+HWTEST2_F(ImageCreate, givenMediaBlockOptionWhenCopySurfaceStateThenSurfaceStateIsSet, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -1653,7 +1653,7 @@ HWTEST_F(ImageCreate, givenImageAllocationTypeExtensionWhenCreateImageThenUsePro
     EXPECT_EQ(imageHW->getAllocation()->getAllocationType(), NEO::AllocationType::sharedResourceCopy);
 }
 
-HWTEST_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThenValidImageIsCreated) {
+HWTEST2_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThenValidImageIsCreated, SupportsLegacyRenderSurfaceState) {
     auto params = GetParam();
 
     ze_image_desc_t zeDesc = {};
@@ -2270,7 +2270,7 @@ uint32_t getCompressionFormatInSlot(L0::Image *image, uint32_t bindlessSlot) {
     return static_cast<uint32_t>(surfaceState.getCompressionFormat());
 }
 
-HWTEST2_F(ImageCreate, givenCompressedImageWhenCreatingImageThenCompressionFormatIsProgrammedInAllSurfaceStates, IsAtLeastXeCore) {
+HWTEST2_F(ImageCreate, givenCompressedImageWhenCreatingImageThenCompressionFormatIsProgrammedInAllSurfaceStates, SupportsLegacyRenderSurfaceStateAndAtLeastXeCore) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.RenderCompressedImagesEnabled.set(1);
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = true;
@@ -2305,7 +2305,7 @@ HWTEST2_F(ImageCreate, givenCompressedImageWhenCreatingImageThenCompressionForma
     }
 }
 
-HWTEST2_F(ImageCreate, givenUncompressedImageWhenCreatingImageThenCompressionFormatIsNotProgrammed, IsAtLeastXeCore) {
+HWTEST2_F(ImageCreate, givenUncompressedImageWhenCreatingImageThenCompressionFormatIsNotProgrammed, SupportsLegacyRenderSurfaceStateAndAtLeastXeCore) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.RenderCompressedImagesEnabled.set(0);
 
@@ -3261,7 +3261,7 @@ HWTEST2_P(ImageCreateUsmPool, GivenBindlessImageWhenImageViewCreatedWithTheSameF
 
 INSTANTIATE_TEST_SUITE_P(UsmPoolDisabledEnabled, ImageCreateUsmPool, ::testing::Values(0, 2));
 
-HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedToSSH, ImageSupport) {
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedToSSH, SupportsLegacyRenderSurfaceStateAndImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -3504,7 +3504,7 @@ HWTEST2_F(ImageCreate, GivenNoSamplerDescWhenSampledImageCreatedThenErrorIsRetur
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenInitializedThenSamplerStateCopiedToSSH, ImageSupport) {
+HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenInitializedThenSamplerStateCopiedToSSH, SupportsLegacyRenderSurfaceStateAndImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -3565,7 +3565,7 @@ HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenInitializedThenSamplerStateC
     ASSERT_EQ(samplerState->getMagModeFilter(), SAMPLER_STATE::MAG_MODE_FILTER_LINEAR);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessSampledImageViewFromUnsampledImageWhenInitializedThenSamplerStateCopiedToSSH, ImageSupport) {
+HWTEST2_F(ImageCreate, GivenBindlessSampledImageViewFromUnsampledImageWhenInitializedThenSamplerStateCopiedToSSH, SupportsLegacyRenderSurfaceStateAndImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -3980,7 +3980,7 @@ HWTEST_F(ImageCreate, givenImageWhenEncodeImplicitArgsSurfaceStateCalledThenSurf
     EXPECT_NE(0u, gpuAddress);
 }
 
-HWTEST_F(ImageCreate, givenBindlessModeAndBindlessHeapsHelperWhenImageInitializedThenImplicitArgsAllocatedAndSurfaceStateCopied) {
+HWTEST2_F(ImageCreate, givenBindlessModeAndBindlessHeapsHelperWhenImageInitializedThenImplicitArgsAllocatedAndSurfaceStateCopied, SupportsLegacyRenderSurfaceState) {
 
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseBindlessMode.set(1);
@@ -4009,7 +4009,7 @@ HWTEST_F(ImageCreate, givenBindlessModeAndBindlessHeapsHelperWhenImageInitialize
     auto baseAddr = implicitArgsSS.getSurfaceBaseAddress();
     EXPECT_EQ(baseAddr, implicitArgsAlloc->getGpuAddress());
 }
-HWTEST_F(ImageCreate, givenNonBindlessImageAndBindlessHeapsHelperPresentWhenImageInitializedThenImplicitArgsAllocatedOnDemandInInitialize) {
+HWTEST2_F(ImageCreate, givenNonBindlessImageAndBindlessHeapsHelperPresentWhenImageInitializedThenImplicitArgsAllocatedOnDemandInInitialize, SupportsLegacyRenderSurfaceState) {
 
     auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
                                                      neoDevice->getNumGenericSubDevices() > 1);
@@ -4034,6 +4034,10 @@ HWTEST_F(ImageCreate, givenNonBindlessImageAndBindlessHeapsHelperPresentWhenImag
     auto &implicitArgsSS = imageHW->getImplicitArgsSurfaceState();
     auto baseAddr = implicitArgsSS.getSurfaceBaseAddress();
     EXPECT_EQ(baseAddr, implicitArgsAlloc->getGpuAddress());
+}
+
+uint64_t getImplicitArgsSurfaceStateBaseAddress(L0::Device *device, void *implicitArgsSurfaceState) {
+    return device->getGfxCoreHelper().getRenderSurfaceStateBaseAddress(implicitArgsSurfaceState, device->getNEODevice()->getRootDeviceEnvironment());
 }
 
 HWTEST_F(ImageCreate, givenImageWhenAllocateImplicitArgsOnDemandCalledThenImplicitArgsAreStoredInTagFromDeviceAllocator) {
@@ -4066,7 +4070,7 @@ HWTEST_F(ImageCreate, givenImageWhenAllocateImplicitArgsOnDemandCalledThenImplic
     EXPECT_EQ(desc.height, imgImplicitArgs->imageHeight);
     EXPECT_EQ(desc.depth, imgImplicitArgs->imageDepth);
 
-    EXPECT_EQ(imageHW->implicitArgsTag->getGpuAddress(), imageHW->getImplicitArgsSurfaceState().getSurfaceBaseAddress());
+    EXPECT_EQ(imageHW->implicitArgsTag->getGpuAddress(), getImplicitArgsSurfaceStateBaseAddress(device, &imageHW->getImplicitArgsSurfaceState()));
 }
 
 TEST(ImageImplicitArgsNodeTypeTest, givenImageImplicitArgsNodeTypeThenItDescribesCacheLineSizedNodesInCpuAccessibleDeviceAllocation) {
@@ -4131,8 +4135,8 @@ HWTEST_F(ImageCreate, givenBindlessHeapsHelperWhenMultipleImagesCreatedThenImpli
     EXPECT_EQ(imageHW1->getImplicitArgsAllocation(), imageHW2->getImplicitArgsAllocation());
     EXPECT_NE(imageHW1->implicitArgsTag->getGpuAddress(), imageHW2->implicitArgsTag->getGpuAddress());
 
-    EXPECT_EQ(imageHW1->implicitArgsTag->getGpuAddress(), imageHW1->getImplicitArgsSurfaceState().getSurfaceBaseAddress());
-    EXPECT_EQ(imageHW2->implicitArgsTag->getGpuAddress(), imageHW2->getImplicitArgsSurfaceState().getSurfaceBaseAddress());
+    EXPECT_EQ(imageHW1->implicitArgsTag->getGpuAddress(), getImplicitArgsSurfaceStateBaseAddress(device, &imageHW1->getImplicitArgsSurfaceState()));
+    EXPECT_EQ(imageHW2->implicitArgsTag->getGpuAddress(), getImplicitArgsSurfaceStateBaseAddress(device, &imageHW2->getImplicitArgsSurfaceState()));
 
     EXPECT_EQ(73u, static_cast<ImageImplicitArgs *>(imageHW1->implicitArgsTag->getCpuBase())->imageWidth);
     EXPECT_EQ(146u, static_cast<ImageImplicitArgs *>(imageHW2->implicitArgsTag->getCpuBase())->imageWidth);
@@ -4199,7 +4203,7 @@ HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializedThenImplicitArgsAreS
     EXPECT_EQ(imageHW1->getImplicitArgsAllocation(), imageHW2->getImplicitArgsAllocation());
     EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, imageHW1->getImplicitArgsAllocation()->getAllocationType());
 
-    EXPECT_EQ(imageHW2->implicitArgsTag->getGpuAddress(), imageHW2->getImplicitArgsSurfaceState().getSurfaceBaseAddress());
+    EXPECT_EQ(imageHW2->implicitArgsTag->getGpuAddress(), getImplicitArgsSurfaceStateBaseAddress(device, &imageHW2->getImplicitArgsSurfaceState()));
     EXPECT_EQ(73u, static_cast<ImageImplicitArgs *>(imageHW2->implicitArgsTag->getCpuBase())->imageWidth);
     EXPECT_EQ(49u, static_cast<ImageImplicitArgs *>(imageHW2->implicitArgsTag->getCpuBase())->imageHeight);
 }
@@ -4232,7 +4236,7 @@ HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageWhenAllocateImplicitArg
     EXPECT_EQ(nullptr, imageHW->implicitArgsTag);
 }
 
-HWTEST2_F(ImageCreate, givenMipmappedImageWhenAllocatingBindlessSlotWithMipmapThenEachLevelGetsSeededSlotWithItsOwnLod, ImageSupport) {
+HWTEST2_F(ImageCreate, givenMipmappedImageWhenAllocatingBindlessSlotWithMipmapThenEachLevelGetsSeededSlotWithItsOwnLod, SupportsLegacyRenderSurfaceStateAndImageSupport) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
@@ -4340,7 +4344,7 @@ HWTEST2_F(ImageCreate, givenImageWhenAllocatingBindlessSlotAgainThenPreviouslyRe
     EXPECT_EQ(baseSlotOffset, baseSlot->surfaceStateOffset);
 }
 
-HWTEST2_F(ImageCreate, givenMipmappedImageWhenProgrammingPackedSlotForMipLevelThenPerLevelSlotGetsItsOwnLod, ImageSupport) {
+HWTEST2_F(ImageCreate, givenMipmappedImageWhenProgrammingPackedSlotForMipLevelThenPerLevelSlotGetsItsOwnLod, SupportsLegacyRenderSurfaceStateAndImageSupport) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
@@ -4537,7 +4541,7 @@ HWTEST2_F(ImageCreate, givenMipmappedImageWithoutBindlessSlotWhenAllocatingBindl
     EXPECT_ANY_THROW(imageHW->getBindlessSlotWithMipmap(2u));
 }
 
-HWTEST_F(ImageCreate, givenMipmappedImageWhenCopySurfaceStateToSSHThenXOffsetAndYOffsetAreZero) {
+HWTEST2_F(ImageCreate, givenMipmappedImageWhenCopySurfaceStateToSSHThenXOffsetAndYOffsetAreZero, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -4576,7 +4580,7 @@ HWTEST_F(ImageCreate, givenMipmappedImageWhenCopySurfaceStateToSSHThenXOffsetAnd
     }
 }
 
-HWTEST_F(ImageCreate, givenMipmappedImageWithMultipleMipLevelsWhenCopySurfaceStateToSSHThenMipFieldsAreCorrect) {
+HWTEST2_F(ImageCreate, givenMipmappedImageWithMultipleMipLevelsWhenCopySurfaceStateToSSHThenMipFieldsAreCorrect, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};

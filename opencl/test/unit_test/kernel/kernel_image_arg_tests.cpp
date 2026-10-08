@@ -378,7 +378,7 @@ HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenSettingKernelArg
     const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   ssOffset));

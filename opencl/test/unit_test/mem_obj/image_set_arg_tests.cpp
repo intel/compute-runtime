@@ -61,6 +61,14 @@ class ImageSetArgTest : public ClDeviceFixture,
         }
     }
 
+    template <typename FamilyType>
+    static void expectShaderChannelSelects(const typename FamilyType::DefaultRenderSurfaceState *surfaceState, int red, int green, int blue, int alpha) {
+        EXPECT_EQ(red, static_cast<int>(surfaceState->getShaderChannelSelectRed()));
+        EXPECT_EQ(green, static_cast<int>(surfaceState->getShaderChannelSelectGreen()));
+        EXPECT_EQ(blue, static_cast<int>(surfaceState->getShaderChannelSelectBlue()));
+        EXPECT_EQ(alpha, static_cast<int>(surfaceState->getShaderChannelSelectAlpha()));
+    }
+
     void SetUp() override {
         ClDeviceFixture::setUp();
         pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -116,7 +124,7 @@ class ImageSetArgTest : public ClDeviceFixture,
 };
 
 HWTEST_F(ImageSetArgTest, WhenSettingKernelArgImageThenSurfaceBaseAddressIsSetCorrectly) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
@@ -133,7 +141,7 @@ HWTEST_F(ImageSetArgTest, WhenSettingKernelArgImageThenSurfaceBaseAddressIsSetCo
 }
 
 HWTEST_F(ImageSetArgTest, GivenMediaBlockImageWhenSettingImageArgThenCorrectValueIsSet) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     RENDER_SURFACE_STATE surfaceState;
 
@@ -146,7 +154,7 @@ HWTEST_F(ImageSetArgTest, GivenMediaBlockImageWhenSettingImageArgThenCorrectValu
 }
 
 HWTEST_F(ImageSetArgTest, GivenNormalImageWhenSettingImageArgThenCorrectValueIsSet) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     RENDER_SURFACE_STATE surfaceState;
 
@@ -158,11 +166,12 @@ HWTEST_F(ImageSetArgTest, GivenNormalImageWhenSettingImageArgThenCorrectValueIsS
     EXPECT_EQ(0u, surfaceState.getMIPCountLOD());
 }
 
-HWTEST_F(ImageSetArgTest, givenImageWhenSettingMipTailStartLodThenProgramValueFromGmmResourceinfo) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+HWTEST_F(ImageSetArgTest, givenMippedImageWhenSettingMipTailStartLodThenProgramValueFromGmmResourceinfo) {
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     RENDER_SURFACE_STATE surfaceState = {};
     const uint32_t mipTailStartLod = 4;
+    srcImage->setMipCount(2u);
 
     auto gmm = srcAllocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
@@ -182,7 +191,7 @@ HWTEST_F(ImageSetArgTest, givenImageWhenSettingMipTailStartLodThenProgramValueFr
 }
 
 HWTEST_F(ImageSetArgTest, givenCubeMapIndexWhenSetKernelArgImageIsCalledThenModifySurfaceState) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     uint32_t cubeFaceIndex = 2;
 
     Image *src2dImage = Image2dHelperUlt<>::create(context);
@@ -195,15 +204,15 @@ HWTEST_F(ImageSetArgTest, givenCubeMapIndexWhenSetKernelArgImageIsCalledThenModi
 
     src2dImage->setImageArg(const_cast<RENDER_SURFACE_STATE *>(surfaceState), false, 0, pClDevice->getRootDeviceIndex());
 
-    auto renderTargetViewExtent = surfaceState->getRenderTargetViewExtent();
     auto minimumArrayElement = surfaceState->getMinimumArrayElement();
-    auto isImageArray = surfaceState->getSurfaceArray();
     auto depth = surfaceState->getDepth();
 
-    EXPECT_EQ(renderTargetViewExtent, 1u);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(surfaceState->getRenderTargetViewExtent(), 1u);
+        EXPECT_TRUE(surfaceState->getSurfaceArray());
+    }
     EXPECT_EQ(minimumArrayElement, cubeFaceIndex);
     EXPECT_EQ(depth, (__GMM_MAX_CUBE_FACE - cubeFaceIndex));
-    EXPECT_TRUE(isImageArray);
 
     delete src2dImage;
 }
@@ -211,7 +220,7 @@ HWTEST_F(ImageSetArgTest, givenCubeMapIndexWhenSetKernelArgImageIsCalledThenModi
 struct ImageSetArgSurfaceArrayTest : ImageSetArgTest {
     template <typename FamilyType>
     void testSurfaceArrayProgramming(cl_mem_object_type imageType, size_t imageArraySize, bool expectedSurfaceArray) {
-        using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+        using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
         RENDER_SURFACE_STATE surfaceState;
 
         cl_image_desc imageDesc = Image2dDefaults::imageDesc;
@@ -221,7 +230,9 @@ struct ImageSetArgSurfaceArrayTest : ImageSetArgTest {
         image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
         image->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
-        EXPECT_EQ(expectedSurfaceArray, surfaceState.getSurfaceArray());
+        if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+            EXPECT_EQ(expectedSurfaceArray, surfaceState.getSurfaceArray());
+        }
     }
 };
 
@@ -254,7 +265,6 @@ HWTEST_F(ImageSetArgSurfaceArrayTest, givenNonArrayImageWhenCallingSetImageArgTh
 }
 
 HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArrayWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
-    MockContext context;
     McsSurfaceInfo mcsSurfaceInfo = {};
     MockGraphicsAllocation *allocation = new MockGraphicsAllocation(0, 0x1000);
     ImageInfo imageInfo = {};
@@ -269,11 +279,11 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
     imageInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imageInfo.plane = ImagePlane::noPlane;
 
-    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), imageInfo, false);
+    auto gmm = MockGmm::queryImgParams(context->getDevice(0)->getGmmHelper(), imageInfo, false);
     allocation->setDefaultGmm(gmm.release());
 
     auto image = std::unique_ptr<Image>{Image::createSharedImage(
-        &context,
+        context,
         nullptr,
         mcsSurfaceInfo,
         GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation),
@@ -285,13 +295,15 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
         0, 0, 0, false, nullptr)};
     image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
-    typename FamilyType::RENDER_SURFACE_STATE surfaceState{};
+    typename FamilyType::DefaultRenderSurfaceState surfaceState{};
     image->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
-    EXPECT_FALSE(surfaceState.getSurfaceArray());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_FALSE(surfaceState.getSurfaceArray());
+    }
 }
 
 HWTEST_F(ImageSetArgTest, givenNonCubeMapIndexWhenSetKernelArgImageIsCalledThenDontModifySurfaceState) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
@@ -300,27 +312,27 @@ HWTEST_F(ImageSetArgTest, givenNonCubeMapIndexWhenSetKernelArgImageIsCalledThenD
     EXPECT_EQ(srcImage->getCubeFaceIndex(), __GMM_NO_CUBE_MAP);
     srcImage->setImageArg(const_cast<RENDER_SURFACE_STATE *>(surfaceState), false, 0, pClDevice->getRootDeviceIndex());
 
-    auto renderTargetViewExtent = surfaceState->getRenderTargetViewExtent();
     auto minimumArrayElement = surfaceState->getMinimumArrayElement();
-    auto isImageArray = surfaceState->getSurfaceArray();
     auto depth = surfaceState->getDepth();
     auto hAlign = static_cast<uint32_t>(surfaceState->getSurfaceHorizontalAlignment());
     auto vAlign = static_cast<uint32_t>(surfaceState->getSurfaceVerticalAlignment());
 
     auto expectedHAlign = static_cast<uint32_t>(MockGmmResourceInfo::getHAlignSurfaceStateResult);
-    auto expectedVAlign = static_cast<uint32_t>(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
+    auto expectedVAlign = static_cast<uint32_t>(FamilyType::RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
 
     // 3D image
-    EXPECT_EQ(renderTargetViewExtent, srcImage->getImageDesc().image_depth);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(surfaceState->getRenderTargetViewExtent(), srcImage->getImageDesc().image_depth);
+        EXPECT_FALSE(surfaceState->getSurfaceArray());
+    }
     EXPECT_EQ(minimumArrayElement, 0u);
     EXPECT_EQ(depth, srcImage->getImageDesc().image_depth);
     EXPECT_EQ(expectedHAlign, hAlign);
     EXPECT_EQ(expectedVAlign, vAlign);
-    EXPECT_FALSE(isImageArray);
 }
 
 HWTEST_F(ImageSetArgTest, givenOffsetBufferWhenSetKernelArgImageIscalledThenFullGPuPointerIsPatched) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
@@ -342,7 +354,7 @@ HWTEST_F(ImageSetArgTest, givenOffsetBufferWhenSetKernelArgImageIscalledThenFull
 HWTEST2_PRODUCT_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorrectly, MatchAny) {
     auto gmmHelper = pDevice->getGmmHelper();
     auto imageMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     cl_mem memObj = srcImage;
 
     retVal = clSetKernelArg(
@@ -365,16 +377,15 @@ HWTEST2_PRODUCT_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorre
     EXPECT_EQ(srcImage->getImageDesc().image_width, surfaceState->getWidth());
     EXPECT_EQ(srcImage->getImageDesc().image_height, surfaceState->getHeight());
     EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getDepth());
-    EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(rPitch, surfaceState->getSurfacePitch());
-    EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
     EXPECT_EQ(srcImage->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat, (SurfaceFormat)surfaceState->getSurfaceFormat());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D, surfaceState->getSurfaceType());
-    EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
-    EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
-    EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
-    EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getRenderTargetViewExtent());
+        EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D, surfaceState->getSurfaceType());
+        EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
+    }
+    expectShaderChannelSelects<FamilyType>(surfaceState, expectedChannelRed, expectedChannelGreen, expectedChannelBlue, FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(0u, surfaceState->getCoherencyType());
     }
@@ -389,7 +400,7 @@ HWTEST2_PRODUCT_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorre
 }
 
 HWTEST_F(ImageSetArgTest, givenImage2DWithMipMapsWhenSetKernelArgIsCalledThenMipLevelAndMipCountIsSet) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     cl_mem memObj = srcImage;
     int mipLevel = 2;
     uint32_t mipCount = 3;
@@ -413,7 +424,7 @@ HWTEST_F(ImageSetArgTest, givenImage2DWithMipMapsWhenSetKernelArgIsCalledThenMip
 }
 
 HWTEST_F(ImageSetArgTest, Given2dArrayWhenSettingKernelArgThenPropertiesAreSetCorrectly) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     Image *image2Darray = Image2dArrayHelperUlt<>::create(context);
     auto graphicsAllocation = image2Darray->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -439,17 +450,16 @@ HWTEST_F(ImageSetArgTest, Given2dArrayWhenSettingKernelArgThenPropertiesAreSetCo
     EXPECT_EQ(image2Darray->getImageDesc().image_width, surfaceState->getWidth());
     EXPECT_EQ(image2Darray->getImageDesc().image_height, surfaceState->getHeight());
     EXPECT_EQ(image2Darray->getImageDesc().image_array_size, surfaceState->getDepth());
-    EXPECT_EQ(image2Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(rPitch, surfaceState->getSurfacePitch());
-    EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
     EXPECT_EQ(image2Darray->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat, (SurfaceFormat)surfaceState->getSurfaceFormat());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D, surfaceState->getSurfaceType());
-    EXPECT_TRUE((SurfaceFormat)surfaceState->getSurfaceArray());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(image2Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
+        EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D, surfaceState->getSurfaceType());
+        EXPECT_TRUE(surfaceState->getSurfaceArray());
+    }
 
-    EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
-    EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
-    EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    expectShaderChannelSelects<FamilyType>(surfaceState, expectedChannelRed, expectedChannelGreen, expectedChannelBlue, FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -461,7 +471,7 @@ HWTEST_F(ImageSetArgTest, Given2dArrayWhenSettingKernelArgThenPropertiesAreSetCo
 }
 
 HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCorrectly) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     Image *image1Darray = Image1dArrayHelperUlt<>::create(context);
     auto graphicsAllocation = image1Darray->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -485,19 +495,18 @@ HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCo
     EXPECT_EQ(image1Darray->getImageDesc().image_width, surfaceState->getWidth());
     EXPECT_EQ(1u, surfaceState->getHeight());
     EXPECT_EQ(image1Darray->getImageDesc().image_array_size, surfaceState->getDepth());
-    EXPECT_EQ(image1Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(image1Darray->getImageDesc().image_row_pitch, surfaceState->getSurfacePitch());
-    EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
-    EXPECT_EQ(graphicsAllocation->getDefaultGmm()->queryQPitch(), surfaceState->getSurfaceQPitch());
 
     EXPECT_EQ(image1Darray->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat, (SurfaceFormat)surfaceState->getSurfaceFormat());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, surfaceState->getSurfaceType());
-    EXPECT_TRUE((SurfaceFormat)surfaceState->getSurfaceArray());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(image1Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
+        EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
+        EXPECT_EQ(graphicsAllocation->getDefaultGmm()->queryQPitch(), surfaceState->getSurfaceQPitch());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, surfaceState->getSurfaceType());
+        EXPECT_TRUE(surfaceState->getSurfaceArray());
+    }
 
-    EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
-    EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
-    EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    expectShaderChannelSelects<FamilyType>(surfaceState, expectedChannelRed, expectedChannelGreen, expectedChannelBlue, FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -586,7 +595,7 @@ HWTEST2_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxField
 }
 
 HWTEST_F(ImageSetArgTest, givenMultisampledR32Floatx8x24DepthStencilFormatWhenSetArgIsCalledThenSetMssSurfaceStateStorageParam) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
 
     McsSurfaceInfo msi = {0, 0, 3};
@@ -606,8 +615,10 @@ HWTEST_F(ImageSetArgTest, givenMultisampledR32Floatx8x24DepthStencilFormatWhenSe
 
     EXPECT_TRUE(Image::isDepthFormat(image->getImageFormat()));
     EXPECT_TRUE(surfaceState->getSurfaceFormat() == SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS);
-    EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
-                RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
+                    RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+    }
 }
 
 HWTEST2_F(ImageSetArgTest, givenMcsAllocationAndCompressionWhenSetArgOnMultisampledImgIsCalledThenProgramAuxFieldsWithMcsParams, IsAtMostXeCore) {
@@ -708,7 +719,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     EXPECT_EQ(0u, surfaceState->getAuxiliarySurfaceQPitch());
 }
 
-HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMcsThenAuxBaseAddressIsSet) {
+HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMcsThenAuxBaseAddressIsSet, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     McsSurfaceInfo msi = {10, 20, 3};
@@ -739,7 +750,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     EXPECT_NE(0u, surfaceState->getAuxiliarySurfaceBaseAddress());
 }
 
-HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMcsThenAuxSurfPitchAndQPitchIsSet) {
+HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMcsThenAuxSurfPitchAndQPitchIsSet, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     McsSurfaceInfo msi = {10, 20, 3};
@@ -778,7 +789,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
 }
 
 HWTEST_F(ImageSetArgTest, GivenImageFrom1dBufferWhenSettingKernelArgThenPropertiesAreSetCorrectly) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     auto buffer = clCreateBuffer(context, 0, 4096 * 10, nullptr, nullptr);
     ASSERT_NE(nullptr, buffer);
@@ -811,32 +822,34 @@ HWTEST_F(ImageSetArgTest, GivenImageFrom1dBufferWhenSettingKernelArgThenProperti
     auto image = castToObject<Image>(imageFromBuffer);
 
     EXPECT_EQ(image->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), surfaceAddress);
-    // Width is 7 bits
-    EXPECT_EQ(128u, surfaceState->getWidth());
-    // Height is 14 bits
-    EXPECT_EQ(50u, surfaceState->getHeight());
-    // Depth is 11 bits
-    EXPECT_EQ(1u, surfaceState->getDepth());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        // Width is 7 bits
+        EXPECT_EQ(128u, surfaceState->getWidth());
+        // Height is 14 bits
+        EXPECT_EQ(50u, surfaceState->getHeight());
+        // Depth is 11 bits
+        EXPECT_EQ(1u, surfaceState->getDepth());
 
-    EXPECT_EQ(1u, surfaceState->getRenderTargetViewExtent());
-    EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
+        EXPECT_EQ(1u, surfaceState->getRenderTargetViewExtent());
+        EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
 
-    EXPECT_EQ(0u, surfaceState->getSurfaceQPitch());
+        EXPECT_EQ(0u, surfaceState->getSurfaceQPitch());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceState->getSurfaceType());
+        EXPECT_FALSE((SurfaceFormat)surfaceState->getSurfaceArray());
+    }
     EXPECT_EQ(image->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat, (SurfaceFormat)surfaceState->getSurfaceFormat());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceState->getSurfaceType());
-    EXPECT_FALSE((SurfaceFormat)surfaceState->getSurfaceArray());
 
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectRed());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN, surfaceState->getShaderChannelSelectGreen());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    using LEGACY_RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    expectShaderChannelSelects<FamilyType>(surfaceState, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN,
+                                           LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
 
     clReleaseMemObject(imageFromBuffer);
     clReleaseMemObject(buffer);
 }
 
 HWTEST_F(ImageSetArgTest, GivenImageWithClLuminanceFormatWhenSettingKernelArgThenPropertiesAreSetCorrectly) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
+    using LEGACY_RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     Image *luminanceImage = Image3dHelperUlt<LuminanceImage>::create(context);
     cl_mem memObj = luminanceImage;
@@ -852,10 +865,8 @@ HWTEST_F(ImageSetArgTest, GivenImageWithClLuminanceFormatWhenSettingKernelArgThe
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->argAsImg(0).bindful));
     // for CL_LUMINANCE format we override channels to RED to be spec compliant.
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectRed());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectGreen());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    expectShaderChannelSelects<FamilyType>(surfaceState, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED,
+                                           LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -898,7 +909,7 @@ HWTEST_F(ImageSetArgTest, givenCompressedResourceWhenSettingImgArgThenSetCorrect
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceQPitch());
 }
 
-HWTEST_F(ImageSetArgTest, givenNonCompressedResourceWhenSettingImgArgThenDontSetAuxParams) {
+HWTEST2_F(ImageSetArgTest, givenNonCompressedResourceWhenSettingImgArgThenDontSetAuxParams, SupportsLegacyRenderSurfaceState) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     typedef typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE AUXILIARY_SURFACE_MODE;
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
@@ -956,7 +967,7 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
 HWTEST_F(ImageMediaBlockSetArgTest, WhenSettingKernelArgImageThenPropertiesAreCorrect) {
     auto gmmHelper = pDevice->getGmmHelper();
     auto imageMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     cl_mem memObj = srcImage;
 
     retVal = clSetKernelArg(
@@ -982,16 +993,15 @@ HWTEST_F(ImageMediaBlockSetArgTest, WhenSettingKernelArgImageThenPropertiesAreCo
     EXPECT_EQ(srcImage->getImageDesc().image_width * elementSize / sizeof(uint32_t), surfaceState->getWidth());
     EXPECT_EQ(srcImage->getImageDesc().image_height, surfaceState->getHeight());
     EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getDepth());
-    EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(rPitch, surfaceState->getSurfacePitch());
-    EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
     EXPECT_EQ(srcImage->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat, (SurfaceFormat)surfaceState->getSurfaceFormat());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D, surfaceState->getSurfaceType());
-    EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
-    EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
-    EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
-    EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
+    if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
+        EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getRenderTargetViewExtent());
+        EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D, surfaceState->getSurfaceType());
+        EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
+    }
+    expectShaderChannelSelects<FamilyType>(surfaceState, expectedChannelRed, expectedChannelGreen, expectedChannelBlue, FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -1130,7 +1140,8 @@ HWTEST_F(ImageShaderChannelValueTest, GivenChannelRgbaWhenGettingShaderChannelVa
 }
 
 HWTEST_F(ImageShaderChannelValueTest, GivenChannelDepthWhenGettingShaderChannelValueThenOutputChannelIsCorrect) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
+    using LEGACY_RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState;
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
@@ -1139,14 +1150,12 @@ HWTEST_F(ImageShaderChannelValueTest, GivenChannelDepthWhenGettingShaderChannelV
 
     image->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
 
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState.getShaderChannelSelectRed());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, surfaceState.getShaderChannelSelectGreen());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, surfaceState.getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE, surfaceState.getShaderChannelSelectAlpha());
+    expectShaderChannelSelects<FamilyType>(&surfaceState, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO,
+                                           LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, LEGACY_RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
 }
 
 HWTEST_F(ImageSetArgTest, givenImageWithOffsetGreaterThan4GBWhenSurfaceStateIsProgrammedThenCorrectStataBaseAddressIsSet) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     RENDER_SURFACE_STATE surfaceState;
 
     uint64_t surfaceOffset = 8 * MemoryConstants::gigaByte;
@@ -1160,7 +1169,7 @@ HWTEST_F(ImageSetArgTest, givenImageWithOffsetGreaterThan4GBWhenSurfaceStateIsPr
     EXPECT_EQ(expectedAddress, surfaceAddress);
 }
 
-HWTEST_F(ImageSetArgTest, givenMediaCompressedResourceThenSurfaceModeIsNone) {
+HWTEST2_F(ImageSetArgTest, givenMediaCompressedResourceThenSurfaceModeIsNone, SupportsLegacyRenderSurfaceState) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     RENDER_SURFACE_STATE surfaceState;

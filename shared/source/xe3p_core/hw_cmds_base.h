@@ -120,6 +120,7 @@ struct Xe3pCoreFamily : public Xe3pCore {
     using Parse = CmdParse<Xe3pCoreFamily>;
     using GfxFamily = Xe3pCoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER_2;
+    using DefaultRenderSurfaceState = typename GfxFamily::RENDER_SURFACE_STATE;
     using PorWalkerType = COMPUTE_WALKER_2;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::MEM_COPY;

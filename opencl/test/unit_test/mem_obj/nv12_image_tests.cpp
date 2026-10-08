@@ -337,7 +337,7 @@ TEST_F(Nv12ImageTest, GivenOffsetOfUVPlaneWhenCreatingUVPlaneImageThenDimensions
     computeExpectedOffsets(imageNV12.get());
 }
 
-HWTEST_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten) {
+HWTEST2_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten, SupportsLegacyRenderSurfaceState) {
     auto device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     char hostPtr[16 * 16 * 16];
     auto contextWithMockCmdQ = new MockContext(device.get(), true);
@@ -356,7 +356,7 @@ HWTEST_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten) {
     contextWithMockCmdQ->release();
 }
 
-HWTEST_F(Nv12ImageTest, WhenSettingImageArgThenSurfaceStateIsCorrect) {
+HWTEST2_F(Nv12ImageTest, WhenSettingImageArgThenSurfaceStateIsCorrect, SupportsLegacyRenderSurfaceState) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState;
 
@@ -375,7 +375,7 @@ HWTEST_F(Nv12ImageTest, WhenSettingImageArgThenSurfaceStateIsCorrect) {
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE, surfaceState.getShaderChannelSelectAlpha());
 }
 
-HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
+HWTEST2_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSetImageArgThenDoNotProgramSurfaceArray, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState;
 
@@ -397,7 +397,7 @@ HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSet
     }
 }
 
-HWTEST_F(Nv12ImageTest, WhenSettingImageArgUvPlaneImageThenOffsetSurfaceBaseAddressAndCorrectTileModeAreSet) {
+HWTEST2_F(Nv12ImageTest, WhenSettingImageArgUvPlaneImageThenOffsetSurfaceBaseAddressAndCorrectTileModeAreSet, SupportsLegacyRenderSurfaceState) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState;
     std::unique_ptr<Image> imageNV12{createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)};

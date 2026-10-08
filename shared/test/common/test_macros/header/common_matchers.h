@@ -10,6 +10,8 @@
 
 #include "test_traits_common.h"
 
+#include <type_traits>
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct IsGfxCore {
     template <PRODUCT_FAMILY productFamily>
@@ -162,6 +164,20 @@ struct HeapfulSupportedMatch {
     }
 };
 
+template <typename FamilyType>
+constexpr bool supportsLegacyRenderSurfaceState() {
+    return std::is_same_v<typename FamilyType::DefaultRenderSurfaceState, typename FamilyType::RENDER_SURFACE_STATE>;
+}
+
+struct SupportsLegacyRenderSurfaceState {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        [[maybe_unused]] const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        return supportsLegacyRenderSurfaceState<FamilyType>();
+    }
+};
+
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
 using IsXeCore = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
 using IsNotXeCore = IsNotWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
@@ -182,6 +198,16 @@ using IsAtMostXe2HpgCore = IsAtMostGfxCore<IGFX_XE2_HPG_CORE>;
 using IsAtLeastXe3Core = IsAtLeastGfxCore<IGFX_XE3_CORE>;
 using IsAtMostXe3Core = IsAtMostGfxCore<IGFX_XE3_CORE>;
 using IsAtLeastXe3pCore = IsAtLeastGfxCore<IGFX_XE3P_CORE>;
+
+template <typename DependentMatcher>
+struct SupportsLegacyRenderSurfaceStateAnd {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return SupportsLegacyRenderSurfaceState::template isMatched<productFamily>() && DependentMatcher::template isMatched<productFamily>();
+    }
+};
+
+using SupportsLegacyRenderSurfaceStateAndAtLeastXeCore = SupportsLegacyRenderSurfaceStateAnd<IsAtLeastXeCore>;
 using IsAtMostXe3pCore = IsAtMostGfxCore<IGFX_XE3P_CORE>;
 
 using IsWithinXeCoreAndXe2HpgCore = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE2_HPG_CORE>;
@@ -311,6 +337,8 @@ struct ImageSupport {
         return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::imagesSupported;
     }
 };
+
+using SupportsLegacyRenderSurfaceStateAndImageSupport = SupportsLegacyRenderSurfaceStateAnd<ImageSupport>;
 
 template <typename GfxFamily>
 concept HasSemaphore64bCmd = requires {

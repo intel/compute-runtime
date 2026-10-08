@@ -103,6 +103,7 @@ struct Xe3CoreFamily : public Xe3Core {
     using Parse = CmdParse<Xe3CoreFamily>;
     using GfxFamily = Xe3CoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER;
+    using DefaultRenderSurfaceState = typename GfxFamily::RENDER_SURFACE_STATE;
     using PorWalkerType = COMPUTE_WALKER;
     using FrontEndStateCommand = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;

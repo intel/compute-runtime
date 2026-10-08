@@ -3608,6 +3608,9 @@ HWTEST2_F(SetKernelArg, givenPackedImageBindlessKernelAndGlobalBindlessHelperWhe
 HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrectSurfaceStateAddressIsPatchedInCrossThreadData, ImageSupport) {
 
     for (auto heaplessEnabled : {false, true}) {
+        if (FamilyType::isHeaplessRequired() && !heaplessEnabled) {
+            continue;
+        }
 
         createKernel();
         kernel->sharedState->heaplessEnabled = heaplessEnabled;
@@ -3770,7 +3773,7 @@ HWTEST2_F(SetKernelArg, givenNoGlobalBindlessHelperAndImageViewWhenAllocatingBin
     imageView->destroy();
 }
 
-HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCalledThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
+HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCalledThenCopySurfaceStateToSSHCalledWithCorrectArgs, IsHeapfulRequiredAndImageSupport) {
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
 
     Mock<Module> mockModule(this->device, nullptr);
@@ -5111,7 +5114,7 @@ TEST_F(KernelImplicitArgTests, givenModuleWithImplicitArgsVersionWhenCreatingKer
 
 using BindlessKernelTest = Test<DeviceFixture>;
 
-TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {
+HWTEST2_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten, IsHeapfulRequired) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.setModule(&mockModule);
@@ -5178,7 +5181,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
     }
 }
 
-TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
+HWTEST2_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatchingCrossThreadDataThenMemoryIsNotPatched, IsHeapfulRequired) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.setModule(&mockModule);

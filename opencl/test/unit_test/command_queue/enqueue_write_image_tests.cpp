@@ -209,7 +209,7 @@ HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenInterfaceDescriptorDataIsCo
 }
 
 HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenSurfaceStateIsCorrect) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
@@ -217,7 +217,7 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenSurfaceStateIsCorrect) {
 
     enqueueWriteImage<FamilyType>();
 
-    const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 1);
+    const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType, RENDER_SURFACE_STATE>(mockCmdQ, 1);
 
     // EnqueueWriteImage uses  multi-byte copies depending on per-pixel-size-in-bytes
     const auto &imageDesc = dstImage->getImageDesc();
@@ -227,7 +227,7 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenSurfaceStateIsCorrect) {
     EXPECT_NE(0u, surfaceState->getSurfaceType());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_UINT, surfaceState->getSurfaceFormat());
     EXPECT_EQ(MockGmmResourceInfo::getHAlignSurfaceStateResult, surfaceState->getSurfaceHorizontalAlignment());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState->getSurfaceVerticalAlignment());
+    EXPECT_EQ(static_cast<uint32_t>(FamilyType::RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4), static_cast<uint32_t>(surfaceState->getSurfaceVerticalAlignment()));
     EXPECT_EQ(dstAllocation->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 

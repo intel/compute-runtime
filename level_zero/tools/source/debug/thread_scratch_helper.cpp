@@ -98,21 +98,21 @@ ze_result_t DebugSessionImp::readThreadScratchRegisters(EuThread::ThreadId threa
 
     const NEO::GfxCoreHelper &gfxCoreHelper = connectedDevice->getGfxCoreHelper();
     const auto &rootDeviceEnvironment = connectedDevice->getNEODevice()->getRootDeviceEnvironment();
-    const size_t renderSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
+    const size_t scratchSurfaceStateSize = gfxCoreHelper.getScratchSurfaceStateSize(rootDeviceEnvironment);
     const size_t topScratchAreaToRead = (count == 2) || (start == 1) ? 2 : 1;
-    std::vector<char> renderSurfaceState(renderSurfaceStateSize * topScratchAreaToRead, 0);
+    std::vector<char> renderSurfaceState(scratchSurfaceStateSize * topScratchAreaToRead, 0);
 
-    ret = readGpuMemory(allThreads[threadId]->getMemoryHandle(), renderSurfaceState.data(), renderSurfaceStateSize * topScratchAreaToRead, renderSurfaceStateAddress);
+    ret = readGpuMemory(allThreads[threadId]->getMemoryHandle(), renderSurfaceState.data(), scratchSurfaceStateSize * topScratchAreaToRead, renderSurfaceStateAddress);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
     std::vector<uint64_t> packed;
     for (size_t i = 0; i < topScratchAreaToRead; i++) {
-        auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data() + (i * renderSurfaceStateSize), rootDeviceEnvironment);
+        auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data() + (i * scratchSurfaceStateSize), rootDeviceEnvironment);
         auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, threadId);
         auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-        auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data() + (i * renderSurfaceStateSize), rootDeviceEnvironment));
+        auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data() + (i * scratchSurfaceStateSize), rootDeviceEnvironment));
         auto scratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
 
         packed.push_back(scratchSpaceBaseAddress);

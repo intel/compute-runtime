@@ -33,7 +33,7 @@ struct ImageTestsTgllAndLater : ClDeviceFixture, testing::Test {
     std::unique_ptr<Image> srcImage{};
 };
 
-HWTEST_F(ImageTestsTgllAndLater, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField) {
+HWTEST2_F(ImageTestsTgllAndLater, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState{};
     auto &gpuFlags = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu;

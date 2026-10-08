@@ -96,7 +96,7 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWhenCreatingImageThen
     imageHW.reset(nullptr);
 }
 
-HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWhenCreatingImageThenImgInfoOffsetsAreResetToZero) {
+HWTEST2_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWhenCreatingImageThenImgInfoOffsetsAreResetToZero, SupportsLegacyRenderSurfaceState) {
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.handle = &imageHandle;
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
@@ -144,7 +144,7 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNonZeroTextureBuf
     imageHW.reset(nullptr);
 }
 
-HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithCubeFaceIndexWhenCreatingImageThenMinimumArrayElementMatchesCubeFace) {
+HWTEST2_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithCubeFaceIndexWhenCreatingImageThenMinimumArrayElementMatchesCubeFace, SupportsLegacyRenderSurfaceState) {
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.handle = &imageHandle;
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
@@ -233,7 +233,7 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithMsaaSamplesWhenCr
     imageHW.reset(nullptr);
 }
 
-HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWith16xMsaaSamplesWhenCreatingImageThenMultisampleCountIsCorrect) {
+HWTEST2_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWith16xMsaaSamplesWhenCreatingImageThenMultisampleCountIsCorrect, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_external_memory_import_win32_handle_t importNTHandle = {};
@@ -264,7 +264,7 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWith16xMsaaSamplesWhe
     imageHW.reset(nullptr);
 }
 
-HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithMsaaAndMcsHandleWhenCreatingImageThenMcsAllocationIsCreated) {
+HWTEST2_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithMsaaAndMcsHandleWhenCreatingImageThenMcsAllocationIsCreated, SupportsLegacyRenderSurfaceState) {
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.handle = &imageHandle;
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
@@ -292,7 +292,7 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithMsaaAndMcsHandleW
     imageHW.reset(nullptr);
 }
 
-HWTEST_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNoMsaaWhenCreatingImageThenMultisampleFieldsAreDefault) {
+HWTEST2_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNoMsaaWhenCreatingImageThenMultisampleFieldsAreDefault, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_external_memory_import_win32_handle_t importNTHandle = {};
