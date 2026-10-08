@@ -1391,7 +1391,7 @@ struct DeferredFreeUnifiedMemoryPoolingManagerTest : public UnifiedMemoryPooling
         setUpCompletionControl(executionEnvironment, *memoryManager, deviceBitfields.at(0u));
 
         usmMemAllocPoolsManager = std::make_unique<MockUsmMemAllocPoolsManager>(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices,
-                                                                                deviceBitfields, nullptr);
+                                                                                deviceBitfields, nullptr, false);
         ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
 
         // unit tests mock PoolInfo with small buckets, so the chunk size has to come from the
@@ -1604,7 +1604,8 @@ class UnifiedMemoryPoolingManagerTest : public SVMMemoryAllocatorFixture<true, 1
         usmMemAllocPoolsManager.reset(new MockUsmMemAllocPoolsManager(poolMemoryType,
                                                                       rootDeviceIndices,
                                                                       deviceBitfields,
-                                                                      device));
+                                                                      device,
+                                                                      false));
         ASSERT_NE(nullptr, usmMemAllocPoolsManager);
         EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
         if (isDevicePool()) {
@@ -2101,6 +2102,73 @@ TEST_P(UnifiedMemoryPoolingFacadeTest, givenInitParamsWithPeerAllocationsFnWhenI
     } else {
         EXPECT_TRUE(static_cast<bool>(reinterpret_cast<MockUsmMemAllocPool *>(mockUsmMemAllocPoolsFacade.pool.get())->peerAllocationsFn));
     }
+}
+
+class UnifiedMemoryDevicePoolingFacadeTest : public UnifiedMemoryPoolingFacadeTest {
+  public:
+    void SetUp() override {
+        debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        UnifiedMemoryPoolingFacadeTest::SetUp();
+        if (IsSkipped()) {
+            return;
+        }
+        if (!device->getGfxCoreHelper().usmCompressionSupported(device->getHardwareInfo())) {
+            GTEST_SKIP();
+        }
+    }
+
+    bool isPoolOfAllocationCompressed(void *allocation) {
+        auto pool = mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(allocation).pool;
+        auto poolAllocationData = svmManager->getSVMAlloc(addrToPtr(pool->getPoolAddress()));
+        return poolAllocationData->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled();
+    }
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    UnifiedMemoryDevicePoolingFacadeTestParameterized,
+    UnifiedMemoryDevicePoolingFacadeTest,
+    ::testing::Combine(
+        ::testing::Values(InternalMemoryType::deviceUnifiedMemory), ::testing::Bool()));
+
+TEST_P(UnifiedMemoryDevicePoolingFacadeTest, givenCompressionSupportedAndDefaultInitParamsWhenAllocatingThenPoolIsCompressed) {
+    void *allocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties);
+    ASSERT_NE(nullptr, mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(allocation).pool);
+    EXPECT_TRUE(isPoolOfAllocationCompressed(allocation));
+    EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(allocation, FreePolicyType::blocking));
+}
+
+TEST_P(UnifiedMemoryDevicePoolingFacadeTest, givenCompressionSupportedAndInitParamsWithUncompressedPoolWhenAllocatingThenPoolIsNotCompressed) {
+    mockUsmMemAllocPoolsFacade.cleanup();
+    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {nullptr, false, true, {}, true});
+    void *allocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties);
+    ASSERT_NE(nullptr, mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(allocation).pool);
+    EXPECT_FALSE(isPoolOfAllocationCompressed(allocation));
+    EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(allocation, FreePolicyType::blocking));
+}
+
+TEST(UnifiedMemoryPooling, givenCompressionHintsWhenCreatingPoolMemoryPropertiesThenUncompressedHintWinsAndHintsApplyOnlyToDeviceMemory) {
+    UltDeviceFactory deviceFactory{1, 1};
+    auto device = deviceFactory.rootDevices[0];
+    RootDeviceIndicesContainer rootDeviceIndices = {device->getRootDeviceIndex()};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{device->getRootDeviceIndex(), device->getDeviceBitfield()}};
+
+    auto defaultProperties = UsmMemAllocPool::createPoolMemoryProperties(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, device, false, false);
+    EXPECT_EQ(device, defaultProperties.device);
+    EXPECT_EQ(0u, defaultProperties.allocationFlags.flags.compressedHint);
+    EXPECT_EQ(0u, defaultProperties.allocationFlags.flags.uncompressedHint);
+
+    auto compressedProperties = UsmMemAllocPool::createPoolMemoryProperties(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, device, true, false);
+    EXPECT_EQ(1u, compressedProperties.allocationFlags.flags.compressedHint);
+    EXPECT_EQ(0u, compressedProperties.allocationFlags.flags.uncompressedHint);
+
+    auto uncompressedProperties = UsmMemAllocPool::createPoolMemoryProperties(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, device, true, true);
+    EXPECT_EQ(0u, uncompressedProperties.allocationFlags.flags.compressedHint);
+    EXPECT_EQ(1u, uncompressedProperties.allocationFlags.flags.uncompressedHint);
+
+    auto hostProperties = UsmMemAllocPool::createPoolMemoryProperties(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields, device, true, true);
+    EXPECT_EQ(nullptr, hostProperties.device);
+    EXPECT_EQ(0u, hostProperties.allocationFlags.flags.compressedHint);
+    EXPECT_EQ(0u, hostProperties.allocationFlags.flags.uncompressedHint);
 }
 
 TEST(UnifiedMemoryPoolingFacade, givenPoolingEnabledWhenDebugFlagSetThenOverrideAppliesPerMemoryType) {

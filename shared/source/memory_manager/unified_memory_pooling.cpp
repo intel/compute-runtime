@@ -19,7 +19,23 @@
 #include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/utilities/heap_allocator.h"
 
+#include <optional>
+
 namespace NEO {
+
+namespace {
+std::optional<int32_t> getPoolDebugFlag(InternalMemoryType memoryType) {
+    switch (memoryType) {
+    case InternalMemoryType::deviceUnifiedMemory:
+        return debugManager.flags.EnableDeviceUsmAllocationPool.get();
+    case InternalMemoryType::hostUnifiedMemory:
+        return debugManager.flags.EnableHostUsmAllocationPool.get();
+    default:
+        DEBUG_BREAK_IF(true);
+        return std::nullopt;
+    }
+}
+} // namespace
 
 bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize) {
     void *poolAllocation = nullptr;
@@ -102,6 +118,21 @@ bool UsmMemAllocPool::alignmentIsAllowed(size_t alignment) {
 
 bool UsmMemAllocPool::sizeIsAllowed(size_t size) {
     return size >= poolInfo.minServicedSize && size <= poolInfo.maxServicedSize;
+}
+
+UnifiedMemoryProperties UsmMemAllocPool::createPoolMemoryProperties(InternalMemoryType memoryType,
+                                                                    const RootDeviceIndicesContainer &rootDeviceIndices,
+                                                                    const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields,
+                                                                    Device *device,
+                                                                    bool compressedHint,
+                                                                    bool uncompressedHint) {
+    UnifiedMemoryProperties memoryProperties(memoryType, poolAlignment, rootDeviceIndices, subdeviceBitfields);
+    if (InternalMemoryType::deviceUnifiedMemory == memoryType) {
+        memoryProperties.device = device;
+        memoryProperties.allocationFlags.flags.compressedHint = compressedHint && !uncompressedHint;
+        memoryProperties.allocationFlags.flags.uncompressedHint = uncompressedHint;
+    }
+    return memoryProperties;
 }
 
 bool UsmMemAllocPool::flagsAreAllowed(const UnifiedMemoryProperties &memoryProperties) {
@@ -514,20 +545,12 @@ UsmPoolLookupResult UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *
 }
 
 bool UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault) {
-    int32_t poolFlag = -1;
-    switch (memoryType) {
-    case InternalMemoryType::deviceUnifiedMemory:
-        poolFlag = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get();
-        break;
-    case InternalMemoryType::hostUnifiedMemory:
-        poolFlag = NEO::debugManager.flags.EnableHostUsmAllocationPool.get();
-        break;
-    default:
-        DEBUG_BREAK_IF(true);
+    const auto poolFlag = getPoolDebugFlag(memoryType);
+    if (false == poolFlag.has_value()) {
         return false;
     }
-    if (poolFlag != -1) {
-        return poolFlag > 0;
+    if (poolFlag.value() != -1) {
+        return poolFlag.value() > 0;
     }
     return enabledByDefault;
 }
@@ -537,7 +560,7 @@ bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const Roo
 
     if (poolManagerEnabled) {
         auto managerDevice = memoryType == InternalMemoryType::deviceUnifiedMemory ? device : nullptr;
-        this->poolManager = std::make_unique<UsmMemAllocPoolsManager>(memoryType, rootDeviceIndices, subdeviceBitfields, managerDevice);
+        this->poolManager = std::make_unique<UsmMemAllocPoolsManager>(memoryType, rootDeviceIndices, subdeviceBitfields, managerDevice, initParams.uncompressedPool);
         if (initParams.customCleanup) {
             this->poolManager->setCustomCleanup(initParams.customCleanup);
         }
@@ -550,17 +573,10 @@ bool UsmMemAllocPoolsFacade::initialize(InternalMemoryType memoryType, const Roo
         return this->poolManager->initialize(svmMemoryManager);
     } else {
         this->pool = std::make_unique<UsmMemAllocPool>();
-        UnifiedMemoryProperties memoryProperties(memoryType, MemoryConstants::pageSize2M,
-                                                 rootDeviceIndices, subdeviceBitfields);
+        auto memoryProperties = UsmMemAllocPool::createPoolMemoryProperties(memoryType, rootDeviceIndices, subdeviceBitfields, device, initParams.compressedHint, initParams.uncompressedPool);
         auto usmPoolParams = UsmPoolParams::getUsmPoolParams(device->getGfxCoreHelper());
-        if (memoryType == InternalMemoryType::deviceUnifiedMemory && debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
-            usmPoolParams.poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
-        } else if (memoryType == InternalMemoryType::hostUnifiedMemory && debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
-            usmPoolParams.poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
-        }
-        if (memoryType == InternalMemoryType::deviceUnifiedMemory) {
-            memoryProperties.device = device;
-            memoryProperties.allocationFlags.flags.compressedHint = initParams.compressedHint;
+        if (const auto poolFlag = getPoolDebugFlag(memoryType); poolFlag.value_or(-1) != -1) {
+            usmPoolParams.poolSize = poolFlag.value() * MemoryConstants::megaByte;
         }
         if (initParams.customCleanup) {
             this->pool->setCustomCleanup(initParams.customCleanup);

@@ -456,7 +456,7 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
     if (enabled) {
         device.getDeviceUsmMemAllocPoolFacade().initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields,
                                                            &device, this->svmAllocsManager,
-                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault, getPoolPeerAllocationsFn()});
+                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault, getPoolPeerAllocationsFn(), multiDevice});
     }
 }
 

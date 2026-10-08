@@ -3130,7 +3130,7 @@ TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueRetur
         EXPECT_EQ(nullptr, device->getDeviceUsmMemAllocPoolFacade().getPoolManager());
         RootDeviceIndicesContainer rootDeviceIndices = {device->getRootDeviceIndex()};
         std::map<uint32_t, DeviceBitfield> deviceBitfields{{device->getRootDeviceIndex(), device->getDeviceBitfield()}};
-        MockUsmMemAllocPoolsManager *usmAllocPoolManager = new MockUsmMemAllocPoolsManager(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, device.get());
+        MockUsmMemAllocPoolsManager *usmAllocPoolManager = new MockUsmMemAllocPoolsManager(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, device.get(), false);
         mockFacade.poolManager.reset(usmAllocPoolManager);
         EXPECT_EQ(usmAllocPoolManager, device->getDeviceUsmMemAllocPoolFacade().getPoolManager());
         usmAllocPoolManager->canAddPoolCallBase = true;

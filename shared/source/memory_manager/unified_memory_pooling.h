@@ -76,6 +76,12 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void cleanup();
     static bool alignmentIsAllowed(size_t alignment);
     static bool flagsAreAllowed(const UnifiedMemoryProperties &memoryProperties);
+    static UnifiedMemoryProperties createPoolMemoryProperties(InternalMemoryType memoryType,
+                                                              const RootDeviceIndicesContainer &rootDeviceIndices,
+                                                              const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields,
+                                                              Device *device,
+                                                              bool compressedHint,
+                                                              bool uncompressedHint);
     static bool freeIfOwned(UsmMemAllocPool *pool, const void *ptr, FreePolicyType policy);
     static double getPercentOfFreeMemoryForRecycling(InternalMemoryType memoryType);
     bool sizeIsAllowed(size_t size);
@@ -157,9 +163,9 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     UsmMemAllocPoolsManager(InternalMemoryType memoryType,
                             const RootDeviceIndicesContainer &rootDeviceIndices,
                             const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields,
-                            Device *device) : device(device), poolMemoryType(memoryType), poolMemoryProperties(memoryType, UsmMemAllocPool::poolAlignment, rootDeviceIndices, subdeviceBitfields) {
-        poolMemoryProperties.device = device;
-    };
+                            Device *device,
+                            bool uncompressed) : device(device), poolMemoryType(memoryType),
+                                                 poolMemoryProperties(UsmMemAllocPool::createPoolMemoryProperties(memoryType, rootDeviceIndices, subdeviceBitfields, device, false, uncompressed)) {};
     MOCKABLE_VIRTUAL ~UsmMemAllocPoolsManager() = default;
     bool initialize(SVMAllocsManager *svmMemoryManager);
     bool isInitialized() const;
@@ -204,6 +210,7 @@ class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
         bool trackResidency{false};
         bool compressedHint{false};
         PeerAllocationsFn peerAllocations{};
+        bool uncompressedPool{false};
     };
     static bool poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault);
     static bool isPoolManagerSupported(InternalMemoryType memoryType, const Device *device);

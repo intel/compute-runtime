@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
@@ -479,6 +480,24 @@ TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenMultiDeviceWhenIniti
     {
         EXPECT_NE(nullptr, l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
         EXPECT_NE(nullptr, l0Devices[1]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    }
+    context->destroy();
+}
+
+TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenCompressionSupportedAndMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolIsNotCompressed) {
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    if (!devices[0]->getGfxCoreHelper().usmCompressionSupported(devices[0]->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+    mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    initDriverImp();
+    for (auto l0Device : l0Devices) {
+        auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Device->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+        ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+        auto poolAllocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockDeviceMemAllocPool->pool);
+        ASSERT_NE(nullptr, poolAllocationData);
+        EXPECT_FALSE(poolAllocationData->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled());
     }
     context->destroy();
 }
