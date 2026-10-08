@@ -257,6 +257,15 @@ HWTEST_F(DirectSubmissionSemaphorePoolTest, givenSemaphorePoolAllocationFailureW
     executionEnvironment.memoryManager = std::move(originalMemoryManager);
 }
 
+HWTEST_F(DirectSubmissionTest, givenStartedRingWhenTryingToFlushMonitorFenceThenNothingIsDispatched) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(directSubmission.initialize(true));
+    auto usedBefore = directSubmission.ringCommandStream.getUsed();
+
+    EXPECT_FALSE(directSubmission.tryFlushMonitorFence(true));
+    EXPECT_EQ(usedBefore, directSubmission.ringCommandStream.getUsed());
+}
+
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionDisabledWhenStopThenRingIsNotStopped) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;

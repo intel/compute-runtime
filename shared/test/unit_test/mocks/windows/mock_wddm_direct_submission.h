@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,7 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::pciBarrierPtr;
     using BaseClass::previousRingBuffer;
     using BaseClass::relaxedOrderingEnabled;
+    using BaseClass::relaxedOrderingSchedulerRequired;
     using BaseClass::ringBufferEndCompletionTagData;
     using BaseClass::ringBuffers;
     using BaseClass::ringCommandStream;

@@ -25,9 +25,11 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     ~WddmDirectSubmission() override;
 
     void flushMonitorFence(bool notifyKmd) override;
+    bool tryFlushMonitorFence(bool notifyKmd) override;
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override;
 
   protected:
+    bool flushMonitorFenceImpl(bool notifyKmd, bool allowBlocking);
     bool allocateOsResources() override;
     bool submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) override;
 

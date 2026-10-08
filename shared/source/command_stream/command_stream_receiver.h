@@ -194,7 +194,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
     virtual WaitStatus waitForFlushStamp(FlushStamp &flushStampToWait, uint64_t timeoutNanoseconds) { return WaitStatus::notReady; }
     // Does not block; nullptr if the KMD wait is not possible.
-    virtual std::unique_ptr<KmdWaiter> createKmdWaiter(FlushStamp flushStamp) { return nullptr; }
+    virtual std::unique_ptr<KmdWaiter> createKmdWaiter(FlushStamp flushStamp, TaskCountType taskCount) { return nullptr; }
 
     TaskCountType peekTaskCount() const { return taskCount; }
 
@@ -770,6 +770,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::atomic<TaskCountType> latestFlushedTaskCount{0};
     // taskCount - # of tasks submitted
     std::atomic<TaskCountType> taskCount{0};
+    TaskCountType latestTaskCountUpdateOnlyFlushTaskCount = 0;
 
     std::atomic<uint32_t> numClients = 0u;
     std::atomic<uint32_t> owningQueueCount = 0u;

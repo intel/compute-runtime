@@ -171,12 +171,30 @@ WaitStatus WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &f
 }
 
 template <typename GfxFamily>
-std::unique_ptr<KmdWaiter> WddmCommandStreamReceiver<GfxFamily>::createKmdWaiter(FlushStamp flushStamp) {
-    // With direct submission the monitored fence is not signaled per submission.
-    if (this->isAnyDirectSubmissionEnabled()) {
+std::unique_ptr<KmdWaiter> WddmCommandStreamReceiver<GfxFamily>::createKmdWaiter(FlushStamp flushStamp, TaskCountType taskCount) {
+    if (this->isAnyDirectSubmissionEnabled() && !debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.get()) {
         return nullptr;
     }
-    return this->wddm->createMonitoredFenceKmdWaiter(static_cast<OsContextWin *>(this->osContext)->getMonitoredFence(), flushStamp);
+    auto &monitoredFence = static_cast<OsContextWin *>(this->osContext)->getMonitoredFence();
+    if (this->isAnyDirectSubmissionEnabled() && (flushStamp > *monitoredFence.cpuAddress)) {
+        // With direct submission the monitored fence is updated only by monitor fences without KMD notify, so dispatch one with notify.
+        // It lands after all flushed work, so use it only if nothing but a task count update was flushed after the event.
+        auto lock = this->tryObtainUniqueOwnership();
+        if (!lock.owns_lock()) {
+            return nullptr;
+        }
+        const TaskCountType latestTaskCount = this->peekTaskCount();
+        const bool onlyTaskCountUpdateFlushedSince = (latestTaskCount == taskCount + 1) && (latestTaskCount == this->latestTaskCountUpdateOnlyFlushTaskCount);
+        if ((latestTaskCount != taskCount) && !onlyTaskCountUpdateFlushedSince) {
+            return nullptr;
+        }
+        const bool fenceFlushed = this->directSubmission ? this->directSubmission->tryFlushMonitorFence(true)
+                                                         : this->blitterDirectSubmission->tryFlushMonitorFence(true);
+        if (!fenceFlushed) {
+            return nullptr;
+        }
+    }
+    return this->wddm->createMonitoredFenceKmdWaiter(monitoredFence, flushStamp);
 }
 
 template <typename GfxFamily>

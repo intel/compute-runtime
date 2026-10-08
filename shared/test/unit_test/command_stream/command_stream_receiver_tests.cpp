@@ -3893,6 +3893,21 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag)
     EXPECT_TRUE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenTaskCountUpdateOnlyFlushWhenItFailsOrSucceedsThenItsTaskCountIsRecordedOnlyOnSuccess) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.taskCount = 5u;
+    const TaskCountType initialTaskCountUpdateOnlyFlushTaskCount = ultCsr.latestTaskCountUpdateOnlyFlushTaskCount;
+
+    ultCsr.flushReturnValue = SubmissionStatus::failed;
+    EXPECT_EQ(SubmissionStatus::failed, ultCsr.flushTagUpdate());
+    EXPECT_EQ(initialTaskCountUpdateOnlyFlushTaskCount, ultCsr.latestTaskCountUpdateOnlyFlushTaskCount);
+
+    ultCsr.flushReturnValue = SubmissionStatus::success;
+    EXPECT_EQ(SubmissionStatus::success, ultCsr.flushTagUpdate());
+    EXPECT_EQ(6u, ultCsr.peekTaskCount());
+    EXPECT_EQ(6u, ultCsr.latestTaskCountUpdateOnlyFlushTaskCount);
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetPassNumClients) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

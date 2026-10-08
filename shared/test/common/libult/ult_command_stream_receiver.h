@@ -48,6 +48,7 @@ struct KmdWaiterParams {
     uint32_t createCount = 0;
     uint32_t waitCount = 0;
     FlushStamp latestFlushStamp = 0;
+    TaskCountType latestTaskCount = 0;
     uint64_t latestWaitTimeout = 0;
     bool createWaiter = true;
     std::optional<WaitStatus> waitStatus = WaitStatus::notReady;
@@ -193,6 +194,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::latestFlushedTaskCount;
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;
     using BaseClass::CommandStreamReceiver::latestSentTaskCount;
+    using BaseClass::CommandStreamReceiver::latestTaskCountUpdateOnlyFlushTaskCount;
     using BaseClass::CommandStreamReceiver::mediaVfeStateDirty;
     using BaseClass::CommandStreamReceiver::newResources;
     using BaseClass::CommandStreamReceiver::osContext;
@@ -418,9 +420,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle, timeoutNanoseconds);
     }
 
-    std::unique_ptr<KmdWaiter> createKmdWaiter(FlushStamp flushStamp) override {
+    std::unique_ptr<KmdWaiter> createKmdWaiter(FlushStamp flushStamp, TaskCountType taskCount) override {
         kmdWaiterParams.createCount++;
         kmdWaiterParams.latestFlushStamp = flushStamp;
+        kmdWaiterParams.latestTaskCount = taskCount;
         if (!kmdWaiterParams.createWaiter) {
             return nullptr;
         }

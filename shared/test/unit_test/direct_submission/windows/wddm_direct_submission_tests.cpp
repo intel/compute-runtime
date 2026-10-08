@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_context_win.h"
@@ -422,6 +423,52 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDirectSubmissionWhenDispatchMonitorF
         isNotifyEnabledProgrammed |= reinterpret_cast<PIPE_CONTROL *>(pipeControl)->getNotifyEnable();
     }
     EXPECT_TRUE(isNotifyEnabledProgrammed);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenStartedRingWhenTryingToFlushMonitorFenceThenMonitorFenceWithNotifyIsDispatchedWithoutWaitingForPagingFence) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(wddmDirectSubmission.initialize(true));
+    auto currOffset = wddmDirectSubmission.ringCommandStream.getUsed();
+    auto expectedFenceValue = osContext->getMonitoredFence().currentFenceValue;
+    auto pagingFenceWaitsBefore = wddm->waitOnPagingFenceFromCpuResult.called;
+
+    EXPECT_TRUE(wddmDirectSubmission.tryFlushMonitorFence(true));
+
+    EXPECT_EQ(pagingFenceWaitsBefore, wddm->waitOnPagingFenceFromCpuResult.called);
+    EXPECT_EQ(expectedFenceValue, osContext->getMonitoredFence().lastSubmittedFence);
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, currOffset);
+    bool isNotifyEnabledProgrammed = false;
+    for (auto &pipeControl : hwParse.getCommandsList<PIPE_CONTROL>()) {
+        isNotifyEnabledProgrammed |= reinterpret_cast<PIPE_CONTROL *>(pipeControl)->getNotifyEnable();
+    }
+    EXPECT_TRUE(isNotifyEnabledProgrammed);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenStoppedRingNonHardwareCsrRelaxedOrderingSchedulerOrFullRingWhenTryingToFlushMonitorFenceThenNothingIsDispatched) {
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(wddmDirectSubmission.initialize(false));
+    EXPECT_FALSE(wddmDirectSubmission.tryFlushMonitorFence(true));
+    EXPECT_EQ(0u, wddmDirectSubmission.ringCommandStream.getUsed());
+
+    wddmDirectSubmission.ringStart = true;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.setType(CommandStreamReceiverType::hardwareWithAub);
+    EXPECT_FALSE(wddmDirectSubmission.tryFlushMonitorFence(true));
+    EXPECT_EQ(0u, wddmDirectSubmission.ringCommandStream.getUsed());
+    csr.setType(CommandStreamReceiverType::hardware);
+
+    wddmDirectSubmission.relaxedOrderingSchedulerRequired = true;
+    EXPECT_FALSE(wddmDirectSubmission.tryFlushMonitorFence(true));
+    EXPECT_EQ(0u, wddmDirectSubmission.ringCommandStream.getUsed());
+
+    wddmDirectSubmission.relaxedOrderingSchedulerRequired = false;
+    wddmDirectSubmission.ringCommandStream.getSpace(wddmDirectSubmission.ringCommandStream.getAvailableSpace() - 1);
+    auto used = wddmDirectSubmission.ringCommandStream.getUsed();
+    EXPECT_FALSE(wddmDirectSubmission.tryFlushMonitorFence(true));
+    EXPECT_EQ(used, wddmDirectSubmission.ringCommandStream.getUsed());
+    wddmDirectSubmission.ringStart = false;
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenHandleNewResourcesSubmissionThenDispatchProperCommands) {

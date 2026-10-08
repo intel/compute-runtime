@@ -1347,6 +1347,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
     auto submissionStatus = flushHandler(batchBuffer, getResidencyAllocations());
     if (submissionStatus == SubmissionStatus::success) {
         ++taskCount;
+        this->latestTaskCountUpdateOnlyFlushTaskCount = taskCount;
     }
     return submissionStatus;
 }

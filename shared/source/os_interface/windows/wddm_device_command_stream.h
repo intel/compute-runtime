@@ -30,7 +30,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     void processEviction() override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
     WaitStatus waitForFlushStamp(FlushStamp &flushStampToWait, uint64_t timeoutNanoseconds) override;
-    std::unique_ptr<KmdWaiter> createKmdWaiter(FlushStamp flushStamp) override;
+    std::unique_ptr<KmdWaiter> createKmdWaiter(FlushStamp flushStamp, TaskCountType taskCount) override;
     bool isTlbFlushRequiredForStateCacheFlush() override;
 
     WddmMemoryManager *getMemoryManager() const;

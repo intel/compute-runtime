@@ -2892,6 +2892,7 @@ TEST_F(EventSynchronizeTest, GivenEventHostSynchronizeWaitStrategyDebugFlagsWhen
     EXPECT_EQ(3, NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.get());
     EXPECT_FALSE(NEO::debugManager.flags.EventHostSynchronizeLinuxUserFenceKmdWait.get());
     EXPECT_TRUE(NEO::debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWait.get());
+    EXPECT_FALSE(NEO::debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.get());
     EXPECT_EQ(5000, NEO::debugManager.flags.EventHostSynchronizeInitialPollMicroseconds.get());
     EXPECT_EQ(750, NEO::debugManager.flags.EventHostSynchronizePollMicroseconds.get());
     EXPECT_EQ(50, NEO::debugManager.flags.EventHostSynchronizeSleepMicroseconds.get());
@@ -3211,7 +3212,8 @@ HWTEST_F(EventSynchronizeTest, GivenWorkFlushedAfterEventWhenSynchronizingThenKm
     setUpWindowsDiscreteKmdWait(2000000);
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     event->setWindowsDiscreteKmdWaitEnabled(true);
-    event->setCleanupTaskCount(&csr, csr.peekTaskCount());
+    const auto signalTaskCount = csr.peekTaskCount();
+    event->setCleanupTaskCount(&csr, signalTaskCount);
     event->setSignalFlushStamp(5);
     csr.taskCount++;
 
@@ -3226,6 +3228,7 @@ HWTEST_F(EventSynchronizeTest, GivenWorkFlushedAfterEventWhenSynchronizingThenKm
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
     EXPECT_EQ(1u, csr.kmdWaiterParams.createCount);
     EXPECT_EQ(5u, csr.kmdWaiterParams.latestFlushStamp);
+    EXPECT_EQ(signalTaskCount, csr.kmdWaiterParams.latestTaskCount);
     EXPECT_EQ(2u, csr.kmdWaiterParams.waitCount);
     EXPECT_EQ(2000000u, csr.kmdWaiterParams.latestWaitTimeout);
 }

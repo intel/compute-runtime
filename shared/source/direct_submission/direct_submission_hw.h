@@ -83,6 +83,8 @@ class DirectSubmissionHw {
     }
 
     virtual void flushMonitorFence(bool notifyKmd) {};
+    // Returns false without dispatching if that would wait on the CPU.
+    virtual bool tryFlushMonitorFence(bool notifyKmd) { return false; }
 
     QueueThrottle getLastSubmittedThrottle() {
         return this->lastSubmittedThrottle;

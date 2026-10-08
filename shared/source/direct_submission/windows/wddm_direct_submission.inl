@@ -55,6 +55,16 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
 
 template <typename GfxFamily, typename Dispatcher>
 inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence(bool notifyKmd) {
+    this->flushMonitorFenceImpl(notifyKmd, true);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::tryFlushMonitorFence(bool notifyKmd) {
+    return this->flushMonitorFenceImpl(notifyKmd, false);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFenceImpl(bool notifyKmd, bool allowBlocking) {
     auto needStart = !this->ringStart;
 
     size_t requiredMinimalSize = this->getSizeSemaphoreSection(false) +
@@ -62,6 +72,10 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence(bool 
                                  this->getSizeNewResourceHandler() +
                                  this->getSizeSwitchRingBufferSection() +
                                  this->getSizeEnd(false);
+    // Each of these may wait on the CPU; outside the hardware mode (e.g. TBX) every submission also handles residency.
+    if (!allowBlocking && (!this->csr.isHardwareMode() || needStart || this->relaxedOrderingSchedulerRequired || (this->ringCommandStream.getAvailableSpace() < requiredMinimalSize))) {
+        return false;
+    }
     this->switchRingBuffersNeeded(requiredMinimalSize, nullptr);
 
     auto startVA = this->ringCommandStream.getCurrentGpuAddressPosition();
@@ -73,10 +87,11 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence(bool 
     Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, notifyKmd);
 
     this->dispatchSemaphoreSection(this->currentQueueWorkCount + 1);
-    this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, true, nullptr);
+    this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, allowBlocking, nullptr);
     this->currentQueueWorkCount++;
 
     this->updateTagValueImpl(this->currentRingBuffer);
+    return true;
 }
 
 template <typename GfxFamily, typename Dispatcher>

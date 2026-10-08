@@ -50,7 +50,9 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::getCS;
     using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::latestTaskCountUpdateOnlyFlushTaskCount;
     using CommandStreamReceiver::requiresInstructionCacheFlush;
+    using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
@@ -79,6 +81,13 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         fillReusableAllocationsListCalled++;
     }
 
+    std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+        if (failTryObtainUniqueOwnership) {
+            return {};
+        }
+        return WddmCommandStreamReceiver<GfxFamily>::tryObtainUniqueOwnership();
+    }
+
     bool initDirectSubmission() override {
         if (callParentInitDirectSubmission) {
             return WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission();
@@ -103,6 +112,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
 
     bool callParentInitDirectSubmission = true;
     bool initBlitterDirectSubmission = false;
+    bool failTryObtainUniqueOwnership = false;
     uint32_t fillReusableAllocationsListCalled = 0;
 };
 
@@ -212,7 +222,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenWddmInterfaceBeforeWddm3ThenCreat
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenHardwareOrHardwareWithAubCsrWithoutDirectSubmissionWhenCreatingKmdWaiterThenWaiterForGivenFlushStampIsCreated) {
-    csr->createKmdWaiter(7u);
+    csr->createKmdWaiter(7u, 0u);
     EXPECT_EQ(1u, wddm->createMonitoredFenceKmdWaiterCalled);
     EXPECT_EQ(7u, wddm->createMonitoredFenceKmdWaiterFenceValue);
 
@@ -222,7 +232,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenHardwareOrHardwareWithAubCsrWitho
     csrWithAubDump->setupContext(csr->getOsContext());
     ASSERT_EQ(CommandStreamReceiverType::hardwareWithAub, csrWithAubDump->getType());
 
-    csrWithAubDump->createKmdWaiter(8u);
+    csrWithAubDump->createKmdWaiter(8u, 0u);
     EXPECT_EQ(2u, wddm->createMonitoredFenceKmdWaiterCalled);
     EXPECT_EQ(8u, wddm->createMonitoredFenceKmdWaiterFenceValue);
 }
@@ -1009,8 +1019,16 @@ struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectS
         lastNotifyKmdParamValue = notifyKmd;
     }
 
+    bool tryFlushMonitorFence(bool notifyKmd) override {
+        tryFlushMonitorFenceCalled++;
+        lastNotifyKmdParamValue = notifyKmd;
+        return tryFlushMonitorFenceResult;
+    }
+
     uint32_t dispatchCommandBufferCalled = 0;
     uint32_t flushMonitorFenceCalled = 0u;
+    uint32_t tryFlushMonitorFenceCalled = 0u;
+    bool tryFlushMonitorFenceResult = true;
     uint32_t lastNotifyKmdParamValue = false;
 };
 
@@ -1072,17 +1090,129 @@ void waitFromCpuOnDefaultEngineMonitoredFence(MockDevice &device, WddmMock *wddm
 }
 } // namespace
 
-HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionWhenCreatingKmdWaiterThenNoWaiterIsCreated) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionAndUllsKmdWaitDisabledWhenCreatingKmdWaiterThenNoWaiterIsCreated) {
     auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
     if (directSubmission == nullptr) {
         GTEST_SKIP();
     }
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    auto &monitoredFence = static_cast<OsContextWin &>(csr->getOsContext()).getMonitoredFence();
+    *monitoredFence.cpuAddress = 5u;
+    mockCsr->taskCount = 10u;
 
-    EXPECT_EQ(nullptr, csr->createKmdWaiter(csr->obtainCurrentFlushStamp()));
+    EXPECT_EQ(nullptr, csr->createKmdWaiter(6u, 10u));
     EXPECT_EQ(0u, wddm->createMonitoredFenceKmdWaiterCalled);
+    EXPECT_EQ(0u, directSubmission->tryFlushMonitorFenceCalled);
     EXPECT_EQ(0u, directSubmission->flushMonitorFenceCalled);
 
-    static_cast<MockWddmCsr<FamilyType> *>(csr)->directSubmission.reset();
+    mockCsr->directSubmission.reset();
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionAndReachedFlushStampWhenCreatingKmdWaiterThenWaiterIsCreatedWithoutFlushingMonitorFence) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(true);
+    auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
+    if (directSubmission == nullptr) {
+        GTEST_SKIP();
+    }
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    auto &monitoredFence = static_cast<OsContextWin &>(csr->getOsContext()).getMonitoredFence();
+    *monitoredFence.cpuAddress = 5u;
+    mockCsr->taskCount = 10u;
+
+    csr->createKmdWaiter(5u, 9u);
+    EXPECT_EQ(0u, directSubmission->tryFlushMonitorFenceCalled);
+    EXPECT_EQ(1u, wddm->createMonitoredFenceKmdWaiterCalled);
+    EXPECT_EQ(5u, wddm->createMonitoredFenceKmdWaiterFenceValue);
+
+    mockCsr->directSubmission.reset();
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionNotReachedFlushStampAndNothingOrOnlyTaskCountUpdateFlushedAfterEventWhenCreatingKmdWaiterThenMonitorFenceWithNotifyIsFlushedAndWaiterIsCreated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(true);
+    auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
+    if (directSubmission == nullptr) {
+        GTEST_SKIP();
+    }
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    auto &monitoredFence = static_cast<OsContextWin &>(csr->getOsContext()).getMonitoredFence();
+    *monitoredFence.cpuAddress = 5u;
+    mockCsr->taskCount = 10u;
+
+    csr->createKmdWaiter(6u, 10u);
+    EXPECT_EQ(1u, directSubmission->tryFlushMonitorFenceCalled);
+    EXPECT_TRUE(directSubmission->lastNotifyKmdParamValue);
+    EXPECT_EQ(1u, wddm->createMonitoredFenceKmdWaiterCalled);
+    EXPECT_EQ(6u, wddm->createMonitoredFenceKmdWaiterFenceValue);
+
+    mockCsr->latestTaskCountUpdateOnlyFlushTaskCount = 10u;
+    csr->createKmdWaiter(7u, 9u);
+    EXPECT_EQ(2u, directSubmission->tryFlushMonitorFenceCalled);
+    EXPECT_EQ(2u, wddm->createMonitoredFenceKmdWaiterCalled);
+    EXPECT_EQ(7u, wddm->createMonitoredFenceKmdWaiterFenceValue);
+    EXPECT_EQ(0u, directSubmission->flushMonitorFenceCalled);
+
+    mockCsr->directSubmission.reset();
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenBlitterDirectSubmissionAndNotReachedFlushStampWhenCreatingKmdWaiterThenMonitorFenceWithNotifyIsFlushedOnBlitterDirectSubmission) {
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, BlitterDispatcher<FamilyType>>;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(true);
+
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    OsContextWin bcsOsContext(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}));
+    D3DKMT_HANDLE fenceHandle = 1;
+    uint64_t fenceCpuValue = 5u;
+    D3DGPU_VIRTUAL_ADDRESS fenceGpuAddress = castToUint64(&fenceCpuValue);
+    bcsOsContext.resetMonitoredFenceParams(fenceHandle, &fenceCpuValue, fenceGpuAddress);
+    mockCsr->setupContext(bcsOsContext);
+    mockCsr->blitterDirectSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
+    auto blitterDirectSubmission = static_cast<MockSubmission *>(mockCsr->blitterDirectSubmission.get());
+    EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());
+    mockCsr->taskCount = 10u;
+
+    csr->createKmdWaiter(6u, 10u);
+    EXPECT_EQ(1u, blitterDirectSubmission->tryFlushMonitorFenceCalled);
+    EXPECT_TRUE(blitterDirectSubmission->lastNotifyKmdParamValue);
+    EXPECT_EQ(1u, wddm->createMonitoredFenceKmdWaiterCalled);
+    EXPECT_EQ(6u, wddm->createMonitoredFenceKmdWaiterFenceValue);
+
+    mockCsr->blitterDirectSubmission.reset();
+    device.reset();
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionNotReachedFlushStampAndWorkFlushedAfterEventBusyCsrOrFailedMonitorFenceFlushWhenCreatingKmdWaiterThenNoWaiterIsCreated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(true);
+    auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
+    if (directSubmission == nullptr) {
+        GTEST_SKIP();
+    }
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    auto &monitoredFence = static_cast<OsContextWin &>(csr->getOsContext()).getMonitoredFence();
+    *monitoredFence.cpuAddress = 5u;
+    mockCsr->taskCount = 10u;
+
+    EXPECT_EQ(nullptr, csr->createKmdWaiter(6u, 9u));
+    mockCsr->latestTaskCountUpdateOnlyFlushTaskCount = 10u;
+    EXPECT_EQ(nullptr, csr->createKmdWaiter(6u, 8u));
+    mockCsr->latestTaskCountUpdateOnlyFlushTaskCount = 9u;
+    EXPECT_EQ(nullptr, csr->createKmdWaiter(6u, 9u));
+    EXPECT_EQ(0u, directSubmission->tryFlushMonitorFenceCalled);
+
+    mockCsr->failTryObtainUniqueOwnership = true;
+    EXPECT_EQ(nullptr, csr->createKmdWaiter(6u, 10u));
+    EXPECT_EQ(0u, directSubmission->tryFlushMonitorFenceCalled);
+
+    mockCsr->failTryObtainUniqueOwnership = false;
+    directSubmission->tryFlushMonitorFenceResult = false;
+    EXPECT_EQ(nullptr, csr->createKmdWaiter(6u, 10u));
+    EXPECT_EQ(1u, directSubmission->tryFlushMonitorFenceCalled);
+
+    EXPECT_EQ(0u, wddm->createMonitoredFenceKmdWaiterCalled);
+    mockCsr->directSubmission.reset();
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenResetDirectSubmissionThenObjectDeleted) {

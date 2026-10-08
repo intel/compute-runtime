@@ -385,6 +385,7 @@ DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeKmdWaitInitialPollMicrosecon
 DECLARE_DEBUG_VARIABLE(bool, EventHostSynchronizeLinuxUserFenceKmdWait, false, "Enable Linux DRM user-fence KMD wait for long infinite zeEventHostSynchronize when EventHostSynchronizeWaitStrategy is 3")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeLinuxUserFenceKmdWaitTimeoutNanoseconds, 750000, "Timeout in nanoseconds for each Linux DRM user-fence KMD wait in zeEventHostSynchronize when EventHostSynchronizeLinuxUserFenceKmdWait is enabled. -1: infinite")
 DECLARE_DEBUG_VARIABLE(bool, EventHostSynchronizeWindowsDiscreteKmdWait, true, "Enable Windows discrete device KMD wait for long zeEventHostSynchronize without direct submission when EventHostSynchronizeWaitStrategy is 3")
+DECLARE_DEBUG_VARIABLE(bool, EventHostSynchronizeWindowsDiscreteKmdWaitUlls, false, "Extend EventHostSynchronizeWindowsDiscreteKmdWait to direct submission (ULLS)")
 DECLARE_DEBUG_VARIABLE(int64_t, EventHostSynchronizeWindowsDiscreteKmdWaitTimeoutNanoseconds, 500000, "Timeout in nanoseconds for each Windows discrete device KMD wait in zeEventHostSynchronize when EventHostSynchronizeWindowsDiscreteKmdWait is enabled")
 
 /*LOGGING FLAGS*/

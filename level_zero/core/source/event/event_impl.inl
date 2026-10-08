@@ -1092,7 +1092,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (!fenceWait && waitForMonitoredFenceUsingKmd && (elapsedTimeSinceWaitStartUs >= kmdWaitInitialPollUs)) {
             const auto kmdWaitTimeoutNs = std::min(EventHostSynchronize::getKmdWaitTimeout(timeout, elapsedTimeSinceWaitStartNs), monitoredFenceKmdWaitTimeoutNs);
             if (!kmdWaiter && (kmdWaitTimeoutNs > 0)) {
-                kmdWaiter = csrs[0]->createKmdWaiter(signalFlushStamp);
+                kmdWaiter = csrs[0]->createKmdWaiter(signalFlushStamp, this->cleanupTaskCount);
                 waitForMonitoredFenceUsingKmd = (kmdWaiter != nullptr);
             }
             if (kmdWaiter && (kmdWaitTimeoutNs > 0)) {
