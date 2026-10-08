@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_xe2_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe3p_and_later.inl"
@@ -70,6 +71,11 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
 template <>
 bool ProductHelperHw<gfxProduct>::isTranslationExceptionSupported() const {
     return debugManager.flags.TemporaryEnableOutOfBoundariesInTranslationException.get();
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isWalkerPreemptionFallbackRequired(PreemptionMode preemptionMode, bool hostWaitablePostSync) const {
+    return hostWaitablePostSync && (preemptionMode == PreemptionMode::MidThread);
 }
 
 template <>
