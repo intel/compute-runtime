@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ MutableKernelGroup::MutableKernelGroup(uint32_t numKernels, ze_kernel_handle_t *
             maxAppendScratchSize[slotId] = std::max(maxAppendScratchSize[slotId], mutableKernel->getKernelScratchSize(slotId));
         }
         maxAppendIndirectHeapSize = std::max(maxAppendIndirectHeapSize, mutableKernel->getKernel()->getIndirectSize());
-        maxIsaSize = std::max(maxIsaSize, mutableKernel->getKernel()->getImmutableData()->getIsaSize());
+        maxIsaSize = std::max(maxIsaSize, mutableKernel->getKernel()->getImmutableData()->getIsaSizeWithoutPadding());
 
         this->kernelsInAppend.emplace_back(std::move(mutableKernel));
     }

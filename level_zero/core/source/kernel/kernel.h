@@ -54,6 +54,7 @@ struct KernelImmutableData {
     }
 
     uint32_t getIsaSize() const;
+    uint32_t getIsaSizeWithoutPadding() const;
     NEO::GraphicsAllocation *getIsaGraphicsAllocation() const;
     void setIsaPerKernelAllocation(NEO::GraphicsAllocation *allocation);
     inline NEO::GraphicsAllocation *getIsaParentAllocation() const { return isaParentAllocation; }

@@ -573,6 +573,8 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         MockQueryKernelTimestampsKernel(MockModule *module) : KernelImp{module}, module{module} {
             mockKernelImmutableData.kernelDescriptor = &mockKernelDescriptor;
             size_t stubKernelHeapSize = 42;
+            mockKernelInfo.heapInfo.kernelHeapSize = static_cast<uint32_t>(stubKernelHeapSize);
+            mockKernelImmutableData.kernelInfo = &mockKernelInfo;
             mockKernelImmutableData.setIsaPerKernelAllocation(module->allocateKernelsIsaMemory(stubKernelHeapSize));
             this->sharedState->kernelImmData = &mockKernelImmutableData;
         }
@@ -606,6 +608,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         NEO::GraphicsAllocation *index0Allocation = nullptr;
         void *index1DstPtr = nullptr;
         KernelDescriptor mockKernelDescriptor = {};
+        NEO::KernelInfo mockKernelInfo = {};
         WhiteBox<::L0::KernelImmutableData> mockKernelImmutableData = {};
         MockModule *module = nullptr;
     };
@@ -4025,7 +4028,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t prefetchSize = 0;
     if (commandList->kernelMemoryPrefetchEnabled()) {
         prefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->getIndirectSize(), device->getNEODevice()->getRootDeviceEnvironment()) +
-                       NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->getImmutableData()->getIsaSize(), device->getNEODevice()->getRootDeviceEnvironment());
+                       NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->getImmutableData()->getIsaSizeWithoutPadding(), device->getNEODevice()->getRootDeviceEnvironment());
     }
     EXPECT_EQ(usedBefore + prefetchSize, cmdListStream.getUsed());
 }

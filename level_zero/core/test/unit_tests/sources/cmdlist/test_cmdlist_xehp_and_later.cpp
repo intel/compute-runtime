@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -3012,6 +3013,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThe
 
     uint32_t defaultIsaSize = static_cast<uint32_t>(5 * MemoryConstants::kiloByte);
     isaAlloc->setSize(defaultIsaSize);
+    kernel.info.heapInfo.kernelHeapSize = defaultIsaSize;
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
 
@@ -3062,6 +3064,59 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThe
         }
         EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), prefetchedSize); // limited to 2kb by debug variable
     }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenIsaAllocationWithPaddingWhenPrefetchingIsaThenOnlyKernelHeapSizeIsPrefetched, IsAtLeastXeHpcCore) {
+    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableMemoryPrefetch.set(1);
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    auto cmdStream = commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto isaAlloc = kernel.getImmutableData()->getIsaGraphicsAllocation();
+
+    const uint32_t kernelHeapSize = 256u;
+    const uint32_t isaSizeWithPadding = kernelHeapSize + static_cast<uint32_t>(device->getGfxCoreHelper().getPaddingForISAAllocation());
+    isaAlloc->setSize(isaSizeWithPadding);
+    kernel.info.heapInfo.kernelHeapSize = kernelHeapSize;
+    EXPECT_EQ(isaSizeWithPadding, kernel.getImmutableData()->getIsaSize());
+    EXPECT_EQ(kernelHeapSize, kernel.getImmutableData()->getIsaSizeWithoutPadding());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    size_t prefetchedSize = 0;
+
+    auto itor = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
+    while (itor != cmdList.end()) {
+        auto statePrefetch = genCmdCast<STATE_PREFETCH *>(*itor);
+        if (statePrefetch) {
+            if (statePrefetch->getAddress() >= isaAlloc->getGpuAddress() &&
+                statePrefetch->getAddress() < (isaAlloc->getGpuAddress() + isaAlloc->getUnderlyingBufferSize())) {
+                prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+            }
+        } else {
+            break;
+        }
+        itor++;
+    }
+    EXPECT_EQ(device->getProductHelper().getIsaPrefetchSize(kernelHeapSize), prefetchedSize); // padding is not prefetched
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel,

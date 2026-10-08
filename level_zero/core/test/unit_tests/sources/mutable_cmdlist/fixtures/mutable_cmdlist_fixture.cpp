@@ -112,6 +112,7 @@ std::unique_ptr<ModuleImmutableDataFixture::MockImmutableData> MutableCommandLis
     auto immData = std::make_unique<MockImmutableData>(0u, 0u, 0u, isaSize, nextIsaPtr);
     nextIsaPtr += isaSize;
     nextIsaPtr = alignUp(nextIsaPtr, 0x1000);
+    immData->kernelInfo->heapInfo.kernelHeapSize = isaSize;
 
     immData->kernelDescriptor->kernelAttributes.crossThreadDataSize = crossThreadInitSize;
     immData->kernelDescriptor->kernelAttributes.numLocalIdChannels = 3;

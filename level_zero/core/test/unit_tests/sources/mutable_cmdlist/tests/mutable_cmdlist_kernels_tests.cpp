@@ -536,7 +536,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
-    auto maxIsaSize = std::max(kernel->getImmutableData()->getIsaSize(), kernel2->getImmutableData()->getIsaSize());
+    auto maxIsaSize = std::max(kernel->getImmutableData()->getIsaSizeWithoutPadding(), kernel2->getImmutableData()->getIsaSizeWithoutPadding());
 
     EXPECT_EQ(maxIsaSize, mutation.kernelGroup->getMaxIsaSize());
 }
@@ -600,7 +600,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto &productHelper = this->device->getProductHelper();
     auto maxIsaSize = productHelper.getIsaPrefetchSize(mutation.kernelGroup->getMaxIsaSize());
 
-    uint32_t expectedIsaPrefetchSize = productHelper.getIsaPrefetchSize(kernel->getImmutableData()->getIsaSize());
+    uint32_t expectedIsaPrefetchSize = productHelper.getIsaPrefetchSize(kernel->getImmutableData()->getIsaSizeWithoutPadding());
     size_t expectedIsaPrefetchPadding =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(maxIsaSize - expectedIsaPrefetchSize,
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
@@ -711,7 +711,7 @@ HWTEST2_F(MutableCommandListKernelTest,
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getIndirectSize(),
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedIsaPrefetchSize =
-        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSize(),
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSizeWithoutPadding(),
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize;
 
@@ -734,7 +734,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     itor++;
 
     prefetchSize =
-        static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
+        static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSizeWithoutPadding(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
 
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);
@@ -798,7 +798,7 @@ HWTEST2_F(MutableCommandListKernelTest,
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getIndirectSize(),
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedIsaPrefetchSize =
-        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSize(),
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSizeWithoutPadding(),
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize;
 
@@ -818,7 +818,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchPatch.offset, prefetchCmd->getAddress());
     itor++;
 
-    prefetchSize = static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
+    prefetchSize = static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSizeWithoutPadding(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
 
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);
@@ -876,7 +876,7 @@ HWTEST2_F(MutableCommandListKernelTest,
                            NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, this->device->getNEODevice()->getRootDeviceEnvironment());
 
     auto expectedIohPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernelBigIsa->getIndirectSize(), this->device->getNEODevice()->getRootDeviceEnvironment());
-    auto expectedIsaPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernelBigIsa->getImmutableData()->getIsaSize(), this->device->getNEODevice()->getRootDeviceEnvironment());
+    auto expectedIsaPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernelBigIsa->getImmutableData()->getIsaSizeWithoutPadding(), this->device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize;
 
     GenCmdList cmdList;
@@ -904,7 +904,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     EXPECT_EQ(isaGpuAddress, isaPrefetchCmd->getAddress());
     itor++;
 
-    size_t isaReminder = kernelBigIsa->getImmutableData()->getIsaSize() - MemoryConstants::pageSize64k;
+    size_t isaReminder = kernelBigIsa->getImmutableData()->getIsaSizeWithoutPadding() - MemoryConstants::pageSize64k;
     prefetchSize = static_cast<uint32_t>(alignUp(isaReminder, MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
     isaGpuAddress = gmmHelper->decanonize(kernelBigIsa->getIsaAllocation()->getGpuAddress()) + MemoryConstants::pageSize64k;
 

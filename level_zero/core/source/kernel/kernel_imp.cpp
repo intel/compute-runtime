@@ -233,6 +233,10 @@ NEO::GraphicsAllocation *KernelImmutableData::getIsaGraphicsAllocation() const {
     }
 }
 
+uint32_t KernelImmutableData::getIsaSizeWithoutPadding() const {
+    return static_cast<uint32_t>(this->kernelInfo->heapInfo.kernelHeapSize);
+}
+
 uint32_t KernelImmutableData::getIsaSize() const {
     if (this->getIsaParentAllocation()) {
         DEBUG_BREAK_IF(this->device->getL0Debugger() != nullptr);
