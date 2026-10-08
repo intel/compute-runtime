@@ -20,6 +20,7 @@ namespace NEO {
 
 struct CapsXe3pCore {
     static constexpr uint32_t cacheLineSize = 256u;
+    static constexpr uint32_t commandBuffersPreallocatedPerCommandQueue = 2u;
     static constexpr uint32_t kernelBFloat16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps;
     static constexpr uint32_t planarYuvMaxHeight = 16128u;
@@ -31,6 +32,8 @@ struct CapsXe3pCore {
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
     static constexpr bool blitImageAllowedForDepthFormat = true;
+    static constexpr bool block2DLoadSupported = true;
+    static constexpr bool block2DStoreSupported = true;
     static constexpr bool cacheFlushPriorToImageReadRequired = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
@@ -38,6 +41,7 @@ struct CapsXe3pCore {
     static constexpr bool matrixMultiplyAccumulateSupported = true;
     static constexpr bool postImageWriteFlushRequired = true;
     static constexpr bool rcsExposureDisabled = true;
+    static constexpr bool scratchSpaceBasePointerInGrf = true;
 };
 
 struct CapsCri : CapsXe3pCore {

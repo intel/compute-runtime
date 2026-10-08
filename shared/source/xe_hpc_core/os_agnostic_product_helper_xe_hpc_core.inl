@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/os_interface/product_helper_from_xe_hpc_to_xe3.inl"
 #include "shared/source/os_interface/product_helper_from_xe_hpg_to_xe3.inl"
 
 namespace NEO {

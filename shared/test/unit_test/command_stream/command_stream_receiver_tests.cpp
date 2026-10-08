@@ -332,8 +332,8 @@ HWTEST_F(CommandStreamReceiverTest, givenUnsetPreallocationsPerQueueWhenRequestP
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 
-    auto &productHelper = getHelper<ProductHelper>();
-    const auto expectedPreallocations = productHelper.getCommandBuffersPreallocatedPerCommandQueue();
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    const auto expectedPreallocations = hwInfo.caps.commandBuffersPreallocatedPerCommandQueue;
 
     commandStreamReceiver->requestPreallocation();
     if (expectedPreallocations > 0) {

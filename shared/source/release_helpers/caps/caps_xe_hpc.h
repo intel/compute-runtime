@@ -20,6 +20,7 @@ namespace NEO {
 
 struct CapsXeHpcCore {
     static constexpr uint32_t cacheLineSize = 64u;
+    static constexpr uint32_t commandBuffersPreallocatedPerCommandQueue = 2u;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
     static constexpr uint32_t planarYuvMaxHeight = 16128u;
     static constexpr uint32_t rtasFormat = 1u;
@@ -29,11 +30,16 @@ struct CapsXeHpcCore {
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
+    static constexpr bool block2DLoadSupported = true;
+    static constexpr bool block2DStoreSupported = true;
     static constexpr bool dummyBlitWaRequired = true;
+    static constexpr bool initBuiltinAsyncSupported = true;
+    static constexpr bool initDeviceWithFirstSubmissionRequired = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool rayTracingSupported = true;
     static constexpr bool rcsExposureDisabled = true;
+    static constexpr bool scratchSpaceBasePointerInGrf = true;
 };
 
 struct CapsPvc : CapsXeHpcCore {

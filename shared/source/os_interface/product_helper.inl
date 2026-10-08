@@ -254,11 +254,6 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroup(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getDefaultMidthreadPreemptionDelayTimer() const {
-    return 0;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const {}
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -554,11 +549,6 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -586,10 +576,6 @@ bool ProductHelperHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequire
     return true;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
-    return true;
-}
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getNumberOfPartsInTileForConcurrentKernel(uint32_t ccsCount) const {
     return 1u;
@@ -894,16 +880,6 @@ bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::supports2DBlockLoad() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::supports2DBlockStore() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getNumCacheRegions() const {
     return 0u;
 }
@@ -1102,17 +1078,7 @@ bool ProductHelperHw<gfxProduct>::sipUsesSubslicePools() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isScratchSpaceBasePointerInGrf() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::scanFullTopologyBitmap() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isMemSetExtendedPayloadSupported() const {
     return false;
 }
 
@@ -1128,11 +1094,6 @@ bool ProductHelperHw<gfxProduct>::isProgramAdditionalEngineMMIORequired(const Ha
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isFrontEndControllerEnabled() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isRayTracingWalkerAdjustmentRequired() const {
     return false;
 }
 

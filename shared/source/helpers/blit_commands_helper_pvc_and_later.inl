@@ -60,7 +60,8 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
         appendBlitMemSetCompressionFormat(&blitCmd, blitProperties.dstAllocation, compressionFormat);
     }
 
-    if (!rootDeviceEnvironment.getHelper<ProductHelper>().isMemSetExtendedPayloadSupported()) {
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (!hwInfo.caps.memSetExtendedPayloadSupported) {
         blitCmd.setFillData(*blitProperties.fillPattern);
     }
 

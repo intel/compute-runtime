@@ -14,7 +14,6 @@
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -179,15 +178,7 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenDebugFlagWhenProgrammingState
     }
 }
 
-struct ProductHelperWithMidthreadPreemptionDelayTimer : public NEO::ProductHelperHw<IGFX_UNKNOWN> {
-    uint32_t getDefaultMidthreadPreemptionDelayTimer() const override {
-        return defaultMidthreadPreemptionDelayTimer;
-    }
-
-    uint32_t defaultMidthreadPreemptionDelayTimer = 0u;
-};
-
-HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenProductHelperDefaultWhenProgrammingStateComputeModeThenMidthreadPreemptionDelayTimerIsProgrammed, IsAtLeastXe2HpgCore) {
+HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenCapsDefaultWhenProgrammingStateComputeModeThenMidthreadPreemptionDelayTimerIsProgrammed, IsAtLeastXe2HpgCore) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
 
@@ -197,7 +188,7 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenProductHelperDefaultWhenProgr
 
     alignas(STATE_COMPUTE_MODE) uint8_t buffer[sizeof(STATE_COMPUTE_MODE)]{};
     auto &rootDeviceEnvironment = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
-    RAIIProductHelperFactory<ProductHelperWithMidthreadPreemptionDelayTimer> raii{rootDeviceEnvironment};
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     auto programStateComputeMode = [&]() -> STATE_COMPUTE_MODE & {
         LinearStream linearStream(buffer, sizeof(buffer));
@@ -212,7 +203,7 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenProductHelperDefaultWhenProgr
 
     {
         // no product default - neither the field nor its mask bits are touched
-        raii.mockProductHelper->defaultMidthreadPreemptionDelayTimer = 0u;
+        hwInfo.caps.defaultMidthreadPreemptionDelayTimer = 0u;
 
         auto &stateComputeModeCmd = programStateComputeMode();
         EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
@@ -220,7 +211,7 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenProductHelperDefaultWhenProgr
     }
 
     {
-        raii.mockProductHelper->defaultMidthreadPreemptionDelayTimer = MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150;
+        hwInfo.caps.defaultMidthreadPreemptionDelayTimer = MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150;
 
         auto &stateComputeModeCmd = programStateComputeMode();
         EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_150, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
@@ -238,7 +229,7 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenProductHelperDefaultWhenProgr
 
     {
         // ... and up, over a product default that leaves it disabled
-        raii.mockProductHelper->defaultMidthreadPreemptionDelayTimer = 0u;
+        hwInfo.caps.defaultMidthreadPreemptionDelayTimer = 0u;
         debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.set(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_100);
 
         auto &stateComputeModeCmd = programStateComputeMode();

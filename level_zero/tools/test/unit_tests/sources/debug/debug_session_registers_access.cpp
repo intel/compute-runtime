@@ -8,7 +8,6 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_registers_access.h"
 
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
@@ -32,9 +31,8 @@ void DebugSessionRegistersAccessV3::setUp() {
 }
 
 void setIsScratchInGrf(NEO::MockDevice *neoDevice, bool value) {
-    auto mockProductHelper = std::make_unique<NEO::MockProductHelper>();
-    mockProductHelper->isScratchSpaceBasePointerInGrfResult = value;
-    neoDevice->getRootDeviceEnvironmentRef().productHelper = std::move(mockProductHelper);
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    hwInfo.caps.scratchSpaceBasePointerInGrf = value;
 }
 
 void DebugSessionRegistersAccessScratchV3::setUp() {

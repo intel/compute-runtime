@@ -35,7 +35,6 @@ class ProductHelperHw : public ProductHelper {
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
-    uint32_t getDefaultMidthreadPreemptionDelayTimer() const override;
     void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
     bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;
@@ -75,7 +74,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const override;
     bool getUuid(NEO::DriverModel *driverModel, uint32_t subDeviceCount, uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override;
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
-    bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const override;
     bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const override;
     bool isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const override;
@@ -95,7 +93,6 @@ class ProductHelperHw : public ProductHelper {
     bool isTimestampWaitSupportedForEvents() const override;
     bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const override;
     BcsSplitSettings getBcsSplitSettings(const HardwareInfo &hwInfo) const override;
-    bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const override;
     bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const override;
     uint32_t getIsaPrefetchSize(uint32_t isaSize) const override;
     bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;
@@ -106,7 +103,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
     void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;
     bool isPrefetcherDisablingInDirectSubmissionRequired() const override;
-    bool isStatefulAddressingModeSupported() const override;
     uint32_t getNumberOfPartsInTileForConcurrentKernel(uint32_t ccsCount) const override;
     bool isPlatformQuerySupported() const override;
     bool isResolveDependenciesByPipeControlsSupported() const override;
@@ -124,7 +120,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getRequiredDetectIndirectVersionVC() const override;
     bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const override;
     bool isTranslationExceptionSupported() const override;
-    uint32_t getCommandBuffersPreallocatedPerCommandQueue() const override;
     uint32_t getInternalHeapsPreallocated() const override;
     bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const override;
     bool is2MBLocalMemAlignmentEnabled() const override;
@@ -180,8 +175,6 @@ class ProductHelperHw : public ProductHelper {
     bool isPatIndexValidForUserptr(uint64_t patIndex) const override;
     bool isStagingBuffersEnabled() const override;
     size_t getCpuCopyThreshold(TransferType transferType) const override;
-    bool supports2DBlockStore() const override;
-    bool supports2DBlockLoad() const override;
     uint32_t getNumCacheRegions() const override;
     uint32_t adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
@@ -208,13 +201,10 @@ class ProductHelperHw : public ProductHelper {
     bool isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isDeviceCapsReaderSupported() const override;
     bool sipUsesSubslicePools() const override;
-    bool isScratchSpaceBasePointerInGrf() const override;
     bool scanFullTopologyBitmap() const override;
-    bool isMemSetExtendedPayloadSupported() const override;
     std::optional<uint8_t> getBcsCompressionFormat() const override;
     bool isProgramAdditionalEngineMMIORequired(const HardwareInfo &hwInfo) const override;
     bool isFrontEndControllerEnabled() const override;
-    bool isRayTracingWalkerAdjustmentRequired() const override;
     bool isLEOSupported() const override;
 
     ~ProductHelperHw() override = default;

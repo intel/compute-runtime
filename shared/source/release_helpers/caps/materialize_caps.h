@@ -16,6 +16,8 @@ namespace NEO {
 
 #define NEO_CAP_FIELDS(NEO_COPY_CAP_FUNC)                                        \
     NEO_COPY_CAP_FUNC(cacheLineSize)                                             \
+    NEO_COPY_CAP_FUNC(commandBuffersPreallocatedPerCommandQueue)                 \
+    NEO_COPY_CAP_FUNC(defaultMidthreadPreemptionDelayTimer)                      \
     NEO_COPY_CAP_FUNC(kernelBFloat16AtomicCapabilities)                          \
     NEO_COPY_CAP_FUNC(kernelFp16AtomicCapabilities)                              \
     NEO_COPY_CAP_FUNC(maxNumSamplers)                                            \
@@ -33,6 +35,8 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(bFloat16ConversionSupported)                               \
     NEO_COPY_CAP_FUNC(bindlessAddressingDisabled)                                \
     NEO_COPY_CAP_FUNC(blitImageAllowedForDepthFormat)                            \
+    NEO_COPY_CAP_FUNC(block2DLoadSupported)                                      \
+    NEO_COPY_CAP_FUNC(block2DStoreSupported)                                     \
     NEO_COPY_CAP_FUNC(cacheFlushPriorToImageReadRequired)                        \
     NEO_COPY_CAP_FUNC(deviceConfigStringTileCountIncluded)                       \
     NEO_COPY_CAP_FUNC(deviceConfigStringXeCuSegmentIncluded)                     \
@@ -43,9 +47,12 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(ftrXe2Compression)                                         \
     NEO_COPY_CAP_FUNC(globalBindlessAllocatorEnabled)                            \
     NEO_COPY_CAP_FUNC(hvAlign4Required)                                          \
+    NEO_COPY_CAP_FUNC(initBuiltinAsyncSupported)                                 \
+    NEO_COPY_CAP_FUNC(initDeviceWithFirstSubmissionRequired)                     \
     NEO_COPY_CAP_FUNC(latePreemptionStartSupported)                              \
     NEO_COPY_CAP_FUNC(localOnlyAllowed)                                          \
     NEO_COPY_CAP_FUNC(matrixMultiplyAccumulateSupported)                         \
+    NEO_COPY_CAP_FUNC(memSetExtendedPayloadSupported)                            \
     NEO_COPY_CAP_FUNC(numRtStacksPerDssFixedValue)                               \
     NEO_COPY_CAP_FUNC(pipeControlPriorToNonPipelinedStateCommandsBaseWARequired) \
     NEO_COPY_CAP_FUNC(pipeControlPriorToPipelineSelectWaRequired)                \
@@ -55,8 +62,10 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(programAllStateComputeCommandFieldsWARequired)             \
     NEO_COPY_CAP_FUNC(queryPeerAccess)                                           \
     NEO_COPY_CAP_FUNC(rayTracingSupported)                                       \
+    NEO_COPY_CAP_FUNC(rayTracingWalkerAdjustmentRequired)                        \
     NEO_COPY_CAP_FUNC(rcsExposureDisabled)                                       \
     NEO_COPY_CAP_FUNC(reducedSurfaceStateSupported)                              \
+    NEO_COPY_CAP_FUNC(scratchSpaceBasePointerInGrf)                              \
     NEO_COPY_CAP_FUNC(singleDispatchRequiredForMultiCCS)                         \
     NEO_COPY_CAP_FUNC(splitMatrixMultiplyAccumulateSupported)
 

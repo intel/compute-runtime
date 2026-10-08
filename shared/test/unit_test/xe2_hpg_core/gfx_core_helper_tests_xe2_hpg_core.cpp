@@ -576,11 +576,6 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallIsTime
     EXPECT_TRUE(productHelper.isTimestampWaitSupportedForEvents());
 }
 
-XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallGetCommandBuffersPreallocatedPerCommandQueueThenReturnCorrectValue) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(2u, productHelper.getCommandBuffersPreallocatedPerCommandQueue());
-}
-
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isStagingBuffersEnabled());

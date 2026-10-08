@@ -37,6 +37,8 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     constexpr auto capsCri = materializeCaps<CapsCri>();
 
     EXPECT_EQ(256u, capsCri.cacheLineSize);
+    EXPECT_EQ(2u, capsCri.commandBuffersPreallocatedPerCommandQueue);
+    EXPECT_EQ(0u, capsCri.defaultMidthreadPreemptionDelayTimer);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsCri.maxNumSamplers);
@@ -52,6 +54,8 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_TRUE(capsCri.bFloat16ConversionSupported);
     EXPECT_TRUE(capsCri.bindlessAddressingDisabled);
     EXPECT_TRUE(capsCri.blitImageAllowedForDepthFormat);
+    EXPECT_TRUE(capsCri.block2DLoadSupported);
+    EXPECT_TRUE(capsCri.block2DStoreSupported);
     EXPECT_TRUE(capsCri.cacheFlushPriorToImageReadRequired);
     EXPECT_TRUE(capsCri.deviceConfigStringTileCountIncluded);
     EXPECT_TRUE(capsCri.deviceConfigStringXeCuSegmentIncluded);
@@ -62,9 +66,12 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsCri.ftrXe2Compression);
     EXPECT_TRUE(capsCri.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsCri.hvAlign4Required);
+    EXPECT_FALSE(capsCri.initBuiltinAsyncSupported);
+    EXPECT_FALSE(capsCri.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsCri.latePreemptionStartSupported);
     EXPECT_FALSE(capsCri.localOnlyAllowed);
     EXPECT_TRUE(capsCri.matrixMultiplyAccumulateSupported);
+    EXPECT_FALSE(capsCri.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsCri.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsCri.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsCri.pipeControlPriorToPipelineSelectWaRequired);
@@ -74,8 +81,10 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsCri.programAllStateComputeCommandFieldsWARequired);
     EXPECT_FALSE(capsCri.queryPeerAccess);
     EXPECT_FALSE(capsCri.rayTracingSupported);
+    EXPECT_FALSE(capsCri.rayTracingWalkerAdjustmentRequired);
     EXPECT_TRUE(capsCri.rcsExposureDisabled);
     EXPECT_FALSE(capsCri.reducedSurfaceStateSupported);
+    EXPECT_TRUE(capsCri.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsCri.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsCri.splitMatrixMultiplyAccumulateSupported);
 }
@@ -85,6 +94,8 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     constexpr auto capsNvlPB0 = materializeCaps<CapsNvlPB0>();
 
     EXPECT_EQ(256u, capsNvlPA0.cacheLineSize);
+    EXPECT_EQ(2u, capsNvlPA0.commandBuffersPreallocatedPerCommandQueue);
+    EXPECT_EQ(0u, capsNvlPA0.defaultMidthreadPreemptionDelayTimer);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPA0.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPA0.kernelFp16AtomicCapabilities);
     EXPECT_EQ(16u, capsNvlPA0.maxNumSamplers);
@@ -100,6 +111,10 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_TRUE(capsNvlPA0.bFloat16ConversionSupported);
     EXPECT_TRUE(capsNvlPA0.bindlessAddressingDisabled);
     EXPECT_TRUE(capsNvlPA0.blitImageAllowedForDepthFormat);
+    EXPECT_TRUE(capsNvlPA0.block2DLoadSupported);
+    EXPECT_TRUE(capsNvlPB0.block2DLoadSupported);
+    EXPECT_TRUE(capsNvlPA0.block2DStoreSupported);
+    EXPECT_TRUE(capsNvlPB0.block2DStoreSupported);
     EXPECT_TRUE(capsNvlPA0.cacheFlushPriorToImageReadRequired);
     EXPECT_TRUE(capsNvlPA0.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsNvlPA0.deviceConfigStringXeCuSegmentIncluded);
@@ -110,9 +125,13 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_TRUE(capsNvlPA0.ftrXe2Compression);
     EXPECT_TRUE(capsNvlPA0.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsNvlPA0.hvAlign4Required);
+    EXPECT_FALSE(capsNvlPA0.initBuiltinAsyncSupported);
+    EXPECT_FALSE(capsNvlPA0.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsNvlPA0.latePreemptionStartSupported);
     EXPECT_FALSE(capsNvlPA0.localOnlyAllowed);
     EXPECT_TRUE(capsNvlPA0.matrixMultiplyAccumulateSupported);
+    EXPECT_FALSE(capsNvlPA0.memSetExtendedPayloadSupported);
+    EXPECT_FALSE(capsNvlPB0.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsNvlPA0.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsNvlPA0.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsNvlPA0.pipeControlPriorToPipelineSelectWaRequired);
@@ -122,12 +141,17 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsNvlPA0.programAllStateComputeCommandFieldsWARequired);
     EXPECT_FALSE(capsNvlPA0.queryPeerAccess);
     EXPECT_TRUE(capsNvlPA0.rayTracingSupported);
+    EXPECT_FALSE(capsNvlPA0.rayTracingWalkerAdjustmentRequired);
     EXPECT_TRUE(capsNvlPA0.rcsExposureDisabled);
     EXPECT_FALSE(capsNvlPA0.reducedSurfaceStateSupported);
+    EXPECT_TRUE(capsNvlPA0.scratchSpaceBasePointerInGrf);
+    EXPECT_TRUE(capsNvlPB0.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsNvlPA0.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsNvlPA0.splitMatrixMultiplyAccumulateSupported);
 
     EXPECT_EQ(256u, capsNvlPB0.cacheLineSize);
+    EXPECT_EQ(2u, capsNvlPB0.commandBuffersPreallocatedPerCommandQueue);
+    EXPECT_EQ(0u, capsNvlPB0.defaultMidthreadPreemptionDelayTimer);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPB0.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPB0.kernelFp16AtomicCapabilities);
     EXPECT_EQ(16u, capsNvlPB0.maxNumSamplers);
@@ -153,6 +177,8 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_TRUE(capsNvlPB0.ftrXe2Compression);
     EXPECT_TRUE(capsNvlPB0.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsNvlPB0.hvAlign4Required);
+    EXPECT_FALSE(capsNvlPB0.initBuiltinAsyncSupported);
+    EXPECT_FALSE(capsNvlPB0.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsNvlPB0.latePreemptionStartSupported);
     EXPECT_FALSE(capsNvlPB0.localOnlyAllowed);
     EXPECT_TRUE(capsNvlPB0.matrixMultiplyAccumulateSupported);
@@ -165,6 +191,7 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsNvlPB0.programAllStateComputeCommandFieldsWARequired);
     EXPECT_FALSE(capsNvlPB0.queryPeerAccess);
     EXPECT_TRUE(capsNvlPB0.rayTracingSupported);
+    EXPECT_FALSE(capsNvlPB0.rayTracingWalkerAdjustmentRequired);
     EXPECT_TRUE(capsNvlPB0.rcsExposureDisabled);
     EXPECT_FALSE(capsNvlPB0.reducedSurfaceStateSupported);
     EXPECT_FALSE(capsNvlPB0.singleDispatchRequiredForMultiCCS);

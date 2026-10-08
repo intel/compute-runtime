@@ -167,10 +167,6 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemI
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }
 
-DG2TEST_F(ProductHelperTestDg2, givenDg2ProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFALSE) {
-    EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
-}
-
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse) {
     EXPECT_FALSE(productHelper->isCopyBufferRectSplitSupported());
 }
@@ -514,10 +510,6 @@ DG2TEST_F(ProductHelperTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScrat
 DG2TEST_F(ProductHelperTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
 
     EXPECT_TRUE(productHelper->isTimestampWaitSupportedForEvents());
-}
-
-DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCallGetCommandBuffersPreallocatedPerCommandQueueThenReturnCorrectValue) {
-    EXPECT_EQ(2u, productHelper->getCommandBuffersPreallocatedPerCommandQueue());
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue) {

@@ -41,6 +41,8 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     constexpr auto capsPvc = materializeCaps<CapsPvc>();
 
     EXPECT_EQ(64u, capsPvc.cacheLineSize);
+    EXPECT_EQ(2u, capsPvc.commandBuffersPreallocatedPerCommandQueue);
+    EXPECT_EQ(0u, capsPvc.defaultMidthreadPreemptionDelayTimer);
     EXPECT_EQ(0u, capsPvc.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPvc.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsPvc.maxNumSamplers);
@@ -56,6 +58,8 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_TRUE(capsPvc.bFloat16ConversionSupported);
     EXPECT_TRUE(capsPvc.bindlessAddressingDisabled);
     EXPECT_FALSE(capsPvc.blitImageAllowedForDepthFormat);
+    EXPECT_TRUE(capsPvc.block2DLoadSupported);
+    EXPECT_TRUE(capsPvc.block2DStoreSupported);
     EXPECT_FALSE(capsPvc.cacheFlushPriorToImageReadRequired);
     EXPECT_FALSE(capsPvc.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsPvc.deviceConfigStringXeCuSegmentIncluded);
@@ -66,9 +70,12 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsPvc.ftrXe2Compression);
     EXPECT_FALSE(capsPvc.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsPvc.hvAlign4Required);
+    EXPECT_TRUE(capsPvc.initBuiltinAsyncSupported);
+    EXPECT_TRUE(capsPvc.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsPvc.latePreemptionStartSupported);
     EXPECT_TRUE(capsPvc.localOnlyAllowed);
     EXPECT_TRUE(capsPvc.matrixMultiplyAccumulateSupported);
+    EXPECT_FALSE(capsPvc.memSetExtendedPayloadSupported);
     EXPECT_TRUE(capsPvc.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsPvc.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPvc.pipeControlPriorToPipelineSelectWaRequired);
@@ -78,8 +85,10 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsPvc.programAllStateComputeCommandFieldsWARequired);
     EXPECT_FALSE(capsPvc.queryPeerAccess);
     EXPECT_TRUE(capsPvc.rayTracingSupported);
+    EXPECT_FALSE(capsPvc.rayTracingWalkerAdjustmentRequired);
     EXPECT_TRUE(capsPvc.rcsExposureDisabled);
     EXPECT_FALSE(capsPvc.reducedSurfaceStateSupported);
+    EXPECT_TRUE(capsPvc.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsPvc.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsPvc.splitMatrixMultiplyAccumulateSupported);
 }
@@ -88,6 +97,8 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     constexpr auto capsPvcVg = materializeCaps<CapsPvcVg>();
 
     EXPECT_EQ(64u, capsPvcVg.cacheLineSize);
+    EXPECT_EQ(2u, capsPvcVg.commandBuffersPreallocatedPerCommandQueue);
+    EXPECT_EQ(0u, capsPvcVg.defaultMidthreadPreemptionDelayTimer);
     EXPECT_EQ(0u, capsPvcVg.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPvcVg.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsPvcVg.maxNumSamplers);
@@ -103,6 +114,8 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_TRUE(capsPvcVg.bFloat16ConversionSupported);
     EXPECT_TRUE(capsPvcVg.bindlessAddressingDisabled);
     EXPECT_FALSE(capsPvcVg.blitImageAllowedForDepthFormat);
+    EXPECT_TRUE(capsPvcVg.block2DLoadSupported);
+    EXPECT_TRUE(capsPvcVg.block2DStoreSupported);
     EXPECT_FALSE(capsPvcVg.cacheFlushPriorToImageReadRequired);
     EXPECT_FALSE(capsPvcVg.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(capsPvcVg.deviceConfigStringXeCuSegmentIncluded);
@@ -113,9 +126,12 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsPvcVg.ftrXe2Compression);
     EXPECT_FALSE(capsPvcVg.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(capsPvcVg.hvAlign4Required);
+    EXPECT_TRUE(capsPvcVg.initBuiltinAsyncSupported);
+    EXPECT_TRUE(capsPvcVg.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsPvcVg.latePreemptionStartSupported);
     EXPECT_TRUE(capsPvcVg.localOnlyAllowed);
     EXPECT_FALSE(capsPvcVg.matrixMultiplyAccumulateSupported);
+    EXPECT_FALSE(capsPvcVg.memSetExtendedPayloadSupported);
     EXPECT_TRUE(capsPvcVg.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(capsPvcVg.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(capsPvcVg.pipeControlPriorToPipelineSelectWaRequired);
@@ -125,8 +141,10 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsPvcVg.programAllStateComputeCommandFieldsWARequired);
     EXPECT_FALSE(capsPvcVg.queryPeerAccess);
     EXPECT_TRUE(capsPvcVg.rayTracingSupported);
+    EXPECT_FALSE(capsPvcVg.rayTracingWalkerAdjustmentRequired);
     EXPECT_TRUE(capsPvcVg.rcsExposureDisabled);
     EXPECT_FALSE(capsPvcVg.reducedSurfaceStateSupported);
+    EXPECT_TRUE(capsPvcVg.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsPvcVg.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsPvcVg.splitMatrixMultiplyAccumulateSupported);
 }

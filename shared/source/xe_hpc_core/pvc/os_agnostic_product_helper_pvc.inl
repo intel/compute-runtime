@@ -94,11 +94,6 @@ bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInf
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
 bool isBaseDieA0(const HardwareInfo &hwInfo) {
     return (hwInfo.platform.usRevId & PVC::pvcBaseDieRevMask) == PVC::pvcBaseDieA0Masked;
 }
@@ -210,11 +205,6 @@ BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings(const Hardware
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
@@ -242,11 +232,6 @@ bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwIn
 template <>
 void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
-    return false;
 }
 
 template <>

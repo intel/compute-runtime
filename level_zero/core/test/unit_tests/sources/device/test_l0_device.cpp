@@ -6096,35 +6096,12 @@ TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZeIntelGetDriverVersionStri
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeIntelGetDriverVersionString"));
 }
 
-template <bool blockLoad, bool blockStore>
-class Mock2DTransposeProductHelper : public MockProductHelperHw<IGFX_UNKNOWN> {
-  public:
-    bool supports2DBlockLoad() const override {
-        return blockLoad;
-    }
-    bool supports2DBlockStore() const override {
-        return blockStore;
-    }
-};
-
-template <bool blockLoad, bool blockStore>
-class Mock2DTransposeDevice : public MockDeviceImp {
-  public:
-    using mockProductHelperType = Mock2DTransposeProductHelper<blockLoad, blockStore>;
-
-    using MockDeviceImp::MockDeviceImp;
-
-    const ProductHelper &getProductHelper() override {
-        return *mockProductHelper;
-    }
-
-  private:
-    std::unique_ptr<mockProductHelperType> mockProductHelper = std::make_unique<mockProductHelperType>();
-};
-
 TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreFalseThenFlagsIndicateSupportsNeither) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
-    Mock2DTransposeDevice<false, false> mockDevice(neoMockDevice);
+    auto &hwInfo = *neoMockDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.block2DLoadSupported = false;
+    hwInfo.caps.block2DStoreSupported = false;
+    MockDeviceImp mockDevice(neoMockDevice);
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
@@ -6139,7 +6116,10 @@ TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreFalseThenFlagsIndi
 
 TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreFalseThenFlagsIndicateSupportLoad) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
-    Mock2DTransposeDevice<true, false> mockDevice(neoMockDevice);
+    auto &hwInfo = *neoMockDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.block2DLoadSupported = true;
+    hwInfo.caps.block2DStoreSupported = false;
+    MockDeviceImp mockDevice(neoMockDevice);
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
@@ -6154,7 +6134,10 @@ TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreFalseThenFlagsIndic
 
 TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreTrueThenFlagsIndicateSupportStore) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
-    Mock2DTransposeDevice<false, true> mockDevice(neoMockDevice);
+    auto &hwInfo = *neoMockDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.block2DLoadSupported = false;
+    hwInfo.caps.block2DStoreSupported = true;
+    MockDeviceImp mockDevice(neoMockDevice);
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
@@ -6169,7 +6152,10 @@ TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreTrueThenFlagsIndic
 
 TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreTrueThenFlagsIndicateSupportBoth) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
-    Mock2DTransposeDevice<true, true> mockDevice(neoMockDevice);
+    auto &hwInfo = *neoMockDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.caps.block2DLoadSupported = true;
+    hwInfo.caps.block2DStoreSupported = true;
+    MockDeviceImp mockDevice(neoMockDevice);
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};

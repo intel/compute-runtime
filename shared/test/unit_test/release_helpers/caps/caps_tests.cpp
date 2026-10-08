@@ -38,6 +38,8 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         auto expectedCaps = resolveCaps(deviceAotInfo.aotConfig);
         ASSERT_TRUE(expectedCaps.has_value());
         EXPECT_EQ(expectedCaps->cacheLineSize, hwInfo.caps.cacheLineSize);
+        EXPECT_EQ(expectedCaps->commandBuffersPreallocatedPerCommandQueue, hwInfo.caps.commandBuffersPreallocatedPerCommandQueue);
+        EXPECT_EQ(expectedCaps->defaultMidthreadPreemptionDelayTimer, hwInfo.caps.defaultMidthreadPreemptionDelayTimer);
         EXPECT_EQ(expectedCaps->kernelBFloat16AtomicCapabilities, hwInfo.caps.kernelBFloat16AtomicCapabilities);
         EXPECT_EQ(expectedCaps->kernelFp16AtomicCapabilities, hwInfo.caps.kernelFp16AtomicCapabilities);
         EXPECT_EQ(expectedCaps->maxNumSamplers, hwInfo.caps.maxNumSamplers);
@@ -53,6 +55,8 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->bFloat16ConversionSupported, hwInfo.caps.bFloat16ConversionSupported);
         EXPECT_EQ(expectedCaps->bindlessAddressingDisabled, hwInfo.caps.bindlessAddressingDisabled);
         EXPECT_EQ(expectedCaps->blitImageAllowedForDepthFormat, hwInfo.caps.blitImageAllowedForDepthFormat);
+        EXPECT_EQ(expectedCaps->block2DLoadSupported, hwInfo.caps.block2DLoadSupported);
+        EXPECT_EQ(expectedCaps->block2DStoreSupported, hwInfo.caps.block2DStoreSupported);
         EXPECT_EQ(expectedCaps->cacheFlushPriorToImageReadRequired, hwInfo.caps.cacheFlushPriorToImageReadRequired);
         EXPECT_EQ(expectedCaps->deviceConfigStringTileCountIncluded, hwInfo.caps.deviceConfigStringTileCountIncluded);
         EXPECT_EQ(expectedCaps->deviceConfigStringXeCuSegmentIncluded, hwInfo.caps.deviceConfigStringXeCuSegmentIncluded);
@@ -63,9 +67,12 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->ftrXe2Compression, hwInfo.caps.ftrXe2Compression);
         EXPECT_EQ(expectedCaps->globalBindlessAllocatorEnabled, hwInfo.caps.globalBindlessAllocatorEnabled);
         EXPECT_EQ(expectedCaps->hvAlign4Required, hwInfo.caps.hvAlign4Required);
+        EXPECT_EQ(expectedCaps->initBuiltinAsyncSupported, hwInfo.caps.initBuiltinAsyncSupported);
+        EXPECT_EQ(expectedCaps->initDeviceWithFirstSubmissionRequired, hwInfo.caps.initDeviceWithFirstSubmissionRequired);
         EXPECT_EQ(expectedCaps->latePreemptionStartSupported, hwInfo.caps.latePreemptionStartSupported);
         EXPECT_EQ(expectedCaps->localOnlyAllowed, hwInfo.caps.localOnlyAllowed);
         EXPECT_EQ(expectedCaps->matrixMultiplyAccumulateSupported, hwInfo.caps.matrixMultiplyAccumulateSupported);
+        EXPECT_EQ(expectedCaps->memSetExtendedPayloadSupported, hwInfo.caps.memSetExtendedPayloadSupported);
         EXPECT_EQ(expectedCaps->numRtStacksPerDssFixedValue, hwInfo.caps.numRtStacksPerDssFixedValue);
         EXPECT_EQ(expectedCaps->pipeControlPriorToNonPipelinedStateCommandsBaseWARequired, hwInfo.caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
         EXPECT_EQ(expectedCaps->pipeControlPriorToPipelineSelectWaRequired, hwInfo.caps.pipeControlPriorToPipelineSelectWaRequired);
@@ -75,8 +82,10 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->programAllStateComputeCommandFieldsWARequired, hwInfo.caps.programAllStateComputeCommandFieldsWARequired);
         EXPECT_EQ(expectedCaps->queryPeerAccess, hwInfo.caps.queryPeerAccess);
         EXPECT_EQ(expectedCaps->rayTracingSupported, hwInfo.caps.rayTracingSupported);
+        EXPECT_EQ(expectedCaps->rayTracingWalkerAdjustmentRequired, hwInfo.caps.rayTracingWalkerAdjustmentRequired);
         EXPECT_EQ(expectedCaps->rcsExposureDisabled, hwInfo.caps.rcsExposureDisabled);
         EXPECT_EQ(expectedCaps->reducedSurfaceStateSupported, hwInfo.caps.reducedSurfaceStateSupported);
+        EXPECT_EQ(expectedCaps->scratchSpaceBasePointerInGrf, hwInfo.caps.scratchSpaceBasePointerInGrf);
         EXPECT_EQ(expectedCaps->singleDispatchRequiredForMultiCCS, hwInfo.caps.singleDispatchRequiredForMultiCCS);
         EXPECT_EQ(expectedCaps->splitMatrixMultiplyAccumulateSupported, hwInfo.caps.splitMatrixMultiplyAccumulateSupported);
     }
@@ -95,6 +104,8 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     constexpr Caps caps{};
 
     EXPECT_EQ(0u, caps.cacheLineSize);
+    EXPECT_EQ(0u, caps.commandBuffersPreallocatedPerCommandQueue);
+    EXPECT_EQ(0u, caps.defaultMidthreadPreemptionDelayTimer);
     EXPECT_EQ(0u, caps.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(0u, caps.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, caps.maxNumSamplers);
@@ -110,6 +121,8 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.bFloat16ConversionSupported);
     EXPECT_FALSE(caps.bindlessAddressingDisabled);
     EXPECT_FALSE(caps.blitImageAllowedForDepthFormat);
+    EXPECT_FALSE(caps.block2DLoadSupported);
+    EXPECT_FALSE(caps.block2DStoreSupported);
     EXPECT_FALSE(caps.cacheFlushPriorToImageReadRequired);
     EXPECT_FALSE(caps.deviceConfigStringTileCountIncluded);
     EXPECT_FALSE(caps.deviceConfigStringXeCuSegmentIncluded);
@@ -120,9 +133,12 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.ftrXe2Compression);
     EXPECT_FALSE(caps.globalBindlessAllocatorEnabled);
     EXPECT_FALSE(caps.hvAlign4Required);
+    EXPECT_FALSE(caps.initBuiltinAsyncSupported);
+    EXPECT_FALSE(caps.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(caps.latePreemptionStartSupported);
     EXPECT_FALSE(caps.localOnlyAllowed);
     EXPECT_FALSE(caps.matrixMultiplyAccumulateSupported);
+    EXPECT_FALSE(caps.memSetExtendedPayloadSupported);
     EXPECT_FALSE(caps.numRtStacksPerDssFixedValue);
     EXPECT_FALSE(caps.pipeControlPriorToNonPipelinedStateCommandsBaseWARequired);
     EXPECT_FALSE(caps.pipeControlPriorToPipelineSelectWaRequired);
@@ -132,8 +148,10 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.programAllStateComputeCommandFieldsWARequired);
     EXPECT_FALSE(caps.queryPeerAccess);
     EXPECT_FALSE(caps.rayTracingSupported);
+    EXPECT_FALSE(caps.rayTracingWalkerAdjustmentRequired);
     EXPECT_FALSE(caps.rcsExposureDisabled);
     EXPECT_FALSE(caps.reducedSurfaceStateSupported);
+    EXPECT_FALSE(caps.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(caps.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(caps.splitMatrixMultiplyAccumulateSupported);
 }

@@ -14,6 +14,8 @@ namespace NEO {
 
 struct Caps {
     uint32_t cacheLineSize = 0u;
+    uint32_t commandBuffersPreallocatedPerCommandQueue = 0u;
+    uint32_t defaultMidthreadPreemptionDelayTimer = 0u; // STATE_COMPUTE_MODE field encoding, not microseconds
     uint32_t kernelBFloat16AtomicCapabilities = 0u;
     uint32_t kernelFp16AtomicCapabilities = 0u;
     uint32_t maxNumSamplers = 0u;
@@ -31,6 +33,8 @@ struct Caps {
     bool bFloat16ConversionSupported = false;
     bool bindlessAddressingDisabled = false;
     bool blitImageAllowedForDepthFormat = false;
+    bool block2DLoadSupported = false;
+    bool block2DStoreSupported = false;
     bool cacheFlushPriorToImageReadRequired = false;
     bool deviceConfigStringTileCountIncluded = false;
     bool deviceConfigStringXeCuSegmentIncluded = false;
@@ -41,9 +45,12 @@ struct Caps {
     bool ftrXe2Compression = false;
     bool globalBindlessAllocatorEnabled = false;
     bool hvAlign4Required = false;
+    bool initBuiltinAsyncSupported = false;
+    bool initDeviceWithFirstSubmissionRequired = false;
     bool latePreemptionStartSupported = false;
     bool localOnlyAllowed = false;
     bool matrixMultiplyAccumulateSupported = false;
+    bool memSetExtendedPayloadSupported = false;
     bool numRtStacksPerDssFixedValue = false;
     bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = false;
     bool pipeControlPriorToPipelineSelectWaRequired = false;
@@ -53,8 +60,10 @@ struct Caps {
     bool programAllStateComputeCommandFieldsWARequired = false;
     bool queryPeerAccess = false;
     bool rayTracingSupported = false;
+    bool rayTracingWalkerAdjustmentRequired = false;
     bool rcsExposureDisabled = false;
     bool reducedSurfaceStateSupported = false;
+    bool scratchSpaceBasePointerInGrf = false;
     bool singleDispatchRequiredForMultiCCS = false;
     bool splitMatrixMultiplyAccumulateSupported = false;
 

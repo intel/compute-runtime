@@ -335,6 +335,7 @@ HWTEST_TEMPLATED_F(EnqueueHandlerTestWithMockCsrBase, givenLocalWorkgroupSizeGre
 }
 
 HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerCallOnEnqueueMarkerThenCallProcessEvictionOnCsrIsNotCalled) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
 
@@ -351,7 +352,7 @@ HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerCallOnEnqueueMarkerThenCallProc
         nullptr);
 
     EXPECT_FALSE(csr->processEvictionCalled);
-    const auto expectedMadeResidentGfxAllocations = pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue();
+    const auto expectedMadeResidentGfxAllocations = hwInfo.caps.commandBuffersPreallocatedPerCommandQueue;
     EXPECT_EQ(expectedMadeResidentGfxAllocations, csr->madeResidentGfxAllocations.size());
     EXPECT_EQ(0u, csr->madeNonResidentGfxAllocations.size());
 }

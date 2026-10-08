@@ -46,11 +46,6 @@ bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQueue() const {
-    return 2u;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
     coherencyFlag = false;
 }

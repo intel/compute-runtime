@@ -9,5 +9,4 @@
 
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned, IGFX_BMG);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenAdjustScratchSizeThenSizeIsNotChanged, IGFX_BMG);
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenGettingDefaultMidthreadPreemptionDelayTimerThenZeroReturned, IGFX_BMG);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSupportThenFalseReturned, IGFX_BMG);

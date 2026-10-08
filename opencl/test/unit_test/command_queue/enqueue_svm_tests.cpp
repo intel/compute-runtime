@@ -963,8 +963,9 @@ TEST_F(EnqueueSvmTest, GivenRepeatCallsWhenFillingMemoryThenSuccessIsReturnedFor
 }
 
 TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThenItsTypeShouldBeSetToFillPattern) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-    if (pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0) {
+    if (hwInfo.caps.commandBuffersPreallocatedPerCommandQueue > 0) {
         csr.flushTagUpdate();
         csr.getInternalAllocationStorage()->cleanAllocationList(-1, AllocationUsage::REUSABLE_ALLOCATION);
     }

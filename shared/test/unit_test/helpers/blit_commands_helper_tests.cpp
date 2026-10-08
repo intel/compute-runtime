@@ -952,7 +952,7 @@ HWTEST2_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress
 }
 
 HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBlitThenHeightIsTwo) {
-    if (pDevice->getProductHelper().isMemSetExtendedPayloadSupported()) {
+    if (pDevice->getHardwareInfo().caps.memSetExtendedPayloadSupported) {
         GTEST_SKIP();
     }
 
@@ -986,7 +986,7 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
 }
 
 HWTEST_F(BlitTests, givenMemorySizeIsLessThanTwicenMaxWidthWhenFillPatternWithBlitThenHeightIsOne) {
-    if (pDevice->getProductHelper().isMemSetExtendedPayloadSupported()) {
+    if (pDevice->getHardwareInfo().caps.memSetExtendedPayloadSupported) {
         GTEST_SKIP();
     }
 

@@ -483,8 +483,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeAligned)
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillBufferIsCalledTwiceThenPatternAllocationIsReused) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-    if (pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0) {
+    if (hwInfo.caps.commandBuffersPreallocatedPerCommandQueue > 0) {
         csr.flushTagUpdate();
         csr.getInternalAllocationStorage()->cleanAllocationList(-1, AllocationUsage::REUSABLE_ALLOCATION);
     }
@@ -500,8 +501,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillBufferIsCalledTwiceThenPatternAlloca
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeOneByteShouldGetPreparedForMiddleKernel) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-    if (pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0) {
+    if (hwInfo.caps.commandBuffersPreallocatedPerCommandQueue > 0) {
         csr.flushTagUpdate();
         csr.getInternalAllocationStorage()->cleanAllocationList(-1, AllocationUsage::REUSABLE_ALLOCATION);
     }
@@ -537,8 +539,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeOneByteSho
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeTwoBytesShouldGetPreparedForMiddleKernel) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-    if (pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0) {
+    if (hwInfo.caps.commandBuffersPreallocatedPerCommandQueue > 0) {
         csr.flushTagUpdate();
         csr.getInternalAllocationStorage()->cleanAllocationList(-1, AllocationUsage::REUSABLE_ALLOCATION);
     }

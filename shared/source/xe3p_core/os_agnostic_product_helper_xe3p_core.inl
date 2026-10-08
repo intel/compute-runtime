@@ -95,16 +95,6 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureExtra(StateCo
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::supports2DBlockLoad() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::supports2DBlockStore() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return true;
 }

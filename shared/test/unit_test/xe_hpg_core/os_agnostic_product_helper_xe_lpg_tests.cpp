@@ -165,10 +165,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckDirectSubmissionCo
     EXPECT_TRUE(productHelper->isDirectSubmissionConstantCacheInvalidationNeeded(hwInfo));
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse, IsXeLpg) {
-    EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
-}
-
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse, IsXeLpg) {
     EXPECT_FALSE(productHelper->isCopyBufferRectSplitSupported());
 }

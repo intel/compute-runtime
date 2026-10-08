@@ -55,6 +55,7 @@ using CommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
 using CommandStreamReceiverFlushTaskTestsWithMockCsrHw2 = UltCommandStreamReceiverTestWithCsrT<MockCsrHw2>;
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrInBatchingModeWhenFlushTaskIsCalledThenNothingIsSubmittedToTheHwAndSubmissionIsRecorded) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -96,7 +97,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
     csrSurfaceCount += mockCsr->clearColorAllocation ? 1 : 0;
-    csrSurfaceCount += pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0 ? 0 : 1;
+    csrSurfaceCount += hwInfo.caps.commandBuffersPreallocatedPerCommandQueue > 0 ? 0 : 1;
     csrSurfaceCount += pDevice->getRTMemoryBackedBuffer() ? 1 : 0;
 
     // we should have 3 heaps, tag allocation and csr command stream + cq

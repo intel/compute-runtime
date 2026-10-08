@@ -221,7 +221,8 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
     // set unconditionally from the product default, so it is present in every expected mask2 below
-    const uint32_t midthreadPreemptionDelayTimerMask = (rootDeviceEnvironment.getHelper<ProductHelper>().getDefaultMidthreadPreemptionDelayTimer() != 0u) ? 0b111u : 0u;
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const uint32_t midthreadPreemptionDelayTimerMask = (hwInfo.caps.defaultMidthreadPreemptionDelayTimer != 0u) ? 0b111u : 0u;
 
     StateComputeModeProperties properties;
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));

@@ -90,14 +90,6 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsPrefetcherDisablingInDire
     EXPECT_FALSE(productHelper->isPrefetcherDisablingInDirectSubmissionRequired());
 }
 
-PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsStatefulAddressingModeSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isStatefulAddressingModeSupported());
-}
-
-PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
-}
-
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse) {
     EXPECT_FALSE(productHelper->isCopyBufferRectSplitSupported());
 }

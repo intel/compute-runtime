@@ -1119,8 +1119,8 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 cmdListWaitOnMemDataSize->cmdListWaitOnMemoryDataSizeInBytes = l0GfxCoreHelper.getCmdListWaitOnMemoryDataSize();
             } else if (extendedProperties->stype == ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES) {
                 ze_intel_device_block_array_exp_flags_t supportMatrix{0};
-                supportMatrix |= getProductHelper().supports2DBlockStore() ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE : 0;
-                supportMatrix |= getProductHelper().supports2DBlockLoad() ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD : 0;
+                supportMatrix |= hardwareInfo.caps.block2DStoreSupported ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE : 0;
+                supportMatrix |= hardwareInfo.caps.block2DLoadSupported ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD : 0;
                 auto blockTransposeProps = reinterpret_cast<ze_intel_device_block_array_exp_properties_t *>(extendedProperties);
                 blockTransposeProps->flags = supportMatrix;
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_PROPERTIES) {

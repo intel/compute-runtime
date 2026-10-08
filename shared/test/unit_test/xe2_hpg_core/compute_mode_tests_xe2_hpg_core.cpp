@@ -32,7 +32,8 @@ template <typename FamilyType>
 void applyProductDefaultMidthreadPreemptionDelayTimer(typename FamilyType::STATE_COMPUTE_MODE &scmCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename FamilyType::STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_DELAY_TIMER;
 
-    const auto defaultTimer = rootDeviceEnvironment.getHelper<ProductHelper>().getDefaultMidthreadPreemptionDelayTimer();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const auto defaultTimer = hwInfo.caps.defaultMidthreadPreemptionDelayTimer;
     if (defaultTimer == 0u) {
         return;
     }

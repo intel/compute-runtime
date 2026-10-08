@@ -20,6 +20,7 @@ namespace NEO {
 
 struct CapsXe2HpgCore {
     static constexpr uint32_t cacheLineSize = 256u;
+    static constexpr uint32_t commandBuffersPreallocatedPerCommandQueue = 2u;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
     static constexpr uint32_t maxNumSamplers = 16u;
     static constexpr uint32_t planarYuvMaxHeight = 16128u;
@@ -31,6 +32,8 @@ struct CapsXe2HpgCore {
     static constexpr bool auxSurfaceModeOverrideRequired = true;
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool blitImageAllowedForDepthFormat = true;
+    static constexpr bool block2DLoadSupported = true;
+    static constexpr bool block2DStoreSupported = true;
     static constexpr bool cacheFlushPriorToImageReadRequired = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
@@ -40,9 +43,11 @@ struct CapsXe2HpgCore {
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;
     static constexpr bool rcsExposureDisabled = true;
+    static constexpr bool scratchSpaceBasePointerInGrf = true;
 };
 
 struct CapsBmg : CapsXe2HpgCore {
+    static constexpr uint32_t defaultMidthreadPreemptionDelayTimer = 3u; // MTP_TIMER_VAL_150 - give threads about to exit 150 us to retire instead of saving their state
     static constexpr bool ftrXe2Compression = true;
     static constexpr bool programAdditionalStallPriorToBarrierWithTimestamp = true;
     static constexpr bool queryPeerAccess = true;

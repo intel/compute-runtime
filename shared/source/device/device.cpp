@@ -758,7 +758,8 @@ bool Device::isBcsSplitSupported() {
 }
 
 bool Device::isInitDeviceWithFirstSubmissionSupported(CommandStreamReceiverType csrType) {
-    return getProductHelper().isInitDeviceWithFirstSubmissionRequired(getHardwareInfo()) &&
+    const auto &hwInfo = getHardwareInfo();
+    return hwInfo.caps.initDeviceWithFirstSubmissionRequired &&
            Device::isInitDeviceWithFirstSubmissionEnabled(csrType);
 }
 

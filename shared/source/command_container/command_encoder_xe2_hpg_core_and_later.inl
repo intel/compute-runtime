@@ -153,13 +153,13 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
 }
 
 template <typename StateComputeModeType>
-void appendMidthreadPreemptionDelayTimer(StateComputeModeType &stateComputeMode, uint32_t &maskBits2, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void appendMidthreadPreemptionDelayTimer(StateComputeModeType &stateComputeMode, uint32_t &maskBits2, const HardwareInfo &hwInfo) {
     using MIDTHREAD_PREEMPTION_DELAY_TIMER = typename StateComputeModeType::MIDTHREAD_PREEMPTION_DELAY_TIMER;
 
     // STATE_COMPUTE_MODE DWORD 2, bits [2:0] - the field mask is also its highest encoding
     constexpr uint32_t midthreadPreemptionDelayTimerMask = 0b111u;
 
-    uint32_t timer = rootDeviceEnvironment.getHelper<ProductHelper>().getDefaultMidthreadPreemptionDelayTimer();
+    uint32_t timer = hwInfo.caps.defaultMidthreadPreemptionDelayTimer;
 
     const int32_t requestedTimer = debugManager.flags.ScmMidthreadPreemptionDelayTimerOverride.get();
     if ((requestedTimer >= 0) && (requestedTimer <= static_cast<int32_t>(midthreadPreemptionDelayTimerMask))) {

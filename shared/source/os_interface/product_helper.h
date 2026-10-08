@@ -103,7 +103,6 @@ class ProductHelper {
     virtual bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
-    virtual uint32_t getDefaultMidthreadPreemptionDelayTimer() const = 0; // STATE_COMPUTE_MODE field encoding, not microseconds
     virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
@@ -142,7 +141,6 @@ class ProductHelper {
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
     virtual bool getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const = 0;
     virtual bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
@@ -165,7 +163,6 @@ class ProductHelper {
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual BcsSplitSettings getBcsSplitSettings(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const = 0;
-    virtual bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;
     virtual bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const = 0;
@@ -173,7 +170,6 @@ class ProductHelper {
     virtual void adjustNumberOfCcs(HardwareInfo &hwInfo) const = 0;
     virtual bool blitEnqueuePreferred(bool isWriteToImageFromBuffer) const = 0;
     virtual bool isPrefetcherDisablingInDirectSubmissionRequired() const = 0;
-    virtual bool isStatefulAddressingModeSupported() const = 0;
     virtual bool isPlatformQuerySupported() const = 0;
     virtual bool isResolveDependenciesByPipeControlsSupported() const = 0;
     virtual bool isBufferPoolAllocatorSupported() const = 0;
@@ -192,7 +188,6 @@ class ProductHelper {
     virtual uint32_t getRequiredDetectIndirectVersionVC() const = 0;
     virtual bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const = 0;
     virtual bool isTranslationExceptionSupported() const = 0;
-    virtual uint32_t getCommandBuffersPreallocatedPerCommandQueue() const = 0;
     virtual uint32_t getInternalHeapsPreallocated() const = 0;
     virtual bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const = 0;
     virtual bool is2MBLocalMemAlignmentEnabled() const = 0;
@@ -249,8 +244,6 @@ class ProductHelper {
     virtual bool isPatIndexValidForUserptr(uint64_t patIndex) const = 0;
     virtual bool isStagingBuffersEnabled() const = 0;
     virtual size_t getCpuCopyThreshold(TransferType transferType) const = 0;
-    virtual bool supports2DBlockStore() const = 0;
-    virtual bool supports2DBlockLoad() const = 0;
     virtual uint32_t getNumCacheRegions() const = 0;
     virtual uint32_t adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
@@ -276,9 +269,7 @@ class ProductHelper {
     virtual bool isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isDeviceCapsReaderSupported() const = 0;
     virtual bool sipUsesSubslicePools() const = 0;
-    virtual bool isScratchSpaceBasePointerInGrf() const = 0;
     virtual bool scanFullTopologyBitmap() const = 0;
-    virtual bool isMemSetExtendedPayloadSupported() const = 0;
 
     virtual uint32_t getAvailableSlmSizePerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
 
@@ -286,7 +277,6 @@ class ProductHelper {
     virtual std::optional<uint8_t> getBcsCompressionFormat() const = 0;
     virtual bool isProgramAdditionalEngineMMIORequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFrontEndControllerEnabled() const = 0;
-    virtual bool isRayTracingWalkerAdjustmentRequired() const = 0;
     virtual bool isLEOSupported() const = 0;
 
     virtual ~ProductHelper() = default;

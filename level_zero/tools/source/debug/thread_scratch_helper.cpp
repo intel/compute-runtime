@@ -65,7 +65,8 @@ ze_result_t DebugSessionImp::getScratchRenderSurfaceStateAddressV2(EuThread::Thr
 }
 
 ze_result_t DebugSessionImp::getScratchRenderSurfaceStateAddress(EuThread::ThreadId threadId, uint64_t *result) {
-    if (getProductHelper().isScratchSpaceBasePointerInGrf()) {
+    const auto &hwInfo = connectedDevice->getHwInfo();
+    if (hwInfo.caps.scratchSpaceBasePointerInGrf) {
         return getScratchRenderSurfaceStateAddressV1(threadId, result);
     } else {
         return getScratchRenderSurfaceStateAddressV2(threadId, result);

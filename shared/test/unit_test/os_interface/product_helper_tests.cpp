@@ -515,10 +515,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTimestampWaitSupport
     EXPECT_FALSE(productHelper->isTimestampWaitSupportedForEvents());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallGetCommandBuffersPreallocatedPerCommandQueueThenReturnCorrectValue, IsGen12LP) {
-    EXPECT_EQ(0u, productHelper->getCommandBuffersPreallocatedPerCommandQueue());
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue, IsGen12LP) {
     EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 0u);
 
@@ -789,10 +785,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWri
 HWTEST2_F(ProductHelperTest, givenPlatformWithUnsupportedL1CachePoliciesWhenGetL1CachePolicyThenReturnZero, IsGen12LP) {
     EXPECT_EQ(0u, productHelper->getL1CachePolicy(false));
     EXPECT_EQ(0u, productHelper->getL1CachePolicy(true));
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsStatefulAddressingModeSupportedThenReturnTrue, HasStatefulSupport) {
-    EXPECT_TRUE(productHelper->isStatefulAddressingModeSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedThenReturnFalse, IsAtMostDg2) {
@@ -1196,26 +1188,6 @@ TEST_F(ProductHelperTest, whenGettingMaxSubSliceSpaceThenValueIsNotSmallerThanMa
     EXPECT_EQ(maxSupportedSubSlices, productHelper->computeMaxNeededSubSliceSpace(hwInfo));
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnFalse, IsAtMostXeHpgCore) {
-
-    EXPECT_FALSE(productHelper->supports2DBlockLoad());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnFalse, IsAtMostXeHpgCore) {
-
-    EXPECT_FALSE(productHelper->supports2DBlockStore());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnTrue, IsWithinXeHpcCoreAndXe3pCore) {
-
-    EXPECT_TRUE(productHelper->supports2DBlockLoad());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTrue, IsWithinXeHpcCoreAndXe3pCore) {
-
-    EXPECT_TRUE(productHelper->supports2DBlockStore());
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetRequiredDetectIndirectVersionCalledThenReturnCorrectVersion, IsNotPVC) {
     EXPECT_EQ(9u, productHelper->getRequiredDetectIndirectVersion());
     EXPECT_EQ(6u, productHelper->getRequiredDetectIndirectVersionVC());
@@ -1328,10 +1300,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenisPackedCopyFormatSupportedTh
     EXPECT_FALSE(productHelper->isPackedCopyFormatSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingDefaultMidthreadPreemptionDelayTimerThenZeroReturned) {
-    EXPECT_EQ(0u, productHelper->getDefaultMidthreadPreemptionDelayTimer());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
@@ -1360,10 +1328,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallIsNewCoherencyModelSuppor
     EXPECT_FALSE(productHelper->isNewCoherencyModelSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenScratchSpacePointerIsInGrfThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isScratchSpaceBasePointerInGrf());
-}
-
 HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue, IsWithinXe2HpgCoreAndXe3Core) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
@@ -1388,14 +1352,6 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
     for (auto patIndex : listOfNonCoherentPatIndexes) {
         EXPECT_FALSE(productHelper.isCoherentAllocation(patIndex).value());
     }
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsMemSetExtendedPayloadSupportedThenFalseReturned, IsAtMostXe3pCore) {
-    EXPECT_FALSE(productHelper->isMemSetExtendedPayloadSupported());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingIsRayTracingWalkerAdjustmentRequiredThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isRayTracingWalkerAdjustmentRequired());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned, IsNotLeoSupported) {

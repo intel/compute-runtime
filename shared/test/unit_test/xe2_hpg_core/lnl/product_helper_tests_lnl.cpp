@@ -105,10 +105,6 @@ LNLTEST_F(LnlProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdI
     }
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
-}
-
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;

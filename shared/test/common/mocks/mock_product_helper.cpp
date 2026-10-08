@@ -200,11 +200,6 @@ void ProductHelperHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInf
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isCopyBufferRectSplitSupported() const {
     return false;
 }
@@ -322,11 +317,6 @@ uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy(bool isDebug
 template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isPrefetcherDisablingInDirectSubmissionRequired() const {
     return true;
-}
-
-template <>
-uint32_t ProductHelperHw<IGFX_UNKNOWN>::getCommandBuffersPreallocatedPerCommandQueue() const {
-    return 0u;
 }
 
 template <>

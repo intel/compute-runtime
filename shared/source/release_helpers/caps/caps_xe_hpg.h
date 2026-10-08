@@ -20,6 +20,7 @@ namespace NEO {
 
 struct CapsXeHpgCore {
     static constexpr uint32_t cacheLineSize = 64u;
+    static constexpr uint32_t commandBuffersPreallocatedPerCommandQueue = 2u;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
     static constexpr uint32_t maxNumSamplers = 16u;
     static constexpr uint32_t planarYuvMaxHeight = 16128u;
@@ -40,6 +41,7 @@ struct CapsXeHpgCore {
     static constexpr bool programAllStateComputeCommandFieldsWARequired = true;
     static constexpr bool rayTracingSupported = true;
     static constexpr bool rcsExposureDisabled = true;
+    static constexpr bool scratchSpaceBasePointerInGrf = true;
     static constexpr bool splitMatrixMultiplyAccumulateSupported = true;
 };
 

@@ -425,7 +425,8 @@ void CommandStreamReceiver::requestPreallocation() {
         return;
     }
 
-    auto preallocationsPerQueue = productHelper.getCommandBuffersPreallocatedPerCommandQueue();
+    const auto &hwInfo = *peekRootDeviceEnvironment().getHardwareInfo();
+    auto preallocationsPerQueue = hwInfo.caps.commandBuffersPreallocatedPerCommandQueue;
     if (debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
         preallocationsPerQueue = debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
     }
@@ -448,7 +449,8 @@ void CommandStreamReceiver::releasePreallocationRequest() {
         return;
     }
 
-    auto preallocationsPerQueue = productHelper.getCommandBuffersPreallocatedPerCommandQueue();
+    const auto &hwInfo = *peekRootDeviceEnvironment().getHardwareInfo();
+    auto preallocationsPerQueue = hwInfo.caps.commandBuffersPreallocatedPerCommandQueue;
     if (debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
         preallocationsPerQueue = debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
     }

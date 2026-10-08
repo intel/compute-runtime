@@ -30,6 +30,7 @@ struct CapsGen12Lp {
     static constexpr bool hvAlign4Required = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
+    static constexpr bool scratchSpaceBasePointerInGrf = true;
 };
 
 struct CapsTgl : CapsGen12Lp {};

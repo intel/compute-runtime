@@ -50,10 +50,6 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCach
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
-}
-
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
     EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
 }
