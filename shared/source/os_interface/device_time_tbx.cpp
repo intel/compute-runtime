@@ -35,11 +35,15 @@ uint32_t DeviceTimeTbx::readHighDword() const {
 }
 
 std::unique_ptr<OSTime> OSTimeTbx::create(aub_stream::AubManager &aubManager, std::optional<uint32_t> timestampMmioOffset) {
-    if (!debugManager.flags.EnableTimestampMmioRead.getIfNotDefault(false) || !timestampMmioOffset) {
+    if (!timestampMmioOffset) {
         return nullptr;
     }
 
     auto deviceTime = std::make_unique<DeviceTimeTbx>(aubManager, *timestampMmioOffset);
+    if (!debugManager.flags.EnableTimestampMmioRead.getIfNotDefault(deviceTime->isTimestampMmioReadEnabledByDefault())) {
+        return nullptr;
+    }
+
     const auto timestamp = readSplitTimestamp(*deviceTime);
 
     PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "TBX timestamp MMIO 0x%x read: 0x%llx\n",

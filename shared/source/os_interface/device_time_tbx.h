@@ -20,6 +20,7 @@ class DeviceTimeTbx : public DeviceTime {
     TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     bool isTimestampsRefreshEnabled() const override;
     bool isTimestampMmioReadAvailable() const override { return true; }
+    bool isTimestampMmioReadEnabledByDefault() const override { return true; }
     uint32_t readLowDword() const;
     uint32_t readHighDword() const;
 

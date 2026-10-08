@@ -45,7 +45,6 @@ struct MockOSTimeWithCpuTime : public OSTime {
 
 struct OSTimeTbxTest : public ::testing::Test {
     void SetUp() override {
-        debugManager.flags.EnableTimestampMmioRead.set(1);
         aubManager.mmioData = std::unordered_map<uint32_t, uint32_t>{{timestampMmioOffset, 0x89abcdefu}, {timestampMmioOffset + 4, 0x01234567u}};
     }
 
@@ -54,10 +53,7 @@ struct OSTimeTbxTest : public ::testing::Test {
 };
 } // namespace
 
-TEST_F(OSTimeTbxTest, givenTimestampMmioReadNotEnabledWhenCreatingThenNullptrIsReturned) {
-    debugManager.flags.EnableTimestampMmioRead.set(-1);
-    EXPECT_EQ(nullptr, OSTimeTbx::create(aubManager, timestampMmioOffset));
-
+TEST_F(OSTimeTbxTest, givenTimestampMmioReadDisabledWhenCreatingThenNullptrIsReturned) {
     debugManager.flags.EnableTimestampMmioRead.set(0);
     EXPECT_EQ(nullptr, OSTimeTbx::create(aubManager, timestampMmioOffset));
 }
@@ -71,7 +67,7 @@ TEST_F(OSTimeTbxTest, givenZeroTimestampReadFromMmioWhenCreatingThenNullptrIsRet
     EXPECT_EQ(nullptr, OSTimeTbx::create(aubManager, timestampMmioOffset));
 }
 
-TEST_F(OSTimeTbxTest, givenNonZeroTimestampReadFromMmioWhenCreatingThenOsTimeReadsTimestampFromMmio) {
+TEST_F(OSTimeTbxTest, givenDefaultTimestampMmioReadFlagAndNonZeroTimestampReadFromMmioWhenCreatingThenOsTimeReadsTimestampFromMmio) {
     auto osTime = OSTimeTbx::create(aubManager, timestampMmioOffset);
     ASSERT_NE(nullptr, osTime);
     EXPECT_TRUE(osTime->isTimestampMmioReadAvailable());
@@ -112,6 +108,11 @@ TEST_F(OSTimeTbxTest, givenHighDwordChangedDuringReadWhenGettingGpuCpuTimeThenRe
     EXPECT_EQ(TimeQueryStatus::success, deviceTime.getGpuCpuTimeImpl(&timestamp, &osTime));
     EXPECT_EQ((2ull << 32) | 0x10u, timestamp.gpuTimeStamp);
     EXPECT_TRUE(sequenceAubManager.highDwordValues.empty());
+}
+
+TEST_F(OSTimeTbxTest, whenCheckingIfTimestampMmioReadIsEnabledByDefaultThenTrueIsReturned) {
+    DeviceTimeTbx deviceTime(aubManager, timestampMmioOffset);
+    EXPECT_TRUE(deviceTime.isTimestampMmioReadEnabledByDefault());
 }
 
 TEST_F(OSTimeTbxTest, whenCheckingTimestampsRefreshThenItIsDisabledUnlessEnabledByDebugFlag) {
