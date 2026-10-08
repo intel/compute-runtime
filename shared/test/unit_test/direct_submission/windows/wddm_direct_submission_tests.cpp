@@ -1063,6 +1063,54 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenUnblockPagingFenceSe
     EXPECT_GT(wddmDirectSubmission.semaphoreData->pagingFenceCounter, mockedPagingFence);
 }
 
+HWTEST_F(WddmDirectSubmissionTest, givenShutdownInProgressAndPendingPagingFenceWhenStoppingRingBufferBlockingThenCallerWaitsForPagingFenceAndSignalsSemaphore) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.initialize(false);
+    EXPECT_EQ(0u, wddmDirectSubmission.semaphoreData->pagingFenceCounter);
+    gdi->getWaitFromCpuArg() = {};
+    wddm->currentPagingFenceValue = 30u;
+    wddm->mockPagingFence = 20u;
+
+    wddm->shutdownStatus = true;
+    wddmDirectSubmission.stopRingBuffer(true);
+    wddm->shutdownStatus = false;
+    ASSERT_EQ(1u, gdi->getWaitFromCpuArg().ObjectCount);
+    EXPECT_EQ(wddm->getPagingQueueSyncObject(), gdi->getWaitFromCpuArg().ObjectHandleArray[0]);
+    EXPECT_NE(0u, wddmDirectSubmission.semaphoreData->pagingFenceCounter);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenShutdownInProgressAndCompletedPagingFenceWhenStoppingRingBufferBlockingThenSemaphoreIsSignaledWithAtLeastThatValue) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    constexpr uint64_t pagingFenceValue = 30u;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.initialize(false);
+    EXPECT_EQ(0u, wddmDirectSubmission.semaphoreData->pagingFenceCounter);
+    wddm->currentPagingFenceValue = pagingFenceValue;
+    wddm->mockPagingFence = pagingFenceValue;
+
+    wddm->shutdownStatus = true;
+    wddmDirectSubmission.stopRingBuffer(true);
+    wddm->shutdownStatus = false;
+    EXPECT_GE(wddmDirectSubmission.semaphoreData->pagingFenceCounter, pagingFenceValue);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenNoShutdownInProgressWhenStoppingRingBufferBlockingThenPagingFenceSemaphoreIsLeftToController) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.initialize(false);
+    gdi->getWaitFromCpuArg() = {};
+    wddm->currentPagingFenceValue = 30u;
+    wddm->mockPagingFence = 20u;
+
+    wddmDirectSubmission.stopRingBuffer(true);
+    EXPECT_EQ(0u, gdi->getWaitFromCpuArg().ObjectCount);
+    EXPECT_EQ(0u, wddmDirectSubmission.semaphoreData->pagingFenceCounter);
+}
+
 TEST(DirectSubmissionControllerWindowsTest, givenDirectSubmissionControllerWhenCallingSleepThenRequestHighResolutionTimers) {
     VariableBackup<size_t> timeBeginPeriodCalledBackup(&SysCalls::timeBeginPeriodCalled, 0u);
     VariableBackup<MMRESULT> timeBeginPeriodLastValueBackup(&SysCalls::timeBeginPeriodLastValue, 0u);

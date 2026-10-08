@@ -96,6 +96,10 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFenceImpl(bool not
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
+    // At process termination the direct submission controller thread, which normally signals this semaphore, is already terminated.
+    if (this->wddm->isShutdownInProgress()) {
+        unblockPagingFenceSemaphore(this->wddm->getCurrentPagingFenceValue());
+    }
     WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionFence(ringFence.lastSubmittedFence, ringFence);
 }
 
