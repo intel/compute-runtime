@@ -1096,6 +1096,12 @@ TEST_F(LeoCommandBufferKernelTest, givenWorkDimAboveThreeWhenSettingUpDispatchTh
     EXPECT_THROW(kernel->setupDispatch(*clDevice, 4u, nullptr, globalWorkSize, localWorkSize, groupCount), std::exception);
 }
 
+TEST_F(LeoCommandBufferKernelTest, givenGroupCountAboveUint32WhenRecordingNDRangeKernelThenInvalidGlobalWorkSizeIsReturned) {
+    const size_t largeGlobalWorkSize[3] = {localWorkSize[0] * (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) + 1u), 4u, 1u};
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, recordKernel(largeGlobalWorkSize, localWorkSize, nullptr));
+    EXPECT_EQ(0u, recordedCmdList.totalCalls());
+}
+
 TEST_F(LeoCommandBufferKernelTest, givenKernelFromAnotherContextWhenRecordingNDRangeKernelThenInvalidContextIsReturned) {
     cl_device_id clDeviceId = clDevice;
     cl_int errcode = CL_SUCCESS;

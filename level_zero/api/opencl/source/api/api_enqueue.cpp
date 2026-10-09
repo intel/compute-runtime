@@ -1223,10 +1223,10 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         pKernel->resetSharedObjectsPatchAddresses();
     }
 
-    auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
     auto cmdlistHandle = pCommandQueue->getL0Handle();
 
     if (!globalWorkSize || globalWorkSize[0] == 0) {
+        auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
         kernelLock.unlock();
         auto lock = pCommandQueue->takeOwnership();
         cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendBarrier(cmdlistHandle, hSignalEvent, waitEvents.size(), waitEvents.data()));
@@ -1242,6 +1242,8 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         TRACING_EXIT(ClEnqueueNdRangeKernel, &setupRetVal);
         return setupRetVal;
     }
+
+    auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
 
     if (pCommandQueue->isPerfCountersEnabled() && event) {
         auto pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(*event);

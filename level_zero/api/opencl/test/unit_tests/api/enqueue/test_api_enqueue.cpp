@@ -12,6 +12,7 @@
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/event/leo_event.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
@@ -224,6 +225,53 @@ TEST_F(EnqueueKernelExecutionTypeFixture, givenGlobalWorkSizeAboveUint32MaxNotDi
     auto retVal = clEnqueueNDRangeKernel(commandQueue.get(), kernel.get(), 1, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
+}
+
+struct EnqueueKernelEventFixture : public Test<LeoCaptureFixture> {
+    void SetUp() override {
+        Test<LeoCaptureFixture>::SetUp();
+        l0Kernel = std::make_unique<L0::ult::Mock<L0::KernelImp>>();
+        program = std::make_unique<Program>(context);
+        std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
+        kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
+    }
+
+    void TearDown() override {
+        kernel.reset();
+        program.reset();
+        l0Kernel.release();
+        Test<LeoCaptureFixture>::TearDown();
+    }
+
+    std::unique_ptr<L0::ult::Mock<L0::KernelImp>> l0Kernel;
+    std::unique_ptr<Program> program;
+    std::unique_ptr<Kernel> kernel;
+};
+
+TEST_F(EnqueueKernelEventFixture, givenGroupCountAboveUint32WhenEnqueueNDRangeKernelThenInvalidGlobalWorkSizeIsReturnedAndOutputEventIsUntouched) {
+    constexpr uint32_t groupSize = 2u;
+    l0Kernel->privateState.groupSize[0] = groupSize;
+    l0Kernel->privateState.groupSize[1] = 1u;
+    l0Kernel->privateState.groupSize[2] = 1u;
+
+    cl_int errcode = CL_SUCCESS;
+    cl_event waitEvent = clCreateUserEvent(clContext, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    const auto waitEventRefCount = castToObject<Event>(waitEvent)->getRefInternalCount();
+
+    std::array<uint8_t, 64> eventStorage{};
+    const auto notAnEvent = reinterpret_cast<cl_event>(eventStorage.data());
+    cl_event event = notAnEvent;
+
+    size_t globalWorkSize[3] = {groupSize * (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) + 1u), 1, 1};
+    size_t localWorkSize[3] = {groupSize, 1, 1};
+
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 1, &waitEvent, &event));
+    EXPECT_EQ(notAnEvent, event);
+    EXPECT_EQ(waitEventRefCount, castToObject<Event>(waitEvent)->getRefInternalCount());
+    EXPECT_EQ(0u, capturingCmdList.totalCalls());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseEvent(waitEvent));
 }
 
 struct EnqueueSvmFixture : public Test<LeoCaptureFixture> {
