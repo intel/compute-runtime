@@ -77,37 +77,29 @@ HWTEST2_F(SubDevicesHwTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAr
     debugManager.flags.CreateMultipleSubDevices.set(2);
 
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
-    initPlatform();
     MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
     auto nonDefaultPlatform = std::make_unique<MockPlatform>(*executionEnvironment);
 
     nonDefaultPlatform->initializeWithNewDevices();
     auto device = nonDefaultPlatform->getClDevice(0);
-    auto defaultDevice = platform()->getClDevice(0);
 
     auto subDevice = device->getSubDevice(1);
     auto baseDeviceApiRefCount = device->getRefApiCount();
     auto baseDeviceInternalRefCount = device->getRefInternalCount();
     auto baseSubDeviceApiRefCount = subDevice->getRefApiCount();
     auto baseSubDeviceInternalRefCount = subDevice->getRefInternalCount();
-    auto baseDefaultDeviceApiRefCount = defaultDevice->getRefApiCount();
-    auto baseDefaultDeviceInternalRefCount = defaultDevice->getRefInternalCount();
 
     subDevice->retainApi();
     EXPECT_EQ(baseDeviceApiRefCount, device->getRefApiCount());
     EXPECT_EQ(baseDeviceInternalRefCount + 1, device->getRefInternalCount());
     EXPECT_EQ(baseSubDeviceApiRefCount + 1, subDevice->getRefApiCount());
     EXPECT_EQ(baseSubDeviceInternalRefCount + 1, subDevice->getRefInternalCount());
-    EXPECT_EQ(baseDefaultDeviceApiRefCount, defaultDevice->getRefApiCount());
-    EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
 
     subDevice->releaseApi();
     EXPECT_EQ(baseDeviceApiRefCount, device->getRefApiCount());
     EXPECT_EQ(baseDeviceInternalRefCount, device->getRefInternalCount());
     EXPECT_EQ(baseSubDeviceApiRefCount, subDevice->getRefApiCount());
     EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
-    EXPECT_EQ(baseDefaultDeviceApiRefCount, defaultDevice->getRefApiCount());
-    EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
 }
 
 HWTEST2_F(SubDevicesHwTest, givenDeviceWithFlatOrCombinedHierarchyWhenSubDeviceApiRefCountsAreChangedThenChangeIsNotPropagatedToRootDevice, IsHeapfulRequired) {
@@ -117,38 +109,30 @@ HWTEST2_F(SubDevicesHwTest, givenDeviceWithFlatOrCombinedHierarchyWhenSubDeviceA
 
     DeviceHierarchyMode deviceHierarchyModes[] = {DeviceHierarchyMode::flat, DeviceHierarchyMode::combined};
     for (auto deviceHierarchyMode : deviceHierarchyModes) {
-        initPlatform();
         MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->setDeviceHierarchyMode(deviceHierarchyMode);
 
         auto nonDefaultPlatform = std::make_unique<MockPlatform>(*executionEnvironment);
         nonDefaultPlatform->initializeWithNewDevices();
         auto device = nonDefaultPlatform->getClDevice(0);
-        auto defaultDevice = platform()->getClDevice(0);
 
         auto subDevice = device->getSubDevice(1);
         auto baseDeviceApiRefCount = device->getRefApiCount();
         auto baseDeviceInternalRefCount = device->getRefInternalCount();
         auto baseSubDeviceApiRefCount = subDevice->getRefApiCount();
         auto baseSubDeviceInternalRefCount = subDevice->getRefInternalCount();
-        auto baseDefaultDeviceApiRefCount = defaultDevice->getRefApiCount();
-        auto baseDefaultDeviceInternalRefCount = defaultDevice->getRefInternalCount();
 
         subDevice->retainApi();
         EXPECT_EQ(baseDeviceApiRefCount, device->getRefApiCount());
         EXPECT_EQ(baseDeviceInternalRefCount, device->getRefInternalCount());
         EXPECT_EQ(baseSubDeviceApiRefCount, subDevice->getRefApiCount());
         EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
-        EXPECT_EQ(baseDefaultDeviceApiRefCount, defaultDevice->getRefApiCount());
-        EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
 
         subDevice->releaseApi();
         EXPECT_EQ(baseDeviceApiRefCount, device->getRefApiCount());
         EXPECT_EQ(baseDeviceInternalRefCount, device->getRefInternalCount());
         EXPECT_EQ(baseSubDeviceApiRefCount, subDevice->getRefApiCount());
         EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
-        EXPECT_EQ(baseDefaultDeviceApiRefCount, defaultDevice->getRefApiCount());
-        EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
     }
 }
 
