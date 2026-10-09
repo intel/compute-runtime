@@ -22,11 +22,6 @@ uint32_t ImplicitScalingDispatch<Family>::getImmediateWritePostSyncOffset() {
     return static_cast<uint32_t>(GfxCoreHelperHw<Family>::getSingleTimestampPacketSizeHw());
 }
 
-template <>
-bool ImplicitScalingDispatch<Family>::platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return true;
-}
-
 template struct ImplicitScalingDispatch<Family>;
 
 template void ImplicitScalingDispatch<Family>::dispatchCommands<COMPUTE_WALKER_2>(LinearStream &commandStream, COMPUTE_WALKER_2 &walkerCmd, const DeviceBitfield &devices,

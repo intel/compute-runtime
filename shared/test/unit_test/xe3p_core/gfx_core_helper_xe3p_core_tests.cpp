@@ -583,6 +583,11 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenAskingForImplicitScalingImmWrite
     EXPECT_EQ(static_cast<uint32_t>(GfxCoreHelperHw<FamilyType>::getSingleTimestampPacketSizeHw()), ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset());
 }
 
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenCheckingPlatformSupportsImplicitScalingThenFalseIsReturned) {
+    EXPECT_FALSE(ImplicitScalingDispatch<FamilyType>::platformSupportsImplicitScaling(pDevice->getRootDeviceEnvironment()));
+    EXPECT_FALSE(getHelper<GfxCoreHelper>().platformSupportsImplicitScaling(pDevice->getRootDeviceEnvironment()));
+}
+
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
     MockExecutionEnvironment mockExecutionEnvironment{};
