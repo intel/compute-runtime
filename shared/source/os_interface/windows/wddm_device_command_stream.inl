@@ -172,7 +172,7 @@ WaitStatus WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &f
 
 template <typename GfxFamily>
 std::unique_ptr<KmdWaiter> WddmCommandStreamReceiver<GfxFamily>::createKmdWaiter(FlushStamp flushStamp, TaskCountType taskCount) {
-    if (this->isAnyDirectSubmissionEnabled() && !debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.get()) {
+    if (this->isAnyDirectSubmissionEnabled() && !debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.getIfNotDefault(true)) {
         return nullptr;
     }
     auto &monitoredFence = static_cast<OsContextWin *>(this->osContext)->getMonitoredFence();

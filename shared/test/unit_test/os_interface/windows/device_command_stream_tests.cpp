@@ -1091,6 +1091,8 @@ void waitFromCpuOnDefaultEngineMonitoredFence(MockDevice &device, WddmMock *wddm
 } // namespace
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionAndUllsKmdWaitDisabledWhenCreatingKmdWaiterThenNoWaiterIsCreated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(0);
     auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
     if (directSubmission == nullptr) {
         GTEST_SKIP();
@@ -1109,8 +1111,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionAndUllsKmd
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionAndReachedFlushStampWhenCreatingKmdWaiterThenWaiterIsCreatedWithoutFlushingMonitorFence) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(true);
     auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
     if (directSubmission == nullptr) {
         GTEST_SKIP();
@@ -1129,8 +1129,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionAndReached
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionNotReachedFlushStampAndNothingOrOnlyTaskCountUpdateFlushedAfterEventWhenCreatingKmdWaiterThenMonitorFenceWithNotifyIsFlushedAndWaiterIsCreated) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(true);
     auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
     if (directSubmission == nullptr) {
         GTEST_SKIP();
@@ -1158,8 +1156,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionNotReached
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenBlitterDirectSubmissionAndNotReachedFlushStampWhenCreatingKmdWaiterThenMonitorFenceWithNotifyIsFlushedOnBlitterDirectSubmission) {
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, BlitterDispatcher<FamilyType>>;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(true);
 
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
     OsContextWin bcsOsContext(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}));
@@ -1184,8 +1180,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenBlitterDirectSubmissionAnd
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionNotReachedFlushStampAndWorkFlushedAfterEventBusyCsrOrFailedMonitorFenceFlushWhenCreatingKmdWaiterThenNoWaiterIsCreated) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EventHostSynchronizeWindowsDiscreteKmdWaitUlls.set(true);
     auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
     if (directSubmission == nullptr) {
         GTEST_SKIP();
