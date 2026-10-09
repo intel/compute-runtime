@@ -12,6 +12,7 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/driver/linux/sysman_os_driver_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/driver/sysman_os_driver.h"

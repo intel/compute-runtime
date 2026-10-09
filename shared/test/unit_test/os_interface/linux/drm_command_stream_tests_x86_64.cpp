@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"

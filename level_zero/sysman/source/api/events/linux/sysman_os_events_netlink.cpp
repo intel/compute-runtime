@@ -11,6 +11,7 @@
 
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_nl_api.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"

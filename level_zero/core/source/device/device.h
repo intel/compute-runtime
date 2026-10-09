@@ -17,6 +17,7 @@
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/lockable.h"
 
+#include "level_zero/core/source/device/device_handle.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <atomic>
@@ -26,9 +27,6 @@
 #include <unordered_map>
 
 static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
-
-struct _ze_device_handle_t : BaseHandle {};
-static_assert(IsCompliantWithDdiHandlesExt<_ze_device_handle_t>);
 
 namespace aub_stream {
 enum EngineType : uint32_t;

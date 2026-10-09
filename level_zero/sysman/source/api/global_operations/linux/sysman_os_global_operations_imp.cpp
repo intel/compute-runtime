@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"

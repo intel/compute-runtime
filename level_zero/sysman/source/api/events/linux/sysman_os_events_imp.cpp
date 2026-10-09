@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_netlink.h"
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"

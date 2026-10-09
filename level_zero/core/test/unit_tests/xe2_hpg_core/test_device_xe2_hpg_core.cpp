@@ -10,6 +10,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+#include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
 namespace ult {

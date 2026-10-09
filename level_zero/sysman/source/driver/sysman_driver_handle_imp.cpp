@@ -13,6 +13,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/device/sysman_device.h"

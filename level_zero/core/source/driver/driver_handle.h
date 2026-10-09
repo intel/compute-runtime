@@ -13,7 +13,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 
-#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <map>
@@ -49,6 +48,7 @@ class HostPointerManager;
 struct FabricVertex;
 struct FabricEdge;
 struct Image;
+struct IpcHandleTracking;
 
 struct BaseDriver : _ze_driver_handle_t {
     virtual ~BaseDriver() = default;

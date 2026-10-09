@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/graphics_allocation.h"

@@ -11,9 +11,9 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/device/os_sysman.h"
-#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -38,6 +38,7 @@ class SysmanKmdInterface;
 class FsAccessInterface;
 class SysFsAccessInterface;
 class ProcFsAccessInterface;
+struct SysmanDeviceImp;
 
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -57,12 +58,12 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     uint32_t getRootDeviceIndex() const override { return rootDeviceIndex; }
     void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
     std::string getPciUuid() override;
-    const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }
+    const NEO::HardwareInfo &getHardwareInfo() const override;
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
     PRODUCT_FAMILY getProductFamilyFromDeviceId(uint32_t deviceId);
-    PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
+    PRODUCT_FAMILY getProductFamily() const;
     SysmanHwDeviceIdDrm::SingleInstance getSysmanHwDeviceIdInstance();
     NEO::Drm *getDrm();
     MOCKABLE_VIRTUAL void releaseSysmanDeviceResources();

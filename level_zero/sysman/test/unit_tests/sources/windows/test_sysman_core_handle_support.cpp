@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"

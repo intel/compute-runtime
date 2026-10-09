@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/api/global_operations/linux/sysman_os_global_operations_imp.h"
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"

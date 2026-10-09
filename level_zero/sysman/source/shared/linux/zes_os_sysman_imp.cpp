@@ -25,6 +25,7 @@
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
@@ -190,6 +191,14 @@ SysFsAccessInterface &LinuxSysmanImp::getSysfsAccess() {
 
 SysmanDeviceImp *LinuxSysmanImp::getSysmanDeviceImp() {
     return pParentSysmanDeviceImp;
+}
+
+const NEO::HardwareInfo &LinuxSysmanImp::getHardwareInfo() const {
+    return pParentSysmanDeviceImp->getHardwareInfo();
+}
+
+PRODUCT_FAMILY LinuxSysmanImp::getProductFamily() const {
+    return pParentSysmanDeviceImp->getProductFamily();
 }
 
 uint32_t LinuxSysmanImp::getSubDeviceCount() {

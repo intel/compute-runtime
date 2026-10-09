@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
 
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_handle.h"
 #include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics.h"
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
