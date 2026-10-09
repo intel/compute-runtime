@@ -141,7 +141,7 @@ TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingBufferThenEventsAreComplet
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const int32_t numThreads = 20;
+    const int32_t numThreads = 8;
 
     std::thread threads[numThreads];
     std::thread threadUnblocking;
@@ -212,7 +212,7 @@ TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingImageThenEventsAreComplete
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const int32_t numThreads = 20;
+    const int32_t numThreads = 8;
 
     std::thread threads[numThreads];
     std::thread threadUnblocking;

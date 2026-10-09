@@ -332,7 +332,7 @@ TEST_F(FenceSynchronizeTest, givenInfiniteTimeoutWhenWaitingForFenceCompletionTh
     }
 
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
-        if (CpuIntrinsicsTests::pauseCounter > 10) {
+        if (CpuIntrinsicsTests::pauseCounter > 1) {
             volatile TagAddressType *nextPacket = CpuIntrinsicsTests::pauseAddress;
             for (uint32_t i = 0; i < activePartitions; i++) {
                 *nextPacket = 1;

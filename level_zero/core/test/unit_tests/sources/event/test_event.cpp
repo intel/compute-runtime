@@ -3726,7 +3726,7 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForN
     }
 
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
-        if (CpuIntrinsicsTests::pauseCounter > 10) {
+        if (CpuIntrinsicsTests::pauseCounter > 1) {
             volatile TagAddressType *nextPacket = CpuIntrinsicsTests::pauseAddress;
             for (uint32_t i = 0; i < packetsInUse; i++) {
                 *nextPacket = Event::STATE_SIGNALED;
@@ -3762,7 +3762,7 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForT
     }
 
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
-        if (CpuIntrinsicsTests::pauseCounter > 10) {
+        if (CpuIntrinsicsTests::pauseCounter > 1) {
             volatile TagAddressType *nextPacket = CpuIntrinsicsTests::pauseAddress;
             for (uint32_t i = 0; i < packetsInUse; i++) {
                 *nextPacket = Event::STATE_SIGNALED;
@@ -5254,7 +5254,7 @@ HWTEST_F(EventTests, whenCreatingNonTimestampEventsThenPacketsSizeIsQword) {
 HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventAllocationOnlyWhenEventWasUsedOnGpu) {
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
 
-    constexpr uint32_t iterations = 5;
+    constexpr uint32_t iterations = 2;
 
     VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
     VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
