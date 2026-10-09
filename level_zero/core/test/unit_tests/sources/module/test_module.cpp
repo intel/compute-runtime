@@ -206,6 +206,23 @@ HWTEST_F(ModuleTest, givenNonZeroCountWhenGettingKernelNamesThenNamesAreReturned
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(ModuleTest, givenCountGreaterThanNumberOfKernelsWhenCallingZeModuleGetKernelNamesThenCountIsClampedAndNamesAreReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeModuleGetKernelNames(module->toHandle(), &count, nullptr));
+    ASSERT_NE(0u, count);
+
+    uint32_t requestedCount = count + 1;
+    std::vector<const char *> kernelNames(requestedCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeModuleGetKernelNames(module->toHandle(), &requestedCount, kernelNames.data()));
+
+    EXPECT_EQ(count, requestedCount);
+    auto whiteboxModule = whiteboxCast(module.get());
+    for (uint32_t i = 0; i < count; i++) {
+        EXPECT_STREQ(whiteboxModule->kernelImmData[i]->getDescriptor().kernelMetadata.kernelName.c_str(), kernelNames[i]);
+    }
+    EXPECT_EQ(nullptr, kernelNames[count]);
+}
+
 HWTEST_F(ModuleTest, givenUserModuleTypeWhenCreatingModuleThenCorrectTypeIsSet) {
     WhiteBox<Module> module(device, nullptr, ModuleType::user);
     EXPECT_EQ(ModuleType::user, module.type);
