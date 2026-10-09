@@ -7153,7 +7153,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenNoEventsAvailableWithinTimeoutWhenRead
     zet_debug_event_t outputEvent = {};
     outputEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
 
-    auto result = session->readEvent(10, &outputEvent);
+    auto result = session->readEvent(1, &outputEvent);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_INVALID, outputEvent.type);
     EXPECT_EQ(0u, outputEvent.flags);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);

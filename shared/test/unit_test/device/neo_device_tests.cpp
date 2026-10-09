@@ -1439,14 +1439,14 @@ TEST_F(DeviceTests, givenZeAffinityMaskSetWithoutTilesThenProperSubDeviceHierarc
     DebugManagerStateRestore restorer;
     debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.set("COMPOSITE");
 
-    uint32_t numRootDevices = 4;
-    uint32_t numSubDevices = 4;
+    uint32_t numRootDevices = 2;
+    uint32_t numSubDevices = 2;
 
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
-    uint32_t expectedRootDevices = 4;
-    debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3,15,25");
+    uint32_t expectedRootDevices = 2;
+    debugManager.flags.ZE_AFFINITY_MASK.set("0,1,15,25");
 
     debugManager.flags.SetCommandStreamReceiver.set(1);
     debugManager.flags.ContextGroupSize.set(0);

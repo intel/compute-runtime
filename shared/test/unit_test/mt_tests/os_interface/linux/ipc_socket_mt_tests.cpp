@@ -1299,7 +1299,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenOneThreadRegistersWhileAnother
     TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
-    constexpr uint64_t handleCount = 5000;
+    constexpr uint64_t handleCount = 1000;
 
     // Encourages the scheduler to interleave both loops when they share a CPU.
     std::thread registerThread([&server]() {

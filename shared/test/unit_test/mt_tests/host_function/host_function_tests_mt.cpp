@@ -175,7 +175,7 @@ class HostFunctionMtFixture {
                 break;
             }
 
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
+            std::this_thread::yield();
         }
     }
 
@@ -193,7 +193,7 @@ class HostFunctionMtFixture {
                 break;
             }
 
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
+            std::this_thread::yield();
         }
 
         for (auto i = 0u; i < csrs.size(); i++) {

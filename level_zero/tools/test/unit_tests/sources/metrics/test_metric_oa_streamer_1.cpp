@@ -1093,7 +1093,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
     zet_metric_streamer_desc_t streamerDesc = {};
 
     streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
-    streamerDesc.notifyEveryNReports = 32768;
+    streamerDesc.notifyEveryNReports = 16;
     streamerDesc.samplingPeriod = 1000;
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     Mock<OaMetricGroupImp> metricGroup(metricOaSource);
@@ -1161,8 +1161,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
     EXPECT_NE(streamerHandle, nullptr);
 
     size_t rawSize = 0;
-    uint32_t reportCount = 65537;
+    uint32_t reportCount = 2 * streamerDesc.notifyEveryNReports + 1;
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, reportCount, &rawSize, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(rawSize, 2 * streamerDesc.notifyEveryNReports * metricsSetParams.RawReportSize);
 
     std::vector<uint8_t> rawData;
     rawData.resize(rawSize);

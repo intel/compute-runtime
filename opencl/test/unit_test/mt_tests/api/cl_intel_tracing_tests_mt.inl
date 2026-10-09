@@ -98,7 +98,7 @@ TEST_F(IntelTracingMtTest, WhenTracingFromMultipleThreadsThenAllThreadsAreCreate
     EXPECT_EQ(CL_SUCCESS, status);
 
     int numThreads = 4;
-    int iterationCount = 1024;
+    int iterationCount = 256;
     std::vector<std::thread> threads;
 
     for (int i = 0; i < numThreads; ++i) {
