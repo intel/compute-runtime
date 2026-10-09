@@ -509,6 +509,13 @@ ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
                 auto pDowngradeExpState = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_state_t *>(pExtProps);
                 pDowngradeExpState->pciLinkSpeedDowngradeStatus = downgradeStatus;
             }
+        } else if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_STATE) {
+            auto pConfigExpState = reinterpret_cast<zes_intel_pci_config_exp_state_t *>(pExtProps);
+            ze_result_t result = pLinuxSysmanImp->getSysmanProductHelper()->getPciConfigState(pConfigExpState, pLinuxSysmanImp);
+            if (result != ZE_RESULT_SUCCESS) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config state and returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+                return result;
+            }
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }

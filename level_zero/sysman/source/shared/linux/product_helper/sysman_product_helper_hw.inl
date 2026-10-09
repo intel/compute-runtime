@@ -537,6 +537,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
 };
 
 template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciConfigState(zes_intel_pci_config_exp_state_t *pState, LinuxSysmanImp *pLinuxSysmanImp) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isPcieDowngradeSupported() {
     return false;
 };

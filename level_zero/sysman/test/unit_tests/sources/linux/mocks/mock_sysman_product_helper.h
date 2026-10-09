@@ -51,6 +51,15 @@ struct MockSysmanProductHelper : public L0::Sysman::SysmanProductHelperHw<IGFX_U
     ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) override {
         return mockGetPciStatsResult;
     }
+
+    ze_result_t mockGetPciConfigStateResult = ZE_RESULT_SUCCESS;
+    uint32_t mockLinkPresentState = 0x11u;
+    ze_result_t getPciConfigState(zes_intel_pci_config_exp_state_t *pState, LinuxSysmanImp *pLinuxSysmanImp) override {
+        if (mockGetPciConfigStateResult == ZE_RESULT_SUCCESS) {
+            pState->linkPresentState = mockLinkPresentState;
+        }
+        return mockGetPciConfigStateResult;
+    }
 };
 
 } // namespace ult

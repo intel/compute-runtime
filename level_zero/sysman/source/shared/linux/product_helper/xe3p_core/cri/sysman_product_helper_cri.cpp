@@ -77,6 +77,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"PCIE_TRANSMIT_BYTES", 528},
       {"PCIE_RECEIVE_PACKETS", 536},
       {"PCIE_TRANSMIT_PACKETS", 544},
+      {"PCIE_DNS_PARITY_ERRORS", 552},
+      {"PCIE_UPS_PARITY_ERRORS", 556},
+      {"SMLH_LTSSM_STATE", 560},
       {"LPDDR_TELEM_CAPTURE_TIMESTAMP", 664},
       {"MEMSS0_PERF_CTR_MB0_CFI_NUM_READ_REQ", 688},
       {"MEMSS1_PERF_CTR_MB0_CFI_NUM_READ_REQ", 768},
@@ -660,6 +663,52 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
 
     return result;
 };
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciConfigState(zes_intel_pci_config_exp_state_t *pState, LinuxSysmanImp *pLinuxSysmanImp) {
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    // Lower 16 bits hold the command parity error count and upper 16 bits hold the data parity error count
+    std::string key = "PCIE_DNS_PARITY_ERRORS";
+    uint32_t dsParityErrors = 0;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, dsParityErrors);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s from telemetry node %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), keyTelemInfoMap[key].c_str(), result);
+        return result;
+    }
+
+    key = "PCIE_UPS_PARITY_ERRORS";
+    uint32_t usParityErrors = 0;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, usParityErrors);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s from telemetry node %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), keyTelemInfoMap[key].c_str(), result);
+        return result;
+    }
+
+    key = "SMLH_LTSSM_STATE";
+    uint32_t ltssmState = 0;
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, ltssmState);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s from telemetry node %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), keyTelemInfoMap[key].c_str(), result);
+        return result;
+    }
+
+    pState->dsCommandParityErrors = bits(dsParityErrors, 0, 16); // bits 0-15
+    pState->dsDataParityErrors = bits(dsParityErrors, 16, 16);   // bits 16-31
+    pState->usCommandParityErrors = bits(usParityErrors, 0, 16); // bits 0-15
+    pState->usDataParityErrors = bits(usParityErrors, 16, 16);   // bits 16-31
+    pState->linkPresentState = bits(ltssmState, 0, 6);           // bits 0-5
+
+    return ZE_RESULT_SUCCESS;
+}
 
 static zes_freq_throttle_reason_flags_t getAggregatedThrottleReasons(const zes_intel_freq_throttle_detailed_reason_exp_flags_t &pDetailedThrottleReasons) {
 

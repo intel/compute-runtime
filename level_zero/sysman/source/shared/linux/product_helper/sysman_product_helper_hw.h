@@ -99,6 +99,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Pci
     ze_result_t getPciProperties(zes_pci_properties_t *pProperties) override;
     ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) override;
+    ze_result_t getPciConfigState(zes_intel_pci_config_exp_state_t *pState, LinuxSysmanImp *pLinuxSysmanImp) override;
     bool isPcieDowngradeSupported() override;
     int32_t maxPcieGenSupported() override;
 

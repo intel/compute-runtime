@@ -972,6 +972,23 @@ void testSysmanPci(ze_device_handle_t &device, std::vector<std::string> &buf, ui
         std::cout << "pciState.pciLinkSpeedDowngradeStatus = " << static_cast<bool>(extState.pciLinkSpeedDowngradeStatus) << std::endl;
     }
 
+    zes_pci_state_t pciConfigState = {};
+    zes_intel_pci_config_exp_state_t configState = {};
+    configState.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_STATE;
+    pciConfigState.pNext = &configState;
+    ze_result_t configStateResult = zesDevicePciGetState(device, &pciConfigState);
+    if (verbose) {
+        if (configStateResult == ZE_RESULT_SUCCESS) {
+            std::cout << "configState.dsCommandParityErrors = " << std::dec << configState.dsCommandParityErrors << std::endl;
+            std::cout << "configState.dsDataParityErrors = " << std::dec << configState.dsDataParityErrors << std::endl;
+            std::cout << "configState.usCommandParityErrors = " << std::dec << configState.usCommandParityErrors << std::endl;
+            std::cout << "configState.usDataParityErrors = " << std::dec << configState.usDataParityErrors << std::endl;
+            std::cout << "configState.linkPresentState = " << std::hex << configState.linkPresentState << std::endl;
+        } else {
+            std::cout << "zesDevicePciGetState with zes_intel_pci_config_exp_state_t failed: " << getErrorString(configStateResult) << std::endl;
+        }
+    }
+
     // Handle PCI downgrade setting if requested
     if (buf.size() != 0) {
         uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[1]));

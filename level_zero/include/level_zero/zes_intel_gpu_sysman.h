@@ -127,6 +127,34 @@ typedef struct _zes_intel_pci_config_exp_properties_t {
 } zes_intel_pci_config_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_PCI_CONFIG_EXP_STATE_NAME
+/// @brief PCI configuration state extension name
+#define ZES_INTEL_PCI_CONFIG_EXP_STATE_NAME "ZES_intel_experimental_pci_config_state"
+#endif // ZES_INTEL_PCI_CONFIG_EXP_STATE_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query pci configuration state extension Version(s)
+typedef enum _zes_intel_pci_config_exp_state_version_t {
+    ZES_INTEL_PCI_CONFIG_EXP_STATE_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_PCI_CONFIG_EXP_STATE_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_PCI_CONFIG_EXP_STATE_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_pci_config_exp_state_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query PCIe parity error counters and current link state.
+/// This structure can be passed in the 'pNext' of zes_pci_state_t
+typedef struct _zes_intel_pci_config_exp_state_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_STATE
+    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    uint32_t dsCommandParityErrors; ///< [out] Returns the downstream command parity error count.
+    uint32_t dsDataParityErrors;    ///< [out] Returns the downstream data parity error count.
+    uint32_t usCommandParityErrors; ///< [out] Returns the upstream command parity error count.
+    uint32_t usDataParityErrors;    ///< [out] Returns the upstream data parity error count.
+    uint32_t linkPresentState;      ///< [out] Returns the current LTSSM state of the link.
+} zes_intel_pci_config_exp_state_t;
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME
 /// @brief PCI link speed update extension name
 #define ZES_INTEL_PCI_LINK_SPEED_UPDATE_EXP_NAME "ZES_intel_experimental_pci_link_speed_update"

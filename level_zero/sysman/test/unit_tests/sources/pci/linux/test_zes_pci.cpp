@@ -633,6 +633,43 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVe
     delete[] pBarProps;
 }
 
+TEST_F(ZesPciFixture, GivenValidLinuxPciImpInstanceWhenGetStateIsCalledWithPciConfigStateExtensionThenStateIsFilledBySysmanProductHelper) {
+    std::unique_ptr<MockSysmanProductHelper> pMockSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    auto pMockSysmanProductHelperRaw = pMockSysmanProductHelper.get();
+    std::unique_ptr<PublicLinuxPciImp> pMockLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    pLinuxSysmanImp->pSysmanProductHelper = std::move(pMockSysmanProductHelper);
+
+    auto pOsPciPrev = pPciImp->pOsPci;
+    pPciImp->pOsPci = pMockLinuxPciImp.get();
+
+    zes_pci_state_t pciState = {};
+    zes_intel_pci_config_exp_state_t configState = {};
+    configState.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_STATE;
+    pciState.pNext = &configState;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetState(device, &pciState));
+    EXPECT_EQ(pMockSysmanProductHelperRaw->mockLinkPresentState, configState.linkPresentState);
+
+    pPciImp->pOsPci = pOsPciPrev;
+}
+
+TEST_F(ZesPciFixture, GivenValidLinuxPciImpInstanceAndGetPciConfigStateFailsFromSysmanProductHelperWhenGetStateIsCalledWithPciConfigStateExtensionThenCallFails) {
+    std::unique_ptr<MockSysmanProductHelper> pMockSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    pMockSysmanProductHelper->mockGetPciConfigStateResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::unique_ptr<PublicLinuxPciImp> pMockLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    pLinuxSysmanImp->pSysmanProductHelper = std::move(pMockSysmanProductHelper);
+
+    auto pOsPciPrev = pPciImp->pOsPci;
+    pPciImp->pOsPci = pMockLinuxPciImp.get();
+
+    zes_pci_state_t pciState = {};
+    zes_intel_pci_config_exp_state_t configState = {};
+    configState.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_STATE;
+    pciState.pNext = &configState;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &pciState));
+
+    pPciImp->pOsPci = pOsPciPrev;
+}
+
 TEST_F(ZesPciFixture, GivenValidLinuxPciImpInstanceAndGetPciStatsFailsFromSysmanProductHelperWhenGetStatsIsCalledThenCallFails) {
     std::unique_ptr<MockSysmanProductHelper> pMockSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
     pMockSysmanProductHelper->mockGetPciStatsResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

@@ -131,6 +131,7 @@ class SysmanProductHelper {
     // Pci
     virtual ze_result_t getPciProperties(zes_pci_properties_t *pProperties) = 0;
     virtual ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) = 0;
+    virtual ze_result_t getPciConfigState(zes_intel_pci_config_exp_state_t *pState, LinuxSysmanImp *pLinuxSysmanImp) = 0;
     virtual bool isPcieDowngradeSupported() = 0;
     virtual int32_t maxPcieGenSupported() = 0;
 
