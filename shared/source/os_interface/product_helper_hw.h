@@ -190,6 +190,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCompressionForbidden(const HardwareInfo &hwInfo) const override;
     bool isExposingSubdevicesAllowed() const override;
     bool useAdditionalBlitProperties() const override;
+    bool isDualStreamCopyOffloadForRegularCmdListSupported() const override;
     bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const override;
     bool isFlushBetweenBlitsRequired() const override;
     bool isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const override;

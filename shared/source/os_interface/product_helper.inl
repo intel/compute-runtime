@@ -1021,6 +1021,11 @@ bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDualStreamCopyOffloadForRegularCmdListSupported() const {
+    return (debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.get() == 1);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties(const BlitProperties &blitProperties) const {
     return false;
 }

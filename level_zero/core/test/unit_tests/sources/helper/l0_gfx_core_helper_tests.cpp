@@ -1315,20 +1315,5 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperFromXe3pWhenAskingForOutOfOrd
     EXPECT_TRUE(l0GfxCoreHelper.isCopyOffloadForOutOfOrderImmediateCmdListSupported());
 }
 
-HWTEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenAskingForRegularCmdListDualStreamCopyOffloadSupportThenReturnValueBasedOnDebugFlag) {
-    DebugManagerStateRestore restorer;
-    MockExecutionEnvironment executionEnvironment;
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-
-    EXPECT_FALSE(l0GfxCoreHelper.isDualStreamCopyOffloadForRegularCmdListSupported());
-
-    NEO::debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(0);
-    EXPECT_FALSE(l0GfxCoreHelper.isDualStreamCopyOffloadForRegularCmdListSupported());
-
-    NEO::debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(1);
-    EXPECT_TRUE(l0GfxCoreHelper.isDualStreamCopyOffloadForRegularCmdListSupported());
-}
-
 } // namespace ult
 } // namespace L0

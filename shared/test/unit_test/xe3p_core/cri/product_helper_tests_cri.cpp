@@ -270,3 +270,15 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIfWriteSplitIsRequiredTh
     EXPECT_FALSE(productHelper->isWriteSplitRequired(false));
     EXPECT_TRUE(productHelper->isWriteSplitRequired(true));
 }
+
+CRITEST_F(CriProductHelper, givenCriWhenAskingForRegularCmdListDualStreamCopyOffloadSupportThenReturnTrueByDefaultAndRespectDebugFlag) {
+    DebugManagerStateRestore restorer;
+
+    EXPECT_TRUE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
+
+    debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(0);
+    EXPECT_FALSE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
+
+    debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(1);
+    EXPECT_TRUE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
+}

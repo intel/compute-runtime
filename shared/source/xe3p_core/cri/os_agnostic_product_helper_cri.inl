@@ -173,6 +173,14 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isDualStreamCopyOffloadForRegularCmdListSupported() const {
+    if (debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.get() != -1) {
+        return (debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.get() == 1);
+    }
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const {
     switch (debugManager.flags.OverrideBcsWriteSplit.get()) {
     case 0:

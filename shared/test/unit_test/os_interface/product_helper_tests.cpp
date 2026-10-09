@@ -1271,6 +1271,18 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingUseAdditionalBlitProper
     EXPECT_FALSE(productHelper->useAdditionalBlitProperties());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForRegularCmdListDualStreamCopyOffloadSupportThenReturnValueBasedOnDebugFlag) {
+    DebugManagerStateRestore restorer;
+
+    EXPECT_FALSE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
+
+    debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(0);
+    EXPECT_FALSE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
+
+    debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(1);
+    EXPECT_TRUE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingUseAdditionalBlitPropertiesWithBlitPropertiesThenFalseReturned) {
     BlitProperties blitProperties{};
     EXPECT_FALSE(productHelper->useAdditionalBlitProperties(blitProperties));

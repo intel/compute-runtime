@@ -117,11 +117,6 @@ bool L0GfxCoreHelperHw<Family>::isCopyOffloadForOutOfOrderImmediateCmdListSuppor
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::isDualStreamCopyOffloadForRegularCmdListSupported() const {
-    return (NEO::debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.get() == 1);
-}
-
-template <typename Family>
 bool L0GfxCoreHelperHw<Family>::bcsSplitAggregatedModeEnabled() const {
     return false;
 }
