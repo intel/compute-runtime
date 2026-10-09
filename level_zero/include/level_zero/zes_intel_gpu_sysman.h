@@ -1143,6 +1143,30 @@ ze_result_t ZE_APICALL zesIntelDriverGetPciDevicePropertiesExp(
                                                               ///< the driver shall only retrieve that number of properties.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME
+/// @brief Device SOC UID property extension name
+#define ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME "ZES_intel_experimental_device_soc_uid_property"
+#endif // ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query device SOC UID extension Version(s)
+typedef enum _zes_intel_device_soc_uid_exp_properties_version_t {
+    ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                   ///< version 1.0
+    ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_CURRENT = ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_soc_uid_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query the SOC UID of a device.
+/// This structure can be passed in the 'pNext' of zes_device_properties_t
+typedef struct _zes_intel_device_soc_uid_exp_properties_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    zes_uuid_t socUid;              ///< [out] unique identifier of the SOC, most significant byte first.
+} zes_intel_device_soc_uid_exp_properties_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

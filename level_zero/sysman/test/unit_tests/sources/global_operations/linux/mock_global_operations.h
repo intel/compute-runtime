@@ -124,6 +124,8 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     bool mockFileWithMaxPagesNoValue = false;
     std::string mockGpuHealthVal = "ok";
     std::string mockGpuHealthWrittenVal;
+    std::string mockSocUidVal = "76f7020e2140765b";
+    ze_result_t mockSocUidReadResult = ZE_RESULT_SUCCESS;
 
     ze_result_t getRealPath(const std::string &file, std::string &val) override {
         if (file.compare(deviceDir) == 0) {
@@ -158,6 +160,9 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
             val = bPid4;
         } else if (file.compare("device/gpu_health") == 0) {
             val = mockGpuHealthVal;
+        } else if (file.compare("device/device_uid") == 0) {
+            val = mockSocUidVal;
+            return mockSocUidReadResult;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }

@@ -951,6 +951,10 @@ ze_result_t LinuxGlobalOperationsImp::getMaxMemoryOfflinePages(uint32_t *pMaxOff
     return pSysmanProductHelper->getMaxMemoryOfflinePages(pSysfsAccess, pMaxOfflinePages);
 }
 
+ze_result_t LinuxGlobalOperationsImp::getSocUid(zes_uuid_t *pSocUid) {
+    return pSysmanProductHelper->getSocUid(pSysfsAccess, pSocUid);
+}
+
 ze_result_t LinuxGlobalOperationsImp::getDeviceHealthStatus(zes_device_health_status_ext_t *pHealth) {
     std::string healthStr;
     ze_result_t result = pSysfsAccess->read(gpuHealthSysfsNode, healthStr);

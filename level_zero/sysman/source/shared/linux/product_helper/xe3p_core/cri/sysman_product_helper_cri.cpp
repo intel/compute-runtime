@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <bit>
+#include <cctype>
 #include <chrono>
 #include <limits>
 #include <unordered_set>
@@ -1540,6 +1541,34 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMaxMemoryOfflinePages(SysFsAcc
     }
 
     return ZE_RESULT_ERROR_NOT_AVAILABLE;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getSocUid(SysFsAccessInterface *pSysFsAccess, zes_uuid_t *pSocUid) {
+    const std::string socUidSysfsNode = "device/device_uid";
+    std::string socUidStr;
+    ze_result_t result = pSysFsAccess->read(socUidSysfsNode, socUidStr);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, socUidSysfsNode.c_str(), result);
+        return result;
+    }
+
+    constexpr size_t socUidHexCharCount = 2 * sizeof(uint64_t);
+    if (socUidStr.length() != socUidHexCharCount) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid length of SOC UID:%s and returning error:0x%x \n", NEO_FUNCTION_NAME, socUidStr.c_str(), ZE_RESULT_ERROR_UNKNOWN);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    zes_uuid_t socUid = {};
+    for (size_t i = 0; i < socUidStr.length(); i += 2) {
+        if (!std::isxdigit(static_cast<unsigned char>(socUidStr[i])) || !std::isxdigit(static_cast<unsigned char>(socUidStr[i + 1]))) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid hex character in SOC UID:%s and returning error:0x%x \n", NEO_FUNCTION_NAME, socUidStr.c_str(), ZE_RESULT_ERROR_UNKNOWN);
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        socUid.id[i / 2] = static_cast<uint8_t>(std::stoul(socUidStr.substr(i, 2), nullptr, 16));
+    }
+    *pSocUid = socUid;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>

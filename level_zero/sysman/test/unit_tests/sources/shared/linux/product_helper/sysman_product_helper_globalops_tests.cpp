@@ -237,6 +237,77 @@ HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandle
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidDeviceUidWhenCallingGetSocUidThenSocUidIsParsedAndSuccessIsReturned, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    auto pSysfsAccess = std::make_unique<MockGlobalOperationsSysfsAccess>();
+    zes_uuid_t socUid = {};
+    memset(socUid.id, 0xff, ZES_MAX_UUID_SIZE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getSocUid(pSysfsAccess.get(), &socUid));
+    const uint8_t expectedSocUid[ZES_MAX_UUID_SIZE] = {0x76, 0xf7, 0x02, 0x0e, 0x21, 0x40, 0x76, 0x5b};
+    EXPECT_EQ(0, memcmp(expectedSocUid, socUid.id, ZES_MAX_UUID_SIZE));
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenUpperCaseDeviceUidWhenCallingGetSocUidThenSocUidIsParsedAndSuccessIsReturned, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    auto pSysfsAccess = std::make_unique<MockGlobalOperationsSysfsAccess>();
+    pSysfsAccess->mockSocUidVal = "AABBCCDDEEFF0011";
+    zes_uuid_t socUid = {};
+    memset(socUid.id, 0xff, ZES_MAX_UUID_SIZE);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getSocUid(pSysfsAccess.get(), &socUid));
+    const uint8_t expectedSocUid[ZES_MAX_UUID_SIZE] = {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11};
+    EXPECT_EQ(0, memcmp(expectedSocUid, socUid.id, ZES_MAX_UUID_SIZE));
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenSysfsReadFailsWhenCallingGetSocUidThenErrorIsReturned, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    auto pSysfsAccess = std::make_unique<MockGlobalOperationsSysfsAccess>();
+    pSysfsAccess->mockSocUidReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    zes_uuid_t socUid = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getSocUid(pSysfsAccess.get(), &socUid));
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenInvalidDeviceUidWhenCallingGetSocUidThenUnknownErrorIsReturnedAndOutputIsNotModified, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    auto pSysfsAccess = std::make_unique<MockGlobalOperationsSysfsAccess>();
+    const std::vector<std::string> invalidSocUids = {
+        "",
+        "76f7",
+        "76f7020e2140765",
+        "76f7020e2140765g",
+        "0x76f7020e214076",
+        "00112233445566778899AABBCCDDEEFF",
+        "00112233445566778899aabbccddeeff00",
+    };
+    for (const auto &invalidSocUid : invalidSocUids) {
+        pSysfsAccess->mockSocUidVal = invalidSocUid;
+        zes_uuid_t socUid = {};
+        memset(socUid.id, 0xab, ZES_MAX_UUID_SIZE);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pSysmanProductHelper->getSocUid(pSysfsAccess.get(), &socUid)) << "device_uid = \"" << invalidSocUid << "\"";
+        for (uint32_t i = 0; i < ZES_MAX_UUID_SIZE; i++) {
+            EXPECT_EQ(0xab, socUid.id[i]);
+        }
+    }
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenDeviceUidWithNonHexFirstCharacterOfByteWhenCallingGetSocUidThenUnknownErrorIsReturnedAndOutputIsNotModified, IsCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    auto pSysfsAccess = std::make_unique<MockGlobalOperationsSysfsAccess>();
+    pSysfsAccess->mockSocUidVal = "76f7020e2140g65b";
+    zes_uuid_t socUid = {};
+    memset(socUid.id, 0xab, ZES_MAX_UUID_SIZE);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pSysmanProductHelper->getSocUid(pSysfsAccess.get(), &socUid));
+    for (uint32_t i = 0; i < ZES_MAX_UUID_SIZE; i++) {
+        EXPECT_EQ(0xab, socUid.id[i]);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenCallingGetSocUidThenUnsupportedFeatureIsReturned, IsNotCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    auto pSysfsAccess = std::make_unique<MockGlobalOperationsSysfsAccess>();
+    zes_uuid_t socUid = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getSocUid(pSysfsAccess.get(), &socUid));
+}
+
 HWTEST2_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingMemoryGetPageOfflineStateExpThenSuccessIsReturned, IsCRI) {
     uint32_t expectedNumberMemoryPageOffline = 1u;
     uint32_t expectedNumberMemoryPagePendingOffline = 2u; // Both 'P' and 'F' status map to pending offline

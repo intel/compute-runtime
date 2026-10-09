@@ -2122,6 +2122,8 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
     zes_intel_device_index_exp_properties_t deviceIndex = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
     zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
     zes_intel_device_generation_exp_properties_t generation = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES};
+    zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
+    generation.pNext = &socUidProperties;
     computeProperties.pNext = &generation;
     deviceIndex.pNext = &computeProperties;
     drvName.pNext = &deviceIndex;
@@ -2166,6 +2168,11 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
         std::cout << std::endl;
         std::cout << "properties.core.name = " << properties.core.name << std::endl;
         std::cout << "driver name = " << drvName.driverName << std::endl;
+        std::cout << "socUidProperties.socUid = " << std::endl;
+        for (uint32_t i = 0; i < ZES_MAX_UUID_SIZE; i++) {
+            std::cout << +socUidProperties.socUid.id[i] << " ";
+        }
+        std::cout << std::endl;
     }
 
     uint32_t count = 0;

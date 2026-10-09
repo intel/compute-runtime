@@ -62,6 +62,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isRepairStatusSupported() override;
     ze_result_t memoryGetPageOfflineStateExp(SysFsAccessInterface *pSysFsAccess, zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, std::vector<MemPageInfo> &memPageInfoList, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) override;
     ze_result_t getMaxMemoryOfflinePages(SysFsAccessInterface *pSysFsAccess, uint32_t *pMaxOfflinePages) override;
+    ze_result_t getSocUid(SysFsAccessInterface *pSysFsAccess, zes_uuid_t *pSocUid) override;
     std::string getGpuGeneration() override;
 
     // power

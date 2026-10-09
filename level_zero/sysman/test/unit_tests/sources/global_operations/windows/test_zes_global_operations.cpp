@@ -741,6 +741,23 @@ TEST_F(SysmanDevicePropertiesFixture,
     EXPECT_EQ(416u, computeProperties.numThreads);
 }
 
+TEST_F(SysmanDevicePropertiesFixture,
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForSocUidPropertiesThenSocUidIsZero) {
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
+    memset(socUidProperties.socUid.id, 0xff, ZES_MAX_UUID_SIZE);
+    properties.pNext = &socUidProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    const uint8_t expectedSocUid[ZES_MAX_UUID_SIZE] = {};
+    EXPECT_EQ(0, memcmp(expectedSocUid, socUidProperties.socUid.id, ZES_MAX_UUID_SIZE));
+
+    ASSERT_NE(nullptr, pGlobalOperationsImp->pOsGlobalOperations);
+    zes_uuid_t socUid = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pGlobalOperationsImp->pOsGlobalOperations->getSocUid(&socUid));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

@@ -2209,6 +2209,46 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_EQ(416u, computeProperties.numThreads);
 }
 
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenValidDeviceUidSysfsNodeWhenCallingZesDeviceGetPropertiesForSocUidPropertiesThenValidSocUidIsReturned, IsCRI) {
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
+    memset(socUidProperties.socUid.id, 0xff, ZES_MAX_UUID_SIZE);
+    properties.pNext = &socUidProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    const uint8_t expectedSocUid[ZES_MAX_UUID_SIZE] = {0x76, 0xf7, 0x02, 0x0e, 0x21, 0x40, 0x76, 0x5b};
+    EXPECT_EQ(0, memcmp(expectedSocUid, socUidProperties.socUid.id, ZES_MAX_UUID_SIZE));
+}
+
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenDeviceUidSysfsReadFailsWhenCallingZesDeviceGetPropertiesForSocUidPropertiesThenSocUidIsZero, IsCRI) {
+    pSysfsAccess->mockSocUidReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
+    memset(socUidProperties.socUid.id, 0xff, ZES_MAX_UUID_SIZE);
+    properties.pNext = &socUidProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    const uint8_t expectedSocUid[ZES_MAX_UUID_SIZE] = {};
+    EXPECT_EQ(0, memcmp(expectedSocUid, socUidProperties.socUid.id, ZES_MAX_UUID_SIZE));
+}
+
+HWTEST2_F(SysmanGlobalOperationsFixture,
+          GivenUnsupportedProductWhenCallingZesDeviceGetPropertiesForSocUidPropertiesThenSocUidIsZero, IsNotCRI) {
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
+    memset(socUidProperties.socUid.id, 0xff, ZES_MAX_UUID_SIZE);
+    properties.pNext = &socUidProperties;
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    const uint8_t expectedSocUid[ZES_MAX_UUID_SIZE] = {};
+    EXPECT_EQ(0, memcmp(expectedSocUid, socUidProperties.socUid.id, ZES_MAX_UUID_SIZE));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

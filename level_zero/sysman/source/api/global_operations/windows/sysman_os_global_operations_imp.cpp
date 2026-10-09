@@ -186,6 +186,10 @@ ze_result_t WddmGlobalOperationsImp::getMaxMemoryOfflinePages(uint32_t *pMaxOffl
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t WddmGlobalOperationsImp::getSocUid(zes_uuid_t *pSocUid) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmGlobalOperationsImp::getDeviceHealthStatus(zes_device_health_status_ext_t *pHealth) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
