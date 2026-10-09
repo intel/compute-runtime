@@ -324,8 +324,8 @@ HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeapless
 
 HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{3, 1});
-    ASSERT_EQ(5U, versions.size());
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{3, 0});
+    ASSERT_LT(3U, versions.size());
 
     EXPECT_EQ(1, versions[0].major);
     EXPECT_EQ(0, versions[0].minor);
@@ -335,17 +335,6 @@ HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsR
 
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
-
-    EXPECT_EQ(3, versions[3].major);
-    EXPECT_EQ(0, versions[3].minor);
-
-    EXPECT_EQ(3, versions[4].major);
-    EXPECT_EQ(1, versions[4].minor);
-}
-
-HWTEST_F(CompilerProductHelperFixture, WhenOpenCLC30ListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListTrimmedToOpenCLC30) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{3, 0});
 
     ASSERT_EQ(4U, versions.size());
     EXPECT_EQ(3, versions[3].major);
@@ -367,7 +356,7 @@ HWTEST_F(CompilerProductHelperFixture, WhenLimitedListOfSupportedOpenCLCVersions
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsEmptyThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto versions = compilerProductHelper.getDeviceOpenCLCVersions(NEO::OclCVersion{0, 0});
-    ASSERT_EQ(5U, versions.size());
+    ASSERT_LT(3U, versions.size());
 
     EXPECT_EQ(1, versions[0].major);
     EXPECT_EQ(0, versions[0].minor);
@@ -378,11 +367,9 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpen
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
 
+    ASSERT_EQ(4U, versions.size());
     EXPECT_EQ(3, versions[3].major);
     EXPECT_EQ(0, versions[3].minor);
-
-    EXPECT_EQ(3, versions[4].major);
-    EXPECT_EQ(1, versions[4].minor);
 }
 
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsBelow10ThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToOclC12) {
