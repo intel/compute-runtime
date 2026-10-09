@@ -231,6 +231,19 @@ HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobalT
 }
 
 HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeCore) {
+    const ze_command_queue_desc_t queueDesc = {};
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(device,
+                                                                               &queueDesc,
+                                                                               false,
+                                                                               NEO::EngineGroupType::copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     desc.type = ZE_IMAGE_TYPE_3D;
@@ -244,21 +257,6 @@ HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyIm
     desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-
-    const ze_command_queue_desc_t queueDesc = {};
-    const size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
-    void *srcPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
-    void *dstPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
-
-    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(device,
-                                                                               &queueDesc,
-                                                                               false,
-                                                                               NEO::EngineGroupType::copy,
-                                                                               returnValue));
-    ASSERT_NE(nullptr, commandList0);
-
     auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHWSrc->initialize(device, &desc);
@@ -270,8 +268,6 @@ HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyIm
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     returnValue = commandList0->appendImageCopyToMemory(dstPtr, imageHWSrc->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    alignedFree(srcPtr);
-    alignedFree(dstPtr);
 }
 
 HWTEST_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendMemoryCopyRegionReturnsSuccess) {

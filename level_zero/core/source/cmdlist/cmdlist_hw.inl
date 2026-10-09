@@ -959,9 +959,33 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         pDstRegion = &tmpRegion;
     }
 
+    if (srcRowPitch == 0) {
+        if (image->getCustomRowPitch() > 0) {
+            srcRowPitch = static_cast<uint32_t>(image->getCustomRowPitch());
+        } else if (image->isMimickedImage()) {
+            uint32_t srcBytesPerPixel = bytesPerPixel;
+            if (bytesPerPixel == 8) {
+                srcBytesPerPixel = 6;
+            }
+            if (bytesPerPixel == 4) {
+                srcBytesPerPixel = 3;
+            }
+            srcRowPitch = pDstRegion->width * srcBytesPerPixel;
+        } else {
+            srcRowPitch = pDstRegion->width * bytesPerPixel;
+        }
+    }
     uint64_t srcSlicePitchCalculated = srcSlicePitch;
-    uint64_t bufferSize = 0;
-    resolveImagePitchesAndBufferSize(image, pDstRegion, srcRowPitch, srcSlicePitchCalculated, bufferSize);
+    if (srcSlicePitch == 0) {
+        if (image->getCustomSlicePitch() > 0) {
+            srcSlicePitchCalculated = image->getCustomSlicePitch();
+        } else {
+            uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height);
+            srcSlicePitchCalculated = height * srcRowPitch;
+        }
+    }
+
+    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, srcRowPitch, srcSlicePitchCalculated, pDstRegion, bytesPerPixel);
 
     auto allocationStruct = resolveAlignedAllocation(this->device, srcPtr, bufferSize, nullptr, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true});
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
@@ -1178,9 +1202,33 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         pSrcRegion = &tmpRegion;
     }
 
+    if (destRowPitch == 0) {
+        if (image->getCustomRowPitch() > 0) {
+            destRowPitch = static_cast<uint32_t>(image->getCustomRowPitch());
+        } else if (image->isMimickedImage()) {
+            uint32_t destBytesPerPixel = bytesPerPixel;
+            if (bytesPerPixel == 8) {
+                destBytesPerPixel = 6;
+            }
+            if (bytesPerPixel == 4) {
+                destBytesPerPixel = 3;
+            }
+            destRowPitch = pSrcRegion->width * destBytesPerPixel;
+        } else {
+            destRowPitch = pSrcRegion->width * bytesPerPixel;
+        }
+    }
     uint64_t destSlicePitchCalculated = destSlicePitch;
-    uint64_t bufferSize = 0;
-    resolveImagePitchesAndBufferSize(image, pSrcRegion, destRowPitch, destSlicePitchCalculated, bufferSize);
+    if (destSlicePitch == 0) {
+        if (image->getCustomSlicePitch() > 0) {
+            destSlicePitchCalculated = image->getCustomSlicePitch();
+        } else {
+            uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height);
+            destSlicePitchCalculated = height * destRowPitch;
+        }
+    }
+
+    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, destRowPitch, destSlicePitchCalculated, pSrcRegion, bytesPerPixel);
 
     auto allocationStruct = resolveAlignedAllocation(this->device, dstPtr, bufferSize, nullptr, {.sharedSystemEnabled = sharedSystemEnabled});
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
@@ -3507,39 +3555,6 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
         UNRECOVERABLE_IF(true);
         return 0;
     }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::resolveImagePitchesAndBufferSize(
-    Image *image, const ze_image_region_t *pRegion, uint32_t &rowPitch, uint64_t &slicePitch, uint64_t &bufferSize) {
-    const auto &imgInfo = image->getImageInfo();
-    auto bytesPerPixel = static_cast<uint32_t>(imgInfo.surfaceFormat->imageElementSizeInBytes);
-
-    if (rowPitch == 0) {
-        if (image->getCustomRowPitch() > 0) {
-            rowPitch = static_cast<uint32_t>(image->getCustomRowPitch());
-        } else if (image->isMimickedImage()) {
-            uint32_t adjustedBytesPerPixel = bytesPerPixel;
-            if (bytesPerPixel == 8) {
-                adjustedBytesPerPixel = 6;
-            }
-            if (bytesPerPixel == 4) {
-                adjustedBytesPerPixel = 3;
-            }
-            rowPitch = pRegion->width * adjustedBytesPerPixel;
-        } else {
-            rowPitch = pRegion->width * bytesPerPixel;
-        }
-    }
-    if (slicePitch == 0) {
-        if (image->getCustomSlicePitch() > 0) {
-            slicePitch = image->getCustomSlicePitch();
-        } else {
-            uint64_t height = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pRegion->height);
-            slicePitch = height * rowPitch;
-        }
-    }
-    bufferSize = this->getInputBufferSize(imgInfo.imgDesc.imageType, rowPitch, slicePitch, pRegion, bytesPerPixel);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
