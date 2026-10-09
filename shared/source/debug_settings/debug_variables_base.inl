@@ -334,7 +334,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, CFEStackIDControl, -1, "Set Stack ID Control in 
 DECLARE_DEBUG_VARIABLE(int32_t, ClearStandaloneInOrderTimestampAllocation, -1, "-1: default, 0: disabled, 1: enabled. If clear allocation before sending to GPU")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampPoolAllocator, -1, "-1: default, 0: disabled, 1: enabled. If enabled, timestamp allocations are pooled and reused across multiple event pools")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlushWithWrite, -1, "-1: ignore. >=0: Force PostSync cache flush and override postSync immediate write address to given value")
-DECLARE_DEBUG_VARIABLE(int32_t, DeferStateInitSubmissionToFirstRegularUsage, -1, "-1: ignore, 0: disabled, 1: enabled. If set, instead of initializing at Device creation, submit initial state during first usage (eg. kernel submission)")
+DECLARE_DEBUG_VARIABLE(int32_t, DeferStateInitSubmissionToFirstRegularUsage, -1, "-1: default (enabled in TBX mode, disabled otherwise), 0: disabled, 1: enabled. If set, instead of initializing at Device creation, submit initial state during first usage (eg. kernel submission)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceNonWalkerSplitMemoryCopy, -1, "-1: default, 0: disabled, 1: enabled. If set, memory copy will be executed as single byte copy Walker without performance optimizations")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdFifoPollInterval, -1, "-1: default , > 0: Fifo will be polled based on input in milliseconds.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetMaxBVHLevels, -1, "-1: default , > 0: Set maxBVHLevel in RTDispatchGlobal.")

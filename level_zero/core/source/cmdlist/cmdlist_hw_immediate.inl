@@ -1501,7 +1501,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     this->latestFlushIsDualCopyOffload = (copyOffloadModeForOperation == CopyOffloadModes::dualStream);
     this->latestFlushIsHostVisible = !this->dcFlushSupport;
 
-    if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
+    if (queue->getCsr()->isStateInitSubmissionDeferred()) {
         queue->getCsr()->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
     }
 

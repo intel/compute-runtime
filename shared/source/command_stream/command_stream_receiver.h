@@ -645,6 +645,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     void ensurePrimaryCsrInitialized(Device &device);
+    bool isStateInitSubmissionDeferred() const;
 
     bool enqueueWaitForPagingFence(uint64_t pagingFenceValue);
     virtual void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {}

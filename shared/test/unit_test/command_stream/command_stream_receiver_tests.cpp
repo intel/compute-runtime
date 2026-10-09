@@ -3690,6 +3690,35 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushing
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.flushMiFlushDW(false));
 }
 
+HWTEST2_F(CommandStreamReceiverHwTest, givenEnginePrologueNotSentWhenFlushingMiFlushDwThenSystemMemFenceAddressIsProgrammedOnce, IsHeapfulRequiredAndAtLeastXeHpcCore) {
+    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (!commandStreamReceiver.getGlobalFenceAllocation()) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.isEnginePrologueSent = false;
+
+    auto usedBefore = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushMiFlushDW(false));
+    EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedBefore);
+    auto itorFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorFenceAddress);
+    EXPECT_NE(hwParser.cmdList.end(), find<MI_FLUSH_DW *>(itorFenceAddress, hwParser.cmdList.end()));
+
+    usedBefore = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushMiFlushDW(false));
+
+    hwParser.tearDown();
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedBefore);
+    EXPECT_EQ(hwParser.cmdList.end(), find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end()));
+    EXPECT_NE(hwParser.cmdList.end(), find<MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end()));
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushingPipeControlThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -3971,6 +4000,54 @@ HWTEST_F(CommandStreamReceiverHwTest, givenVariousCsrModeWhenGettingTbxModeThenE
 
     ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbxWithAub;
     EXPECT_TRUE(ultCsr.isTbxMode());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenDefaultDeferStateInitFlagWhenCheckingIfStateInitSubmissionIsDeferredThenReturnTrueOnlyInTbxMode) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(-1);
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    EXPECT_FALSE(ultCsr.isStateInitSubmissionDeferred());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardwareWithAub;
+    EXPECT_FALSE(ultCsr.isStateInitSubmissionDeferred());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    EXPECT_FALSE(ultCsr.isStateInitSubmissionDeferred());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    EXPECT_TRUE(ultCsr.isStateInitSubmissionDeferred());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbxWithAub;
+    EXPECT_TRUE(ultCsr.isStateInitSubmissionDeferred());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenDeferStateInitFlagDisabledWhenCheckingIfStateInitSubmissionIsDeferredThenReturnFalseInAllModes) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(0);
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    EXPECT_FALSE(ultCsr.isStateInitSubmissionDeferred());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    EXPECT_FALSE(ultCsr.isStateInitSubmissionDeferred());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbxWithAub;
+    EXPECT_FALSE(ultCsr.isStateInitSubmissionDeferred());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenDeferStateInitFlagEnabledWhenCheckingIfStateInitSubmissionIsDeferredThenReturnTrueInAllModes) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    EXPECT_TRUE(ultCsr.isStateInitSubmissionDeferred());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    EXPECT_TRUE(ultCsr.isStateInitSubmissionDeferred());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenVariousCsrModeWhenGettingAubModeThenReturnedValueIsCorrect) {

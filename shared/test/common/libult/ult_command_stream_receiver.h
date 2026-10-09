@@ -239,6 +239,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
             this->downloadAllocationUlt(graphicsAllocation);
         };
         gpuHangCheckPeriod = {};
+        if (ultHwConfig.csrInTbxMode) {
+            commandStreamReceiverType = CommandStreamReceiverType::tbx;
+        }
     }
     ~UltCommandStreamReceiver() override {
         this->downloadAllocationImpl = nullptr;

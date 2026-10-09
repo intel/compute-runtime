@@ -3074,6 +3074,68 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenSubmittingThenD
     EXPECT_EQ(1u, computePrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
 }
 
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenTbxModeAndDefaultDeferFlagWhenSubmittingThenDeferFirstDeviceSubmission) {
+    VariableBackup<UltHwConfig> backupUltHwConfig(&ultHwConfig);
+    ultHwConfig.csrInTbxMode = true;
+    DebugManagerStateRestore restore;
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(-1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    MockContext context{&clDevice};
+    cl_command_queue_properties computeProperties[5] = {};
+    cl_command_queue_properties copyProperties[5] = {};
+
+    fillProperties(computeProperties, 1, 0);
+    fillProperties(copyProperties, 1, 0);
+
+    auto buffer = std::unique_ptr<Buffer>{BufferHelper<>::create(&context)};
+
+    MockCommandQueueHw<FamilyType> queueBcs0(&context, context.getDevice(0), copyProperties, false);
+    MockCommandQueueHw<FamilyType> queueBcs1(&context, context.getDevice(0), copyProperties, false);
+    MockCommandQueueHw<FamilyType> queueCompute0(&context, context.getDevice(0), computeProperties, false);
+    MockCommandQueueHw<FamilyType> queueCompute1(&context, context.getDevice(0), computeProperties, false);
+
+    auto copyCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(queueBcs1.bcsEngines[0]->commandStreamReceiver);
+    auto computeCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(&queueCompute1.getGpgpuCommandStreamReceiver());
+
+    auto copyPrimaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(copyCsr1->primaryCsr ? copyCsr1->primaryCsr : copyCsr1);
+    auto computePrimaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(computeCsr1->primaryCsr ? computeCsr1->primaryCsr : computeCsr1);
+
+    for (auto csr : {copyCsr1, computeCsr1, copyPrimaryCsr, computePrimaryCsr}) {
+        EXPECT_TRUE(csr->isTbxMode());
+        csr->callBaseWaitForCompletionWithTimeout = false;
+    }
+
+    EXPECT_EQ(0u, copyPrimaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, computePrimaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, copyPrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, computePrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+
+    queueBcs1.enqueueCopyBuffer(buffer.get(), buffer.get(), 0, 0, 1, 0, nullptr, nullptr);
+
+    EXPECT_NE(0u, copyPrimaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, computePrimaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, copyPrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, computePrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+
+    MockKernelWithInternals mockKernelWithInternals(context);
+    size_t gws[3] = {1, 0, 0};
+
+    queueCompute1.enqueueKernel(mockKernelWithInternals.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_NE(0u, computePrimaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, copyPrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(1u, computePrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+}
+
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;

@@ -1380,6 +1380,94 @@ HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingT
     commandQueue2->destroy();
 }
 
+struct DeferredFirstSubmissionCmdQueueTbxTests : public Test<ModuleFixture> {
+    void SetUp() override {
+        ultHwConfig.csrInTbxMode = true;
+        debugManager.flags.ContextGroupSize.set(5);
+        debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(-1);
+        Test<ModuleFixture>::SetUp();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    VariableBackup<UltHwConfig> backupUltHwConfig{&ultHwConfig};
+};
+
+HWTEST2_F(DeferredFirstSubmissionCmdQueueTbxTests, givenTbxModeAndDefaultDeferFlagWhenSubmittingToSecondaryThenDeferFirstSubmission, IsAtLeastXeCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    createKernel();
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0;
+    desc.index = 0;
+    ze_command_queue_handle_t commandQueueHandle1, commandQueueHandle2;
+
+    auto result = device->createCommandQueue(&desc, &commandQueueHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandQueue(&desc, &commandQueueHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandQueue1 = L0::CommandQueue::fromHandle(commandQueueHandle1);
+    auto commandQueue2 = L0::CommandQueue::fromHandle(commandQueueHandle2);
+
+    EXPECT_NE(commandQueue1->getCsr(), commandQueue2->getCsr());
+
+    ze_command_list_handle_t commandListHandle1, commandListHandle2;
+    ze_command_list_desc_t cmdListDesc = {};
+
+    result = device->createCommandList(&cmdListDesc, &commandListHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandList(&cmdListDesc, &commandListHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+    auto commandList2 = L0::CommandList::fromHandle(commandListHandle2);
+
+    auto secondaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue2->getCsr());
+    auto primaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryCsr->primaryCsr);
+    EXPECT_NE(nullptr, primaryCsr);
+    EXPECT_NE(secondaryCsr, primaryCsr);
+    EXPECT_TRUE(primaryCsr->isTbxMode());
+    EXPECT_TRUE(secondaryCsr->isTbxMode());
+    primaryCsr->callBaseWaitForCompletionWithTimeout = false;
+    secondaryCsr->callBaseWaitForCompletionWithTimeout = false;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    commandList2->close();
+    EXPECT_EQ(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, commandQueue1->getCsr()->peekTaskCount());
+    EXPECT_EQ(0u, secondaryCsr->peekTaskCount());
+    CommandListExecutionInternalOptions internalOptions = {};
+    commandQueue2->executeCommandLists(1, &commandListHandle2, nullptr, internalOptions);
+
+    EXPECT_NE(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_NE(0u, secondaryCsr->peekTaskCount());
+
+    commandList1->destroy();
+    commandList2->destroy();
+    commandQueue1->destroy();
+    commandQueue2->destroy();
+}
+
 HWTEST_F(CommandQueueTest, givenCommandQueueWhenRegisterCsrClientCalledMultipleTimesThenRegistersOnlyOnce) {
     MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);

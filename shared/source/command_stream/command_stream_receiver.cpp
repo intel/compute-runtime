@@ -1635,6 +1635,13 @@ void CommandStreamReceiver::ensurePrimaryCsrInitialized(Device &device) {
     csrToInitialize->initializeDeviceWithFirstSubmission(device);
 }
 
+bool CommandStreamReceiver::isStateInitSubmissionDeferred() const {
+    if (debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() != -1) {
+        return debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1;
+    }
+    return isTbxMode();
+}
+
 void CommandStreamReceiver::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {}
 
 DeferredFreeContext CommandStreamReceiver::createDeferredFreeContext() const {

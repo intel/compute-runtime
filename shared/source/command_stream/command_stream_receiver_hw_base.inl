@@ -1256,7 +1256,8 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool 
     args.notifyEnable = isUsedNotifyEnableForPostSync();
 
     size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, peekRootDeviceEnvironment()) +
-                          EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+                          EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs) +
+                          getCmdSizeForPrologue();
 
     if (initializeProlog) {
         requiredSize += getCmdsSizeForHardwareContext();
@@ -1268,6 +1269,8 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool 
     if (initializeProlog) {
         programHardwareContext(commandStream);
     }
+
+    this->programEnginePrologue(commandStream);
 
     NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, 0, NEO::FenceType::release, peekRootDeviceEnvironment());
 

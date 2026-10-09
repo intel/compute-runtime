@@ -1665,6 +1665,60 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenSysmanNoContextModeWhenDeviceCrea
     }
 }
 
+template <typename FamilyType>
+bool isStateInitRequiredAtEngineInitialization(Device &device, EngineControl &engine) {
+    auto heaplessModeEnabled = device.getCompilerProductHelper().isHeaplessModeEnabled(device.getHardwareInfo());
+    return engine.osContext->isPartOfContextGroup() || (engine.osContext->getIsPrimaryEngine() && heaplessModeEnabled);
+}
+
+HWTEST_F(DeviceTests, givenHardwareModeAndDefaultDeferFlagWhenDeviceCreatesEnginesThenStateInitIsSubmittedAtDeviceCreation) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(5);
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(-1);
+
+    UltDeviceFactory deviceFactory{1, 0};
+    auto device = deviceFactory.rootDevices[0];
+
+    uint32_t enginesRequiringStateInit = 0;
+    for (auto &engine : device->allEngines) {
+        if (!isStateInitRequiredAtEngineInitialization<FamilyType>(*device, engine)) {
+            continue;
+        }
+        enginesRequiringStateInit++;
+        auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        EXPECT_FALSE(ultCsr->isTbxMode());
+        EXPECT_EQ(1u, ultCsr->initializeDeviceWithFirstSubmissionCalled);
+    }
+    if (enginesRequiringStateInit == 0) {
+        GTEST_SKIP();
+    }
+}
+
+HWTEST_F(DeviceTests, givenTbxModeAndDefaultDeferFlagWhenDeviceCreatesEnginesThenStateInitSubmissionIsDeferred) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrInTbxMode = true;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(5);
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(-1);
+
+    UltDeviceFactory deviceFactory{1, 0};
+    auto device = deviceFactory.rootDevices[0];
+
+    uint32_t enginesRequiringStateInit = 0;
+    for (auto &engine : device->allEngines) {
+        auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        EXPECT_TRUE(ultCsr->isTbxMode());
+        EXPECT_EQ(0u, ultCsr->initializeDeviceWithFirstSubmissionCalled);
+        EXPECT_EQ(0u, ultCsr->peekTaskCount());
+        if (isStateInitRequiredAtEngineInitialization<FamilyType>(*device, engine)) {
+            enginesRequiringStateInit++;
+        }
+    }
+    if (enginesRequiringStateInit == 0) {
+        GTEST_SKIP();
+    }
+}
+
 TEST(FailDeviceTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
     auto hwInfo = defaultHwInfo.get();
     DebugManagerStateRestore dbgRestore;

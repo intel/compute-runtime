@@ -2170,6 +2170,79 @@ HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingTo
     commandList2->destroy();
 }
 
+struct DeferredFirstSubmissionCmdListTbxTests : public Test<ModuleFixture> {
+    void SetUp() override {
+        ultHwConfig.csrInTbxMode = true;
+        debugManager.flags.ContextGroupSize.set(5);
+        debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(-1);
+        Test<ModuleFixture>::SetUp();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    VariableBackup<UltHwConfig> backupUltHwConfig{&ultHwConfig};
+};
+
+HWTEST2_F(DeferredFirstSubmissionCmdListTbxTests, givenTbxModeAndDefaultDeferFlagWhenSubmittingToSecondaryThenDeferFirstSubmission, IsAtLeastXeCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    createKernel();
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0;
+    desc.index = 0;
+    ze_command_list_handle_t commandListHandle1, commandListHandle2;
+
+    auto result = device->createCommandListImmediate(&desc, &commandListHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandListImmediate(&desc, &commandListHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList1 = L0::CommandList::fromHandle(commandListHandle1);
+    auto commandList2 = L0::CommandList::fromHandle(commandListHandle2);
+
+    EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
+
+    auto secondaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandList2->getCsr(false));
+    auto primaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryCsr->primaryCsr);
+    EXPECT_NE(nullptr, primaryCsr);
+    EXPECT_NE(secondaryCsr, primaryCsr);
+    EXPECT_TRUE(primaryCsr->isTbxMode());
+    EXPECT_TRUE(secondaryCsr->isTbxMode());
+    primaryCsr->callBaseWaitForCompletionWithTimeout = false;
+    secondaryCsr->callBaseWaitForCompletionWithTimeout = false;
+
+    EXPECT_EQ(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, commandList1->getCsr(false)->peekTaskCount());
+    EXPECT_EQ(0u, secondaryCsr->peekTaskCount());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_NE(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_NE(0u, secondaryCsr->peekTaskCount());
+
+    commandList1->destroy();
+    commandList2->destroy();
+}
+
 HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingToPrimaryThenDeferFirstSubmission, IsAtLeastXeCore) {
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
