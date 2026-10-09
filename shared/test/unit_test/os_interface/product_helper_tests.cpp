@@ -38,6 +38,7 @@
 #include "aubstream/stepping_values.h"
 #include "clos_matchers.h"
 #include "gtest/gtest.h"
+#include "leo_matchers.h"
 #include "ocl_igc_shared/indirect_access_detection/version.h"
 #include "test_traits_common.h"
 

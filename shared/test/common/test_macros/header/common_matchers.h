@@ -253,20 +253,6 @@ using IsNotBmgOrCri = IsNoneProducts<IGFX_BMG, IGFX_CRI>;
 using IsDg2BmgOrCri = IsAnyProducts<IGFX_DG2, IGFX_BMG, IGFX_CRI>;
 using IsNotDg2BmgOrCri = IsNoneProducts<IGFX_DG2, IGFX_BMG, IGFX_CRI>;
 
-struct IsLeoSupported {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return IsCRI::isMatched<productFamily>() || IsNVLS::isMatched<productFamily>() || IsNVLP::isMatched<productFamily>();
-    }
-};
-
-struct IsNotLeoSupported {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return !IsLeoSupported::isMatched<productFamily>();
-    }
-};
-
 using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 using HasNoStatefulSupport = IsAnyGfxCores<IGFX_XE_HPC_CORE>;
