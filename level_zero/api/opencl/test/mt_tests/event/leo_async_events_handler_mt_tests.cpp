@@ -5,8 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/test/common/fixtures/leo_event_callbacks_fixture.h"
 
@@ -25,7 +25,7 @@ struct MockAsyncEvent : public Event {
     void complete() { this->eventStatus = CL_COMPLETE; }
 };
 
-TEST_F(AsyncEventsHandlerMtTests, givenRegisteredEventWhenItCompletesThenTheHandlerThreadExecutesTheCallback) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenRegisteredEventWhenItCompletesThenTheHandlerThreadExecutesTheCallback) {
     auto handler = installMockHandler(true);
     auto event = new MockAsyncEvent(CL_COMMAND_MARKER, commandQueue);
     auto &tracker = createTracker();
@@ -46,7 +46,7 @@ TEST_F(AsyncEventsHandlerMtTests, givenRegisteredEventWhenItCompletesThenTheHand
     clReleaseEvent(event);
 }
 
-TEST_F(AsyncEventsHandlerMtTests, givenAlreadySignalledEventWhenCallbackIsRegisteredThenTheHandlerThreadIsNotNeeded) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenAlreadySignalledEventWhenCallbackIsRegisteredThenTheHandlerThreadIsNotNeeded) {
     auto handler = installMockHandler(true);
     auto event = new Event(CL_COMMAND_MARKER, commandQueue);
     signalEvent(event);
@@ -61,7 +61,7 @@ TEST_F(AsyncEventsHandlerMtTests, givenAlreadySignalledEventWhenCallbackIsRegist
     clReleaseEvent(event);
 }
 
-TEST_F(AsyncEventsHandlerMtTests, givenMultipleEventsWithCallbacksWhenAllCompleteThenAllCallbacksAreExecuted) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenMultipleEventsWithCallbacksWhenAllCompleteThenAllCallbacksAreExecuted) {
     auto handler = installMockHandler(true);
     constexpr uint32_t numEvents = 8u;
 
@@ -90,7 +90,7 @@ TEST_F(AsyncEventsHandlerMtTests, givenMultipleEventsWithCallbacksWhenAllComplet
     }
 }
 
-TEST_F(AsyncEventsHandlerMtTests, givenCallbacksOfDifferentTypesWhenEventCompletesThenTheHandlerThreadExecutesAllOfThem) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenCallbacksOfDifferentTypesWhenEventCompletesThenTheHandlerThreadExecutesAllOfThem) {
     auto handler = installMockHandler(true);
     auto event = new MockAsyncEvent(CL_COMMAND_MARKER, commandQueue);
     auto &submittedTracker = createTracker();
@@ -116,7 +116,7 @@ TEST_F(AsyncEventsHandlerMtTests, givenCallbacksOfDifferentTypesWhenEventComplet
     clReleaseEvent(event);
 }
 
-TEST_F(AsyncEventsHandlerMtTests, givenApiReleasedEventWithPendingCallbackWhenItCompletesThenTheHandlerRunsTheCallbackAndDestroysTheEvent) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenApiReleasedEventWithPendingCallbackWhenItCompletesThenTheHandlerRunsTheCallbackAndDestroysTheEvent) {
     auto handler = installMockHandler(true);
     auto event = new MockAsyncEvent(CL_COMMAND_MARKER, commandQueue);
     auto &tracker = createTracker();
@@ -131,7 +131,7 @@ TEST_F(AsyncEventsHandlerMtTests, givenApiReleasedEventWithPendingCallbackWhenIt
     handler->closeThread();
 }
 
-TEST_F(AsyncEventsHandlerMtTests, givenNeverSignalledEventWhenClosingTheThreadThenItIsJoinedAndTheEventIsReleased) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenNeverSignalledEventWhenClosingTheThreadThenItIsJoinedAndTheEventIsReleased) {
     auto handler = installMockHandler(true);
     auto event = new Event(CL_COMMAND_MARKER, commandQueue);
     auto &tracker = createTracker();
@@ -159,7 +159,7 @@ struct MockEventWithHangingWait : public Event {
     ADDMETHOD_NOBASE(wait, ze_result_t, ZE_RESULT_ERROR_DEVICE_LOST, (uint64_t timeout));
 };
 
-TEST_F(AsyncEventsHandlerMtTests, givenHangingEventWhenTrackedByTheHandlerThreadThenCallbackIsExecutedWithTheAbortStatus) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenHangingEventWhenTrackedByTheHandlerThreadThenCallbackIsExecutedWithTheAbortStatus) {
     auto handler = installMockHandler(true);
     auto event = new MockEventWithHangingWait(CL_COMMAND_MARKER, commandQueue);
     auto &tracker = createTracker();
@@ -176,7 +176,7 @@ TEST_F(AsyncEventsHandlerMtTests, givenHangingEventWhenTrackedByTheHandlerThread
     clReleaseEvent(event);
 }
 
-TEST_F(AsyncEventsHandlerMtTests, givenCallbacksRegisteredFromMultipleThreadsWhenEventCompletesThenAllOfThemAreExecuted) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenCallbacksRegisteredFromMultipleThreadsWhenEventCompletesThenAllOfThemAreExecuted) {
     auto handler = installMockHandler(true);
     auto event = new MockAsyncEvent(CL_COMMAND_MARKER, commandQueue);
 
@@ -215,7 +215,7 @@ TEST_F(AsyncEventsHandlerMtTests, givenCallbacksRegisteredFromMultipleThreadsWhe
     clReleaseEvent(event);
 }
 
-TEST_F(AsyncEventsHandlerMtTests, givenUserEventWithCallbackWhenSetUserEventStatusIsCalledFromAnotherThreadThenCallbackIsExecuted) {
+TEST_F_DEFAULT(AsyncEventsHandlerMtTests, givenUserEventWithCallbackWhenSetUserEventStatusIsCalledFromAnotherThreadThenCallbackIsExecuted) {
     installMockHandler(true);
     cl_int errcode = CL_SUCCESS;
     auto userEvent = clCreateUserEvent(clContext, &errcode);

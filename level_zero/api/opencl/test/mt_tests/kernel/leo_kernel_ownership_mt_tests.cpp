@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
@@ -154,7 +154,7 @@ struct KernelOwnershipMtTests : public Test<OclFixture> {
     std::unique_ptr<KernelExposingOwnershipMutex> kernel;
 };
 
-TEST_F(KernelOwnershipMtTests, givenEnqueueNDRangeKernelWhenGroupSizeIsSetOnSharedKernelThenClKernelIsOwned) {
+TEST_F_DEFAULT(KernelOwnershipMtTests, givenEnqueueNDRangeKernelWhenGroupSizeIsSetOnSharedKernelThenClKernelIsOwned) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
@@ -166,7 +166,7 @@ TEST_F(KernelOwnershipMtTests, givenEnqueueNDRangeKernelWhenGroupSizeIsSetOnShar
     EXPECT_TRUE(l0Kernel->clKernelOwnedDuringSetGroupSize);
 }
 
-TEST_F(KernelOwnershipMtTests, givenEnqueueNDCountKernelWhenGroupSizeIsSetOnSharedKernelThenClKernelIsOwned) {
+TEST_F_DEFAULT(KernelOwnershipMtTests, givenEnqueueNDCountKernelWhenGroupSizeIsSetOnSharedKernelThenClKernelIsOwned) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workgroupCount[3] = {1, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
@@ -178,7 +178,7 @@ TEST_F(KernelOwnershipMtTests, givenEnqueueNDCountKernelWhenGroupSizeIsSetOnShar
     EXPECT_TRUE(l0Kernel->clKernelOwnedDuringSetGroupSize);
 }
 
-TEST_F(KernelOwnershipMtTests, givenEnqueueNDRangeKernelWhenExecutionTypeIsCheckedThenClKernelIsOwned) {
+TEST_F_DEFAULT(KernelOwnershipMtTests, givenEnqueueNDRangeKernelWhenExecutionTypeIsCheckedThenClKernelIsOwned) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
@@ -191,7 +191,7 @@ TEST_F(KernelOwnershipMtTests, givenEnqueueNDRangeKernelWhenExecutionTypeIsCheck
     EXPECT_TRUE(l0Kernel->allDescriptorReadsOwned);
 }
 
-TEST_F(KernelOwnershipMtTests, givenEnqueueNDCountKernelWhenExecutionTypeIsCheckedThenClKernelIsOwned) {
+TEST_F_DEFAULT(KernelOwnershipMtTests, givenEnqueueNDCountKernelWhenExecutionTypeIsCheckedThenClKernelIsOwned) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workgroupCount[3] = {1, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
@@ -204,7 +204,7 @@ TEST_F(KernelOwnershipMtTests, givenEnqueueNDCountKernelWhenExecutionTypeIsCheck
     EXPECT_TRUE(l0Kernel->allDescriptorReadsOwned);
 }
 
-TEST_F(KernelOwnershipMtTests, givenSetKernelExecInfoIndirectAccessThenClKernelIsOwned) {
+TEST_F_DEFAULT(KernelOwnershipMtTests, givenSetKernelExecInfoIndirectAccessThenClKernelIsOwned) {
     cl_bool enabled = CL_TRUE;
 
     auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL, sizeof(enabled), &enabled);
@@ -214,7 +214,7 @@ TEST_F(KernelOwnershipMtTests, givenSetKernelExecInfoIndirectAccessThenClKernelI
     EXPECT_TRUE(l0Kernel->clKernelOwnedDuringSetIndirectAccess);
 }
 
-TEST_F(KernelOwnershipMtTests, givenSetKernelExecInfoThreadArbitrationPolicyThenClKernelIsOwned) {
+TEST_F_DEFAULT(KernelOwnershipMtTests, givenSetKernelExecInfoThreadArbitrationPolicyThenClKernelIsOwned) {
     cl_uint policy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
 
     auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, sizeof(policy), &policy);
@@ -224,7 +224,7 @@ TEST_F(KernelOwnershipMtTests, givenSetKernelExecInfoThreadArbitrationPolicyThen
     EXPECT_TRUE(l0Kernel->clKernelOwnedDuringSetSchedulingHint);
 }
 
-TEST_F(KernelOwnershipMtTests, givenNullGlobalWorkSizeWhenEnqueueNDRangeKernelThenClKernelIsNotOwnedDuringBarrier) {
+TEST_F_DEFAULT(KernelOwnershipMtTests, givenNullGlobalWorkSizeWhenEnqueueNDRangeKernelThenClKernelIsNotOwnedDuringBarrier) {
     size_t globalWorkOffset[3] = {0, 0, 0};
 
     auto retVal = clEnqueueNDRangeKernel(commandQueue.get(), kernel.get(), 1, globalWorkOffset, nullptr, nullptr, 0, nullptr, nullptr);
@@ -235,7 +235,7 @@ TEST_F(KernelOwnershipMtTests, givenNullGlobalWorkSizeWhenEnqueueNDRangeKernelTh
     EXPECT_FALSE(l0Kernel->setGroupSizeCalled);
 }
 
-TEST_F(KernelOwnershipMtTests, givenGetKernelSuggestedLocalWorkSizeWhenGroupSizeIsSuggestedOnSharedKernelThenClKernelIsOwned) {
+TEST_F_DEFAULT(KernelOwnershipMtTests, givenGetKernelSuggestedLocalWorkSizeWhenGroupSizeIsSuggestedOnSharedKernelThenClKernelIsOwned) {
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t suggestedLocalWorkSize[3] = {0, 0, 0};
     l0Kernel->resetDescriptorProbe();

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/opencl/test/common/fixtures/leo_event_callbacks_fixture.h"
 
@@ -46,7 +46,7 @@ struct MockProfilingEvent : public Event {
     std::atomic<bool> ownershipAvailable{false};
 };
 
-TEST_F(EventProfilingLockMtTests, givenProfilingQueryWhenResolvingTimestampThenEventOwnershipIsNotHeld) {
+TEST_F_DEFAULT(EventProfilingLockMtTests, givenProfilingQueryWhenResolvingTimestampThenEventOwnershipIsNotHeld) {
     auto event = std::make_unique<MockProfilingEvent>(CL_COMMAND_NDRANGE_KERNEL, commandQueue);
     event->setQueueTimeStamp();
     event->setSubmitTimeStamp();
@@ -61,7 +61,7 @@ TEST_F(EventProfilingLockMtTests, givenProfilingQueryWhenResolvingTimestampThenE
     EXPECT_TRUE(event->ownershipAvailable);
 }
 
-TEST_F(EventProfilingLockMtTests, givenConcurrentProfilingQueriesWhenDerivingDataThenAnchorsAreRebasedOnce) {
+TEST_F_DEFAULT(EventProfilingLockMtTests, givenConcurrentProfilingQueriesWhenDerivingDataThenAnchorsAreRebasedOnce) {
     auto event = std::make_unique<MockProfilingEvent>(CL_COMMAND_NDRANGE_KERNEL, commandQueue);
     event->setQueueTimeStamp();
     event->setSubmitTimeStamp();

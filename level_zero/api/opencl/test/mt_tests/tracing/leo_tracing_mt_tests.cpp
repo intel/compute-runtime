@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/opencl/source/tracing/leo_tracing_api.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_handle.h"
@@ -69,7 +69,7 @@ struct TracingMtFixture : public ::testing::Test {
     uint32_t savedState = 0u;
 };
 
-TEST_F(TracingMtFixture, givenConcurrentClientsWhenTheyAllFinishThenTheClientCounterIsBackToZero) {
+TEST_F_DEFAULT(TracingMtFixture, givenConcurrentClientsWhenTheyAllFinishThenTheClientCounterIsBackToZero) {
     ASSERT_EQ(CL_SUCCESS, clEnableTracingINTEL(createHandle()));
 
     constexpr uint32_t numThreads = 4u;
@@ -98,7 +98,7 @@ TEST_F(TracingMtFixture, givenConcurrentClientsWhenTheyAllFinishThenTheClientCou
     EXPECT_EQ(0u, TRACING_GET_LOCKED_BIT(tracingState.load()));
 }
 
-TEST_F(TracingMtFixture, givenTracingDisabledWhenClientsAreAddedConcurrentlyThenNoneOfThemSucceeds) {
+TEST_F_DEFAULT(TracingMtFixture, givenTracingDisabledWhenClientsAreAddedConcurrentlyThenNoneOfThemSucceeds) {
     constexpr uint32_t numThreads = 4u;
     constexpr uint32_t iterationsPerThread = 500u;
     std::atomic<uint32_t> succeededAdds{0};
@@ -122,7 +122,7 @@ TEST_F(TracingMtFixture, givenTracingDisabledWhenClientsAreAddedConcurrentlyThen
     EXPECT_EQ(0u, TRACING_GET_CLIENT_COUNTER(tracingState.load()));
 }
 
-TEST_F(TracingMtFixture, givenDistinctHandlesEnabledConcurrentlyThenEachOfThemTakesItsOwnSlot) {
+TEST_F_DEFAULT(TracingMtFixture, givenDistinctHandlesEnabledConcurrentlyThenEachOfThemTakesItsOwnSlot) {
     constexpr uint32_t numThreads = 8u;
     std::vector<cl_tracing_handle> handles;
     for (uint32_t i = 0; i < numThreads; i++) {
@@ -153,7 +153,7 @@ TEST_F(TracingMtFixture, givenDistinctHandlesEnabledConcurrentlyThenEachOfThemTa
     }
 }
 
-TEST_F(TracingMtFixture, givenTheSameHandleEnabledConcurrentlyThenOnlyOneAttemptSucceeds) {
+TEST_F_DEFAULT(TracingMtFixture, givenTheSameHandleEnabledConcurrentlyThenOnlyOneAttemptSucceeds) {
     constexpr uint32_t numThreads = 8u;
     auto handle = createHandle();
 
@@ -174,7 +174,7 @@ TEST_F(TracingMtFixture, givenTheSameHandleEnabledConcurrentlyThenOnlyOneAttempt
     EXPECT_EQ(1u, countEnabledSlots());
 }
 
-TEST_F(TracingMtFixture, givenEnabledHandlesDisabledConcurrentlyThenAllSlotsAreFreedAndTracingIsTurnedOff) {
+TEST_F_DEFAULT(TracingMtFixture, givenEnabledHandlesDisabledConcurrentlyThenAllSlotsAreFreedAndTracingIsTurnedOff) {
     constexpr uint32_t numThreads = 8u;
     std::vector<cl_tracing_handle> handles;
     for (uint32_t i = 0; i < numThreads; i++) {
@@ -202,7 +202,7 @@ TEST_F(TracingMtFixture, givenEnabledHandlesDisabledConcurrentlyThenAllSlotsAreF
     EXPECT_EQ(0u, TRACING_GET_LOCKED_BIT(tracingState.load()));
 }
 
-TEST_F(TracingMtFixture, givenConcurrentEnableAndDisableOfTheSameHandleThenTheStateStaysConsistent) {
+TEST_F_DEFAULT(TracingMtFixture, givenConcurrentEnableAndDisableOfTheSameHandleThenTheStateStaysConsistent) {
     constexpr uint32_t numThreads = 4u;
     constexpr uint32_t iterationsPerThread = 500u;
     auto handle = createHandle();
@@ -229,7 +229,7 @@ TEST_F(TracingMtFixture, givenConcurrentEnableAndDisableOfTheSameHandleThenTheSt
     EXPECT_EQ(0u, TRACING_GET_ENABLED_BIT(tracingState.load()));
 }
 
-TEST_F(TracingMtFixture, givenTracingStateQueriedConcurrentlyWithEnableAndDisableThenEveryQuerySucceeds) {
+TEST_F_DEFAULT(TracingMtFixture, givenTracingStateQueriedConcurrentlyWithEnableAndDisableThenEveryQuerySucceeds) {
     constexpr uint32_t queryIterations = 2000u;
     auto togglingHandle = createHandle();
     auto queriedHandle = createHandle();
@@ -262,7 +262,7 @@ TEST_F(TracingMtFixture, givenTracingStateQueriedConcurrentlyWithEnableAndDisabl
     EXPECT_EQ(0u, TRACING_GET_LOCKED_BIT(tracingState.load()));
 }
 
-TEST_F(TracingMtFixture, givenClientsAddedConcurrentlyWithHandleEnablingThenTheLockIsAlwaysReleased) {
+TEST_F_DEFAULT(TracingMtFixture, givenClientsAddedConcurrentlyWithHandleEnablingThenTheLockIsAlwaysReleased) {
     constexpr uint32_t iterations = 1000u;
     auto enabledHandle = createHandle();
     auto togglingHandle = createHandle();

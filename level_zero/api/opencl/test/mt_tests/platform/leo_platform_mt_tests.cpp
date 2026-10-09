@@ -6,7 +6,7 @@
  */
 
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
@@ -37,7 +37,7 @@ struct GetPlatformIDsMtTests : public Test<OclFixture> {
     std::unique_ptr<VariableBackup<decltype(platformsImpl)>> platformsImplBackup;
 };
 
-TEST_F(GetPlatformIDsMtTests, givenPlatformsMutexTakenWhenGetPlatformIDsIsCalledOnAnotherThreadThenItWaitsForTheMutex) {
+TEST_F_DEFAULT(GetPlatformIDsMtTests, givenPlatformsMutexTakenWhenGetPlatformIDsIsCalledOnAnotherThreadThenItWaitsForTheMutex) {
     std::atomic<bool> threadStarted{false};
     std::atomic<bool> callCompleted{false};
     cl_uint numPlatforms = 0;

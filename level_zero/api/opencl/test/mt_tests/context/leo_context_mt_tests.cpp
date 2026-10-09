@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
@@ -37,7 +37,7 @@ struct LeoContextMtTest : public Test<OclFixture> {
     std::unique_ptr<Context> leoContext;
 };
 
-TEST_F(LeoContextMtTest, givenConcurrentRequestsForInternalCmdListsWhenGettingThemThenEachIsCreatedOnceAndAllThreadsGetTheSameHandle) {
+TEST_F_DEFAULT(LeoContextMtTest, givenConcurrentRequestsForInternalCmdListsWhenGettingThemThenEachIsCreatedOnceAndAllThreadsGetTheSameHandle) {
     CommandListCreateImmediateHook createImmediateHook;
     constexpr size_t numThreads = 8u;
 

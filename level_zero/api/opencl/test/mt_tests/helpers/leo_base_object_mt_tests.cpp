@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
@@ -26,7 +26,7 @@ namespace ult {
 
 using BaseObjectMtTests = Test<OclFixture>;
 
-TEST_F(BaseObjectMtTests, givenOwnershipHeldWhenAnotherThreadTakesItThenItWaitsUntilTheLockIsReleased) {
+TEST_F_DEFAULT(BaseObjectMtTests, givenOwnershipHeldWhenAnotherThreadTakesItThenItWaitsUntilTheLockIsReleased) {
     std::promise<void> threadStarted;
     std::promise<void> ownershipTaken;
     auto threadStartedFuture = threadStarted.get_future();
@@ -57,7 +57,7 @@ TEST_F(BaseObjectMtTests, givenOwnershipHeldWhenAnotherThreadTakesItThenItWaitsU
     EXPECT_TRUE(takenAfterRelease);
 }
 
-TEST_F(BaseObjectMtTests, givenOwnershipOfOneObjectWhenAnotherObjectIsLockedOnAnotherThreadThenItIsNotBlocked) {
+TEST_F_DEFAULT(BaseObjectMtTests, givenOwnershipOfOneObjectWhenAnotherObjectIsLockedOnAnotherThreadThenItIsNotBlocked) {
     auto otherPlatform = std::make_unique<Platform>(driverHandle->toHandle());
 
     auto lock = platform->takeOwnership();
@@ -72,7 +72,7 @@ TEST_F(BaseObjectMtTests, givenOwnershipOfOneObjectWhenAnotherObjectIsLockedOnAn
     EXPECT_TRUE(ownershipTaken.load());
 }
 
-TEST_F(BaseObjectMtTests, givenConcurrentCastToObjectWhileOwnershipIsHeldThenEveryThreadRecoversTheSameObject) {
+TEST_F_DEFAULT(BaseObjectMtTests, givenConcurrentCastToObjectWhileOwnershipIsHeldThenEveryThreadRecoversTheSameObject) {
     constexpr uint32_t numThreads = 4u;
     cl_platform_id clPlatform = platform;
 
