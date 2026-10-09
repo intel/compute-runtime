@@ -9,6 +9,6 @@
 
 namespace L0 {
 namespace ult {
-HWTEST_EXCLUDE_PRODUCT(AUBVariableRegisterPerThreadL0Xe3p, givenZeOptRegisterFileSizeOptionWhenExecutingKernelThenCorrectValuesAreReturned, IGFX_NVL);
+HWTEST_EXCLUDE_PRODUCT(AUBVariableRegisterPerThreadL0, givenZeOptRegisterFileSizeOptionWhenExecutingKernelThenCorrectValuesAreReturned_IsAtLeastXe3Core, IGFX_NVL);
 }
 } // namespace L0

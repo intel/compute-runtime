@@ -226,41 +226,45 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "test_get_work_dim";
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernel));
-    for (auto i = 0u; i < arrayCount<>(testData); i++) {
+
+    constexpr uint8_t size = sizeof(uint32_t);
+    const auto testCount = arrayCount<>(testData);
+    std::vector<void *> dispatchTraitsBuffers(testCount, nullptr);
+    std::vector<void *> outBuffers(testCount, nullptr);
+    for (auto i = 0u; i < testCount; i++) {
         std::array<uint32_t, 3> groupSize;
         std::array<uint32_t, 3> groupCount;
         uint32_t expectedWorkDim;
 
         std::tie(groupSize, groupCount, expectedWorkDim) = testData[i];
 
-        uint8_t size = sizeof(uint32_t);
+        dispatchTraitsBuffers[i] = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_group_count_t), unifiedMemoryProperties);
+        outBuffers[i] = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 
-        auto pDispatchTraits = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_group_count_t), unifiedMemoryProperties);
+        memset(outBuffers[i], 0, size);
 
-        auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-
-        memset(outBuffer, 0, size);
-
-        ze_group_count_t &dispatchTraits = *reinterpret_cast<ze_group_count_t *>(pDispatchTraits);
+        ze_group_count_t &dispatchTraits = *reinterpret_cast<ze_group_count_t *>(dispatchTraitsBuffers[i]);
         dispatchTraits.groupCountX = groupCount[0];
         dispatchTraits.groupCountY = groupCount[1];
         dispatchTraits.groupCountZ = groupCount[2];
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &outBuffer));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &outBuffers[i]));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel, groupSize[0], groupSize[1], groupSize[2]));
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
-        commandList->close();
+    }
+    commandList->close();
 
-        CommandListExecutionInternalOptions internalOptions = {};
-        pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
-        pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
+    CommandListExecutionInternalOptions internalOptions = {};
+    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
+    pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
-        EXPECT_TRUE(csr->expectMemory(outBuffer, &expectedWorkDim, size, aub_stream::CompareOperationValues::CompareEqual));
+    for (auto i = 0u; i < testCount; i++) {
+        const auto expectedWorkDim = std::get<2>(testData[i]);
+        EXPECT_TRUE(csr->expectMemory(outBuffers[i], &expectedWorkDim, size, aub_stream::CompareOperationValues::CompareEqual));
 
-        driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer);
-        driverHandle->svmAllocsManager->freeSVMAlloc(pDispatchTraits);
-        commandList->reset();
+        driverHandle->svmAllocsManager->freeSVMAlloc(outBuffers[i]);
+        driverHandle->svmAllocsManager->freeSVMAlloc(dispatchTraitsBuffers[i]);
     }
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
@@ -350,6 +354,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
         debugManager.flags.SplitBcsRequiredTileCount.set(1);
         debugManager.flags.SplitBcsRequiredEnginesCount.set(numEnabledEngines);
         debugManager.flags.SplitBcsMask.set(bcsMaskValue);
+        debugManager.flags.SplitBcsSize.set(64);
         debugManager.flags.SplitBcsTransferDirectionMask.set(~(1 << static_cast<int32_t>(TransferDirection::localToLocal)));
         debugManager.flags.ContextGroupSize.set(0);
 
