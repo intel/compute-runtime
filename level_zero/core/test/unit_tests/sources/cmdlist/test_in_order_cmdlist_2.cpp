@@ -18,15 +18,55 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/internal/l0_event.h"
+#include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
 #include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
 namespace ult {
 using CopyOffloadInOrderTests = CopyOffloadInOrderFixture;
+
+HWTEST2_F(CopyOffloadInOrderTests, givenImmCmdListWhenGraphIsInstantiatedThenGraphCmdListsInheritCopyOffload, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(0);
+
+    const bool copyOffloadSupported = !device->getGfxCoreHelper().crossEngineCacheFlushRequired();
+
+    for (bool withOffload : {false, true}) {
+        const bool expectedOffload = withOffload && copyOffloadSupported;
+        ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+        queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER | (withOffload ? ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT : 0);
+        queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+        ze_command_list_handle_t cmdListHandle = nullptr;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &cmdListHandle));
+        auto immCmdList = CommandList::fromHandle(cmdListHandle);
+        ASSERT_EQ(expectedOffload, immCmdList->isCopyOffloadEnabled());
+        EXPECT_EQ(expectedOffload, NEO::isValueSet(immCmdList->getCmdListFlags(), ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT));
+
+        {
+            MockGraph graph(context, true);
+            ze_graph_handle_t graphHandle = graph.toHandle();
+            ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr));
+            ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopy(cmdListHandle, &copyData1, &copyData2, sizeof(copyData1), nullptr, 0, nullptr));
+            ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(cmdListHandle, &graphHandle, nullptr));
+
+            GraphInstatiateSettings settings{nullptr, false};
+            MockExecutableGraph execGraph;
+            ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(graph, settings));
+            ASSERT_NE(0u, execGraph.myCommandLists.size());
+            for (auto &graphCmdList : execGraph.myCommandLists) {
+                EXPECT_FALSE(graphCmdList->isImmediateType());
+                EXPECT_EQ(expectedOffload, graphCmdList->isCopyOffloadEnabled());
+            }
+        }
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdListHandle));
+    }
+}
 
 template <typename FamilyType>
 static void verifyInOrderCounterUpdate(WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> &list, NEO::GmmHelper &gmmHelper, size_t offset, bool atomicSignalling) {

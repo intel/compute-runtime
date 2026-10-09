@@ -662,6 +662,9 @@ CommandList *CommandList::createImmediate(Device *device,
                                                      device->getL0GfxCoreHelper().isCopyOffloadForOutOfOrderImmediateCmdListSupported();
     const bool cmdListSupportsCopyOffload = inOrderOrOutOfOrderOffloadSupported && !gfxCoreHelper.crossEngineCacheFlushRequired() && isBcsPreferredForCopyOffload;
     commandList->copyOffloadHintRequested = (NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && cmdListSupportsCopyOffload;
+    if (commandList->copyOffloadHintRequested) {
+        commandList->flags |= ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT;
+    }
 
     if (csr) {
         commandList->preassignedImmediateCsr = csr;
