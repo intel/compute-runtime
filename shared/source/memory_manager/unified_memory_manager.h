@@ -52,7 +52,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
         this->allocId = svmAllocData.allocId;
         this->pageSizeForAlignment = svmAllocData.pageSizeForAlignment;
         this->isImportedAllocation = svmAllocData.isImportedAllocation;
-        this->isExportedAllocation = svmAllocData.isExportedAllocation;
+        this->isExportedAllocation = svmAllocData.isExportedAllocation.load();
         this->isInternalAllocation = svmAllocData.isInternalAllocation;
         this->isExternalMemmapAllocation = svmAllocData.isExternalMemmapAllocation;
         for (auto allocation : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
@@ -75,7 +75,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;
     bool isImportedAllocation = false;
-    bool isExportedAllocation = false;
+    std::atomic<bool> isExportedAllocation = false;
     bool isExternalMemmapAllocation = false;
     std::vector<MemFreeCallback> memFreeCallbacks;
     void setAllocId(uint32_t id) {
