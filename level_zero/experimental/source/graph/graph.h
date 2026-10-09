@@ -79,6 +79,7 @@ struct VisitContext;
 struct ForkInfo {
     CapturedCommandId forkSignalCommandId = 0;
     ze_event_handle_t forkEvent = nullptr;
+    bool forkEventExternal = false;
 };
 
 struct ForkJoinInfo {
@@ -87,6 +88,8 @@ struct ForkJoinInfo {
     CapturedCommandId joinSignalCommandId = 0; // child
     ze_event_handle_t forkEvent = nullptr;
     ze_event_handle_t joinEvent = nullptr;
+    bool forkEventExternal = false;
+    bool joinEventExternal = false;
     Graph *forkDestiny = nullptr;  // child
     Graph *joiningGraph = nullptr; // graph that owns joinWaitCommandId (the command list that joined the fork)
 };
@@ -224,6 +227,7 @@ struct Graph : _ze_graph_handle_t {
           preallocated(preallocated) {
         if (orderedCommands.empty()) {
             orderedCommands = WeaklyShared<OrderedCommandsRegistry>(new OrderedCommandsRegistry);
+            internalEvents = std::make_shared<GraphInternalEvents>();
         }
         enabledGraphs();
     }
@@ -281,10 +285,6 @@ struct Graph : _ze_graph_handle_t {
         return resolvedJoins;
     }
 
-    const std::unordered_map<L0::Event *, CapturedCommandId> &getRecordedSignals() const {
-        return recordedSignals;
-    }
-
     const std::unordered_map<L0::CommandList *, ForkInfo> &getUnjoinedForks() const {
         return unjoinedForks;
     }
@@ -307,6 +307,14 @@ struct Graph : _ze_graph_handle_t {
 
     uint64_t getId() const {
         return getRootGraph()->id;
+    }
+
+    GraphInternalEvents &getInternalEvents() {
+        return *getRootGraph()->internalEvents;
+    }
+
+    const GraphInternalEvents &getInternalEvents() const {
+        return *getRootGraph()->internalEvents;
     }
 
     struct CaptureTargetDesc {
@@ -365,6 +373,7 @@ struct Graph : _ze_graph_handle_t {
 
     void tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent);
     void forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent);
+    ze_result_t addInternalEventForNextCommand(L0::Event &event);
     void registerSignallingEventFromPreviousCommand(L0::Event &ev);
     ClosureExternalStorage &getExternalStorage() {
         return recordedApiCommands.externalStorage;
@@ -459,7 +468,6 @@ struct Graph : _ze_graph_handle_t {
     void setCaptureTargetRecursively(bool attach);
     void setRecordedSignalsRecursively(bool attach);
     void unregisterSignallingEvents();
-    void markSignallingEventsAsGraphInternal();
 
     RecordedApiCommands recordedApiCommands;
     CaptureTargetDesc captureTargetDesc;
@@ -467,7 +475,7 @@ struct Graph : _ze_graph_handle_t {
     std::vector<OrderedCommandsSegment> segments;
     StackVec<Graph *, 16> subGraphs;
 
-    std::unordered_map<L0::Event *, CapturedCommandId> recordedSignals;
+    std::unordered_map<ze_event_handle_t, CapturedCommandId> recordedSignals;
     std::unordered_map<L0::CommandList *, ForkInfo> unjoinedForks;
     std::unordered_map<L0::CommandList *, ForkJoinInfo> potentialJoins; // keyed by forked command list, a single fork event can be awaited by many command lists
     std::unordered_map<Graph *, ForkJoinInfo> resolvedJoins;
@@ -481,6 +489,7 @@ struct Graph : _ze_graph_handle_t {
     const uint64_t id = getNextGraphId();
 
     WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
+    std::shared_ptr<GraphInternalEvents> internalEvents;
 
     struct DestructorCallbackEntry {
         zex_mem_graph_free_callback_fn_t pfnCallback;
@@ -552,6 +561,15 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    if (signalEvent) {
+        if (getCommandsGraphExternalSignalFlag<api>(apiArgs...)) {
+            L0::Event::fromHandle(signalEvent)->setApiRequiredGraphExternalEvent(true);
+        }
+        if (auto ret = graphCaptureTarget->addInternalEventForNextCommand(*L0::Event::fromHandle(signalEvent)); ZE_RESULT_SUCCESS != ret) {
+            return ret;
+        }
     }
 
     auto ret = graphCaptureTarget->capture<api>(apiArgs...);
@@ -651,14 +669,6 @@ struct ExecGraphBuilder final {
         return {std::move(this->trailingEvents)};
     }
 
-    GraphInternalEvents &getInternalEvents() {
-        return internalEvents;
-    }
-
-    GraphInternalEvents releaseInternalEvents() {
-        return {std::move(this->internalEvents)};
-    }
-
   protected:
     void createEventPoolForTrailingEvents(size_t numEvents);
     L0::Event *createTrailingEvent();
@@ -669,7 +679,6 @@ struct ExecGraphBuilder final {
     std::unordered_map<const Graph *, ExecSubGraphBuilder> subgraphs;
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;
-    GraphInternalEvents internalEvents;
 };
 
 struct ExecutableGraph : _ze_executable_graph_handle_t {
@@ -720,7 +729,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     }
 
     const GraphInternalEvents &getInternalEvents() const {
-        return internalEvents;
+        return src->getInternalEvents();
     }
 
     bool segmentRequiresSeperateSubmission(GraphCommandId segmentStart) const {
@@ -759,8 +768,6 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     CountersCrossSyncContainer internalCountersCrossSyncs;
     PatchPreambleDataContainer graphWidePatchPreambleCrossSync;
     ExecutionSegmentImmediateCountersCrossSyncList graphWideImmediateCountersCrossSyncs;
-
-    GraphInternalEvents internalEvents;
 
     bool usePatchingPreamble = true;
     bool mutableExecGraph = false;

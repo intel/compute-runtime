@@ -21,6 +21,7 @@
 #include "level_zero/zet_api.h"
 
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <span>
 #include <string>
@@ -266,17 +267,22 @@ struct ExternalCbEventInfoContainer {
     PatchPreambleDataContainer executorStorage;
 };
 
+struct GraphInternalEventEntry {
+    L0::Event *internalEvent = nullptr;
+    L0::CommandList *signalFrom = nullptr;
+};
+
 class GraphInternalEvents {
   public:
     GraphInternalEvents() = default;
     GraphInternalEvents(const GraphInternalEvents &) = delete;
     GraphInternalEvents &operator=(const GraphInternalEvents &) = delete;
-    GraphInternalEvents(GraphInternalEvents &&) = default;
-    GraphInternalEvents &operator=(GraphInternalEvents &&) = default;
 
     ~GraphInternalEvents() {
-        for (const auto &entry : originalToInternal) {
-            entry.second->destroy();
+        for (const auto &entry : entries) {
+            if (entry.second.internalEvent) {
+                entry.second.internalEvent->destroy();
+            }
         }
     }
 
@@ -296,26 +302,49 @@ class GraphInternalEvents {
 
     ze_result_t addInternalEvent(L0::Event *originalEvent, ze_context_handle_t hContext);
 
+    void unbindInternalEvents() {
+        std::lock_guard lock(entriesMutex);
+        for (const auto &entry : entries) {
+            if (entry.second.internalEvent) {
+                entry.second.internalEvent->unsetInOrderExecInfo();
+            }
+        }
+    }
+
+    GraphInternalEventEntry &getEntry(ze_event_handle_t hOriginalEvent) {
+        std::lock_guard lock(entriesMutex);
+        return entries[hOriginalEvent];
+    }
+
+    void setSignalFrom(ze_event_handle_t hOriginalEvent, L0::CommandList *signalFrom) {
+        std::lock_guard lock(entriesMutex);
+        auto it = entries.find(hOriginalEvent);
+        if (it != entries.end()) {
+            it->second.signalFrom = signalFrom;
+        }
+    }
+
     L0::Event *getInternal(L0::Event *originalEvent) const {
-        auto it = originalToInternal.find(originalEvent);
-        if (it == originalToInternal.end()) {
+        auto it = entries.find(originalEvent);
+        if (it == entries.end()) {
             return nullptr;
         }
 
-        return it->second;
+        return it->second.internalEvent;
     }
 
     ze_event_handle_t getInternal(ze_event_handle_t hOriginalEvent) const {
-        if (nullptr == hOriginalEvent) {
-            return nullptr;
+        auto it = entries.find(hOriginalEvent);
+        if ((it == entries.end()) || (nullptr == it->second.internalEvent)) {
+            return hOriginalEvent;
         }
 
-        auto *internalEvent = getInternal(L0::Event::fromHandle(hOriginalEvent));
-        return (nullptr == internalEvent) ? hOriginalEvent : internalEvent->toHandle();
+        return it->second.internalEvent->toHandle();
     }
 
   protected:
-    std::unordered_map<L0::Event *, L0::Event *> originalToInternal;
+    std::mutex entriesMutex;
+    std::unordered_map<ze_event_handle_t, GraphInternalEventEntry> entries;
 };
 
 using SubstitutedWaitEvents = StackVec<ze_event_handle_t, 8>;
@@ -572,6 +601,21 @@ inline bool getCommandsGraphExternalWaitFlag(TArgs... args) {
 template <CaptureApi api, typename... TArgs>
     requires(api != CaptureApi::zeCommandListAppendWaitOnEventsWithParameters)
 inline bool getCommandsGraphExternalWaitFlag(TArgs... args) {
+    return false;
+}
+
+bool getGraphExternalSignalEventFlagFromPNext(const void *pNext);
+
+template <CaptureApi api, typename... TArgs>
+    requires(api == CaptureApi::zeCommandListAppendSignalEventWithParameters)
+inline bool getCommandsGraphExternalSignalFlag(TArgs... args) {
+    typename Closure<api>::ApiArgs structuredApiArgs{args...};
+    return getGraphExternalSignalEventFlagFromPNext(structuredApiArgs.pNext);
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires(api != CaptureApi::zeCommandListAppendSignalEventWithParameters)
+inline bool getCommandsGraphExternalSignalFlag(TArgs... args) {
     return false;
 }
 

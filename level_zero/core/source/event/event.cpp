@@ -1366,6 +1366,11 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     return ZE_RESULT_SUCCESS;
 }
 
+CommandList *Event::getRecordedSignalFrom() const {
+    auto entry = this->recordedSignalEntry.lock();
+    return entry ? entry->signalFrom : nullptr;
+}
+
 bool Event::isBeingUsedInActiveGraphRecording(const Event *event) {
     return nullptr != event->getRecordedSignalFrom();
 }

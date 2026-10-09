@@ -54,6 +54,7 @@ class DriverHandle;
 struct Device;
 struct Kernel;
 struct CommandList;
+struct GraphInternalEventEntry;
 
 #pragma pack(1)
 struct IpcEventPoolData {
@@ -407,12 +408,10 @@ struct Event : _ze_event_handle_t {
 
     static bool isAggregatedEvent(const Event *event) { return (event && event->getInOrderIncrementValue(1) > 0); }
 
-    MOCKABLE_VIRTUAL CommandList *getRecordedSignalFrom() const {
-        return this->recordedSignalFrom;
-    }
+    MOCKABLE_VIRTUAL CommandList *getRecordedSignalFrom() const;
 
-    void setRecordedSignalFrom(CommandList *cmdlist) {
-        this->recordedSignalFrom = cmdlist;
+    void setRecordedSignalEntry(std::weak_ptr<const GraphInternalEventEntry> entry) {
+        this->recordedSignalEntry = std::move(entry);
     }
 
     void setCbEventWithProfiling(bool value) {
@@ -490,7 +489,7 @@ struct Event : _ze_event_handle_t {
     static const uint64_t completionTimeoutMs;
 
     EventPool *eventPool = nullptr;
-    CommandList *recordedSignalFrom = nullptr;
+    std::weak_ptr<const GraphInternalEventEntry> recordedSignalEntry;
 
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 

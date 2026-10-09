@@ -303,27 +303,27 @@ GraphDotExporter::InternalCommandsSet GraphDotExporter::collectInternalDependenc
 
     const auto &commands = graph.getCapturedCommands();
     std::unordered_map<CapturedCommandId, std::vector<ze_event_handle_t>> internalDependencyEvents;
-    auto trackDependencyEvent = [&internalDependencyEvents, &commands](CapturedCommandId cmdId, ze_event_handle_t dependencyEvent) {
+    auto trackDependencyEvent = [&internalDependencyEvents, &commands](CapturedCommandId cmdId, ze_event_handle_t dependencyEvent, bool dependencyEventExternal) {
         if (cmdId >= commands.size()) {
             return;
         }
-        if ((nullptr == dependencyEvent) || L0::Event::fromHandle(dependencyEvent)->isExternalEvent()) {
+        if ((nullptr == dependencyEvent) || dependencyEventExternal) {
             return;
         }
         internalDependencyEvents[cmdId].push_back(dependencyEvent);
     };
 
     for (const auto &[_, forkJoinInfo] : graph.getJoinedForks()) {
-        trackDependencyEvent(forkJoinInfo.forkSignalCommandId, forkJoinInfo.forkEvent);
+        trackDependencyEvent(forkJoinInfo.forkSignalCommandId, forkJoinInfo.forkEvent, forkJoinInfo.forkEventExternal);
         // The join-wait command belongs to the joining graph, which for a transitive join is
         // another graph (ancestor or sibling) rather than this fork owner; only hide it in its
         // owning graph.
         if ((nullptr == forkJoinInfo.joiningGraph) || (forkJoinInfo.joiningGraph == &graph)) {
-            trackDependencyEvent(forkJoinInfo.joinWaitCommandId, forkJoinInfo.joinEvent);
+            trackDependencyEvent(forkJoinInfo.joinWaitCommandId, forkJoinInfo.joinEvent, forkJoinInfo.joinEventExternal);
         }
     }
     for (const auto &[_, forkInfo] : graph.getUnjoinedForks()) {
-        trackDependencyEvent(forkInfo.forkSignalCommandId, forkInfo.forkEvent);
+        trackDependencyEvent(forkInfo.forkSignalCommandId, forkInfo.forkEvent, forkInfo.forkEventExternal);
     }
 
     // operations which link this subgraph with its parent are tracked by the parent
@@ -334,14 +334,14 @@ GraphDotExporter::InternalCommandsSet GraphDotExporter::collectInternalDependenc
             if (forkJoinInfo.forkDestiny != &graph) {
                 continue;
             }
-            trackDependencyEvent(forkWaitCommandId, forkJoinInfo.forkEvent);
-            trackDependencyEvent(forkJoinInfo.joinSignalCommandId, forkJoinInfo.joinEvent);
+            trackDependencyEvent(forkWaitCommandId, forkJoinInfo.forkEvent, forkJoinInfo.forkEventExternal);
+            trackDependencyEvent(forkJoinInfo.joinSignalCommandId, forkJoinInfo.joinEvent, forkJoinInfo.joinEventExternal);
         }
         for (const auto &[cmdList, forkInfo] : parentGraph->getUnjoinedForks()) {
             if (cmdList != graph.getExecutionTarget()) {
                 continue;
             }
-            trackDependencyEvent(forkWaitCommandId, forkInfo.forkEvent);
+            trackDependencyEvent(forkWaitCommandId, forkInfo.forkEvent, forkInfo.forkEventExternal);
         }
     }
 

@@ -278,8 +278,9 @@ void Graph::setCaptureTargetRecursively(bool attach) {
 
 void Graph::setRecordedSignalsRecursively(bool attach) {
     auto *recordedSignalFrom = attach ? this->captureSrc : nullptr;
+    auto &internalEvents = this->getInternalEvents();
     for (const auto &recordedSignal : this->recordedSignals) {
-        recordedSignal.first->setRecordedSignalFrom(recordedSignalFrom);
+        internalEvents.setSignalFrom(recordedSignal.first, recordedSignalFrom);
     }
 
     for (auto &subGraph : this->subGraphs) {
@@ -288,9 +289,6 @@ void Graph::setRecordedSignalsRecursively(bool attach) {
 }
 
 Graph::~Graph() {
-    if (false == this->wasCapturingStopped) {
-        this->unregisterSignallingEvents();
-    }
     for (auto *sg : subGraphs) {
         if (false == sg->wasPreallocated()) {
             delete sg;
@@ -374,7 +372,6 @@ void Graph::stopCapturing() {
     if (nullptr == this->captureSrc) {
         return;
     }
-    this->markSignallingEventsAsGraphInternal();
     this->unregisterSignallingEvents();
     this->captureSrc->releaseGraphCaptureTarget();
     this->captureSrc = nullptr;
@@ -458,11 +455,13 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
     ForkJoinInfo forkJoinInfo = {};
     forkJoinInfo.forkSignalCommandId = forkInfo->second.forkSignalCommandId;
     forkJoinInfo.forkEvent = forkInfo->second.forkEvent;
+    forkJoinInfo.forkEventExternal = forkInfo->second.forkEventExternal;
     forkJoinInfo.joinWaitCommandId = static_cast<CapturedCommandId>(this->recordedApiCommands.size());
     forkJoinInfo.joinEvent = &joinEvent;
+    forkJoinInfo.joinEventExternal = joinEvent.isExternalEvent();
     forkJoinInfo.joiningGraph = this;
     forkJoinInfo.forkDestiny = childGraph;
-    auto joinRecordedSignal = forkJoinInfo.forkDestiny->recordedSignals.find(&joinEvent);
+    auto joinRecordedSignal = forkJoinInfo.forkDestiny->recordedSignals.find(joinEvent.toHandle());
     UNRECOVERABLE_IF(forkJoinInfo.forkDestiny->recordedSignals.end() == joinRecordedSignal);
     forkJoinInfo.joinSignalCommandId = joinRecordedSignal->second;
     forkOwner->potentialJoins[&childCmdList] = forkJoinInfo;
@@ -476,26 +475,30 @@ void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &fork
     childCmdList.setGraphCaptureTarget(child);
     this->subGraphs.push_back(child);
 
-    auto forkEventInfo = this->recordedSignals.find(&forkEvent);
+    auto forkEventInfo = this->recordedSignals.find(forkEvent.toHandle());
     UNRECOVERABLE_IF(this->recordedSignals.end() == forkEventInfo);
     this->unjoinedForks[&childCmdList] = ForkInfo{.forkSignalCommandId = forkEventInfo->second,
-                                                  .forkEvent = &forkEvent};
+                                                  .forkEvent = &forkEvent,
+                                                  .forkEventExternal = forkEvent.isExternalEvent()};
 }
 
-void Graph::registerSignallingEventFromPreviousCommand(L0::Event &ev) {
-    ev.setRecordedSignalFrom(this->captureSrc);
-    this->recordedSignals[&ev] = static_cast<CapturedCommandId>(this->recordedApiCommands.size() - 1);
+ze_result_t Graph::addInternalEventForNextCommand(L0::Event &event) {
+    return this->getInternalEvents().addInternalEvent(&event, this->ctx->toHandle());
+}
+
+void Graph::registerSignallingEventFromPreviousCommand(L0::Event &event) {
+    const auto &rootInternalEvents = this->getRootGraph()->internalEvents;
+    auto &entry = rootInternalEvents->getEntry(event.toHandle());
+    entry.signalFrom = this->captureSrc;
+    event.setRecordedSignalEntry(std::shared_ptr<const GraphInternalEventEntry>(rootInternalEvents, &entry));
+    event.setIsSignalledAsGraphInternalEvent(true);
+    this->recordedSignals[event.toHandle()] = static_cast<CapturedCommandId>(this->recordedApiCommands.size() - 1);
 }
 
 void Graph::unregisterSignallingEvents() {
-    for (auto ev : this->recordedSignals) {
-        ev.first->setRecordedSignalFrom(nullptr);
-    }
-}
-
-void Graph::markSignallingEventsAsGraphInternal() {
-    for (auto &signal : this->recordedSignals) {
-        signal.first->setIsSignalledAsGraphInternalEvent(true);
+    auto &internalEvents = this->getInternalEvents();
+    for (const auto &recordedSignal : this->recordedSignals) {
+        internalEvents.setSignalFrom(recordedSignal.first, nullptr);
     }
 }
 
@@ -512,15 +515,17 @@ inline L0::CommandList *resolveExecutionTargetForInstantiate(L0::CommandList *ex
 }
 
 ze_result_t GraphInternalEvents::addInternalEvent(L0::Event *originalEvent, ze_context_handle_t hContext) {
-    if ((nullptr == hContext) || (false == isInternalEventDependency(originalEvent)) || (nullptr != getInternal(originalEvent))) {
+    if (false == isInternalEventDependency(originalEvent)) {
         return ZE_RESULT_SUCCESS;
+    }
+    {
+        std::lock_guard lock(entriesMutex);
+        if (nullptr != getInternal(originalEvent)) {
+            return ZE_RESULT_SUCCESS;
+        }
     }
 
     auto *device = originalEvent->getDevice();
-    if (nullptr == device) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
     ze_event_counter_based_desc_t internalDesc = {
         .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
         .flags = originalEvent->getCounterBasedFlags()};
@@ -538,24 +543,9 @@ ze_result_t GraphInternalEvents::addInternalEvent(L0::Event *originalEvent, ze_c
         return result;
     }
 
-    auto *internalEvent = L0::Event::fromHandle(hInternalEvent);
-    this->originalToInternal[originalEvent] = internalEvent;
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t cloneEventsToInternal(GraphInternalEvents &internalEvents, const Graph &src) {
-    auto hContext = src.getContext() ? src.getContext()->toHandle() : nullptr;
-    for (const auto &recordedSignal : src.getRecordedSignals()) {
-        auto result = internalEvents.addInternalEvent(recordedSignal.first, hContext);
-        if (ZE_RESULT_SUCCESS != result) {
-            return result;
-        }
-    }
-    for (const auto *subGraph : src.getSubgraphs()) {
-        auto result = cloneEventsToInternal(internalEvents, *subGraph);
-        if (ZE_RESULT_SUCCESS != result) {
-            return result;
-        }
+    {
+        std::lock_guard lock(entriesMutex);
+        this->entries[originalEvent].internalEvent = L0::Event::fromHandle(hInternalEvent);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1657,10 +1647,8 @@ void ExecGraphBuilder::finalize(const GraphInstatiateSettings &settings) {
 
 ze_result_t ExecutableGraph::instantiateFrom(Graph &rootSrc, const GraphInstatiateSettings &settings) {
     this->src = &rootSrc;
+    rootSrc.getInternalEvents().unbindInternalEvents();
     ExecGraphBuilder builder{rootSrc, *this};
-    if (auto err = cloneEventsToInternal(builder.getInternalEvents(), rootSrc); ZE_RESULT_SUCCESS != err) {
-        return err;
-    }
     const auto &allCommands = rootSrc.getOrderedCommands();
     for (const auto &segment : allCommands) {
         auto err = builder.getSubGraphBuilder(segment.subgraph).dst->instantiateFrom(segment, builder, settings);
@@ -1671,7 +1659,6 @@ ze_result_t ExecutableGraph::instantiateFrom(Graph &rootSrc, const GraphInstatia
     builder.finalize(settings);
     this->trailingEventsPool = builder.releaseTrailingEventsPool();
     this->trailingEvents = builder.releaseTrailingEvents();
-    this->internalEvents = builder.releaseInternalEvents();
     if (this->getExternalCbEventInfoContainer()->externalCbSignalEventsPresent()) {
         // prepare storage for command list and signal events
         this->getExternalCbEventInfoContainer()->finalizeExecutorContainer();
@@ -1694,7 +1681,7 @@ ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segme
 
     CbExternalEventInstantiateContext externalCbEventsContext{this->getExternalCbEventInfoContainer().get(),
                                                               this->executionTarget,
-                                                              &builder.getInternalEvents()};
+                                                              &builder.getRootSrc().getInternalEvents()};
 
     if (segment.empty() == false) {
         const auto &allCommands = src->getCapturedCommands();
@@ -2011,7 +1998,7 @@ bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents
             L0::Event::isAggregatedEvent(event) || (nullptr != event->getRecordedSignalFrom())) {
             continue;
         }
-        if (event->getInOrderExecEventHelper().isDataAssigned()) {
+        if (event->getInOrderExecEventHelper().isDataAssigned() || event->getIsSignalledAsGraphInternalEvent()) {
             return true;
         }
     }
@@ -2040,6 +2027,12 @@ bool getGraphExternalWaitEventFlagFromPNext(const void *pNext) {
     [[maybe_unused]] auto ret = L0::CommandList::obtainWaitEventParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), waitEventsParameters);
     DEBUG_BREAK_IF(ret != ZE_RESULT_SUCCESS);
     return waitEventsParameters.apiRequestForGraphExternal;
+}
+
+bool getGraphExternalSignalEventFlagFromPNext(const void *pNext) {
+    CmdListSignalEventParameters signalEventParameters = {};
+    L0::CommandList::obtainSignalEventParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), signalEventParameters);
+    return signalEventParameters.apiRequestForGraphExternal;
 }
 
 struct VisitContext {
