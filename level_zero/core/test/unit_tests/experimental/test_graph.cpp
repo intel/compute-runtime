@@ -1315,6 +1315,50 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPrese
     EXPECT_EQ(expectedSequence[2], instantiatedSequence[2]);
 }
 
+TEST_F(GraphInstantiation, GivenForkedGraphWhenVisitingWithReappendTargetCommandListThenOnlyRootLevelCommandsAreReappendedToTarget) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.device = this->device;
+    auto subCmdListHandle = subCmdlist.toHandle();
+    MockGraphCmdListWithContext targetCmdlist{&ctx};
+    targetCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    Mock<Event> joinEvent;
+    ze_event_handle_t forkEventHandle = forkEvent.toHandle();
+    ze_event_handle_t joinEventHandle = joinEvent.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdListHandle, joinEventHandle, 1U, &forkEventHandle);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 1U, &joinEventHandle);
+    srcGraph.stopCapturing();
+    cmdlist.setGraphCaptureTarget(nullptr);
+    subCmdlist.setGraphCaptureTarget(nullptr);
+    ASSERT_EQ(1U, srcGraph.getSubgraphs().size());
+
+    for (bool explicitTarget : {false, true}) {
+        cmdlist.appendBarrierCalled = 0;
+        subCmdlist.appendBarrierCalled = 0;
+        targetCmdlist.appendBarrierCalled = 0;
+
+        ze_visit_ext_desc_t desc{ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
+        desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
+        desc.hReappendTargetCmdList = explicitTarget ? targetCmdlist.toHandle() : nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, srcGraph.visit(&desc));
+
+        EXPECT_EQ(explicitTarget ? 0U : 2U, cmdlist.appendBarrierCalled);
+        EXPECT_EQ(explicitTarget ? 2U : 0U, targetCmdlist.appendBarrierCalled);
+        EXPECT_EQ(1U, subCmdlist.appendBarrierCalled);
+    }
+}
+
 TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecutableInterleavesParentAndChildCommandListBasedOnForks) {
     GraphsCleanupGuard graphCleanup;
 
@@ -7276,6 +7320,128 @@ TEST(GraphTestZeGraphVisitExt, GivenValidParametersThenForwardsToGraphVisitAndRe
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphVisitExt(graph.toHandle(), &desc));
     EXPECT_EQ(1u, graph.visitCalled);
     EXPECT_EQ(&desc, graph.passedDesc);
+}
+
+struct TestableGraphForEagerSubmit : public L0::Graph {
+    using L0::Graph::Graph;
+
+    ze_result_t visit(const ze_visit_ext_desc_t *desc) override {
+        ++visitCalled;
+        passedDesc = *desc;
+        return returnValue;
+    }
+
+    uint32_t visitCalled = 0;
+    ze_visit_ext_desc_t passedDesc{};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+};
+
+TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenAppendingGraphThenSourceGraphIsVisitedWithReappendToTargetCommandList) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GraphEagerSubmit.set(true);
+
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    MockExecutableGraph execGraph;
+    execGraph.src = &srcGraph;
+    Mock<CommandList> cmdlist;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExt(cmdlist.toHandle(), execGraph.toHandle(), nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(1u, srcGraph.visitCalled);
+    EXPECT_EQ(ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC, srcGraph.passedDesc.stype);
+    EXPECT_EQ(nullptr, srcGraph.passedDesc.pNext);
+    EXPECT_EQ(ZE_VISIT_EXT_DEFAULT_OP_REAPPEND, srcGraph.passedDesc.defaultOp);
+    EXPECT_EQ(cmdlist.toHandle(), srcGraph.passedDesc.hReappendTargetCmdList);
+    EXPECT_EQ(nullptr, srcGraph.passedDesc.beforeDefaultOpClb);
+    EXPECT_EQ(nullptr, srcGraph.passedDesc.afterDefaultOpClb);
+    EXPECT_EQ(0u, cmdlist.appendWaitOnEventsCalled);
+    EXPECT_EQ(0u, cmdlist.appendBarrierCalled);
+    EXPECT_EQ(0u, cmdlist.appendCommandListsCalled);
+}
+
+TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenAppendingGraphWithEventsThenWaitBeforeAndSignalAfterVisitingOnTargetCommandList) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GraphEagerSubmit.set(true);
+
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    MockExecutableGraph execGraph;
+    execGraph.src = &srcGraph;
+    Mock<CommandList> cmdlist;
+    Mock<Event> signalEvent;
+    Mock<Event> waitEvents[2];
+    ze_event_handle_t waitEventsList[2] = {waitEvents[0].toHandle(), waitEvents[1].toHandle()};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExt(cmdlist.toHandle(), execGraph.toHandle(), nullptr, signalEvent.toHandle(), 2, waitEventsList));
+    EXPECT_EQ(1u, srcGraph.visitCalled);
+    EXPECT_EQ(1u, cmdlist.appendWaitOnEventsCalled);
+    EXPECT_EQ(1u, cmdlist.appendBarrierCalled);
+    EXPECT_EQ(0u, cmdlist.appendCommandListsCalled);
+}
+
+TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenWaitOnEventsFailsThenGraphIsNotVisitedAndErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GraphEagerSubmit.set(true);
+
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    MockExecutableGraph execGraph;
+    execGraph.src = &srcGraph;
+    Mock<CommandList> cmdlist;
+    cmdlist.appendWaitOnEventsResult = ZE_RESULT_ERROR_DEVICE_LOST;
+    Mock<Event> signalEvent;
+    Mock<Event> waitEvent;
+    ze_event_handle_t hWaitEvent = waitEvent.toHandle();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::zeCommandListAppendGraphExt(cmdlist.toHandle(), execGraph.toHandle(), nullptr, signalEvent.toHandle(), 1, &hWaitEvent));
+    EXPECT_EQ(0u, srcGraph.visitCalled);
+    EXPECT_EQ(0u, cmdlist.appendBarrierCalled);
+}
+
+TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenVisitFailsThenSignalEventIsNotAppendedAndErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GraphEagerSubmit.set(true);
+
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    srcGraph.returnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    MockExecutableGraph execGraph;
+    execGraph.src = &srcGraph;
+    Mock<CommandList> cmdlist;
+    Mock<Event> signalEvent;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendGraphExt(cmdlist.toHandle(), execGraph.toHandle(), nullptr, signalEvent.toHandle(), 0, nullptr));
+    EXPECT_EQ(1u, srcGraph.visitCalled);
+    EXPECT_EQ(0u, cmdlist.appendBarrierCalled);
+}
+
+TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledAndNoSourceGraphWhenAppendingGraphThenExecutableGraphIsExecuted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GraphEagerSubmit.set(true);
+
+    GraphsCleanupGuard graphCleanup;
+    MockExecutableGraph execGraph;
+    Mock<CommandList> cmdlist;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExt(cmdlist.toHandle(), execGraph.toHandle(), nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(1u, cmdlist.appendBarrierCalled); // empty executable graph is executed as barrier
+}
+
+TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitDisabledWhenAppendingGraphThenSourceGraphIsNotVisitedAndExecutableGraphIsExecuted) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    MockExecutableGraph execGraph;
+    execGraph.src = &srcGraph;
+    Mock<CommandList> cmdlist;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExt(cmdlist.toHandle(), execGraph.toHandle(), nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(0u, srcGraph.visitCalled);
+    EXPECT_EQ(1u, cmdlist.appendBarrierCalled); // empty executable graph is executed as barrier
 }
 
 TEST(GraphTestVisit, GivenExternalCbEventsWhenReappendingThenPreserveEventsWithoutRequestingMutableCommands) {

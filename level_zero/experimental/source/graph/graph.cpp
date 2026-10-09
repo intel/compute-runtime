@@ -2256,6 +2256,10 @@ ze_result_t Graph::visit(const ze_visit_ext_desc_t *desc) {
     }
 
     for (auto &seg : *orderedCommands) {
+        // explicit reappend target applies only to root level recording, forks reappend to their original command lists
+        bool isRootLevelSegment = (seg.subgraph->getRootGraph() == seg.subgraph);
+        visitContext.hReappendTargetCmdList = isRootLevelSegment ? desc->hReappendTargetCmdList : nullptr;
+
         auto &allCommands = seg.subgraph->recordedApiCommands;
         for (CapturedCommandId cmdId = seg.subBegin; cmdId < seg.subBegin + seg.numCommands; ++cmdId) {
             auto result = allCommands.visit(cmdId, visitContext);

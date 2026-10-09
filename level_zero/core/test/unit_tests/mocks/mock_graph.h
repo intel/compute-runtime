@@ -33,6 +33,7 @@ struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::myOrderedSegments;
     using ExecutableGraph::patchPreambleBarrierCounter;
     using ExecutableGraph::segmentsCrossSync;
+    using ExecutableGraph::src;
     using ExecutableGraph::subGraphs;
     using ExecutableGraph::usePatchingPreamble;
 };

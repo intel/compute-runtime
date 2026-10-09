@@ -7,6 +7,10 @@
 
 #include "level_zero/api/core/ze_graph_api_entrypoints.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
+#include "level_zero/api/core/ze_barrier_api_entrypoints.h"
+#include "level_zero/api/core/ze_cmdlist_api_entrypoints.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/experimental/source/graph/graph.h"
@@ -148,6 +152,31 @@ ze_result_t ZE_APICALL zeGraphInstantiateExt(ze_graph_handle_t hGraph, const voi
     return ZE_RESULT_SUCCESS;
 }
 
+static ze_result_t executeGraphEagerly(ze_command_list_handle_t hCommandList, L0::Graph &sourceGraph,
+                                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (numWaitEvents > 0) {
+        auto ret = L0::zeCommandListAppendWaitOnEvents(hCommandList, numWaitEvents, phWaitEvents);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
+    }
+
+    // reappend recorded commands one by one - root level commands to target command list, forks to their original command lists
+    ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
+    visitDesc.hReappendTargetCmdList = hCommandList;
+    visitDesc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
+    auto ret = sourceGraph.visit(&visitDesc);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    if (nullptr != hSignalEvent) {
+        return L0::zeCommandListAppendBarrier(hCommandList, hSignalEvent, 0, nullptr);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ZE_APICALL zeCommandListAppendGraphExt(ze_command_list_handle_t hCommandList, ze_executable_graph_handle_t hGraph, const void *pNext,
                                                    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     if (nullptr != pNext) {
@@ -162,6 +191,13 @@ ze_result_t ZE_APICALL zeCommandListAppendGraphExt(ze_command_list_handle_t hCom
     auto graph = L0::ExecutableGraph::fromHandle(hGraph);
     if (nullptr == graph) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (NEO::debugManager.flags.GraphEagerSubmit.get()) {
+        auto *sourceGraph = graph->getSourceGraph();
+        if (nullptr != sourceGraph) {
+            return executeGraphEagerly(hCommandList, *sourceGraph, hSignalEvent, numWaitEvents, phWaitEvents);
+        }
     }
 
     return graph->execute(cmdList, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
