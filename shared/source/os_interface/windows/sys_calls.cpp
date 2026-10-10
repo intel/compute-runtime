@@ -282,6 +282,12 @@ BOOL getModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) 
 DWORD getModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     return ::GetModuleFileNameW(hModule, lpFilename, nSize);
 }
+BOOL getModuleHandleExA(DWORD dwFlags, LPCSTR lpModuleName, HMODULE *phModule) {
+    return ::GetModuleHandleExA(dwFlags, lpModuleName, phModule);
+}
+DWORD getModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize) {
+    return ::GetModuleFileNameA(hModule, lpFilename, nSize);
+}
 DWORD getFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle) {
     return ::GetFileVersionInfoSizeW(lptstrFilename, lpdwHandle);
 }

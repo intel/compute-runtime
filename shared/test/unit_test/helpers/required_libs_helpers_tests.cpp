@@ -25,8 +25,8 @@ TEST_F(RequiredLibsHelpersTest, givenRequiredLibPathWhenOptionalSearchPathsDefin
 
     const auto fakeOptionalPaths = std::to_array({"/fake1/path"sv, "/fake2/path"sv});
     MockRequiredLibsHelpers::optionalSearchPaths.reserve(fakeOptionalPaths.size());
-    MockRequiredLibsHelpers::optionalSearchPaths.push_back(fakeOptionalPaths[0]);
-    MockRequiredLibsHelpers::optionalSearchPaths.push_back(fakeOptionalPaths[1]);
+    MockRequiredLibsHelpers::optionalSearchPaths.emplace_back(fakeOptionalPaths[0]);
+    MockRequiredLibsHelpers::optionalSearchPaths.emplace_back(fakeOptionalPaths[1]);
 
     VariableBackup<FILE *> mockFopenReturnedBkp(&IoFunctions::mockFopenReturned, static_cast<FILE *>(nullptr));
 
@@ -50,8 +50,8 @@ TEST_F(RequiredLibsHelpersTest, givenRequiredLibPathWhenOptionalSearchPathsDoNot
 
     const auto fakeOptionalPaths = std::to_array({"/fake1/path"sv, "/fake2/path"sv});
     MockRequiredLibsHelpers::optionalSearchPaths.reserve(fakeOptionalPaths.size());
-    MockRequiredLibsHelpers::optionalSearchPaths.push_back(fakeOptionalPaths[0]);
-    MockRequiredLibsHelpers::optionalSearchPaths.push_back(fakeOptionalPaths[1]);
+    MockRequiredLibsHelpers::optionalSearchPaths.emplace_back(fakeOptionalPaths[0]);
+    MockRequiredLibsHelpers::optionalSearchPaths.emplace_back(fakeOptionalPaths[1]);
 
     const auto fakeDefaultPaths = std::to_array({"/default1/fake/path"sv, "/default2/fake/path"sv});
     MockRequiredLibsHelpers::defaultSearchPaths.reserve(2U);
@@ -105,8 +105,8 @@ TEST_F(RequiredLibsHelpersTest, givenRequiredLibPathWhenBinaryNotFoundInAnySearc
 
     const auto fakeOptionalPaths = std::to_array({"/fake1/path"sv, "/fake2/path"sv});
     MockRequiredLibsHelpers::optionalSearchPaths.reserve(fakeOptionalPaths.size());
-    MockRequiredLibsHelpers::optionalSearchPaths.push_back(fakeOptionalPaths[0]);
-    MockRequiredLibsHelpers::optionalSearchPaths.push_back(fakeOptionalPaths[1]);
+    MockRequiredLibsHelpers::optionalSearchPaths.emplace_back(fakeOptionalPaths[0]);
+    MockRequiredLibsHelpers::optionalSearchPaths.emplace_back(fakeOptionalPaths[1]);
 
     const auto fakeDefaultPaths = std::to_array({"/default1/fake/path"sv, "/default2/fake/path"sv});
     MockRequiredLibsHelpers::defaultSearchPaths.reserve(2U);

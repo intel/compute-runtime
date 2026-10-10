@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,9 @@
 
 namespace NEO {
 namespace Windows {
+
+extern "C" IMAGE_DOS_HEADER __ImageBase; // NOLINT(readability-identifier-naming)
+__inline HINSTANCE getModuleHINSTANCE() { return (HINSTANCE)&__ImageBase; }
 
 class OsLibrary : public NEO::OsLibrary, NEO::NonCopyableAndNonMovableClass {
   private:

@@ -178,7 +178,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     MOCKABLE_VIRTUAL Program *createRequiredLibProgram(const std::string &libName, cl_int &errcodeRet);
     MOCKABLE_VIRTUAL BuiltIn::Resource loadRequiredLibBinary(const std::string &dirPath, const std::string &fileName) const;
 
-    Lockable<std::vector<std::string_view>> requiredLibsOptionalSearchPaths;
+    Lockable<std::vector<std::string>> requiredLibsOptionalSearchPaths;
     Lockable<std::unordered_map<std::string, std::unique_ptr<Program>>> requiredLibsRegistry;
 };
 

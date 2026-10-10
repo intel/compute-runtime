@@ -11,6 +11,7 @@
 #include <array>
 #include <ranges>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -29,7 +30,7 @@ const std::span<const std::string_view> RequiredLibsHelpers::getDefaultBinarySea
     return fixedPaths;
 }
 
-const std::span<const std::string_view> RequiredLibsHelpers::getOptionalBinarySearchPaths(LockableSearchPaths &optionalPathsCache) {
+const std::span<const std::string> RequiredLibsHelpers::getOptionalBinarySearchPaths(LockableSearchPaths &optionalPathsCache) {
     auto lock = optionalPathsCache.lock();
 
     if (not optionalPathsCache->empty()) {
@@ -43,10 +44,13 @@ const std::span<const std::string_view> RequiredLibsHelpers::getOptionalBinarySe
     auto ldPathsView = std::string_view(ldLibraryPath);
 
     optionalPathsCache->reserve(std::ranges::count(ldPathsView, ':') + 1);
-    std::ranges::for_each(
-        ldPathsView | std::views::split(':'),
-        [&](auto &&sv) { optionalPathsCache->push_back(sv); },
-        [](auto &&rng) { return std::string_view(&*rng.begin(), std::ranges::distance(rng)); });
+    for (auto &&entry : ldPathsView | std::views::split(':')) {
+        const auto entrySize = static_cast<size_t>(std::ranges::distance(entry));
+        if (0 == entrySize) {
+            continue;
+        }
+        optionalPathsCache->emplace_back(&*entry.begin(), entrySize);
+    }
 
     return *optionalPathsCache;
 }

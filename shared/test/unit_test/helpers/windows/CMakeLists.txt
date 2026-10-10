@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ if(WIN32)
   target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/cpu_copy_helper_windows_tests.cpp)
   target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_windows_tests.cpp)
   target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/path_windows_tests.cpp)
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/required_libs_helpers_tests.cpp)
 
   add_subdirectories()
 endif()

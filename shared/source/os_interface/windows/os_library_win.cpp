@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,9 +42,6 @@ decltype(&LoadLibraryExA) OsLibrary::loadLibraryExA = LoadLibraryExA;
 decltype(&GetModuleFileNameA) OsLibrary::getModuleFileNameA = GetModuleFileNameA;
 decltype(&GetSystemDirectoryA) OsLibrary::getSystemDirectoryA = GetSystemDirectoryA;
 decltype(&FreeLibrary) OsLibrary::freeLibrary = FreeLibrary;
-
-extern "C" IMAGE_DOS_HEADER __ImageBase; // NOLINT(readability-identifier-naming)
-__inline HINSTANCE getModuleHINSTANCE() { return (HINSTANCE)&__ImageBase; }
 
 void OsLibrary::getLastErrorString(std::string *errorValue) {
     DWORD errorID = GetLastError();

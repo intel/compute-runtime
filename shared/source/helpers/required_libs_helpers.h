@@ -16,16 +16,17 @@
 #include <array>
 #include <ranges>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 
 namespace NEO {
 
 struct RequiredLibsHelpers {
-    using LockableSearchPaths = Lockable<std::vector<std::string_view>>;
+    using LockableSearchPaths = Lockable<std::vector<std::string>>;
 
     static const std::span<const std::string_view> getDefaultBinarySearchPaths();
-    static const std::span<const std::string_view> getOptionalBinarySearchPaths(LockableSearchPaths &optionalPathsCache);
+    static const std::span<const std::string> getOptionalBinarySearchPaths(LockableSearchPaths &optionalPathsCache);
 
     template <typename ReqLibsHelpersT = RequiredLibsHelpers>
     static bool getRequiredLibDirPath(const std::string &libName,
@@ -40,7 +41,7 @@ struct RequiredLibsHelpers {
             return true;
         } else {
             auto findLibInPaths = [&libName](const auto &paths) {
-                return std::ranges::find_if(paths, [libName](const auto dirPath) {
+                return std::ranges::find_if(paths, [&libName](const auto &dirPath) {
                     return NEO::fileExists(NEO::joinPath(std::string{dirPath}, libName));
                 });
             };

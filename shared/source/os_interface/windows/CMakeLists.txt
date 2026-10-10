@@ -35,6 +35,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/power_settings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/required_libs_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.inl

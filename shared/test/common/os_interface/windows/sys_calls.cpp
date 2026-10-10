@@ -681,6 +681,9 @@ SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_
 BOOL (*sysCallsGetModuleHandleExW)(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) = nullptr;
 DWORD(*sysCallsGetModuleFileNameW)
 (HMODULE hModule, LPWSTR lpFilename, DWORD nSize) = nullptr;
+BOOL (*sysCallsGetModuleHandleExA)(DWORD dwFlags, LPCSTR lpModuleName, HMODULE *phModule) = nullptr;
+DWORD(*sysCallsGetModuleFileNameA)
+(HMODULE hModule, LPSTR lpFilename, DWORD nSize) = nullptr;
 DWORD(*sysCallsGetFileVersionInfoSizeW)
 (LPCWSTR lptstrFilename, LPDWORD lpdwHandle) = nullptr;
 BOOL (*sysCallsGetFileVersionInfoW)(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) = nullptr;
@@ -696,6 +699,18 @@ BOOL getModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) 
 DWORD getModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     if (sysCallsGetModuleFileNameW) {
         return sysCallsGetModuleFileNameW(hModule, lpFilename, nSize);
+    }
+    return 0;
+}
+BOOL getModuleHandleExA(DWORD dwFlags, LPCSTR lpModuleName, HMODULE *phModule) {
+    if (sysCallsGetModuleHandleExA) {
+        return sysCallsGetModuleHandleExA(dwFlags, lpModuleName, phModule);
+    }
+    return FALSE;
+}
+DWORD getModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize) {
+    if (sysCallsGetModuleFileNameA) {
+        return sysCallsGetModuleFileNameA(hModule, lpFilename, nSize);
     }
     return 0;
 }

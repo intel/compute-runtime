@@ -11,6 +11,7 @@
 
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace NEO {
@@ -23,9 +24,9 @@ struct MockRequiredLibsHelpers {
         return defaultSearchPaths;
     }
 
-    static inline std::vector<std::string_view> optionalSearchPaths{};
+    static inline std::vector<std::string> optionalSearchPaths{};
     static inline constinit int getOptionalBinarySearchPathsCalled = 0;
-    static const std::span<const std::string_view> getOptionalBinarySearchPaths(NEO::Lockable<std::vector<std::string_view>> &optionalPathsCache) {
+    static const std::span<const std::string> getOptionalBinarySearchPaths(NEO::Lockable<std::vector<std::string>> &optionalPathsCache) {
         ++getOptionalBinarySearchPathsCalled;
         return optionalSearchPaths;
     }

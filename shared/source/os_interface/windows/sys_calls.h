@@ -82,6 +82,8 @@ BOOL heapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
 SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
 BOOL getModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
 DWORD getModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
+BOOL getModuleHandleExA(DWORD dwFlags, LPCSTR lpModuleName, HMODULE *phModule);
+DWORD getModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize);
 DWORD getFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle);
 BOOL getFileVersionInfoW(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
 BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);

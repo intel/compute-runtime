@@ -310,7 +310,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL Module *doCreateRequiredLibModule(NEO::BuiltIn::Resource &reqLibBuff, ModuleBuildLog *buildLog, ze_result_t &result);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
-    NEO::Lockable<std::vector<std::string_view>> requiredLibsOptionalSearchPaths;
+    NEO::Lockable<std::vector<std::string>> requiredLibsOptionalSearchPaths;
     NEO::Lockable<std::unordered_map<std::string, Module *>> requiredLibsRegistry;
 
     SysmanDevice *pSysmanDevice = nullptr;

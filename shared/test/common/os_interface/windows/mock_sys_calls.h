@@ -87,6 +87,8 @@ extern DWORD (*sysCallsWaitForSingleObject)(HANDLE hHandle, DWORD dwMilliseconds
 
 extern BOOL (*sysCallsGetModuleHandleExW)(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
 extern DWORD (*sysCallsGetModuleFileNameW)(HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
+extern BOOL (*sysCallsGetModuleHandleExA)(DWORD dwFlags, LPCSTR lpModuleName, HMODULE *phModule);
+extern DWORD (*sysCallsGetModuleFileNameA)(HMODULE hModule, LPSTR lpFilename, DWORD nSize);
 extern DWORD (*sysCallsGetFileVersionInfoSizeW)(LPCWSTR lptstrFilename, LPDWORD lpdwHandle);
 extern BOOL (*sysCallsGetFileVersionInfoW)(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
 extern BOOL (*sysCallsVerQueryValueW)(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);

@@ -44,6 +44,25 @@ TEST_F(RequiredLibsHelpersTest, givenLdLibraryPathEnvUsedWhenSearchingForLibThen
     EXPECT_EQ((*cachedLdLibraryPaths)[1], pathsSpan[1]);
 }
 
+TEST_F(RequiredLibsHelpersTest, givenLdLibraryPathWithEmptyEntriesWhenSearchingForLibThenTheyAreSkipped) {
+    debugManager.flags.EnvLdLibraryPath.set(":/test/path/foo::/test/path/bar:");
+
+    auto cachedLdLibraryPaths = RequiredLibsHelpers::LockableSearchPaths{};
+    auto pathsSpan = RequiredLibsHelpers::getOptionalBinarySearchPaths(cachedLdLibraryPaths);
+    ASSERT_EQ(pathsSpan.size(), 2U);
+    EXPECT_EQ(pathsSpan[0], "/test/path/foo");
+    EXPECT_EQ(pathsSpan[1], "/test/path/bar");
+}
+
+TEST_F(RequiredLibsHelpersTest, givenLdLibraryPathOfOnlySeparatorsWhenSearchingForLibThenNoPathsAreReturned) {
+    debugManager.flags.EnvLdLibraryPath.set(":::");
+
+    auto cachedLdLibraryPaths = RequiredLibsHelpers::LockableSearchPaths{};
+    auto pathsSpan = RequiredLibsHelpers::getOptionalBinarySearchPaths(cachedLdLibraryPaths);
+    EXPECT_TRUE(pathsSpan.empty());
+    EXPECT_TRUE(cachedLdLibraryPaths->empty());
+}
+
 TEST_F(RequiredLibsHelpersTest, givenPreviouslyCachedRequiredLibsOptionalSearchPathsWhenSearchingAgainThenCachedValuesUsed) {
     debugManager.flags.EnvLdLibraryPath.set("/test/path/FOO");
 
@@ -67,7 +86,6 @@ TEST_F(RequiredLibsHelpersTest, givenLdLibraryPathNotSetWhenSearchingRequiredLib
 }
 
 TEST_F(RequiredLibsHelpersTest, givenLdLibraryPathSetToEmptyStringWhenSearchingRequiredLibsThenOptionalSearchPathsAreEmpty) {
-    // this is not natural but handled anyway
     debugManager.flags.EnvLdLibraryPath.set("");
 
     auto cachedLdLibraryPaths = RequiredLibsHelpers::LockableSearchPaths{};
