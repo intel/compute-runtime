@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/basic_math_float.h"
-#include "shared/source/helpers/string.h"
 
 #include "CL/cl.h"
 
@@ -38,8 +37,10 @@ inline void convertFillColor(const void *fillColor,
                              const cl_image_format &newImageFormat) {
     float fFillColor[4] = {0.0f};
 
-    memcpy_s(iFillColor, 4 * sizeof(int32_t), fillColor, 4 * sizeof(int32_t));
-    memcpy_s(fFillColor, sizeof(fFillColor), fillColor, sizeof(fFillColor));
+    for (auto i = 0; i < 4; i++) {
+        iFillColor[i] = reinterpret_cast<const int32_t *>(fillColor)[i];
+        fFillColor[i] = reinterpret_cast<const float *>(fillColor)[i];
+    }
 
     if (oldImageFormat.image_channel_order == CL_A) {
         std::swap(iFillColor[0], iFillColor[3]);
