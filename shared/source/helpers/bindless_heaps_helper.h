@@ -44,7 +44,7 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable);
     MOCKABLE_VIRTUAL ~BindlessHeapsHelper();
 
-    GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow);
+    GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow, BindlesHeapType heapType);
 
     MOCKABLE_VIRTUAL SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType);
     uint64_t getGlobalHeapsBase();
@@ -74,6 +74,7 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     bool initializeReservedMemory();
     bool isReservedMemoryModeAvailable();
     bool tryReservingMemoryForSpecialSsh(const size_t size, size_t alignment);
+    AllocationType getHeapAllocationType(BindlesHeapType heapType) const;
     std::optional<AddressRange> reserveMemoryRange(size_t size, size_t alignment, HeapIndex heapIndex);
 
     std::mutex mtx;

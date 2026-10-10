@@ -159,6 +159,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
 
   private:
     std::mutex mtx;
+    std::mutex bindlessHeapsHelperMutex;
 };
 
 static_assert(NEO::NonCopyable<RootDeviceEnvironment>);

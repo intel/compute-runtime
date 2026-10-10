@@ -485,6 +485,7 @@ HWTEST2_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThe
     pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 4 * sizeof(uint64_t);
 
     MockKernel mockKernel(pProgram, pProgram->mockKernelInfo, *pClDevice);
+    mockKernel.kernelArguments.resize(pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.size());
 
     pProgram->mockKernelInfo.kernelDescriptor.initBindlessOffsetToSurfaceState();
 
@@ -494,7 +495,7 @@ HWTEST2_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThe
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
+    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment()));
 
     auto patchValue1 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress));
     auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 1 * surfaceStateSize));
@@ -541,6 +542,7 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchBindlessSurfaceStatesInC
     pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 4 * sizeof(uint64_t);
 
     MockKernel mockKernel(pProgram, pProgram->mockKernelInfo, *pClDevice);
+    mockKernel.kernelArguments.resize(pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.size());
 
     pProgram->mockKernelInfo.kernelDescriptor.initBindlessOffsetToSurfaceState();
 
@@ -552,7 +554,7 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchBindlessSurfaceStatesInC
     ASSERT_TRUE(baseAddress > std::numeric_limits<uint32_t>::max());
 
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
-    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
+    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment()));
 
     auto bindlessSufaceState1Address = baseAddress;
     auto bindlessSufaceState2Address = baseAddress + 2 * surfaceStateSize;
@@ -3394,8 +3396,7 @@ HWTEST_F(KernelTest, givenBindlessArgBufferWhenPatchWithImplicitSurfaceThenSurfa
     kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
 
     const auto &gfxCoreHelper = device->getGfxCoreHelper();
-    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment());
-
+    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getDevice().getRootDeviceEnvironment()));
     const auto ssIndex = kernel.kernelInfo.kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
     const auto ssOffset = ssIndex * surfaceStateSize;
 
@@ -3437,6 +3438,8 @@ HWTEST_F(KernelTest, givenBindlessArgBufferAndNotInitializedBindlessOffsetToSurf
 }
 
 HWTEST2_F(KernelTest, givenBindlessHeapsHelperAndBindlessArgBufferWhenPatchWithImplicitSurfaceThenCrossThreadDataIsPatchedAndSurfaceStateIsEncoded, IsHeapfulRequired) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseBindlessMode.set(1);
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
     auto &neoDevice = device->getDevice();
 

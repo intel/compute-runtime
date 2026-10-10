@@ -18,6 +18,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -30,6 +31,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/local_ids_cache.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -147,9 +149,9 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
             void *surfaceState = nullptr;
             auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(clDevice.getRootDeviceEnvironment());
 
-            if (clDevice.getDevice().getBindlessHeapsHelper()) {
+            if (clDevice.getDevice().getBindlessHeapsHelper() &&
+                ApiSpecificConfig::getBindlessMode(clDevice.getDevice())) {
                 UNRECOVERABLE_IF(clDevice.getDevice().getCompilerProductHelper().isHeaplessModeEnabled(clDevice.getHardwareInfo()));
-
                 auto &ssInHeap = allocation.getBindlessInfo();
                 surfaceState = ssInHeap.ssPtr;
                 auto patchLocation = ptrOffset(crossThreadData, arg.bindless);
@@ -1341,7 +1343,17 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
         pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(this->getContext().getSVMAllocsManager());
     }
     makeArgsResident(commandStreamReceiver);
-
+    auto bindlessHelper = getDevice().getDevice().getBindlessHeapsHelper();
+    if (bindlessHelper) {
+        for (auto heapType : {NEO::BindlessHeapsHelper::specialSsh,
+                              NEO::BindlessHeapsHelper::globalSsh,
+                              NEO::BindlessHeapsHelper::globalDsh}) {
+            auto heap = bindlessHelper->getHeap(heapType);
+            if (heap) {
+                commandStreamReceiver.makeResident(*heap->getGraphicsAllocation());
+            }
+        }
+    }
     auto kernelIsaAllocation = this->kernelInfo.getIsaGraphicsAllocation();
     if (kernelIsaAllocation) {
         commandStreamReceiver.makeResident(*kernelIsaAllocation);
@@ -1521,6 +1533,10 @@ void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &al
             }
         }
     }
+}
+
+bool Kernel::usesBindlessImages() const {
+    return program->usesBindlessImages(clDevice.getRootDeviceIndex());
 }
 
 cl_int Kernel::setArgLocal(uint32_t argIndexIn,
@@ -1715,7 +1731,19 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         imageFromBufferArgsCount += (pImage->isImageFromBuffer() ? 1 : 0) - (wasImageFromBuffer ? 1 : 0);
 
         void *surfaceState = nullptr;
-        if (isValidOffset(argAsImg.bindless)) {
+        if (isValidOffset(argAsImg.bindless) && pImage->isBindlessImage()) {
+            auto bindlessSlot = pImage->getBindlessSlot();
+            if (bindlessSlot && bindlessSlot->ssPtr) {
+                surfaceState = bindlessSlot->ssPtr;
+
+                auto &gfxCoreHelper = this->getGfxCoreHelper();
+                auto patchLocation = ptrOffset(getCrossThreadData(), argAsImg.bindless);
+                uint64_t patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(
+                    static_cast<uint32_t>(bindlessSlot->surfaceStateOffset));
+                uint32_t patchSize = NEO::isUndefinedOffset(argAsImg.size) ? 0 : argAsImg.size;
+                patchWithRequiredSize(reinterpret_cast<uint8_t *>(patchLocation), patchSize, patchValue);
+            }
+        } else if (isValidOffset(argAsImg.bindless)) {
             auto ssIndex = getSurfaceStateIndexForBindlessOffset(argAsImg.bindless);
             if (ssIndex < std::numeric_limits<uint32_t>::max()) {
                 auto &gfxCoreHelper = this->getGfxCoreHelper();
@@ -1727,10 +1755,8 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
             surfaceState = ptrOffset(getSurfaceStateHeap(), argAsImg.bindful);
         }
 
-        // Sets SS structure
         UNRECOVERABLE_IF(surfaceState == nullptr);
         pImage->setImageArg(surfaceState, arg.getExtendedTypeInfo().isMediaBlockImage, mipLevel, rootDeviceIndex);
-
         auto &imageDesc = pImage->getImageDesc();
         auto &imageFormat = pImage->getImageFormat();
 
@@ -2078,13 +2104,22 @@ void Kernel::patchBindlessSurfaceStatesInCrossThreadData(uint64_t bindlessSurfac
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(getDevice().getRootDeviceEnvironment());
     auto *crossThreadDataPtr = reinterpret_cast<uint8_t *>(getCrossThreadData());
 
-    for (auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
+    const auto &explicitArgs = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs;
+    for (size_t argIndex = 0; argIndex < explicitArgs.size(); argIndex++) {
+        const auto &arg = explicitArgs[argIndex];
 
         auto offset = NEO::undefined<NEO::CrossThreadDataOffset>;
         if (arg.type == NEO::ArgDescriptor::argTPointer) {
             offset = arg.as<NEO::ArgDescPointer>().bindless;
         } else if (arg.type == NEO::ArgDescriptor::argTImage) {
             offset = arg.as<NEO::ArgDescImage>().bindless;
+            if (NEO::isValidOffset(offset)) {
+                auto clMem = static_cast<cl_mem>(kernelArguments[argIndex].object);
+                auto pImage = castToObject<Image>(clMem);
+                if (pImage && pImage->isBindlessImage()) {
+                    continue;
+                }
+            }
         } else {
             continue;
         }

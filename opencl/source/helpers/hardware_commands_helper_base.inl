@@ -13,6 +13,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -259,9 +260,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     const auto &samplerTable = kernelInfo.kernelDescriptor.payloadMappings.samplerTable;
     if (isValidOffset(samplerTable.tableOffset) && isValidOffset(samplerTable.borderColor)) {
         samplerCount = samplerTable.numSamplers;
+        auto *samplerHeapHelper = ApiSpecificConfig::getBindlessMode(device) ? device.getBindlessHeapsHelper() : nullptr;
         samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
                                                                        samplerCount, samplerTable.borderColor,
-                                                                       kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
+                                                                       kernel.getDynamicStateHeap(), samplerHeapHelper,
                                                                        device.getRootDeviceEnvironment());
         if constexpr (heaplessModeEnabled) {
             uint64_t bindlessSamplerStateAddress = samplerStateOffset;

@@ -115,5 +115,9 @@ bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &ro
 bool ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless() {
     return false;
 }
+bool ApiSpecificConfig::createBindlessHeapsHelper(const Device &device) {
+    return getGlobalBindlessHeapConfiguration(device.getHardwareInfo()) && getBindlessMode(device);
+}
+
 
 } // namespace NEO
