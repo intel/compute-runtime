@@ -253,6 +253,20 @@ TEST(UmKmDataTranslator, givenToggledDebugKeyAndNotExistingLibWhenCreatingDefaul
     EXPECT_FALSE(translator->enabled());
 }
 
+static NTSTATUS APIENTRY failingQueryAdapterInfo(const D3DKMT_QUERYADAPTERINFO *queryAdapterInfo) {
+    return STATUS_UNSUCCESSFUL;
+}
+
+TEST(UmKmDataTranslator, givenToggledDebugKeyAndFailingDriverStorePathQueryWhenCreatingDefaultTranslatorThenUnrecoverableIsHit) {
+    DebugManagerStateRestore debugSettingsRestore;
+
+    NEO::debugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::Gdi gdi;
+    gdi.queryAdapterInfo.mFunc = failingQueryAdapterInfo;
+
+    EXPECT_THROW(NEO::createUmKmDataTranslator(gdi, validHandle), std::exception);
+}
+
 TEST(WslUmKmDataTranslator, whenQueryingForTranslationThenQueryIsForwardedToWslComputeHelper) {
     DebugManagerStateRestore debugSettingsRestore;
 

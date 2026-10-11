@@ -403,25 +403,6 @@ bool Wddm::destroyDevice() {
     return true;
 }
 
-bool validDriverStorePath(OsEnvironmentWin &osEnvironment, D3DKMT_HANDLE adapter) {
-    D3DKMT_QUERYADAPTERINFO queryAdapterInfo = {};
-    ADAPTER_INFO_KMD adapterInfo = {};
-    queryAdapterInfo.hAdapter = adapter;
-    queryAdapterInfo.Type = KMTQAITYPE_UMDRIVERPRIVATE;
-    queryAdapterInfo.pPrivateDriverData = &adapterInfo;
-    queryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO_KMD);
-
-    auto status = osEnvironment.gdi->queryAdapterInfo(&queryAdapterInfo);
-
-    if (status != STATUS_SUCCESS) {
-        DEBUG_BREAK_IF("queryAdapterInfo failed");
-        return false;
-    }
-
-    std::string deviceRegistryPath = adapterInfo.DeviceRegistryPath;
-    return isCompatibleDriverStore(std::move(deviceRegistryPath));
-}
-
 std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinal) {
     D3DKMT_OPENADAPTERFROMLUID openAdapterData = {};
     openAdapterData.AdapterLuid = adapterLuid;
@@ -433,7 +414,7 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
 
     std::unique_ptr<UmKmDataTranslator> umKmDataTranslator = createUmKmDataTranslator(*osEnvironment.gdi, openAdapterData.hAdapter);
     if (false == umKmDataTranslator->enabled() && !debugManager.flags.DoNotValidateDriverPath.get()) {
-        if (false == validDriverStorePath(osEnvironment, openAdapterData.hAdapter)) {
+        if (false == isCompatibleDriverStore(*osEnvironment.gdi, openAdapterData.hAdapter)) {
             PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Driver path is not a valid DriverStore path. Try running with debug key: DoNotValidateDriverPath=1.\n");
             return nullptr;
         }

@@ -7,9 +7,13 @@
 
 #include <string>
 
+typedef unsigned int D3DKMT_HANDLE;
+
 namespace NEO {
 
-bool isCompatibleDriverStore(std::string &&deviceRegistryPath) {
+class Gdi;
+
+bool isCompatibleDriverStore(const Gdi &gdi, D3DKMT_HANDLE adapter) {
     return false;
 }
 

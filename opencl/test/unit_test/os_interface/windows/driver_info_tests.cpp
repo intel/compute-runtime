@@ -28,10 +28,6 @@
 
 namespace NEO {
 
-namespace SysCalls {
-extern const wchar_t *currentLibraryPath;
-}
-
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 
 CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump,
@@ -127,10 +123,6 @@ class MockRegistryReader : public SettingsReader {
         } else if (key == "UserModeDriverNameWOW") {
             properMediaSharingExtensions = true;
             return returnString;
-        } else if (key == "DriverStorePathForComputeRuntime") {
-            return driverStorePath;
-        } else if (key == "OpenCLDriverName") {
-            return openCLDriverName;
         }
         return value;
     }
@@ -145,8 +137,6 @@ class MockRegistryReader : public SettingsReader {
 
     bool properNameKey = false;
     bool properVersionKey = false;
-    std::string driverStorePath = "driverStore\\0x8086";
-    std::string openCLDriverName = "igdrcl.dll";
     bool properMediaSharingExtensions = false;
     bool using64bit = false;
     std::string returnString = "";
@@ -226,28 +216,5 @@ TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoWindowsThenSetRe
     std::unique_ptr<MockDriverInfoWindows> driverInfo(MockDriverInfoWindows::create(path));
     EXPECT_STREQ(driverInfo->getRegistryReaderRegKey(), driverInfo->reader->getRegKey());
 };
-
-TEST_F(DriverInfoWindowsTest, whenThereIsNoOpenCLDriverNamePointedByDriverInfoThenItIsNotCompatible) {
-    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
-    currentLibraryPathBackup = L"driverStore\\0x8086\\myLib.dll";
-
-    static_cast<MockRegistryReader *>(driverInfo->registryReader.get())->openCLDriverName = "";
-
-    EXPECT_FALSE(driverInfo->isCompatibleDriverStore());
-}
-
-TEST_F(DriverInfoWindowsTest, whenCurrentLibraryIsLoadedFromDriverStorePointedByDriverInfoThenItIsCompatible) {
-    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
-    currentLibraryPathBackup = L"driverStore\\0x8086\\myLib.dll";
-
-    EXPECT_TRUE(driverInfo->isCompatibleDriverStore());
-}
-
-TEST_F(DriverInfoWindowsTest, whenCurrentLibraryIsLoadedFromDifferentDriverStoreThanPointedByDriverInfoThenItIsNotCompatible) {
-    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
-    currentLibraryPathBackup = L"driverStore\\different_driverStore\\myLib.dll";
-
-    EXPECT_FALSE(driverInfo->isCompatibleDriverStore());
-}
 
 } // namespace NEO

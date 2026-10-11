@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,14 @@
 #include <memory>
 #include <string>
 
+typedef unsigned int D3DKMT_HANDLE;
+
 namespace NEO {
 
+class Gdi;
 class SettingsReader;
 
-bool isCompatibleDriverStore(std::string &&deviceRegistryPath);
+bool isCompatibleDriverStore(const Gdi &gdi, D3DKMT_HANDLE adapter);
 
 class DriverInfoWindows : public DriverInfo {
   public:
@@ -27,7 +30,6 @@ class DriverInfoWindows : public DriverInfo {
     ~DriverInfoWindows() override;
     std::string getDeviceName(std::string defaultName) override;
     std::string getVersion(std::string defaultVersion) override;
-    bool isCompatibleDriverStore() const;
     MOCKABLE_VIRTUAL bool containsSetting(const char *setting);
     static std::function<std::unique_ptr<SettingsReader>(const std::string &registryPath)> createRegistryReaderFunc;
 

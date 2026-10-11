@@ -19,7 +19,6 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
-#include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -313,79 +312,211 @@ TEST_F(Wddm20WithMockGdiDllTests, whenInitWddmThenAdapterInfoCapsArePassedToGmmL
     EXPECT_EQ(expectedAdapterCpuVisibleMemory, gmmMemory->adapterCpuVisibleMemory);
 }
 
-class MockRegistryReaderWithDriverStorePath : public SettingsReader {
-  public:
-    MockRegistryReaderWithDriverStorePath(const char *driverStorePathArg) : driverStorePath(driverStorePathArg) {};
-    bool hasSetting(const char *settingName, DebugVarPrefix &type) override { return false; };
-    std::string getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) override { return ""; };
+TEST(DiscoverDevices, givenAdapterFromOtherDriverStoreWhenDiscoveringDevicesThenHwDeviceIdIsNotCreatedAndPrivateDriverDataIsNotQueried) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+    VariableBackup<uint32_t> privateQueryCountBackup{&queryAdapterInfoUmDriverPrivateCallCount, 0u};
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+    EXPECT_EQ(0u, queryAdapterInfoUmDriverPrivateCallCount);
+}
 
-    std::string getSetting(const char *settingName, const std::string &value) override {
-        std::string key(settingName);
-        if (key == "DriverStorePathForComputeRuntime") {
-            return driverStorePath;
-        } else if (key == "OpenCLDriverName") {
-            return driverStorePath;
-        }
-        return value;
-    }
+TEST(DiscoverDevices, givenLibOutsideOfAdapterDriverStoreAndComputeRuntimePathPointingToLibDirectoryWhenDiscoveringDevicesThenHwDeviceIdIsCreatedAndPrivateDriverDataIsNotQueried) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, L"C:\\local\\neo\\bin"};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\local\\neo\\bin\\igdrcl64.dll"};
+    VariableBackup<uint32_t> privateQueryCountBackup{&queryAdapterInfoUmDriverPrivateCallCount, 0u};
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_EQ(0u, queryAdapterInfoUmDriverPrivateCallCount);
+}
 
-    bool getSetting(const char *settingName, bool defaultValue, DebugVarPrefix &type) override { return defaultValue; };
-    bool getSetting(const char *settingName, bool defaultValue) override { return defaultValue; };
-    int64_t getSetting(const char *settingName, int64_t defaultValue, DebugVarPrefix &type) override { return defaultValue; };
-    int64_t getSetting(const char *settingName, int64_t defaultValue) override { return defaultValue; };
-    int32_t getSetting(const char *settingName, int32_t defaultValue, DebugVarPrefix &type) override { return defaultValue; };
-    int32_t getSetting(const char *settingName, int32_t defaultValue) override { return defaultValue; };
-    const char *appSpecificLocation(const std::string &name) override { return name.c_str(); };
+TEST(DiscoverDevices, givenLibOutsideOfAdapterDriverStoreAndComputeRuntimePathPointingToOtherDirectoryWhenDiscoveringDevicesThenHwDeviceIdIsNotCreated) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, L"C:\\local\\neo\\bin"};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\other\\igdrcl64.dll"};
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+}
 
-    const std::string driverStorePath;
-};
-
-TEST(DiscoverDevices, whenDriverInfoHasIncompatibleDriverStoreThenHwDeviceIdIsNotCreated) {
-    VariableBackup<decltype(DriverInfoWindows::createRegistryReaderFunc)> createFuncBackup{&DriverInfoWindows::createRegistryReaderFunc};
-    DriverInfoWindows::createRegistryReaderFunc = [](const std::string &) -> std::unique_ptr<SettingsReader> {
-        return std::make_unique<MockRegistryReaderWithDriverStorePath>("driverStore\\0x8086");
-    };
-    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
-    currentLibraryPathBackup = L"driverStore\\different_driverStore\\myLib.dll";
+TEST(DiscoverDevices, givenDriverStorePathQueryFailsAndComputeRuntimePathPointingToLibDirectoryWhenDiscoveringDevicesThenHwDeviceIdIsNotCreated) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, nullptr};
+    VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, L"C:\\local\\neo\\bin"};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\local\\neo\\bin\\igdrcl64.dll"};
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
 TEST(DiscoverDevices, givenDifferentCaseInLibPathAndInDriverStorePathWhenDiscoveringDeviceThenHwDeviceIdIsCreated) {
-    VariableBackup<decltype(DriverInfoWindows::createRegistryReaderFunc)> createFuncBackup{&DriverInfoWindows::createRegistryReaderFunc};
-    DriverInfoWindows::createRegistryReaderFunc = [](const std::string &) -> std::unique_ptr<SettingsReader> {
-        return std::make_unique<MockRegistryReaderWithDriverStorePath>("\\SystemRoot\\driverStore\\0x8086");
-    };
-    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
-    currentLibraryPathBackup = L"\\SyStEmrOOt\\driverstore\\0x8086\\myLib.dll";
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\WINDOWS\\system32\\driverstore\\FILEREPOSITORY\\IIGD_DCH.INF_AMD64_0X8086\\IGDRCL64.DLL"};
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
 }
 
-TEST(DiscoverDevices, givenLibFromHostDriverStoreAndRegistryWithDriverStoreWhenDiscoveringDeviceThenHwDeviceIdIsCreated) {
-    VariableBackup<decltype(DriverInfoWindows::createRegistryReaderFunc)> createFuncBackup{&DriverInfoWindows::createRegistryReaderFunc};
-    DriverInfoWindows::createRegistryReaderFunc = [](const std::string &) -> std::unique_ptr<SettingsReader> {
-        return std::make_unique<MockRegistryReaderWithDriverStorePath>("\\SystemRoot\\driverStore\\0x8086");
-    };
-    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
-    currentLibraryPathBackup = L"\\SystemRoot\\hostdriverStore\\0x8086\\myLib.dll";
+TEST(DiscoverDevices, givenLibFromHostDriverStoreAndAdapterFromDriverStoreWhenDiscoveringDeviceThenHwDeviceIdIsCreated) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\Windows\\System32\\HostDriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll"};
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
 }
 
-TEST(DiscoverDevices, givenLibFromDriverStoreAndRegistryWithHostDriverStoreWhenDiscoveringDeviceThenHwDeviceIdIsCreated) {
-    VariableBackup<decltype(DriverInfoWindows::createRegistryReaderFunc)> createFuncBackup{&DriverInfoWindows::createRegistryReaderFunc};
-    DriverInfoWindows::createRegistryReaderFunc = [](const std::string &) -> std::unique_ptr<SettingsReader> {
-        return std::make_unique<MockRegistryReaderWithDriverStorePath>("\\SystemRoot\\driverStore\\0x8086");
-    };
-    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
-    currentLibraryPathBackup = L"\\SystemRoot\\hostdriverStore\\0x8086\\myLib.dll";
+TEST(DiscoverDevices, givenLibFromDriverStoreAndAdapterFromHostDriverStoreWhenDiscoveringDeviceThenHwDeviceIdIsCreated) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, L"\\SystemRoot\\System32\\HostDriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086"};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
+}
+
+TEST(DiscoverDevices, givenDriverStorePathQueryFailsAndNoComputeRuntimePathWhenDiscoveringDeviceThenHwDeviceIdIsNotCreated) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, nullptr};
+    VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, nullptr};
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+}
+
+TEST(DiscoverDevices, givenLibOutsideOfAdapterDriverStoreAndNoComputeRuntimePathWhenDiscoveringDevicesThenHwDeviceIdIsCreated) {
+    VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, nullptr};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\local\\neo\\bin\\igdrcl64.dll"};
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(1u, hwDeviceIds.size());
+}
+
+TEST(DiscoverDevices, givenAdapterFromOtherDriverStoreWithoutOpenClDriverNameAndComputeRuntimePathWhenDiscoveringDevicesThenHwDeviceIdIsNotCreatedAndPrivateDriverDataIsNotQueried) {
+    VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, nullptr};
+    VariableBackup<const wchar_t *> openClDriverNameBackup{&queryRegistryOpenClDriverName, nullptr};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+    VariableBackup<uint32_t> privateQueryCountBackup{&queryAdapterInfoUmDriverPrivateCallCount, 0u};
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+    EXPECT_EQ(0u, queryAdapterInfoUmDriverPrivateCallCount);
+}
+
+constexpr const wchar_t *adapterDriverStorePath = L"\\SystemRoot\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086";
+constexpr const wchar_t *computeRuntimePath = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086";
+
+bool isCompatibleDriverStoreWithRegistryPaths(const wchar_t *adapterDriverStorePathInRegistry, const wchar_t *computeRuntimePathInRegistry) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, adapterDriverStorePathInRegistry};
+    VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, computeRuntimePathInRegistry};
+    OsEnvironmentWin osEnvironment;
+    return isCompatibleDriverStore(*osEnvironment.gdi, ADAPTER_HANDLE);
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryLoadedFromAdapterDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, computeRuntimePath));
+}
+
+TEST(DriverStoreCompatibility, givenNoOpenClDriverNameInAdapterRegistryWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+    VariableBackup<const wchar_t *> openClDriverNameBackup{&queryRegistryOpenClDriverName, nullptr};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, computeRuntimePath));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryLoadedFromSubdirectoryOfAdapterDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\x64\\igdrcl64.dll"};
+
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, computeRuntimePath));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryLoadedFromOtherDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, computeRuntimePath));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryLoadedOutsideOfDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\Program Files\\Application\\igdrcl64.dll"};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, computeRuntimePath));
+}
+
+TEST(DriverStoreCompatibility, givenDifferentCaseInCurrentLibraryPathAndAdapterDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\WINDOWS\\system32\\driverstore\\FILEREPOSITORY\\IIGD_DCH.INF_AMD64_0X8086\\IGDRCL64.DLL"};
+
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, computeRuntimePath));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryFromHostDriverStoreAndAdapterFromDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\Windows\\System32\\HostDriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll"};
+
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, computeRuntimePath));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryFromDriverStoreAndAdapterFromHostDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(L"\\SystemRoot\\System32\\HostDriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086", L""));
+}
+
+TEST(DriverStoreCompatibility, givenEmptyAdapterDriverStorePathWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(L"", L""));
+}
+
+TEST(DriverStoreCompatibility, givenEmptyCurrentLibraryPathWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L""};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, computeRuntimePath));
+}
+
+TEST(DriverStoreCompatibility, givenAdapterPathOutsideOfDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(L"C:\\Windows\\System32", L""));
+}
+
+TEST(DriverStoreCompatibility, givenSamePathOutsideOfDriverStoreForAdapterAndCurrentLibraryWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"\\"};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(L"\\", L""));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryInComputeRuntimeDirectoryWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\Local\\Neo\\bin\\igdrcl64.dll"};
+
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, L"C:\\local\\neo\\bin"));
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, L"C:\\local\\neo\\bin\\"));
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, L"C:\\local\\neo"));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryOutsideOfComputeRuntimeDirectoryWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\local\\other\\igdrcl64.dll"};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, L"C:\\local\\neo\\bin"));
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, L"C:\\other"));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryFromOtherDriverStoreAndInComputeRuntimeDirectoryWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x1234"));
+}
+
+TEST(DriverStoreCompatibility, givenEmptyAdapterDriverStorePathAndCurrentLibraryInComputeRuntimeDirectoryWhenCheckingDriverStoreCompatibilityThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, L"C:\\local\\neo\\bin\\igdrcl64.dll"};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(L"", L"C:\\local\\neo\\bin"));
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(L"", L""));
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryFromOtherDriverStoreAndNoComputeRuntimePathWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+
+    EXPECT_TRUE(isCompatibleDriverStoreWithRegistryPaths(adapterDriverStorePath, L""));
 }
 
 TEST(WddmDiscoverDevices, WhenMultipleRootDevicesAreAvailableThenAllAreDiscovered) {

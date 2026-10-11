@@ -19,10 +19,7 @@ namespace NEO {
 std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinal);
 
 namespace SysCalls {
-extern uint32_t regOpenKeySuccessCount;
-extern uint32_t regQueryValueSuccessCount;
 extern const wchar_t *currentLibraryPath;
-extern const char *driverStorePath;
 } // namespace SysCalls
 
 using WddmOsContextDeviceLuidTests = WddmFixtureLuid;
@@ -46,14 +43,8 @@ TEST_F(WddmFixtureLuid, givenValidOsContextAndGetDeviceNodeMaskThenValidDataRetu
 TEST_F(WddmFixtureLuid, givenDoNotValidateDriverPathWhenCreatingHwDeviceThenDriverStorePathIsNotValidated) {
     DebugManagerStateRestore debugSettingsRestore;
 
-    VariableBackup<uint32_t> openRegCountBackup{&SysCalls::regOpenKeySuccessCount};
-    VariableBackup<uint32_t> queryRegCountBackup{&SysCalls::regQueryValueSuccessCount};
-    VariableBackup<const char *> driverStorePathBackup{&SysCalls::driverStorePath};
-    SysCalls::regOpenKeySuccessCount = 10;
-    SysCalls::regQueryValueSuccessCount = 10;
-    SysCalls::driverStorePath = "invalidPath";
-    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
-    SysCalls::currentLibraryPath = L"driverStore\\0x8086\\myLib.dll";
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
 
     LUID adapterLuid = {0x1, 0x1};
     wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
@@ -63,6 +54,37 @@ TEST_F(WddmFixtureLuid, givenDoNotValidateDriverPathWhenCreatingHwDeviceThenDriv
 
     wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
     EXPECT_NE(nullptr, wddm->hwDeviceId);
+}
+
+TEST_F(WddmFixtureLuid, givenAdapterFromSameDriverStoreWhenCreatingHwDeviceThenHwDeviceIsCreatedWithoutQueryingPrivateDriverData) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+    VariableBackup<uint32_t> privateQueryCountBackup{&queryAdapterInfoUmDriverPrivateCallCount, 0u};
+
+    LUID adapterLuid = {0x1, 0x1};
+    auto hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
+    EXPECT_NE(nullptr, hwDeviceId);
+    EXPECT_EQ(0u, queryAdapterInfoUmDriverPrivateCallCount);
+}
+
+TEST_F(WddmFixtureLuid, givenAdapterFromOtherDriverStoreWhenCreatingHwDeviceThenHwDeviceIsNotCreatedAndPrivateDriverDataIsNotQueried) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+    VariableBackup<uint32_t> privateQueryCountBackup{&queryAdapterInfoUmDriverPrivateCallCount, 0u};
+
+    LUID adapterLuid = {0x1, 0x1};
+    auto hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
+    EXPECT_EQ(nullptr, hwDeviceId);
+    EXPECT_EQ(0u, queryAdapterInfoUmDriverPrivateCallCount);
+}
+
+TEST_F(WddmFixtureLuid, givenDriverStorePathQueryFailsWhenCreatingHwDeviceThenHwDeviceIsNotCreated) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, nullptr};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+
+    LUID adapterLuid = {0x1, 0x1};
+    auto hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
+    EXPECT_EQ(nullptr, hwDeviceId);
 }
 
 } // namespace NEO

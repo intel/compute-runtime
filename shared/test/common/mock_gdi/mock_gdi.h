@@ -117,5 +117,14 @@ void getCapturedCreateAllocationFlags(D3DKMT_CREATEALLOCATIONFLAGS &capturedCrea
 void setSupportCreateAllocationWithReadWriteExisitingSysMemory(bool supportValue, bool &previousValue);
 extern bool failCreateDevice;
 extern bool failCreatePagingQueue;
+extern const wchar_t *queryRegistryDriverStorePath;
+extern const wchar_t *queryRegistryComputeRuntimePath;
+extern const wchar_t *queryRegistryOpenClDriverName;
+extern uint32_t queryAdapterInfoUmDriverPrivateCallCount;
+inline const wchar_t *mockAdapterDriverStorePath = L"\\SystemRoot\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086";
+inline const wchar_t *mockLibraryFromAdapterDriverStore = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll";
+inline const wchar_t *mockLibraryFromOtherDriverStore = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x1234\\igdrcl64.dll";
+inline const wchar_t *mockComputeRuntimePath = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086";
+inline const wchar_t *mockOpenClDriverName = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll";
 extern D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData;
 extern uint32_t destroySynchronizationObjectCallCount;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,11 @@
 
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
+#include "shared/source/os_interface/windows/wddm/adapter_info.h"
 
 #include <algorithm>
+#include <cctype>
+#include <string_view>
 
 std::string getCurrentLibraryPath() {
     std::string returnValue;
@@ -33,6 +36,20 @@ std::string getCurrentLibraryPath() {
 }
 
 namespace NEO {
+namespace {
+
+std::string_view trimToDriverStore(std::string_view path) {
+    constexpr std::string_view driverStore = "\\driverstore\\";
+
+    const auto pos = path.find(driverStore);
+    if (pos == std::string_view::npos) {
+        return {};
+    }
+    return path.substr(pos);
+}
+
+} // namespace
+
 DriverInfoWindows::DriverInfoWindows(const std::string &fullPath, const PhysicalDevicePciBusInfo &pciBusInfo)
     : DriverInfo(DriverInfoType::windowsType), path(DriverInfoWindows::trimRegistryKey(fullPath)), registryReader(createRegistryReaderFunc(path)) {
     this->pciBusInfo = pciBusInfo;
@@ -58,7 +75,11 @@ std::string DriverInfoWindows::getVersion(std::string defaultVersion) {
     return registryReader->getSetting("DriverVersion", defaultVersion);
 };
 
-bool DriverInfoWindows::isCompatibleDriverStore() const {
+bool isCompatibleDriverStore(const Gdi &gdi, D3DKMT_HANDLE adapter) {
+    if (queryAdapterRegistry(gdi, adapter, L"OpenCLDriverName").empty()) {
+        return false;
+    }
+
     auto toLowerAndUnifyDriverStore = [](std::string input) -> std::string {
         std::transform(input.begin(), input.end(), input.begin(), [](unsigned char c) { return std::tolower(c); });
         auto hostDriverStorePos = input.find("\\hostdriverstore\\");
@@ -67,19 +88,19 @@ bool DriverInfoWindows::isCompatibleDriverStore() const {
         }
         return input;
     };
-    auto currentLibraryPath = toLowerAndUnifyDriverStore(getCurrentLibraryPath());
-    auto openclDriverName = registryReader->getSetting("OpenCLDriverName", std::string{});
-    if (openclDriverName.empty()) {
+    const auto currentLibraryPath = toLowerAndUnifyDriverStore(getCurrentLibraryPath());
+
+    const auto adapterPath = toLowerAndUnifyDriverStore(queryAdapterDriverStorePath(gdi, adapter));
+    const auto adapterPackage = trimToDriverStore(adapterPath);
+    if (adapterPackage.empty()) {
         return false;
     }
+    if (trimToDriverStore(currentLibraryPath).starts_with(adapterPackage)) {
+        return true;
+    }
 
-    auto driverStorePath = toLowerAndUnifyDriverStore(registryReader->getSetting("DriverStorePathForComputeRuntime", currentLibraryPath));
-    return currentLibraryPath.find(driverStorePath.c_str()) == 0u;
-}
-
-bool isCompatibleDriverStore(std::string &&deviceRegistryPath) {
-    DriverInfoWindows driverInfo(deviceRegistryPath, PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
-    return driverInfo.isCompatibleDriverStore();
+    const auto computeRuntimePath = queryAdapterRegistry(gdi, adapter, L"DriverStorePathForComputeRuntime");
+    return currentLibraryPath.starts_with(toLowerAndUnifyDriverStore(computeRuntimePath));
 }
 
 bool DriverInfoWindows::containsSetting(const char *setting) {

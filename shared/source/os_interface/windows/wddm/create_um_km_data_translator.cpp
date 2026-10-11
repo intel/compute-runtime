@@ -278,13 +278,11 @@ std::unique_ptr<UmKmDataTranslator> createUmKmDataTranslator(const Gdi &gdi, D3D
     requiresWslComputeHelper = true;
 #endif
     if (requiresWslComputeHelper || NEO::debugManager.flags.UseUmKmDataTranslator.get()) {
-        auto wpath = queryAdapterDriverStorePath(gdi, adapter);
+        auto driverStorePath = queryAdapterDriverStorePath(gdi, adapter);
+        UNRECOVERABLE_IF(driverStorePath.empty());
         std::string path;
         if (strlen(wslComputeHelperLibNameToLoad)) {
-            path.reserve(wpath.size() + 1 + strlen(wslComputeHelperLibName));
-            for (wchar_t wc : wpath) {
-                path += static_cast<char>(wc);
-            }
+            path = std::move(driverStorePath);
             path.append(Os::fileSeparator);
             path.append(wslComputeHelperLibNameToLoad);
         }

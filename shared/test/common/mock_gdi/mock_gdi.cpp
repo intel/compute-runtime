@@ -15,6 +15,8 @@
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
+#include <cwchar>
+#include <iterator>
 #include <map>
 
 ADAPTER_INFO_KMD gAdapterInfo{};
@@ -30,6 +32,10 @@ NTSTATUS gGetDeviceStateExecutionReturnValue = STATUS_SUCCESS;
 NTSTATUS gGetDeviceStatePageFaultReturnValue = STATUS_SUCCESS;
 bool failCreateDevice = false;
 bool failCreatePagingQueue = false;
+const wchar_t *queryRegistryDriverStorePath = mockAdapterDriverStorePath;
+const wchar_t *queryRegistryComputeRuntimePath = mockComputeRuntimePath;
+const wchar_t *queryRegistryOpenClDriverName = mockOpenClDriverName;
+uint32_t queryAdapterInfoUmDriverPrivateCallCount = 0;
 
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int perfTicks = 0;
@@ -362,6 +368,7 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         return STATUS_INVALID_PARAMETER;
     }
     if (queryAdapterInfo->Type == KMTQAITYPE_UMDRIVERPRIVATE) {
+        queryAdapterInfoUmDriverPrivateCallCount++;
         if (queryAdapterInfo->pPrivateDriverData == NULL) {
             return STATUS_INVALID_PARAMETER;
         }
@@ -429,31 +436,43 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
     }
 
     if (KMTQAITYPE_QUERYREGISTRY == queryAdapterInfo->Type) {
-        const wchar_t *driverStorePathStr = L"some/path/fffff";
-
         if ((nullptr == queryAdapterInfo->pPrivateDriverData) || (sizeof(D3DDDI_QUERYREGISTRY_INFO) > queryAdapterInfo->PrivateDriverDataSize)) {
             return STATUS_INVALID_PARAMETER;
         }
 
         D3DDDI_QUERYREGISTRY_INFO *queryRegistryInfo = reinterpret_cast<D3DDDI_QUERYREGISTRY_INFO *>(queryAdapterInfo->pPrivateDriverData);
-        if (D3DDDI_QUERYREGISTRY_DRIVERSTOREPATH != queryRegistryInfo->QueryType) {
-            return STATUS_INVALID_PARAMETER;
-        }
         if (0U != queryRegistryInfo->QueryFlags.Value) {
-            return STATUS_INVALID_PARAMETER;
-        }
-        bool regValueNameIsEmpty = std::wstring(std::wstring(queryRegistryInfo->ValueName[0], queryRegistryInfo->ValueName[0] + sizeof(queryRegistryInfo->ValueName)).c_str()).empty();
-        if (false == regValueNameIsEmpty) {
-            return STATUS_INVALID_PARAMETER;
-        }
-        if (0U != queryRegistryInfo->ValueType) {
             return STATUS_INVALID_PARAMETER;
         }
         if (0U != queryRegistryInfo->PhysicalAdapterIndex) {
             return STATUS_INVALID_PARAMETER;
         }
 
-        if (D3DDDI_QUERYREGISTRY_DRIVERSTOREPATH != queryRegistryInfo->QueryType) {
+        const std::wstring valueName(queryRegistryInfo->ValueName, wcsnlen(queryRegistryInfo->ValueName, std::size(queryRegistryInfo->ValueName)));
+        const wchar_t *driverStorePathStr = nullptr;
+        if (D3DDDI_QUERYREGISTRY_DRIVERSTOREPATH == queryRegistryInfo->QueryType) {
+            if (!valueName.empty() || (0U != queryRegistryInfo->ValueType)) {
+                return STATUS_INVALID_PARAMETER;
+            }
+            driverStorePathStr = queryRegistryDriverStorePath;
+        } else if (D3DDDI_QUERYREGISTRY_ADAPTERKEY == queryRegistryInfo->QueryType) {
+            constexpr ULONG regSzValueType = 1; // REG_SZ
+            if (regSzValueType != queryRegistryInfo->ValueType) {
+                return STATUS_INVALID_PARAMETER;
+            }
+            if (valueName == L"DriverStorePathForComputeRuntime") {
+                driverStorePathStr = queryRegistryComputeRuntimePath;
+            } else if (valueName == L"OpenCLDriverName") {
+                driverStorePathStr = queryRegistryOpenClDriverName;
+            } else {
+                return STATUS_INVALID_PARAMETER;
+            }
+            if (nullptr == driverStorePathStr) {
+                return STATUS_UNSUCCESSFUL;
+            }
+        }
+
+        if (nullptr == driverStorePathStr) {
             return STATUS_INVALID_PARAMETER;
         }
 

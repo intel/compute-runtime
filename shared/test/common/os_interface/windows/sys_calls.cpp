@@ -44,7 +44,7 @@ BOOL getLastErrorConstantResult = TRUE;
 bool isShutdownInProgressRetVal = false;
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
-const wchar_t *currentLibraryPath = L"\\";
+const wchar_t *currentLibraryPath = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll";
 uint32_t regOpenKeySuccessCount = 0u;
 uint32_t regQueryValueSuccessCount = 0u;
 uint64_t regQueryValueExpectedData = 0ull;
@@ -52,7 +52,6 @@ uint32_t remainingRegReadCount = 0u;
 const HKEY validHkey = reinterpret_cast<HKEY>(0);
 bool getNumThreadsCalled = false;
 bool mmapAllowExtendedPointers = false;
-const char *driverStorePath = nullptr;
 
 size_t closeHandleCalled = 0u;
 
@@ -663,16 +662,6 @@ LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDW
                 if (*lpcbData == sizeof(int64_t)) {
                     if (lpData) {
                         *reinterpret_cast<uint64_t *>(lpData) = regQueryValueExpectedData;
-                    }
-                }
-            } else if (driverStorePath && (strcmp(lpValueName, "DriverStorePathForComputeRuntime") == 0)) {
-                if (lpData) {
-                    strcpy_s(reinterpret_cast<char *>(lpData), strlen(driverStorePath) + 1u, driverStorePath);
-                }
-                if (lpcbData) {
-                    *lpcbData = static_cast<DWORD>(strlen(driverStorePath) + 1u);
-                    if (lpType) {
-                        *lpType = REG_SZ;
                     }
                 }
             }

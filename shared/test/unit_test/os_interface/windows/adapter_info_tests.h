@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 constexpr D3DKMT_HANDLE validHandle = 0x7;
 constexpr auto error = STATUS_SUCCESS + 1;
 inline const wchar_t *driverStorePathStr = L"some/path/fffff";
+inline const char *expectedDriverStorePathStr = "some/path/fffff";
 
 struct QueryAdapterInfoMock {
     static NTSTATUS(APIENTRY queryadapterinfo)(
