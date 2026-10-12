@@ -772,5 +772,21 @@ TEST_F(PisaInputTest, GivenPisaInputWithSpecializationConstantsWhenBuildingThenC
     EXPECT_EQ(constantValue, translationUnit.specConstantsValues[constantId]);
 }
 
+TEST_F(PisaInputTest, GivenPisaInputWithNonNullEmptySpecializationConstantsWhenBuildingThenSpecConstantsInfoIsNotQueried) {
+    auto neoDevice = this->device->getNEODevice();
+    auto mockCompiler = new MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(0u);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+
+    MockModuleTranslationUnit translationUnit{this->device};
+    translationUnit.processUnpackedBinaryCallBase = false;
+
+    ze_module_constants_t specConstants = {};
+    ASSERT_EQ(0u, specConstants.numConstants);
+
+    translationUnit.buildFromIntermediate(NEO::pisaCodeType, pisaSample.data(), static_cast<uint32_t>(pisaSample.size()), "", "", &specConstants);
+    EXPECT_EQ(0u, mockCompiler->getSpecConstantsInfoCalled);
+    EXPECT_TRUE(translationUnit.specConstantsValues.empty());
+}
+
 } // namespace ult
 } // namespace L0

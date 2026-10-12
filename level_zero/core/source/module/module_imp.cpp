@@ -219,7 +219,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
 
 bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize,
                                                     IGC::CodeType::CodeType_t srcCodeType) {
-    if (pConstants) {
+    if (pConstants && pConstants->numConstants > 0) {
         NEO::SpecConstantInfo specConstInfo;
         auto retVal = compilerInterface->getSpecConstantsInfo(*device->getNEODevice(), ArrayRef<const char>(input, inputSize), specConstInfo, srcCodeType);
         if (retVal != NEO::TranslationErrorCode::success) {
