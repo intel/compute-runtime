@@ -208,38 +208,104 @@ TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentRead
     EXPECT_EQ(readerImpl2, debugManager.getReaderImpl());
 }
 
-TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
+struct DumpedFlagPrefix {
+    DebugVarPrefix type;
+    const char *string;
+};
+
+struct DumpFlagsPrefixTestParams {
+    ApiSpecificConfig::ApiType apiType;
+    DumpedFlagPrefix printDebugSettings;
+    DumpedFlagPrefix loopAtDriverInit;
+    DumpedFlagPrefix enable64kbpages;
+    DumpedFlagPrefix tbxServer;
+};
+
+namespace {
+constexpr DumpedFlagPrefix noPrefix{DebugVarPrefix::none, ""};
+constexpr DumpedFlagPrefix neoPrefix{DebugVarPrefix::neo, "NEO_"};
+constexpr DumpedFlagPrefix neoL0Prefix{DebugVarPrefix::neoL0, "NEO_L0_"};
+constexpr DumpedFlagPrefix neoOclPrefix{DebugVarPrefix::neoOcl, "NEO_OCL_"};
+
+void configureDumpedFlags(FullyEnabledTestDebugManager &debugManager, const DumpFlagsPrefixTestParams &params) {
+    debugManager.flags.PrintDebugSettings.set(true);
+    debugManager.flags.PrintDebugSettings.setPrefixType(params.printDebugSettings.type);
+    debugManager.flags.LoopAtDriverInit.set(true);
+    debugManager.flags.LoopAtDriverInit.setPrefixType(params.loopAtDriverInit.type);
+    debugManager.flags.Enable64kbpages.set(1);
+    debugManager.flags.Enable64kbpages.setPrefixType(params.enable64kbpages.type);
+    debugManager.flags.TbxServer.set("192.168.0.1");
+    debugManager.flags.TbxServer.setPrefixType(params.tbxServer.type);
+}
+
+void expectDumpedLine(const std::string &dumpedFlags, const std::string &expectedLine) {
+    EXPECT_NE(std::string::npos, dumpedFlags.find("\n" + expectedLine + "\n")) << expectedLine;
+}
+} // namespace
+
+TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenCallingDumpFlagsThenAllFlagsAreWrittenToDumpFile) {
     StreamCapture capture;
     capture.captureStdout();
     FullyEnabledTestDebugManager debugManager;
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-    debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::none);
-    debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::none);
-    debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::none);
-    debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::none);
+    configureDumpedFlags(debugManager, {ApiSpecificConfig::L0, noPrefix, noPrefix, noPrefix, noPrefix});
 
-    // Clear dump files and generate new
     removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     debugManager.dumpFlags();
 
-    // Validate allSettingsDumpFile
     MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
     expectAllDebugVariablesDumped(debugManager, allSettingsReader);
+
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
+    EXPECT_NE(0u, capture.getCapturedStdout().size());
+}
+
+using DebugSettingsManagerDumpFlagsPrefixTest = ::testing::TestWithParam<DumpFlagsPrefixTestParams>;
+
+TEST_P(DebugSettingsManagerDumpFlagsPrefixTest, givenPrintDebugSettingsEnabledWithPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
+    const auto &params = GetParam();
+    StreamCapture capture;
+    capture.captureStdout();
+    FullyEnabledTestDebugManager debugManager;
+
+    auto apiType = params.apiType;
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, apiType);
+    configureDumpedFlags(debugManager, params);
+
+    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
+    debugManager.dumpFlags();
+
+    size_t dumpFileSize = 0;
+    auto dumpFileData = loadDataFromVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName, dumpFileSize);
+    ASSERT_NE(nullptr, dumpFileData);
+    const std::string dumpedFlags = "\n" + std::string(dumpFileData.get(), dumpFileSize);
+    expectDumpedLine(dumpedFlags, std::string(params.printDebugSettings.string) + "PrintDebugSettings = 1");
+    expectDumpedLine(dumpedFlags, std::string(params.loopAtDriverInit.string) + "LoopAtDriverInit = 1");
+    expectDumpedLine(dumpedFlags, std::string(params.enable64kbpages.string) + "Enable64kbpages = 1");
+    expectDumpedLine(dumpedFlags, std::string(params.tbxServer.string) + "TbxServer = 192.168.0.1");
+    expectDumpedLine(dumpedFlags, "MakeEachEnqueueBlocking = 0");
+    expectDumpedLine(dumpedFlags, "OverrideGpuAddressSpace = -1");
+    expectDumpedLine(dumpedFlags, "ProductFamilyOverride = unk");
 
     removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
     std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: TbxServer = 192.168.0.1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: LoopAtDriverInit = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: PrintDebugSettings = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: Enable64kbpages = 1"));
+    const std::string nonDefaultValuePrefix = "Non-default value of debug variable: ";
+    EXPECT_NE(std::string::npos, output.find(nonDefaultValuePrefix + params.tbxServer.string + "TbxServer = 192.168.0.1"));
+    EXPECT_NE(std::string::npos, output.find(nonDefaultValuePrefix + params.loopAtDriverInit.string + "LoopAtDriverInit = 1"));
+    EXPECT_NE(std::string::npos, output.find(nonDefaultValuePrefix + params.printDebugSettings.string + "PrintDebugSettings = 1"));
+    EXPECT_NE(std::string::npos, output.find(nonDefaultValuePrefix + params.enable64kbpages.string + "Enable64kbpages = 1"));
 }
+
+INSTANTIATE_TEST_SUITE_P(AllPrefixes,
+                         DebugSettingsManagerDumpFlagsPrefixTest,
+                         ::testing::Values(DumpFlagsPrefixTestParams{ApiSpecificConfig::L0, noPrefix, noPrefix, noPrefix, noPrefix},
+                                           DumpFlagsPrefixTestParams{ApiSpecificConfig::L0, neoPrefix, neoPrefix, neoPrefix, neoPrefix},
+                                           DumpFlagsPrefixTestParams{ApiSpecificConfig::L0, neoL0Prefix, neoL0Prefix, neoL0Prefix, neoL0Prefix},
+                                           DumpFlagsPrefixTestParams{ApiSpecificConfig::OCL, neoOclPrefix, neoOclPrefix, neoOclPrefix, neoOclPrefix},
+                                           DumpFlagsPrefixTestParams{ApiSpecificConfig::L0, neoL0Prefix, neoPrefix, noPrefix, neoL0Prefix}));
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenReleaseAndEnvVariablesAreNonDefaultThenDumpFlagsWritesThem) {
     StreamCapture capture;
@@ -274,138 +340,6 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenReleaseAndEnvVariab
 
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: HOME = /custom/home (env-only variable)"));
     EXPECT_EQ(std::string::npos, output.find("EnvHome"));
-}
-
-TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNeoPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    StreamCapture capture;
-    capture.captureStdout();
-    FullyEnabledTestDebugManager debugManager;
-
-    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-    debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::neo);
-    debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::neo);
-    debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::neo);
-    debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neo);
-
-    // Clear dump files and generate new
-    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
-    debugManager.dumpFlags();
-
-    // Validate allSettingsDumpFile
-    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
-
-    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = capture.getCapturedStdout();
-    ASSERT_NE(0u, output.size());
-
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_TbxServer = 192.168.0.1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_LoopAtDriverInit = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_PrintDebugSettings = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_Enable64kbpages = 1"));
-}
-
-TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    StreamCapture capture;
-    capture.captureStdout();
-    FullyEnabledTestDebugManager debugManager;
-
-    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-    debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::neoL0);
-    debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::neoL0);
-    debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::neoL0);
-    debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoL0);
-
-    // Clear dump files and generate new
-    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
-    debugManager.dumpFlags();
-
-    // Validate allSettingsDumpFile
-    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
-
-    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = capture.getCapturedStdout();
-    ASSERT_NE(0u, output.size());
-
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_L0_TbxServer = 192.168.0.1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_L0_LoopAtDriverInit = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_L0_PrintDebugSettings = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_L0_Enable64kbpages = 1"));
-}
-
-TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    StreamCapture capture;
-    capture.captureStdout();
-    FullyEnabledTestDebugManager debugManager;
-
-    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-    debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::neoOcl);
-    debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::neoOcl);
-    debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::neoOcl);
-    debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoOcl);
-
-    // Clear dump files and generate new
-    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
-    debugManager.dumpFlags();
-
-    // Validate allSettingsDumpFile
-    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
-
-    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = capture.getCapturedStdout();
-    ASSERT_NE(0u, output.size());
-
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_OCL_TbxServer = 192.168.0.1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_OCL_LoopAtDriverInit = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_OCL_PrintDebugSettings = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_OCL_Enable64kbpages = 1"));
-}
-
-TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    StreamCapture capture;
-    capture.captureStdout();
-    FullyEnabledTestDebugManager debugManager;
-
-    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-    debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::neoL0);
-    debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::neo);
-    debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::none);
-    debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoL0);
-
-    // Clear dump files and generate new
-    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
-    debugManager.dumpFlags();
-
-    // Validate allSettingsDumpFile
-    MockSettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
-    expectAllDebugVariablesDumped(debugManager, allSettingsReader);
-
-    removeVirtualFile(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = capture.getCapturedStdout();
-    ASSERT_NE(0u, output.size());
-
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_L0_TbxServer = 192.168.0.1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_LoopAtDriverInit = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_L0_PrintDebugSettings = 1"));
-    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: Enable64kbpages = 1"));
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledOnDisabledDebugManagerWhenCallingDumpFlagsThenFlagsAreNotWrittenToDumpFile) {
