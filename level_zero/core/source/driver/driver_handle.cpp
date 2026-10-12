@@ -456,7 +456,8 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
                                                                      NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
                                                                          device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
                                                                          nullptr == device.getL0Debugger() &&
-                                                                         NEO::DeviceFactory::isHwModeSelected());
+                                                                         NEO::DeviceFactory::isHwModeSelected() &&
+                                                                         !multiDevice);
 
     bool trackResidency = true;
     if (NEO::debugManager.flags.EnableUsmPoolResidencyTracking.get() != -1) {
