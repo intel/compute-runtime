@@ -557,9 +557,11 @@ ze_scheduling_hint_exp_flags_t Kernel::schedulingHintToL0(uint32_t arbitrationPo
 cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel type) {
     auto lock = this->takeOwnership();
     switch (type) {
+    case CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_DEFAULT_INTEL:
     case CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL:
         this->executionType = NEO::KernelExecutionType::defaultType;
         break;
+    case CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_CONCURRENT_INTEL:
     case CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL:
         this->executionType = NEO::KernelExecutionType::concurrent;
         break;

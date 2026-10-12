@@ -443,6 +443,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
         retVal = CL_INVALID_OPERATION;
         break;
+    case CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_INTEL:
     case CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL:
         if (nullptr == paramValue ||
             sizeof(cl_execution_info_kernel_type_intel) != paramValueSize) [[unlikely]] {

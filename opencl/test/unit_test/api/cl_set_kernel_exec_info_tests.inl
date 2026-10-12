@@ -330,6 +330,41 @@ HWTEST_F(clSetKernelExecInfoTests, givenDifferentExecutionTypesWhenSettingAdditi
     EXPECT_EQ(KernelExecutionType::concurrent, pMockKernel->executionType);
 }
 
+HWTEST_F(clSetKernelExecInfoTests, givenDispatchTypeParamWhenSettingKernelExecInfoThenDispatchTypeValuesAreAppliedAndOtherValuesAreRejected) {
+    cl_kernel_exec_info paramName = CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_INTEL;
+    size_t paramSize = sizeof(cl_kernel_exec_info_dispatch_type_intel);
+    cl_kernel_exec_info_dispatch_type_intel dispatchType = CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_CONCURRENT_INTEL;
+
+    retVal = clSetKernelExecInfo(
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        paramName,              // cl_kernel_exec_info param_name
+        paramSize,              // size_t param_value_size
+        &dispatchType           // const void *param_value
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(KernelExecutionType::concurrent, pMockKernel->executionType);
+
+    dispatchType = CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_DEFAULT_INTEL;
+    retVal = clSetKernelExecInfo(
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        paramName,              // cl_kernel_exec_info param_name
+        paramSize,              // size_t param_value_size
+        &dispatchType           // const void *param_value
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(KernelExecutionType::defaultType, pMockKernel->executionType);
+
+    dispatchType = CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_CONCURRENT_INTEL + 1;
+    retVal = clSetKernelExecInfo(
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        paramName,              // cl_kernel_exec_info param_name
+        paramSize,              // size_t param_value_size
+        &dispatchType           // const void *param_value
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(KernelExecutionType::defaultType, pMockKernel->executionType);
+}
+
 TEST_F(clSetKernelExecInfoTests, GivenSystemPtrWithSharedSystemEnabledWhenSettingKernelExecInfoThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);

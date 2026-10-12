@@ -5483,6 +5483,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         TRACING_EXIT(ClSetKernelExecInfo, &retVal);
         return retVal;
     }
+    case CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_INTEL:
     case CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL: {
         if (paramValueSize != sizeof(cl_execution_info_kernel_type_intel) ||
             paramValue == nullptr) {

@@ -22,9 +22,15 @@
  * Internal only kernel exec info properties *
  *********************************************/
 
+// Legacy aliases of the CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_*_INTEL tokens, still accepted for backward compatibility
 #define CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL 0x1000C
 #define CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL 0x1000D
 #define CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL 0x1000E
+
+using cl_kernel_exec_info_dispatch_type_intel = cl_uint;
+#define CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_INTEL 0x4257
+#define CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_DEFAULT_INTEL 0
+#define CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_CONCURRENT_INTEL 1
 
 /*********************************
  * cl_intel_debug_info extension *

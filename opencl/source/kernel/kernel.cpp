@@ -1137,9 +1137,11 @@ void Kernel::clearUnifiedMemoryExecInfo() {
 
 cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel executionType) {
     switch (executionType) {
+    case CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_DEFAULT_INTEL:
     case CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL:
         this->executionType = KernelExecutionType::defaultType;
         break;
+    case CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_CONCURRENT_INTEL:
     case CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL:
         this->executionType = KernelExecutionType::concurrent;
         break;

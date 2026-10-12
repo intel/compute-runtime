@@ -450,6 +450,34 @@ TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenNullParamValueWhenSetKernelE
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenConcurrentDispatchTypeWhenSetKernelExecInfoDispatchTypeThenExecutionTypeIsStored) {
+    cl_kernel_exec_info_dispatch_type_intel type = CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_CONCURRENT_INTEL;
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_INTEL, sizeof(type), &type);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(NEO::KernelExecutionType::concurrent, kernel->getExecutionType());
+}
+
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenConcurrentKernelWhenSetKernelExecInfoDispatchTypeToDefaultThenExecutionTypeIsRestored) {
+    cl_kernel_exec_info_dispatch_type_intel type = CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_CONCURRENT_INTEL;
+    ASSERT_EQ(CL_SUCCESS, clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_INTEL, sizeof(type), &type));
+
+    type = CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_DEFAULT_INTEL;
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_INTEL, sizeof(type), &type);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(NEO::KernelExecutionType::defaultType, kernel->getExecutionType());
+}
+
+TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenInvalidTypeWhenSetKernelExecInfoDispatchTypeThenReturnsCLInvalidValue) {
+    cl_kernel_exec_info_dispatch_type_intel type = CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_CONCURRENT_INTEL + 1;
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_DISPATCH_TYPE_INTEL, sizeof(type), &type);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
 TEST_F(GetKernelSuggestedLocalWorkSizeFixture, givenNullCommandQueueWhenGetKernelSuggestedLocalWorkSizeINTELThenReturnsCLInvalidCommandQueue) {
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t suggestedLocalWorkSize[3] = {};
