@@ -104,7 +104,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(co
     }
 
     auto compatibilityFallbackAbbreviations =
-        ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(requestedProductAbbreviation.str());
+        ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(static_cast<AOT::PRODUCT_CONFIG>(requestedTargetDevice.aotConfig.value));
 
     for (const auto &compatAbbrev : compatibilityFallbackAbbreviations) {
         if (compatAbbrev == requestedProductAbbreviation.str()) {

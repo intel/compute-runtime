@@ -396,20 +396,8 @@ const std::map<AOT::PRODUCT_CONFIG, std::vector<AOT::PRODUCT_CONFIG>> &ProductCo
     return invertedMapping;
 }
 
-std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(const std::string &requestedProductAbbreviation) {
+std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(AOT::PRODUCT_CONFIG requestedConfig) {
     std::vector<std::string> result;
-
-    AOT::PRODUCT_CONFIG requestedConfig = AOT::PRODUCT_CONFIG::UNKNOWN_ISA;
-    for (const auto &acronymEntry : AOT::deviceAcronyms) {
-        if (acronymEntry.first == requestedProductAbbreviation ||
-            acronymEntry.first.starts_with(requestedProductAbbreviation + "-")) {
-            requestedConfig = acronymEntry.second;
-            break;
-        }
-    }
-    if (requestedConfig == AOT::PRODUCT_CONFIG::UNKNOWN_ISA) {
-        return result;
-    }
 
     const auto &invertedMapping = getInvertedCompatibilityMapping();
 

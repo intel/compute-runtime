@@ -21,6 +21,8 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
+#include "platforms.h"
+
 TEST(IsDeviceBinaryFormatAr, GivenValidBinaryThenReturnTrue) {
     auto emptyArchive = ArrayRef<const uint8_t>::fromAny(NEO::Ar::arMagic.begin(), NEO::Ar::arMagic.size());
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::archive>(emptyArchive));
@@ -609,7 +611,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenRequestedDeviceHasCompatibleFallbackThenUse
     std::string fallbackProduct = "bmg";
 
     {
-        auto compatibleDevices = ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(requestedProduct);
+        auto compatibleDevices = ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(AOT::LNL_B0);
 
         if (compatibleDevices.empty() ||
             std::find(compatibleDevices.begin(), compatibleDevices.end(), fallbackProduct) == compatibleDevices.end()) {
@@ -626,6 +628,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenRequestedDeviceHasCompatibleFallbackThenUse
     target.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
     target.stepping = 0U;
     target.maxPointerSizeInBytes = 8U;
+    target.aotConfig.value = AOT::LNL_B0;
 
     auto arData = encoder.encode();
     std::string unpackErrors;
@@ -640,9 +643,38 @@ TEST(UnpackSingleDeviceBinaryAr, WhenRequestedDeviceHasCompatibleFallbackThenUse
 }
 
 TEST(ProductConfigHelper, GivenUnknownDeviceWhenGettingCompatibilityFallbacksThenReturnEmpty) {
-    const std::string requestedProduct = "nonexistent_device_acronym_xyz";
-
-    auto result = ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(requestedProduct);
+    auto result = ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(AOT::UNKNOWN_ISA);
 
     EXPECT_TRUE(result.empty());
+}
+
+TEST(UnpackSingleDeviceBinaryAr, GivenProductAbbreviationWithoutDeviceAcronymWhenTargetConfigHasCompatibleFallbackThenUseFallbackDevice) {
+    auto compatibleConfigs = AOT::compatibilityMapping.find(AOT::PTL_H_B0);
+    if (AOT::deviceAcronyms.find("ptl-h") == AOT::deviceAcronyms.end() ||
+        compatibleConfigs == AOT::compatibilityMapping.end() ||
+        std::find(compatibleConfigs->second.begin(), compatibleConfigs->second.end(), AOT::NVL_U_B0) == compatibleConfigs->second.end()) {
+        GTEST_SKIP();
+    }
+
+    ZebinTestData::ValidEmptyProgram zebin;
+
+    NEO::Ar::ArEncoder encoder{true};
+    ASSERT_TRUE(encoder.appendFileEntry("64.ptl", zebin.storage));
+
+    NEO::TargetDevice target{};
+    target.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
+    target.aotConfig.value = AOT::NVL_U_B0;
+    target.stepping = 0U;
+    target.maxPointerSizeInBytes = 8U;
+
+    auto arData = encoder.encode();
+    std::string unpackErrors;
+    std::string unpackWarnings;
+
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, "nvls", target, unpackErrors, unpackWarnings);
+
+    EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
+    EXPECT_FALSE(unpacked.deviceBinary.empty());
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpacked.format);
+    EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
 }
