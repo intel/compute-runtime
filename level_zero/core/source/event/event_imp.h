@@ -69,7 +69,6 @@ struct EventImp : public Event {
     void downloadAllTbxAllocations();
 
     bool handlePreQueryStatusOperationsAndCheckCompletion();
-    void downloadTbxAllocationsForQuery();
     bool tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation, bool &downloadedPatchPreambleAllocation);
     void tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation, bool &downloadedPatchPreambleAllocation);
     TaskCountType getTaskCount(const NEO::CommandStreamReceiver &csr) const;

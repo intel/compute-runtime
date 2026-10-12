@@ -133,7 +133,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::latestFlushIsDualCopyOffload;
-    using BaseClass::latestOperationHasCbEventWithProfiling;
+    using BaseClass::latestOperationHasHeapfullCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;
@@ -280,7 +280,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestFlushIsHostVisible;
-    using BaseClass::latestOperationHasCbEventWithProfiling;
+    using BaseClass::latestOperationHasHeapfullCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;

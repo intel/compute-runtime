@@ -3442,7 +3442,7 @@ HWTEST_F(EventSynchronizeTimestampTest, GivenDrmAndKmdWaitStrategyWhenSynchroniz
     timestampNode->initialize();
 
     event->resetInOrderTimestampNode(timestampNode, 1);
-    event->setCbEventWithProfiling(true);
+    event->setHeapfullCbEventWithProfiling(true);
 
     uint64_t counterStorage = 1;
     NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
@@ -3485,7 +3485,7 @@ HWTEST_F(EventSynchronizeTimestampTest, GivenDrmAndKmdWaitStrategyWhenTimestampN
     timestampNode->initialize();
 
     event->resetInOrderTimestampNode(timestampNode, 1);
-    event->setCbEventWithProfiling(true);
+    event->setHeapfullCbEventWithProfiling(true);
 
     uint64_t counterStorage = 1;
     NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));

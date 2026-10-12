@@ -414,12 +414,8 @@ struct Event : _ze_event_handle_t {
         this->recordedSignalEntry = std::move(entry);
     }
 
-    void setCbEventWithProfiling(bool value) {
-        this->cbEventWithProfiling = value;
-    }
-
-    bool isCbEventWithProfiling() const {
-        return this->cbEventWithProfiling;
+    void setHeapfullCbEventWithProfiling(bool value) {
+        this->heapfullCbEventWithProfiling = value;
     }
 
     bool isExternalEvent() const {
@@ -556,7 +552,7 @@ struct Event : _ze_event_handle_t {
     bool windowsDiscreteKmdWaitEnabled = false;
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
-    bool cbEventWithProfiling = false;
+    bool heapfullCbEventWithProfiling = false;
     bool externalEvent = false;
     bool isDualCopyOffloadEvent = false;
     bool isSignalledAsGraphInternalEvent = false;

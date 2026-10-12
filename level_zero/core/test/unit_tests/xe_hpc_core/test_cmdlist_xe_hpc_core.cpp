@@ -59,16 +59,16 @@ HWTEST2_F(CommandListInOrderDependencyXeHpcCore, givenImplicitInOrderDependencyW
     ASSERT_FALSE(commandList->dcFlushSupport);
     ASSERT_FALSE(commandList->isInOrderCounterSignalPending());
 
-    commandList->latestOperationHasCbEventWithProfiling = false;
+    commandList->latestOperationHasHeapfullCbEventWithProfiling = false;
     EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
 
     EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(false, false, false));
     EXPECT_FALSE(commandList->isResolveIoqDependencyWithBarrier(true, true, false));
 
-    commandList->latestOperationHasCbEventWithProfiling = true;
-    EXPECT_TRUE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
+    commandList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    EXPECT_EQ(!commandList->heaplessModeEnabled, commandList->isResolveIoqDependencyWithBarrier(true, false, false));
 
-    commandList->latestOperationHasCbEventWithProfiling = false;
+    commandList->latestOperationHasHeapfullCbEventWithProfiling = false;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     EXPECT_TRUE(commandList->isResolveIoqDependencyWithBarrier(true, false, false));
 

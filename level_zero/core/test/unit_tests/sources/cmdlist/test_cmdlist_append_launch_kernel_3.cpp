@@ -1378,6 +1378,10 @@ class MockPerformanceCounters : public NEO::PerformanceCounters {
     bool enableCountersConfiguration() override { return true; }
     void releaseCountersConfiguration() override {}
 };
+
+struct HeapfullProfilingEventAccessor : public ::L0::Event {
+    using ::L0::Event::heapfullCbEventWithProfiling;
+};
 } // namespace
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenEventWithPerfCounterNodeWhenAppendLaunchKernelThenCommandStreamGrows, IsAtLeastXeCore) {
@@ -1603,7 +1607,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCounterBasedEventWithoutTimestampA
         }
     }
     EXPECT_TRUE(counterSignaledAfterWalker);
-    EXPECT_FALSE(event->isCbEventWithProfiling());
+    EXPECT_FALSE(static_cast<HeapfullProfilingEventAccessor *>(event.get())->heapfullCbEventWithProfiling);
 
     event->setPerfCounterNode(nullptr);
     perfCounterNode->returnTag();
@@ -1682,7 +1686,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCounterBasedTimestampEventWithPerf
         }
     }
     EXPECT_TRUE(eventTimestampWrittenAfterWalker);
-    EXPECT_TRUE(event->isCbEventWithProfiling());
+    EXPECT_TRUE(static_cast<HeapfullProfilingEventAccessor *>(event.get())->heapfullCbEventWithProfiling);
 
     event->setPerfCounterNode(nullptr);
     perfCounterNode->returnTag();

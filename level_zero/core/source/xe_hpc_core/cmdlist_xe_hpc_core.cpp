@@ -76,7 +76,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(boo
     if (!sameEngineImplicitDependency) {
         return false;
     }
-    const auto isBarrierRequired = this->latestOperationHasCbEventWithProfiling;
+    const auto isBarrierRequired = this->latestOperationHasHeapfullCbEventWithProfiling;
     if (!isBarrierRequired && NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1) {
         return true;
     }
