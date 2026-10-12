@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"

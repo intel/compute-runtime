@@ -20,6 +20,7 @@
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 #include "CL/cl.h"

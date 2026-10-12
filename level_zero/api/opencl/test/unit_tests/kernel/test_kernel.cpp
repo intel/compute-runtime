@@ -15,6 +15,7 @@
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include <level_zero/ze_api.h>
 

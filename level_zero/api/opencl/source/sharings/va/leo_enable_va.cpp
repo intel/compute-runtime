@@ -9,6 +9,7 @@
 
 #include "level_zero/api/opencl/source/sharings/va/leo_enable_va.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"

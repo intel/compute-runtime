@@ -24,6 +24,7 @@
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj_helper.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_imp.h"

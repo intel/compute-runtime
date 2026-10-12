@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/unified_memory_manager.h"
+
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
 
 namespace NEO {

@@ -9,6 +9,7 @@
 
 #include "level_zero/api/opencl/source/sharings/d3d/leo_enable_d3d.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"

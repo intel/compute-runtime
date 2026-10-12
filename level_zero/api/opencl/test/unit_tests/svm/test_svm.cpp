@@ -19,6 +19,7 @@
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
 #include "level_zero/api/opencl/test/common/fixtures/leo_event_callbacks_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 

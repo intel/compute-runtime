@@ -12,9 +12,22 @@
 #include "shared/source/os_interface/driver_info.h"
 
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/core/source/device/device.h"
 
 namespace NEO {
 namespace LEO {
+
+Device &ClDevice::getDevice() const noexcept {
+    return *getL0Object()->getNEODevice();
+}
+
+L0::Device *ClDevice::getL0Object() const {
+    return L0::Device::fromHandle(this->deviceHandle);
+}
+
+NEO::DriverInfo *ClDevice::getDriverInfo() {
+    return getL0Object()->driverInfo.get();
+}
 
 Platform *ClDevice::getPlatform() const {
     return castToObject<Platform>(this->platform);

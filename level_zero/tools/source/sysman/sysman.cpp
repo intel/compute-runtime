@@ -17,6 +17,10 @@
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
+
+SysmanDevice *SysmanDevice::fromHandle(zes_device_handle_t handle) {
+    return Device::fromHandle(handle)->getSysmanHandle();
+}
 bool sysmanInitFromCore = false;
 
 struct OsSysmanDriver *globalOsSysmanDriver = nullptr;

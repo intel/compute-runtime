@@ -12,9 +12,15 @@
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device_info.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
-#include "level_zero/core/source/device/device.h"
+#include <level_zero/ze_api.h>
+
+namespace L0 {
+struct Device;
+} // namespace L0
 
 namespace NEO {
+class DriverInfo;
+
 namespace LEO {
 
 class Platform;
@@ -58,7 +64,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
     bool getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const { return getDevice().getDeviceAndHostTimer(deviceTimestamp, hostTimestamp); }
     bool getHostTimer(uint64_t *hostTimestamp) const { return getDevice().getHostTimer(hostTimestamp); }
-    Device &getDevice() const noexcept { return *getL0Object()->getNEODevice(); }
+    Device &getDevice() const noexcept;
     const HardwareInfo &getHardwareInfo() const { return getDevice().getHardwareInfo(); };
     uint32_t getRootDeviceIndex() const { return getDevice().getRootDeviceIndex(); };
     double getPlatformHostTimerResolution() const { return getDevice().getPlatformHostTimerResolution(); };
@@ -67,7 +73,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     bool getIsSubdevice() const { return this->isSubdevice; };
 
     ze_device_handle_t getL0Handle() const { return this->deviceHandle; }
-    L0::Device *getL0Object() const { return L0::Device::fromHandle(this->deviceHandle); }
+    L0::Device *getL0Object() const;
     Platform *getPlatform() const;
 
   protected:
@@ -75,7 +81,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     uint32_t getNumGenericSubDevices() const { return getDevice().getNumGenericSubDevices(); };
     const CompilerProductHelper &getCompilerProductHelper() const { return getDevice().getCompilerProductHelper(); };
     MemoryManager *getMemoryManager() const { return getDevice().getMemoryManager(); };
-    NEO::DriverInfo *getDriverInfo() { return getL0Object()->driverInfo.get(); }
+    NEO::DriverInfo *getDriverInfo();
 
     bool isPciBusInfoValid() const;
     cl_version getExtensionVersion(std::string name);

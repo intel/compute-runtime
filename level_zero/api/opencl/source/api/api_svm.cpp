@@ -22,6 +22,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/memory/internal_mem_alloc_ext.h"
 #include <level_zero/ze_api.h>

@@ -13,10 +13,13 @@
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing.h"
-#include "level_zero/core/source/context/context.h"
 
 #include <map>
 #include <memory>
+
+namespace L0 {
+struct Context;
+} // namespace L0
 
 namespace NEO {
 namespace LEO {
@@ -126,7 +129,7 @@ class Context : public BaseObject<_cl_context> {
     bool isSingleDeviceContext() const { return this->rootDeviceIndices.size() == 1u; };
 
     ze_context_handle_t getL0ContextHandle() const { return this->contextHandle; };
-    L0::Context *getL0Object() const { return L0::Context::fromHandle(this->contextHandle); };
+    L0::Context *getL0Object() const;
 
   protected:
     void storeProperties(const cl_context_properties *properties);

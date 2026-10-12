@@ -22,6 +22,7 @@
 #include "level_zero/tools/source/sysman/linux/pmu/pmu.h"
 #include "level_zero/tools/source/sysman/pci/pci.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
+#include "level_zero/tools/source/sysman/standby/standby.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 #include "drm.h"

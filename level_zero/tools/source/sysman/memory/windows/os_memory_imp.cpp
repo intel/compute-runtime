@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 

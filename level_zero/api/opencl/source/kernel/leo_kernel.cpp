@@ -22,6 +22,7 @@
 #include "level_zero/api/opencl/source/kernel/leo_kernel_info_cl.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
+#include "level_zero/core/source/device/device.h"
 
 namespace NEO {
 namespace LEO {

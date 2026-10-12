@@ -24,6 +24,7 @@
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/source/sampler/leo_sampler.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 

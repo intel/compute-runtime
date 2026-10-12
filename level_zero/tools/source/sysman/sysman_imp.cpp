@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
+#include "level_zero/tools/source/sysman/standby/standby.h"
 #include "level_zero/tools/source/sysman/vf_management/vf_management.h"
 
 #include <vector>

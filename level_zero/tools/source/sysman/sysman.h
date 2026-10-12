@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "level_zero/core/source/device/device_handle.h"
 #include "level_zero/tools/source/sysman/diagnostics/diagnostics.h"
 #include "level_zero/tools/source/sysman/engine/engine.h"
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
@@ -17,7 +18,6 @@
 #include "level_zero/tools/source/sysman/power/power.h"
 #include "level_zero/tools/source/sysman/ras/ras.h"
 #include "level_zero/tools/source/sysman/scheduler/scheduler.h"
-#include "level_zero/tools/source/sysman/standby/standby.h"
 #include "level_zero/tools/source/sysman/temperature/temperature.h"
 #include "level_zero/tools/source/sysman/vf_management/vf_management.h"
 #include <level_zero/zes_api.h>
@@ -30,7 +30,7 @@ struct OsSysman;
 
 struct SysmanDevice : _ze_device_handle_t {
 
-    static SysmanDevice *fromHandle(zes_device_handle_t handle) { return Device::fromHandle(handle)->getSysmanHandle(); }
+    static SysmanDevice *fromHandle(zes_device_handle_t handle);
     static ze_result_t performanceGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_perf_handle_t *phPerformance);
     static ze_result_t powerGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_pwr_handle_t *phPower);
     static ze_result_t powerGetCardDomain(zes_device_handle_t hDevice, zes_pwr_handle_t *phPower);

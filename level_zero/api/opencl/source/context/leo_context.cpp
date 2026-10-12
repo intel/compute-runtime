@@ -19,6 +19,7 @@
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
@@ -398,6 +399,8 @@ void Context::storeProperties(const cl_context_properties *properties) {
         this->contextProperties.push_back(0u);
     }
 }
+
+L0::Context *Context::getL0Object() const { return L0::Context::fromHandle(this->contextHandle); }
 
 } // namespace LEO
 } // namespace NEO
