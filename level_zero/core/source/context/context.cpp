@@ -708,6 +708,9 @@ ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, s
             return changeMemoryOperationStatusToL0ResultType(result);
         }
     }
+    if (auto hostPoolLookup = this->getDriverHandle()->getHostUsmPoolOwningPtr(ptr); hostPoolLookup.pool && false == hostPoolLookup.isAllocatedInPool()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
     auto allocation = device->getDriverHandle()->resolveMemoryAllocation(device, ptr, size, true);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -748,6 +751,10 @@ ze_result_t Context::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t s
             auto result = poolLookup.pool->evictChunk(ptr, neoDevice);
             return changeMemoryOperationStatusToL0ResultType(result);
         }
+    }
+
+    if (auto hostPoolLookup = this->getDriverHandle()->getHostUsmPoolOwningPtr(ptr); hostPoolLookup.pool) {
+        return hostPoolLookup.isAllocatedInPool() ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto allocation = device->getDriverHandle()->resolveMemoryAllocation(device, ptr, size, false);
     if (allocation == nullptr) {

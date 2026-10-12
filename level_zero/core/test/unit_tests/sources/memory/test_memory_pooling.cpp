@@ -444,6 +444,64 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDefaultContextWhenCallingPoolCleanupT
     std::swap(driverHandle->defaultContext, contextHandle);
 }
 
+TEST_F(AllocUsmHostEnabledMemoryTest, givenResidentPooledHostAllocationsWhenEvictingOneThenPoolAllocationIsNotEvicted) {
+    auto hostMemAllocPool = driverHandle->usmHostMemAllocPoolFacade.getPool();
+    ASSERT_NE(nullptr, hostMemAllocPool);
+
+    void *evicted = nullptr;
+    void *sibling = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 1u, 0u, &evicted));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 1u, 0u, &sibling));
+    ASSERT_TRUE(hostMemAllocPool->isInPoolRange(evicted));
+    ASSERT_TRUE(hostMemAllocPool->isInPoolRange(sibling));
+
+    auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(l0Devices[0]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], evicted, 1u));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], sibling, 1u));
+    auto evictCalledCount = mockMemoryOperationsHandler->evictCalledCount.load();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], evicted, 1u));
+    EXPECT_EQ(evictCalledCount, mockMemoryOperationsHandler->evictCalledCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(evicted));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(sibling));
+}
+
+TEST_F(AllocUsmHostEnabledMemoryTest, givenFreedPooledHostAllocationWhenEvictingThenErrorIsReturnedAndPoolAllocationIsNotEvicted) {
+    auto hostMemAllocPool = driverHandle->usmHostMemAllocPoolFacade.getPool();
+    ASSERT_NE(nullptr, hostMemAllocPool);
+
+    void *freed = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 1u, 0u, &freed));
+    ASSERT_TRUE(hostMemAllocPool->isInPoolRange(freed));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freed));
+
+    auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(l0Devices[0]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    auto evictCalledCount = mockMemoryOperationsHandler->evictCalledCount.load();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->evictMemory(l0Devices[0], freed, 1u));
+    EXPECT_EQ(evictCalledCount, mockMemoryOperationsHandler->evictCalledCount);
+}
+
+TEST_F(AllocUsmHostEnabledMemoryTest, givenFreedPooledHostAllocationWhenMakingItResidentThenErrorIsReturnedAndPoolAllocationIsNotMadeResident) {
+    auto hostMemAllocPool = driverHandle->usmHostMemAllocPoolFacade.getPool();
+    ASSERT_NE(nullptr, hostMemAllocPool);
+
+    void *freed = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 1u, 0u, &freed));
+    ASSERT_TRUE(hostMemAllocPool->isInPoolRange(freed));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freed));
+
+    auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(l0Devices[0]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    auto makeResidentCalledCount = mockMemoryOperationsHandler->makeResidentCalledCount.load();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->makeMemoryResident(l0Devices[0], freed, 1u));
+    EXPECT_EQ(makeResidentCalledCount, mockMemoryOperationsHandler->makeResidentCalledCount);
+}
+
 using AllocUsmDeviceDefaultSinglePoolMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0>;
 
 TEST_F(AllocUsmDeviceDefaultSinglePoolMemoryTest, givenDeviceWhenCallingInitDeviceUsmAllocPoolThenInitIfEnabled) {
