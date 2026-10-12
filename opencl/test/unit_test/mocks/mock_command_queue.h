@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
@@ -41,6 +40,7 @@
 
 namespace NEO {
 class Kernel;
+class CommandStreamReceiver;
 
 class MockCommandQueue : public CommandQueue {
   public:

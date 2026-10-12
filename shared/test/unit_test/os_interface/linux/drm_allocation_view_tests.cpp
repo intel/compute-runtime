@@ -11,7 +11,6 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 #include "gtest/gtest.h"
 

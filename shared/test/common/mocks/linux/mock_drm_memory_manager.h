@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <atomic>

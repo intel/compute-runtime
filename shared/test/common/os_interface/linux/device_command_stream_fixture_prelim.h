@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture_context.h"
 
 struct DrmMockCustomPrelim : public DrmMockCustom {

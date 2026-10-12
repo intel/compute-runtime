@@ -196,8 +196,6 @@ set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_WIN ${neo_libult_com
 
 set(neo_libult_common_SRCS_LIB_ULT_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/linux/memory_allocator_multi_device_fixture_linux.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_buffer_object_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
 )

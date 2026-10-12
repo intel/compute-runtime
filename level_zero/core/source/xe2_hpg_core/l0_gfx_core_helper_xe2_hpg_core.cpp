@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_base.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_and_later.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_to_xe2.inl"

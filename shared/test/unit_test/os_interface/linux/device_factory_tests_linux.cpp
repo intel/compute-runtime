@@ -9,6 +9,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"

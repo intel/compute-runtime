@@ -11,7 +11,6 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
-#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
 #include "level_zero/zet_intel_gpu_debug.h"
@@ -25,7 +24,13 @@
 #include <memory>
 #include <vector>
 
+namespace L0 {
+class DriverHandle;
+} // namespace L0
+
 namespace NEO {
+class GraphicsAllocation;
+
 enum class EngineGroupType : uint32_t;
 struct HardwareInfo;
 struct EngineGroupT;

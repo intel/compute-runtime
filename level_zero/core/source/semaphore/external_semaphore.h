@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"

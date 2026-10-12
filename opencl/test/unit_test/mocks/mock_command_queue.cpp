@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 
 #include "opencl/source/event/event.h"

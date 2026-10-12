@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_interface.h"
