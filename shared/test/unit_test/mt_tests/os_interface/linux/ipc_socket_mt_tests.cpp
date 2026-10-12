@@ -9,7 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include <atomic>
 #include <errno.h>
@@ -114,7 +114,7 @@ class IpcSocketServerMtTest : public ::testing::Test {
     }
 };
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenInitializedSuccessfullyThenIsRunningReturnsTrue) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenInitializedSuccessfullyThenIsRunningReturnsTrue) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -132,7 +132,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenInitializedSuccessfullyThenIsRunnin
     EXPECT_GT(SysCalls::listenCalled, 0);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenSocketCreationFailsThenInitializeFails) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenSocketCreationFailsThenInitializeFails) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
 
     SysCalls::sysCallsSocket = [](int, int, int) -> int { return -1; };
@@ -145,7 +145,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSocketCreationFailsThenInitializeFa
     EXPECT_EQ(SysCalls::bindCalled, 0);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenBindFailsThenInitializeFails) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenBindFailsThenInitializeFails) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
 
@@ -161,7 +161,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenBindFailsThenInitializeFails) {
     EXPECT_EQ(SysCalls::listenCalled, 0);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenListenFailsThenInitializeFails) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenListenFailsThenInitializeFails) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -177,7 +177,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenListenFailsThenInitializeFails) {
     EXPECT_GT(SysCalls::listenCalled, 0);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenInitializedMultipleTimesThenSubsequentCallsSucceed) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenInitializedMultipleTimesThenSubsequentCallsSucceed) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -196,7 +196,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenInitializedMultipleTimesThenSubsequ
     EXPECT_EQ(initialSocketCalls, SysCalls::socketCalled);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenShutdownCalledThenServerStops) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenShutdownCalledThenServerStops) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -213,7 +213,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenShutdownCalledThenServerStops) {
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenShutdownCalledMultipleTimesThenNoError) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenShutdownCalledMultipleTimesThenNoError) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -232,7 +232,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenShutdownCalledMultipleTimesThenNoEr
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterHandleWithValidFdThenSucceeds) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenRegisterHandleWithValidFdThenSucceeds) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -253,7 +253,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterHandleWithValidFdThenSuccee
     EXPECT_GT(SysCalls::dupCalled, 0);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterSameHandleMultipleTimesThenRefCountIncreases) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenRegisterSameHandleMultipleTimesThenRefCountIncreases) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -277,7 +277,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterSameHandleMultipleTimesThen
     EXPECT_EQ(dupCallsFirst, SysCalls::dupCalled);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenDupFailsThenRegisterHandleFails) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenDupFailsThenRegisterHandleFails) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -297,7 +297,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenDupFailsThenRegisterHandleFails) {
     EXPECT_FALSE(server.registerHandle(handleId, fd));
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterExistingHandleThenSucceeds) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenUnregisterExistingHandleThenSucceeds) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -318,7 +318,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterExistingHandleThenSucceed
     EXPECT_TRUE(server.unregisterHandle(handleId));
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterMultipleDifferentHandlesThenAllAreStored) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenRegisterMultipleDifferentHandlesThenAllAreStored) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -339,7 +339,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenRegisterMultipleDifferentHandlesThe
     EXPECT_EQ(3, SysCalls::dupCalled);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenDestructorCalledWithRegisteredHandlesThenHandlesAreCleaned) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenDestructorCalledWithRegisteredHandlesThenHandlesAreCleaned) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -362,7 +362,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenDestructorCalledWithRegisteredHandl
     EXPECT_GT(SysCalls::closeFuncCalled, closeCallsBefore);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenThreadCreationFailsThenInitializeFails) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenThreadCreationFailsThenInitializeFails) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -378,7 +378,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenThreadCreationFailsThenInitializeFa
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsErrorThenServerExits) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenPollReturnsErrorThenServerExits) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -401,7 +401,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsErrorThenServerExits) {
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenAcceptReturnsOtherErrorThenContinues) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenAcceptReturnsOtherErrorThenContinues) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -433,7 +433,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenAcceptReturnsOtherErrorThenContinue
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenClientConnectionReceiveFailsThenReturnsFalse) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenClientConnectionReceiveFailsThenReturnsFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -469,7 +469,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenClientConnectionReceiveFailsThenRet
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForNonExistentHandleThenSendsFailureResponse) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenProcessRequestForNonExistentHandleThenSendsFailureResponse) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -522,7 +522,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForNonExistentHandleT
     EXPECT_TRUE(sendCalled.load());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForExistingHandleThenSendsFdViaScmRights) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenProcessRequestForExistingHandleThenSendsFdViaScmRights) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -581,7 +581,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForExistingHandleThen
     EXPECT_TRUE(sendmsgCalled.load());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithPayloadAndPayloadSendFailsThenReturnsFalse) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenSendMessageWithPayloadAndPayloadSendFailsThenReturnsFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -636,7 +636,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithPayloadAndPayloadSen
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadAndPayloadRecvFailsThenReturnsFalse) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadAndPayloadRecvFailsThenReturnsFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -684,7 +684,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadAndPayload
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWithRegisteredHandleWhenShutdownThenClosesFileDescriptors) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWithRegisteredHandleWhenShutdownThenClosesFileDescriptors) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -697,7 +697,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWithRegisteredHandleWhenShutdownThenClo
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenRunningServerWhenUnregisterNonExistentHandleCalledThenReturnsFalse) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenRunningServerWhenUnregisterNonExistentHandleCalledThenReturnsFalse) {
     TestedIpcSocketServer server;
     EXPECT_TRUE(server.initialize());
 
@@ -706,7 +706,7 @@ TEST_F(IpcSocketServerMtTest, givenRunningServerWhenUnregisterNonExistentHandleC
     server.shutdown();
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithInvalidFdThenStillDecrements) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithInvalidFdThenStillDecrements) {
     VariableBackup<decltype(SysCalls::sysCallsDup)> dupBackup(&SysCalls::sysCallsDup);
 
     static int dupReturnValue = 42;
@@ -722,7 +722,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithInvalidFdThenSt
     server.shutdown();
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsEintrThenContinuesLoop) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenPollReturnsEintrThenContinuesLoop) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -749,7 +749,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsEintrThenContinuesLoop) 
     EXPECT_GE(pollCallCount.load(), 2);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadSizeLargerThanMaxThenFails) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadSizeLargerThanMaxThenFails) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -794,7 +794,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithPayloadSizeLarger
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForHandleWithInvalidFdThenSendsFailureResponse) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenProcessRequestForHandleWithInvalidFdThenSendsFailureResponse) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -851,7 +851,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenProcessRequestForHandleWithInvalidF
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithZeroPayloadSizeThenSkipsPayloadSend) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenSendMessageWithZeroPayloadSizeThenSkipsPayloadSend) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -905,7 +905,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithZeroPayloadSizeThenS
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsTimeoutThenContinuesLoop) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenPollReturnsTimeoutThenContinuesLoop) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -931,7 +931,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsTimeoutThenContinuesLoop
     EXPECT_GE(pollCallCountLocal.load(), 2);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsWithoutPollinThenContinuesLoop) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenPollReturnsWithoutPollinThenContinuesLoop) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -958,7 +958,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenPollReturnsWithoutPollinThenContinu
     EXPECT_GE(pollCallCountLocal.load(), 2);
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenHandleClientConnectionReceivesDefaultMessageTypeThenReturnsDefault) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenHandleClientConnectionReceivesDefaultMessageTypeThenReturnsDefault) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -1003,7 +1003,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenHandleClientConnectionReceivesDefau
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageHeaderFailsThenReturnsFalse) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenSendMessageHeaderFailsThenReturnsFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -1053,7 +1053,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageHeaderFailsThenReturnsFa
     EXPECT_FALSE(server.isRunning());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithZeroPayloadSizeThenSkipsPayloadRecv) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithZeroPayloadSizeThenSkipsPayloadRecv) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -1108,7 +1108,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenReceiveMessageWithZeroPayloadSizeTh
     EXPECT_EQ(1, recvCallCountLocal.load());
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithRefCountGreaterThanOneThenOnlyDecrements) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithRefCountGreaterThanOneThenOnlyDecrements) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -1134,7 +1134,7 @@ TEST_F(IpcSocketServerMtTest, givenServerWhenUnregisterHandleWithRefCountGreater
     server.shutdown();
 }
 
-TEST_F(IpcSocketServerMtTest, givenServerWhenSendMessageWithValidPayloadThenSendsPayload) {
+TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenSendMessageWithValidPayloadThenSendsPayload) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(false);
 
@@ -1210,7 +1210,7 @@ class IpcSocketMultiThreadedTest : public ::testing::Test {
     }
 };
 
-TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterHandlesConcurrentlyThenAllSucceed) {
+TEST_F_DEFAULT(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterHandlesConcurrentlyThenAllSucceed) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -1250,7 +1250,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterHandles
     EXPECT_EQ(numThreads * handlesPerThread, successCount.load());
 }
 
-TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterAndUnregisterConcurrentlyThenNoRaceConditions) {
+TEST_F_DEFAULT(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterAndUnregisterConcurrentlyThenNoRaceConditions) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -1285,7 +1285,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterAndUnre
     EXPECT_TRUE(server.isRunning());
 }
 
-TEST_F(IpcSocketMultiThreadedTest, givenServerWhenOneThreadRegistersWhileAnotherUnregistersThenNoCorruption) {
+TEST_F_DEFAULT(IpcSocketMultiThreadedTest, givenServerWhenOneThreadRegistersWhileAnotherUnregistersThenNoCorruption) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -1322,7 +1322,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenOneThreadRegistersWhileAnother
     EXPECT_TRUE(server.isRunning());
 }
 
-TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterSameHandleIdThenRefCountIsCorrect) {
+TEST_F_DEFAULT(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterSameHandleIdThenRefCountIsCorrect) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -1360,7 +1360,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsRegisterSameHan
 }
 
 #if 0
-TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsCallInitializeConcurrentlyThenOnlyOneSucceeds) {
+TEST_F_DEFAULT(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsCallInitializeConcurrentlyThenOnlyOneSucceeds) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -1397,7 +1397,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenMultipleThreadsCallInitializeC
 }
 #endif
 
-TEST_F(IpcSocketMultiThreadedTest, givenServerWhenConcurrentRegisterAndShutdownThenNoDeadlock) {
+TEST_F_DEFAULT(IpcSocketMultiThreadedTest, givenServerWhenConcurrentRegisterAndShutdownThenNoDeadlock) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);
@@ -1435,7 +1435,7 @@ TEST_F(IpcSocketMultiThreadedTest, givenServerWhenConcurrentRegisterAndShutdownT
     }
 }
 
-TEST_F(IpcSocketMultiThreadedTest, givenServerWhenStressTestingRegisterUnregisterThenHandlesCorrectly) {
+TEST_F_DEFAULT(IpcSocketMultiThreadedTest, givenServerWhenStressTestingRegisterUnregisterThenHandlesCorrectly) {
     VariableBackup<decltype(SysCalls::sysCallsSocket)> socketBackup(&SysCalls::sysCallsSocket);
     VariableBackup<decltype(SysCalls::sysCallsBind)> bindBackup(&SysCalls::sysCallsBind);
     VariableBackup<decltype(SysCalls::sysCallsListen)> listenBackup(&SysCalls::sysCallsListen);

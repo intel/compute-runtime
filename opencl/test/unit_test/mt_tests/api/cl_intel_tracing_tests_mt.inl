@@ -7,7 +7,7 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_limits.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/tracing/tracing_api.h"
@@ -84,7 +84,7 @@ struct IntelTracingMtTest : public Test<PlatformFixture> {
     std::atomic<int> count{0};
 };
 
-TEST_F(IntelTracingMtTest, WhenTracingFromMultipleThreadsThenAllThreadsAreCreated) {
+TEST_F_DEFAULT(IntelTracingMtTest, WhenTracingFromMultipleThreadsThenAllThreadsAreCreated) {
     status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle);
     EXPECT_EQ(CL_SUCCESS, status);
 
