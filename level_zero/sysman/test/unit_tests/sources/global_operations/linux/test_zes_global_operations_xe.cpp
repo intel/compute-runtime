@@ -438,19 +438,33 @@ TEST_F(SysmanGlobalOperationsFixtureXe,
     pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeExistsWhenCallingDeviceGetStateWithExtensionThenWedgedAndPowerOffPendingFlagsAreSet) {
-    pFsAccess->mockAlertReasonNodeExists = true;
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeReportsAlertReasonWhenCallingDeviceGetStateWithExtensionThenWedgedAndPowerOffPendingFlagsAreSet) {
+    pFsAccess->mockAlertReason = "Thermal Trip";
 
     const uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
     EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeExistsButIsUnreadableWhenCallingDeviceGetStateWithExtensionThenWedgedAndPowerOffPendingFlagsAreSet) {
-    pFsAccess->mockAlertReasonNodeExists = true;
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsUnreadableWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
+    pFsAccess->mockAlertReason = "Thermal Trip";
     pFsAccess->mockAlertReasonReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
 
-    const uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
-    EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeReportsNoneWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
+    pFsAccess->mockAlertReason = "none";
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenUnrecognizedAlertReasonWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
+    pFsAccess->mockAlertReason = "Some Unknown Reason";
+    pLinuxSysmanImp->isDeviceInWedgedState = true;
+
+    EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenEachSupportedAlertReasonWhenCallingZesIntelDeviceGetPowerOffReasonExpThenMatchingReasonIsReturned) {
@@ -470,7 +484,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenEachSupportedAlertReasonWhenCalling
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonIsReportedOnAnOtherwiseHealthyDeviceWhenCallingDeviceGetStateWithExtensionThenNormalFlagIsNotSet) {
-    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReason = "Thermal Trip";
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
         const char *drmVersion = "xe";
@@ -488,23 +502,23 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonIsReportedOnAnOtherwiseH
     EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe, GivenDriverNotLoadedAndAlertReasonNodeExistsWhenCallingDeviceGetStateWithExtensionThenOnlyPowerOffPendingFlagsAreSet) {
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenDriverNotLoadedAndAlertReasonNodeReportsAlertReasonWhenCallingDeviceGetStateWithExtensionThenOnlyPowerOffPendingFlagsAreSet) {
     pFsAccess->mockDriverLoaded = false;
-    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReason = "Thermal Trip";
 
     uint32_t expectedFlags = ZES_DEVICE_STATE_EXT_FLAG_WEDGED | ZES_INTEL_DEVICE_STATE_EXP_FLAG_POWER_OFF_PENDING;
     EXPECT_EQ(expectedFlags, getDeviceStateExtFlags());
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonNodeAndDriverNotLoadedWhenCallingDeviceGetStateWithExtensionThenDriverNotLoadedFlagIsSet) {
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonAndDriverNotLoadedWhenCallingDeviceGetStateWithExtensionThenDriverNotLoadedFlagIsSet) {
     pFsAccess->mockDriverLoaded = false;
-    pFsAccess->mockAlertReasonNodeExists = false;
+    pFsAccess->mockAlertReason = "none";
 
     EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_DRIVER_NOT_LOADED), getDeviceStateExtFlags());
 }
 
-TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonNodeWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
-    pFsAccess->mockAlertReasonNodeExists = false;
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
+    pFsAccess->mockAlertReason = "none";
     pLinuxSysmanImp->isDeviceInWedgedState = true;
 
     EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
@@ -512,7 +526,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenNoAlertReasonNodeWhenCallingDeviceG
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeIsNotExposedByKmdWhenCallingDeviceGetStateWithExtensionThenPowerOffPendingFlagIsNotSet) {
     pSysmanKmdInterface->mockNodeFileNameUnavailable = true;
-    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReason = "Thermal Trip";
     pLinuxSysmanImp->isDeviceInWedgedState = true;
 
     EXPECT_EQ(static_cast<uint32_t>(ZES_DEVICE_STATE_EXT_FLAG_WEDGED), getDeviceStateExtFlags());
@@ -553,6 +567,14 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenEmptyAlertReasonNodeWhenCallingZesI
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
 }
 
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenAlertReasonNodeReportsNoneWhenCallingZesIntelDeviceGetPowerOffReasonExpThenNoReasonIsReturned) {
+    pFsAccess->mockAlertReason = "none";
+
+    zes_intel_device_power_off_reason_exp_t powerOffReason = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_POWER_OFF_REASON_EXP, nullptr, ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDeviceGetPowerOffReasonExp(device->toHandle(), &powerOffReason));
+    EXPECT_EQ(static_cast<zes_intel_device_power_off_reason_exp_flags_t>(ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_NONE), powerOffReason.reasons);
+}
+
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenUnrecognizedAlertReasonWhenCallingZesIntelDeviceGetPowerOffReasonExpThenUnknownErrorIsReturned) {
     pFsAccess->mockAlertReason = "Some Unknown Reason";
 
@@ -562,7 +584,7 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenUnrecognizedAlertReasonWhenCallingZ
 
 TEST_F(SysmanGlobalOperationsFixtureXe, GivenPciPathIsInaccessibleWhenCallingDeviceGetStateWithExtensionThenOnlyGpuLostFlagIsSet) {
     pFsAccess->mockDevicePciPathAccessible = false;
-    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReason = "Thermal Trip";
 
     EXPECT_EQ(static_cast<uint32_t>(ZES_INTEL_DEVICE_STATE_EXP_FLAG_GPU_LOST), getDeviceStateExtFlags());
 }

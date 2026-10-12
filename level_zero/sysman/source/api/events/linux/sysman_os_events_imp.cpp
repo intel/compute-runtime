@@ -300,20 +300,6 @@ bool LinuxEventsUtil::isSurvivabilityModeAsExpected(FsAccessInterface *pFsAccess
     return survivabilityModeVal == mode;
 }
 
-bool LinuxEventsUtil::isPowerOffPending(SysmanDeviceImp *pSysmanDeviceImp, FsAccessInterface *pFsAccess, const std::string &devPath) {
-    if (pFsAccess == nullptr) {
-        return false;
-    }
-
-    auto *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pSysmanDeviceImp->deviceGetOsInterface());
-    const std::string alertReasonFile = pLinuxSysmanImp->getSysmanKmdInterface()->getNodeFileName(NodeName::amcAlertReason);
-    if (alertReasonFile.empty()) {
-        return false;
-    }
-
-    return pFsAccess->fileExists("/sys" + devPath + "/" + alertReasonFile);
-}
-
 bool LinuxEventsUtil::isDrmCardNode(const std::string &eventDevPath, const std::string &pciDevPath) {
     // A single unbind/bind generates add/remove uevents for every child node of the PCI device
     // (drm card, render node, connectors, auxiliary devices). Only the primary drm card node
@@ -575,7 +561,8 @@ bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &reg
                 if (registeredEvents[it->first] & ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING) {
                     zes_event_type_flags_t wedgedEvent = 0;
                     auto pSysmanDevice = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[it->first]));
-                    if (isPowerOffPending(pSysmanDevice, pFsAccess, it->second) &&
+                    auto *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pSysmanDevice->deviceGetOsInterface());
+                    if (pLinuxSysmanImp->isPowerOffPending() &&
                         checkDeviceWedgedEvent(dev, wedgedEvent)) {
                         pEvents[it->first] |= ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING;
                         retVal = true;

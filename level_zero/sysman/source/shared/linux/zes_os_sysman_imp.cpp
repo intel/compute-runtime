@@ -39,6 +39,14 @@ namespace Sysman {
 
 const std::string LinuxSysmanImp::deviceDir("device");
 
+const std::map<std::string, zes_intel_device_power_off_reason_exp_flags_t> alertReasonToPowerOffReasonMap = {
+    {"none", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_NONE},
+    {"Firmware Download", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FIRMWARE_DOWNLOAD},
+    {"Thermal Trip", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP},
+    {"OOB Request", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_ALERT},
+    {"OOB Reset", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_RESET},
+    {"Catastrophic", ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_CATASTROPHIC_ERROR}};
+
 ze_result_t LinuxSysmanImp::init() {
     subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&pParentSysmanDeviceImp->getHardwareInfo());
     if (subDeviceCount == 1) {
@@ -156,6 +164,58 @@ std::string LinuxSysmanImp::getPciRootPortDirectoryPath(std::string realPciPath)
     // '/sys/devices/pci0000:89/0000:89:02.0/' will always be the same distance.
     // from 0000:8c:00.0 i.e the 3rd PCI address from the gt tile
     return modifyPathOnLevel(std::move(realPciPath), 3);
+}
+
+std::string LinuxSysmanImp::getAlertReasonFilePath() {
+    const std::string alertReasonFile = getSysmanKmdInterface()->getNodeFileName(NodeName::amcAlertReason);
+    if (alertReasonFile.empty()) {
+        return {};
+    }
+    const std::string devicePciPath = pSysfsAccess->getDevicePciPath();
+    if (devicePciPath.empty()) {
+        return {};
+    }
+    return devicePciPath + "/" + alertReasonFile;
+}
+
+bool LinuxSysmanImp::isPowerOffPending() {
+    if (getAlertReasonFilePath().empty()) {
+        return false;
+    }
+    zes_intel_device_power_off_reason_exp_flags_t reasons = ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_NONE;
+    return (readPowerOffReasons(reasons) == ZE_RESULT_SUCCESS) && (reasons != ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_NONE);
+}
+
+ze_result_t LinuxSysmanImp::readPowerOffReasons(zes_intel_device_power_off_reason_exp_flags_t &reasons) {
+    const std::string alertReasonSysFsNodeName = getAlertReasonFilePath();
+    if (alertReasonSysFsNodeName.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Alert reason node is unavailable and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::vector<std::string> alertReasonLines = {};
+    ze_result_t result = pFsAccess->read(alertReasonSysFsNodeName, alertReasonLines);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, alertReasonSysFsNodeName.c_str(), result);
+        return result;
+    }
+
+    if (alertReasonLines.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No alert reason reported by %s \n", NEO_FUNCTION_NAME, alertReasonSysFsNodeName.c_str());
+        DEBUG_BREAK_IF(1);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    const std::string &alertReason = alertReasonLines.front();
+    auto alertReasonFlag = alertReasonToPowerOffReasonMap.find(alertReason);
+    if (alertReasonFlag == alertReasonToPowerOffReasonMap.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unrecognized alert reason %s reported by %s \n", NEO_FUNCTION_NAME, alertReason.c_str(), alertReasonSysFsNodeName.c_str());
+        DEBUG_BREAK_IF(1);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    reasons = alertReasonFlag->second;
+    return ZE_RESULT_SUCCESS;
 }
 
 std::string LinuxSysmanImp::getPciCardBusDirectoryPath(std::string realPciPath) {

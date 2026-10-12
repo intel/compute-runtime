@@ -172,13 +172,14 @@ struct MockEventsFsAccess : public L0::Sysman::FsAccessInterface {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    bool mockAlertReasonNodeExists = false;
+    std::string mockAlertReason = "none";
 
-    bool fileExists(const std::string file) override {
+    ze_result_t read(const std::string file, std::vector<std::string> &val) override {
         if (file.find("xe_amc_alert_reason") != std::string::npos) {
-            return mockAlertReasonNodeExists;
+            val.push_back(mockAlertReason);
+            return ZE_RESULT_SUCCESS;
         }
-        return false;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     bool isRootUser() override {
@@ -335,7 +336,6 @@ class PublicLinuxEventsUtil : public L0::Sysman::LinuxEventsUtil {
     using LinuxEventsUtil::init;
     using LinuxEventsUtil::initNetlink;
     using LinuxEventsUtil::isDrmCardNode;
-    using LinuxEventsUtil::isPowerOffPending;
     using LinuxEventsUtil::isSurvivabilityModeAsExpected;
     using LinuxEventsUtil::listenSystemEvents;
     using LinuxEventsUtil::pDrmNl;

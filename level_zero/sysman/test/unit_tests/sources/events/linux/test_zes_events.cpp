@@ -2612,10 +2612,6 @@ TEST_F(SysmanEventsFixture, GivenPowerOffPendingEventFlagWhenRegisteringEventsTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsImp->eventRegister(ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
 }
 
-TEST_F(SysmanEventsFixture, GivenNullFsAccessWhenCheckingForPowerOffPendingThenFalseIsReturned) {
-    EXPECT_FALSE(PublicLinuxEventsUtil::isPowerOffPending(pSysmanDeviceImp, nullptr, "/devices/pci0000:97/0000:97:02.0"));
-}
-
 // The alert reason node is exposed by the xe driver only.
 class SysmanEventsXeFixture : public SysmanEventsFixture {
   protected:
@@ -2635,7 +2631,7 @@ class SysmanEventsXeFixture : public SysmanEventsFixture {
     }
 };
 
-TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsPresentWhenListeningForPowerOffPendingEventThenEventListenAPIReturnsEvent) {
+TEST_F(SysmanEventsXeFixture, GivenAlertReasonIsReportedWhenListeningForPowerOffPendingEventThenEventListenAPIReturnsEvent) {
     VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
         pipeFd[0] = mockReadPipeFd;
         pipeFd[1] = mockWritePipeFd;
@@ -2657,7 +2653,7 @@ TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsPresentWhenListeningForPower
     udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
     udevLibLocal.getEventPropertyValueResult = "vendor-specific";
 
-    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReason = "Thermal Trip";
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
@@ -2668,7 +2664,7 @@ TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsPresentWhenListeningForPower
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING), pDeviceEvents[0]);
 }
 
-TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsNotPresentWhenListeningForPowerOffPendingEventThenEventListenAPIDoesNotReturnEvent) {
+TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeReportsNoneWhenListeningForPowerOffPendingEventThenEventListenAPIDoesNotReturnEvent) {
     VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
         pipeFd[0] = mockReadPipeFd;
         pipeFd[1] = mockWritePipeFd;
@@ -2690,8 +2686,8 @@ TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsNotPresentWhenListeningForPo
     udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
     udevLibLocal.getEventPropertyValueResult = "vendor-specific";
 
-    // Without the alert reason node the wedged uevent is a survivability mode entry only.
-    pFsAccess->mockAlertReasonNodeExists = false;
+    // Without an alert reason the wedged uevent is a survivability mode entry only.
+    pFsAccess->mockAlertReason = "none";
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
@@ -2701,7 +2697,7 @@ TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsNotPresentWhenListeningForPo
     EXPECT_EQ(0u, numDeviceEvents);
 }
 
-TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsPresentButWedgedPropertyIsNotVendorSpecificWhenListeningForPowerOffPendingEventThenEventListenAPIDoesNotReturnEvent) {
+TEST_F(SysmanEventsXeFixture, GivenAlertReasonIsReportedButWedgedPropertyIsNotVendorSpecificWhenListeningForPowerOffPendingEventThenEventListenAPIDoesNotReturnEvent) {
     VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
         pipeFd[0] = mockReadPipeFd;
         pipeFd[1] = mockWritePipeFd;
@@ -2723,7 +2719,7 @@ TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeIsPresentButWedgedPropertyIsNo
     udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
     udevLibLocal.getEventPropertyValueResult = "not-vendor-specific";
 
-    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReason = "Thermal Trip";
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
@@ -2755,7 +2751,7 @@ TEST_F(SysmanEventsXeFixture, GivenAlertReasonNodeNameIsUnavailableWhenListening
     udevLibLocal.allocateDeviceToReceiveDataResult = reinterpret_cast<void *>(0x1);
     udevLibLocal.getEventPropertyValueResult = "vendor-specific";
 
-    pFsAccess->mockAlertReasonNodeExists = true;
+    pFsAccess->mockAlertReason = "Thermal Trip";
     pSysmanKmdInterfaceXe->mockNodeFileNameUnavailable = true;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING));

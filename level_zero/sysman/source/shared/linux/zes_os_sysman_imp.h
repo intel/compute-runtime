@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
 
+#include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
@@ -62,6 +63,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
+    std::string getAlertReasonFilePath();
+    ze_result_t readPowerOffReasons(zes_intel_device_power_off_reason_exp_flags_t &reasons);
+    bool isPowerOffPending();
     PRODUCT_FAMILY getProductFamilyFromDeviceId(uint32_t deviceId);
     PRODUCT_FAMILY getProductFamily() const;
     SysmanHwDeviceIdDrm::SingleInstance getSysmanHwDeviceIdInstance();

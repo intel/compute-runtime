@@ -95,7 +95,6 @@ class LinuxEventsUtil {
     static bool getPciAddressOfDrmCardNode(const std::string &eventDevPath, std::string &pciAddress);
     void getSupportedPciDeviceAddresses(std::set<std::string> &pciAddresses);
     void updateSupportedPciDeviceAddresses(zes_event_type_flags_t driverRegisteredEvents);
-    static bool isPowerOffPending(SysmanDeviceImp *pSysmanDeviceImp, FsAccessInterface *pFsAccess, const std::string &devPath);
     std::string action;
 
   private:

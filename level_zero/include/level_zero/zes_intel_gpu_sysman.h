@@ -483,6 +483,7 @@ typedef enum _zes_intel_device_power_off_reason_exp_version_t {
 ///       multiple concurrent reasons
 typedef uint32_t zes_intel_device_power_off_reason_exp_flags_t;
 typedef enum _zes_intel_device_power_off_reason_exp_flag_t {
+    ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_NONE = 0,                       ///< No power off is pending for the device
     ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_FIRMWARE_DOWNLOAD = ZE_BIT(0),  ///< The device is being powered off for firmware download
     ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_THERMAL_TRIP = ZE_BIT(1),       ///< The device is being powered off due to a thermal trip
     ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_FLAG_OOB_ALERT = ZE_BIT(2),          ///< The device is being powered off due to an out-of-band alert
