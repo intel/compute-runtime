@@ -18,40 +18,6 @@
 using GfxCoreHelperTestGen12Lp = GfxCoreHelperTest;
 using GfxCoreHelperTestGen12LpWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
 
-TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpSteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    hardwareInfo.featureTable.flags.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper, nullptr);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
-TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpSteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    hardwareInfo.featureTable.flags.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
-
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper, nullptr);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
-TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllWhenWaForDefaultEngineIsNotAppliedThenCcsIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    hardwareInfo.featureTable.flags.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-    hardwareInfo.platform.eProductFamily = IGFX_UNKNOWN;
-
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper, nullptr);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
 TGLLPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpAndVariousSteppingsWhenGettingIsWorkaroundRequiredThenCorrectValueIsReturned) {
 
     const auto &productHelper = getHelper<ProductHelper>();

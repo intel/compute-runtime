@@ -6423,6 +6423,8 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenFreeingThenRegisteredHandle
 }
 
 TEST(DrmMemoryManager, givenEnabledResourceRegistrationWhenSshIsAllocatedThenItIsMarkedForCapture) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceRunAloneContext.set(0);
     auto executionEnvironment = new MockExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->setDebuggingMode(DebuggingMode::online);

@@ -22,10 +22,6 @@ using Family = NEO::Gen12LpFamily;
 namespace NEO {
 
 template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) {
-}
-
-template <typename GfxFamily>
 inline uint32_t GfxCoreHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
     return 36;
 }

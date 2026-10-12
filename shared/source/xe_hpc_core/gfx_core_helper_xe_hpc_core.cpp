@@ -40,8 +40,7 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
         }
     }
 
-    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) ||
-        hwInfo.featureTable.flags.ftrRcsNode) {
+    if (EngineHelpers::isRcsExposed(rootDeviceEnvironment)) {
         engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::regular});
     }
 
@@ -101,13 +100,6 @@ EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineTy
         return EngineGroupType::linkedCopy;
     }
     UNRECOVERABLE_IF(true);
-}
-
-template <>
-void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) {
-    if (!pHwInfo->featureTable.flags.ftrCCSNode) {
-        pHwInfo->capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCCS;
-    }
 }
 
 template <>

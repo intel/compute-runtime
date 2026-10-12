@@ -167,7 +167,6 @@ PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAd
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     hwInfo.capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCS;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
 
     auto tilePartsForConcurrentKernels = PVC::numberOfpartsInTileForConcurrentKernels;
     auto passedMaxWorkGroupCount = 1024;
@@ -178,7 +177,7 @@ PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAd
         hwInfo.platform.usRevId = hwRevId;
         for (auto engineGroupType : {EngineGroupType::renderCompute, EngineGroupType::compute, EngineGroupType::cooperativeCompute}) {
             for (auto isRcsEnabled : ::testing::Bool()) {
-                hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
+                hwInfo.caps.rcsExposureDisabled = !isRcsEnabled;
                 bool disallowDispatch = (engineGroupType == EngineGroupType::renderCompute ||
                                          (engineGroupType == EngineGroupType::compute && isRcsEnabled)) &&
                                         productHelper.isCooperativeEngineSupported(hwInfo);

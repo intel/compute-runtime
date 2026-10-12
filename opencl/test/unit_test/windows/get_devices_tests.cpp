@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -47,13 +48,12 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializ
     NEO::ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1u);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[0]->setRcsExposure();
     auto *hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
     productHelper.configureHardwareCustom(hwInfo, nullptr);
 
     bool expectedValue = false;
-    if (hwInfo->featureTable.flags.ftrRcsNode || hwInfo->featureTable.flags.ftrCCSNode) {
+    if (EngineHelpers::isRcsExposed(*executionEnvironment.rootDeviceEnvironments[0]) || hwInfo->featureTable.flags.ftrCCSNode) {
         expectedValue = true;
     }
 

@@ -11,7 +11,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
@@ -72,11 +71,5 @@ void ProductHelper::setupImageSupport(HardwareInfo &hwInfo) {
     if (debugManager.flags.ForceImagesSupport.get() != -1) {
         hwInfo.capabilityTable.supportsImages = debugManager.flags.ForceImagesSupport.get();
     }
-}
-
-void ProductHelper::setupDefaultEngineType(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    gfxCoreHelper.adjustDefaultEngineType(&hwInfo, *this, rootDeviceEnvironment.ailConfiguration.get());
-    hwInfo.capabilityTable.defaultEngineType = getChosenEngineType(hwInfo);
 }
 } // namespace NEO

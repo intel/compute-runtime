@@ -51,8 +51,7 @@ const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstanc
         }
     }
 
-    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) ||
-        hwInfo.featureTable.flags.ftrRcsNode) {
+    if (EngineHelpers::isRcsExposed(rootDeviceEnvironment)) {
         engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::regular});
     }
 

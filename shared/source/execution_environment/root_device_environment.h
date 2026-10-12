@@ -91,7 +91,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
     bool setNumberOfCcs(uint32_t numberOfCcs);
     uint32_t getNumberOfCcs() const;
     bool isNumberOfCcsLimited() const;
-    void setRcsExposure();
     void initProductHelper();
     void initHelpers();
     void initGfxCoreHelper();

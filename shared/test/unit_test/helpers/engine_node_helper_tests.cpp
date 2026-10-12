@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
@@ -228,4 +229,153 @@ TEST(EngineNodeHelperTest, givenNoOsInterfaceWhenIsPowerHintEngineSupportedThenR
 
     EXPECT_EQ(nullptr, rootDeviceEnvironment.osInterface.get());
     EXPECT_FALSE(EngineHelpers::isPowerHintEngineSupported(rootDeviceEnvironment));
+}
+
+TEST(EngineNodeHelperTest, givenRcsExposureNotDisabledInCapsWhenIsRcsExposedThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.getMutableHardwareInfo()->caps.rcsExposureDisabled = false;
+
+    EXPECT_TRUE(EngineHelpers::isRcsExposed(rootDeviceEnvironment));
+}
+
+TEST(EngineNodeHelperTest, givenRcsExposureDisabledInCapsAndNoOverrideWhenIsRcsExposedThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.getMutableHardwareInfo()->caps.rcsExposureDisabled = true;
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+    EXPECT_FALSE(EngineHelpers::isRcsExposed(rootDeviceEnvironment));
+}
+
+TEST(EngineNodeHelperTest, givenRcsExposureDisabledInCapsAndNodeOrdinalSetToRcsOrCccsWhenIsRcsExposedThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.getMutableHardwareInfo()->caps.rcsExposureDisabled = true;
+
+    for (auto nodeOrdinal : {aub_stream::EngineType::ENGINE_RCS, aub_stream::EngineType::ENGINE_CCCS}) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(nodeOrdinal));
+        EXPECT_TRUE(EngineHelpers::isRcsExposed(rootDeviceEnvironment));
+    }
+}
+
+TEST(EngineNodeHelperTest, givenRcsExposureDisabledInCapsAndNodeOrdinalSetToCcsWhenIsRcsExposedThenReturnFalse) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.getMutableHardwareInfo()->caps.rcsExposureDisabled = true;
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+    EXPECT_FALSE(EngineHelpers::isRcsExposed(rootDeviceEnvironment));
+}
+
+TEST(EngineNodeHelperTest, givenRcsExposureDisabledInCapsWhenIsRcsExposedThenReturnTrueOnlyForRenderDefaultEngine) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.caps.rcsExposureDisabled = true;
+
+    for (auto defaultEngineType : {aub_stream::ENGINE_RCS, aub_stream::ENGINE_CCCS, aub_stream::ENGINE_CCS, aub_stream::ENGINE_CCS1, aub_stream::ENGINE_BCS}) {
+        hwInfo.capabilityTable.defaultEngineType = defaultEngineType;
+        auto expected = defaultEngineType == aub_stream::ENGINE_RCS || defaultEngineType == aub_stream::ENGINE_CCCS;
+        EXPECT_EQ(expected, EngineHelpers::isRcsExposed(rootDeviceEnvironment));
+    }
+}
+
+TEST(EngineNodeHelperTest, givenRcsExposureDisabledInCapsAndAilForceRcsWithoutDefaultEngineSetupWhenIsRcsExposedThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.caps.rcsExposureDisabled = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    auto ailConfiguration = new MockAILConfiguration();
+    ailConfiguration->forceRcsValue = true;
+    rootDeviceEnvironment.ailConfiguration.reset(ailConfiguration);
+
+    EXPECT_FALSE(EngineHelpers::isRcsExposed(rootDeviceEnvironment));
+}
+
+TEST(EngineNodeHelperTest, givenCcsNodeDisabledAndRcsExposedWhenSettingUpDefaultEngineTypeThenRenderEngineIsSet) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.ailConfiguration.reset();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.caps.rcsExposureDisabled = false;
+    hwInfo.featureTable.flags.ftrCCSNode = false;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+    EngineHelpers::setupDefaultEngineType(rootDeviceEnvironment);
+
+    EXPECT_EQ(EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::ENGINE_RCS, rootDeviceEnvironment), hwInfo.capabilityTable.defaultEngineType);
+}
+
+TEST(EngineNodeHelperTest, givenCcsNodeDisabledAndRcsNotExposedWhenSettingUpDefaultEngineTypeThenDefaultEngineTypeIsNotChanged) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.ailConfiguration.reset();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.caps.rcsExposureDisabled = true;
+    hwInfo.featureTable.flags.ftrCCSNode = false;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+    EngineHelpers::setupDefaultEngineType(rootDeviceEnvironment);
+
+    EXPECT_EQ(aub_stream::ENGINE_CCS, hwInfo.capabilityTable.defaultEngineType);
+}
+
+TEST(EngineNodeHelperTest, givenCcsNodeEnabledAndNoOverrideWhenSettingUpDefaultEngineTypeThenDefaultEngineTypeIsNotChanged) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.ailConfiguration.reset();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    for (auto rcsExposureDisabled : ::testing::Bool()) {
+        hwInfo.caps.rcsExposureDisabled = rcsExposureDisabled;
+        hwInfo.featureTable.flags.ftrCCSNode = true;
+        hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+        EngineHelpers::setupDefaultEngineType(rootDeviceEnvironment);
+
+        EXPECT_EQ(aub_stream::ENGINE_CCS, hwInfo.capabilityTable.defaultEngineType);
+    }
+}
+
+TEST(EngineNodeHelperTest, givenAilForceRcsWhenSettingUpDefaultEngineTypeThenRenderEngineIsSetAndExposed) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto ailConfiguration = new MockAILConfiguration();
+    ailConfiguration->forceRcsValue = true;
+    rootDeviceEnvironment.ailConfiguration.reset(ailConfiguration);
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.caps.rcsExposureDisabled = true;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+    EngineHelpers::setupDefaultEngineType(rootDeviceEnvironment);
+
+    EXPECT_EQ(EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::ENGINE_RCS, rootDeviceEnvironment), hwInfo.capabilityTable.defaultEngineType);
+    EXPECT_TRUE(EngineHelpers::isRcsExposed(rootDeviceEnvironment));
+}
+
+TEST(EngineNodeHelperTest, givenNodeOrdinalSetWhenSettingUpDefaultEngineTypeThenNodeOrdinalIsUsed) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.ailConfiguration.reset();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    for (auto nodeOrdinal : {aub_stream::ENGINE_CCS1, aub_stream::ENGINE_CCCS}) {
+        debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(nodeOrdinal));
+        for (auto ftrCCSNode : ::testing::Bool()) {
+            hwInfo.caps.rcsExposureDisabled = true;
+            hwInfo.featureTable.flags.ftrCCSNode = ftrCCSNode;
+            hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+            EngineHelpers::setupDefaultEngineType(rootDeviceEnvironment);
+
+            EXPECT_EQ(nodeOrdinal, hwInfo.capabilityTable.defaultEngineType);
+        }
+    }
 }

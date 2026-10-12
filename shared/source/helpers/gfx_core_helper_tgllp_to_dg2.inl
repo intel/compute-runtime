@@ -19,11 +19,6 @@ bool GfxCoreHelperHw<GfxFamily>::isCpuImageTransferPreferred(const HardwareInfo 
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isRcsAvailable(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return true;
 }

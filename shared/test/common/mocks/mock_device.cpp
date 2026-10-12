@@ -59,7 +59,6 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
     }
     this->deferredImmediateCmdListEnabled = false;
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
-    UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
@@ -140,7 +139,6 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(pHwInfo);
 
-        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
         UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
@@ -181,7 +179,6 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
 
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
-    UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
     UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
 
     executionEnvironment->setDeviceHierarchyMode(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());

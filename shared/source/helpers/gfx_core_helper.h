@@ -51,7 +51,6 @@ struct KernelDescriptor;
 class ProductHelper;
 class ReleaseHelper;
 class GfxCoreHelper;
-class AILConfiguration;
 
 using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
 using GfxCoreHelperCreateFunctionType = std::unique_ptr<GfxCoreHelper> (*)();
@@ -63,7 +62,6 @@ class GfxCoreHelper {
     virtual size_t getKernelIsaPointerAlignment() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) = 0;
     static SipKernelType getSipKernelType(bool debuggingActive);
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
@@ -118,7 +116,6 @@ class GfxCoreHelper {
     virtual int32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const;
-    virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                              const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -273,8 +270,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
-    void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) override;
-
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
 
     bool isBufferSizeSuitableForCompression(const size_t size) const override;
@@ -358,8 +353,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     int32_t getDefaultThreadArbitrationPolicy() const override;
 
     bool useOnlyGlobalTimestamps() const override;
-
-    bool isRcsAvailable(const HardwareInfo &hwInfo) const override;
 
     bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 

@@ -65,7 +65,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGetGpgpuEnginesThenReturnTwoCccs
 
         EXPECT_EQ(cccsEnabled ? numEnginesWithCccs : numEnginesWithoutCccs, device->allEngines.size());
 
-        device->getRootDeviceEnvironmentRef().setRcsExposure();
         auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
         EXPECT_EQ(cccsEnabled ? numEnginesWithCccs : numEnginesWithoutCccs, engines.size());
 
@@ -152,7 +151,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
         numEngines++;
     }
 
-    bool renderCommandStreamerEnabled = device->getHardwareInfo().featureTable.flags.ftrRcsNode;
+    bool renderCommandStreamerEnabled = EngineHelpers::isRcsExposed(device->getRootDeviceEnvironment());
     if (!renderCommandStreamerEnabled) {
         numEngines--;
     }
@@ -216,7 +215,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEngin
         numEngines++;
     }
 
-    bool renderCommandStreamerEnabled = device->getHardwareInfo().featureTable.flags.ftrRcsNode;
+    bool renderCommandStreamerEnabled = EngineHelpers::isRcsExposed(device->getRootDeviceEnvironment());
     if (!renderCommandStreamerEnabled) {
         numEngines--;
     }
@@ -305,7 +304,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagDisablingContextGroupW
     debugManager.flags.ContextGroupSize.set(0);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(3);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -354,7 +353,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingEngines
     debugManager.flags.ContextGroupSize.set(4);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(3);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -403,7 +402,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingInterna
     debugManager.flags.ContextGroupSize.set(4);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(4);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -678,21 +677,6 @@ XE3P_CORETEST_F(ProductHelperTestXe3p, when64bAddressingIsEnabledForRTThenResour
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenIsTranslationExceptionSupportedThenTrueIsReturned) {
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isTranslationExceptionSupported());
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, whenGetEnginesCalledThenRegularCcsIsAvailable) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0));
-
-    auto &engines = device->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-
-    EXPECT_EQ(device->allEngines.size(), engines.size());
-
-    for (size_t idx = 0; idx < engines.size(); idx++) {
-        countEngine(engines[idx].first, engines[idx].second);
-    }
-
-    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
-    EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
 }
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenAskingForIsIpSamplingSupportedThenReturnTrue) {

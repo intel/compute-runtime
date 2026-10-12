@@ -14,6 +14,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -82,8 +83,12 @@ bool IoctlHelperPrelim20::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTo
         int subSliceCount = 0;
         int euCount = 0;
 
+        auto queryEngineType = hwInfo.featureTable.flags.ftrCCSNode
+                                   ? hwInfo.capabilityTable.defaultEngineType
+                                   : EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::ENGINE_RCS, drm.getRootDeviceEnvironment());
+
         for (auto i = 0u; i < nTiles; i++) {
-            auto classInstance = engineInfo->getEngineInstance(i, hwInfo.capabilityTable.defaultEngineType);
+            auto classInstance = engineInfo->getEngineInstance(i, queryEngineType);
             UNRECOVERABLE_IF(!classInstance);
 
             uint32_t flags = classInstance->engineClass;

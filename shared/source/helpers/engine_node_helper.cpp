@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/engine_node_helper.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -256,6 +257,25 @@ bool isPowerHintEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironme
     return rootDeviceEnvironment.osInterface &&
            rootDeviceEnvironment.osInterface->getDriverModel() &&
            rootDeviceEnvironment.osInterface->getDriverModel()->getDriverModelType() == DriverModelType::wddm;
+}
+
+bool isRcsExposed(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (!hwInfo.caps.rcsExposureDisabled) {
+        return true;
+    }
+    const auto defaultEngineType = getChosenEngineType(hwInfo);
+    return defaultEngineType == aub_stream::EngineType::ENGINE_RCS || defaultEngineType == aub_stream::EngineType::ENGINE_CCCS;
+}
+
+void setupDefaultEngineType(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    auto ailConfiguration = rootDeviceEnvironment.getAILConfigurationHelper();
+    if ((ailConfiguration && ailConfiguration->forceRcs()) ||
+        (!hwInfo.featureTable.flags.ftrCCSNode && isRcsExposed(rootDeviceEnvironment))) {
+        hwInfo.capabilityTable.defaultEngineType = remapEngineTypeToHwSpecific(aub_stream::ENGINE_RCS, rootDeviceEnvironment);
+    }
+    hwInfo.capabilityTable.defaultEngineType = getChosenEngineType(hwInfo);
 }
 
 } // namespace NEO::EngineHelpers

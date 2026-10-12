@@ -44,7 +44,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     std::optional<aub_stream::ProductFamily> getAubStreamProductFamily() const override;
-    bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     bool initializeInternalEngineImmediately() const override;
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

@@ -969,23 +969,29 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
 }
 
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenNodeOrdinalCCSWhenInitIsCalledThenProperOrdinalIsSet) {
-    if (!rootDeviceEnvironment->getHardwareInfo()->featureTable.flags.ftrCCSNode) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.NodeOrdinal.set(4);
+    auto adapterInfo = static_cast<ADAPTER_INFO_KMD *>(getAdapterInfoAddressFcn());
+    VariableBackup<SKU_FEATURE_TABLE_KMD> skuTableBackup(&adapterInfo->SkuTable);
+    VariableBackup<GT_SYSTEM_INFO> systemInfoBackup(&adapterInfo->SystemInfo);
+    adapterInfo->SkuTable.FtrCCSNode = true;
+    adapterInfo->SystemInfo.CCSInfo.IsValid = true;
+    adapterInfo->SystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
     init();
     auto createContextParams = this->getCreateContextDataFcn();
     EXPECT_EQ(createContextParams->NodeOrdinal, GPUNODE_CCS0);
 }
 
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenNodeOrdinalCCSWhenOverrideIsCalledThenProperOrdinalIsSet) {
-    if (!rootDeviceEnvironment->getHardwareInfo()->featureTable.flags.ftrCCSNode) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.NodeOrdinal.set(4);
     debugManager.flags.NodeOrdinalOverrideForCCS.set(8);
+    auto adapterInfo = static_cast<ADAPTER_INFO_KMD *>(getAdapterInfoAddressFcn());
+    VariableBackup<SKU_FEATURE_TABLE_KMD> skuTableBackup(&adapterInfo->SkuTable);
+    VariableBackup<GT_SYSTEM_INFO> systemInfoBackup(&adapterInfo->SystemInfo);
+    adapterInfo->SkuTable.FtrCCSNode = true;
+    adapterInfo->SystemInfo.CCSInfo.IsValid = true;
+    adapterInfo->SystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
     init();
     auto createContextParams = this->getCreateContextDataFcn();
     EXPECT_EQ(createContextParams->NodeOrdinal, 8u);

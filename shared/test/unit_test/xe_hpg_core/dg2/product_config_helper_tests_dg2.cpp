@@ -230,27 +230,6 @@ DG2TEST_F(ProductHelperTestDg2, givenG12DevIdWhenIsDisableOverdispatchAvailableC
     EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
-DG2TEST_F(ProductHelperTestDg2, whenAdjustingDefaultEngineTypeThenSelectEngineTypeBasedOnRevisionId) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
-        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
-            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
-            hwInfo.platform.usDeviceID = deviceId;
-            hwInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
-            gfxCoreHelper.adjustDefaultEngineType(&hwInfo, productHelper, nullptr);
-            if (DG2::isG10(hwInfo) && revision < REVISION_B) {
-                EXPECT_EQ(aub_stream::ENGINE_RCS, hwInfo.capabilityTable.defaultEngineType);
-            } else {
-                EXPECT_EQ(aub_stream::ENGINE_CCS, defaultHwInfo->capabilityTable.defaultEngineType);
-            }
-        }
-    }
-}
-
 DG2TEST_F(ProductHelperTestDg2, givenDg2G11OrG12WhenAskingIfMaxThreadsForWorkgroupWAIsRequiredThenReturnFalse) {
     auto hwInfo = *defaultHwInfo;
     for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
@@ -260,29 +239,6 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G11OrG12WhenAskingIfMaxThreadsForWorkgro
 
             EXPECT_FALSE(productHelper->isMaxThreadsForWorkgroupWARequired(hwInfo));
         }
-    }
-}
-
-DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0OrA1SteppingWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto hwInfo = *defaultHwInfo;
-    std::vector<std::pair<unsigned short, uint16_t>> dg2Configs =
-        {{dg2G10DeviceIds[0], revIdA0},
-         {dg2G10DeviceIds[0], revIdA1},
-         {dg2G10DeviceIds[0], revIdB0},
-         {dg2G10DeviceIds[0], revIdC0},
-         {dg2G11DeviceIds[0], revIdA0},
-         {dg2G11DeviceIds[0], revIdB0},
-         {dg2G11DeviceIds[0], revIdB1},
-         {dg2G12DeviceIds[0], revIdA0}};
-
-    for (const auto &[deviceID, revisionID] : dg2Configs) {
-        hwInfo.platform.usRevId = revisionID;
-        hwInfo.platform.usDeviceID = deviceID;
-        hwInfo.ipVersion.value = compilerProductHelper->getHwIpVersion(hwInfo);
-        auto expectedValue = DG2::isG10(hwInfo) && revisionID < revIdB0;
-        refreshReleaseHelper(&hwInfo);
-
-        EXPECT_EQ(expectedValue, productHelper->isDefaultEngineTypeAdjustmentRequired(hwInfo));
     }
 }
 

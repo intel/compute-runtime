@@ -17,10 +17,6 @@ using BcsInfoMask = std::bitset<bcsInfoMaskSize>;
 
 struct FeatureTableBase {
   public:
-    FeatureTableBase() {
-        flags.ftrRcsNode = 1;
-    }
-
     struct Flags {
         // DW0
         uint32_t ftrGpGpuMidBatchPreempt : 1;
@@ -56,7 +52,6 @@ struct FeatureTableBase {
         uint32_t ftrCCSRing : 1;
         uint32_t ftrCCSNode : 1;
         // DW1
-        uint32_t ftrRcsNode : 1;
         uint32_t ftrLocalMemory : 1;
         uint32_t ftrLocalMemoryAllows4KB : 1;
         uint32_t ftrFlatPhysCCS : 1;
@@ -75,7 +70,7 @@ struct FeatureTableBase {
         uint32_t ftrHwSemaphore64 : 1;
         uint32_t ftrSelectiveWmtp : 1;
         uint32_t ftrAppTransientCaching : 1;
-        uint32_t reserved : 13;
+        uint32_t reserved : 14;
     };
 
     BcsInfoMask ftrBcsInfo = 1;

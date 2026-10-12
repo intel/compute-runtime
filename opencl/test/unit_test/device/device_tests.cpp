@@ -365,11 +365,10 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepa
 HWTEST_F(DeviceTest, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1u);
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto &productHelper = getHelper<ProductHelper>();
 
     UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
-    gfxCoreHelper.adjustDefaultEngineType(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), productHelper, executionEnvironment->rootDeviceEnvironments[0]->ailConfiguration.get());
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->caps.rcsExposureDisabled = false;
+    EngineHelpers::setupDefaultEngineType(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0));
     auto osContext = device->getDefaultEngine().osContext;
@@ -462,8 +461,8 @@ TEST(DeviceCreation, whenCheckingEngineGroupsThenGroupsAreUnique) {
 
     for (auto blitterOperationsSupported : ::testing::Bool()) {
         defaultHwInfo->capabilityTable.blitterOperationsSupported = blitterOperationsSupported;
-        for (auto ftrRcsNode : ::testing::Bool()) {
-            defaultHwInfo->featureTable.flags.ftrRcsNode = ftrRcsNode;
+        for (auto rcsExposed : ::testing::Bool()) {
+            defaultHwInfo->caps.rcsExposureDisabled = !rcsExposed;
             for (auto ftrCCSNode : ::testing::Bool()) {
                 defaultHwInfo->featureTable.flags.ftrCCSNode = ftrCCSNode;
 

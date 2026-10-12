@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledButDebugVariableSetWhenGetG
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -159,7 +159,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledWhenGetGpgpuEnginesCalledTh
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -222,7 +222,6 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCCCSEngineAndRevisionBWhenCallingIsCoop
     auto &rootDeviceEnvironment = *pDevice->executionEnvironment->rootDeviceEnvironments[0];
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::ENGINE_CCCS, EngineUsage::cooperative, hwInfo);
@@ -240,6 +239,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenBcsDisabledWhenGetEnginesCalledThenDont
     const size_t numEngines = 7;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.rcsExposureDisabled = false;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 0;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
@@ -282,6 +282,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenOneBcsEnabledWhenGetEnginesCalledThenCr
     const size_t numEngines = 9;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.rcsExposureDisabled = false;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -327,6 +328,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenNotAllCopyEnginesWhenSettingEngineTable
     const size_t numEngines = 9;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.rcsExposureDisabled = false;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.featureTable.ftrBcsInfo.set(0, false);
@@ -376,6 +378,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenOneCcsEnabledWhenGetEnginesCalledThenCr
     const size_t numEngines = 15;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.rcsExposureDisabled = false;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -421,66 +424,13 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenOneCcsEnabledWhenGetEnginesCalledThenCr
     }
 }
 
-PVCTEST_F(EngineNodeHelperPvcTests, givenCccsAsDefaultEngineWhenGetEnginesCalledThenChangeDefaultEngine) {
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    const size_t numEngines = 18;
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-
-    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(numEngines, engines.size());
-
-    struct EnginePropertiesMap {
-        aub_stream::EngineType engineType;
-        bool isCcs;
-        bool isBcs;
-    };
-
-    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS1, true, false},
-        {aub_stream::ENGINE_CCS2, true, false},
-        {aub_stream::ENGINE_CCS3, true, false},
-        {aub_stream::ENGINE_CCCS, false, false},
-        {aub_stream::ENGINE_CCCS, false, false},
-        {aub_stream::ENGINE_CCCS, false, false},
-        {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS1, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS3, false, true},
-        {aub_stream::ENGINE_BCS3, false, true},
-        {aub_stream::ENGINE_BCS4, false, true},
-        {aub_stream::ENGINE_BCS5, false, true},
-        {aub_stream::ENGINE_BCS6, false, true},
-        {aub_stream::ENGINE_BCS7, false, true},
-        {aub_stream::ENGINE_BCS8, false, true},
-    }};
-
-    for (size_t i = 0; i < numEngines; i++) {
-        EXPECT_EQ(enginePropertiesMap[i].engineType, engines[i].first);
-        EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
-        EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
-    }
-}
-
 PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
     const auto &productHelper = getHelper<ProductHelper>();
 
     const size_t numEngines = 18;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.rcsExposureDisabled = false;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -535,6 +485,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesA
     const size_t numEngines = 18;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.rcsExposureDisabled = false;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;

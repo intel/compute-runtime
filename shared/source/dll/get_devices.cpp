@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -37,8 +38,8 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
             executionEnvironment.rootDeviceEnvironments[i]->initGmm();
             bool unsupportedDeviceDetected = false;
 
-            auto &featureTable = executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->featureTable;
-            if (!featureTable.flags.ftrRcsNode && !featureTable.flags.ftrCCSNode) {
+            auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[i];
+            if (!EngineHelpers::isRcsExposed(rootDeviceEnvironment) && !rootDeviceEnvironment.getHardwareInfo()->featureTable.flags.ftrCCSNode) {
                 unsupportedDeviceDetected = true;
             }
 

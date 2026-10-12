@@ -79,7 +79,6 @@ MockExecutionEnvironment::MockExecutionEnvironment(const HardwareInfo *hwInfo, b
             rootDeviceEnvironments[rootDeviceIndex]->initGmm();
         }
 
-        UnitTestSetter::setRcsExposure(*rootDeviceEnvironments[rootDeviceIndex]);
         UnitTestSetter::setCcsExposure(*rootDeviceEnvironments[rootDeviceIndex]);
     }
 

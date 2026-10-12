@@ -61,7 +61,6 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
 
         UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
-        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->calculateMaxOsContextCount();
 
         executionEnvironment->initializeMemoryManager();

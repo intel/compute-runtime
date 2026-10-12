@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -18,7 +19,7 @@ int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInf
     this->setCapabilityCoherencyFlag(*outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
     outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.flags.ftrL3IACoherency;
 
-    setupDefaultEngineType(*outHwInfo, rootDeviceEnvironment);
+    EngineHelpers::setupDefaultEngineType(rootDeviceEnvironment);
     setupPreemptionMode(*outHwInfo, true);
     setupPreemptionSurfaceSize(*outHwInfo, rootDeviceEnvironment);
     setupKmdNotifyProperties(outHwInfo->capabilityTable.kmdNotifyProperties);

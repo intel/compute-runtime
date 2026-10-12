@@ -42,7 +42,7 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDon
 
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -69,7 +69,7 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenAilForceToUseRcsThenRcsIsSet
 
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -79,13 +79,16 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenAilForceToUseRcsThenRcsIsSet
     ailConfiguration->forceRcsValue = true;
     auto &rootDeviceEnvironment = *device->getExecutionEnvironment()->rootDeviceEnvironments[0];
     rootDeviceEnvironment.ailConfiguration.reset(ailConfiguration.release());
+    EngineHelpers::setupDefaultEngineType(rootDeviceEnvironment);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, rootDeviceEnvironment.getHardwareInfo()->capabilityTable.defaultEngineType);
+
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
     EXPECT_EQ(5u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
-    EXPECT_EQ(getChosenEngineType(hwInfo), engines[1].first);
-    EXPECT_EQ(getChosenEngineType(hwInfo), engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[3].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[4].first);
 }
@@ -94,7 +97,7 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledButDebugVariableSetWhenGetGpgpuE
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;

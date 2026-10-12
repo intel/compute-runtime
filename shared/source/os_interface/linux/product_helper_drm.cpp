@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -92,7 +93,7 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
-    setupDefaultEngineType(*outHwInfo, rootDeviceEnvironment);
+    EngineHelpers::setupDefaultEngineType(rootDeviceEnvironment);
 
     drm->checkQueueSliceSupport();
     drm->checkNonPersistentContextsSupport();

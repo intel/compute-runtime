@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -71,6 +72,7 @@ struct BufferEnqueueFixture : public ClHardwareParse,
 struct EnqueueReadWriteBufferRectDispatch : public BufferEnqueueFixture {
 
     void SetUp() override {
+        debugManager.flags.EnableDirectSubmission.set(0);
         BufferEnqueueFixture::SetUp();
     }
 
@@ -78,6 +80,7 @@ struct EnqueueReadWriteBufferRectDispatch : public BufferEnqueueFixture {
         BufferEnqueueFixture::TearDown();
     }
 
+    DebugManagerStateRestore restorer;
     uint32_t memory[64] = {0};
 
     size_t bufferOrigin[3] = {0, 0, 0};

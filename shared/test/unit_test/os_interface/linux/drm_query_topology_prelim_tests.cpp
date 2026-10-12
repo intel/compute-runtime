@@ -230,6 +230,25 @@ HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl, 
     EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEusPerSubSlice);
 }
 
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesAndNoComputeEnginesWhenQueryingThenUseNewIoctlWithRenderEngine, IsAtMostXeCore) {
+    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.CCSInfo.IsValid = false;
+    hwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    createDrm(2);
+    ASSERT_FALSE(hwInfo->featureTable.flags.ftrCCSNode);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, hwInfo->capabilityTable.defaultEngineType);
+
+    DrmQueryTopologyData topologyData = {};
+
+    drmMock->queryTopology(*hwInfo, topologyData);
+
+    EXPECT_EQ(4u, drmMock->queryComputeSlicesCallCount); // 2x length + 2x query
+
+    EXPECT_EQ(drmMock->queryComputeSlicesSCount, topologyData.sliceCount);
+    EXPECT_EQ(drmMock->queryComputeSlicesSSCount, topologyData.subSliceCount);
+    EXPECT_EQ(drmMock->queryComputeSlicesEuCount, topologyData.euCount);
+}
+
 HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback, IsAtMostXeCore) {
     createDrm(2);
 

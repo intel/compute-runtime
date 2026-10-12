@@ -80,7 +80,7 @@ CRITEST_F(GfxCoreHelperTestsCri, givenDebugFlagDisablingContextGroupWhenQuerying
     debugManager.flags.ContextGroupSize.set(0);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(3);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -127,7 +127,7 @@ CRITEST_F(GfxCoreHelperTestsCri, givenContextGroupWhenQueryingEnginesThenLowPrio
     debugManager.flags.ContextGroupSize.set(4);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(3);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -307,7 +307,6 @@ CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTw
             EXPECT_EQ(numEnginesWithoutCccs, device->allEngines.size());
         }
 
-        device->getRootDeviceEnvironmentRef().setRcsExposure();
         auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
         EXPECT_EQ(cccsEnabled ? numEnginesWithCccs : numEnginesWithoutCccs, engines.size());
 

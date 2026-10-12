@@ -158,8 +158,6 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         productHelper.configureHardwareCustom(hardwareInfo, nullptr);
 
-        rootDeviceEnvironment.setRcsExposure();
-
         hardwareInfo->gtSystemInfo.SLMSizeInKb = hardwareInfo->capabilityTable.maxProgrammableSlmSize;
 
         if (debugManager.flags.OverrideSlmSize.get() != -1) {

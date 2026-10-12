@@ -893,6 +893,7 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIs
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(1);
+    NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
     backupUseMockSip = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -912,6 +913,7 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentAndEnableProgramDebuggingWithVal
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ZET_ENABLE_PROGRAM_DEBUGGING.set(2);
+    NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
     backupUseMockSip = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;

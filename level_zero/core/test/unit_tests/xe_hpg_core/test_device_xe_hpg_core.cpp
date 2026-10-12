@@ -16,35 +16,9 @@ namespace ult {
 
 using CommandQueueGroupTest = Test<DeviceFixture>;
 
-HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsXeHpgCore) {
-    const uint32_t rootDeviceIndex = 0u;
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.flags.ftrCCSNode = false;
-    hwInfo.capabilityTable.blitterOperationsSupported = false;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp mockDevice(neoMockDevice);
-
-    uint32_t count = 0;
-    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_GE(count, 1u);
-}
-
-HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndCCSThenTwoQueueGroupsAreReturned, IsXeHpgCore) {
-    const uint32_t rootDeviceIndex = 0u;
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.capabilityTable.blitterOperationsSupported = false;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp mockDevice(neoMockDevice);
-
-    uint32_t count = 0;
-    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_GE(count, 2u);
-}
-
 HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportAndCCSThenThreeQueueGroupsAreReturned, IsXeHpgCore) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.NodeOrdinal.set(aub_stream::ENGINE_RCS);
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = true;

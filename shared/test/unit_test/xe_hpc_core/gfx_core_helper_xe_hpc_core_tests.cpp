@@ -78,21 +78,6 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, whenGetDefaultDeviceHierarchyThenR
 
 using GfxCoreHelperTestsXeHpcCoreWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
 
-XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCoreWithEnginesCheck, whenGetEnginesCalledThenRegularCcsIsNotAvailable) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0));
-
-    auto &engines = device->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-
-    EXPECT_EQ(device->allEngines.size(), engines.size());
-
-    for (size_t idx = 0; idx < engines.size(); idx++) {
-        countEngine(engines[idx].first, engines[idx].second);
-    }
-
-    EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
-    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
-}
-
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCoreWithEnginesCheck, givenWddmWhenGetEnginesCalledThenPowerHintEnginesAreCreated) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = 1;

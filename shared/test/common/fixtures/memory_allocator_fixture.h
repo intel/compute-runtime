@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,6 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
         UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->calculateMaxOsContextCount();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,6 @@ void EngineInfo::setSupportedEnginesInfo(const RootDeviceEnvironment &rootDevice
         ccsInfo.NumberOfCCSEnabled = numComputeEngines;
         ccsInfo.Instances.CCSEnableMask = static_cast<uint32_t>(maxNBitValue(numComputeEngines));
     } else {
-        hwInfo->capabilityTable.defaultEngineType = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment);
         hwInfo->featureTable.flags.ftrCCSNode = false;
 
         ccsInfo.IsValid = false;

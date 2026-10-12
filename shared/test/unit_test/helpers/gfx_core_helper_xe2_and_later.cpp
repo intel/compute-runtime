@@ -289,3 +289,25 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterDeviceTests, givenProductHelperWhenCallUseGemC
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.useGemCreateExtInAllocateMemoryByKMD());
 }
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterDeviceTests, givenNoCcsAndNodeOrdinalSetToCccsWhenGetGpgpuEnginesThenOnlyCccsEnginesAreReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.NodeOrdinal.set(aub_stream::ENGINE_CCCS);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = false;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 0;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    auto &engines = device->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+    EXPECT_EQ(3u, device->allEngines.size());
+    ASSERT_EQ(3u, engines.size());
+
+    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[0].first);
+    EXPECT_EQ(EngineUsage::regular, engines[0].second);
+    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[1].first);
+    EXPECT_EQ(EngineUsage::lowPriority, engines[1].second);
+    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[2].first);
+    EXPECT_EQ(EngineUsage::internal, engines[2].second);
+}

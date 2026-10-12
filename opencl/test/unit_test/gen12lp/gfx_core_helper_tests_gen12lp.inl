@@ -99,16 +99,6 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, WhenGettingPitchAlignmentForImageThenCor
     }
 }
 
-GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, WhenAdjustingDefaultEngineTypeThenRcsIsSet) {
-    hardwareInfo.featureTable.flags.ftrCCSNode = false;
-
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto &productHelper = getHelper<ProductHelper>();
-
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper, nullptr);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCompressionPreferenceThenReturnCorrectValue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 

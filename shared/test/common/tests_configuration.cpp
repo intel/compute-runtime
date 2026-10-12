@@ -29,6 +29,9 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     // Reflect the release's semaphore64 availability explicitly so a device derives deviceInfo.semaphore64bCmdSupport
     // per its real default rather than defaulting the whole gen to the legacy command.
     hwInfoForTests.featureTable.flags.ftrHwSemaphore64 = hwInfoForTests.caps.availableSemaphore64;
+    if (hwInfoForTests.platform.eRenderCoreFamily >= IGFX_XE_HPG_CORE) {
+        hwInfoForTests.featureTable.flags.ftrCCSNode = hwInfoForTests.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0;
+    }
 
     GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
 

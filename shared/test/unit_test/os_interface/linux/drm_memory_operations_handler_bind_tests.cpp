@@ -893,30 +893,24 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleSub
                                                                                                     true,
                                                                                                     *executionEnvironment));
 
-    uint32_t vmIdForRootContext = 0;
-    uint32_t vmIdForContext0 = 0;
-    uint32_t vmIdForContext1 = 0;
-
     auto &engines = memoryManager->allRegisteredEngines[this->device->getRootDeviceIndex()];
     engines = EngineControlContainer{this->device->allEngines};
     engines.insert(engines.end(), this->device->getSubDevice(0)->getAllEngines().begin(), this->device->getSubDevice(0)->getAllEngines().end());
     engines.insert(engines.end(), this->device->getSubDevice(1)->getAllEngines().begin(), this->device->getSubDevice(1)->getAllEngines().end());
     for (auto &engine : engines) {
         engine.osContext->incRefInternal();
-        if (engine.osContext->isDefaultContext()) {
-
-            if (engine.osContext->getDeviceBitfield().to_ulong() == 3) {
-                auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-                vmIdForRootContext = osContexLinux->getDrmVmIds()[0];
-            } else if (engine.osContext->getDeviceBitfield().to_ulong() == 1) {
-                auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-                vmIdForContext0 = osContexLinux->getDrmVmIds()[0];
-            } else if (engine.osContext->getDeviceBitfield().to_ulong() == 2) {
-                auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-                vmIdForContext1 = osContexLinux->getDrmVmIds()[1];
-            }
-        }
     }
+    auto rootDeviceIndex = this->device->getRootDeviceIndex();
+    auto rootDefaultContext = static_cast<OsContextLinux *>(memoryManager->getDefaultEngineContext(rootDeviceIndex, DeviceBitfield(0b11)));
+    auto subDevice0DefaultContext = static_cast<OsContextLinux *>(memoryManager->getDefaultEngineContext(rootDeviceIndex, DeviceBitfield(0b01)));
+    auto subDevice1DefaultContext = static_cast<OsContextLinux *>(memoryManager->getDefaultEngineContext(rootDeviceIndex, DeviceBitfield(0b10)));
+    ASSERT_NE(nullptr, rootDefaultContext);
+    ASSERT_NE(nullptr, subDevice0DefaultContext);
+    ASSERT_NE(nullptr, subDevice1DefaultContext);
+
+    auto vmIdForRootContext = rootDefaultContext->getDrmVmIds()[0];
+    auto vmIdForContext0 = subDevice0DefaultContext->getDrmVmIds()[0];
+    auto vmIdForContext1 = subDevice1DefaultContext->getDrmVmIds()[1];
 
     EXPECT_NE(0u, vmIdForRootContext);
     EXPECT_NE(0u, vmIdForContext0);
@@ -976,11 +970,6 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
                                                                                                     true,
                                                                                                     *executionEnvironment));
 
-    uint32_t vmIdForDevice0 = 0;
-    uint32_t vmIdForDevice0Subdevice0 = 0;
-    uint32_t vmIdForDevice1 = 0;
-    uint32_t vmIdForDevice1Subdevice0 = 0;
-
     {
 
         auto &engines = memoryManager->allRegisteredEngines[this->device->getRootDeviceIndex()];
@@ -989,15 +978,6 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
         engines.insert(engines.end(), this->device->getSubDevice(1)->getAllEngines().begin(), this->device->getSubDevice(1)->getAllEngines().end());
         for (auto &engine : engines) {
             engine.osContext->incRefInternal();
-            if (engine.osContext->isDefaultContext()) {
-                if (engine.osContext->getDeviceBitfield().to_ulong() == 3) {
-                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-                    vmIdForDevice0 = osContexLinux->getDrmVmIds()[0];
-                } else if (engine.osContext->getDeviceBitfield().to_ulong() == 1) {
-                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-                    vmIdForDevice0Subdevice0 = osContexLinux->getDrmVmIds()[0];
-                }
-            }
         }
     }
 
@@ -1008,19 +988,21 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
         engines.insert(engines.end(), device1->getSubDevice(1)->getAllEngines().begin(), device1->getSubDevice(1)->getAllEngines().end());
         for (auto &engine : engines) {
             engine.osContext->incRefInternal();
-            if (engine.osContext->isDefaultContext()) {
-
-                if (engine.osContext->getDeviceBitfield().to_ulong() == 3) {
-                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-                    vmIdForDevice1 = osContexLinux->getDrmVmIds()[0];
-
-                } else if (engine.osContext->getDeviceBitfield().to_ulong() == 1) {
-                    auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-                    vmIdForDevice1Subdevice0 = osContexLinux->getDrmVmIds()[0];
-                }
-            }
         }
     }
+    auto device0DefaultContext = static_cast<OsContextLinux *>(memoryManager->getDefaultEngineContext(this->device->getRootDeviceIndex(), DeviceBitfield(0b11)));
+    auto device0SubDevice0DefaultContext = static_cast<OsContextLinux *>(memoryManager->getDefaultEngineContext(this->device->getRootDeviceIndex(), DeviceBitfield(0b01)));
+    auto device1DefaultContext = static_cast<OsContextLinux *>(memoryManager->getDefaultEngineContext(device1->getRootDeviceIndex(), DeviceBitfield(0b11)));
+    auto device1SubDevice0DefaultContext = static_cast<OsContextLinux *>(memoryManager->getDefaultEngineContext(device1->getRootDeviceIndex(), DeviceBitfield(0b01)));
+    ASSERT_NE(nullptr, device0DefaultContext);
+    ASSERT_NE(nullptr, device0SubDevice0DefaultContext);
+    ASSERT_NE(nullptr, device1DefaultContext);
+    ASSERT_NE(nullptr, device1SubDevice0DefaultContext);
+
+    auto vmIdForDevice0 = device0DefaultContext->getDrmVmIds()[0];
+    auto vmIdForDevice0Subdevice0 = device0SubDevice0DefaultContext->getDrmVmIds()[0];
+    auto vmIdForDevice1 = device1DefaultContext->getDrmVmIds()[0];
+    auto vmIdForDevice1Subdevice0 = device1SubDevice0DefaultContext->getDrmVmIds()[0];
     EXPECT_NE(0u, vmIdForDevice0);
     EXPECT_NE(0u, vmIdForDevice0Subdevice0);
     EXPECT_NE(0u, vmIdForDevice1);

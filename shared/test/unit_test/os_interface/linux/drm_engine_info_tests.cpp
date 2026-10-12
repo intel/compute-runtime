@@ -284,7 +284,7 @@ TEST(EngineInfoTest, givenIoctlHelperReturningEngineInfoWithoutEnginesWhenQueryi
     EXPECT_NE(std::string::npos, output.find("FATAL: Engine info size is equal to 0."));
 }
 
-TEST(EngineInfoTest, givenEnginesWithoutComputeEngineWhenQueryingEngineInfoThenCcsInfoIsResetAndRcsIsDefaultEngine) {
+TEST(EngineInfoTest, givenEnginesWithoutComputeEngineWhenQueryingEngineInfoThenCcsInfoIsResetAndDefaultEngineIsNotChanged) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockWithCaptureHelper drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto ioctlHelper = drm.getMockIoctlHelper();
@@ -304,8 +304,8 @@ TEST(EngineInfoTest, givenEnginesWithoutComputeEngineWhenQueryingEngineInfoThenC
     EXPECT_FALSE(hwInfo->gtSystemInfo.CCSInfo.IsValid);
     EXPECT_EQ(0u, hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     EXPECT_EQ(0u, hwInfo->gtSystemInfo.CCSInfo.Instances.CCSEnableMask);
-    EXPECT_EQ(EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, drm.getRootDeviceEnvironment()),
-              hwInfo->capabilityTable.defaultEngineType);
+    EXPECT_FALSE(hwInfo->featureTable.flags.ftrCCSNode);
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_CCS, hwInfo->capabilityTable.defaultEngineType);
 }
 
 TEST(EngineInfoTest, whenQueryingEngineInfoThenMultiTileArchInfoIsUnchanged) {

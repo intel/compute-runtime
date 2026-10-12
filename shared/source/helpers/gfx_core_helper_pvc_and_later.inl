@@ -33,13 +33,6 @@ bool GfxCoreHelperHw<Family>::isCpuImageTransferPreferred(const HardwareInfo &hw
 }
 
 template <typename Family>
-bool GfxCoreHelperHw<Family>::isRcsAvailable(const HardwareInfo &hwInfo) const {
-    auto defaultEngine = getChosenEngineType(hwInfo);
-    return (defaultEngine == aub_stream::EngineType::ENGINE_RCS) ||
-           (defaultEngine == aub_stream::EngineType::ENGINE_CCCS) || hwInfo.featureTable.flags.ftrRcsNode;
-}
-
-template <typename Family>
 bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
@@ -49,7 +42,7 @@ bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupTy
         }
 
         bool isExclusiveContextUsed = (engineGroupType == EngineGroupType::cooperativeCompute);
-        return !isRcsAvailable(hwInfo) || isExclusiveContextUsed;
+        return !EngineHelpers::isRcsExposed(rootDeviceEnvironment) || isExclusiveContextUsed;
     }
 
     return true;

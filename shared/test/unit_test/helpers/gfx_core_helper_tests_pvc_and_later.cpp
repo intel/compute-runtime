@@ -39,12 +39,6 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenVariousCachesRequestsThenProperMocs
 }
 
 HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenRenderEngineWhenRemapCalledThenUseCccs, IsAtLeastXeHpcCore) {
-    hardwareInfo.featureTable.flags.ftrCCSNode = false;
-
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto &productHelper = getHelper<ProductHelper>();
-
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper, nullptr);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_CCCS, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment));
@@ -83,44 +77,17 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenPVCAndLaterPlatformWhenCheckingIfEn
     EXPECT_TRUE(gfxCoreHelper.isEngineTypeRemappingToHwSpecificRequired());
 }
 
-HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsRcsAvailableIsCalledThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto hwInfo = *::defaultHwInfo;
-    aub_stream::EngineType defaultEngineTypes[] = {aub_stream::EngineType::ENGINE_RCS, aub_stream::EngineType::ENGINE_CCCS,
-                                                   aub_stream::EngineType::ENGINE_BCS, aub_stream::EngineType::ENGINE_BCS2,
-                                                   aub_stream::EngineType::ENGINE_CCS, aub_stream::EngineType::ENGINE_CCS2};
-    for (auto defaultEngineType : defaultEngineTypes) {
-        hwInfo.capabilityTable.defaultEngineType = defaultEngineType;
-        for (auto ftrRcsNode : ::testing::Bool()) {
-            hwInfo.featureTable.flags.ftrRcsNode = ftrRcsNode;
-            if (ftrRcsNode ||
-                (defaultEngineType == aub_stream::EngineType::ENGINE_RCS) ||
-                (defaultEngineType == aub_stream::EngineType::ENGINE_CCCS)) {
-                EXPECT_TRUE(gfxCoreHelper.isRcsAvailable(hwInfo));
-            } else {
-                EXPECT_FALSE(gfxCoreHelper.isRcsAvailable(hwInfo));
-            }
-        }
-    }
-}
-
 HWTEST2_PRODUCT_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
-    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
-        bool isRcsAvailable(const HardwareInfo &hwInfo) const override {
-            return isRcsAvailableValue;
-        }
-        bool isRcsAvailableValue = true;
-    };
-
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(rootDeviceEnvironment);
-    MockGfxCoreHelper gfxCoreHelper{};
+    NEO::GfxCoreHelperHw<FamilyType> gfxCoreHelper{};
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     for (auto isCooperativeEngineSupported : ::testing::Bool()) {
         raii.mockProductHelper->isCooperativeEngineSupportedValue = isCooperativeEngineSupported;
-        for (auto isRcsAvailable : ::testing::Bool()) {
-            gfxCoreHelper.isRcsAvailableValue = isRcsAvailable;
+        for (auto isRcsExposed : ::testing::Bool()) {
+            hwInfo.caps.rcsExposureDisabled = !isRcsExposed;
             for (auto engineGroupType : {EngineGroupType::renderCompute, EngineGroupType::compute,
                                          EngineGroupType::cooperativeCompute}) {
 
@@ -131,7 +98,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupport
                         EXPECT_FALSE(isCooperativeDispatchSupported);
                         break;
                     case EngineGroupType::compute:
-                        EXPECT_EQ(!isRcsAvailable, isCooperativeDispatchSupported);
+                        EXPECT_EQ(!isRcsExposed, isCooperativeDispatchSupported);
                         break;
                     default: // EngineGroupType::cooperativeCompute
                         EXPECT_TRUE(isCooperativeDispatchSupported);

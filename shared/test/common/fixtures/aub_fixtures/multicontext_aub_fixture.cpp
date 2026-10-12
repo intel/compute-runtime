@@ -59,7 +59,6 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     debugManager.flags.EnableBlitterForEnqueueOperations.set(false);
 
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(&localHwInfo, rootDeviceIndex));
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setRcsExposure();
     localHwInfo = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     auto renderEngine = aub_stream::NUM_ENGINES;

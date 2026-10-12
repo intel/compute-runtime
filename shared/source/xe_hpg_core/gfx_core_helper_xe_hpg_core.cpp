@@ -43,16 +43,6 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
-void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) {
-    if (!pHwInfo->featureTable.flags.ftrCCSNode) {
-        pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
-    }
-    if (productHelper.isDefaultEngineTypeAdjustmentRequired(*pHwInfo) || (ailConfiguration && ailConfiguration->forceRcs())) {
-        pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
-    }
-}
-
-template <>
 bool GfxCoreHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const {
     return !hwInfo.workaroundTable.flags.waAuxTable64KGranular && isCompressionEnabled;
 }
@@ -161,9 +151,7 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
         }
     }
 
-    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) ||
-        hwInfo.featureTable.flags.ftrRcsNode ||
-        forceRcs) {
+    if (EngineHelpers::isRcsExposed(rootDeviceEnvironment)) {
         engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
     }
 

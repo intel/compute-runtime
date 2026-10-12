@@ -11,6 +11,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
@@ -1465,7 +1466,6 @@ HWTEST2_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjust
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     hwInfo.capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCS;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto &revision : revisions) {
@@ -1476,7 +1476,7 @@ HWTEST2_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjust
         hwInfo.platform.usRevId = hwRevId;
 
         for (auto isRcsEnabled : ::testing::Bool()) {
-            hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
+            hwInfo.caps.rcsExposureDisabled = !isRcsEnabled;
             for (auto engineGroupType : {EngineGroupType::renderCompute, EngineGroupType::compute, EngineGroupType::cooperativeCompute}) {
                 if (productHelper.isCooperativeEngineSupported(hwInfo)) {
                     bool disallowDispatch = (engineGroupType == EngineGroupType::renderCompute) ||
@@ -1553,12 +1553,6 @@ HWTEST_F(GfxCoreHelperTest, GivenDebugTogglesInfluencingMaxWorkGroupCountSetWhen
             EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::renderCompute, rootDeviceEnvironment));
         }
     }
-}
-
-HWTEST2_F(GfxCoreHelperTest, WhenIsRcsAvailableIsCalledThenTrueIsReturned, IsAtMostXeHpgCore) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isRcsAvailable(*defaultHwInfo));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault) {
@@ -1902,4 +1896,21 @@ HWTEST_F(GfxCoreHelperTest, whenIsWalkerPostSyncSkipEnabledCalledThenReturnFalse
 
     debugManager.flags.EnableWalkerPostSyncSkip.set(0);
     EXPECT_FALSE(gfxCoreHelper.isWalkerPostSyncSkipEnabled(false));
+}
+
+HWTEST2_F(GfxCoreHelperTestWithEnginesCheck, whenGetEnginesCalledThenRegularCcsIsAvailableAndRegularRenderEngineOnlyWhenRcsExposureIsNotDisabled, IsAtLeastXeCore) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    auto &engines = pDevice->getGfxCoreHelper().getGpgpuEngineInstances(rootDeviceEnvironment);
+
+    EXPECT_EQ(pDevice->allEngines.size(), engines.size());
+
+    for (size_t idx = 0; idx < engines.size(); idx++) {
+        countEngine(engines[idx].first, engines[idx].second);
+    }
+
+    const auto renderEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::ENGINE_RCS, rootDeviceEnvironment);
+    const uint32_t expectedRenderEngineCount = pDevice->getHardwareInfo().caps.rcsExposureDisabled ? 0u : 1u;
+    EXPECT_EQ(expectedRenderEngineCount, getEngineCount(renderEngine, EngineUsage::regular));
+    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
 }

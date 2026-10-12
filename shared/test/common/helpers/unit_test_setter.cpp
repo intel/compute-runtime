@@ -17,16 +17,7 @@ void UnitTestSetter::setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
 
     if (hwInfo && (hwInfo->platform.eRenderCoreFamily >= IGFX_XE3P_CORE)) {
-        uint32_t numCcs = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-        hwInfo->featureTable.flags.ftrCCSNode = numCcs > 0;
-    }
-}
-
-void UnitTestSetter::setRcsExposure(RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-
-    if (hwInfo && (hwInfo->platform.eRenderCoreFamily >= IGFX_XE3P_CORE)) {
-        rootDeviceEnvironment.setRcsExposure();
+        hwInfo->featureTable.flags.ftrCCSNode = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0;
     }
 }
 

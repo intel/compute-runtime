@@ -78,5 +78,9 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
 
 bool isPowerHintEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment);
 
+bool isRcsExposed(const RootDeviceEnvironment &rootDeviceEnvironment);
+
+void setupDefaultEngineType(const RootDeviceEnvironment &rootDeviceEnvironment);
+
 }; // namespace EngineHelpers
 } // namespace NEO

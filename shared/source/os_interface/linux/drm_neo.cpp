@@ -779,8 +779,6 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
         hwInfo->gtSystemInfo.L3CacheSizeInKb = systemInfo->getL3BankSizeInKb() * hwInfo->gtSystemInfo.L3BankCount;
     }
 
-    rootDeviceEnvironment.setRcsExposure();
-
     setupCacheInfo(*hwInfo);
     hwInfo->capabilityTable.deviceName = deviceDescriptor->devName;
 

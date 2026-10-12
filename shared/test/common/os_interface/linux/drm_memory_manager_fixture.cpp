@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@ void DrmMemoryManagerBasic::SetUp() {
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         UnitTestSetter::setCcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
-        UnitTestSetter::setRcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
 
         auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]);
         executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));

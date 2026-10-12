@@ -4145,7 +4145,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     }
 
     hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 

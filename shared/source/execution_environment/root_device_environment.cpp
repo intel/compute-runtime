@@ -287,15 +287,6 @@ bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
     return limitedNumberOfCcs;
 }
 
-void RootDeviceEnvironment::setRcsExposure() {
-    if (hwInfo->caps.rcsExposureDisabled) {
-        hwInfo->featureTable.flags.ftrRcsNode = false;
-        if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) || (debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS))) {
-            hwInfo->featureTable.flags.ftrRcsNode = true;
-        }
-    }
-}
-
 void RootDeviceEnvironment::initDummyAllocation() {
     std::call_once(isDummyAllocationInitialized, [this]() {
         auto customDeleter = [this](GraphicsAllocation *dummyAllocation) {

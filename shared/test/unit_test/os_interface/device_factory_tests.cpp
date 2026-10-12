@@ -138,16 +138,6 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionAndProductFamilyOverrideWhenPrepareDe
     EXPECT_EQ(overriddenConfig, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
 }
 
-TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledThenSetFtrFlag) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-
-    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
-    ASSERT_TRUE(success);
-
-    const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    EXPECT_NE(hwInfo.featureTable.flags.ftrRcsNode, hwInfo.caps.rcsExposureDisabled);
-}
-
 TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsForAtLeastOneDeviceThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleRootDevices.set(3);

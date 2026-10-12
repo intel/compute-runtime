@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,6 @@ bool MockPlatform::initializeWithNewDevices() {
 
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
 
-        UnitTestSetter::setRcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
         UnitTestSetter::setCcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
     }
 

@@ -3990,6 +3990,33 @@ TEST(CommandQueueSecondaryContextOwnershipDisabledTest, givenNoSecondaryContextA
     EXPECT_EQ(0u, csr->getOwningQueueCount());
 }
 
+TEST(CommandQueueSecondaryContextNonCcsDefaultEngineTest, givenSecondaryContextsSupportedAndNonCcsDefaultEngineWhenGettingGpgpuCsrThenDefaultEngineIsUsedWithoutOwnership) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(4);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = false;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 0;
+    hwInfo.caps.rcsExposureDisabled = false;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    const auto renderEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::ENGINE_RCS, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    hwInfo.capabilityTable.defaultEngineType = renderEngine;
+
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    if (!clDevice->getGfxCoreHelper().areSecondaryContextsSupported()) {
+        GTEST_SKIP();
+    }
+    ASSERT_EQ(renderEngine, clDevice->getDefaultEngine().getEngineType());
+
+    MockContext context(clDevice.get());
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    MockCommandQueue queue(&context, clDevice.get(), props, false);
+
+    EXPECT_EQ(clDevice->getDefaultEngine().commandStreamReceiver, &queue.getGpgpuCommandStreamReceiver());
+    EXPECT_FALSE(queue.gpgpuQueueOwnershipTaken);
+}
+
 HWTEST_F(CommandQueueSecondaryContextOwnershipTest, givenLowPriorityQueueWhenEngineIsOverwrittenThenPreviousOwnershipIsReleased) {
     cl_queue_properties lowPriorityProps[] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0,
                                               CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};

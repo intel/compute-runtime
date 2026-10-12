@@ -111,7 +111,6 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrLinearCCS = true;
         refFtrTable.flags.ftrCCSRing = true;
         refFtrTable.flags.ftrCCSNode = true;
-        refFtrTable.flags.ftrRcsNode = true;
         refFtrTable.flags.ftrMemTypeMocsDeferPAT = true;
         refFtrTable.flags.ftrLocalMemory = true;
         refFtrTable.flags.ftrLocalMemoryAllows4KB = true;

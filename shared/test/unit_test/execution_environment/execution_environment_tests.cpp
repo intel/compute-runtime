@@ -71,7 +71,7 @@ TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExec
 
 TEST(ExecutionEnvironment, givenDeviceCreatorWhenIsMicrosecondAdjustmendRequiredByAilThenGetMicrosecondResolutionCalled) {
     auto executionEnvironment = new ExecutionEnvironment();
-    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+    prepareDeviceEnvironments(*executionEnvironment);
     executionEnvironment->rootDeviceEnvironments[0u]->ailConfiguration.reset(new MockAILConfiguration());
     auto mockAIL = static_cast<MockAILConfiguration *>(executionEnvironment->rootDeviceEnvironments[0u]->ailConfiguration.get());
     mockAIL->adjustMicrosecondResolution = true;
@@ -82,7 +82,7 @@ TEST(ExecutionEnvironment, givenDeviceCreatorWhenIsMicrosecondAdjustmendRequired
 
 TEST(ExecutionEnvironment, givenDeviceCreatorWhenIsMicrosecondAdjustmendRequiredByAilThenMicrosecondResolutionIsSameAsInMock) {
     auto executionEnvironment = new ExecutionEnvironment();
-    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+    prepareDeviceEnvironments(*executionEnvironment);
     executionEnvironment->rootDeviceEnvironments[0u]->ailConfiguration.reset(new MockAILConfiguration());
     auto mockAIL = static_cast<MockAILConfiguration *>(executionEnvironment->rootDeviceEnvironments[0u]->ailConfiguration.get());
     mockAIL->adjustMicrosecondResolution = true;
@@ -94,7 +94,7 @@ TEST(ExecutionEnvironment, givenDeviceCreatorWhenIsMicrosecondAdjustmendRequired
 }
 TEST(ExecutionEnvironment, givenDeviceCreatorWhenAilHelperIsNullThenDefaultValueReturned) {
     auto executionEnvironment = new ExecutionEnvironment();
-    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+    prepareDeviceEnvironments(*executionEnvironment);
     executionEnvironment->rootDeviceEnvironments[0u]->ailConfiguration.reset();
     uint32_t expectedResolution = 1000u;
     auto device = Device::create<RootDevice>(executionEnvironment, 0u);
@@ -104,7 +104,7 @@ TEST(ExecutionEnvironment, givenDeviceCreatorWhenAilHelperIsNullThenDefaultValue
 
 TEST(ExecutionEnvironment, givenDeviceCreatorWhenIsMicrosecondAdjustmendIsNotRequiredByAilThenGetMicrosecondResolutionIsNotCalled) {
     auto executionEnvironment = new ExecutionEnvironment();
-    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+    prepareDeviceEnvironments(*executionEnvironment);
     MockAILConfiguration mockAilConfigurationHelper;
     executionEnvironment->rootDeviceEnvironments[0u]->ailConfiguration.reset(new MockAILConfiguration());
     auto mockAIL = static_cast<MockAILConfiguration *>(executionEnvironment->rootDeviceEnvironments[0u]->ailConfiguration.get());
@@ -234,44 +234,6 @@ TEST(RootDeviceEnvironment, givenRootExecutionEnvironmentWhenGetAssertHandlerIsC
 
     EXPECT_NE(nullptr, assertHandler);
     EXPECT_EQ(assertHandler, rootDeviceEnvironment->getAssertHandler(device.get()));
-}
-
-TEST(RootDeviceEnvironment, givenDefaultHardwareInfoWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsCorrectSet) {
-    MockExecutionEnvironment executionEnvironment;
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    rootDeviceEnvironment->setRcsExposure();
-    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-
-    bool shouldRcsBeDisabled = hwInfo->caps.rcsExposureDisabled;
-    bool isRcsDisabled = hwInfo->featureTable.flags.ftrRcsNode;
-    EXPECT_NE(shouldRcsBeDisabled, isRcsDisabled);
-}
-
-TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
-
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-    rootDeviceEnvironment->setRcsExposure();
-    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-
-    EXPECT_TRUE(hwInfo->featureTable.flags.ftrRcsNode);
-}
-
-TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsCccsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
-
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-    rootDeviceEnvironment->setRcsExposure();
-    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-
-    EXPECT_TRUE(hwInfo->featureTable.flags.ftrRcsNode);
 }
 
 TEST(RootDeviceEnvironment, givenEnableAILFlagSetToFalseWhenInitializingAILConfigurationThenSkipInitializingIt) {

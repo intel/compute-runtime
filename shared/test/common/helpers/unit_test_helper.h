@@ -29,7 +29,6 @@ struct RootDeviceEnvironment;
 
 struct UnitTestSetter {
     static void setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
-    static void setRcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
 };
 
 template <typename GfxFamily>

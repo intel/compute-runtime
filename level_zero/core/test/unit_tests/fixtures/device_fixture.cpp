@@ -237,7 +237,7 @@ void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.caps.rcsExposureDisabled = true;
     hwInfo.featureTable.flags.ftrCCSNode = true;
 
     if (expectedCopyEngineCount != 0) {

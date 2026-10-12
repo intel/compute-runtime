@@ -51,7 +51,6 @@ struct L0DebuggerLinuxFixture {
         MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo ? hwInfo : defaultHwInfo.get());
         UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
-        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->calculateMaxOsContextCount();
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();
