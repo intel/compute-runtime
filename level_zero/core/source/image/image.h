@@ -51,6 +51,7 @@ struct Image : _ze_image_handle_t {
     virtual NEO::SurfaceStateInHeapInfo *getBindlessSlot() = 0;
     virtual ze_result_t allocateBindlessSlotWithMipmap(uint32_t mipLevel) = 0;
     virtual NEO::SurfaceStateInHeapInfo *getBindlessSlotWithMipmap(uint32_t mipLevel) = 0;
+    virtual NEO::SurfaceStateInHeapInfo *getOrInitializeBindlessSlot(uint32_t bindlessSlot, uint32_t mipLevel, bool isMediaBlockArg) = 0;
     virtual ze_result_t getDeviceOffset(uint64_t *deviceOffset) = 0;
     virtual bool isMimickedImage() = 0;
     virtual bool hasCustomPitch() const = 0;

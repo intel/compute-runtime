@@ -390,6 +390,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     if (this->bindlessImage) {
         auto ssInHeap = getBindlessSlot();
         copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, false, 0u);
+        bindlessSlotsWrittenMask |= (1u << NEO::BindlessImageSlot::image);
 
         if (this->sampledImage) {
             auto sampler = Sampler::create(device, &this->samplerDesc);
@@ -409,6 +410,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         this->encodeImplicitArgsSurfaceState();
         auto ssInHeap = getBindlessSlot();
         copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false, 0u);
+        bindlessSlotsWrittenMask |= (1u << NEO::BindlessImageSlot::implicitArgs);
     }
 
     return ZE_RESULT_SUCCESS;

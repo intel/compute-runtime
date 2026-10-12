@@ -746,11 +746,11 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
         const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment());
         if (bindlessHeapsHelper) {
 
-            if (image->allocateBindlessSlotWithMipmap(mipLevel) != ZE_RESULT_SUCCESS) {
+            auto ssInHeap = image->getOrInitializeBindlessSlot(bindlessSlot, mipLevel, false);
+            if (ssInHeap == nullptr) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
 
-            auto ssInHeap = image->getBindlessSlotWithMipmap(mipLevel);
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
             // redescribed image's surface state is after image's implicit args and sampler
             uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * bindlessSlot;
@@ -761,7 +761,6 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), patchSize, patchValue);
 
-            image->copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize * bindlessSlot), 0u, bindlessSlot, false, mipLevel);
             privateState.isBindlessOffsetSet[argIndex] = true;
         } else {
             privateState.usingSurfaceStateHeap[argIndex] = true;
@@ -990,11 +989,12 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
         auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment());
         if (bindlessHeapsHelper) {
 
-            if (image->allocateBindlessSlot() != ZE_RESULT_SUCCESS) {
+            auto ssInHeap = image->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::image, 0u, isMediaBlockImage);
+            if (ssInHeap == nullptr) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
+            image->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::implicitArgs, 0u, isMediaBlockImage);
 
-            auto ssInHeap = image->getBindlessSlot();
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
             auto bindlessSlotOffset = ssInHeap->surfaceStateOffset;
             uint32_t patchSize = NEO::isUndefined(arg.size) ? 0 : arg.size;
@@ -1003,9 +1003,6 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
                                       : gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
 
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), patchSize, patchValue);
-
-            image->copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, isMediaBlockImage, 0u);
-            image->copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false, 0u);
 
             privateState.isBindlessOffsetSet[argIndex] = true;
         } else {

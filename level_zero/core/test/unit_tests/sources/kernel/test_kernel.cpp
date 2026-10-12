@@ -3312,6 +3312,7 @@ struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
                                uint32_t bindlessSlot,
                                bool isMediaBlockArg,
                                uint32_t mipLevel) override {
+        copySurfaceStateCalled[bindlessSlot]++;
 
         switch (bindlessSlot) {
         case NEO::BindlessImageSlot::implicitArgs:
@@ -3349,6 +3350,8 @@ struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
     void *passedPackedSurfaceStateHeap = nullptr;
     uint32_t passedPackedSurfaceStateOffset = 0;
     uint32_t passedPackedMipLevel = 0;
+
+    uint32_t copySurfaceStateCalled[NEO::BindlessImageSlot::max] = {};
 };
 
 HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
@@ -3539,12 +3542,13 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetti
     EXPECT_NE(mipLevel1Slot->surfaceStateOffset, mipLevel2Slot->surfaceStateOffset);
     EXPECT_NE(mipLevel1SurfaceState, imageHW->passedRedescribedSurfaceStateHeap);
     EXPECT_EQ(2u, imageHW->passedRedescribedMipLevel);
+    auto mipLevel2SurfaceState = imageHW->passedRedescribedSurfaceStateHeap;
 
     ret = kernel->setArgRedescribedImage(3, handle, false, 1u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(mipLevel1Slot, imageHW->getBindlessSlotWithMipmap(1u));
-    EXPECT_EQ(mipLevel1SurfaceState, imageHW->passedRedescribedSurfaceStateHeap);
-    EXPECT_EQ(1u, imageHW->passedRedescribedMipLevel);
+    EXPECT_EQ(mipLevel2SurfaceState, imageHW->passedRedescribedSurfaceStateHeap);
+    EXPECT_EQ(2u, imageHW->passedRedescribedMipLevel);
     EXPECT_TRUE(kernel->privateState.isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->privateState.usingSurfaceStateHeap[3]);
 }
@@ -3589,20 +3593,139 @@ HWTEST2_F(SetKernelArg, givenPackedImageBindlessKernelAndGlobalBindlessHelperWhe
     EXPECT_EQ(ptrOffset(mipLevel2Slot->ssPtr, packedSlotOffset), imageHW->passedPackedSurfaceStateHeap);
     EXPECT_EQ(2u, imageHW->passedPackedMipLevel);
 
-    // packed and redescribed args at the same level share the block but not the slot
     ret = kernel->setArgRedescribedImage(3, handle, false, 1u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(mipLevel1Slot, imageHW->getBindlessSlotWithMipmap(1u));
-    EXPECT_EQ(ptrOffset(mipLevel1Slot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage),
+    EXPECT_EQ(ptrOffset(mipLevel2Slot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage),
               imageHW->passedRedescribedSurfaceStateHeap);
-    EXPECT_NE(imageHW->passedPackedSurfaceStateHeap, imageHW->passedRedescribedSurfaceStateHeap);
 
     ret = kernel->setArgRedescribedImage(3, handle, true, 1u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(ptrOffset(mipLevel1Slot->ssPtr, packedSlotOffset), imageHW->passedPackedSurfaceStateHeap);
-    EXPECT_EQ(1u, imageHW->passedPackedMipLevel);
+    EXPECT_EQ(ptrOffset(mipLevel2Slot->ssPtr, packedSlotOffset), imageHW->passedPackedSurfaceStateHeap);
+    EXPECT_EQ(2u, imageHW->passedPackedMipLevel);
     EXPECT_TRUE(kernel->privateState.isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->privateState.usingSurfaceStateHeap[3]);
+}
+
+HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetArgRedescribedImageCalledRepeatedlyThenGlobalSlotIsWrittenOnlyOnce, ImageSupport) {
+    createKernel();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.miplevels = 3u;
+
+    auto imageHW = std::make_unique<MyMockImage<FamilyType::gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    auto handle = imageHW->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    for (uint32_t i = 0u; i < 3u; i++) {
+        ret = kernel->setArgRedescribedImage(3, handle, false, 0u);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    }
+    EXPECT_EQ(1u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::redescribedImage]);
+
+    for (uint32_t i = 0u; i < 3u; i++) {
+        ret = kernel->setArgRedescribedImage(3, handle, false, 1u);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+        ret = kernel->setArgRedescribedImage(3, handle, true, 1u);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    }
+    EXPECT_EQ(2u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::redescribedImage]);
+    EXPECT_EQ(1u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::packedImage]);
+}
+
+HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetArgImageCalledRepeatedlyThenGlobalSlotsAreWrittenOnlyOnce, ImageSupport) {
+    createKernel();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto imageHW = std::make_unique<MyMockImage<FamilyType::gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    auto handle = imageHW->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    for (uint32_t i = 0u; i < 3u; i++) {
+        ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    }
+    EXPECT_EQ(1u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::image]);
+    EXPECT_EQ(1u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::implicitArgs]);
+    EXPECT_TRUE(kernel->privateState.isBindlessOffsetSet[3]);
+}
+
+HWTEST2_F(SetKernelArg, givenMediaBlockImageArgAndBindlessKernelWhenSetArgImageThenSeparateGlobalSlotIsPatched, ImageSupport) {
+    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.supportsMediaBlock = true;
+    createKernel();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
+    auto &arg = const_cast<NEO::ArgDescriptor &>(kernel->getDescriptor().payloadMappings.explicitArgs[3]);
+    auto &imageArg = arg.as<NEO::ArgDescImage>();
+    auto &addressingMode = kernel->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+    imageArg.size = sizeof(uint64_t);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto imageHW = std::make_unique<MyMockImage<FamilyType::gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    auto handle = imageHW->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto getExpectedPatchValue = [&](uint64_t surfaceStateOffset) {
+        return kernel->sharedState->heaplessEnabled
+                   ? surfaceStateOffset
+                   : gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
+    };
+    auto patchLocation = reinterpret_cast<uint64_t *>(ptrOffset(kernel->privateState.crossThreadData.data(), imageArg.bindless));
+
+    arg.getExtendedTypeInfo().isMediaBlockImage = true;
+    ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto mediaBlockSlot = imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::image, 0u, true);
+    ASSERT_NE(nullptr, mediaBlockSlot);
+    EXPECT_EQ(getExpectedPatchValue(mediaBlockSlot->surfaceStateOffset), *patchLocation);
+    EXPECT_EQ(ptrOffset(mediaBlockSlot->ssPtr, 0u), imageHW->passedSurfaceStateHeap);
+
+    arg.getExtendedTypeInfo().isMediaBlockImage = false;
+    ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto baseSlot = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, baseSlot);
+    EXPECT_NE(baseSlot->surfaceStateOffset, mediaBlockSlot->surfaceStateOffset);
+    EXPECT_EQ(getExpectedPatchValue(baseSlot->surfaceStateOffset), *patchLocation);
+    EXPECT_EQ(ptrOffset(baseSlot->ssPtr, 0u), imageHW->passedSurfaceStateHeap);
+
+    arg.getExtendedTypeInfo().isMediaBlockImage = true;
+    ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(getExpectedPatchValue(mediaBlockSlot->surfaceStateOffset), *patchLocation);
+    EXPECT_EQ(2u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::image]);
 }
 
 HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrectSurfaceStateAddressIsPatchedInCrossThreadData, ImageSupport) {
