@@ -21,6 +21,11 @@ class WddmSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovable
     WddmSysmanDriverImp() = default;
     ~WddmSysmanDriverImp() override;
 
+    WddmSysmanDriverImp(const WddmSysmanDriverImp &) = delete;
+    WddmSysmanDriverImp(WddmSysmanDriverImp &&) = delete;
+    WddmSysmanDriverImp &operator=(const WddmSysmanDriverImp &) = delete;
+    WddmSysmanDriverImp &operator=(WddmSysmanDriverImp &&) = delete;
+
     ze_result_t eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
     ze_result_t driverEventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents) override;
     ze_result_t driverEventRegister(zes_event_type_flags_t events) override;

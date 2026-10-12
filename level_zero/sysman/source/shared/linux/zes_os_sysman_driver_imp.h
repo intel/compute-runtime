@@ -36,6 +36,11 @@ class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovabl
     LinuxSysmanDriverImp();
     ~LinuxSysmanDriverImp() override;
 
+    LinuxSysmanDriverImp(const LinuxSysmanDriverImp &) = delete;
+    LinuxSysmanDriverImp(LinuxSysmanDriverImp &&) = delete;
+    LinuxSysmanDriverImp &operator=(const LinuxSysmanDriverImp &) = delete;
+    LinuxSysmanDriverImp &operator=(LinuxSysmanDriverImp &&) = delete;
+
     ze_result_t eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
     ze_result_t driverEventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents) override;
     ze_result_t driverEventRegister(zes_event_type_flags_t events) override;
