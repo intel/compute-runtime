@@ -23,6 +23,8 @@ class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
     ze_result_t engineGetProperties(zes_engine_properties_t *pProperties) override;
     ze_result_t engineGetActivity(zes_engine_stats_t *pStats) override;
     ze_result_t engineGetActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;
+    ze_result_t engineStartActivityCollection() override;
+    ze_result_t engineStopActivityCollection() override;
     void reInit() override;
 
     EngineImp() = default;

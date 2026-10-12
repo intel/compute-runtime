@@ -30,6 +30,8 @@ class Engine : _zes_engine_handle_t {
     virtual ze_result_t engineGetProperties(zes_engine_properties_t *pProperties) = 0;
     virtual ze_result_t engineGetActivity(zes_engine_stats_t *pStats) = 0;
     virtual ze_result_t engineGetActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) = 0;
+    virtual ze_result_t engineStartActivityCollection() = 0;
+    virtual ze_result_t engineStopActivityCollection() = 0;
 
     static Engine *fromHandle(zes_engine_handle_t handle) {
         return static_cast<Engine *>(handle);

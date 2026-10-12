@@ -23,12 +23,14 @@
 #include <shlobj_core.h>
 #include <string>
 #else // defined(_WIN32)
+#include <dirent.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
 #endif // defined(_WIN32)
 #include <cstring>
 #include <mutex>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -133,6 +135,7 @@ void usage() {
                  "\n  -f,   --frequency                                                                               selectively run frequency black box test"
                  "\n  -s,   --standby                                                                                 selectively run standby black box test"
                  "\n  -e,   --engine                                                                                  selectively run engine black box test"
+                 "\n        --engineactivitycollection                                                                selectively run the engine activity collection EXP API black box test, which starts and stops the activity collection of every engine (requires root)"
                  "\n  -c,   --scheduler                                                                               selectively run scheduler black box test"
                  "\n  -t,   --temperature                                                                             selectively run temperature black box test"
                  "\n  -o,   --power                                                                                   selectively run power black box test"
@@ -1506,6 +1509,140 @@ void testSysmanEngine(ze_device_handle_t &device) {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
         std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    }
+}
+
+typedef ze_result_t(ZE_APICALL *zesIntelEngineActivityCollectionExp_pfn)(
+    zes_engine_handle_t hEngine);
+
+zesIntelEngineActivityCollectionExp_pfn zesIntelEngineStartActivityCollectionExpPtr = nullptr;
+zesIntelEngineActivityCollectionExp_pfn zesIntelEngineStopActivityCollectionExpPtr = nullptr;
+
+void getEngineActivityCollectionExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelEngineStartActivityCollectionExp", reinterpret_cast<void **>(&zesIntelEngineStartActivityCollectionExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelEngineStopActivityCollectionExp", reinterpret_cast<void **>(&zesIntelEngineStopActivityCollectionExpPtr)));
+}
+
+std::set<int> getOpenFileDescriptors() {
+#if defined(_WIN32)
+    return {};
+#else  // defined(_WIN32)
+    std::set<int> fileDescriptors;
+    DIR *fdDirectory = opendir("/proc/self/fd");
+    if (fdDirectory == nullptr) {
+        return fileDescriptors;
+    }
+    const int scanFd = dirfd(fdDirectory);
+    while (const dirent *entry = readdir(fdDirectory)) {
+        char *entryEnd = nullptr;
+        const long entryFd = strtol(entry->d_name, &entryEnd, 10);
+        const bool isFdEntry = (entryEnd != entry->d_name) && (*entryEnd == '\0');
+        if (isFdEntry && (static_cast<int>(entryFd) != scanFd)) {
+            fileDescriptors.insert(static_cast<int>(entryFd));
+        }
+    }
+    closedir(fdDirectory);
+    return fileDescriptors;
+#endif // defined(_WIN32)
+}
+
+void printFileDescriptorDifference(const std::string &label, const std::set<int> &presentIn, const std::set<int> &absentFrom) {
+    std::cout << label;
+    bool anyReported = false;
+    for (const auto fileDescriptor : presentIn) {
+        if (absentFrom.count(fileDescriptor) == 0) {
+            std::cout << fileDescriptor << " ";
+            anyReported = true;
+        }
+    }
+    if (!anyReported) {
+        std::cout << "none";
+    }
+    std::cout << std::endl;
+}
+
+std::string getFileDescriptorTarget(int fileDescriptor) {
+#if defined(_WIN32)
+    return "unknown";
+#else  // defined(_WIN32)
+    const std::string linkPath = "/proc/self/fd/" + std::to_string(fileDescriptor);
+    char target[512] = {};
+    const ssize_t targetLength = readlink(linkPath.c_str(), target, sizeof(target) - 1);
+    if (targetLength < 0) {
+        return "unknown";
+    }
+    return std::string(target, static_cast<size_t>(targetLength));
+#endif // defined(_WIN32)
+}
+
+void printFileDescriptorsLeftOpen(const std::string &label, const std::set<int> &beforeStart, const std::set<int> &afterStart, const std::set<int> &afterStop) {
+    std::cout << label;
+    bool anyReported = false;
+    for (const auto fileDescriptor : afterStart) {
+        if ((beforeStart.count(fileDescriptor) == 0) && (afterStop.count(fileDescriptor) != 0)) {
+            std::cout << fileDescriptor << " -> " << getFileDescriptorTarget(fileDescriptor) << " ";
+            anyReported = true;
+        }
+    }
+    if (!anyReported) {
+        std::cout << "none";
+    }
+    std::cout << std::endl;
+}
+
+void testSysmanEngineActivityCollection(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  Engine activity collection tests ---- " << std::endl;
+
+    if ((zesIntelEngineStartActivityCollectionExpPtr == nullptr) || (zesIntelEngineStopActivityCollectionExpPtr == nullptr)) {
+        std::cout << "Engine activity collection EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    bool iamroot = (geteuid() == 0);
+    if (!iamroot) {
+        std::cout << "Not running as Root. Skipping Engine activity collection test." << std::endl;
+        return;
+    }
+
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumEngineGroups(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Engine domains" << std::endl;
+        return;
+    }
+    std::vector<zes_engine_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumEngineGroups(device, &count, handles.data()));
+
+    for (const auto &handle : handles) {
+        zes_engine_properties_t engineProperties = {};
+        VALIDATECALL(zesEngineGetProperties(handle, &engineProperties));
+
+        std::cout << std::endl
+                  << "Engine Type = " << getEngineType(engineProperties.type);
+        if (engineProperties.onSubdevice) {
+            std::cout << " || Subdevice Id = " << engineProperties.subdeviceId;
+        }
+        std::cout << std::endl;
+
+        const std::set<int> fdsBeforeStart = getOpenFileDescriptors();
+        const ze_result_t startResult = zesIntelEngineStartActivityCollectionExpPtr(handle);
+        std::cout << "  zesIntelEngineStartActivityCollectionExp : " << getErrorString(startResult) << std::endl;
+        if (startResult != ZE_RESULT_SUCCESS) {
+            continue;
+        }
+        const std::set<int> fdsAfterStart = getOpenFileDescriptors();
+        printFileDescriptorDifference("  Descriptors opened by the start          : ", fdsAfterStart, fdsBeforeStart);
+
+        zes_engine_stats_t stats = {};
+        VALIDATECALL(zesEngineGetActivity(handle, &stats));
+        std::cout << "  Activity while collecting                : Active Time = " << stats.activeTime
+                  << " us || Timestamp = " << stats.timestamp << " us" << std::endl;
+
+        std::cout << "  zesIntelEngineStopActivityCollectionExp  : " << getErrorString(zesIntelEngineStopActivityCollectionExpPtr(handle)) << std::endl;
+        const std::set<int> fdsAfterStop = getOpenFileDescriptors();
+        printFileDescriptorDifference("  Descriptors closed by the stop           : ", fdsAfterStart, fdsAfterStop);
+        printFileDescriptorsLeftOpen("  Descriptors left open by the stop        : ", fdsBeforeStart, fdsAfterStart, fdsAfterStop);
     }
 }
 
@@ -3640,6 +3777,12 @@ int main(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-e", "--engine", &optind)) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanEngine(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "--engineactivitycollection", "--engineactivitycollection", &optind)) {
+        getEngineActivityCollectionExpFunctionPointers(driver);
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanEngineActivityCollection(device);
         });
     }
     if (isParamEnabled(argc, argv, "-c", "--scheduler", &optind)) {

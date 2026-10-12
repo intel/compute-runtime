@@ -87,8 +87,10 @@ struct MockEnginePmuInterfaceImp : public L0::Sysman::ult::MockPmuInterfaceImpFo
     MockEnginePmuInterfaceImp(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
 
     int64_t mockPerfEventFailureReturnValue = 0;
+    int32_t mockErrorNumber = ENOENT;
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
         if (mockPerfEventFailureReturnValue == -1) {
+            errno = mockErrorNumber;
             return mockPerfEventFailureReturnValue;
         }
 
@@ -105,6 +107,22 @@ struct MockEnginePmuInterfaceImp : public L0::Sysman::ult::MockPmuInterfaceImpFo
         data[1] = mockTimestamp;
         return 0;
     }
+};
+
+struct MockOsEngineWithoutActivityCollection : public L0::Sysman::OsEngine {
+    ze_result_t getActivity(zes_engine_stats_t *pStats) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t getProperties(zes_engine_properties_t &properties) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    bool isEngineModuleSupported() override {
+        return true;
+    }
+    void reInit() override {}
 };
 
 using DrmMockEngineInfoFailing = DrmMock;

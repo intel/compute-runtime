@@ -129,14 +129,18 @@ HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenValidEngineHandlesWhenCall
     EXPECT_TRUE(properties.onSubdevice);
 }
 
-HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenHandleQueryItemCalledAndPmuInterfaceOpenFailsWhenCallingZesDeviceEnumEngineGroupsThenSuccessAndZeroHandleCountIsReturned, IsPVC) {
+HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenHandleQueryItemCalledAndPmuInterfaceOpenFailsWhenCallingZesEngineGetActivityThenErrorIsReturnedAndHandlesRemainEnumerated, IsPVC) {
 
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     pSysmanDeviceImp->pEngineHandleContext->init(pOsSysman->getSubDeviceCount());
-    uint32_t count = 0;
-    uint32_t mockHandleCount = 0u;
-    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, mockHandleCount);
+
+    auto handles = getEngineHandles(handleCountForMultiDeviceFixture);
+    EXPECT_EQ(handleCountForMultiDeviceFixture, static_cast<uint32_t>(handles.size()));
+
+    zes_engine_stats_t stats = {};
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivity(handle, &stats));
+    }
 }
 
 } // namespace ult

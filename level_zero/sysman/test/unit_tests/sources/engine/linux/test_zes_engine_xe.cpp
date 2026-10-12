@@ -31,9 +31,11 @@ static MapOfEngineInfo mockMapEngineInfo = {
 class ZesEngineFixtureXe : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
-    std::unique_ptr<MockPmuInterfaceImp> pPmuInterface;
+    std::unique_ptr<MockEnginePmuInterfaceXe> pPmuInterface;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
+    MockEngineXeFsAccess mockFsAccess;
+    L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -52,7 +54,10 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pLinuxSysmanImp->pSysmanKmdInterface->initAllAccessInterfaces(*pDrm);
 
-        pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
+        pOriginalFsAccess = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = &mockFsAccess;
+
+        pPmuInterface = std::make_unique<MockEnginePmuInterfaceXe>(pLinuxSysmanImp);
         pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
@@ -64,6 +69,7 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
 
     void TearDown() override {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
+        pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
         SysmanDeviceFixture::TearDown();
     }
 };
@@ -78,6 +84,24 @@ TEST_F(ZesEngineFixtureXe, GivenEngineImpInstanceForSingleComputeEngineAndGetPmu
 TEST_F(ZesEngineFixtureXe, GivenEngineImpInstanceForMediaGroupEngineAndSingleMediaEngineNotAvailableWhenCallingIsEngineModuleSupportedThenFalseValueIsReturned) {
     auto pLinuxEngineImp = std::make_unique<L0::Sysman::LinuxEngineImp>(pOsSysman, mockMapEngineInfo, ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0, 0);
     EXPECT_FALSE(pLinuxEngineImp->isEngineModuleSupported());
+}
+
+TEST_F(ZesEngineFixtureXe, GivenEngineImpInstanceForMediaGroupEngineAndSingleMediaEngineNotAvailableWhenCallingGetActivityAndStartActivityCollectionThenErrorIsReturned) {
+    auto pLinuxEngineImp = std::make_unique<L0::Sysman::LinuxEngineImp>(pOsSysman, mockMapEngineInfo, ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0, 0);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxEngineImp->startActivityCollection());
+
+    zes_engine_stats_t stats = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxEngineImp->getActivity(&stats));
+}
+
+TEST_F(ZesEngineFixtureXe, GivenPmuConfigsUnavailableForAllEnginesWhenCallingZesDeviceEnumEngineGroupsThenZeroHandlesAreReturned) {
+    pPmuInterface->mockGetPmuConfigsFailure = true;
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(0u, count);
+    EXPECT_TRUE(pSysmanDeviceImp->pEngineHandleContext->handleList.empty());
 }
 
 } // namespace ult

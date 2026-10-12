@@ -22,6 +22,12 @@ class OsEngine {
     virtual ze_result_t getActivity(zes_engine_stats_t *pStats) = 0;
     virtual ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) = 0;
     virtual ze_result_t getProperties(zes_engine_properties_t &properties) = 0;
+    virtual ze_result_t startActivityCollection() {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    virtual ze_result_t stopActivityCollection() {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     virtual bool isEngineModuleSupported() = 0;
     virtual void reInit() = 0;
     static std::unique_ptr<OsEngine> create(OsSysman *pOsSysman, MapOfEngineInfo &mapEngineInfo, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice);

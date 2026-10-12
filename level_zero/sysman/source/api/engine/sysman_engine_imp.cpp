@@ -18,6 +18,14 @@ ze_result_t EngineImp::engineGetActivity(zes_engine_stats_t *pStats) {
     return pOsEngine->getActivity(pStats);
 }
 
+ze_result_t EngineImp::engineStartActivityCollection() {
+    return pOsEngine->startActivityCollection();
+}
+
+ze_result_t EngineImp::engineStopActivityCollection() {
+    return pOsEngine->stopActivityCollection();
+}
+
 ze_result_t EngineImp::engineGetProperties(zes_engine_properties_t *pProperties) {
     *pProperties = engineProperties;
     return ZE_RESULT_SUCCESS;

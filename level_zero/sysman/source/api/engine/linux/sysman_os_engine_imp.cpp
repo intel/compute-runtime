@@ -23,12 +23,17 @@
 namespace L0 {
 namespace Sysman {
 
-void LinuxEngineImp::cleanup() {
+void LinuxEngineImp::closeFds() {
     for (auto &fd : fdList) {
         DEBUG_BREAK_IF(fd < 0);
         NEO::SysCalls::close(static_cast<int>(fd));
     }
     fdList.clear();
+}
+
+void LinuxEngineImp::cleanup() {
+    const std::lock_guard<std::mutex> lock(fdListMutex);
+    closeFds();
 }
 
 void LinuxEngineImp::reInit() {
@@ -131,7 +136,20 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
 }
 
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
+    ze_result_t result = createFdsForEngineHandle();
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
     return pSysmanKmdInterface->readBusynessFromGroupFd(pPmuInterface, fdList, pStats);
+}
+
+ze_result_t LinuxEngineImp::startActivityCollection() {
+    return createFdsForEngineHandle();
+}
+
+ze_result_t LinuxEngineImp::stopActivityCollection() {
+    cleanup();
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
@@ -141,9 +159,45 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t LinuxEngineImp::createFdsForEngineHandle() {
+
+    const std::lock_guard<std::mutex> lock(fdListMutex);
+
+    if (!fdList.empty()) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    if (pmuConfigs.empty()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmu Configs Not Available \n", NEO_FUNCTION_NAME);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    for (auto &config : pmuConfigs) {
+        int64_t fd = -1;
+        if (fdList.empty()) {
+            if (pmuConfigs.size() == 1) {
+                fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+            } else {
+                fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+            }
+        } else {
+            fd = pPmuInterface->pmuInterfaceOpen(config, static_cast<int>(fdList[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+        }
+
+        if (fd < 0) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", NEO_FUNCTION_NAME);
+            closeFds();
+            return pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
+        }
+        fdList.push_back(fd);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 void LinuxEngineImp::init(MapOfEngineInfo &mapEngineInfo) {
 
-    std::vector<uint64_t> pmuConfigs;
+    pmuConfigs.clear();
     const std::string sysmanDeviceDir = std::string(sysDevicesDir) + pSysmanKmdInterface->getSysmanDeviceDirName();
 
     if (isGroupEngineHandle(engineGroupInfo.engineGroup)) {
@@ -155,42 +209,15 @@ void LinuxEngineImp::init(MapOfEngineInfo &mapEngineInfo) {
     if (initStatus != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to fetch Pmu Configs \n", NEO_FUNCTION_NAME);
         return;
-    } else {
-        if (pmuConfigs.empty()) {
-            initStatus = ZE_RESULT_ERROR_UNKNOWN;
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmu Configs Not Available \n", NEO_FUNCTION_NAME);
-            return;
-        } else {
-            for (auto &config : pmuConfigs) {
-                int64_t fd = -1;
-                if (fdList.empty()) {
-                    if (pmuConfigs.size() == 1) {
-                        fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
-                    } else {
-                        fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
-                    }
-                    if (fd < 0) {
-                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", NEO_FUNCTION_NAME);
-                        initStatus = pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
-                        return;
-                    }
-                } else {
-                    fd = pPmuInterface->pmuInterfaceOpen(config, static_cast<int>(fdList[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
-                    if (fd < 0) {
-                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", NEO_FUNCTION_NAME);
-                        for (auto &fd : fdList) {
-                            NEO::SysCalls::close(static_cast<int>(fd));
-                        }
-                        fdList.clear();
-                        initStatus = pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
-                        return;
-                    }
-                }
-                fdList.push_back(fd);
-            }
-            initStatus = ZE_RESULT_SUCCESS;
-        }
     }
+
+    if (pmuConfigs.empty()) {
+        initStatus = ZE_RESULT_ERROR_UNKNOWN;
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmu Configs Not Available \n", NEO_FUNCTION_NAME);
+        return;
+    }
+
+    initStatus = ZE_RESULT_SUCCESS;
 }
 
 bool LinuxEngineImp::isEngineModuleSupported() {
@@ -211,9 +238,6 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, MapOfEngineInfo &mapEngineIn
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     init(mapEngineInfo);
-    if (initStatus != ZE_RESULT_SUCCESS) {
-        cleanup();
-    }
 }
 
 std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, MapOfEngineInfo &mapEngineInfo, zes_engine_group_t type, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubDevice) {

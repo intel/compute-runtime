@@ -7,11 +7,28 @@
 
 #pragma once
 
+#include "level_zero/sysman/source/api/engine/sysman_os_engine.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+struct MockUnsupportedOsEngine : public L0::Sysman::OsEngine {
+    ze_result_t getActivity(zes_engine_stats_t *pStats) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t getProperties(zes_engine_properties_t &properties) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    bool isEngineModuleSupported() override {
+        return false;
+    }
+    void reInit() override {}
+};
 
 struct MockEngineKmdSysManager : public MockKmdSysManager {
 

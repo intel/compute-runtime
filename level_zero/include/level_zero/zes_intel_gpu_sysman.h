@@ -1168,6 +1168,80 @@ typedef struct _zes_intel_device_soc_uid_exp_properties_t {
     zes_uuid_t socUid;              ///< [out] unique identifier of the SOC, most significant byte first.
 } zes_intel_device_soc_uid_exp_properties_t;
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_NAME
+/// @brief Engine activity collection extension name
+#define ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_NAME "ZES_intel_experimental_engine_activity_collection"
+#endif // ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Engine activity collection extension Version(s)
+typedef enum _zes_intel_engine_activity_collection_exp_version_t {
+    ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_engine_activity_collection_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Start the activity collection of an engine
+///
+/// @details
+///     - This function allocates the resources, for example the performance counter file
+///       descriptors, which ::zesEngineGetActivity reads the activity of the engine from.
+///     - Activity collection is also started by the first ::zesEngineGetActivity call of an
+///       engine handle, so calling this function is only needed to pay the cost of the
+///       allocation up front, or to resume the collection of an engine which was stopped with
+///       ::zesIntelEngineStopActivityCollectionExp.
+///     - Calling this function for an engine which is already collecting does nothing and
+///       returns ::ZE_RESULT_SUCCESS.
+///     - The counters of an engine restart from zero every time its collection is started, so
+///       the activity reported by the first ::zesEngineGetActivity call after this one must not
+///       be compared with a sample taken before the collection was stopped.
+///     - The application must not call this function from simultaneous threads with the same
+///       engine handle.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The platform does not collect the engine activity from driver owned resources.
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hEngine`
+ze_result_t ZE_APICALL zesIntelEngineStartActivityCollectionExp(
+    zes_engine_handle_t hEngine ///< [in] handle of the engine
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Stop the activity collection of an engine
+///
+/// @details
+///     - This function releases the resources, for example the performance counter file
+///       descriptors, which ::zesEngineGetActivity reads the activity of the engine from. The
+///       engine handle itself remains valid.
+///     - This is meant for an application which keeps engine handles it does not query, as the
+///       resources of an engine are held until its handle is destroyed otherwise.
+///     - Calling this function for an engine which is not collecting does nothing and returns
+///       ::ZE_RESULT_SUCCESS.
+///     - A subsequent ::zesEngineGetActivity or ::zesIntelEngineStartActivityCollectionExp call
+///       starts the collection again, with the counters of the engine restarting from zero.
+///     - The application must not call this function from simultaneous threads with the same
+///       engine handle, and must not call it while another function is using that handle.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The platform does not collect the engine activity from driver owned resources.
+///     - ::ZE_RESULT_ERROR_UNKNOWN
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hEngine`
+ze_result_t ZE_APICALL zesIntelEngineStopActivityCollectionExp(
+    zes_engine_handle_t hEngine ///< [in] handle of the engine
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

@@ -5,9 +5,11 @@
  *
  */
 
+#include "level_zero/sysman/source/api/engine/sysman_engine_imp.h"
 #include "level_zero/sysman/source/api/engine/windows/sysman_os_engine_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/windows/mock_engine.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
 namespace Sysman {
@@ -141,6 +143,25 @@ TEST_F(SysmanDeviceEngineFixture, GivenZeroResponseSizeFromKmdWhenEnumeratingEng
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, 0u);
+}
+
+TEST_F(SysmanDeviceEngineFixture, GivenValidEngineHandleWhenCallingActivityCollectionStartAndStopExpThenUnsupportedFeatureIsReturned) {
+    auto handles = getEngineHandles(MockEngineKmdSysManager::mockEngineHandleComponentCount);
+    ASSERT_EQ(MockEngineKmdSysManager::mockEngineHandleComponentCount, static_cast<uint32_t>(handles.size()));
+
+    for (auto &handle : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelEngineStartActivityCollectionExp(handle));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelEngineStopActivityCollectionExp(handle));
+    }
+}
+
+TEST_F(SysmanDeviceEngineFixture, GivenOsEngineReportingUnsupportedEngineModuleWhenInitializingEngineImpThenInitIsNotSuccessful) {
+    auto pEngineImp = std::make_unique<L0::Sysman::EngineImp>();
+    pEngineImp->pOsEngine = std::make_unique<MockUnsupportedOsEngine>();
+
+    pEngineImp->init();
+
+    EXPECT_FALSE(pEngineImp->initSuccess);
 }
 
 TEST_F(SysmanDeviceEngineFixture, GivenValidEngineHandlesWhenCallingReInitOnEngineHandleContextThenHandlesRemainValid) {

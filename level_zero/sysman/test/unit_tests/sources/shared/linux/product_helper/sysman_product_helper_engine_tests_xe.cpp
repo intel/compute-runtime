@@ -13,6 +13,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
 namespace Sysman {
@@ -28,6 +29,7 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
     MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
     MockEngineXeFsAccess mockFsAccess;
     L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
+    std::unique_ptr<VariableBackup<decltype(NEO::SysCalls::sysCallsPread)>> preadBackup;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -35,6 +37,14 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
             std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
             std::memcpy(buf, str.c_str(), str.size());
             return static_cast<int>(str.size());
+        });
+        preadBackup = std::make_unique<VariableBackup<decltype(NEO::SysCalls::sysCallsPread)>>(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+            uint32_t mockReadVal = 23;
+            std::ostringstream oStream;
+            oStream << mockReadVal;
+            std::string value = oStream.str();
+            memcpy(buf, value.data(), count);
+            return count;
         });
         device = pSysmanDevice;
         MockNeoDrm *pDrm = new MockNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
@@ -69,16 +79,6 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {
-
-        VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-            uint32_t mockReadVal = 23;
-            std::ostringstream oStream;
-            oStream << mockReadVal;
-            std::string value = oStream.str();
-            memcpy(buf, value.data(), count);
-            return count;
-        });
-
         std::vector<zes_engine_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -86,16 +86,6 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
 };
 
 HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenComponentCountZeroWhenCallingZesDeviceEnumEngineGroupsThenCallSucceedsAndValidCountIsReturned, IsAtLeastXe2HpgCore) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint32_t mockReadVal = 23;
-        std::ostringstream oStream;
-        oStream << mockReadVal;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, mockEngineHandleCount);
@@ -151,6 +141,23 @@ HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuRe
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         EXPECT_EQ(zesEngineGetActivity(handle, &stats), ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleWhenStartingAndStoppingActivityCollectionThenActivityIsStillReported, IsAtLeastXe2HpgCore) {
+
+    zes_engine_stats_t stats = {};
+    auto handles = getEngineHandles(mockEngineHandleCount);
+    EXPECT_EQ(mockEngineHandleCount, handles.size());
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(zesIntelEngineStartActivityCollectionExp(handle), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zesIntelEngineStopActivityCollectionExp(handle), ZE_RESULT_SUCCESS);
+
+        EXPECT_EQ(zesEngineGetActivity(handle, &stats), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(stats.activeTime, pPmuInterface->mockActiveTime);
+        EXPECT_EQ(stats.timestamp, pPmuInterface->mockTimestamp);
     }
 }
 

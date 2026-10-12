@@ -10,6 +10,7 @@
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_prelim.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
 namespace Sysman {
@@ -25,6 +26,7 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     MockEnginePrelimFsAccess mockFsAccess;
     L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
+    std::unique_ptr<VariableBackup<decltype(NEO::SysCalls::sysCallsPread)>> preadBackup;
 
     L0::Sysman::SysmanDevice *device = nullptr;
 
@@ -34,6 +36,13 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
             std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
             std::memcpy(buf, str.c_str(), str.size());
             return static_cast<int>(str.size());
+        });
+        preadBackup = std::make_unique<VariableBackup<decltype(NEO::SysCalls::sysCallsPread)>>(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+            std::ostringstream oStream;
+            oStream << 23;
+            std::string value = oStream.str();
+            memcpy(buf, value.data(), count);
+            return count;
         });
 
         pDrm = new MockEngineNeoDrmPrelim(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
@@ -66,15 +75,6 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {
-
-        VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-            std::ostringstream oStream;
-            oStream << 23;
-            std::string value = oStream.str();
-            memcpy(buf, value.data(), count);
-            return count;
-        });
-
         std::vector<zes_engine_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -256,15 +256,6 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndIntegratedDeviceWhenCall
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::ostringstream oStream;
-        oStream << 23;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
     pPmuInterface->mockPerfEventOpenReadFail = true;
     EXPECT_EQ(-1, pPmuInterface->pmuInterfaceOpen(0, -1, 0));
 }
@@ -283,76 +274,94 @@ TEST_F(ZesEngineFixturePrelim, GivenHandleQueryItemCalledWithInvalidEngineTypeTh
     EXPECT_EQ(count, mockHandleCount);
 }
 
-TEST_F(ZesEngineFixturePrelim, GivenDeviceHandleAndPmuOpenFailsDueToTooManyOpenFilesWhenCallingZesDeviceEnumEngineGroupsThenZeroHandlesReturned) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::ostringstream oStream;
-        oStream << 23;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
+TEST_F(ZesEngineFixturePrelim, GivenDeviceHandleAndPmuOpenFailsDueToTooManyOpenFilesWhenCallingZesEngineGetActivityThenDependencyUnavailableIsReturned) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
 
     pPmuInterface->mockPerfEventOpenReadFail = true;
     pPmuInterface->mockPerfEventOpenFailAtCount = 3;
     pPmuInterface->mockErrorNumber = EMFILE;
-    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-    pSysmanDeviceImp->pEngineHandleContext->init(pOsSysman->getSubDeviceCount());
 
-    uint32_t handleCount = 0;
-    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &handleCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(handleCount, 0u);
+    zes_engine_stats_t stats = {};
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivity(handle, &stats));
+    }
 }
 
-TEST_F(ZesEngineFixturePrelim, GivenDeviceHandleAndPmuOpenFailsDueToFileTableOverFlowWhenCallingZesDeviceEnumEngineGroupsThenZeroHandlesReturned) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::ostringstream oStream;
-        oStream << 23;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
+TEST_F(ZesEngineFixturePrelim, GivenDeviceHandleAndPmuOpenFailsDueToFileTableOverFlowWhenCallingZesEngineGetActivityThenDependencyUnavailableIsReturned) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
 
     pPmuInterface->mockPerfEventOpenReadFail = true;
     pPmuInterface->mockPerfEventOpenFailAtCount = 3;
     pPmuInterface->mockErrorNumber = ENFILE;
-    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-    pSysmanDeviceImp->pEngineHandleContext->init(pOsSysman->getSubDeviceCount());
 
-    uint32_t handleCount = 0;
-    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &handleCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(handleCount, 0u);
+    zes_engine_stats_t stats = {};
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivity(handle, &stats));
+    }
 }
 
-TEST_F(ZesEngineFixturePrelim, GivenPmuOpenFailsWhenCallingZesDeviceEnumEngineGroupsThenZeroHandlesAreEnumerated) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::ostringstream oStream;
-        oStream << 23;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
+TEST_F(ZesEngineFixturePrelim, GivenPmuOpenFailsWhenCallingZesEngineGetActivityThenErrorIsReturnedAndHandlesRemainEnumerated) {
     pPmuInterface->mockPerfEventOpenReadFail = true;
     pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     pSysmanDeviceImp->pEngineHandleContext->init(pOsSysman->getSubDeviceCount());
 
     uint32_t handleCount = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &handleCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(handleCount, 0u);
+    EXPECT_EQ(handleCount, handleComponentCount);
+
+    zes_engine_stats_t stats = {};
+    for (auto &handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+        EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, handle->engineGetActivity(&stats));
+    }
 }
 
-TEST_F(ZesEngineFixturePrelim, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThenzesDeviceEnumEngineGroupsSucceedsAndHandleCountIsZero) {
+TEST_F(ZesEngineFixturePrelim, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThenzesDeviceEnumEngineGroupsSucceedsAndActivityQueryFails) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
 
-    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-    pSysmanDeviceImp->pEngineHandleContext->init(pOsSysman->getSubDeviceCount());
-    uint32_t count = 0;
-    uint32_t mockHandleCount = 0u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
-    EXPECT_EQ(count, mockHandleCount);
+    preadBackup.reset();
+
+    zes_engine_stats_t stats = {};
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivity(handle, &stats));
+    }
+}
+
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleWhenCallingActivityCollectionStopExpThenFdsAreClosedAndActivityCollectionCanBeStartedAgain) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    zes_engine_stats_t stats = {};
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStopActivityCollectionExp(handle));
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStartActivityCollectionExp(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
+        EXPECT_EQ(stats.activeTime, mockActiveTime);
+        EXPECT_EQ(stats.timestamp, pPmuInterface->mockTimestamp);
+    }
+}
+
+TEST_F(ZesEngineFixturePrelim, GivenActivityCollectionStoppedWhenPmuOpenFailsThenActivityCollectionStartExpReturnsError) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStartActivityCollectionExp(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStopActivityCollectionExp(handle));
+    }
+
+    pPmuInterface->mockPerfEventOpenReadFail = true;
+    pPmuInterface->mockErrorNumber = EMFILE;
+
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesIntelEngineStartActivityCollectionExp(handle));
+    }
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenValidDrmObjectWhenCallingsysmanQueryEngineInfoMethodThenSuccessIsReturned) {

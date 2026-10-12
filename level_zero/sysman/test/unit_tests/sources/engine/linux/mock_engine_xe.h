@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
 
 namespace L0 {
 namespace Sysman {
@@ -22,6 +23,18 @@ struct MockEngineXeFsAccess : public L0::Sysman::FsAccessInterface {
     bool mockIsRootUser = true;
     bool isRootUser() override {
         return mockIsRootUser;
+    }
+};
+
+struct MockEnginePmuInterfaceXe : public MockPmuInterfaceImp {
+    MockEnginePmuInterfaceXe(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImp(pLinuxSysmanImp) {}
+
+    bool mockGetPmuConfigsFailure = false;
+    int32_t getPmuConfigs(std::string_view sysmanDeviceDir, uint64_t engineClass, uint64_t engineInstance, uint64_t gtId, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) override {
+        if (mockGetPmuConfigsFailure) {
+            return -1;
+        }
+        return MockPmuInterfaceImp::getPmuConfigs(sysmanDeviceDir, engineClass, engineInstance, gtId, activeTicksConfig, totalTicksConfig);
     }
 };
 

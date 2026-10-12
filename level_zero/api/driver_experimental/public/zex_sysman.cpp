@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/api/engine/sysman_engine.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
@@ -107,6 +108,26 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(zes_intel_info_log_insta
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t ZE_APICALL zesIntelEngineStartActivityCollectionExp(zes_engine_handle_t hEngine) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Engine::fromHandle(hEngine)->engineStartActivityCollection();
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t ZE_APICALL zesIntelEngineStopActivityCollectionExp(zes_engine_handle_t hEngine) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Engine::fromHandle(hEngine)->engineStopActivityCollection();
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 } // namespace L0
 
 extern "C" {
@@ -172,6 +193,14 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstancePeekWithMetadataExp(zes_intel_info
 
 ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(zes_intel_info_log_instance_handle_t hInfoLogInstance) {
     return L0::zesIntelInfoLogInstanceDeleteExp(hInfoLogInstance);
+}
+
+ze_result_t ZE_APICALL zesIntelEngineStartActivityCollectionExp(zes_engine_handle_t hEngine) {
+    return L0::zesIntelEngineStartActivityCollectionExp(hEngine);
+}
+
+ze_result_t ZE_APICALL zesIntelEngineStopActivityCollectionExp(zes_engine_handle_t hEngine) {
+    return L0::zesIntelEngineStopActivityCollectionExp(hEngine);
 }
 
 } // extern "C"

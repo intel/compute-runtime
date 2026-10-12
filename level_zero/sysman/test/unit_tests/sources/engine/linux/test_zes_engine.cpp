@@ -10,6 +10,7 @@
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
 namespace Sysman {
@@ -29,6 +30,7 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     MockEngineFsAccess mockFsAccess;
     L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
+    std::unique_ptr<VariableBackup<decltype(NEO::SysCalls::sysCallsPread)>> preadBackup;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -36,6 +38,14 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
             std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
             std::memcpy(buf, str.c_str(), str.size());
             return static_cast<int>(str.size());
+        });
+        preadBackup = std::make_unique<VariableBackup<decltype(NEO::SysCalls::sysCallsPread)>>(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+            uint32_t mockReadVal = 23;
+            std::ostringstream oStream;
+            oStream << mockReadVal;
+            std::string value = oStream.str();
+            memcpy(buf, value.data(), count);
+            return count;
         });
         MockEngineNeoDrm *pDrm = new MockEngineNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
@@ -70,16 +80,6 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {
-
-        VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-            uint32_t mockReadVal = 23;
-            std::ostringstream oStream;
-            oStream << mockReadVal;
-            std::string value = oStream.str();
-            memcpy(buf, value.data(), count);
-            return count;
-        });
-
         std::vector<zes_engine_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -124,15 +124,6 @@ TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivi
 }
 
 TEST_F(ZesEngineFixtureI915, GivenValidEngineHandlesWhenCallingReInitOnEngineHandleContextThenHandlesRemainValidAndActivityCanStillBeQueried) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint32_t mockReadVal = 23;
-        std::ostringstream oStream;
-        oStream << mockReadVal;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
 
@@ -147,15 +138,6 @@ TEST_F(ZesEngineFixtureI915, GivenValidEngineHandlesWhenCallingReInitOnEngineHan
 }
 
 TEST_F(ZesEngineFixtureI915, GivenEngineInfoQueryFailsWhenCallingReInitOnEngineHandleContextThenReInitReturnsEarlyAndHandlesRemainNonNull) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint32_t mockReadVal = 23;
-        std::ostringstream oStream;
-        oStream << mockReadVal;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
 
@@ -172,18 +154,53 @@ TEST_F(ZesEngineFixtureI915, GivenEngineInfoQueryFailsWhenCallingReInitOnEngineH
 }
 
 TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint32_t mockReadVal = 23;
-        std::ostringstream oStream;
-        oStream << mockReadVal;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
     pPmuInterface->mockPerfEventFailureReturnValue = -1;
     EXPECT_EQ(-1, pPmuInterface->pmuInterfaceOpen(0, -1, 0));
+}
+
+TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndFdCreationFailsThenErrorIsReturned) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    pPmuInterface->mockPerfEventFailureReturnValue = -1;
+
+    zes_engine_stats_t stats = {};
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivity(handle, &stats));
+    }
+}
+
+TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingActivityCollectionStartAndStopExpThenSuccessIsReturnedAndActivityCanBeQueried) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    zes_engine_stats_t stats = {};
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStartActivityCollectionExp(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStartActivityCollectionExp(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStopActivityCollectionExp(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStopActivityCollectionExp(handle));
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
+    }
+}
+
+TEST_F(ZesEngineFixtureI915, GivenActivityCollectionStoppedWhenFdCreationFailsThenActivityCollectionStartExpReturnsError) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStartActivityCollectionExp(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelEngineStopActivityCollectionExp(handle));
+    }
+
+    pPmuInterface->mockPerfEventFailureReturnValue = -1;
+
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesIntelEngineStartActivityCollectionExp(handle));
+    }
 }
 
 TEST_F(ZesEngineFixtureI915, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
@@ -240,6 +257,14 @@ TEST_F(ZesEngineFixtureI915, GivenEngineInfoWithVideoQuerySupportedWhenQueryingE
     auto engineInfo = drm->getEngineInfo();
     ASSERT_NE(nullptr, engineInfo);
     EXPECT_EQ(2u, engineInfo->getEngineInfos().size());
+}
+
+TEST_F(ZesEngineFixtureI915, GivenOsEngineNotOverridingActivityCollectionWhenCallingEngineStartAndStopActivityCollectionThenUnsupportedFeatureIsReturned) {
+    auto pEngineImp = std::make_unique<L0::Sysman::EngineImp>();
+    pEngineImp->pOsEngine = std::make_unique<MockOsEngineWithoutActivityCollection>();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pEngineImp->engineStartActivityCollection());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pEngineImp->engineStopActivityCollection());
 }
 
 TEST_F(ZesEngineFixtureI915, GivenEngineInfoWithVideoQueryFailsThenFailureIsReturned) {
