@@ -46,6 +46,9 @@
 
 #include <algorithm>
 #include <emmintrin.h>
+#if !defined(_WIN32)
+#include <x86intrin.h>
+#endif
 
 namespace NEO {
 

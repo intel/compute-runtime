@@ -49,7 +49,6 @@
 #if __clang__
 #pragma clang diagnostic pop
 #endif
-#include <x86intrin.h>
 
 #define STATUS_GRAPHICS_NO_VIDEO_MEMORY ((NTSTATUS)0xC01E0100L)
 
