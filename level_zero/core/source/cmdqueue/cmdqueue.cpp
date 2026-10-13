@@ -221,6 +221,9 @@ ze_result_t CommandQueue::dispatchCopyOffloadCmdList(CommandList *commandList, c
                                                                                         .appendedCommandListToSyncBefore = copyOffloadCmdList});
         if (ctx.countersCrossSyncContainer) {
             for (const auto &crossSync : ctx.countersCrossSyncContainer->patchPreambleCrossSyncList) {
+                if (crossSync.appendedCommandListToSyncBefore != commandList) {
+                    continue;
+                }
                 this->copyOffloadPatchPreambleCounterSync.patchPreambleCrossSyncList.push_back({.counter = crossSync.counter,
                                                                                                 .deviceGpuAddress = crossSync.deviceGpuAddress,
                                                                                                 .deviceGraphicsAllocation = crossSync.deviceGraphicsAllocation,

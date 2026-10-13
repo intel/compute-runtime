@@ -1083,6 +1083,82 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleAndMultipleCmdListsW
     EXPECT_EQ(1u, patchPreambleCounterWaits[1]);
 }
 
+HWTEST2_F(RegularCmdListCopyOffloadTests,
+          givenPatchPreambleExternalCrossSyncsForMultipleCmdListsWhenExecutingThenEachCopyOffloadStreamWaitsOnlyForCrossSyncOfItsComputeCmdList,
+          IsAtLeastXeCore) {
+    auto cmdList0 = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList0, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList0->close());
+    auto cmdList1 = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList1, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList1->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    cmdQueue->setPatchingPreamble(true);
+
+    uint64_t requiredCounter = 0;
+    uint64_t *hostAddress = nullptr;
+    uint64_t hostGpuAddress = 0;
+    NEO::GraphicsAllocation *hostAllocation = nullptr;
+    uint64_t requiredDeviceGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceAllocation = nullptr;
+    cmdQueue->getPatchPreambleFullData(requiredCounter, hostAddress, hostGpuAddress, hostAllocation, requiredDeviceGpuAddress, deviceAllocation);
+
+    uint64_t cmdList0ExternalCounter = 5;
+    uint64_t cmdList0ExternalDeviceGpuAddress = 0xABC000;
+    MockGraphicsAllocation cmdList0ExternalAllocation(nullptr, cmdList0ExternalDeviceGpuAddress, 0x1000);
+    uint64_t cmdList1ExternalCounter = 10;
+    uint64_t cmdList1ExternalDeviceGpuAddress = 0xDEF000;
+    MockGraphicsAllocation cmdList1ExternalAllocation(nullptr, cmdList1ExternalDeviceGpuAddress, 0x1000);
+
+    CountersCrossSyncContainer crossSyncContainer;
+    crossSyncContainer.patchPreambleCrossSyncList.push_back({.counter = cmdList0ExternalCounter,
+                                                             .deviceGpuAddress = cmdList0ExternalDeviceGpuAddress,
+                                                             .deviceGraphicsAllocation = &cmdList0ExternalAllocation,
+                                                             .appendedCommandListToSyncBefore = cmdList0.get()});
+    crossSyncContainer.patchPreambleCrossSyncList.push_back({.counter = cmdList1ExternalCounter,
+                                                             .deviceGpuAddress = cmdList1ExternalDeviceGpuAddress,
+                                                             .deviceGraphicsAllocation = &cmdList1ExternalAllocation,
+                                                             .appendedCommandListToSyncBefore = cmdList1.get()});
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.countersCrossSyncContainer = &crossSyncContainer;
+    internalOptions.patchPreambleRequiredCounter = requiredCounter;
+    internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress = requiredDeviceGpuAddress;
+
+    ze_command_list_handle_t cmdListHandles[] = {cmdList0->toHandle(), cmdList1->toHandle()};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(2, cmdListHandles, nullptr, internalOptions));
+
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
+    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueue);
+    auto copyQueueCmds = parseStream<FamilyType>(copyQueue->commandStream, 0);
+
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    std::vector<uint64_t> waitAddresses;
+    for (auto &cmd : copyQueueCmds) {
+        if (auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
+            auto address = gmmHelper->decanonize(NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore));
+            if (address == gmmHelper->decanonize(requiredDeviceGpuAddress) ||
+                address == cmdList0ExternalDeviceGpuAddress ||
+                address == cmdList1ExternalDeviceGpuAddress) {
+                waitAddresses.push_back(address);
+            }
+        }
+    }
+
+    std::vector<uint64_t> expectedWaitAddresses = {gmmHelper->decanonize(requiredDeviceGpuAddress), cmdList0ExternalDeviceGpuAddress,
+                                                   gmmHelper->decanonize(requiredDeviceGpuAddress), cmdList1ExternalDeviceGpuAddress};
+    EXPECT_EQ(expectedWaitAddresses, waitAddresses);
+
+    auto cmdList0ExternalWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, cmdList0ExternalDeviceGpuAddress);
+    ASSERT_EQ(1u, cmdList0ExternalWaits.size());
+    EXPECT_EQ(cmdList0ExternalCounter, cmdList0ExternalWaits[0]);
+    auto cmdList1ExternalWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, cmdList1ExternalDeviceGpuAddress);
+    ASSERT_EQ(1u, cmdList1ExternalWaits.size());
+    EXPECT_EQ(cmdList1ExternalCounter, cmdList1ExternalWaits[0]);
+}
+
 HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleAndCmdListWithoutCopyOffloadWhenExecutingThenPatchPreambleCounterIsNotAcquired, IsAtLeastXeCore) {
     auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernel(*cmdList));
