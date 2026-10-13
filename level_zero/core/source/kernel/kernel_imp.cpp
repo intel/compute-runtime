@@ -964,10 +964,14 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         }
     }
 
-    const uint32_t allocId = allocData->getAllocId();
-    privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
+    const auto result = setArgBufferWithAlloc(argIndex, gpuAddress, alloc, peerAllocData ? peerAllocData : allocData);
+    if (result != ZE_RESULT_SUCCESS) {
+        privateState.kernelArgInfos[argIndex] = {};
+        return result;
+    }
 
-    return setArgBufferWithAlloc(argIndex, gpuAddress, alloc, peerAllocData ? peerAllocData : allocData);
+    privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocData->getAllocId(), allocationsCounter, false};
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void *argVal) {

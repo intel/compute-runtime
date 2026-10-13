@@ -4017,6 +4017,36 @@ HWTEST_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgBuff
     svmAllocsManager->freeSVMAlloc(svmAllocation);
 }
 
+HWTEST_F(SetKernelArg, givenBindlessKernelAndSetArgBufferFailedWhenSameBufferIsSetAgainThenBindingIsRetried) {
+    auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
+    mockKernel.setModule(module.get());
+    mockKernel.initialize(&desc);
+    auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
+    arg.bindless = 0x40;
+    arg.bindful = undefined<SurfaceStateHeapOffset>;
+
+    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    auto allocationProperties = NEO::SVMAllocsManager::SvmAllocationProperties{};
+    auto svmAllocation = svmAllocsManager->createSVMAlloc(4096, allocationProperties, context->rootDeviceIndices, context->deviceBitfields);
+
+    mockMemManager->failInDevicePool = true;
+    mockMemManager->failAllocateSystemMemory = true;
+    mockMemManager->failAllocate32Bit = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
+
+    svmAllocsManager->freeSVMAlloc(svmAllocation);
+}
+
 HWTEST_F(SetKernelArg, givenSlmPointerWhenSettingKernelArgThenPropertyIsSaved) {
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
