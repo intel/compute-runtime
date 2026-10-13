@@ -501,15 +501,14 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
 
     auto lock = pCommandQueue->takeOwnership();
     pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
-    ze_result_t ret = zeCommandListAppendImageCopyToMemoryExt(pCommandQueue->getL0Handle(),
-                                                              ptr,
-                                                              pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
-                                                              &mipDesc,
-                                                              getL0ImageRowPitch(pImage->getClObjectType(), rowPitch, slicePitch),
-                                                              static_cast<uint32_t>(slicePitch),
-                                                              hSignalEvent,
-                                                              waitEvents.size(),
-                                                              waitEvents.data());
+    ze_result_t ret = pCommandQueue->appendHostImageCopyToMemory(ptr,
+                                                                 pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
+                                                                 &mipDesc,
+                                                                 getL0ImageRowPitch(pImage->getClObjectType(), rowPitch, slicePitch),
+                                                                 static_cast<uint32_t>(slicePitch),
+                                                                 hSignalEvent,
+                                                                 waitEvents.size(),
+                                                                 waitEvents.data());
     if (blockingRead) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
@@ -565,15 +564,14 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
 
     auto lock = pCommandQueue->takeOwnership();
     pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
-    ze_result_t ret = zeCommandListAppendImageCopyFromMemoryExt(pCommandQueue->getL0Handle(),
-                                                                pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
-                                                                ptr,
-                                                                &mipDesc,
-                                                                getL0ImageRowPitch(pImage->getClObjectType(), inputRowPitch, inputSlicePitch),
-                                                                static_cast<uint32_t>(inputSlicePitch),
-                                                                hSignalEvent,
-                                                                waitEvents.size(),
-                                                                waitEvents.data());
+    ze_result_t ret = pCommandQueue->appendHostImageCopyFromMemory(pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
+                                                                   ptr,
+                                                                   &mipDesc,
+                                                                   getL0ImageRowPitch(pImage->getClObjectType(), inputRowPitch, inputSlicePitch),
+                                                                   static_cast<uint32_t>(inputSlicePitch),
+                                                                   hSignalEvent,
+                                                                   waitEvents.size(),
+                                                                   waitEvents.data());
     if (blockingWrite) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
@@ -989,15 +987,14 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         {
             auto lock = pCommandQueue->takeOwnership();
             pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
-            errcodeHelper.set(L0ToClResultMapper(zeCommandListAppendImageCopyToMemoryExt(pCommandQueue->getL0Handle(),
-                                                                                         ptrOffset(pImage->getCpuPtr(), offset),
-                                                                                         pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
-                                                                                         &mipDesc,
-                                                                                         getL0ImageRowPitch(pImage->getClObjectType(), mapRowPitch, mapSlicePitch),
-                                                                                         mapSlicePitch,
-                                                                                         hSignalEvent,
-                                                                                         waitEvents.size(),
-                                                                                         waitEvents.data())));
+            errcodeHelper.set(L0ToClResultMapper(pCommandQueue->appendHostImageCopyToMemory(ptrOffset(pImage->getCpuPtr(), offset),
+                                                                                            pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
+                                                                                            &mipDesc,
+                                                                                            getL0ImageRowPitch(pImage->getClObjectType(), mapRowPitch, mapSlicePitch),
+                                                                                            mapSlicePitch,
+                                                                                            hSignalEvent,
+                                                                                            waitEvents.size(),
+                                                                                            waitEvents.data())));
         }
         if (blockingMap && errcodeHelper.localErrcode == CL_SUCCESS) {
             errcodeHelper.set(L0ToClResultMapper(pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max())));

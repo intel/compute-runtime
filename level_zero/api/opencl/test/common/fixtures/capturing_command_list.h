@@ -57,6 +57,7 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
 
     void clearCaptures() {
         stagingCopiesAllowedAtMemoryCopy.clear();
+        stagingCopiesAllowedAtImageCopy.clear();
         sequence.clear();
 #define LEO_CAPTURED_API_CLEAR(name, argsType) name##Args.records.clear();
         LEO_CAPTURED_APIS(LEO_CAPTURED_API_CLEAR)
@@ -65,6 +66,7 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
 
     std::vector<ApiId> sequence{};
     std::vector<bool> stagingCopiesAllowedAtMemoryCopy{};
+    std::vector<bool> stagingCopiesAllowedAtImageCopy{};
 
 #define LEO_CAPTURED_API_MEMBER(name, argsType) CapturedApi<argsType> name##Args{};
     LEO_CAPTURED_APIS(LEO_CAPTURED_API_MEMBER)
@@ -107,12 +109,22 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
                                              const ze_image_region_t *pDstRegion, uint32_t srcRowPitch,
                                              uint32_t srcSlicePitch, ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                              ze_event_handle_t *phWaitEvents, L0::CmdListMemoryCopyParams &memoryCopyParams) override {
+        stagingCopiesAllowedAtImageCopy.push_back(this->stagingCopiesAllowed);
         return record(this->appendImageCopyFromMemoryExtArgs, ApiId::appendImageCopyFromMemoryExt,
                       AppendImageCopyFromMemoryExtArgs{hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents},
                       appendImageCopyFromMemoryExtResult);
     }
 
     ze_result_t appendImageCopyFromMemoryExtResult = ZE_RESULT_SUCCESS;
+
+    ze_result_t appendImageCopyToMemoryExt(void *dstptr, ze_image_handle_t hSrcImage, const ze_image_region_t *pSrcRegion,
+                                           uint32_t destRowPitch, uint32_t destSlicePitch, ze_event_handle_t hEvent,
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                           L0::CmdListMemoryCopyParams &memoryCopyParams) override {
+        stagingCopiesAllowedAtImageCopy.push_back(this->stagingCopiesAllowed);
+        return BaseClass::appendImageCopyToMemoryExt(dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hEvent,
+                                                     numWaitEvents, phWaitEvents, memoryCopyParams);
+    }
 
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle, const ze_group_count_t &threadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,

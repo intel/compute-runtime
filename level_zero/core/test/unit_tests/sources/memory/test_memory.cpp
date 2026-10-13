@@ -7105,8 +7105,6 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     const ze_command_queue_desc_t queueDesc = {};
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
 
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -7121,6 +7119,10 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    const size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
+    void *srcPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
+    void *dstPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
 
     L0::Image *image0Src;
     L0::Image *image0Dst;
@@ -7163,6 +7165,9 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     result = image1Dst->destroy();
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    alignedFree(srcPtr);
+    alignedFree(dstPtr);
 }
 
 HWTEST2_F(MultipleDevicePeerImageTest,
@@ -7173,8 +7178,6 @@ HWTEST2_F(MultipleDevicePeerImageTest,
 
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
 
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -7189,6 +7192,10 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    const size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
+    void *srcPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
+    void *dstPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
 
     L0::Image *image0Src;
     L0::Image *image0Dst;
@@ -7234,6 +7241,9 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     static_cast<L0::ult::CommandList *>(commandList0.get())->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device0->getNEODevice());
+
+    alignedFree(srcPtr);
+    alignedFree(dstPtr);
 }
 
 HWTEST2_F(MultipleDevicePeerImageTest,

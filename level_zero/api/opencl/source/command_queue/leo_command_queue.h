@@ -95,9 +95,18 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool hasDependencies();
     ze_result_t appendHostMemoryCopy(void *dstPtr, const void *srcPtr, size_t size, ze_event_handle_t hSignalEvent,
                                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t appendHostImageCopyToMemory(void *dstPtr, ze_image_handle_t hSrcImage, const ze_image_region_t *pSrcRegion,
+                                            uint32_t destRowPitch, uint32_t destSlicePitch, ze_event_handle_t hSignalEvent,
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t appendHostImageCopyFromMemory(ze_image_handle_t hDstImage, const void *srcPtr, const ze_image_region_t *pDstRegion,
+                                              uint32_t srcRowPitch, uint32_t srcSlicePitch, ze_event_handle_t hSignalEvent,
+                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     ze_result_t hostSynchronize(uint64_t timeout);
 
   protected:
+    template <typename AppendFunc>
+    ze_result_t appendWithHostMemory(AppendFunc &&appendFunc);
+
     void storeProperties(const cl_queue_properties *properties);
     cl_queue_properties getCommandQueueProperties() const { return getCmdQueueProperties<cl_queue_properties>(this->queueProperties.data()); };
     cl_uint getQueueFamilyIndex() const { return this->getCmdQueueProperties<cl_uint>(this->queueProperties.data(), CL_QUEUE_FAMILY_INTEL); };

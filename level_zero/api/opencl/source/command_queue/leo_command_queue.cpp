@@ -450,15 +450,40 @@ bool CommandQueue::hasDependencies() {
 
 // A staging copy waits on the host inside the append, so behind a command gated by a user event that is not set yet it
 // would block before the application can set the event. Callers hold queue ownership.
-ze_result_t CommandQueue::appendHostMemoryCopy(void *dstPtr, const void *srcPtr, size_t size, ze_event_handle_t hSignalEvent,
-                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+template <typename AppendFunc>
+ze_result_t CommandQueue::appendWithHostMemory(AppendFunc &&appendFunc) {
     const bool userEventPending = std::any_of(this->dependencyEvents.begin(), this->dependencyEvents.end(), [](Event *pEvent) {
         return pEvent->isUserEvent() && pEvent->peekExecutionStatus() > CL_COMPLETE;
     });
     this->getL0Object()->setStagingCopiesAllowed(!userEventPending);
-    auto result = zeCommandListAppendMemoryCopy(this->cmdListHandle, dstPtr, srcPtr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+    auto result = appendFunc();
     this->getL0Object()->setStagingCopiesAllowed(true);
     return result;
+}
+
+ze_result_t CommandQueue::appendHostMemoryCopy(void *dstPtr, const void *srcPtr, size_t size, ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    return this->appendWithHostMemory([&]() {
+        return zeCommandListAppendMemoryCopy(this->cmdListHandle, dstPtr, srcPtr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+    });
+}
+
+ze_result_t CommandQueue::appendHostImageCopyToMemory(void *dstPtr, ze_image_handle_t hSrcImage, const ze_image_region_t *pSrcRegion,
+                                                      uint32_t destRowPitch, uint32_t destSlicePitch, ze_event_handle_t hSignalEvent,
+                                                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    return this->appendWithHostMemory([&]() {
+        return zeCommandListAppendImageCopyToMemoryExt(this->cmdListHandle, dstPtr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch,
+                                                       hSignalEvent, numWaitEvents, phWaitEvents);
+    });
+}
+
+ze_result_t CommandQueue::appendHostImageCopyFromMemory(ze_image_handle_t hDstImage, const void *srcPtr, const ze_image_region_t *pDstRegion,
+                                                        uint32_t srcRowPitch, uint32_t srcSlicePitch, ze_event_handle_t hSignalEvent,
+                                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    return this->appendWithHostMemory([&]() {
+        return zeCommandListAppendImageCopyFromMemoryExt(this->cmdListHandle, hDstImage, srcPtr, pDstRegion, srcRowPitch, srcSlicePitch,
+                                                         hSignalEvent, numWaitEvents, phWaitEvents);
+    });
 }
 
 ze_result_t CommandQueue::hostSynchronize(uint64_t timeout) {

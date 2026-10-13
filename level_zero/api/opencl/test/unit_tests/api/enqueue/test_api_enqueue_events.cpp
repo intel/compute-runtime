@@ -367,6 +367,98 @@ TEST_F(EnqueueEventPlumbingFixture, givenCommandWaitingOnIncompleteNonUserEventW
     clReleaseEvent(markerEvent);
 }
 
+struct EnqueueImageEventPlumbingFixture : public EnqueueEventPlumbingFixture {
+    void SetUp() override {
+        EnqueueEventPlumbingFixture::SetUp();
+        if (!clDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            GTEST_SKIP() << "Product does not support images";
+        }
+        capturingCmdList.setCmdListContext(context->getL0ContextHandle());
+
+        cl_image_format format{CL_RGBA, CL_UNSIGNED_INT8};
+        cl_image_desc desc{};
+        desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        desc.image_width = imageWidth;
+        desc.image_height = imageHeight;
+
+        cl_int errcode = CL_INVALID_VALUE;
+        image = clCreateImage(clContext, CL_MEM_READ_WRITE, &format, &desc, nullptr, &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        ASSERT_NE(nullptr, image);
+    }
+
+    void TearDown() override {
+        if (image != nullptr) {
+            EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(image));
+        }
+        EnqueueEventPlumbingFixture::TearDown();
+    }
+
+    static constexpr size_t imageWidth = 4u;
+    static constexpr size_t imageHeight = 4u;
+    static constexpr size_t imagePixelSize = 4u;
+    static constexpr std::array<size_t, 3> origin{0, 0, 0};
+    static constexpr std::array<size_t, 3> region{imageWidth, imageHeight, 1};
+
+    cl_mem image = nullptr;
+    std::vector<uint8_t> imageHostData = std::vector<uint8_t>(imageWidth * imageHeight * imagePixelSize);
+};
+
+TEST_F(EnqueueImageEventPlumbingFixture, givenCommandWaitingOnUserEventNotSetWhenReadImageIsEnqueuedThenOnlyThatCopyHasStagingDisabled) {
+    auto userEvent = createUserEvent();
+    ASSERT_EQ(CL_SUCCESS, clEnqueueMigrateMemObjects(getCommandQueue(), 1, &image, 0, 1, &userEvent, nullptr));
+
+    ASSERT_EQ(CL_SUCCESS, clEnqueueReadImage(getCommandQueue(), image, CL_FALSE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+    ASSERT_EQ(CL_SUCCESS, clSetUserEventStatus(userEvent, CL_COMPLETE));
+    ASSERT_EQ(CL_SUCCESS, clEnqueueReadImage(getCommandQueue(), image, CL_FALSE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+
+    ASSERT_EQ(2u, capturingCmdList.stagingCopiesAllowedAtImageCopy.size());
+    EXPECT_FALSE(capturingCmdList.stagingCopiesAllowedAtImageCopy[0]);
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowedAtImageCopy[1]);
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowed);
+}
+
+TEST_F(EnqueueImageEventPlumbingFixture, givenCommandWaitingOnUserEventNotSetWhenWriteImageIsEnqueuedThenOnlyThatCopyHasStagingDisabled) {
+    auto userEvent = createUserEvent();
+    ASSERT_EQ(CL_SUCCESS, clEnqueueMigrateMemObjects(getCommandQueue(), 1, &image, 0, 1, &userEvent, nullptr));
+
+    ASSERT_EQ(CL_SUCCESS, clEnqueueWriteImage(getCommandQueue(), image, CL_FALSE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+    ASSERT_EQ(CL_SUCCESS, clSetUserEventStatus(userEvent, CL_COMPLETE));
+    ASSERT_EQ(CL_SUCCESS, clEnqueueWriteImage(getCommandQueue(), image, CL_FALSE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+
+    ASSERT_EQ(2u, capturingCmdList.stagingCopiesAllowedAtImageCopy.size());
+    EXPECT_FALSE(capturingCmdList.stagingCopiesAllowedAtImageCopy[0]);
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowedAtImageCopy[1]);
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowed);
+}
+
+TEST_F(EnqueueImageEventPlumbingFixture, givenCommandWaitingOnUserEventNotSetWhenMapImageIsEnqueuedThenItsCopyHasStagingDisabled) {
+    auto userEvent = createUserEvent();
+    ASSERT_EQ(CL_SUCCESS, clEnqueueMigrateMemObjects(getCommandQueue(), 1, &image, 0, 1, &userEvent, nullptr));
+
+    size_t rowPitch = 0;
+    cl_int errcode = CL_INVALID_VALUE;
+    auto mappedPtr = clEnqueueMapImage(getCommandQueue(), image, CL_FALSE, CL_MAP_READ, origin.data(), region.data(), &rowPitch, nullptr, 0, nullptr, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, mappedPtr);
+
+    ASSERT_EQ(1u, capturingCmdList.stagingCopiesAllowedAtImageCopy.size());
+    EXPECT_FALSE(capturingCmdList.stagingCopiesAllowedAtImageCopy[0]);
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowed);
+
+    ASSERT_EQ(CL_SUCCESS, clSetUserEventStatus(userEvent, CL_COMPLETE));
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), image, mappedPtr, 0, nullptr, nullptr));
+}
+
+TEST_F(EnqueueImageEventPlumbingFixture, givenUserEventNotSetButNotADependencyWhenReadImageIsEnqueuedThenStagingCopiesAreAllowed) {
+    createUserEvent();
+
+    ASSERT_EQ(CL_SUCCESS, clEnqueueReadImage(getCommandQueue(), image, CL_FALSE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+
+    ASSERT_EQ(1u, capturingCmdList.stagingCopiesAllowedAtImageCopy.size());
+    EXPECT_TRUE(capturingCmdList.stagingCopiesAllowedAtImageCopy[0]);
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO
