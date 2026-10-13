@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/api/internal/l0_event.h"

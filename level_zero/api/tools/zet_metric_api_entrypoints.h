@@ -10,7 +10,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/experimental/source/graph/graph_captured_apis.h"
+#include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include <level_zero/zet_api.h>
 

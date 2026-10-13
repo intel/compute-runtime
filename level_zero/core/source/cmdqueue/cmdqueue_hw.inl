@@ -44,6 +44,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
+#include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/fence/fence.h"

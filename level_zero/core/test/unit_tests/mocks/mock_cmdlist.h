@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"

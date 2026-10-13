@@ -13,6 +13,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 #include <cstdint>
 

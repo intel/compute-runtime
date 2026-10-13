@@ -17,6 +17,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"

@@ -10,6 +10,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {
 ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(

@@ -7,6 +7,7 @@
 
 #include "level_zero/experimental/source/graph/graph_export.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/io_functions.h"

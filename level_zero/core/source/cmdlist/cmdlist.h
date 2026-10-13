@@ -14,7 +14,6 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/bit_helpers.h"
-#include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/heap_base_address_model.h"
@@ -34,19 +33,24 @@
 #include "level_zero/core/source/device/bcs_split_params.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
-#include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_cmdlist.h"
+#include "level_zero/include/level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/include/level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
 #include "copy_offload_mode.h"
 
+#include <list>
 #include <map>
 #include <mutex>
 #include <optional>
 #include <utility>
 #include <vector>
+
+namespace NEO {
+struct BlitProperties;
+} // namespace NEO
 
 struct _ze_command_list_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_command_list_handle_t>);
@@ -74,6 +78,13 @@ struct CmdListMemoryCopyParams;
 struct CmdListHostFunctionParameters;
 struct CmdListCustomOperationParams;
 struct MemAllocInfo;
+struct Graph;
+struct RecordedApiCommands;
+struct CommandList;
+enum class CaptureApi;
+
+template <CaptureApi api, typename... TArgs>
+ze_result_t captureCommand(CommandList &srcCmdList, Graph *&graphCaptureTarget, RecordedApiCommands *flatCaptureTarget, TArgs... apiArgs);
 
 struct CmdListReturnPoint {
     NEO::StreamProperties configSnapshot;
@@ -276,12 +287,7 @@ struct CommandList : _ze_command_list_handle_t {
     ze_result_t getImmediatePriority(ze_command_queue_priority_t *pPriority);
     virtual ze_result_t isImmediate(ze_bool_t *pIsImmediate);
     ze_result_t isMutableExp(ze_bool_t *pIsMutable);
-    MOCKABLE_VIRTUAL ze_result_t visit(const ze_visit_ext_desc_t *desc) {
-        if (nullptr == this->flatCapture) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-        return flatCapture->visit(desc);
-    }
+    MOCKABLE_VIRTUAL ze_result_t visit(const ze_visit_ext_desc_t *desc);
 
     virtual ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
@@ -710,9 +716,7 @@ struct CommandList : _ze_command_list_handle_t {
     BcsSplitParams::CmdListsForSplitContainer getRegularCmdListsForSplit(size_t totalTransferSize, size_t perEngineMaxSize, size_t splitQueuesCount);
     void dispatchRecordedBcsSplit();
 
-    void disableFlatCapture() {
-        flatCapture.reset();
-    }
+    void disableFlatCapture();
 
     RecordedApiCommands *getFlatCapture() {
         return flatCapture.get();

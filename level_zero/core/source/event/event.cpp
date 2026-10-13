@@ -32,6 +32,7 @@
 #include "level_zero/core/source/event/event_host_synchronize_wait.h"
 #include "level_zero/core/source/event/event_impl.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/experimental/source/graph/graph_captured_apis.h"
 
 static_assert(sizeof(NEO::InOrderExecEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "InOrderExecEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 

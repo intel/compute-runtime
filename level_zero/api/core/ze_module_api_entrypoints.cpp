@@ -13,7 +13,7 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_build_log.h"
-#include "level_zero/experimental/source/graph/graph_captured_apis.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {
 

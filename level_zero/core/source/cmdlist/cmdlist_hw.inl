@@ -68,6 +68,7 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/driver_experimental/zex_api.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 #include "CL/cl_platform.h"
 

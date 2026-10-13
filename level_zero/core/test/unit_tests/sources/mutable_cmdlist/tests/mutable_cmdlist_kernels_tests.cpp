@@ -33,6 +33,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_variable.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {
 namespace ult {

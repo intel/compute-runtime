@@ -40,6 +40,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
+#include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_visit.h"
 

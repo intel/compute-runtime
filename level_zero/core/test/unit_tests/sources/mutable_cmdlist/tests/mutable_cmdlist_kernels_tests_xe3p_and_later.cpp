@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"

@@ -9,7 +9,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/experimental/source/graph/graph_captured_apis.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {
 

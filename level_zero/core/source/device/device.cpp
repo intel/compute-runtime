@@ -37,6 +37,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/host_function/host_function_allocator.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"

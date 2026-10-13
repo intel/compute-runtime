@@ -17,6 +17,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -87,6 +88,17 @@ CommandList::~CommandList() {
     if (graphCapture && (false == graphCapture->wasPreallocated())) {
         delete graphCapture;
     }
+}
+
+ze_result_t CommandList::visit(const ze_visit_ext_desc_t *desc) {
+    if (nullptr == this->flatCapture) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return flatCapture->visit(desc);
+}
+
+void CommandList::disableFlatCapture() {
+    flatCapture.reset();
 }
 
 void CommandList::storePrintfKernel(Kernel *kernel) {

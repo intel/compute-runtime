@@ -11,7 +11,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
-#include "level_zero/experimental/source/graph/graph_captured_apis.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {
 
