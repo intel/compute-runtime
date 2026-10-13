@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include <thread>
+
 using namespace NEO;
 
 struct CommandStreamReceiverMtTest : public DeviceFixture,
@@ -27,6 +29,19 @@ struct CommandStreamReceiverMtTest : public DeviceFixture,
 
     void TearDown() override {
         DeviceFixture::tearDown();
+    }
+
+    template <typename CsrType>
+    static void waitForDebugPauseState(CsrType &csr, DebugPauseState expectedState) {
+        while (true) {
+            {
+                std::unique_lock<SpinLock> lock{csr.debugPauseStateLock};
+                if (*csr.debugPauseStateAddress == expectedState) {
+                    return;
+                }
+            }
+            std::this_thread::yield();
+        }
     }
 
     CommandStreamReceiver *commandStreamReceiver;
@@ -64,21 +79,14 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenSettingFlagProgre
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
     }
-    auto currentValue = DebugPauseState::waitingForUserStartConfirmation;
 
-    while (currentValue != DebugPauseState::hasUserStartConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
     }
 
-    while (currentValue != DebugPauseState::hasUserEndConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserEndConfirmation);
     EXPECT_EQ(2u, confirmationCounter);
 
     auto output = capture.getCapturedStdout();
@@ -111,12 +119,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadBeforeWalkerOnlyWhenS
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
     }
-    auto currentValue = DebugPauseState::waitingForUserStartConfirmation;
 
-    while (currentValue != DebugPauseState::hasUserStartConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
 
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
@@ -155,12 +159,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadAfterWalkerOnlyWhenSe
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
     }
-    auto currentValue = DebugPauseState::waitingForUserEndConfirmation;
 
-    while (currentValue != DebugPauseState::hasUserEndConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserEndConfirmation);
 
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
@@ -221,39 +221,26 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSett
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
     }
-    auto currentValue = DebugPauseState::waitingForUserStartConfirmation;
 
-    while (currentValue != DebugPauseState::hasUserStartConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
     }
 
-    while (currentValue != DebugPauseState::hasUserEndConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserEndConfirmation);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
     }
 
-    while (currentValue != DebugPauseState::hasUserStartConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
     }
 
-    while (currentValue != DebugPauseState::hasUserEndConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserEndConfirmation);
 
     EXPECT_EQ(4u, confirmationCounter);
 
@@ -309,39 +296,26 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSetting
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
     }
-    auto currentValue = DebugPauseState::waitingForUserStartConfirmation;
 
-    while (currentValue != DebugPauseState::hasUserStartConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
     }
 
-    while (currentValue != DebugPauseState::hasUserEndConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserEndConfirmation);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
     }
 
-    while (currentValue != DebugPauseState::hasUserStartConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
     }
 
-    while (currentValue != DebugPauseState::hasUserEndConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserEndConfirmation);
 
     EXPECT_EQ(4u, confirmationCounter);
 
@@ -400,12 +374,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtSeco
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
     }
-    auto currentValue = DebugPauseState::waitingForUserStartConfirmation;
 
-    while (currentValue != DebugPauseState::hasUserStartConfirmation) {
-        std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
-        currentValue = *mockCSR->debugPauseStateAddress;
-    }
+    waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::terminate;
