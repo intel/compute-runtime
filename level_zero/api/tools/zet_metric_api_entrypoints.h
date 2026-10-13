@@ -352,27 +352,27 @@ zetMetricTracerCreateExp(
     zet_metric_tracer_exp_desc_t *desc,
     ze_event_handle_t hNotificationEvent,
     zet_metric_tracer_exp_handle_t *phMetricTracer) {
-    return L0::metricTracerCreate(hContext, hDevice, metricGroupCount, phMetricGroups, desc, hNotificationEvent, phMetricTracer);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
 zetMetricTracerDestroyExp(
     zet_metric_tracer_exp_handle_t hMetricTracer) {
-    return L0::metricTracerDestroy(hMetricTracer);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
 zetMetricTracerEnableExp(
     zet_metric_tracer_exp_handle_t hMetricTracer,
     ze_bool_t synchronous) {
-    return L0::metricTracerEnable(hMetricTracer, synchronous);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
 zetMetricTracerDisableExp(
     zet_metric_tracer_exp_handle_t hMetricTracer,
     ze_bool_t synchronous) {
-    return L0::metricTracerDisable(hMetricTracer, synchronous);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
@@ -380,20 +380,20 @@ zetMetricTracerReadDataExp(
     zet_metric_tracer_exp_handle_t hMetricTracer,
     size_t *pRawDataSize,
     uint8_t *pRawData) {
-    return L0::metricTracerReadData(hMetricTracer, pRawDataSize, pRawData);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
 zetMetricDecoderCreateExp(
     zet_metric_tracer_exp_handle_t hMetricTracer,
     zet_metric_decoder_exp_handle_t *phMetricDecoder) {
-    return L0::metricDecoderCreate(hMetricTracer, phMetricDecoder);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
 zetMetricDecoderDestroyExp(
     zet_metric_decoder_exp_handle_t phMetricDecoder) {
-    return L0::metricDecoderDestroy(phMetricDecoder);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
@@ -401,10 +401,7 @@ zetMetricDecoderGetDecodableMetricsExp(
     zet_metric_decoder_exp_handle_t hMetricDecoder,
     uint32_t *pCount,
     zet_metric_handle_t *phMetrics) {
-    return L0::metricDecoderGetDecodableMetrics(
-        hMetricDecoder,
-        pCount,
-        phMetrics);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
@@ -418,16 +415,7 @@ zetMetricTracerDecodeExp(
     uint32_t *pMetricEntriesCountPerSet,
     uint32_t *pMetricEntriesCount,
     zet_metric_entry_exp_t *pMetricEntries) {
-    return L0::metricTracerDecode(
-        phMetricDecoder,
-        pRawDataSize,
-        pRawData,
-        metricsCount,
-        phMetrics,
-        pSetCount,
-        pMetricEntriesCountPerSet,
-        pMetricEntriesCount,
-        pMetricEntries);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL
