@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"

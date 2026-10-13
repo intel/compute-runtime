@@ -9,7 +9,6 @@
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
-#include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include <vector>
 
@@ -60,7 +59,7 @@ class CommandBuffer : public BaseObject<_cl_command_buffer_khr> {
     Context *getContext() const { return this->context; };
     CommandQueue *getCommandQueue() const { return this->commandQueue; };
     ze_command_list_handle_t getL0Handle() const { return this->cmdListHandle; };
-    uint32_t getOrdinal() const { return L0::CommandList::fromHandle(this->cmdListHandle)->getOrdinal(); };
+    uint32_t getOrdinal() const;
 
   protected:
     void storeProperties(const cl_command_buffer_properties_khr *properties);

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/heap_info.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"

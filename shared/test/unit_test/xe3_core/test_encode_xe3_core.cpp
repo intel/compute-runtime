@@ -15,6 +15,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

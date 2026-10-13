@@ -12,6 +12,7 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"

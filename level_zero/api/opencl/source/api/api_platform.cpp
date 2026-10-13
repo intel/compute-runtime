@@ -20,6 +20,8 @@
 
 #include "CL/cl.h"
 
+#include <cstring>
+
 namespace NEO {
 namespace LEO {
 

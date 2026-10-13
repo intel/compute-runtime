@@ -13,6 +13,7 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

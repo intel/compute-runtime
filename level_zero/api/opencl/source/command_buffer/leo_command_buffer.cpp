@@ -17,6 +17,7 @@
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include <algorithm>
 #include <limits>
@@ -201,6 +202,8 @@ void CommandBuffer::storeProperties(const cl_command_buffer_properties_khr *prop
         this->bufferProperties.push_back(0u);
     }
 }
+
+uint32_t CommandBuffer::getOrdinal() const { return L0::CommandList::fromHandle(this->cmdListHandle)->getOrdinal(); }
 
 } // namespace LEO
 } // namespace NEO

@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"

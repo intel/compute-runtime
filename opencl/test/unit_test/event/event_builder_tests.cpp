@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/test/common/mocks/mock_device.h"
 

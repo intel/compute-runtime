@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"

@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 

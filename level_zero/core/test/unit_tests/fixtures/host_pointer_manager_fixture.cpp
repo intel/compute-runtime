@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
