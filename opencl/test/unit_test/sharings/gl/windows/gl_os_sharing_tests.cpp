@@ -352,7 +352,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     FailSignalSyncObjectMock::getExpectedSynchHandle0() = syncInfo.serverSynchronizationObject;
     FailSignalSyncObjectMock::getExpectedSynchHandle1() = syncInfo.clientSynchronizationObject;
 
-    signalArbSyncObject(osContext, syncInfo);
+    signalArbSyncObject(osContext, syncInfo, false);
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchronizationObjectForServerClientSyncSucceedsThenSubmissionSyncGetsSignalledAsWell) {
@@ -410,7 +410,34 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.getWddmContextHandle();
     FailSignalSyncObjectMock::getExpectedSynchHandle0() = syncInfo.submissionSynchronizationObject;
 
-    signalArbSyncObject(osContext, syncInfo);
+    signalArbSyncObject(osContext, syncInfo, false);
+}
+
+TEST_F(GlArbSyncEventOsTest, givenSignalAtSubmissionWhenSignalArbSyncObjectIsCalledThenServerClientSyncIsSignalledAtSubmission) {
+    struct SignalSyncObjectMock {
+        static NTSTATUS __stdcall signal(_In_ CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECT *obj) {
+            if (obj->ObjectCount == 2u) {
+                getServerClientSignalAtSubmission() = obj->Flags.SignalAtSubmission;
+            }
+            return STATUS_SUCCESS;
+        }
+
+        static UINT &getServerClientSignalAtSubmission() {
+            static UINT signalAtSubmission = 0u;
+            return signalAtSubmission;
+        }
+    };
+    SignalSyncObjectMock::getServerClientSignalAtSubmission() = 0u;
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+    wddm->init();
+    auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+    OsContextWin osContext(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0], preemptionMode));
+
+    CL_GL_SYNC_INFO syncInfo = {};
+    gdi->signalSynchronizationObject.mFunc = SignalSyncObjectMock::signal;
+
+    signalArbSyncObject(osContext, syncInfo, true);
+    EXPECT_EQ(1u, SignalSyncObjectMock::getServerClientSignalAtSubmission());
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSynchronizationObjectFailsThenWaitFlagDoesNotGetSet) {

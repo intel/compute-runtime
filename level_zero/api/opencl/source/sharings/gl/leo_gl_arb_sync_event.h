@@ -33,7 +33,7 @@ void destroyArbSyncEventName(char *name);
 
 void cleanupArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo);
 bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo);
-void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo);
+void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo, bool signalAtSubmission);
 void serverWaitForArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo, bool cpuSync);
 
 class GlArbSyncEvent {

@@ -25,7 +25,7 @@ bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, C
     return false;
 }
 
-void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {}
+void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo, bool signalAtSubmission) {}
 
 void serverWaitForArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {}
 
@@ -80,7 +80,7 @@ void GlArbSyncEvent::unblockEventBy(Event &event, TaskCountType taskLevel, int32
         return;
     }
 
-    ctx->getSharing<GLSharingFunctionsLinux>()->glArbSyncObjectSignal(event.getCommandQueue()->getGpgpuCommandStreamReceiver().getOsContext(), *glSyncInfo);
+    ctx->getSharing<GLSharingFunctionsLinux>()->glArbSyncObjectSignal(event.getCommandQueue()->getGpgpuCommandStreamReceiver().getOsContext(), *glSyncInfo, transitionStatus == CL_COMPLETE);
     ctx->getSharing<GLSharingFunctionsLinux>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
 }
 } // namespace NEO

@@ -116,14 +116,14 @@ bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, C
     return true;
 }
 
-void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
+void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo, bool signalAtSubmission) {
     auto osContextWin = static_cast<OsContextWin *>(&osContext);
     UNRECOVERABLE_IF(!osContextWin);
     auto wddm = osContextWin->getWddm();
 
     D3DKMT_SIGNALSYNCHRONIZATIONOBJECT signalServerClientSyncInfo = {};
     signalServerClientSyncInfo.hContext = osContextWin->getWddmContextHandle();
-    signalServerClientSyncInfo.Flags.SignalAtSubmission = 0; // Wait for GPU to complete processing command buffer
+    signalServerClientSyncInfo.Flags.SignalAtSubmission = signalAtSubmission;
     signalServerClientSyncInfo.ObjectHandleArray[0] = glSyncInfo.serverSynchronizationObject;
     signalServerClientSyncInfo.ObjectHandleArray[1] = glSyncInfo.clientSynchronizationObject;
     signalServerClientSyncInfo.ObjectCount = 2;
@@ -217,7 +217,7 @@ void GlArbSyncEvent::unblockEventBy(Event &event, TaskCountType taskLevel, int32
     }
 
     event.getCommandQueue()->getGpgpuCommandStreamReceiver().stopDirectSubmission(true, true);
-    ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSignal(event.getCommandQueue()->getGpgpuCommandStreamReceiver().getOsContext(), *glSyncInfo);
+    ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSignal(event.getCommandQueue()->getGpgpuCommandStreamReceiver().getOsContext(), *glSyncInfo, transitionStatus == CL_COMPLETE);
     ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
 }
 } // namespace NEO

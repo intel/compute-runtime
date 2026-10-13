@@ -233,6 +233,28 @@ TEST_F(GlArbSyncEventTest, whenUnblockCompletedEventThenStopDirectSubmission) {
     syncEv->release();
 }
 
+TEST_F(GlArbSyncEventTest, givenSubmittedAndCompletedBaseEventWhenGlArbSyncEventGetsUnblockedThenSyncObjectIsSignalledAtSubmissionOnlyForCompletedEvent) {
+    static bool signalAtSubmissionValues[2];
+    static uint32_t signalCount;
+    signalCount = 0u;
+    sharing->pfnGlArbSyncObjectSignal = [](OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo, bool signalAtSubmission) {
+        if (signalCount < 2u) {
+            signalAtSubmissionValues[signalCount] = signalAtSubmission;
+        }
+        signalCount++;
+    };
+    auto *syncEv = new DummyArbEvent<false>(*ctx);
+    syncEv->useBaseSetEvent = true;
+    EXPECT_TRUE(syncEv->setBaseEvent(*getBaseEvent()));
+
+    syncEv->unblockEventBy(*this->baseEvent, 0, CL_SUBMITTED);
+    syncEv->unblockEventBy(*this->baseEvent, 0, CL_COMPLETE);
+    ASSERT_EQ(2u, signalCount);
+    EXPECT_FALSE(signalAtSubmissionValues[0]);
+    EXPECT_TRUE(signalAtSubmissionValues[1]);
+    syncEv->release();
+}
+
 TEST_F(GlArbSyncEventTest, whenGlArbSyncEventGetsUnblockedBySubmittedOrCompletedEventThenSyncObjectGetsSignalled) {
     setWaitCalledFlagOnServerWait();
 

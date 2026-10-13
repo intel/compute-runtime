@@ -116,14 +116,14 @@ bool setupArbSyncObject(GLSharingFunctions &sharing, NEO::OSInterface &osInterfa
     return true;
 }
 
-void signalArbSyncObject(NEO::OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
+void signalArbSyncObject(NEO::OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo, bool signalAtSubmission) {
     auto osContextWin = static_cast<OsContextWin *>(&osContext);
     UNRECOVERABLE_IF(!osContextWin);
     auto wddm = osContextWin->getWddm();
 
     D3DKMT_SIGNALSYNCHRONIZATIONOBJECT signalServerClientSyncInfo = {};
     signalServerClientSyncInfo.hContext = osContextWin->getWddmContextHandle();
-    signalServerClientSyncInfo.Flags.SignalAtSubmission = 0; // Wait for GPU to complete processing command buffer
+    signalServerClientSyncInfo.Flags.SignalAtSubmission = signalAtSubmission;
     signalServerClientSyncInfo.ObjectHandleArray[0] = glSyncInfo.serverSynchronizationObject;
     signalServerClientSyncInfo.ObjectHandleArray[1] = glSyncInfo.clientSynchronizationObject;
     signalServerClientSyncInfo.ObjectCount = 2;
@@ -196,7 +196,7 @@ void GlArbSyncEvent::unblockGlArbEvent(cl_event event, cl_int status, void *user
         pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().commandStreamReceiver->stopDirectSubmission(true, true);
     }
 
-    pEvent->getContext()->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSignal(*pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().osContext, *pEvent->getGlArbSyncEvent()->getSyncInfo());
+    pEvent->getContext()->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSignal(*pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().osContext, *pEvent->getGlArbSyncEvent()->getSyncInfo(), status == CL_COMPLETE);
     pEvent->getContext()->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectWaitServer(*pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().commandStreamReceiver->getOSInterface(), *pEvent->getGlArbSyncEvent()->getSyncInfo(), *alreadyCompletedData);
 
     delete alreadyCompletedData;

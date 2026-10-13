@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ struct DummyArbEvent : NEO::GlArbSyncEvent {
 inline void glArbSyncObjectCleanupMockDoNothing(NEO::OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo) {
 }
 
-inline void glArbSyncObjectSignalMockDoNothing(NEO::OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
+inline void glArbSyncObjectSignalMockDoNothing(NEO::OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo, bool signalAtSubmission) {
 }
 
 template <bool Fail>

@@ -30,7 +30,7 @@ typedef void (*PFNglBindTexture)(GLenum target, GLuint texture);
 
 typedef bool (*PFNglArbSyncObjectSetup)(GLSharingFunctions &sharing, OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo);
 typedef void (*PFNglArbSyncObjectCleanup)(OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo);
-typedef void (*PFNglArbSyncObjectSignal)(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo);
+typedef void (*PFNglArbSyncObjectSignal)(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo, bool signalAtSubmission);
 typedef void (*PFNglArbSyncObjectWaitServer)(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo, bool cpuSync);
 
 class GLSharingFunctionsLinux : public GLSharingFunctions {
@@ -104,8 +104,8 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
     void glArbSyncObjectCleanup(OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo) {
         pfnGlArbSyncObjectCleanup(osInterface, glSyncInfo);
     }
-    void glArbSyncObjectSignal(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
-        pfnGlArbSyncObjectSignal(osContext, glSyncInfo);
+    void glArbSyncObjectSignal(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo, bool signalAtSubmission) {
+        pfnGlArbSyncObjectSignal(osContext, glSyncInfo, signalAtSubmission);
     }
     void glArbSyncObjectWaitServer(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo, bool cpuSync) {
         pfnGlArbSyncObjectWaitServer(osInterface, glSyncInfo, cpuSync);
