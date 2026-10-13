@@ -121,6 +121,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::iohState;
     using BaseClass::isBlitterDirectSubmissionEnabled;
     using BaseClass::isDirectSubmissionEnabled;
+    using BaseClass::isHeaplessStatePrologRequiredForContext;
     using BaseClass::isPerDssBackedBufferSent;
     using BaseClass::isPerQueuePrologueEnabled;
     using BaseClass::isWalkerWithProfilingEnqueued;

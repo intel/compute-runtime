@@ -1021,7 +1021,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
 
     // make sure they are not the same
     EXPECT_NE(cmdList.end(), itorBatchBufferStartFirst);
-    if (mockCsr->getHeaplessModeEnabled() && !mockCsr->isPerQueuePrologueEnabled()) {
+    if (mockCsr->getHeaplessModeEnabled()) {
         EXPECT_EQ(cmdList.end(), itorBatchBufferStartSecond);
     } else {
         EXPECT_NE(cmdList.end(), itorBatchBufferStartSecond);

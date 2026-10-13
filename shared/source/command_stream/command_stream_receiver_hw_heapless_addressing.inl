@@ -129,7 +129,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     if (!heaplessPrologProgrammed) {
-        bool isHeaplessPrologRequired = EngineHelpers::isCcs(this->osContext->getEngineType()) && (this->osContext->getPrimaryContext() == nullptr);
+        bool isHeaplessPrologRequired = isHeaplessStatePrologRequiredForContext();
         if (isHeaplessPrologRequired) {
             programHeaplessStateProlog(device, commandStreamCSR);
         }
@@ -138,10 +138,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
 
     if (isProgramActivePartitionConfigRequired()) {
         programActivePartitionConfig(commandStreamCSR);
-    }
-
-    if (isPerQueuePrologueEnabled()) {
-        programEnginePrologue(commandStreamCSR);
     }
 
     if (stateCacheFlushRequired) {
@@ -179,7 +175,7 @@ template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamHeaplessSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = 0u;
 
-    if (heaplessPrologProgrammed == false && EngineHelpers::isCcs(this->osContext->getEngineType()) && this->osContext->getPrimaryContext() == nullptr) {
+    if (heaplessPrologProgrammed == false && isHeaplessStatePrologRequiredForContext()) {
         size += getCmdSizeForHeaplessPrologue(device);
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
@@ -206,10 +202,6 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamHeaplessSi
         size += this->getCmdSizeForActivePartitionConfig();
     }
 
-    if (this->isPerQueuePrologueEnabled()) {
-        size += getCmdSizeForPrologue();
-    }
-
     return size;
 }
 
@@ -229,7 +221,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
 
     this->isWalkerWithProfilingEnqueued |= dispatchFlags.isWalkerWithProfilingEnqueued;
     ImmediateFlushData flushData{};
-    bool isHeaplessPrologRequired = !heaplessPrologProgrammed && EngineHelpers::isCcs(this->osContext->getEngineType()) && (this->osContext->getPrimaryContext() == nullptr);
+    bool isHeaplessPrologRequired = !heaplessPrologProgrammed && isHeaplessStatePrologRequiredForContext();
 
     if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
         if (isHeaplessPrologRequired) {
@@ -248,10 +240,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
             flushData.estimatedSize += this->getCmdSizeForActivePartitionConfig();
         }
 
-        if (this->isPerQueuePrologueEnabled()) {
-            flushData.estimatedSize += getCmdSizeForPrologue();
-        }
-
         if (debugManager.flags.EnableSWTags.get()) {
             flushData.estimatedSize += SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
         }
@@ -267,10 +255,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
         if (isHeaplessPrologRequired) {
             programHeaplessStateProlog(device, csrCommandStream);
             heaplessPrologProgrammed = true;
-        }
-
-        if (isPerQueuePrologueEnabled()) {
-            programEnginePrologue(csrCommandStream);
         }
 
         if (isProgramActivePartitionConfigRequired()) {
@@ -405,12 +389,15 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForHeaplessPrologue(Device 
 }
 
 template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::isHeaplessStatePrologRequiredForContext() const {
+    return EngineHelpers::isCcs(this->osContext->getEngineType()) &&
+           (this->osContext->getPrimaryContext() == nullptr || this->isPerQueuePrologueEnabled());
+}
+
+template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programHeaplessStateProlog(Device &device, LinearStream &commandStream) {
 
-    bool perQueueStateOnly = this->executionEnvironment.rootDeviceEnvironments[getRootDeviceIndex()]->osInterface &&
-                             this->executionEnvironment.rootDeviceEnvironments[getRootDeviceIndex()]->osInterface->getAggregatedProcessCount() > 1;
-
-    perQueueStateOnly &= (this->osContext->getPrimaryContext() != nullptr);
+    bool perQueueStateOnly = (this->osContext->getPrimaryContext() != nullptr);
 
     if (!perQueueStateOnly) {
         programComputeModeHeapless(device, commandStream);

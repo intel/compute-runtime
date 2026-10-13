@@ -242,6 +242,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForExceptions() const;
     bool shouldProgramExceptions() const;
     size_t getCmdSizeForHeaplessPrologue(Device &device) const;
+    bool isHeaplessStatePrologRequiredForContext() const;
     void handleAllocationsResidencyForHeaplessProlog(LinearStream &linearStream, Device &device);
 
     void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
