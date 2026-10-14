@@ -11,6 +11,8 @@
 
 #include "gtest/gtest.h"
 
+#include <thread>
+
 using namespace NEO;
 
 const int threadCount = 4;
@@ -30,7 +32,7 @@ struct ClearQueueTest : public ::testing::Test,
     }
     static void threadMethod(MockDeferredDeleter *deleter) {
         while (!startClear) {
-            ;
+            std::this_thread::yield();
         }
         deleter->clearQueue(false);
         threadStopped++;
