@@ -1200,12 +1200,12 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCbEventWithProfilingAsLatestOpera
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernel(*cmdList));
     ASSERT_TRUE(cmdList->hasInOrderDependencies());
-    cmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    cmdList->latestOperationHasCbEventWithProfiling = true;
     const auto counterAfterKernel = cmdList->inOrderExecInfo->getCounterValue();
 
     const auto offset = mainStream->getUsed();
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
-    EXPECT_FALSE(cmdList->latestOperationHasHeapfullCbEventWithProfiling);
+    EXPECT_FALSE(cmdList->latestOperationHasCbEventWithProfiling);
 
     auto mainCmds = parseStream<FamilyType>(*mainStream, offset);
     auto counterSignal = findInOrderCounterSignalPipeControl<FamilyType>(mainCmds, counterAddress);
@@ -1229,7 +1229,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenInOrderCounterSignalPendingAsLate
 
     cmdList->inOrderExecInfo->setProgrammedCounterValue(counterAfterKernel - incrementValue);
     ASSERT_TRUE(cmdList->hasInOrderDependencies());
-    ASSERT_FALSE(cmdList->latestOperationHasHeapfullCbEventWithProfiling);
+    ASSERT_FALSE(cmdList->latestOperationHasCbEventWithProfiling);
     ASSERT_TRUE(cmdList->isInOrderCounterSignalPending());
 
     const auto offset = mainStream->getUsed();
@@ -1257,7 +1257,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCounterSignaledByLatestOperationW
 
     cmdList->inOrderExecInfo->setProgrammedCounterValue(counterAfterKernel);
     ASSERT_TRUE(cmdList->hasInOrderDependencies());
-    ASSERT_FALSE(cmdList->latestOperationHasHeapfullCbEventWithProfiling);
+    ASSERT_FALSE(cmdList->latestOperationHasCbEventWithProfiling);
     ASSERT_FALSE(cmdList->isInOrderCounterSignalPending());
 
     const auto offset = mainStream->getUsed();

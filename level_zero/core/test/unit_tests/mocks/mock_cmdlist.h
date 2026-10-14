@@ -135,7 +135,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::latestFlushIsDualCopyOffload;
-    using BaseClass::latestOperationHasHeapfullCbEventWithProfiling;
+    using BaseClass::latestOperationHasCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;
@@ -267,6 +267,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::getInOrderIncrementValue;
+    using BaseClass::heaplessModeEnabled;
     using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::inOrderAtomicSignalingEnabled;
@@ -283,7 +284,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestFlushIsHostVisible;
-    using BaseClass::latestOperationHasHeapfullCbEventWithProfiling;
+    using BaseClass::latestOperationHasCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;

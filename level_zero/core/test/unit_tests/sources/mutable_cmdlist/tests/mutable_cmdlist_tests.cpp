@@ -2976,7 +2976,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
     uint64_t waitAddress = 0;
-    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
+    if (mutableCommandList->getBase()->isInOrderCounterWaitRequired(event)) {
         waitAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
     } else {
         waitAddress = event->getCompletionFieldGpuAddress(this->device);
@@ -2989,7 +2989,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
+    if (mutableCommandList->getBase()->isInOrderCounterWaitRequired(newEvent)) {
         waitAddress = newEvent->getInOrderExecEventHelper().getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
     } else {
         waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);

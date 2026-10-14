@@ -348,17 +348,17 @@ HWTEST_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCou
         CmdListMemoryCopyParams copyParams = {};
         immCmdList0->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
 
-        auto expectedLatestTaskCount = immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 1u : 2u;
+        auto expectedLatestTaskCount = immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasCbEventWithProfiling) ? 1u : 2u;
         expectedLatestTaskCount += (heapless ? 1u : 0u);
         EXPECT_EQ(expectedLatestTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
-        EXPECT_EQ(immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasCbEventWithProfiling) ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         immCmdList1->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
 
         expectedLatestTaskCount = 2u;
         expectedLatestTaskCount += (heapless ? 1u : 0u);
         EXPECT_EQ(expectedLatestTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
-        EXPECT_EQ(immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasHeapfullCbEventWithProfiling) ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasCbEventWithProfiling) ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         context->freeMem(deviceAlloc);
     }
@@ -387,7 +387,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingFillThenMarkCmdChaini
     CmdListMemoryCopyParams copyParams = {};
     immCmdList0->appendMemoryFill(deviceAlloc, &hostCopyData, 4, 4, events[0].get(), 0, nullptr, copyParams);
 
-    EXPECT_TRUE(immCmdList0->latestOperationHasHeapfullCbEventWithProfiling);
+    EXPECT_TRUE(immCmdList0->latestOperationHasCbEventWithProfiling);
     EXPECT_FALSE(immCmdList0->latestOperationRequiredNonWalkerInOrderCmdsChaining);
 
     context->freeMem(deviceAlloc);
@@ -406,7 +406,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingMemcpyThenMarkCmdChai
     CmdListMemoryCopyParams copyParams = {};
     immCmdList0->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, events[0].get(), 0, nullptr, copyParams);
 
-    EXPECT_TRUE(immCmdList0->latestOperationHasHeapfullCbEventWithProfiling);
+    EXPECT_TRUE(immCmdList0->latestOperationHasCbEventWithProfiling);
     EXPECT_FALSE(immCmdList0->latestOperationRequiredNonWalkerInOrderCmdsChaining);
 
     context->freeMem(deviceAlloc);
@@ -727,8 +727,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendQ
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
 
     bool chainingRequired = regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining;
-    const bool heapfulProfilingEvent = !regularCmdList->isHeaplessModeEnabled() && regularCmdList->latestOperationHasHeapfullCbEventWithProfiling;
-    const bool barrierRequired = regularCmdList->isInOrderCounterSignalPending() || heapfulProfilingEvent;
+    const bool cbProfilingEvent = regularCmdList->latestOperationHasCbEventWithProfiling;
+    const bool counterSignalPending = regularCmdList->isInOrderCounterSignalPending();
+    const bool barrierRequired = counterSignalPending || cbProfilingEvent;
 
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
@@ -749,7 +750,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendQ
     auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ((chainingRequired || barrierRequired) ? 1u : 2u, semaphores.size());
 
-    if (barrierRequired) {
+    if (counterSignalPending && !cbProfilingEvent) {
         auto barrier = find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), barrier);
     }
@@ -1435,7 +1436,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenResolveDependenciesViaPip
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenSubmittingThenProgramPipeControlInBetweenDispatches) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCbEventWithProfilingWhenSubmittingThenProgramPipeControlInBetweenDispatches) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
 
@@ -1449,7 +1450,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfil
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
     auto offset = cmdStream->getUsed();
-    immCmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    immCmdList->latestOperationHasCbEventWithProfiling = true;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
@@ -1479,7 +1480,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderCmdListWhenSubmitt
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
     auto offset = cmdStream->getUsed();
-    immCmdList->latestOperationHasHeapfullCbEventWithProfiling = false;
+    immCmdList->latestOperationHasCbEventWithProfiling = false;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
@@ -1567,7 +1568,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterleavedCsrSubmissionW
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingAndInterleavedCsrSubmissionWhenResolvingInOrderDependencyThenStillUsePipeControl) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCbEventWithProfilingAndInterleavedCsrSubmissionWhenResolvingInOrderDependencyThenStillUsePipeControl) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(-1);
 
@@ -1594,7 +1595,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfil
 
     ultCsr->taskCount = immCmdList->cmdQImmediate->getTaskCount() + 1;
 
-    immCmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    immCmdList->latestOperationHasCbEventWithProfiling = true;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
@@ -3386,7 +3387,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenAddingRela
     EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lrrCmd->getDestinationRegisterAddress());
 }
 
-HWTEST2_F(InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenAppendNeedsRelaxedOrderingThenSubmitInOrderCounter, IsXeHpcCore) {
+HWTEST2_F(InOrderCmdListTests, givenCbEventWithProfilingWhenAppendNeedsRelaxedOrderingThenSubmitInOrderCounter, IsXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
@@ -3401,7 +3402,7 @@ HWTEST2_F(InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenAppendNeedsR
     auto eventPool = createEvents<FamilyType>(1, false);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    immCmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    immCmdList->latestOperationHasCbEventWithProfiling = true;
 
     auto value = immCmdList->inOrderExecInfo->getCounterValue();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
@@ -3773,7 +3774,7 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
 
     immCmdList->hostSynchronize(0, false);
 
-    if (immCmdList->dcFlushSupport || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
+    if (immCmdList->dcFlushSupport || immCmdList->latestOperationHasCbEventWithProfiling) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3791,7 +3792,7 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
 
     immCmdList->hostSynchronize(0, false);
 
-    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
+    if (!immCmdList->latestFlushIsHostVisible || immCmdList->latestOperationHasCbEventWithProfiling) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else if (immCmdList->dcFlushSupport) {
@@ -3805,7 +3806,7 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
     // handle post sync operations
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
+    if (!immCmdList->latestFlushIsHostVisible || immCmdList->latestOperationHasCbEventWithProfiling) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(4u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else if (immCmdList->dcFlushSupport) {
@@ -3849,7 +3850,7 @@ HWTEST_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchro
 
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
+    if (!immCmdList->latestFlushIsHostVisible || immCmdList->latestOperationHasCbEventWithProfiling) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3861,7 +3862,7 @@ HWTEST_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchro
 
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasHeapfullCbEventWithProfiling)) {
+    if (!immCmdList->latestFlushIsHostVisible || immCmdList->latestOperationHasCbEventWithProfiling) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3957,10 +3958,67 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenMultipleAllocationsForWri
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
     auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    EXPECT_EQ(isCompactEvent0, immCmdList2->isInOrderNonWalkerSignalingRequired(events[0].get()));
+    const bool heaplessWithDcFlush = immCmdList2->isHeaplessModeEnabled() && immCmdList2->dcFlushSupport;
+    EXPECT_EQ(isCompactEvent0 || heaplessWithDcFlush, immCmdList2->isInOrderNonWalkerSignalingRequired(events[0].get()));
     EXPECT_EQ(isCompactEvent1, immCmdList2->isInOrderNonWalkerSignalingRequired(events[1].get()));
     EXPECT_EQ(isCompactEvent2, immCmdList2->isInOrderNonWalkerSignalingRequired(events[2].get()));
     EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(nullptr));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDuplicatedCounterStorageAndHeaplessWithDcFlushWhenAskingForNonWalkerSignalingRequiredForCounterBasedProfilingEventThenReturnTrue) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->heaplessModeEnabled = true;
+    immCmdList->dcFlushSupport = true;
+    immCmdList->compactL3FlushEventPacket = false;
+
+    auto profilingEventPool = createEvents<FamilyType>(1, true);
+    auto counterEventPool = createEvents<FamilyType>(1, false);
+
+    ASSERT_TRUE(immCmdList->duplicatedInOrderCounterStorageEnabled);
+
+    EXPECT_TRUE(events[0]->isCounterBased());
+    EXPECT_TRUE(events[0]->isEventTimestampFlagSet());
+    EXPECT_TRUE(immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
+
+    EXPECT_TRUE(events[1]->isCounterBased());
+    EXPECT_FALSE(events[1]->isEventTimestampFlagSet());
+    EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(events[1].get()));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDuplicatedCounterStorageAndHeaplessWithoutDcFlushWhenAskingForNonWalkerSignalingRequiredForCounterBasedProfilingEventThenReturnFalse) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->heaplessModeEnabled = true;
+    immCmdList->dcFlushSupport = false;
+    immCmdList->compactL3FlushEventPacket = false;
+
+    auto profilingEventPool = createEvents<FamilyType>(1, true);
+
+    ASSERT_TRUE(immCmdList->duplicatedInOrderCounterStorageEnabled);
+
+    EXPECT_TRUE(events[0]->isCounterBased());
+    EXPECT_TRUE(events[0]->isEventTimestampFlagSet());
+    EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDuplicatedCounterStorageAndHeapfulWithDcFlushWhenAskingForNonWalkerSignalingRequiredForCounterBasedProfilingEventThenReturnFalse) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->heaplessModeEnabled = false;
+    immCmdList->dcFlushSupport = true;
+    immCmdList->compactL3FlushEventPacket = false;
+
+    auto profilingEventPool = createEvents<FamilyType>(1, true);
+
+    ASSERT_TRUE(immCmdList->duplicatedInOrderCounterStorageEnabled);
+
+    EXPECT_TRUE(events[0]->isCounterBased());
+    EXPECT_TRUE(events[0]->isEventTimestampFlagSet());
+    EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
 }
 
 HWTEST_F(InOrderCmdListTests, givenSignalAllPacketsSetWhenProgrammingRemainingPacketsThenSkip) {
@@ -5432,11 +5490,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
         .relaxedOrderingDispatch = false};
     immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParametersForBarrier, signalEventParameters);
     EXPECT_EQ(nullptr, events[1]->getLatestUsedCmdQueue());
-    immCmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
-    EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
+    immCmdList->latestOperationHasCbEventWithProfiling = true;
+    EXPECT_FALSE(events[1]->cbEventWithProfiling);
     immCmdList->appendBarrier(eventHandle, 0, nullptr, waitEventsParametersForBarrier, signalEventParameters);
     EXPECT_EQ(immCmdList->cmdQImmediate, events[1]->getLatestUsedCmdQueue());
-    EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
+    EXPECT_FALSE(events[1]->cbEventWithProfiling);
 
     EXPECT_LT(offset, cmdStream->getUsed());
 
@@ -5458,7 +5516,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfilingWhenAppendBarrierWithoutSignalEventThenSkipBarrier) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCbEventWithProfilingWhenAppendBarrierWithoutSignalEventThenSkipBarrier) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -5468,7 +5526,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenHeapfullCbEventWithProfil
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
+    immCmdList->latestOperationHasCbEventWithProfiling = true;
 
     CmdListWaitEventParameters waitEventsParametersForBarrier = {
         .outWaitCmds = nullptr,
@@ -5555,11 +5613,11 @@ HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWit
     CmdListSignalEventParameters signalEventParameters = {
         .relaxedOrderingDispatch = false};
     cmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParametersForBarrier, signalEventParameters);
-    cmdList->latestOperationHasHeapfullCbEventWithProfiling = true;
-    EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
+    cmdList->latestOperationHasCbEventWithProfiling = true;
+    EXPECT_FALSE(events[1]->cbEventWithProfiling);
     cmdList->appendBarrier(eventHandle, 0, nullptr, waitEventsParametersForBarrier, signalEventParameters);
     EXPECT_EQ(reinterpret_cast<void *>(0x1234), events[1]->getLatestUsedCmdQueue());
-    EXPECT_FALSE(events[1]->heapfullCbEventWithProfiling);
+    EXPECT_FALSE(events[1]->cbEventWithProfiling);
 
     EXPECT_LT(offset, cmdStream->getUsed());
 
@@ -6193,7 +6251,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAubModeWhenSyncCalledAlwa
 
     immCmdList->hostSynchronize(0, false);
 
-    auto expectPollForCompletion = immCmdList->latestFlushIsHostVisible && (immCmdList->isHeaplessModeEnabled() || !immCmdList->latestOperationHasHeapfullCbEventWithProfiling) ? 1u : 0u;
+    auto expectPollForCompletion = immCmdList->latestFlushIsHostVisible && !immCmdList->latestOperationHasCbEventWithProfiling ? 1u : 0u;
     EXPECT_EQ(expectPollForCompletion++, ultCsr->pollForAubCompletionCalled);
 
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
@@ -7883,12 +7941,30 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAppendingLaunchKernelMul
         immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handleWithInterruptHint, 0, nullptr, launchParams);
         EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 0u);
 
+        const uint32_t expectedTimestampEventUserFenceAllocations = (immCmdList->isHeaplessModeEnabled() && immCmdList->dcFlushSupport) ? 0u : 1u;
+
         debugManager.flags.EnableWalkerPartition.set(0);
         immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handleWithInterruptHint, 0, nullptr, launchParams);
-        EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 1u);
+        EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, expectedTimestampEventUserFenceAllocations);
 
         immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handleWithInterruptHint, 0, nullptr, launchParams);
+        EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, expectedTimestampEventUserFenceAllocations);
+
+        ze_event_counter_based_desc_t nonTimestampDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        nonTimestampDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+        nonTimestampDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+        nonTimestampDesc.pNext = &syncModeDesc;
+
+        ze_event_handle_t nonTimestampHandleWithInterruptHint = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &nonTimestampDesc, &nonTimestampHandleWithInterruptHint));
+
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nonTimestampHandleWithInterruptHint, 0, nullptr, launchParams);
         EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 1u);
+
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nonTimestampHandleWithInterruptHint, 0, nullptr, launchParams);
+        EXPECT_EQ(ultCsr->userFenceAllocationAttemptCount, 1u);
+
+        zeEventDestroy(nonTimestampHandleWithInterruptHint);
     }
 
     zeEventDestroy(handle);

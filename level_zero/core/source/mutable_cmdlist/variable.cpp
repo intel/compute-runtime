@@ -139,6 +139,8 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
     this->desc.eventValue.packetCount = event->getPacketsInUse();
     this->desc.eventValue.waitPackets = event->getPacketsToWait();
     this->desc.eventValue.hasStandaloneProfilingNode = event->hasInOrderTimestampNode();
+    // captured after the append, so it reflects the signaling mode the recorded walker was programmed with
+    this->desc.eventValue.cbEventWithProfiling = event->isCbEventWithProfiling();
     if (this->desc.eventValue.counterBasedEvent) {
         this->desc.eventValue.inOrderExecBaseSignalValue = event->getInOrderExecBaseSignalValue();
         this->desc.eventValue.inOrderAllocationOffset = event->getInOrderAllocationOffset();
@@ -672,9 +674,8 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
                                                 newEvent,
                                                 this->desc.eventValue.apiRequiredExternal);
 
-        if (this->desc.eventValue.hasStandaloneProfilingNode &&
-            !device->getGfxCoreHelper().duplicatedInOrderCounterStorageEnabled()) {
-            newEvent->setHeapfullCbEventWithProfiling(true);
+        if (this->desc.eventValue.hasStandaloneProfilingNode) {
+            newEvent->setCbEventWithProfiling(this->desc.eventValue.cbEventWithProfiling);
         }
     }
 
@@ -774,7 +775,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     updateAllocationResidency(oldInOrderAllocation, newInOrderAllocation);
     updateAllocationResidency(oldPatchPreambleCounterAllocation, newPatchPreambleCounterAllocation);
 
-    if (this->desc.eventValue.counterBasedEvent && (this->cmdList->getBase()->isHeaplessModeEnabled() || !(newEvent ? newEvent->hasInOrderTimestampNode() : false))) {
+    if (this->desc.eventValue.counterBasedEvent && this->cmdList->getBase()->isInOrderCounterWaitRequired(newEvent)) {
         if (oldNooped) {
             if (!newNooped) {
                 // was nooped, needs programming - restore

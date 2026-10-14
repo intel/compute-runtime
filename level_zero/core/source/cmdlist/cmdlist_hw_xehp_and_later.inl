@@ -52,7 +52,11 @@ bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(c
     const bool inOrderRequired = !this->duplicatedInOrderCounterStorageEnabled &&
                                  (event->isEventTimestampFlagSet() || !event->isCounterBased());
 
-    return flushRequired || inOrderRequired;
+    const bool profilingCounterBasedEvent = this->heaplessModeEnabled && this->dcFlushSupport &&
+                                            event->isCounterBased() && event->isEventTimestampFlagSet() &&
+                                            !event->isExternalEvent() && !Event::isAggregatedEvent(event) && !event->isIpcImported();
+
+    return flushRequired || inOrderRequired || profilingCounterBasedEvent;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -502,8 +506,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (event->isCounterBased()) {
-                this->latestOperationHasHeapfullCbEventWithProfiling = true;
-                event->setHeapfullCbEventWithProfiling(true);
+                this->latestOperationHasCbEventWithProfiling = true;
+                event->setCbEventWithProfiling(true);
             } else {
                 appendWaitOnSingleEvent<PatchCbEventTimestampPostSyncSemaphoreWait>(event, launchParams.outListCommands, false, false);
                 appendSignalInOrderDependencyCounter(event, false, false, false, false);

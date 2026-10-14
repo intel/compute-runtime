@@ -565,7 +565,7 @@ struct CommandListCoreFamily : public CommandList {
     };
 
     NEO::PauseOnGpuProperties::PendingSubmissionPauses pendingSubmissionPauses{};
-    bool latestOperationHasHeapfullCbEventWithProfiling = false;
+    bool latestOperationHasCbEventWithProfiling = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;
