@@ -134,7 +134,7 @@ HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFi
 
         std::thread t([&]() {
             while (!go) {
-                ;
+                std::this_thread::yield();
             }
 
             uEvent.setStatus(CL_COMPLETE);
@@ -146,6 +146,7 @@ HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFi
         std::thread t2([&]() {
             while (updateEvent) {
                 castToObject<Event>(returnedEvent)->updateExecutionStatus();
+                std::this_thread::yield();
             }
         });
 
