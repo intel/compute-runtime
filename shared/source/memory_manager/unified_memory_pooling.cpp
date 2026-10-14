@@ -93,11 +93,11 @@ void UsmMemAllocPool::cleanup() {
     {
         std::unique_lock<std::mutex> lock(mtx);
         hasDeferredChunks = false == this->deferredFreeChunks.empty();
-        if (hasDeferredChunks) {
-            // snapshots can bound work up to latestSentTaskCount, which is not stamped on
-            // the pool allocation, so raise it first or defer free would not cover them
-            this->svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
-        }
+    }
+    if (hasDeferredChunks) {
+        // snapshots can bound work up to latestSentTaskCount, which is not stamped on
+        // the pool allocation, so raise it first or defer free would not cover them
+        this->svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
     }
 
     if (this->customCleanup) {
@@ -204,6 +204,32 @@ UsmPoolFreeResult UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType 
     if (false == isInitialized() || false == isInPoolRange(ptr)) {
         return result;
     }
+    StackVec<GraphicsAllocation *, 4> peerAllocations;
+    if (FreePolicyType::none != policy) {
+        {
+            std::unique_lock<std::mutex> lock(mtx);
+            if (false == allocations.contains(ptr)) {
+                return result;
+            }
+        }
+        if (this->peerAllocationsFn) {
+            peerAllocations = this->peerAllocationsFn(this->pool);
+        }
+    }
+    // Run unlocked
+    EngineCompletionSnapshot snapshot;
+    if (FreePolicyType::blocking == policy) {
+        svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
+        svmMemoryManager->waitForEnginesCompletion(allocationData);
+        for (auto peerAllocation : peerAllocations) {
+            this->device->getMemoryManager()->waitForEnginesCompletion(*peerAllocation);
+        }
+    } else if (FreePolicyType::defer == policy) {
+        svmMemoryManager->captureEngineCompletionSnapshot(allocationData, snapshot);
+        for (auto peerAllocation : peerAllocations) {
+            this->device->getMemoryManager()->captureEngineCompletionSnapshot(*peerAllocation, snapshot);
+        }
+    }
     std::unique_lock<std::mutex> lock(mtx);
     auto allocationInfo = allocations.extract(ptr);
     if (!allocationInfo) {
@@ -211,24 +237,8 @@ UsmPoolFreeResult UsmMemAllocPool::freeSVMAlloc(const void *ptr, FreePolicyType 
     }
     DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
     DEBUG_BREAK_IF(false == allocationInfo->memFreeCallbacks.empty());
-    StackVec<GraphicsAllocation *, 4> peerAllocations;
-    if (this->peerAllocationsFn && FreePolicyType::none != policy) {
-        peerAllocations = this->peerAllocationsFn(this->pool);
-    }
-    if (FreePolicyType::blocking == policy) {
-        svmMemoryManager->applyIndirectAccessTaskCountFloor(allocationData);
-        svmMemoryManager->waitForEnginesCompletion(allocationData);
-        for (auto peerAllocation : peerAllocations) {
-            this->device->getMemoryManager()->waitForEnginesCompletion(*peerAllocation);
-        }
-    }
     if (FreePolicyType::defer == policy) {
-        DeferredFreeInfo deferredFreeInfo{std::move(*allocationInfo), {}};
-        svmMemoryManager->captureEngineCompletionSnapshot(allocationData, deferredFreeInfo.snapshot);
-        for (auto peerAllocation : peerAllocations) {
-            this->device->getMemoryManager()->captureEngineCompletionSnapshot(*peerAllocation, deferredFreeInfo.snapshot);
-        }
-        this->deferredFreeChunks.push_back(std::move(deferredFreeInfo));
+        this->deferredFreeChunks.push_back(DeferredFreeInfo{std::move(*allocationInfo), std::move(snapshot)});
     } else {
         this->releaseChunk(*allocationInfo);
     }
@@ -448,43 +458,49 @@ void *UsmMemAllocPoolsManager::createUnifiedMemoryAllocation(size_t size, const 
     if (!canBePooled(size, memoryProperties)) {
         return nullptr;
     }
-    std::unique_lock<std::mutex> lock(mtx);
-    void *ptr = nullptr;
     for (const auto &poolInfo : getPoolInfos()) {
         if (size <= poolInfo.maxServicedSize) {
-            for (auto &pool : this->pools[poolInfo]) {
-                if (nullptr != (ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties))) {
-                    break;
+            {
+                std::lock_guard lock(mtx);
+                for (auto &pool : this->pools[poolInfo]) {
+                    if (auto ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties)) {
+                        return ptr;
+                    }
                 }
             }
-            if (nullptr == ptr) {
-                if (auto pool = tryAddPool(poolInfo)) {
-                    ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties);
-                    DEBUG_BREAK_IF(nullptr == ptr);
-                }
+            auto pool = this->createPool(poolInfo);
+            if (nullptr == pool) {
+                return nullptr;
             }
-            break;
+            auto ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties);
+            DEBUG_BREAK_IF(nullptr == ptr);
+            this->insertPool(poolInfo, std::move(pool));
+            return ptr;
         }
     }
-    return ptr;
+    return nullptr;
 }
 
-UsmMemAllocPool *UsmMemAllocPoolsManager::tryAddPool(PoolInfo poolInfo) {
-    UsmMemAllocPool *poolPtr = nullptr;
-    if (canAddPool(poolInfo)) {
-        auto pool = std::make_unique<UsmMemAllocPool>();
-        if (pool->initialize(svmMemoryManager, poolMemoryProperties, poolInfo.poolSize, poolInfo.minServicedSize, poolInfo.maxServicedSize)) {
-            poolPtr = pool.get();
-            this->totalSize += pool->getPoolSize();
-            if (trackResidency) {
-                pool->enableResidencyTracking();
-            }
-            pool->setCustomCleanup(this->customCleanup);
-            pool->setPeerAllocationsFn(this->peerAllocationsFn);
-            this->pools[poolInfo].push_back(std::move(pool));
-        }
+std::unique_ptr<UsmMemAllocPool> UsmMemAllocPoolsManager::createPool(PoolInfo poolInfo) {
+    if (false == canAddPool(poolInfo)) {
+        return nullptr;
     }
-    return poolPtr;
+    auto pool = std::make_unique<UsmMemAllocPool>();
+    if (false == pool->initialize(svmMemoryManager, poolMemoryProperties, poolInfo.poolSize, poolInfo.minServicedSize, poolInfo.maxServicedSize)) {
+        return nullptr;
+    }
+    if (trackResidency) {
+        pool->enableResidencyTracking();
+    }
+    pool->setCustomCleanup(this->customCleanup);
+    pool->setPeerAllocationsFn(this->peerAllocationsFn);
+    return pool;
+}
+
+void UsmMemAllocPoolsManager::insertPool(PoolInfo poolInfo, std::unique_ptr<UsmMemAllocPool> pool) {
+    std::lock_guard lock(mtx);
+    this->totalSize += pool->getPoolSize();
+    this->pools[poolInfo].push_back(std::move(pool));
 }
 bool UsmMemAllocPoolsManager::canAddPool(PoolInfo poolInfo) {
     return true;

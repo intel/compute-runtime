@@ -93,6 +93,10 @@ class BaseSortedPointerWithValueVector {
         return retVal;
     }
 
+    bool contains(const void *ptr) {
+        return allocations.end() != getImpl<false>(ptr);
+    }
+
     ValueType *get(const void *ptr) {
         // try non offset path if ptr is page aligned
         if ((reinterpret_cast<uintptr_t>(ptr) & MemoryConstants::page4kEntryMask) == reinterpret_cast<uintptr_t>(ptr)) {

@@ -560,6 +560,9 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenUsing
 
     EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(reinterpret_cast<void *>(0x1), FreePolicyType::blocking).freeSucceeded);
     EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(ptrOffset(allocFromPool, 1u), FreePolicyType::blocking).freeSucceeded);
+    EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(ptrOffset(allocFromPool, 1u), FreePolicyType::none).freeSucceeded);
     EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(allocFromPool, FreePolicyType::blocking).freeSucceeded);
     EXPECT_EQ(1u, memoryManager->waitForEnginesCompletionCalled);
     EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(allocFromPool, FreePolicyType::blocking).freeSucceeded);

@@ -70,6 +70,7 @@ class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {
     using UsmMemAllocPoolsManager::getPoolContainingAlloc;
     using UsmMemAllocPoolsManager::getPoolInfos;
     using UsmMemAllocPoolsManager::memoryManager;
+    using UsmMemAllocPoolsManager::mtx;
     using UsmMemAllocPoolsManager::peerAllocationsFn;
     using UsmMemAllocPoolsManager::pools;
     using UsmMemAllocPoolsManager::totalSize;
@@ -80,6 +81,14 @@ class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {
             return UsmMemAllocPoolsManager::canAddPool(poolInfo);
         }
         return canAddPools;
+    }
+    UsmMemAllocPool *tryAddPool(PoolInfo poolInfo) {
+        auto pool = createPool(poolInfo);
+        auto poolPtr = pool.get();
+        if (pool) {
+            insertPool(poolInfo, std::move(pool));
+        }
+        return poolPtr;
     }
     bool canAddPools = true;
     bool canAddPoolCallBase = false;
