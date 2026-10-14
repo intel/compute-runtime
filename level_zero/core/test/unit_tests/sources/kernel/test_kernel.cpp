@@ -874,6 +874,26 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPriv
     EXPECT_EQ(expectedSize, kernel->sharedState->privateMemoryGraphicsAllocation->getUnderlyingBufferSize());
 }
 
+TEST_F(KernelImmutableDataTests, givenKernelRequiringSubgroupIndependentForwardProgressWhenImmutableDataIsInitializedThenRoundRobinThreadArbitrationPolicyIsUsed) {
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = true;
+
+    auto kernelImmutableData = std::make_unique<KernelImmutableData>(device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false));
+
+    EXPECT_EQ(NEO::ThreadArbitrationPolicy::RoundRobin, kernelImmutableData->getDescriptor().kernelAttributes.threadArbitrationPolicy);
+}
+
+TEST_F(KernelImmutableDataTests, givenKernelNotRequiringSubgroupIndependentForwardProgressWhenImmutableDataIsInitializedThenThreadArbitrationPolicyIsNotChanged) {
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = false;
+
+    auto kernelImmutableData = std::make_unique<KernelImmutableData>(device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false));
+
+    EXPECT_EQ(NEO::ThreadArbitrationPolicy::NotPresent, kernelImmutableData->getDescriptor().kernelAttributes.threadArbitrationPolicy);
+}
+
 using KernelImmutableDataIsaCopyTests = KernelImmutableDataTests;
 
 TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsCopiedWhenModuleIsCreated) {
