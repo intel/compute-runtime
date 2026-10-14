@@ -49,6 +49,7 @@ struct CapturedApi {
 };
 struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     using BaseClass = L0::ult::Mock<L0::ult::CommandList>;
+    using BaseClass::imageCopyOffloadAllowed;
     using BaseClass::stagingCopiesAllowed;
 
     CapturingCommandList() : BaseClass(nullptr) {}
@@ -58,6 +59,7 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     void clearCaptures() {
         stagingCopiesAllowedAtMemoryCopy.clear();
         stagingCopiesAllowedAtImageCopy.clear();
+        imageCopyOffloadAllowedAtImageCopy.clear();
         sequence.clear();
 #define LEO_CAPTURED_API_CLEAR(name, argsType) name##Args.records.clear();
         LEO_CAPTURED_APIS(LEO_CAPTURED_API_CLEAR)
@@ -67,6 +69,7 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     std::vector<ApiId> sequence{};
     std::vector<bool> stagingCopiesAllowedAtMemoryCopy{};
     std::vector<bool> stagingCopiesAllowedAtImageCopy{};
+    std::vector<bool> imageCopyOffloadAllowedAtImageCopy{};
 
 #define LEO_CAPTURED_API_MEMBER(name, argsType) CapturedApi<argsType> name##Args{};
     LEO_CAPTURED_APIS(LEO_CAPTURED_API_MEMBER)
@@ -110,6 +113,7 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
                                              uint32_t srcSlicePitch, ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                              ze_event_handle_t *phWaitEvents, L0::CmdListMemoryCopyParams &memoryCopyParams) override {
         stagingCopiesAllowedAtImageCopy.push_back(this->stagingCopiesAllowed);
+        imageCopyOffloadAllowedAtImageCopy.push_back(this->imageCopyOffloadAllowed);
         return record(this->appendImageCopyFromMemoryExtArgs, ApiId::appendImageCopyFromMemoryExt,
                       AppendImageCopyFromMemoryExtArgs{hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents},
                       appendImageCopyFromMemoryExtResult);
@@ -122,8 +126,23 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                            L0::CmdListMemoryCopyParams &memoryCopyParams) override {
         stagingCopiesAllowedAtImageCopy.push_back(this->stagingCopiesAllowed);
+        imageCopyOffloadAllowedAtImageCopy.push_back(this->imageCopyOffloadAllowed);
         return BaseClass::appendImageCopyToMemoryExt(dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hEvent,
                                                      numWaitEvents, phWaitEvents, memoryCopyParams);
+    }
+
+    ze_result_t appendImageCopyFromMemory(ze_image_handle_t hDstImage, const void *srcptr, const ze_image_region_t *pDstRegion,
+                                          ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                          L0::CmdListMemoryCopyParams &memoryCopyParams) override {
+        imageCopyOffloadAllowedAtImageCopy.push_back(this->imageCopyOffloadAllowed);
+        return BaseClass::appendImageCopyFromMemory(hDstImage, srcptr, pDstRegion, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    }
+
+    ze_result_t appendImageCopyToMemory(void *dstptr, ze_image_handle_t hSrcImage, const ze_image_region_t *pSrcRegion,
+                                        ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                        L0::CmdListMemoryCopyParams &memoryCopyParams) override {
+        imageCopyOffloadAllowedAtImageCopy.push_back(this->imageCopyOffloadAllowed);
+        return BaseClass::appendImageCopyToMemory(dstptr, hSrcImage, pSrcRegion, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
     }
 
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle, const ze_group_count_t &threadGroupDimensions,

@@ -495,6 +495,10 @@ struct CommandList : _ze_command_list_handle_t {
         this->stagingCopiesAllowed = allowed;
     }
 
+    void setImageCopyOffloadAllowed(bool allowed) {
+        this->imageCopyOffloadAllowed = allowed;
+    }
+
     bool isImmediateType() const {
         return (this->cmdListType == CommandListType::typeImmediate);
     }
@@ -952,6 +956,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool copyThroughLockedPtrEnabled = false;
     bool stagingCopiesAllowed = true;
+    bool imageCopyOffloadAllowed = true;
     bool isSmallBarConfigPresent = false;
     bool useOnlyGlobalTimestamps = false;
     bool heaplessModeEnabled = false;

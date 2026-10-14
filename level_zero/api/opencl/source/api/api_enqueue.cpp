@@ -753,13 +753,12 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
 
     auto lock = pCommandQueue->takeOwnership();
     pSrcImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
-    ze_result_t ret = zeCommandListAppendImageCopyToMemory(pCommandQueue->getL0Handle(),
-                                                           ptrOffset(pDstBuffer->getUsmPtr(), dstOffset),
-                                                           pSrcImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
-                                                           &mipDesc,
-                                                           hSignalEvent,
-                                                           waitEvents.size(),
-                                                           waitEvents.data());
+    ze_result_t ret = pCommandQueue->appendImageCopyToBuffer(ptrOffset(pDstBuffer->getUsmPtr(), dstOffset),
+                                                             pSrcImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
+                                                             &mipDesc,
+                                                             hSignalEvent,
+                                                             static_cast<uint32_t>(waitEvents.size()),
+                                                             waitEvents.data());
 
     cl_int tracingRetVal = L0ToClResultMapper(ret);
     TRACING_EXIT(ClEnqueueCopyImageToBuffer, &tracingRetVal);
@@ -799,12 +798,11 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
 
     auto lock = pCommandQueue->takeOwnership();
     pDstImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
-    ze_result_t ret = zeCommandListAppendImageCopyFromMemory(pCommandQueue->getL0Handle(),
-                                                             pDstImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
+    ze_result_t ret = pCommandQueue->appendBufferCopyToImage(pDstImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()),
                                                              ptrOffset(pSrcBuffer->getUsmPtr(), srcOffset),
                                                              &mipDesc,
                                                              hSignalEvent,
-                                                             waitEvents.size(),
+                                                             static_cast<uint32_t>(waitEvents.size()),
                                                              waitEvents.data());
 
     cl_int tracingRetVal = L0ToClResultMapper(ret);

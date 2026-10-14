@@ -996,7 +996,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
 
     bool imageToBuffer = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
-    bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
+    bool shouldUseCopyOffload = this->imageCopyOffloadAllowed && this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     auto canUseCopyEngine = !(bytesPerPixel == 3 || bytesPerPixel == 6 || image->isMimickedImage());
     memoryCopyParams.copyOffloadAllowed = canUseCopyEngine && isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), remoteCopy, imageToBuffer, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
     CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams.copyOffloadAllowed);
@@ -1215,7 +1215,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
 
     bool imageToBuffer = true;
-    bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
+    bool shouldUseCopyOffload = this->imageCopyOffloadAllowed && this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     auto canUseCopyEngine = !(bytesPerPixel == 3 || bytesPerPixel == 6 || image->isMimickedImage());
     memoryCopyParams.copyOffloadAllowed = canUseCopyEngine && isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, remoteCopy, false, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
     CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams.copyOffloadAllowed);

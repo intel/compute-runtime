@@ -101,11 +101,17 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     ze_result_t appendHostImageCopyFromMemory(ze_image_handle_t hDstImage, const void *srcPtr, const ze_image_region_t *pDstRegion,
                                               uint32_t srcRowPitch, uint32_t srcSlicePitch, ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t appendImageCopyToBuffer(void *dstPtr, ze_image_handle_t hSrcImage, const ze_image_region_t *pSrcRegion,
+                                        ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t appendBufferCopyToImage(ze_image_handle_t hDstImage, const void *srcPtr, const ze_image_region_t *pDstRegion,
+                                        ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     ze_result_t hostSynchronize(uint64_t timeout);
 
   protected:
     template <typename AppendFunc>
     ze_result_t appendWithHostMemory(AppendFunc &&appendFunc);
+    template <typename AppendFunc>
+    ze_result_t appendWithoutImageCopyOffload(AppendFunc &&appendFunc);
 
     void storeProperties(const cl_queue_properties *properties);
     cl_queue_properties getCommandQueueProperties() const { return getCmdQueueProperties<cl_queue_properties>(this->queueProperties.data()); };

@@ -450,6 +450,26 @@ TEST_F(EnqueueImageEventPlumbingFixture, givenCommandWaitingOnUserEventNotSetWhe
     EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), image, mappedPtr, 0, nullptr, nullptr));
 }
 
+TEST_F(EnqueueImageEventPlumbingFixture, givenImageAndBufferWhenCopyImageToBufferIsEnqueuedThenOnlyThatCopyHasImageCopyOffloadDisabled) {
+    ASSERT_EQ(CL_SUCCESS, clEnqueueCopyImageToBuffer(getCommandQueue(), image, buffer, origin.data(), region.data(), 0, 0, nullptr, nullptr));
+    ASSERT_EQ(CL_SUCCESS, clEnqueueReadImage(getCommandQueue(), image, CL_FALSE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+
+    ASSERT_EQ(2u, capturingCmdList.imageCopyOffloadAllowedAtImageCopy.size());
+    EXPECT_FALSE(capturingCmdList.imageCopyOffloadAllowedAtImageCopy[0]);
+    EXPECT_TRUE(capturingCmdList.imageCopyOffloadAllowedAtImageCopy[1]);
+    EXPECT_TRUE(capturingCmdList.imageCopyOffloadAllowed);
+}
+
+TEST_F(EnqueueImageEventPlumbingFixture, givenImageAndBufferWhenCopyBufferToImageIsEnqueuedThenOnlyThatCopyHasImageCopyOffloadDisabled) {
+    ASSERT_EQ(CL_SUCCESS, clEnqueueCopyBufferToImage(getCommandQueue(), buffer, image, 0, origin.data(), region.data(), 0, nullptr, nullptr));
+    ASSERT_EQ(CL_SUCCESS, clEnqueueWriteImage(getCommandQueue(), image, CL_FALSE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+
+    ASSERT_EQ(2u, capturingCmdList.imageCopyOffloadAllowedAtImageCopy.size());
+    EXPECT_FALSE(capturingCmdList.imageCopyOffloadAllowedAtImageCopy[0]);
+    EXPECT_TRUE(capturingCmdList.imageCopyOffloadAllowedAtImageCopy[1]);
+    EXPECT_TRUE(capturingCmdList.imageCopyOffloadAllowed);
+}
+
 TEST_F(EnqueueImageEventPlumbingFixture, givenUserEventNotSetButNotADependencyWhenReadImageIsEnqueuedThenStagingCopiesAreAllowed) {
     createUserEvent();
 

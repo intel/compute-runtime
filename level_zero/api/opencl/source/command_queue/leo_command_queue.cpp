@@ -486,6 +486,28 @@ ze_result_t CommandQueue::appendHostImageCopyFromMemory(ze_image_handle_t hDstIm
     });
 }
 
+template <typename AppendFunc>
+ze_result_t CommandQueue::appendWithoutImageCopyOffload(AppendFunc &&appendFunc) {
+    this->getL0Object()->setImageCopyOffloadAllowed(false);
+    auto result = appendFunc();
+    this->getL0Object()->setImageCopyOffloadAllowed(true);
+    return result;
+}
+
+ze_result_t CommandQueue::appendImageCopyToBuffer(void *dstPtr, ze_image_handle_t hSrcImage, const ze_image_region_t *pSrcRegion,
+                                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    return this->appendWithoutImageCopyOffload([&]() {
+        return zeCommandListAppendImageCopyToMemory(this->cmdListHandle, dstPtr, hSrcImage, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents);
+    });
+}
+
+ze_result_t CommandQueue::appendBufferCopyToImage(ze_image_handle_t hDstImage, const void *srcPtr, const ze_image_region_t *pDstRegion,
+                                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    return this->appendWithoutImageCopyOffload([&]() {
+        return zeCommandListAppendImageCopyFromMemory(this->cmdListHandle, hDstImage, srcPtr, pDstRegion, hSignalEvent, numWaitEvents, phWaitEvents);
+    });
+}
+
 ze_result_t CommandQueue::hostSynchronize(uint64_t timeout) {
     auto result = zeCommandListHostSynchronize(this->cmdListHandle, timeout);
     if (result == ZE_RESULT_SUCCESS) {

@@ -19,11 +19,13 @@
 
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/api/internal/l0_graph.h"
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
@@ -1845,6 +1847,64 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
             EXPECT_EQ(mainTaskCount, mainQueueCsr->taskCount);
         }
     }
+    context->freeMem(data);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenImageCopyOffloadDisallowedWhenAppendingImageCopyToAndFromMemoryThenComputeWalkerIsUsedInsteadOfCopyEngine, IsAtLeastXeCore) {
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    if (!device->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    for (const auto imageBuiltIn : {ImageBuiltIn::copyBufferToImage3dBytes, ImageBuiltIn::copyImage3dToBufferBytes}) {
+        auto builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(imageBuiltIn, getDefaultBuiltInMode());
+        static_cast<Mock<::L0::KernelImp> *>(builtinKernel)->setArgRedescribedImageCallBase = false;
+    }
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->setImageCopyOffloadAllowed(false);
+
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+    const auto initialCopyTaskCount = copyQueueCsr->taskCount.load();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto data = allocHostMem(MemoryConstants::kiloByte);
+
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.width = 10;
+    zeDesc.height = 10;
+    zeDesc.depth = 1;
+    image->initialize(device, &zeDesc);
+    static_cast<MemoryAllocation *>(image->getAllocation())->overrideMemoryPool(NEO::MemoryPool::system64KBPages);
+
+    ze_image_region_t imgRegion = {0, 0, 0, 1, 1, 1};
+
+    for (const bool imageToMemory : {false, true}) {
+        const auto offset = cmdStream->getUsed();
+
+        if (imageToMemory) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendImageCopyToMemoryExt(data, image->toHandle(), &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+        } else {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), data, &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+        }
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        EXPECT_EQ(cmdList.end(), find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end()));
+        EXPECT_NE(cmdList.end(), find<WalkerType *>(cmdList.begin(), cmdList.end()));
+    }
+
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        EXPECT_EQ(initialCopyTaskCount, copyQueueCsr->taskCount);
+    }
+
     context->freeMem(data);
 }
 
