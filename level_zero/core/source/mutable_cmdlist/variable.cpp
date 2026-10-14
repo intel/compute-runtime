@@ -775,6 +775,8 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     updateAllocationResidency(oldInOrderAllocation, newInOrderAllocation);
     updateAllocationResidency(oldPatchPreambleCounterAllocation, newPatchPreambleCounterAllocation);
 
+    const uint64_t patchPreambleCounter = this->desc.eventValue.qwordInUse == false ? getLowPart(newPatchPreambleCounterValue) : newPatchPreambleCounterValue;
+
     if (this->desc.eventValue.counterBasedEvent && this->cmdList->getBase()->isInOrderCounterWaitRequired(newEvent)) {
         if (oldNooped) {
             if (!newNooped) {
@@ -782,38 +784,23 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
                 this->desc.eventValue.noopState = false;
                 // update in order info with patching, restore commands with new address
                 auto waitAddress = newInOrderEventHelper->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
-                setCbWaitEventUpdateOperation(CbWaitEventOperationType::restore, waitAddress, newInOrderEventHelper);
+                setCbWaitEventUpdateOperation(CbWaitEventOperationType::restore, waitAddress, newInOrderEventHelper, patchPreambleCounter, newPatchPreambleCounterGpuAddress, newPatchPreambleNooped);
             }
         } else {
             if (newNooped) {
                 // was programed, needs noop
                 this->desc.eventValue.noopState = true;
-                setCbWaitEventUpdateOperation(CbWaitEventOperationType::noop, 0, newInOrderEventHelper);
+                setCbWaitEventUpdateOperation(CbWaitEventOperationType::noop, 0, newInOrderEventHelper, patchPreambleCounter, newPatchPreambleCounterGpuAddress, newPatchPreambleNooped);
             } else {
                 // was programed, needs update address and new newInOrderEventHelper
                 auto waitAddress = newInOrderEventHelper->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
-                setCbWaitEventUpdateOperation(CbWaitEventOperationType::set, waitAddress, newInOrderEventHelper);
+                setCbWaitEventUpdateOperation(CbWaitEventOperationType::set, waitAddress, newInOrderEventHelper, patchPreambleCounter, newPatchPreambleCounterGpuAddress, newPatchPreambleNooped);
             }
         }
     } else {
-        if (newEventAllocation != nullptr) {
-            auto waitAddress = newEvent->getGpuAddress(device);
-            for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
-                if (oldNooped) {
-                    mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
-                } else {
-                    mutableSemWait->setSemaphoreAddress(waitAddress);
-                }
-            }
-        }
-        if (newNooped) {
-            this->desc.eventValue.noopState = true;
-            for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
-                mutableSemWait->noop();
-            }
-        } else {
-            this->desc.eventValue.noopState = false;
-        }
+        auto waitAddress = newEventAllocation != nullptr ? newEvent->getGpuAddress(device) : 0;
+        this->desc.eventValue.noopState = newNooped;
+        setRegularWaitEventUpdateOperation(oldNooped, newNooped, newEventAllocation, waitAddress, patchPreambleCounter, newPatchPreambleCounterGpuAddress, newPatchPreambleNooped);
     }
 
     if (desc.asyncMutation) {
@@ -839,13 +826,8 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
     return ZE_RESULT_SUCCESS;
 }
 
-void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper) {
-
-    auto newPatchPreambleCounter = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getPatchPreambleCounter();
-    auto newPatchPreambleCounterAddress = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getPatchPreambleDeviceGpuAddress();
-    bool newPatchPreambleNooped = newPatchPreambleCounter == 0;
-    newPatchPreambleCounter = this->desc.eventValue.qwordInUse == false ? getLowPart(newPatchPreambleCounter) : newPatchPreambleCounter;
-
+void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper,
+                                             uint64_t patchPreambleCounter, uint64_t patchPreambleGpuAddress, bool newPatchPreambleNoop) {
     for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
         if (mutableSemWait->getType() != MutableSemaphoreWait::cbEventWaitPatchPreambleCounter) {
             if (operation == CbWaitEventOperationType::set) {
@@ -862,7 +844,7 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                 }
             }
         } else {
-            setCbWaitEventPatchPreambleSemWaitOperation(operation, mutableSemWait, newPatchPreambleCounter, newPatchPreambleCounterAddress, newPatchPreambleNooped, this->desc.eventValue.qwordIndirect);
+            setCbWaitEventPatchPreambleSemWaitOperation(operation, mutableSemWait, patchPreambleCounter, patchPreambleGpuAddress, newPatchPreambleNoop, this->desc.eventValue.qwordIndirect);
         }
     }
     if (this->desc.eventValue.qwordIndirect) {
@@ -883,7 +865,43 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                     }
                 }
             } else {
-                setCbWaitEventPatchPreambleLoadRegImmOperation(operation, mutableLoadRegImm, newPatchPreambleCounter, cmdIndex, newPatchPreambleNooped);
+                setCbWaitEventPatchPreambleLoadRegImmOperation(operation, mutableLoadRegImm, patchPreambleCounter, cmdIndex, newPatchPreambleNoop);
+            }
+            cmdIndex++;
+        }
+    }
+}
+
+void Variable::setRegularWaitEventUpdateOperation(bool oldNooped, bool newNooped, NEO::GraphicsAllocation *newEventAllocation, uint64_t waitAddress,
+                                                  uint64_t patchPreambleCounter, uint64_t patchPreambleGpuAddress, bool newPatchPreambleNoop) {
+    auto patchPreambleOperation = CbWaitEventOperationType::set;
+    if (newNooped) {
+        patchPreambleOperation = CbWaitEventOperationType::noop;
+    } else if (oldNooped) {
+        patchPreambleOperation = CbWaitEventOperationType::restore;
+    }
+
+    for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
+        if (mutableSemWait->getType() == MutableSemaphoreWait::cbEventWaitPatchPreambleCounter) {
+            setCbWaitEventPatchPreambleSemWaitOperation(patchPreambleOperation, mutableSemWait, patchPreambleCounter, patchPreambleGpuAddress, newPatchPreambleNoop, this->desc.eventValue.qwordIndirect);
+            continue;
+        }
+        if (newEventAllocation != nullptr) {
+            if (oldNooped) {
+                mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
+            } else {
+                mutableSemWait->setSemaphoreAddress(waitAddress);
+            }
+        }
+        if (newNooped) {
+            mutableSemWait->noop();
+        }
+    }
+    if (this->desc.eventValue.qwordIndirect) {
+        uint32_t cmdIndex = 0;
+        for (auto &mutableLoadRegImm : this->desc.eventValue.loadRegImmCmds) {
+            if (mutableLoadRegImm->getType() == MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter) {
+                setCbWaitEventPatchPreambleLoadRegImmOperation(patchPreambleOperation, mutableLoadRegImm, patchPreambleCounter, cmdIndex, newPatchPreambleNoop);
             }
             cmdIndex++;
         }

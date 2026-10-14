@@ -2460,5 +2460,84 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(0, memcmp(noopSemaphoreSpace, this->semaphoreWaitBuffer, sizeof(MI_SEMAPHORE_WAIT)));
 }
 
+struct VariableInOrderRegularWaitFixture : public VariableInOrderFixture {
+    template <typename FamilyType>
+    void testRefreshWithPatchPreambleCounter(bool externalFlag) {
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+        // regular wait path is taken only by heapful cmdlists, LRI path is forced wherever qword counter is used
+        static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(this->mutableCommandList->getBase())->heaplessModeEnabled = false;
+        this->mutableCommandList->semaphore64bCmdSupported = false;
+        this->qwordIndirect = this->mutableCommandList->isQwordInOrderCounter();
+
+        auto otherCmdList = this->createMutableCmdList();
+        auto otherBaseCmdList = static_cast<L0::ult::MockCommandList *>(otherCmdList->getBase());
+        auto event = this->createTestEvent(true, false, true, false, externalFlag);
+        auto newEvent = this->createTestEvent(true, false, true, false, externalFlag);
+        this->attachCbEvent(event, otherBaseCmdList);
+        this->attachCbEvent(newEvent, otherBaseCmdList);
+        ASSERT_TRUE(newEvent->hasInOrderTimestampNode());
+
+        this->semWaitOffset = 0;
+        preparePatchPreambleWaitCommands<FamilyType>();
+
+        createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+        L0::MCL::WaitEventVariableDescriptor waitEventVarDesc{};
+        waitEventVarDesc.event = event;
+        waitEventVarDesc.waitEventPackets = event->getInOrderExecEventHelper().getEventData()->devicePartitions;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, this->variable->setAsWaitEvent(waitEventVarDesc));
+
+        auto &eventValue = this->variable->getDesc().eventValue;
+        EXPECT_EQ(externalFlag, eventValue.isExternalFlag);
+        EXPECT_TRUE(eventValue.patchPreambleNoopState);
+
+        for (auto &mutableLoadRegisterImm : this->mutableLoadRegisterImms) {
+            mutableLoadRegisterImm->noop();
+            this->variable->getLoadRegImmList().push_back(mutableLoadRegisterImm.get());
+        }
+        this->mutableSemaphoreWait->noop();
+        this->variable->getSemWaitList().push_back(this->mutableSemaphoreWait.get());
+
+        uint64_t counterValue = (3ull << 32) | 4;
+        uint64_t gpuAddress = 0x10000;
+        MockGraphicsAllocation counterAlloc(0, reinterpret_cast<void *>(gpuAddress), 0x1000);
+        newEvent->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, nullptr, 0, nullptr, gpuAddress, &counterAlloc);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, this->variable->setValue(0, 0, newEvent));
+        EXPECT_FALSE(eventValue.patchPreambleNoopState);
+
+        auto semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(this->semaphoreWaitBuffer);
+        ASSERT_NE(nullptr, semWaitCmd);
+        EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+
+        if (this->qwordIndirect) {
+            auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->loadRegisterImmBuffers[0]);
+            ASSERT_NE(nullptr, lriCmd);
+            EXPECT_EQ(getLowPart(counterValue), lriCmd->getDataDword());
+
+            auto lriHighCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(this->loadRegisterImmBuffers[1]);
+            ASSERT_NE(nullptr, lriHighCmd);
+            EXPECT_EQ(getHighPart(counterValue), lriHighCmd->getDataDword());
+        } else {
+            EXPECT_EQ(getLowPart(counterValue), semWaitCmd->getSemaphoreDataDword());
+        }
+    }
+};
+
+using VariableInOrderRegularWaitTest = Test<VariableInOrderRegularWaitFixture>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderRegularWaitTest,
+            givenExternalCbTimestampEventWhenRefreshingWithEventHavingPatchPreambleCounterThenPatchPreambleCommandsAreProgrammed) {
+    testRefreshWithPatchPreambleCounter<FamilyType>(true);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableInOrderRegularWaitTest,
+            givenNotExternalCbTimestampEventWhenRefreshingWithEventHavingPatchPreambleCounterThenPatchPreambleCommandsAreProgrammed) {
+    testRefreshWithPatchPreambleCounter<FamilyType>(false);
+}
+
 } // namespace ult
 } // namespace L0

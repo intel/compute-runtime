@@ -1039,15 +1039,17 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     do {
         if (this->cbEventWithProfiling && !isAlreadyCompleted()) {
-            downloadTbxAllocationsForQuery();
-            assignKernelEventCompletionData(getHostAddress());
-            calculateProfilingData();
-            if (this->isTimestampPopulated()) {
-                inOrderExecHelper.setLastWaitedCounterValue(getInOrderExecBaseSignalValue(), this->getInOrderAllocationOffset());
-                handleSuccessfulHostSynchronization();
+            ret = ZE_RESULT_NOT_READY;
+            if (handlePreQueryStatusOperationsAndCheckCompletion()) {
                 ret = ZE_RESULT_SUCCESS;
-            } else {
-                ret = ZE_RESULT_NOT_READY;
+            } else if (!isActiveExternalCbEvent() || isPatchPreambleCounterCompleted(elapsedTimeSinceWaitStartUs, timeout != 0)) {
+                assignKernelEventCompletionData(getHostAddress());
+                calculateProfilingData();
+                if (this->isTimestampPopulated()) {
+                    inOrderExecHelper.setLastWaitedCounterValue(getInOrderExecBaseSignalValue(), this->getInOrderAllocationOffset());
+                    handleSuccessfulHostSynchronization();
+                    ret = ZE_RESULT_SUCCESS;
+                }
             }
         } else {
             if (fenceWait) {

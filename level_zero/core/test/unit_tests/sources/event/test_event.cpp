@@ -3504,6 +3504,141 @@ HWTEST_F(EventSynchronizeTimestampTest, GivenDrmAndKmdWaitStrategyWhenTimestampN
     EXPECT_EQ(castToUint64(timestampCompletionAddress), csr.waitUserFenceParams.latestWaitedAddress);
 }
 
+TEST_F(EventSynchronizeTimestampTest, GivenCbEventWithProfilingAndPatchPreambleCounterNotReachedWhenHostSynchronizeThenNotReadyUntilPatchPreambleCounterIsReached) {
+    using TimestampPackets = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
+    MockTagAllocator<TimestampPackets> timestampAllocator(0, neoDevice->getMemoryManager());
+    auto timestampNode = timestampAllocator.getTag();
+    timestampNode->initialize();
+
+    event->resetInOrderTimestampNode(timestampNode, 1);
+    event->setCbEventWithProfiling(true);
+
+    uint64_t counterStorage = 1;
+    NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->getInOrderExecEventHelper().assignData(1u, 0u, 1u, 1u, &counterAllocation, &counterAllocation, counterAllocation.getGpuAddress(), counterAllocation.getGpuAddress(), &counterStorage, 0u, 0u, false, false);
+
+    constexpr uint64_t patchPreambleCounter = 2;
+    uint64_t patchPreambleStorage = 0;
+    NEO::MockGraphicsAllocation patchPreambleAllocation(&patchPreambleStorage, sizeof(patchPreambleStorage));
+    event->getInOrderExecEventHelper().assignPatchPreambleData(patchPreambleCounter, &patchPreambleStorage, patchPreambleAllocation.getGpuAddress(), &patchPreambleAllocation,
+                                                               patchPreambleAllocation.getGpuAddress(), &patchPreambleAllocation);
+    ASSERT_TRUE(event->isActiveExternalCbEvent());
+
+    auto timestampCompletionAddress = static_cast<uint32_t *>(ptrOffset(timestampNode->getCpuBase(), event->getCompletionFieldOffset()));
+    *timestampCompletionAddress = Event::STATE_SIGNALED;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->hostSynchronize(0));
+
+    patchPreambleStorage = patchPreambleCounter;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(0));
+}
+
+HWTEST_F(EventSynchronizeTimestampTest, GivenTbxModeAndCbEventWithProfilingWhenHostSynchronizeThenPatchPreambleCounterIsReadAfterDownload) {
+    using TimestampPackets = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    eventDesc.index = 1;
+    auto tbxEvent = std::unique_ptr<EventImp<uint32_t>>(static_cast<EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device, result)));
+    ASSERT_NE(nullptr, tbxEvent);
+
+    MockTagAllocator<TimestampPackets> timestampAllocator(0, neoDevice->getMemoryManager());
+    auto timestampNode = timestampAllocator.getTag();
+    timestampNode->initialize();
+
+    tbxEvent->resetInOrderTimestampNode(timestampNode, 1);
+    tbxEvent->setCbEventWithProfiling(true);
+
+    uint64_t counterStorage = 1;
+    NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
+    tbxEvent->getInOrderExecEventHelper().initializeLocalTempStorage();
+    tbxEvent->getInOrderExecEventHelper().assignData(1u, 0u, 1u, 1u, &counterAllocation, &counterAllocation, counterAllocation.getGpuAddress(), counterAllocation.getGpuAddress(), &counterStorage, 0u, 0u, false, false);
+
+    constexpr uint64_t patchPreambleCounter = 2;
+    uint64_t patchPreambleStorage = 0;
+    NEO::MockGraphicsAllocation patchPreambleAllocation(&patchPreambleStorage, sizeof(patchPreambleStorage));
+    patchPreambleAllocation.updateTaskCount(1u, ultCsr.getOsContext().getContextId());
+    tbxEvent->getInOrderExecEventHelper().assignPatchPreambleData(patchPreambleCounter, &patchPreambleStorage, patchPreambleAllocation.getGpuAddress(), &patchPreambleAllocation,
+                                                                  patchPreambleAllocation.getGpuAddress(), &patchPreambleAllocation);
+    ASSERT_TRUE(tbxEvent->isActiveExternalCbEvent());
+
+    auto timestampCompletionAddress = static_cast<uint32_t *>(ptrOffset(timestampNode->getCpuBase(), tbxEvent->getCompletionFieldOffset()));
+    *timestampCompletionAddress = Event::STATE_SIGNALED;
+
+    ultCsr.initializeResources(device->getDevicePreemptionMode());
+    uint32_t patchPreambleDownloads = 0;
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr.downloadAllocationImpl);
+    ultCsr.downloadAllocationImpl = [&](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
+        if (&gfxAllocation == &patchPreambleAllocation) {
+            patchPreambleStorage = patchPreambleCounter;
+            patchPreambleDownloads++;
+        }
+    };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tbxEvent->hostSynchronize(0));
+    EXPECT_EQ(1u, patchPreambleDownloads);
+}
+
+HWTEST_F(EventSynchronizeTimestampTest, GivenTbxModeAndStandaloneCbTimestampEventWithProfilingWhenHostSynchronizeThenTimestampNodeIsDownloaded) {
+    using TimestampPacketType = typename FamilyType::TimestampPacketType;
+    using TimestampPackets = NEO::TimestampPackets<TimestampPacketType, NEO::TimestampPacketConstants::preferredPacketCount>;
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+    ze_event_handle_t handle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &handle));
+    auto standaloneEvent = Event::fromHandle(handle);
+
+    MockTagAllocator<TimestampPackets> timestampAllocator(0, neoDevice->getMemoryManager());
+    auto timestampNode = timestampAllocator.getTag();
+    timestampNode->initialize();
+    standaloneEvent->resetInOrderTimestampNode(timestampNode, 1);
+    standaloneEvent->setCbEventWithProfiling(true);
+
+    uint64_t counterStorage = 1;
+    NEO::MockGraphicsAllocation counterAllocation(&counterStorage, sizeof(counterStorage));
+    standaloneEvent->getInOrderExecEventHelper().assignData(1u, 0u, 1u, 1u, &counterAllocation, &counterAllocation, counterAllocation.getGpuAddress(), counterAllocation.getGpuAddress(), &counterStorage, 0u, 0u, false, false);
+
+    auto nodeAllocation = standaloneEvent->getAllocation(device);
+    ASSERT_NE(nullptr, nodeAllocation);
+    nodeAllocation->updateTaskCount(1u, ultCsr.getOsContext().getContextId());
+    auto timestampCompletionAddress = static_cast<TimestampPacketType *>(ptrOffset(timestampNode->getCpuBase(), standaloneEvent->getCompletionFieldOffset()));
+
+    ultCsr.initializeResources(device->getDevicePreemptionMode());
+    uint32_t nodeDownloads = 0;
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation, uint64_t, size_t)>> backupCsrDownloadImpl(&ultCsr.downloadAllocationImpl);
+    ultCsr.downloadAllocationImpl = [&](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
+        if (&gfxAllocation == nodeAllocation) {
+            *timestampCompletionAddress = static_cast<TimestampPacketType>(Event::STATE_SIGNALED);
+            nodeDownloads++;
+        }
+    };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, standaloneEvent->hostSynchronize(0));
+    EXPECT_EQ(1u, nodeDownloads);
+
+    zeEventDestroy(handle);
+}
+
+TEST_F(EventSynchronizeTimestampTest, GivenCompletedCbEventWithProfilingWhenHostSynchronizeThenSuccessIsReturnedWithoutReadingTimestamp) {
+    using TimestampPackets = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
+    MockTagAllocator<TimestampPackets> timestampAllocator(0, neoDevice->getMemoryManager());
+    auto timestampNode = timestampAllocator.getTag();
+    timestampNode->initialize();
+
+    event->resetInOrderTimestampNode(timestampNode, 1);
+    event->setCbEventWithProfiling(true);
+    event->setIsCompleted();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(0));
+}
+
 TEST_F(EventSynchronizeTimestampTest, GivenCounterBasedTimestampEventBackedByNodeWithZeroTotalEventSizeWhenHostSignalThenProfilingCanBeRetrieved) {
     using TimestampPackets = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
     MockTagAllocator<TimestampPackets> timestampAllocator(0, neoDevice->getMemoryManager());

@@ -323,7 +323,10 @@ struct Variable : public VariableHandle {
         noop,
         restore
     };
-    void setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper);
+    void setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper,
+                                       uint64_t patchPreambleCounter, uint64_t patchPreambleGpuAddress, bool newPatchPreambleNoop);
+    void setRegularWaitEventUpdateOperation(bool oldNooped, bool newNooped, NEO::GraphicsAllocation *newEventAllocation, uint64_t waitAddress,
+                                            uint64_t patchPreambleCounter, uint64_t patchPreambleGpuAddress, bool newPatchPreambleNoop);
     void setCbWaitEventPatchPreambleSemWaitOperation(CbWaitEventOperationType operation, MutableSemaphoreWait *mutableSemWait, uint64_t counter, uint64_t deviceGpuAddress, bool newPatchPreambleNoop, bool qwordIndirect);
     void setCbWaitEventPatchPreambleLoadRegImmOperation(CbWaitEventOperationType operation, MutableLoadRegisterImm *mutableLoadRegImm, uint64_t counter, uint32_t cmdIndex, bool newPatchPreambleNoop);
     void addCommitVariableToBaseCmdList();

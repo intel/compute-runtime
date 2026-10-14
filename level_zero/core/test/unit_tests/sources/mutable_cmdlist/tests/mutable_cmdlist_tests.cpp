@@ -10,6 +10,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -4412,6 +4413,185 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         lriHighCmdEvent = genCmdCast<MI_LOAD_REGISTER_IMM *>(lriHighCmdEvent);
         ASSERT_NE(nullptr, lriHighCmdEvent);
     }
+}
+
+struct MutableCommandListPatchPreambleWaitFixture : public MutableCommandListFixture<true, -1> {
+    void setUp() {
+        MutableCommandListFixture<true, -1>::setUp();
+        signalCmdList = createMutableCmdList();
+    }
+
+    void tearDown() {
+        signalCmdList.reset();
+        MutableCommandListFixture<true, -1>::tearDown();
+    }
+
+    void appendSignal(MutableCommandList *cmdList, Event *event) {
+        L0::CmdListWaitEventParameters waitEventParams = {};
+        L0::CmdListSignalEventParameters signalEventParams = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendBarrier(event->toHandle(), 0, nullptr, waitEventParams, signalEventParams));
+    }
+
+    bool captureWaitOnSignaledEvent(Event *event) {
+        appendSignal(signalCmdList.get(), event);
+
+        mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
+        auto eventHandle = event->toHandle();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+        auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+        if (waitEvents.size() != 1u) {
+            return false;
+        }
+        waitEventVar = waitEvents[0];
+
+        // wait on timestamp event signaled before capture is captured in regular shape with patch preamble wait ahead of it
+        auto &semWaits = waitEventVar->getSemWaitList();
+        return semWaits.size() == 2u &&
+               semWaits[patchPreambleSemWaitIndex]->getType() == L0::MCL::MutableSemaphoreWait::cbEventWaitPatchPreambleCounter &&
+               semWaits[eventSemWaitIndex]->getType() == L0::MCL::MutableSemaphoreWait::regularEventWait;
+    }
+
+    void mutateWaitEvent(Event *event) {
+        auto eventHandle = event->toHandle();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+    }
+
+    void assignPatchPreambleCounter(Event *event) {
+        event->getInOrderExecEventHelper().assignPatchPreambleData(patchPreambleCounter, nullptr, 0, nullptr, patchPreambleAllocation.getGpuAddress(), &patchPreambleAllocation);
+    }
+
+    template <typename FamilyType>
+    typename FamilyType::MI_SEMAPHORE_WAIT *getSemWait(size_t index) {
+        return reinterpret_cast<typename FamilyType::MI_SEMAPHORE_WAIT *>(static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(waitEventVar->getSemWaitList()[index])->semWait);
+    }
+
+    template <typename FamilyType>
+    bool isSemWaitNooped(size_t index) {
+        return memoryZeroed(getSemWait<FamilyType>(index), sizeof(typename FamilyType::MI_SEMAPHORE_WAIT));
+    }
+
+    template <typename FamilyType>
+    void expectPatchPreambleWaitNooped() {
+        EXPECT_TRUE(waitEventVar->getDesc().eventValue.patchPreambleNoopState);
+        EXPECT_TRUE(isSemWaitNooped<FamilyType>(patchPreambleSemWaitIndex));
+    }
+
+    template <typename FamilyType>
+    void expectPatchPreambleWaitProgrammed() {
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+        EXPECT_FALSE(waitEventVar->getDesc().eventValue.patchPreambleNoopState);
+        auto semWait = genCmdCast<MI_SEMAPHORE_WAIT *>(getSemWait<FamilyType>(patchPreambleSemWaitIndex));
+        ASSERT_NE(nullptr, semWait);
+        EXPECT_EQ(patchPreambleAllocation.getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWait));
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semWait->getCompareOperation());
+        if (!waitEventVar->getDesc().eventValue.qwordIndirect) {
+            EXPECT_EQ(patchPreambleCounter, semWait->getSemaphoreDataDword());
+        }
+    }
+
+    template <typename FamilyType>
+    void expectEventWaitNooped() {
+        EXPECT_TRUE(waitEventVar->getDesc().eventValue.noopState);
+        EXPECT_TRUE(isSemWaitNooped<FamilyType>(eventSemWaitIndex));
+    }
+
+    template <typename FamilyType>
+    void expectEventWaitProgrammed(Event *event) {
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+        EXPECT_FALSE(waitEventVar->getDesc().eventValue.noopState);
+        auto semWait = genCmdCast<MI_SEMAPHORE_WAIT *>(getSemWait<FamilyType>(eventSemWaitIndex));
+        ASSERT_NE(nullptr, semWait);
+        EXPECT_EQ(event->getCompletionFieldGpuAddress(this->device), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWait));
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semWait->getCompareOperation());
+    }
+
+    static constexpr size_t patchPreambleSemWaitIndex = 0;
+    static constexpr size_t eventSemWaitIndex = 1;
+    static constexpr uint64_t patchPreambleCounter = 4;
+
+    MockGraphicsAllocation patchPreambleAllocation{nullptr, 0xCD000, sizeof(uint64_t)};
+    std::unique_ptr<MutableCommandList> signalCmdList;
+    L0::MCL::Variable *waitEventVar = nullptr;
+};
+
+using MutableCommandListPatchPreambleWaitTest = Test<MutableCommandListPatchPreambleWaitFixture>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListPatchPreambleWaitTest,
+            givenExternalCbTimestampEventSignaledBeforeCaptureWhenRefreshingThenEventWaitIsUpdatedAndPatchPreambleWaitFollowsPatchPreambleCounter) {
+    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
+    auto event = createTestEvent(true, false, true, false, true);
+    ASSERT_TRUE(captureWaitOnSignaledEvent(event));
+    expectPatchPreambleWaitNooped<FamilyType>();
+
+    appendSignal(signalCmdList.get(), event);
+    mutateWaitEvent(event);
+    expectPatchPreambleWaitNooped<FamilyType>();
+    expectEventWaitProgrammed<FamilyType>(event);
+
+    assignPatchPreambleCounter(event);
+    mutateWaitEvent(event);
+    expectPatchPreambleWaitProgrammed<FamilyType>();
+    expectEventWaitProgrammed<FamilyType>(event);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListPatchPreambleWaitTest,
+            givenNoopedWaitOnExternalCbTimestampEventSignaledBeforeCaptureWhenMutatingBackThenEventWaitIsRestoredAndPatchPreambleWaitFollowsPatchPreambleCounter) {
+    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
+    auto event = createTestEvent(true, false, true, false, true);
+    auto unsignaledEvent = createTestEvent(true, false, true, false, true);
+    ASSERT_TRUE(captureWaitOnSignaledEvent(event));
+
+    mutateWaitEvent(unsignaledEvent);
+    expectPatchPreambleWaitNooped<FamilyType>();
+    expectEventWaitNooped<FamilyType>();
+
+    mutateWaitEvent(event);
+    expectPatchPreambleWaitNooped<FamilyType>();
+    expectEventWaitProgrammed<FamilyType>(event);
+
+    mutateWaitEvent(unsignaledEvent);
+    expectEventWaitNooped<FamilyType>();
+
+    assignPatchPreambleCounter(event);
+    mutateWaitEvent(event);
+    expectPatchPreambleWaitProgrammed<FamilyType>();
+    expectEventWaitProgrammed<FamilyType>(event);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListPatchPreambleWaitTest,
+            givenWaitOnExternalCbTimestampEventSignaledBeforeCaptureWhenMutatingIntoTimestampEventBoundToCmdListThenBothWaitsAreNoopedOnRegularPath) {
+    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
+    auto event = createTestEvent(true, false, true, false, true);
+    auto boundEvent = createTestEvent(true, false, true, false, true);
+    appendSignal(mutableCommandList.get(), boundEvent);
+    ASSERT_TRUE(boundEvent->hasInOrderTimestampNode());
+    assignPatchPreambleCounter(boundEvent);
+
+    ASSERT_TRUE(captureWaitOnSignaledEvent(event));
+
+    mutateWaitEvent(boundEvent);
+    expectEventWaitNooped<FamilyType>();
+    // patch preamble noop state follows the new patch preamble counter, the command itself is nooped together with the event wait
+    EXPECT_FALSE(waitEventVar->getDesc().eventValue.patchPreambleNoopState);
+    EXPECT_TRUE(isSemWaitNooped<FamilyType>(patchPreambleSemWaitIndex));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

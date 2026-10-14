@@ -1119,7 +1119,9 @@ bool testExternalWaitCbEventsGraphs(ze_context_handle_t &context,
                                     TestKernelsContainer &testKernels,
                                     bool aubMode,
                                     const GraphDumpSettings &dumpSettings,
-                                    bool useCopyEngineForMemoryTransfers) {
+                                    bool useCopyEngineForMemoryTransfers,
+                                    uint32_t executionCount,
+                                    bool primedTimestampWait) {
     bool validRet = true;
 
     constexpr size_t allocSize = 4096;
@@ -1142,7 +1144,7 @@ bool testExternalWaitCbEventsGraphs(ze_context_handle_t &context,
                                                      1, &eventSynchronization, counterBasedDesc.signal, 0u);
 
     counterBasedDesc.signal = 0;
-    counterBasedDesc.flags = commonFlags;
+    counterBasedDesc.flags = commonFlags | (primedTimestampWait ? ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP : 0);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
@@ -1182,6 +1184,13 @@ bool testExternalWaitCbEventsGraphs(ze_context_handle_t &context,
     memset(outputBuffer, 0, allocSize);
     memset(zeBufferIn, 0, allocSize);
     memset(zeBufferOut, 0, allocSize);
+
+    void *primeBuffer = nullptr;
+    if (primedTimestampWait) {
+        SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, sizeof(uint32_t), sizeof(uint32_t), &primeBuffer));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(inputOutputCmdList, primeBuffer, inputBuffer, sizeof(uint32_t), eventInput, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(inputOutputCmdList, primeBuffer, inputBuffer, sizeof(uint32_t), eventOutput, 0, nullptr));
+    }
 
     ze_graph_handle_t virtualGraph = nullptr;
     ze_graph_handle_t virtualInputGraph = nullptr;
@@ -1226,37 +1235,27 @@ bool testExternalWaitCbEventsGraphs(ze_context_handle_t &context,
     ze_executable_graph_handle_t physicalOutputGraph = nullptr;
     SUCCESS_OR_TERMINATE(zeGraphInstantiateExt(virtualOutputGraph, nullptr, &physicalOutputGraph));
 
-    // Dispatch executable graphs
-    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(inputOutputCmdList, physicalInputGraph, nullptr, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(replayCmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(inputOutputCmdList, physicalOutputGraph, nullptr, nullptr, 0, nullptr));
+    for (uint32_t i = 0; i < executionCount; ++i) {
+        // Dispatch executable graphs
+        SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(inputOutputCmdList, physicalInputGraph, nullptr, nullptr, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(replayCmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(inputOutputCmdList, physicalOutputGraph, nullptr, nullptr, 0, nullptr));
 
-    SUCCESS_OR_TERMINATE(zeEventHostSynchronize(eventSynchronization, std::numeric_limits<uint64_t>::max()));
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(eventSynchronization, std::numeric_limits<uint64_t>::max()));
 
-    // verify data
-    if (aubMode == false) {
-        validRet &= LevelZeroBlackBoxTests::validateToValue(expectedValue, outputBuffer, elemCount);
-        std::cerr << "Validation result after first execution: " << (validRet ? "success" : "failure") << std::endl;
-    }
+        // verify data
+        if (aubMode == false) {
+            bool executionValid = LevelZeroBlackBoxTests::validateToValue(expectedValue, outputBuffer, elemCount);
+            std::cerr << "Validation result after #" << i + 1 << " execution: " << (executionValid ? "success" : "failure") << std::endl;
+            validRet &= executionValid;
+        }
 
-    // reset zeBuffer and outputBuffer for second execution
-    uint8_t resetValue = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(inputOutputCmdList, zeBufferIn, &resetValue, sizeof(resetValue), allocSize, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(inputOutputCmdList, zeBufferOut, &resetValue, sizeof(resetValue), allocSize, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(inputOutputCmdList, outputBuffer, &resetValue, sizeof(resetValue), allocSize, nullptr, 0, nullptr));
-
-    // Dispatch executable graphs
-    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(inputOutputCmdList, physicalInputGraph, nullptr, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(replayCmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(inputOutputCmdList, physicalOutputGraph, nullptr, nullptr, 0, nullptr));
-
-    SUCCESS_OR_TERMINATE(zeEventHostSynchronize(eventSynchronization, std::numeric_limits<uint64_t>::max()));
-
-    // verify data
-    if (aubMode == false) {
-        auto validRet2 = LevelZeroBlackBoxTests::validateToValue(expectedValue, outputBuffer, elemCount);
-        std::cerr << "Validation result after second execution: " << (validRet2 ? "success" : "failure") << std::endl;
-        validRet &= validRet2;
+        uint8_t resetValue = 0;
+        if (!primedTimestampWait && i < executionCount - 1) {
+            SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(inputOutputCmdList, zeBufferIn, &resetValue, sizeof(resetValue), allocSize, nullptr, 0, nullptr));
+            SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(inputOutputCmdList, zeBufferOut, &resetValue, sizeof(resetValue), allocSize, nullptr, 0, nullptr));
+            SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(inputOutputCmdList, outputBuffer, &resetValue, sizeof(resetValue), allocSize, nullptr, 0, nullptr));
+        }
     }
 
     // Final sync to ensure all operations are done
@@ -1278,6 +1277,9 @@ bool testExternalWaitCbEventsGraphs(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualInputGraph));
     SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualOutputGraph));
+    if (primeBuffer) {
+        SUCCESS_OR_TERMINATE(zeMemFree(context, primeBuffer));
+    }
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBufferIn));
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBufferOut));
     SUCCESS_OR_TERMINATE(zeMemFree(context, outputBuffer));
@@ -1296,7 +1298,8 @@ bool testEmptyExternalWaitCbEvents(ze_context_handle_t &context,
                                    bool aubMode,
                                    const GraphDumpSettings &dumpSettings,
                                    bool useCopyEngineForMemoryTransfers,
-                                   uint32_t executionCount) {
+                                   uint32_t executionCount,
+                                   bool primedTimestampWait) {
     bool validRet = true;
 
     constexpr size_t allocSize = 4096;
@@ -1312,14 +1315,14 @@ bool testEmptyExternalWaitCbEvents(ze_context_handle_t &context,
 
     constexpr ze_event_counter_based_flags_t commonFlags = (ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL);
     ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
-    counterBasedDesc.flags = commonFlags;
+    counterBasedDesc.flags = commonFlags | (primedTimestampWait ? ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP : 0);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
                                                      1, &eventInput, counterBasedDesc.signal, 0u);
 
     counterBasedDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
-    counterBasedDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
+    counterBasedDesc.flags = commonFlags | ZE_EVENT_COUNTER_BASED_FLAG_HOST_VISIBLE;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
                                                      true, &counterBasedDesc,
@@ -1348,6 +1351,12 @@ bool testEmptyExternalWaitCbEvents(ze_context_handle_t &context,
     }
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &outputBuffer));
     memset(outputBuffer, 0, allocSize);
+
+    void *primeBuffer = nullptr;
+    if (primedTimestampWait) {
+        SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, sizeof(uint32_t), sizeof(uint32_t), &primeBuffer));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(inputCmdList, primeBuffer, inputBuffer, sizeof(uint32_t), eventInput, 0, nullptr));
+    }
 
     ze_graph_handle_t virtualGraph = nullptr;
 
@@ -1401,6 +1410,9 @@ bool testEmptyExternalWaitCbEvents(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeGraphDestroyExt(virtualGraph));
     SUCCESS_OR_TERMINATE(zeMemFree(context, outputBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, inputBuffer));
+    if (primeBuffer) {
+        SUCCESS_OR_TERMINATE(zeMemFree(context, primeBuffer));
+    }
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(replayCmdList));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(inputCmdList));
     SUCCESS_OR_TERMINATE(zeEventDestroy(eventInput));
@@ -3394,7 +3406,7 @@ int main(int argc, char *argv[]) {
             currentTest = getCaseNameExternalWaitEvents(testTitle, useCopyEngineForMemoryTransfers);
 
             LevelZeroBlackBoxTests::printTestHeader(currentTest);
-            casePass = testExternalWaitCbEventsGraphs(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers);
+            casePass = testExternalWaitCbEventsGraphs(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, 2, false);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
@@ -3410,7 +3422,33 @@ int main(int argc, char *argv[]) {
             currentTest = getCaseNameEmptyExternalWaitEvents(useCopyEngineForMemoryTransfers, executionCount);
 
             LevelZeroBlackBoxTests::printTestHeader(currentTest);
-            casePass = testEmptyExternalWaitCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, executionCount);
+            casePass = testEmptyExternalWaitCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, executionCount, false);
+            LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+            boxPass &= casePass;
+        }
+        if (testSubMask.test(5)) {
+            std::string testTitle = "External Wait CB Events with device timestamp signaled before graph capture";
+            std::ostringstream caseName;
+            caseName << testTitle << std::endl;
+            caseName << "Execution count: " << executionCount << std::endl;
+            caseName << "Copy engine selected for memory transfers: " << (useCopyEngineForMemoryTransfers ? "yes" : "no");
+            currentTest = caseName.str();
+
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
+            casePass = testEmptyExternalWaitCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, executionCount, true);
+            LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+            boxPass &= casePass;
+        }
+        if (testSubMask.test(6)) {
+            std::string testTitle = "External Wait CB Events with device timestamp signaled before graph capture using graphs for input/output";
+            std::ostringstream caseName;
+            caseName << testTitle << std::endl;
+            caseName << "Execution count: " << executionCount << std::endl;
+            caseName << "Copy engine selected for memory transfers: " << (useCopyEngineForMemoryTransfers ? "yes" : "no");
+            currentTest = caseName.str();
+
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
+            casePass = testExternalWaitCbEventsGraphs(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, executionCount, true);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
         }
