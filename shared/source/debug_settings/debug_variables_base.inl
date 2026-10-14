@@ -513,7 +513,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableL3FlushAfterPostSync, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceUsmAllocationPool, -1, "-1: default (enabled, 2MB), 0: disabled, >=1: enabled, size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostUsmAllocationPool, -1, "-1: default (enabled, 2MB), 0: disabled, >=1: enabled, size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmAllocationPoolManager, -1, "-1: default, 0: disabled, 1: enabled, use growing pools")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmPoolResidencyTracking, -1, "-1: default, 0: disabled, 1: enabled, track residency per chunk")
 DECLARE_DEBUG_VARIABLE(int32_t, UsmPoolChunkAllocatorSizeThreshold, -1, "-1: default, >=0: size threshold in bytes passed to pool HeapAllocator")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIsaAllocationPool, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UseKmdAllocationForIsa, -1, "-1: default, 0: disabled, 1: enabled")

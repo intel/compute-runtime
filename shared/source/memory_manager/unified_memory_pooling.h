@@ -99,15 +99,8 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     uint64_t getPoolAddress() const;
     std::mutex &getMutex() noexcept { return mtx; }
     void enableResidencyTracking() { this->trackResidency = true; }
-    bool isTrackingResidency() { return this->trackResidency; }
 
-    MemoryOperationsStatus makeChunkResident(const void *ptr) {
-        return this->makeChunkResident(ptr, this->device, this->allocation);
-    }
     MemoryOperationsStatus makeChunkResident(const void *ptr, Device *targetDevice, GraphicsAllocation *targetAllocation);
-    MemoryOperationsStatus evictChunk(const void *ptr) {
-        return this->evictChunk(ptr, this->device);
-    }
     MemoryOperationsStatus evictChunk(const void *ptr, Device *targetDevice);
 
     void setCustomCleanup(CustomCleanupFn customCleanup) {

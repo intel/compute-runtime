@@ -685,16 +685,9 @@ ze_result_t Context::registerMemoryFreeCallback(zex_memory_free_callback_ext_des
 ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, size_t size) {
     Device *device = L0::Device::fromHandle(hDevice);
     NEO::Device *neoDevice = device->getNEODevice();
-    if (auto poolLookup = neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr); poolLookup.pool && poolLookup.pool->isTrackingResidency()) {
-        auto result = poolLookup.pool->makeChunkResident(ptr);
-        return changeMemoryOperationStatusToL0ResultType(result);
-    }
-    for (auto peerL0Device : this->getDriverHandle()->devices) {
-        if (device == peerL0Device) {
-            continue;
-        }
-        auto peerDevice = peerL0Device->getNEODevice();
-        if (auto poolLookup = peerDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr); poolLookup.pool && poolLookup.pool->isTrackingResidency()) {
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    if (allocData) {
+        if (auto poolLookup = getUsmPoolOwningPtr(ptr, allocData); poolLookup.pool) {
             if (false == poolLookup.isAllocatedInPool()) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -707,9 +700,6 @@ ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, s
             auto result = poolLookup.pool->makeChunkResident(ptr, neoDevice, poolAllocation);
             return changeMemoryOperationStatusToL0ResultType(result);
         }
-    }
-    if (auto hostPoolLookup = this->getDriverHandle()->getHostUsmPoolOwningPtr(ptr); hostPoolLookup.pool && false == hostPoolLookup.isAllocatedInPool()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto allocation = device->getDriverHandle()->resolveMemoryAllocation(device, ptr, size, true);
     if (allocation == nullptr) {
@@ -724,7 +714,6 @@ ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, s
     ze_result_t res = changeMemoryOperationStatusToL0ResultType(success);
 
     if (ZE_RESULT_SUCCESS == res) {
-        auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
         if (allocData && allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
             auto driverHandle = device->getDriverHandle();
             std::lock_guard<std::mutex> lock(driverHandle->sharedMakeResidentAllocationsLock);
@@ -738,23 +727,11 @@ ze_result_t Context::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, s
 ze_result_t Context::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t size) {
     Device *device = L0::Device::fromHandle(hDevice);
     NEO::Device *neoDevice = device->getNEODevice();
-    if (auto poolLookup = neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr); poolLookup.pool && poolLookup.pool->isTrackingResidency()) {
-        auto result = poolLookup.pool->evictChunk(ptr);
-        return changeMemoryOperationStatusToL0ResultType(result);
-    }
-    for (auto peerL0Device : this->getDriverHandle()->devices) {
-        if (device == peerL0Device) {
-            continue;
-        }
-        auto peerDevice = peerL0Device->getNEODevice();
-        if (auto poolLookup = peerDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr); poolLookup.pool && poolLookup.pool->isTrackingResidency()) {
+    if (auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr); allocData) {
+        if (auto poolLookup = getUsmPoolOwningPtr(ptr, allocData); poolLookup.pool) {
             auto result = poolLookup.pool->evictChunk(ptr, neoDevice);
             return changeMemoryOperationStatusToL0ResultType(result);
         }
-    }
-
-    if (auto hostPoolLookup = this->getDriverHandle()->getHostUsmPoolOwningPtr(ptr); hostPoolLookup.pool) {
-        return hostPoolLookup.isAllocatedInPool() ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto allocation = device->getDriverHandle()->resolveMemoryAllocation(device, ptr, size, false);
     if (allocation == nullptr) {

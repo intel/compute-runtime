@@ -459,16 +459,11 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
                                                                          NEO::DeviceFactory::isHwModeSelected() &&
                                                                          !multiDevice);
 
-    bool trackResidency = true;
-    if (NEO::debugManager.flags.EnableUsmPoolResidencyTracking.get() != -1) {
-        trackResidency = NEO::debugManager.flags.EnableUsmPoolResidencyTracking.get() != 0;
-    }
-
     if (enabled) {
         const bool uncompressedPool = isAccessedByAnyPeer(this->devices, device);
         device.getDeviceUsmMemAllocPoolFacade().initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields,
                                                            &device, this->svmAllocsManager,
-                                                           {getPoolCleanupFn(), trackResidency, compressionEnabledByDefault, getPoolPeerAllocationsFn(), uncompressedPool});
+                                                           {getPoolCleanupFn(), true, compressionEnabledByDefault, getPoolPeerAllocationsFn(), uncompressedPool});
     }
 }
 

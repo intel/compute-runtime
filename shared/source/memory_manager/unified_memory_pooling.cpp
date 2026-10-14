@@ -346,6 +346,9 @@ MemoryOperationsStatus UsmMemAllocPool::makeChunkResident(const void *ptr, Devic
     if (nullptr == allocationInfo) {
         return MemoryOperationsStatus::memoryNotFound;
     }
+    if (false == this->trackResidency) {
+        return this->makePoolResident(targetDevice, targetAllocation);
+    }
 
     auto &chunkIsResident = allocationInfo->isResident[targetDevice];
     if (chunkIsResident) {
@@ -372,6 +375,9 @@ MemoryOperationsStatus UsmMemAllocPool::evictChunk(const void *ptr, Device *targ
     auto allocationInfo = allocations.get(ptr);
     if (nullptr == allocationInfo) {
         return MemoryOperationsStatus::memoryNotFound;
+    }
+    if (false == this->trackResidency) {
+        return MemoryOperationsStatus::success;
     }
 
     auto isResidentIt = allocationInfo->isResident.find(targetDevice);
