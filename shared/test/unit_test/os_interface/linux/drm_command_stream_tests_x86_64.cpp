@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/direct_submission/direct_submission_hw.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
@@ -72,4 +74,54 @@ HWTEST2_TEMPLATED_F(DrmCommandStreamUllsLightTest, givenWaitpkgParamsSetByDebugV
     EXPECT_EQ(WaitUtils::counterValueForEventHostSync, 1000u);
     EXPECT_EQ(WaitUtils::waitPkgThresholdInMicroSeconds, 35);
     EXPECT_EQ(WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds, 35);
+}
+
+TEST(DrmTest, Given57BitCpuWithoutLa57And48BitGpuWhenAdjustingThenRangeIsClampedTo47Bits) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
+    VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);
+    mockCpuInfo->featuresDetected = true;
+    mockCpuInfo->virtualAddressSize = 57u;
+    mockCpuInfo->cpuFlags = "";
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    drm.setSharedSystemAllocEnable(true);
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = caps;
+
+    drm.adjustSharedSystemMemCapabilities();
+    EXPECT_TRUE(drm.isSharedSystemAllocEnabled());
+    EXPECT_EQ(caps, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
+    EXPECT_TRUE(drm.hasPageFaultSupport());
+    uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
+    EXPECT_EQ(CpuInfo::getInstance().getMaxCpuVirtualAddress() + 1, sharedSystemRange);
+}
+
+TEST(DrmTest, Given57BitCpuAddressRangeAnd57BitGpuAddressRangeThenSharedSystemUsmIsEnabled) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
+    VariableBackup<MockCpuInfo> cpuInfoBackup(mockCpuInfo);
+    mockCpuInfo->featuresDetected = true;
+    mockCpuInfo->virtualAddressSize = 57u;
+    mockCpuInfo->cpuFlags = "la57";
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(57);
+    drm.setSharedSystemAllocEnable(true);
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = caps;
+
+    drm.adjustSharedSystemMemCapabilities();
+    EXPECT_TRUE(drm.isSharedSystemAllocEnabled());
+    EXPECT_EQ(caps, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
+    EXPECT_TRUE(drm.hasPageFaultSupport());
+    uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
+    EXPECT_EQ(CpuInfo::getInstance().getMaxCpuVirtualAddress() + 1, sharedSystemRange);
 }

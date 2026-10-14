@@ -5087,3 +5087,38 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingDisabledWhenIsDeferBa
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingSupported());
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
 }
+
+TEST_F(IoctlHelperXeTest, givenSharedSystemRangeLimitedToUserSpaceWhenCallingVmUnbindForNonSvmHeapAddressThenOneBindOp) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    drm->setSharedSystemAllocAddressRange(maxNBitValue(47) + 1);
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = 0x1234;
+    vmBindParams.sharedSystemUsmEnabled = true;
+    vmBindParams.start = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper()->canonize(maxNBitValue(47) + 1);
+    vmBindParams.length = MemoryConstants::pageSize64k;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    drm->vmBindInputs.clear();
+    drm->vmBindOpsInputs.clear();
+    drm->syncInputs.clear();
+    drm->waitUserFenceInputs.clear();
+
+    ASSERT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+
+    ASSERT_EQ(1u, drm->vmBindInputs.size());
+    EXPECT_EQ(1u, drm->vmBindInputs[0].num_binds);
+    EXPECT_EQ(0u, drm->vmBindInputs[0].vector_of_binds);
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_UNMAP), drm->vmBindInputs[0].bind.op);
+    EXPECT_EQ(0u, drm->vmBindInputs[0].bind.flags & DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR);
+    EXPECT_TRUE(drm->vmBindOpsInputs.empty());
+}

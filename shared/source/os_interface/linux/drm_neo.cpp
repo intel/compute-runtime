@@ -2213,11 +2213,8 @@ void Drm::adjustSharedSystemMemCapabilities() {
 
     if (requestSharedSystemUsm) {
         uint64_t gpuAddressLength = (this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.gpuAddressSpace + 1);
-        uint64_t cpuAddressLength = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
+        uint64_t cpuAddressLength = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress() + 1;
         const bool la57Present = CpuInfo::getInstance().isCpuFlagPresent("la57");
-        if ((cpuAddressLength > (maxNBitValue(48) + 1)) && !la57Present) {
-            cpuAddressLength = (maxNBitValue(48) + 1);
-        }
         if (gpuAddressLength < cpuAddressLength) {
             requestSharedSystemUsm = false;
             if (la57Present) {

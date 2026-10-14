@@ -2792,7 +2792,7 @@ TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsTru
     EXPECT_EQ(caps, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
     EXPECT_TRUE(drm.hasPageFaultSupport());
     uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
-    EXPECT_EQ((maxNBitValue(48) + 1), sharedSystemRange);
+    EXPECT_EQ(CpuInfo::getInstance().getMaxCpuVirtualAddress() + 1, sharedSystemRange);
 }
 
 TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsFalse) {
