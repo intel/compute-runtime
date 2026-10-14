@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -547,6 +548,21 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCallDeferMOCSTo
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.deferMOCSToPatIndex(true));
+}
+
+XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenMidThreadPreemptionWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenTrueReturnedOnlyForHostWaitablePostSync) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.isWalkerPreemptionFallbackRequired(PreemptionMode::MidThread, true));
+    EXPECT_FALSE(productHelper.isWalkerPreemptionFallbackRequired(PreemptionMode::MidThread, false));
+}
+
+XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenNonMidThreadPreemptionWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenFalseReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    for (auto preemptionMode : {PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup}) {
+        for (bool hostWaitablePostSync : {true, false}) {
+            EXPECT_FALSE(productHelper.isWalkerPreemptionFallbackRequired(preemptionMode, hostWaitablePostSync));
+        }
+    }
 }
 
 using LriHelperTestsXe3pCore = ::testing::Test;
