@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
@@ -48,6 +49,11 @@ void ProductHelperHw<gfxProduct>::adjustEngineGroupType(EngineGroupType &engineG
 template <>
 bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
     return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isWalkerPreemptionFallbackRequired(PreemptionMode preemptionMode, bool hostWaitablePostSync) const {
+    return hostWaitablePostSync && (preemptionMode == PreemptionMode::MidThread);
 }
 
 template <>
