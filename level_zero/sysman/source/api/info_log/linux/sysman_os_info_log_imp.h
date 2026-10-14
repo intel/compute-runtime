@@ -22,6 +22,7 @@ class TraceFsApi;
 class LinuxInfoLogImp : public OsInfoLog {
   public:
     static std::unique_ptr<TraceFsApi> (*createTraceFsApi)();
+    static bool (*isCperEventSupported)();
 
     LinuxInfoLogImp(zes_info_log_format_ext_t format);
     ~LinuxInfoLogImp() override;

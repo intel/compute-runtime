@@ -11,7 +11,6 @@
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_netlink.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
-#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/events/linux/mock_events.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api.h"
@@ -90,15 +89,6 @@ class MockDrmNlApiForEvents : public MockDrmNlApi {
 
     bool isSubscribedToEvents() const override {
         return subscribedToEvents;
-    }
-};
-
-class MockProductHelperForNetlink : public L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
-  public:
-    bool isNetlinkSupported = true;
-
-    bool isNetlinkEventSupported() override {
-        return isNetlinkSupported;
     }
 };
 
@@ -547,7 +537,8 @@ TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkInitializeSucceedsWhenInitRunsVia
     zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS};
 
-    bool result = pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0);
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, result));
 
     EXPECT_NE(pLinuxEventsUtil->pDrmNl, nullptr);
     EXPECT_FALSE(result);
@@ -555,7 +546,7 @@ TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkInitializeSucceedsWhenInitRunsVia
     pDriverImp->pUdevLib = nullptr;
 }
 
-TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkInitializeFailsListNodesWhenInitRunsViaListenSystemEventsThenPDrmNlIsNull) {
+TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkInitializeFailsListNodesAndRasEventIsRegisteredWhenListeningForSystemEventsThenPDrmNlIsNullAndDependencyUnavailableErrorIsReturned) {
     auto pDriverImp = std::make_unique<PublicLinuxSysmanDriverImpForNetlinkListen>();
 
     auto pMockDrmNl = new MockDrmNlApiForEvents("testCard");
@@ -586,7 +577,87 @@ TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkInitializeFailsListNodesWhenInitR
     zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS};
 
-    bool result = pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0);
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, result));
+
+    EXPECT_EQ(pLinuxEventsUtil->pDrmNl, nullptr);
+    EXPECT_FALSE(result);
+
+    pDriverImp->pUdevLib = nullptr;
+}
+
+TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkSubscribeFailsAndRasEventIsRegisteredWhenListeningForSystemEventsThenPDrmNlIsNullAndDependencyUnavailableErrorIsReturned) {
+    auto pDriverImp = std::make_unique<PublicLinuxSysmanDriverImpForNetlinkListen>();
+
+    auto pMockDrmNl = new MockDrmNlApiForEvents("testCard");
+    pMockDrmNl->subscribeReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
+    pDriverImp->pDrmNl = pMockDrmNl;
+
+    auto pMockUdevLib = std::make_unique<EventsUdevLibMock>();
+    pDriverImp->pUdevLib = pMockUdevLib.get();
+
+    std::vector<DrmRasNode> rasNodes = {{0, pLinuxSysmanImp->getDevicePciBdf(), "correctable-errors", 1}};
+    MockNetlinkRasUtilForEvents::rasNodes = rasNodes;
+
+    auto pLinuxEventsUtil = std::make_unique<PublicLinuxEventsUtil>(pDriverImp.get());
+
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = netlinkTestReadPipeFd;
+        pipeFd[1] = netlinkTestWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll,
+                                                              [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+                                                                  return 0;
+                                                              });
+    VariableBackup<decltype(SysCalls::sysCallsClose)> mockClose(&SysCalls::sysCallsClose, [](int fd) -> int { return 0; });
+
+    zes_event_type_flags_t pEvents[1] = {0};
+    zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS};
+
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, result));
+
+    EXPECT_EQ(pLinuxEventsUtil->pDrmNl, nullptr);
+    EXPECT_FALSE(result);
+
+    pDriverImp->pUdevLib = nullptr;
+}
+
+TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkInitializeFailsAndNoRasEventIsRegisteredWhenListeningForSystemEventsThenSuccessIsReturned) {
+    auto pDriverImp = std::make_unique<PublicLinuxSysmanDriverImpForNetlinkListen>();
+
+    auto pMockDrmNl = new MockDrmNlApiForEvents("testCard");
+    pMockDrmNl->subscribeReturnStatus = ZE_RESULT_SUCCESS;
+    auto *pMockDrmNlBase = static_cast<MockDrmNlApi *>(pMockDrmNl);
+    pMockDrmNlBase->listNodesReturnStatus = ZE_RESULT_ERROR_UNKNOWN;
+    pDriverImp->pDrmNl = pMockDrmNl;
+
+    auto pMockUdevLib = std::make_unique<EventsUdevLibMock>();
+    pDriverImp->pUdevLib = pMockUdevLib.get();
+
+    MockNetlinkRasUtilForEvents::rasNodes.clear();
+
+    auto pLinuxEventsUtil = std::make_unique<PublicLinuxEventsUtil>(pDriverImp.get());
+
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = netlinkTestReadPipeFd;
+        pipeFd[1] = netlinkTestWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll,
+                                                              [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+                                                                  return 0;
+                                                              });
+    VariableBackup<decltype(SysCalls::sysCallsClose)> mockClose(&SysCalls::sysCallsClose, [](int fd) -> int { return 0; });
+
+    zes_event_type_flags_t pEvents[1] = {0};
+    zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_MEM_HEALTH};
+
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, result));
 
     EXPECT_EQ(pLinuxEventsUtil->pDrmNl, nullptr);
     EXPECT_FALSE(result);
@@ -621,7 +692,8 @@ TEST_F(SysmanEventsNetlinkFixture, GivenNullPhDevicesWhenListenSystemEventsCalle
     std::vector<zes_event_type_flags_t> registeredEvents = {};
 
     // phDevices == nullptr and count == 0: pDevice will be nullptr inside init()
-    bool result = pLinuxEventsUtil->listenSystemEvents(pEvents, 0, registeredEvents, nullptr, 0);
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsUtil->listenSystemEvents(pEvents, 0, registeredEvents, nullptr, 0, result));
 
     // pUdevLib is initialized (init ran), pDrmNl depends on netlinkInitialize with null device
     EXPECT_NE(pLinuxEventsUtil->pUdevLib, nullptr);
@@ -672,7 +744,8 @@ TEST_F(SysmanEventsNetlinkFixture, GivenIsNetlinkSubscribedWhenListenSystemEvent
     zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS};
 
-    bool result = pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0);
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, result));
 
     EXPECT_FALSE(result);
     EXPECT_EQ(pEvents[0], 0u);
@@ -728,7 +801,8 @@ TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkEventReadyWhenListenSystemEventsC
     zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS};
 
-    bool result = pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0);
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, result));
 
     EXPECT_TRUE(result);
     EXPECT_EQ(pEvents[0], ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS);
@@ -782,7 +856,8 @@ TEST_F(SysmanEventsNetlinkFixture, GivenNetlinkEventReadyWhenHandleNetlinkEvents
     zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS};
 
-    bool result = pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0);
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, result));
 
     EXPECT_FALSE(result);
     EXPECT_EQ(pEvents[0], 0u);
@@ -871,7 +946,8 @@ TEST_F(SysmanEventsNetlinkFixture, GivenUdevAndNetlinkBothReadySimultaneouslyWhe
     zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS};
 
-    bool result = pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0);
+    bool result = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, result));
 
     EXPECT_TRUE(result);
     EXPECT_EQ(pEvents[0], static_cast<zes_event_type_flags_t>(ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
@@ -1024,11 +1100,12 @@ TEST_F(SysmanEventsNetlinkFixture, GivenInitNetlinkFailedOnFirstListenWhenSecond
     zes_device_handle_t phDevices[1] = {pSysmanDeviceImp->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents = {ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS};
 
-    pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0);
+    bool eventReceived = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, eventReceived));
     EXPECT_EQ(pLinuxEventsUtil->pDrmNl, nullptr);
 
     pMockProductHelperImp->isNetlinkSupported = true;
-    pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pLinuxEventsUtil->listenSystemEvents(pEvents, 1, registeredEvents, phDevices, 0, eventReceived));
 
     EXPECT_EQ(pLinuxEventsUtil->pDrmNl, nullptr);
 

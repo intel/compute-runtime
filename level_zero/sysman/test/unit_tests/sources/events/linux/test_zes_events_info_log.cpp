@@ -63,6 +63,7 @@ class SysmanEventsInfoLogFixture : public SysmanDeviceFixture {
 
         loadFuncBackup = mockLoadFunc;
         createTraceFsApiBackup = mockCreateTraceFsApi;
+        cperEventSupportedBackup = []() { return true; };
 
         openBackup = MockTraceFsApiWithData::mockSysCallsOpen;
         readBackup = mockSysCallsRead;
@@ -244,6 +245,7 @@ class SysmanEventsInfoLogFixture : public SysmanDeviceFixture {
     VariableBackup<bool> allowFakeDevicePathBackup{&NEO::SysCalls::allowFakeDevicePath};
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncBackup{&NEO::OsLibrary::loadFunc};
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup{&LinuxInfoLogImp::createTraceFsApi};
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperEventSupportedBackup{&LinuxInfoLogImp::isCperEventSupported};
     MockPerCpuCountersWithoutDrops perCpuCountersBackup;
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen};
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readBackup{&NEO::SysCalls::sysCallsRead};
@@ -509,7 +511,9 @@ TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredWhenCalling
     zes_event_type_flags_t pEvents[count] = {0};
     zes_event_type_flags_t driverEvents = 0;
 
-    EXPECT_TRUE(pEventsUtil->listenSystemEvents(pEvents, count, registeredEvents, phDevices, 0u, &driverEvents));
+    bool eventReceived = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pEventsUtil->listenSystemEvents(pEvents, count, registeredEvents, phDevices, 0u, eventReceived, &driverEvents));
+    EXPECT_TRUE(eventReceived);
     EXPECT_EQ(0u, pEvents[0]);
     EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT), driverEvents);
 

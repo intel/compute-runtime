@@ -13,6 +13,7 @@ namespace Sysman {
 class TraceFsApi {};
 
 std::unique_ptr<TraceFsApi> (*LinuxInfoLogImp::createTraceFsApi)() = []() -> std::unique_ptr<TraceFsApi> { return nullptr; };
+bool (*LinuxInfoLogImp::isCperEventSupported)() = []() { return false; };
 
 LinuxInfoLogImp::~LinuxInfoLogImp() = default;
 

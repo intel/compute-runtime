@@ -84,7 +84,8 @@ class LinuxEventsUtil {
     bool checkIfMemHealthChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkIfFabricPortStatusChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkDeviceWedgedEvent(void *dev, zes_event_type_flags_t &pEvent);
-    bool listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout, zes_event_type_flags_t *pDriverEvents = nullptr);
+    ze_result_t checkEventSourcesAvailable(const std::vector<zes_event_type_flags_t> &registeredEvents, zes_event_type_flags_t driverRegisteredEvents, uint32_t count, zes_device_handle_t *phDevices);
+    ze_result_t listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout, bool &eventReceived, zes_event_type_flags_t *pDriverEvents = nullptr);
     bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices);
     void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess);
     MOCKABLE_VIRTUAL void updateCperPollSource(zes_event_type_flags_t driverRegisteredEvents, std::vector<PollDescriptor> &pollSources, bool &cperRegistered);
@@ -107,6 +108,8 @@ class LinuxEventsUtil {
     static bool checkRasEventOccured(Ras *rasHandle);
     std::once_flag initEventsOnce;
     std::once_flag initNetlinkOnce;
+    std::once_flag initCperEventSupportOnce;
+    bool cperEventSupported = false;
     std::mutex eventsMutex;
 
   protected:

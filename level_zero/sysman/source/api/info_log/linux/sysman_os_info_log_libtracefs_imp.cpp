@@ -14,6 +14,7 @@
 #include "level_zero/sysman/source/shared/linux/tracefs_api/sysman_tracefs_api.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
+#include <algorithm>
 #include <fcntl.h>
 #include <string>
 #include <string_view>
@@ -31,6 +32,15 @@ std::unique_ptr<TraceFsApi> (*LinuxInfoLogImp::createTraceFsApi)() = []() {
     auto traceFsApi = std::make_unique<TraceFsApi>();
     traceFsApi->loadEntryPoints();
     return traceFsApi;
+};
+
+bool (*LinuxInfoLogImp::isCperEventSupported)() = []() {
+    auto supportedFormats = OsInfoLog::getSupportedInfoLogFormats();
+    if (std::find(supportedFormats.begin(), supportedFormats.end(), ZES_INFO_LOG_FORMAT_EXT_CPER) == supportedFormats.end()) {
+        return false;
+    }
+    auto pTraceFsApi = createTraceFsApi();
+    return (pTraceFsApi != nullptr) && pTraceFsApi->loadEntryPoints();
 };
 
 LinuxInfoLogImp::~LinuxInfoLogImp() = default;

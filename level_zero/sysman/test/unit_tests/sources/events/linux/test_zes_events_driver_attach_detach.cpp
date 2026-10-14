@@ -487,7 +487,7 @@ TEST_F(SysmanEventsDriverAttachDetachFixture, GivenAttachDetachIsClearedWhileLis
     EXPECT_EQ(0u, driverEvents);
 }
 
-TEST_F(SysmanEventsDriverAttachDetachFixture, GivenLibUdevIsNotAvailableAndAttachDetachIsRegisteredWhenListeningForDriverEventsThenNoEventIsReported) {
+TEST_F(SysmanEventsDriverAttachDetachFixture, GivenLibUdevIsNotAvailableAndAttachDetachIsRegisteredWhenListeningForDriverEventsThenDependencyUnavailableErrorIsReturnedAndNoEventIsReported) {
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, mockPollUdevReady);
     pLinuxSysmanDriverImp->pUdevLib = nullptr;
 
@@ -496,7 +496,7 @@ TEST_F(SysmanEventsDriverAttachDetachFixture, GivenLibUdevIsNotAvailableAndAttac
     uint32_t numDeviceEvents = 0u;
     zes_event_type_flags_t deviceEvents = 0u;
     zes_event_type_flags_t driverEvents = driverEventsSentinel;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, listenForDriverEvents(1000u, numDeviceEvents, deviceEvents, driverEvents));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, listenForDriverEvents(1000u, numDeviceEvents, deviceEvents, driverEvents));
     EXPECT_EQ(0u, numDeviceEvents);
     EXPECT_EQ(0u, driverEvents);
     EXPECT_EQ(0u, pollCallCount);

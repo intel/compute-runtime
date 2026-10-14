@@ -7,6 +7,7 @@
 
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/events/linux/mock_events.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
@@ -19,6 +20,57 @@ constexpr uint32_t mockHandleCount = 2u;
 constexpr int mockReadPipeFd = 8;
 constexpr int mockWritePipeFd = 9;
 constexpr uint32_t pmuDriverType = 16u;
+
+struct EventRegistrationDuringListen {
+    static inline PublicLinuxEventsUtil *pEventsUtil = nullptr;
+    static inline L0::Sysman::SysmanDeviceImp *pDevice = nullptr;
+    static inline zes_event_type_flags_t deviceEvents = 0;
+    static inline zes_event_type_flags_t driverEvents = 0;
+    static inline uint32_t pollCount = 0;
+
+    static int pipe(int pipeFd[2]) {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 0;
+    }
+
+    static int poll(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) {
+        if (pollCount++ > 0) {
+            return 0;
+        }
+        if (deviceEvents != 0) {
+            pEventsUtil->eventRegister(deviceEvents, pDevice);
+        }
+        if (driverEvents != 0) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, pEventsUtil->driverEventRegister(driverEvents));
+        }
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockReadPipeFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    }
+
+    static void reset(PublicLinuxEventsUtil *pUtil, L0::Sysman::SysmanDeviceImp *pSysmanDevice, zes_event_type_flags_t deviceEventsToRegister, zes_event_type_flags_t driverEventsToRegister) {
+        pEventsUtil = pUtil;
+        pDevice = pSysmanDevice;
+        deviceEvents = deviceEventsToRegister;
+        driverEvents = driverEventsToRegister;
+        pollCount = 0;
+    }
+};
+
+class MockUdevLibRegisteringCperBeforeListenSetup : public EventsUdevLibMock {
+  public:
+    PublicLinuxEventsUtil *pEventsUtil = nullptr;
+
+    int registerEventsFromSubsystemAndGetFd(std::vector<std::string> &subsystemList) override {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pEventsUtil->driverEventRegister(ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT));
+        return mockUdevFd;
+    }
+};
+
 class SysmanEventsFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockEventsFsAccess> pFsAccess;
@@ -33,6 +85,18 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     PmuInterface *pOriginalPmuInterface = nullptr;
     PublicLinuxEventsImp *pLinuxEventsImp = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
+    std::unique_ptr<EventsUdevLibMock> pUdevLibMock;
+    L0::Sysman::UdevLib *pUdevLibOriginal = nullptr;
+    std::unique_ptr<SysmanProductHelper> pOriginalProductHelper;
+
+    void setNetlinkEventSupport(bool supported) {
+        if (this->pOriginalProductHelper == nullptr) {
+            this->pOriginalProductHelper = std::move(this->pLinuxSysmanImp->pSysmanProductHelper);
+        }
+        auto pMockProductHelper = std::make_unique<MockProductHelperForNetlink>();
+        pMockProductHelper->isNetlinkSupported = supported;
+        this->pLinuxSysmanImp->pSysmanProductHelper = std::move(pMockProductHelper);
+    }
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -65,9 +129,18 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pRasHandleContext->handleList.clear();
         device = pSysmanDeviceImp;
         getRasHandles(0);
+
+        auto pPublicLinuxSysmanDriverImp = static_cast<PublicLinuxSysmanDriverImp *>(this->driverHandle->pOsSysmanDriver);
+        this->pUdevLibMock = std::make_unique<EventsUdevLibMock>();
+        this->pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
+        pPublicLinuxSysmanDriverImp->pUdevLib = this->pUdevLibMock.get();
     }
 
     void TearDown() override {
+        if (this->pOriginalProductHelper != nullptr) {
+            this->pLinuxSysmanImp->pSysmanProductHelper = std::move(this->pOriginalProductHelper);
+        }
+        static_cast<PublicLinuxSysmanDriverImp *>(this->driverHandle->pOsSysmanDriver)->pUdevLib = this->pUdevLibOriginal;
         if (nullptr != pEventsImp->pOsEvents) {
             delete pEventsImp->pOsEvents;
         }
@@ -405,16 +478,372 @@ TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundWhenListeningForEventsThenEventL
 
     pLinuxEventsImp->pUdevLib = nullptr;
 
-    zes_event_type_flags_t pEvents;
-    std::vector<zes_event_type_flags_t> registeredEvents;
+    zes_event_type_flags_t pEvents = 0;
+    std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED);
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
-    EXPECT_FALSE(pLinuxEventsImp->listenSystemEvents(&pEvents, 1u, registeredEvents, phDevices, 1000u));
+    bool eventReceived = true;
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pLinuxEventsImp->listenSystemEvents(&pEvents, 1u, registeredEvents, phDevices, 1000u, eventReceived));
+    EXPECT_FALSE(eventReceived);
+    EXPECT_EQ(pollCalledBefore, SysCalls::pollFuncCalled);
     delete[] phDevices;
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
     driverHandle->pOsSysmanDriver = pOsSysmanDriverOriginal;
     delete pPublicLinuxSysmanDriverImp;
     delete pLinuxEventsImp;
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundAndNoUdevEventIsRegisteredWhenListeningForSystemEventsThenSuccessIsReturnedOnTimeout) {
+    setNetlinkEventSupport(false);
+    PublicLinuxSysmanDriverImp driverImp{};
+    driverImp.pUdevLib = nullptr;
+    auto pEventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    for (auto events : {static_cast<zes_event_type_flags_t>(0), static_cast<zes_event_type_flags_t>(ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS)}) {
+        std::vector<zes_event_type_flags_t> registeredEvents(1, events);
+        zes_event_type_flags_t pEvents[1] = {};
+        bool eventReceived = true;
+        auto pollCalledBefore = SysCalls::pollFuncCalled;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pEventsUtil->listenSystemEvents(pEvents, 1u, registeredEvents, phDevices, 1u, eventReceived));
+        EXPECT_FALSE(eventReceived);
+        EXPECT_EQ(0u, pEvents[0]);
+        EXPECT_EQ(pollCalledBefore + 1, SysCalls::pollFuncCalled);
+    }
+    EXPECT_EQ(nullptr, pEventsUtil->pUdevLib);
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundWhenCallingDriverEventListenExThenDependencyUnavailableErrorIsReturned) {
+    static_cast<PublicLinuxSysmanDriverImp *>(driverHandle->pOsSysmanDriver)->pUdevLib = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {ZES_EVENT_TYPE_FLAG_MEM_HEALTH};
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDriverEventListenEx(driverHandle->toHandle(), 1000u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+    EXPECT_EQ(pollCalledBefore, SysCalls::pollFuncCalled);
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundWhenCallingDriverEventListenThenDependencyUnavailableErrorIsReturned) {
+    static_cast<PublicLinuxSysmanDriverImp *>(driverHandle->pOsSysmanDriver)->pUdevLib = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundAndNoEventsAreRegisteredWhenCallingDriverEventListenExThenSuccessIsReturnedOnTimeout) {
+    static_cast<PublicLinuxSysmanDriverImp *>(driverHandle->pOsSysmanDriver)->pUdevLib = nullptr;
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {};
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(pollCalledBefore + 1, SysCalls::pollFuncCalled);
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundAndCperDataAvailableIsRegisteredWhenCallingDriverEventListenExtThenSuccessIsReturnedOnTimeout) {
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperSupportBackup(&LinuxInfoLogImp::isCperEventSupported, []() { return true; });
+    static_cast<PublicLinuxSysmanDriverImp *>(driverHandle->pOsSysmanDriver)->pUdevLib = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventRegisterExt(driverHandle->toHandle(), ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {};
+    zes_event_type_flags_t driverEvents = ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT;
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenExt(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, driverEvents);
+    EXPECT_EQ(pollCalledBefore + 1, SysCalls::pollFuncCalled);
+}
+
+TEST_F(SysmanEventsFixture, GivenNetlinkEventsAreSupportedButNotAvailableAndOnlyRasEventsAreRegisteredWhenCallingDriverEventListenExThenDependencyUnavailableErrorIsReturned) {
+    setNetlinkEventSupport(true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {};
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDriverEventListenEx(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+    EXPECT_EQ(pollCalledBefore, SysCalls::pollFuncCalled);
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundAndOnlyRasEventsAreRegisteredWhenCallingDriverEventListenExThenSuccessIsReturnedOnTimeout) {
+    setNetlinkEventSupport(false);
+    static_cast<PublicLinuxSysmanDriverImp *>(driverHandle->pOsSysmanDriver)->pUdevLib = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {};
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, pDeviceEvents[0]);
+    EXPECT_EQ(pollCalledBefore + 1, SysCalls::pollFuncCalled);
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundAndCperDataAvailableAndUdevDeviceEventAreRegisteredWhenCallingDriverEventListenExtThenDependencyUnavailableErrorIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperSupportBackup(&LinuxInfoLogImp::isCperEventSupported, []() { return true; });
+    static_cast<PublicLinuxSysmanDriverImp *>(driverHandle->pOsSysmanDriver)->pUdevLib = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventRegisterExt(driverHandle->toHandle(), ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    for (auto udevDeviceEvent : std::initializer_list<zes_event_type_flags_t>{ZES_EVENT_TYPE_FLAG_DEVICE_DETACH, ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH, ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED,
+                                                                              ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, ZES_EVENT_TYPE_FLAG_MEM_HEALTH, ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH,
+                                                                              ZES_INTEL_EVENT_TYPE_EXP_FLAG_DEVICE_POWER_OFF_PENDING}) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), 0));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), udevDeviceEvent | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
+
+        uint32_t numDeviceEvents = 0;
+        zes_event_type_flags_t pDeviceEvents[1] = {};
+        zes_event_type_flags_t driverEvents = 0;
+        auto pollCalledBefore = SysCalls::pollFuncCalled;
+        EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDriverEventListenExt(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+        EXPECT_EQ(0u, numDeviceEvents);
+        EXPECT_EQ(0u, pDeviceEvents[0]);
+        EXPECT_EQ(0u, driverEvents);
+        EXPECT_EQ(pollCalledBefore, SysCalls::pollFuncCalled);
+    }
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundAndCperDataAvailableAndRasEventsAreRegisteredWhenCallingDriverEventListenExtThenSuccessIsReturnedOnTimeout) {
+    setNetlinkEventSupport(false);
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperSupportBackup(&LinuxInfoLogImp::isCperEventSupported, []() { return true; });
+    static_cast<PublicLinuxSysmanDriverImp *>(driverHandle->pOsSysmanDriver)->pUdevLib = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventRegisterExt(driverHandle->toHandle(), ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {};
+    zes_event_type_flags_t driverEvents = 0;
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenExt(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, driverEvents);
+    EXPECT_EQ(pollCalledBefore + 1, SysCalls::pollFuncCalled);
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundAndCperDataAvailableAndDriverAttachDetachAreRegisteredWhenListeningForSystemEventsThenDependencyUnavailableErrorIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperSupportBackup(&LinuxInfoLogImp::isCperEventSupported, []() { return true; });
+    PublicLinuxSysmanDriverImp driverImp{};
+    driverImp.pUdevLib = nullptr;
+    auto pEventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents(1, 0);
+    for (auto attachDetachEvent : {ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH, ZES_EVENT_TYPE_FLAG_DEVICE_DETACH}) {
+        pEventsUtil->registeredDriverEvents = ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT | attachDetachEvent;
+
+        zes_event_type_flags_t pEvents[1] = {};
+        zes_event_type_flags_t driverEvents = 0;
+        bool eventReceived = true;
+        auto pollCalledBefore = SysCalls::pollFuncCalled;
+        EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pEventsUtil->listenSystemEvents(pEvents, 1u, registeredEvents, phDevices, 1u, eventReceived, &driverEvents));
+        EXPECT_FALSE(eventReceived);
+        EXPECT_EQ(0u, driverEvents);
+        EXPECT_EQ(pollCalledBefore, SysCalls::pollFuncCalled);
+    }
+    EXPECT_EQ(nullptr, pEventsUtil->pUdevLib);
+}
+
+TEST_F(SysmanEventsFixture, GivenCperDataAvailableIsRegisteredAndCperEventsAreNotSupportedWhenCallingDriverEventListenExtThenDependencyUnavailableErrorIsReturnedAndSupportIsCheckedOnce) {
+    static uint32_t cperSupportCheckCount = 0;
+    cperSupportCheckCount = 0;
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperSupportBackup(&LinuxInfoLogImp::isCperEventSupported, []() {
+        cperSupportCheckCount++;
+        return false;
+    });
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventRegisterExt(driverHandle->toHandle(), ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    for (uint32_t listenCount = 0; listenCount < 2; listenCount++) {
+        uint32_t numDeviceEvents = 0;
+        zes_event_type_flags_t pDeviceEvents[1] = {};
+        zes_event_type_flags_t driverEvents = 0;
+        auto pollCalledBefore = SysCalls::pollFuncCalled;
+        EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDriverEventListenExt(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+        EXPECT_EQ(0u, numDeviceEvents);
+        EXPECT_EQ(0u, driverEvents);
+        EXPECT_EQ(pollCalledBefore, SysCalls::pollFuncCalled);
+    }
+    EXPECT_EQ(1u, cperSupportCheckCount);
+}
+
+TEST_F(SysmanEventsFixture, GivenCperDataAvailableIsNotRegisteredAndCperEventsAreNotSupportedWhenCallingDriverEventListenExtThenSuccessIsReturnedWithoutCheckingCperSupport) {
+    static uint32_t cperSupportCheckCount = 0;
+    cperSupportCheckCount = 0;
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperSupportBackup(&LinuxInfoLogImp::isCperEventSupported, []() {
+        cperSupportCheckCount++;
+        return false;
+    });
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {};
+    zes_event_type_flags_t driverEvents = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenExt(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(0u, cperSupportCheckCount);
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundWhenUdevEventIsRegisteredDuringListenThenDependencyUnavailableErrorIsReturnedAndPipeIsClosed) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, EventRegistrationDuringListen::pipe);
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, EventRegistrationDuringListen::poll);
+    setNetlinkEventSupport(false);
+    PublicLinuxSysmanDriverImp driverImp{};
+    driverImp.pUdevLib = nullptr;
+    auto pEventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    pEventsUtil->eventRegister(ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS, pSysmanDeviceImp);
+    EventRegistrationDuringListen::reset(pEventsUtil.get(), pSysmanDeviceImp, ZES_EVENT_TYPE_FLAG_MEM_HEALTH, 0);
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS);
+    zes_event_type_flags_t pEvents[1] = {};
+    bool eventReceived = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pEventsUtil->listenSystemEvents(pEvents, 1u, registeredEvents, phDevices, 1000u, eventReceived));
+    EXPECT_FALSE(eventReceived);
+    EXPECT_EQ(1u, EventRegistrationDuringListen::pollCount);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[0]);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[1]);
+}
+
+TEST_F(SysmanEventsFixture, GivenNetlinkEventsAreSupportedButNotAvailableWhenRasEventIsRegisteredDuringListenThenDependencyUnavailableErrorIsReturnedAndPipeIsClosed) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, EventRegistrationDuringListen::pipe);
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, EventRegistrationDuringListen::poll);
+    setNetlinkEventSupport(true);
+    PublicLinuxSysmanDriverImp driverImp{};
+    EventsUdevLibMock udevLib{};
+    driverImp.pUdevLib = &udevLib;
+    auto pEventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    EventRegistrationDuringListen::reset(pEventsUtil.get(), pSysmanDeviceImp, ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS, 0);
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents(1, 0);
+    zes_event_type_flags_t pEvents[1] = {};
+    bool eventReceived = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pEventsUtil->listenSystemEvents(pEvents, 1u, registeredEvents, phDevices, 1000u, eventReceived));
+    EXPECT_FALSE(eventReceived);
+    EXPECT_EQ(1u, EventRegistrationDuringListen::pollCount);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[0]);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[1]);
+    driverImp.pUdevLib = nullptr;
+}
+
+TEST_F(SysmanEventsFixture, GivenCperEventsAreNotSupportedWhenCperDataAvailableIsRegisteredDuringListenThenDependencyUnavailableErrorIsReturnedAndPipeIsClosed) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, EventRegistrationDuringListen::pipe);
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, EventRegistrationDuringListen::poll);
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperSupportBackup(&LinuxInfoLogImp::isCperEventSupported, []() { return false; });
+    PublicLinuxSysmanDriverImp driverImp{};
+    EventsUdevLibMock udevLib{};
+    driverImp.pUdevLib = &udevLib;
+    auto pEventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    EventRegistrationDuringListen::reset(pEventsUtil.get(), pSysmanDeviceImp, 0, ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT);
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents(1, 0);
+    zes_event_type_flags_t pEvents[1] = {};
+    zes_event_type_flags_t driverEvents = 0;
+    bool eventReceived = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pEventsUtil->listenSystemEvents(pEvents, 1u, registeredEvents, phDevices, 1000u, eventReceived, &driverEvents));
+    EXPECT_FALSE(eventReceived);
+    EXPECT_EQ(0u, driverEvents);
+    EXPECT_EQ(1u, EventRegistrationDuringListen::pollCount);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[0]);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[1]);
+    driverImp.pUdevLib = nullptr;
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundAndUdevEventIsRegisteredAfterRegisteredEventsWereReadWhenListeningForSystemEventsThenDependencyUnavailableErrorIsReturnedWithoutPolling) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, EventRegistrationDuringListen::pipe);
+    setNetlinkEventSupport(false);
+    PublicLinuxSysmanDriverImp driverImp{};
+    driverImp.pUdevLib = nullptr;
+    auto pEventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    pEventsUtil->eventRegister(ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_MEM_HEALTH, pSysmanDeviceImp);
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS);
+    zes_event_type_flags_t pEvents[1] = {};
+    bool eventReceived = true;
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pEventsUtil->listenSystemEvents(pEvents, 1u, registeredEvents, phDevices, 1000u, eventReceived));
+    EXPECT_FALSE(eventReceived);
+    EXPECT_EQ(pollCalledBefore, SysCalls::pollFuncCalled);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[0]);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[1]);
+}
+
+TEST_F(SysmanEventsFixture, GivenCperEventsAreNotSupportedAndCperDataAvailableIsRegisteredAfterDriverEventsWereReadWhenListeningForSystemEventsThenDependencyUnavailableErrorIsReturnedWithoutPolling) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, EventRegistrationDuringListen::pipe);
+    VariableBackup<decltype(LinuxInfoLogImp::isCperEventSupported)> cperSupportBackup(&LinuxInfoLogImp::isCperEventSupported, []() { return false; });
+    PublicLinuxSysmanDriverImp driverImp{};
+    MockUdevLibRegisteringCperBeforeListenSetup udevLib{};
+    driverImp.pUdevLib = &udevLib;
+    auto pEventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    udevLib.pEventsUtil = pEventsUtil.get();
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents(1, 0);
+    zes_event_type_flags_t pEvents[1] = {};
+    zes_event_type_flags_t driverEvents = 0;
+    bool eventReceived = true;
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pEventsUtil->listenSystemEvents(pEvents, 1u, registeredEvents, phDevices, 1000u, eventReceived, &driverEvents));
+    EXPECT_FALSE(eventReceived);
+    EXPECT_EQ(0u, driverEvents);
+    EXPECT_EQ(pollCalledBefore, SysCalls::pollFuncCalled);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[0]);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[1]);
+    driverImp.pUdevLib = nullptr;
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevIsAvailableWhenUdevEventIsRegisteredDuringListenThenListenContinuesUntilTimeoutAndSuccessIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, EventRegistrationDuringListen::pipe);
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, EventRegistrationDuringListen::poll);
+    PublicLinuxSysmanDriverImp driverImp{};
+    EventsUdevLibMock udevLib{};
+    driverImp.pUdevLib = &udevLib;
+    auto pEventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    EventRegistrationDuringListen::reset(pEventsUtil.get(), pSysmanDeviceImp, ZES_EVENT_TYPE_FLAG_MEM_HEALTH, 0);
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    std::vector<zes_event_type_flags_t> registeredEvents(1, 0);
+    zes_event_type_flags_t pEvents[1] = {};
+    bool eventReceived = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pEventsUtil->listenSystemEvents(pEvents, 1u, registeredEvents, phDevices, 1000u, eventReceived));
+    EXPECT_FALSE(eventReceived);
+    EXPECT_EQ(2u, EventRegistrationDuringListen::pollCount);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[0]);
+    EXPECT_EQ(-1, pEventsUtil->pipeFd[1]);
+    driverImp.pUdevLib = nullptr;
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevIsAvailableAndNoEventIsReceivedWhenCallingDriverEventListenExThenSuccessIsReturnedOnTimeout) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
+
+    zes_device_handle_t phDevices[1] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[1] = {};
+    auto pollCalledBefore = SysCalls::pollFuncCalled;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(pollCalledBefore + 1, SysCalls::pollFuncCalled);
 }
 
 TEST_F(SysmanEventsFixture, GivenNoEventsAreRegisteredWhenListeningForEventsThenVerifyListenSystemEventsReturnsFalse) {
@@ -449,7 +878,9 @@ TEST_F(SysmanEventsFixture, GivenNoEventsAreRegisteredWhenListeningForEventsThen
     std::vector<zes_event_type_flags_t> registeredEvents(1);
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
-    EXPECT_FALSE(pLinuxEventsImp->listenSystemEvents(&pEvents, 1u, registeredEvents, phDevices, 1000u));
+    bool eventReceived = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsImp->listenSystemEvents(&pEvents, 1u, registeredEvents, phDevices, 1000u, eventReceived));
+    EXPECT_FALSE(eventReceived);
     delete[] phDevices;
     pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibOriginal;

@@ -154,6 +154,38 @@ TEST_F(SysmanInfoLogFixture, GivenDefaultCreateTraceFsApiLambdaWhenInvokedThenNo
     EXPECT_NE(nullptr, traceFsApi);
 }
 
+TEST_F(SysmanInfoLogFixture, GivenCperTracepointAndLibTraceFsAreAvailableWhenCheckingCperEventSupportThenTrueIsReturned) {
+    EXPECT_TRUE(LinuxInfoLogImp::isCperEventSupported());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenCperTracepointIsNotAvailableWhenCheckingCperEventSupportThenFalseIsReturned) {
+    VariableBackup<bool> failAccessBackup(&NEO::SysCalls::failAccess, true);
+    EXPECT_FALSE(LinuxInfoLogImp::isCperEventSupported());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenLibTraceFsCanNotBeLoadedWhenCheckingCperEventSupportThenFalseIsReturned) {
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncFailBackup(&NEO::OsLibrary::loadFunc, [](const NEO::OsLibraryCreateProperties &) -> NEO::OsLibrary * {
+        return nullptr;
+    });
+    EXPECT_FALSE(LinuxInfoLogImp::isCperEventSupported());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenLibTraceFsIsMissingAnEntryPointWhenCheckingCperEventSupportThenFalseIsReturned) {
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncMissingSymbolBackup(&NEO::OsLibrary::loadFunc, [](const NEO::OsLibraryCreateProperties &) -> NEO::OsLibrary * {
+        auto pLibrary = new MockTraceFsOsLibrary();
+        pLibrary->deleteEntryPoint("tracefs_instance_create");
+        return pLibrary;
+    });
+    EXPECT_FALSE(LinuxInfoLogImp::isCperEventSupported());
+}
+
+TEST_F(SysmanInfoLogFixture, GivenTraceFsApiCanNotBeCreatedWhenCheckingCperEventSupportThenFalseIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return nullptr;
+    });
+    EXPECT_FALSE(LinuxInfoLogImp::isCperEventSupported());
+}
+
 TEST_F(SysmanInfoLogFixture, GivenTracepointPathInaccessibleWhenEnumeratingInfoLogsThenNoHandlesAreReturned) {
     VariableBackup<bool> failAccessBackup(&NEO::SysCalls::failAccess, true);
     uint32_t count = 0;

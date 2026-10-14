@@ -17,6 +17,7 @@
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 #include "level_zero/sysman/source/api/events/sysman_events_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
@@ -222,6 +223,15 @@ struct MockEventsSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     }
 
     MockEventsSysfsAccess() = default;
+};
+
+class MockProductHelperForNetlink : public L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+  public:
+    bool isNetlinkSupported = true;
+
+    bool isNetlinkEventSupported() override {
+        return isNetlinkSupported;
+    }
 };
 
 class EventsUdevLibMock : public L0::Sysman::UdevLib {
