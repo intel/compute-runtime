@@ -1281,6 +1281,8 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenAggregatedSignalEventWhenAppend
 
 HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenAsynchronousBarrierWhenAppendingBarrierWithSignalEventThenSignalEventIsSubmitted) {
     auto event = createEvent(eventPool.get(), 0);
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    csr->testTaskCountReadyReturnValue = false;
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
     auto waitEventsParameters = getWaitEventParameters();
 
@@ -1293,6 +1295,50 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenAsynchronousBarrierWhenAppendin
     auto usedBefore = cmdStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(cmdStream->getUsed(), usedBefore);
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenCompletedSubmissionsWithoutHostSynchronizationWhenAppendingRedundantBarrierWithSignalEventThenNothingIsSubmittedAndEventIsCompletedOnHost) {
+    auto event = createEvent(eventPool.get(), 0);
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto waitEventsParameters = getWaitEventParameters();
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    csr->testTaskCountReadyReturnValue = true;
+    const auto usedBefore = cmdStream->getUsed();
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    EXPECT_EQ(usedBefore, cmdStream->getUsed());
+    EXPECT_EQ(taskCountBefore, getQueue()->getTaskCount());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
+}
+
+HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenNotCompletedSubmissionsWithoutHostSynchronizationWhenAppendingRedundantBarrierWithSignalEventThenBarrierIsSubmitted) {
+    auto event = createEvent(eventPool.get(), 0);
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto waitEventsParameters = getWaitEventParameters();
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendEventReset(event->toHandle()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    csr->testTaskCountReadyReturnValue = false;
+    const auto usedBefore = cmdStream->getUsed();
+    const auto taskCountBefore = getQueue()->getTaskCount();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    EXPECT_GT(cmdStream->getUsed(), usedBefore);
+    EXPECT_GT(getQueue()->getTaskCount(), taskCountBefore);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
 }
 
 HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenCounterBasedSignalEventWhenAppendingRedundantBarrierThenInvalidArgumentIsStillReturned) {
@@ -1451,6 +1497,7 @@ HWTEST_F(OutOfOrderImmediateCmdListBarrier, givenSubmissionDuringPostWaitOperati
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(0));
     csr->onDownloadAllocations = nullptr;
     getWhiteBoxCmdList()->isTbxMode = false;
+    csr->testTaskCountReadyReturnValue = false;
 
     const auto taskCountBefore = getQueue()->getTaskCount();
     auto waitEventsParameters = getWaitEventParameters();

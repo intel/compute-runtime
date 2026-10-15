@@ -731,7 +731,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
             if (!signalEvent) {
                 return ZE_RESULT_SUCCESS;
             }
-            if (this->lastHostSynchronizeTaskCounts.matches(mainTaskCount, copyOffloadTaskCount) && !signalEvent->isEventTimestampFlagSet() && !signalEvent->isSignalWithUserInterrupt() &&
+            auto mainCsr = getCsr(false);
+            const bool trackedWorkCompleted = this->lastHostSynchronizeTaskCounts.matches(mainTaskCount, copyOffloadTaskCount) ||
+                                              mainCsr->testTaskCountReady(mainCsr->getTagAddress(), mainTaskCount);
+            if (trackedWorkCompleted && !signalEvent->isEventTimestampFlagSet() && !signalEvent->isSignalWithUserInterrupt() &&
                 !signalEvent->isCounterBased() && !Event::isAggregatedEvent(signalEvent)) {
                 return signalEvent->hostSignal(false);
             }

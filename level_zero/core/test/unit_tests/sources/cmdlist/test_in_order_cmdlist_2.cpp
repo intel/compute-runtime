@@ -1130,6 +1130,59 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadAndNoWork
     EXPECT_EQ(immCmdList->cmdQImmediate->getTaskCount(), cleanupTaskCount);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadAndCompletedMainQueueWorkWhenAppendRedundantBarrierWithSignalEventThenNothingIsSubmittedAndEventIsCompletedOnHost, IsAtLeastXe3pCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
+
+    auto mainCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    immCmdList->cmdQImmediate->setTaskCount(1);
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    CmdListSignalEventParameters signalEventParameters{
+        .relaxedOrderingDispatch = false,
+    };
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    const auto mainQueueTaskCount = immCmdList->cmdQImmediate->getTaskCount();
+    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_FALSE(event->isEventTimestampFlagSet());
+
+    mainCsr->testTaskCountReadyReturnValue = true;
+    copyCsr->testTaskCountReadyReturnValue = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    EXPECT_EQ(mainQueueTaskCount, immCmdList->cmdQImmediate->getTaskCount());
+    EXPECT_EQ(copyOffloadQueueTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppendBarrierThenWaitEventParametersFromCallerArePassedToBaseImplementation, IsAtLeastXe3pCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
