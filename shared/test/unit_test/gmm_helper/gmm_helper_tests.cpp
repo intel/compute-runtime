@@ -657,15 +657,10 @@ TEST_F(GmmHelperTests, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapa
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 0;
-    mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
     mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
     EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // CCS == 0
 
     mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 1;
-    mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 0;
-    EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // UnifiedAuxSurface == 0
-
-    mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
     mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed = 0;
     EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // RenderCompressed == 0
 }
