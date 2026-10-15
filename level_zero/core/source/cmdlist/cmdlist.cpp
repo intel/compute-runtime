@@ -480,6 +480,9 @@ ze_result_t CommandList::appendMetricQueryBegin(zet_metric_query_handle_t hMetri
 
 ze_result_t CommandList::appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (hSignalEvent != nullptr && Event::fromHandle(hSignalEvent)->isCounterBasedExplicitlyEnabled()) {
+        return ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT;
+    }
     auto returnValue = ensureImmediateResourcesInitialized();
     if (returnValue != ZE_RESULT_SUCCESS) {
         return returnValue;

@@ -347,6 +347,99 @@ HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsAvailableToR
     }
 }
 
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenCounterBasedNotificationEventWhenStreamerOpenIsCalledThenInvalidSynchronizationObjectIsReturned, HasIPSamplingSupport) {
+
+    for (auto device : testDevices) {
+        zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+        ze_event_handle_t eventHandle = {};
+        zet_metric_streamer_handle_t streamerHandle = {};
+        zet_metric_streamer_desc_t streamerDesc = {};
+        streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+        streamerDesc.notifyEveryNReports = 32768;
+        streamerDesc.samplingPeriod = 1000;
+
+        ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+        counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE;
+        ze_event_pool_handle_t eventPoolHandle = {};
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+        eventPoolDesc.pNext = &counterBasedExtension;
+        eventPoolDesc.count = 1;
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+        ze_device_handle_t hDevice = device->toHandle();
+
+        EXPECT_EQ(zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &hDevice, &eventPoolHandle), ZE_RESULT_SUCCESS);
+        EXPECT_NE(eventPoolHandle, nullptr);
+
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
+        eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+        EXPECT_EQ(zeEventCreate(eventPoolHandle, &eventDesc, &eventHandle), ZE_RESULT_SUCCESS);
+        ASSERT_NE(eventHandle, nullptr);
+        EXPECT_TRUE(Event::fromHandle(eventHandle)->isCounterBasedExplicitlyEnabled());
+
+        EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT);
+        EXPECT_EQ(streamerHandle, nullptr);
+        if (streamerHandle != nullptr) {
+            zetMetricStreamerClose(streamerHandle);
+        }
+
+        EXPECT_EQ(zeEventDestroy(eventHandle), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zeEventPoolDestroy(eventPoolHandle), ZE_RESULT_SUCCESS);
+    }
+}
+
+HWTEST2_F(MetricIpSamplingStreamerTest, GivenRegularNotificationEventImplicitlyConvertedToCounterBasedWhenStreamerOpenIsCalledThenSuccessIsReturned, HasIPSamplingSupport) {
+
+    for (auto device : testDevices) {
+        zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+        ze_event_handle_t eventHandle = {};
+        zet_metric_streamer_handle_t streamerHandle = {};
+        zet_metric_streamer_desc_t streamerDesc = {};
+        streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+        streamerDesc.notifyEveryNReports = 32768;
+        streamerDesc.samplingPeriod = 1000;
+        ze_event_pool_handle_t eventPoolHandle = {};
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.count = 1;
+        eventPoolDesc.flags = 0;
+        eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+
+        ze_device_handle_t hDevice = device->toHandle();
+
+        EXPECT_EQ(zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &hDevice, &eventPoolHandle), ZE_RESULT_SUCCESS);
+        EXPECT_NE(eventPoolHandle, nullptr);
+
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
+        eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+        EXPECT_EQ(zeEventCreate(eventPoolHandle, &eventDesc, &eventHandle), ZE_RESULT_SUCCESS);
+        ASSERT_NE(eventHandle, nullptr);
+
+        // Same conversion as an in-order immediate command list applies to a regular signal event.
+        auto event = Event::fromHandle(eventHandle);
+        event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+        EXPECT_TRUE(event->isCounterBased());
+        EXPECT_FALSE(event->isCounterBasedExplicitlyEnabled());
+
+        EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+        EXPECT_NE(streamerHandle, nullptr);
+        EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+
+        EXPECT_EQ(zeEventDestroy(eventHandle), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zeEventPoolDestroy(eventPoolHandle), ZE_RESULT_SUCCESS);
+    }
+}
+
 HWTEST2_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailableToReadWhenEventQueryStatusIsCalledThenEventIsNotSignalled, HasIPSamplingSupport) {
 
     for (std::size_t index = 0; index < testDevices.size(); index++) {

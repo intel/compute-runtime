@@ -929,6 +929,10 @@ ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_me
 ze_result_t metricStreamerOpen(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                                zet_metric_streamer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                                zet_metric_streamer_handle_t *phMetricStreamer) {
+    if (hNotificationEvent != nullptr && Event::fromHandle(hNotificationEvent)->isCounterBasedExplicitlyEnabled()) {
+        METRICS_LOG_ERR("%s", "Counter based event is not supported as notification event");
+        return ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT;
+    }
     return MetricGroup::fromHandle(hMetricGroup)->streamerOpen(hContext, hDevice, pDesc, hNotificationEvent, phMetricStreamer);
 }
 
