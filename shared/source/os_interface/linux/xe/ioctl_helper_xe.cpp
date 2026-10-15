@@ -119,8 +119,8 @@ std::string IoctlHelperXe::xeGetBindFlagNames(int bindFlags) {
         bindFlags &= ~DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET;
         flags += "MADVISE_AUTORESET ";
     }
-    if (bindFlags & getVmBindDecompressFlag() && getVmBindDecompressFlag() > 0) {
-        bindFlags &= ~getVmBindDecompressFlag();
+    if (bindFlags & DRM_XE_VM_BIND_FLAG_DECOMPRESS) {
+        bindFlags &= ~DRM_XE_VM_BIND_FLAG_DECOMPRESS;
         flags += "DECOMPRESS ";
     }
 
@@ -311,11 +311,6 @@ bool IoctlHelperXe::isVmBindAvailable() {
 
 bool IoctlHelperXe::isVmBindDecompressAvailable(uint32_t vmId) {
     std::call_once(checkVmBindDecompressOnce, [this, vmId]() {
-        if (getVmBindDecompressFlag() == 0) {
-            vmBindDecompressAvailable = false;
-            return;
-        }
-
         auto gemRet = createGem(MemoryConstants::pageSize, 1, std::nullopt);
 
         if (gemRet != 0) {
@@ -327,7 +322,7 @@ bool IoctlHelperXe::isVmBindDecompressAvailable(uint32_t vmId) {
             VmBindParams probeVmBind{};
             probeVmBind.vmId = static_cast<uint32_t>(vmId);
             probeVmBind.handle = gemRet;
-            probeVmBind.flags = DRM_XE_VM_BIND_FLAG_IMMEDIATE | getVmBindDecompressFlag();
+            probeVmBind.flags = DRM_XE_VM_BIND_FLAG_IMMEDIATE | DRM_XE_VM_BIND_FLAG_DECOMPRESS;
             probeVmBind.length = MemoryConstants::pageSize;
             probeVmBind.start = gmmHelper->canonize(probeAddr);
             probeVmBind.offset = 0u;
@@ -1281,7 +1276,7 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
     }
 
     if (resolveResource) {
-        flags |= getVmBindDecompressFlag();
+        flags |= DRM_XE_VM_BIND_FLAG_DECOMPRESS;
     }
     return flags;
 }
@@ -1405,7 +1400,13 @@ int IoctlHelperXe::getContextHealth(ContextHealth &contextHealth) {
         return ret;
     }
     contextHealth.banned = getProperty.value != 0;
-    contextHealth.banReason = contextHealth.banned ? ContextBanReason::gpuHang : ContextBanReason::none;
+    if (!contextHealth.banned) {
+        contextHealth.banReason = ContextBanReason::none;
+    } else if ((getProperty.value & DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE) != 0) {
+        contextHealth.banReason = ContextBanReason::pageOffline;
+    } else {
+        contextHealth.banReason = ContextBanReason::gpuHang;
+    }
 
     return 0;
 }

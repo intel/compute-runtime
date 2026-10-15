@@ -100,6 +100,7 @@ struct ContextFault {
 enum class ContextBanReason : uint32_t {
     none = 0,
     gpuHang,
+    pageOffline,
 };
 
 struct ContextHealth {

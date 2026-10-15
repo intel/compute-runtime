@@ -3035,10 +3035,20 @@ TEST_F(IoctlHelperXeTest, whenCallingGetContextHealthThenBanPropertyDecidesTheBa
     EXPECT_FALSE(contextHealth.banned);
     EXPECT_EQ(ContextBanReason::none, contextHealth.banReason);
 
-    drm->execQueueBanPropertyReturn = 1;
+    drm->execQueueBanPropertyReturn = DRM_XE_EXEC_QUEUE_BAN_REASON_GPU_HANG;
     EXPECT_EQ(0, xeIoctlHelper->getContextHealth(contextHealth));
     EXPECT_TRUE(contextHealth.banned);
     EXPECT_EQ(ContextBanReason::gpuHang, contextHealth.banReason);
+
+    drm->execQueueBanPropertyReturn = DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE;
+    EXPECT_EQ(0, xeIoctlHelper->getContextHealth(contextHealth));
+    EXPECT_TRUE(contextHealth.banned);
+    EXPECT_EQ(ContextBanReason::pageOffline, contextHealth.banReason);
+
+    drm->execQueueBanPropertyReturn = DRM_XE_EXEC_QUEUE_BAN_REASON_GPU_HANG | DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE;
+    EXPECT_EQ(0, xeIoctlHelper->getContextHealth(contextHealth));
+    EXPECT_TRUE(contextHealth.banned);
+    EXPECT_EQ(ContextBanReason::pageOffline, contextHealth.banReason);
 
     // xe exposes no fault details through this property
     EXPECT_FALSE(contextHealth.faultValid);
@@ -3294,7 +3304,7 @@ TEST_F(IoctlHelperXeTest, givenImmediateAndReadOnlyBindFlagsSupportedWhenGetting
                         expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
                     }
                     if (bindResolveSupport) {
-                        expectedFlags |= xeIoctlHelper->getVmBindDecompressFlag();
+                        expectedFlags |= DRM_XE_VM_BIND_FLAG_DECOMPRESS;
                     }
 
                     auto bindFlags = xeIoctlHelper->getFlagsForVmBind(true, bindImmediateSupport, bindMakeResidentSupport, false, bindReadOnlySupport, bindResolveSupport);
@@ -3312,10 +3322,6 @@ struct MockIoctlHelperXeIsVmBindDecompress : MockIoctlHelperXe {
 
     bool isVmBindDecompressAvailable(uint32_t vmId) override {
         return IoctlHelperXe::isVmBindDecompressAvailable(vmId);
-    }
-
-    uint32_t getVmBindDecompressFlag() const override {
-        return vmBindDecompressFlagValue;
     }
 
     uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override {
@@ -3344,7 +3350,6 @@ struct MockIoctlHelperXeIsVmBindDecompress : MockIoctlHelperXe {
         return IoctlHelperXe::ioctl(request, arg);
     }
 
-    uint32_t vmBindDecompressFlagValue = DRM_XE_VM_BIND_FLAG_DECOMPRESS;
     uint32_t createGemResult = 1u;
     int vmBindResult = 0;
     int vmUnbindResult = 0;
@@ -3356,19 +3361,6 @@ struct MockIoctlHelperXeIsVmBindDecompress : MockIoctlHelperXe {
     uint32_t vmBindVmId = 0;
     uint32_t vmUnbindVmId = 0;
 };
-
-TEST_F(IoctlHelperXeTest, givenVmBindDecompressFlagIsZeroWhenIsVmBindDecompressAvailableThenReturnsFalseAndDoesNotProbe) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeIsVmBindDecompress>(*drm);
-    xeIoctlHelper->vmBindDecompressFlagValue = 0u;
-
-    EXPECT_FALSE(xeIoctlHelper->isVmBindDecompressAvailable(0u));
-    EXPECT_EQ(0u, xeIoctlHelper->createGemCalled);
-    EXPECT_EQ(0u, xeIoctlHelper->vmBindCalled);
-    EXPECT_EQ(0u, xeIoctlHelper->vmUnbindCalled);
-    EXPECT_EQ(0u, xeIoctlHelper->gemCloseCalled);
-}
 
 TEST_F(IoctlHelperXeTest, givenCreateGemFailsWhenIsVmBindDecompressAvailableThenReturnsFalseAndDoesNotBind) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
