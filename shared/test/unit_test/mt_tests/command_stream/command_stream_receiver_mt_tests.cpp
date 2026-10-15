@@ -211,7 +211,6 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSett
                 EXPECT_TRUE(DebugPauseState::waitingForUserEndConfirmation == *mockCSR->debugPauseStateAddress);
             }
             confirmationCounter++;
-            debugManager.flags.PauseOnEnqueue.set(-1);
         }
     };
 
@@ -235,6 +234,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSett
     }
 
     waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
+    debugManager.flags.PauseOnEnqueue.set(-1);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
@@ -286,7 +286,6 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSetting
                 EXPECT_TRUE(DebugPauseState::waitingForUserEndConfirmation == *mockCSR->debugPauseStateAddress);
             }
             confirmationCounter++;
-            debugManager.flags.PauseOnBlitCopy.set(-1);
         }
     };
 
@@ -310,6 +309,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSetting
     }
 
     waitForDebugPauseState(*mockCSR, DebugPauseState::hasUserStartConfirmation);
+    debugManager.flags.PauseOnBlitCopy.set(-1);
     {
         std::unique_lock<SpinLock> lock{mockCSR->debugPauseStateLock};
         *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
