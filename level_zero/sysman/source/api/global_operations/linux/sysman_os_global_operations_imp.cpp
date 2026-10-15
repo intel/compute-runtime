@@ -22,6 +22,7 @@
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_sysfs_engine_map.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <chrono>

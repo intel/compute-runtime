@@ -14,6 +14,7 @@
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
+#include "level_zero/sysman/source/sysman_steady_clock.h"
 
 namespace L0 {
 namespace Sysman {

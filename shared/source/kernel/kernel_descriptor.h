@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/device_binary_format.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"

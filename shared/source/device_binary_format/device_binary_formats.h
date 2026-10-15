@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/compiler_interface/spec_const_values_map.h"
+#include "shared/source/device_binary_format/device_binary_format.h"
 #include "shared/source/device_binary_format/zebin/zeinfo.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/utilities/arrayref.h"
@@ -23,15 +24,6 @@ namespace NEO {
 struct ProgramInfo;
 struct RootDeviceEnvironment;
 class GfxCoreHelper;
-
-enum class DeviceBinaryFormat : uint8_t {
-    unknown,
-    oclElf,
-    oclLibrary,
-    oclCompiledObject,
-    archive,
-    zebin
-};
 
 enum class DecodeError : uint8_t {
     success,

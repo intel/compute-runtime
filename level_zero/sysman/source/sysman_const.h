@@ -8,8 +8,6 @@
 #pragma once
 #include <level_zero/zes_api.h>
 
-#include <chrono>
-#include <map>
 #include <string_view>
 
 namespace L0 {
@@ -37,17 +35,6 @@ inline constexpr uint32_t invalidMaxTemperature = 125;
 inline constexpr uint32_t invalidMinTemperature = 10;
 inline constexpr uint32_t vendorIdIntel = 0x8086;
 inline constexpr double defaultMaxTemperature = -1;
-
-struct SteadyClock {
-    typedef std::chrono::duration<uint64_t, std::milli> duration;
-    typedef duration::rep rep;
-    typedef duration::period period;
-    typedef std::chrono::time_point<SteadyClock> time_point;
-    static time_point now() noexcept {
-        static auto epoch = std::chrono::steady_clock::now();
-        return time_point(std::chrono::duration_cast<duration>(std::chrono::steady_clock::now() - epoch));
-    }
-};
 
 namespace PciLinkSpeeds {
 inline constexpr double pci2Dot5GigaTransfersPerSecond = 2.5;
@@ -117,13 +104,6 @@ inline constexpr double convertU18p14(uint32_t rawValue) {
     const double fractionalPart = static_cast<double>(fractionalBits) / (1 << 14);
     return static_cast<double>(integerPart) + fractionalPart;
 }
-
-const std::map<std::string_view, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
-    {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},
-    {"ccs", ZES_ENGINE_TYPE_FLAG_COMPUTE},
-    {"bcs", ZES_ENGINE_TYPE_FLAG_DMA},
-    {"vcs", ZES_ENGINE_TYPE_FLAG_MEDIA},
-    {"vecs", ZES_ENGINE_TYPE_FLAG_OTHER}};
 
 inline constexpr bool isGroupEngineHandle(zes_engine_group_t engineGroup) {
     return (engineGroup == ZES_ENGINE_GROUP_ALL || engineGroup == ZES_ENGINE_GROUP_MEDIA_ALL || engineGroup == ZES_ENGINE_GROUP_COMPUTE_ALL || engineGroup == ZES_ENGINE_GROUP_RENDER_ALL || engineGroup == ZES_ENGINE_GROUP_COPY_ALL);
