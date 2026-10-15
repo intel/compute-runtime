@@ -33,10 +33,17 @@ static void expectDebugVariableRestored(const char *variableName, T &snapshot, c
     }
 }
 
+void BaseUltConfigListener::snapshotHwInfo() {
+    referencedHwInfo = *defaultHwInfo;
+    referencedFeatureTableHash = referencedHwInfo.featureTable.asHash();
+    referencedWorkaroundTableHash = referencedHwInfo.workaroundTable.asHash();
+}
+
 void BaseUltConfigListener::OnTestIterationStart(const ::testing::UnitTest &, int) {
     lastTest.reserve(maxTestNameLength);
     debugVarSnapshot = debugManager.flags;
     injectFcnSnapshot = debugManager.injectFcn;
+    snapshotHwInfo();
     markIterationStart();
     resetAlarm(enableAlarm);
 }
@@ -51,7 +58,7 @@ void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
         GTEST_SKIP();
     }
 
-    lastTest = std::string(testInfo.test_suite_name()) + "." + testInfo.name();
+    lastTest.assign(testInfo.test_suite_name()).append(".").append(testInfo.name());
     WaitUtils::waitpkgUse = WaitUtils::WaitpkgUse::uninitialized;
     WaitUtils::waitPkgThresholdInMicroSeconds = WaitUtils::defaultWaitPkgThresholdInMicroSeconds;
     WaitUtils::waitPkgThresholdForEventHostSyncInMicroSeconds = WaitUtils::defaultWaitPkgThresholdForEventHostSyncInMicroSeconds;
@@ -62,7 +69,6 @@ void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
 
     maxOsContextCountBackup = MemoryManager::maxOsContextCount;
 
-    referencedHwInfo = *defaultHwInfo;
     stateSaveAreaHeaderSnapshot = MockSipData::mockSipKernel->getStateSaveAreaHeader();
 
     testStart = std::chrono::steady_clock::now();
@@ -111,10 +117,21 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
     static_assert(sizeof(UltHwConfig) == (20 * sizeof(bool) + sizeof(const char *) + sizeof(ExecutionEnvironment *) + sizeof(UltHwConfig::padding)), ""); // Ensure that there is no internal padding
     EXPECT_EQ(0, memcmp(&expectedState, &ultHwConfig, sizeof(UltHwConfig)));
 
-    EXPECT_EQ(0, memcmp(&referencedHwInfo.platform, &defaultHwInfo->platform, sizeof(PLATFORM)));
-    EXPECT_EQ(1, referencedHwInfo.featureTable.asHash() == defaultHwInfo->featureTable.asHash());
-    EXPECT_EQ(1, referencedHwInfo.workaroundTable.asHash() == defaultHwInfo->workaroundTable.asHash());
-    EXPECT_EQ(1, referencedHwInfo.capabilityTable == defaultHwInfo->capabilityTable);
+    const bool platformRestored = 0 == memcmp(&referencedHwInfo.platform, &defaultHwInfo->platform, sizeof(PLATFORM));
+    const bool featureTableRestored = referencedFeatureTableHash == defaultHwInfo->featureTable.asHash();
+    const bool workaroundTableRestored = referencedWorkaroundTableHash == defaultHwInfo->workaroundTable.asHash();
+    const bool capabilityTableRestored = referencedHwInfo.capabilityTable == defaultHwInfo->capabilityTable;
+    const bool capsRestored = referencedHwInfo.caps == defaultHwInfo->caps;
+    const bool ipVersionRestored = referencedHwInfo.ipVersion.value == defaultHwInfo->ipVersion.value;
+    EXPECT_TRUE(platformRestored);
+    EXPECT_TRUE(featureTableRestored);
+    EXPECT_TRUE(workaroundTableRestored);
+    EXPECT_TRUE(capabilityTableRestored);
+    EXPECT_TRUE(capsRestored);
+    EXPECT_TRUE(ipVersionRestored);
+    if (!platformRestored || !featureTableRestored || !workaroundTableRestored || !capabilityTableRestored || !capsRestored || !ipVersionRestored) {
+        snapshotHwInfo();
+    }
     MemoryManager::maxOsContextCount = maxOsContextCountBackup;
 
     EXPECT_EQ(stateSaveAreaHeaderSnapshot.size(), MockSipData::mockSipKernel->getStateSaveAreaHeader().size());

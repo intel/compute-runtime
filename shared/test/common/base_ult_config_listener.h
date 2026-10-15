@@ -25,9 +25,13 @@ class BaseUltConfigListener : public ::testing::EmptyTestEventListener {
     bool testExcluded = false;
 
   private:
+    void snapshotHwInfo();
+
     DebugVariables debugVarSnapshot;
     void *injectFcnSnapshot = nullptr;
     HardwareInfo referencedHwInfo;
+    uint64_t referencedFeatureTableHash = 0;
+    uint64_t referencedWorkaroundTableHash = 0;
     std::chrono::steady_clock::time_point testStart{};
     uint32_t maxOsContextCountBackup = 0;
     std::vector<char> stateSaveAreaHeaderSnapshot{100};
