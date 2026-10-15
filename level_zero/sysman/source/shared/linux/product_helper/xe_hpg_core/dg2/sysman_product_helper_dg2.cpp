@@ -206,7 +206,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Sysfsread for maxBw returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
-    pBandwidth->maxBandwidth = maxBw * mbpsToBytesPerSecond;
+    pBandwidth->maxBandwidth = maxBw * mbpsToBytesPerSec;
     pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
     return result;
 }

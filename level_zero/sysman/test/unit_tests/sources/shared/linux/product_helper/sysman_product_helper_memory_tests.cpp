@@ -912,7 +912,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     EXPECT_EQ(expectedReadCounters, bandwidth.readCounter);
     expectedWriteCounters = numberMcChannels * mockIdiWriteVal * transactionSize;
     EXPECT_EQ(expectedWriteCounters, bandwidth.writeCounter);
-    expectedBandwidth = mockMaxBwDg2 * mbpsToBytesPerSecond;
+    expectedBandwidth = mockMaxBwDg2 * mbpsToBytesPerSec;
     EXPECT_EQ(expectedBandwidth, bandwidth.maxBandwidth);
     EXPECT_GT(bandwidth.timestamp, 0u);
 }
@@ -931,7 +931,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     expectedReadCounters = numberMcChannels * (mockIdiReadVal + mockDisplayVc1ReadVal) * transactionSize;
     expectedWriteCounters = numberMcChannels * mockIdiWriteVal * transactionSize;
-    expectedBandwidth = mockMaxBwDg2 * mbpsToBytesPerSecond;
+    expectedBandwidth = mockMaxBwDg2 * mbpsToBytesPerSec;
     EXPECT_EQ(expectedReadCounters, bandwidth.readCounter);
     EXPECT_EQ(expectedWriteCounters, bandwidth.writeCounter);
     EXPECT_EQ(expectedBandwidth, bandwidth.maxBandwidth);
@@ -1311,7 +1311,7 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGetBand
         EXPECT_EQ(expectedReadCounters, bandwidth.readCounter);
         expectedWriteCounters = numberMcChannels * mockIdiWriteVal * transactionSize;
         EXPECT_EQ(expectedWriteCounters, bandwidth.writeCounter);
-        expectedBandwidth = mockMaxBwDg2 * mbpsToBytesPerSecond;
+        expectedBandwidth = mockMaxBwDg2 * mbpsToBytesPerSec;
         EXPECT_EQ(expectedBandwidth, bandwidth.maxBandwidth);
         EXPECT_GT(bandwidth.timestamp, 0u);
     }

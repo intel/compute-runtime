@@ -811,8 +811,8 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenC
     uint64_t expectedReadCounter = readCounterValue * transactionSize;
     uint64_t expectedWriteCounter = writeCounterValue * transactionSize;
     // vramBandwidth = 0x6abc0000, and the upper 16 bits hold the bandwidth in GB/s:
-    // 0x6abc0000 >> 16 = 0x6abc = 27324 GB/s, and 27324 x 1024^3 = 29338921598976 bytes/s
-    uint64_t expectedMaxBandwidth = 29338921598976u;
+    // 0x6abc0000 >> 16 = 0x6abc = 27324 GB/s, and 27324 x 1000^3 = 27324000000000 bytes/s
+    uint64_t expectedMaxBandwidth = 27324000000000u;
     ze_result_t result = pSysmanProductHelper->getMemoryBandwidth(&memBandwidth, pLinuxSysmanImp, subdeviceId);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(memBandwidth.readCounter, expectedReadCounter);

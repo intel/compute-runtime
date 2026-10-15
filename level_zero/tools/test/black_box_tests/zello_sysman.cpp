@@ -1793,7 +1793,7 @@ std::string formatBandwidthValue(double value, int precision = bandwidthPrecisio
 //      / (s2.maxBandwidth * (s2.timestamp - s1.timestamp))
 void printMemoryBandwidthSamples(const zes_mem_handle_t &handle, uint32_t iterations, uint32_t intervalMs) {
     constexpr double microSecondsPerSecond = 1000000.0;
-    constexpr double bytesPerMegaByte = 1024.0 * 1024.0;
+    constexpr double bytesPerMegaByte = 1000.0 * 1000.0;
 
     zes_mem_bandwidth_t previousSample = {};
     ze_result_t result = zesMemoryGetBandwidth(handle, &previousSample);

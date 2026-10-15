@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,7 +134,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
     pBandwidth->maxBandwidth = 0;
     if (vResponses[0].returnCode == KmdSysman::Success) {
         memcpy_s(&retValu32, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
-        pBandwidth->maxBandwidth = static_cast<uint64_t>(retValu32) * static_cast<uint64_t>(mbpsToBytesPerSecond);
+        pBandwidth->maxBandwidth = static_cast<uint64_t>(retValu32) * mbpsToBytesPerSec;
     }
 
     pBandwidth->readCounter = 0;

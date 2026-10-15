@@ -17,7 +17,6 @@ inline constexpr std::string_view vendorIntel("Intel(R) Corporation");
 inline constexpr std::string_view unknown("unknown");
 inline constexpr std::string_view intelPciId("0x8086");
 inline constexpr std::string_view guid64BitMemoryCounters("0xb15a0ede");
-inline constexpr uint32_t mbpsToBytesPerSecond = 125000;
 inline constexpr double milliVoltsFactor = 1000.0;
 inline constexpr uint32_t maxRasErrorCategoryCount = 7;
 inline constexpr uint32_t maxRasErrorCategoryExpCount = 10;
@@ -65,8 +64,8 @@ inline constexpr uint16_t milliSecsToMicroSecs = 1000;
 inline constexpr uint32_t milliFactor = 1000u;
 inline constexpr uint32_t microFactor = milliFactor * milliFactor;
 inline constexpr uint64_t gigaUnitTransferToUnitTransfer = 1000 * 1000 * 1000;
-inline constexpr uint64_t megaBytesToBytes = 1024 * 1024;
-inline constexpr uint64_t gigaBytesToBytes = megaBytesToBytes * 1024;
+inline constexpr uint64_t megaBytesToBytes = 1000 * 1000;
+inline constexpr uint64_t gigaBytesToBytes = megaBytesToBytes * 1000;
 inline constexpr uint64_t mbpsToBytesPerSec = megaBytesToBytes / 8;
 
 inline constexpr int32_t memoryBusWidth = 128; // bus width in bytes
