@@ -305,6 +305,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     subBuffer->associatedMemObject = this;
     subBuffer->offset = region->origin;
     subBuffer->setUsesSvm(this->usesSvm);
+    subBuffer->setZeroCopy(this->zeroCopy);
     subBuffer->setParentSharingHandler(this->getSharingHandler());
     return subBuffer;
 }

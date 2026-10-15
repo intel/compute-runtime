@@ -8,8 +8,10 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/event/leo_event.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
+#include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
 
@@ -365,6 +367,52 @@ TEST_F(EnqueueEventPlumbingFixture, givenCommandWaitingOnIncompleteNonUserEventW
 
     EXPECT_EQ(CL_SUCCESS, clFinish(getCommandQueue()));
     clReleaseEvent(markerEvent);
+}
+
+struct EnqueueUseHostPtrBufferMapFixture : public EnqueueEventPlumbingFixture {
+    Buffer *createUseHostPtrBuffer(bool zeroCopy) {
+        constexpr cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+        auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &clDevice->getDevice());
+        auto useHostPtrBuffer = new Buffer(castToObject<Context>(clContext), memoryProperties, flags, deviceAddress, hostStorage.data(), hostStorage.size(), true);
+        useHostPtrBuffer->setZeroCopy(zeroCopy);
+        return useHostPtrBuffer;
+    }
+
+    void mapAndUnmap(Buffer *useHostPtrBuffer) {
+        capturingCmdList.clearCaptures();
+
+        cl_int errcode = CL_INVALID_VALUE;
+        auto mappedPtr = clEnqueueMapBuffer(getCommandQueue(), useHostPtrBuffer, CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, hostStorage.size(), 0, nullptr, nullptr, &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        EXPECT_EQ(hostStorage.data(), mappedPtr);
+
+        EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), useHostPtrBuffer, mappedPtr, 0, nullptr, nullptr));
+    }
+
+    alignas(MemoryConstants::cacheLineSize) std::array<uint8_t, MemoryConstants::cacheLineSize> hostStorage{};
+    void *deviceAddress = reinterpret_cast<void *>(0x100000);
+};
+
+TEST_F(EnqueueUseHostPtrBufferMapFixture, givenZeroCopyUseHostPtrBufferWithDeviceAddressDifferentFromHostPtrWhenMappedAndUnmappedThenNoMemoryCopyIsAppended) {
+    auto useHostPtrBuffer = createUseHostPtrBuffer(true);
+
+    mapAndUnmap(useHostPtrBuffer);
+
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(useHostPtrBuffer));
+}
+
+TEST_F(EnqueueUseHostPtrBufferMapFixture, givenNotZeroCopyUseHostPtrBufferWithDeviceAddressDifferentFromHostPtrWhenMappedAndUnmappedThenDataIsCopiedBothWays) {
+    auto useHostPtrBuffer = createUseHostPtrBuffer(false);
+
+    mapAndUnmap(useHostPtrBuffer);
+
+    ASSERT_EQ(2u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(hostStorage.data(), capturingCmdList.appendMemoryCopyArgs[0].dstptr);
+    EXPECT_EQ(deviceAddress, capturingCmdList.appendMemoryCopyArgs[0].srcptr);
+    EXPECT_EQ(deviceAddress, capturingCmdList.appendMemoryCopyArgs[1].dstptr);
+    EXPECT_EQ(hostStorage.data(), capturingCmdList.appendMemoryCopyArgs[1].srcptr);
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(useHostPtrBuffer));
 }
 
 struct EnqueueImageEventPlumbingFixture : public EnqueueEventPlumbingFixture {

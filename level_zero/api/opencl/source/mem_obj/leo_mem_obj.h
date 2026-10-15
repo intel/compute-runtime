@@ -125,6 +125,8 @@ class MemObj : public BaseObject<_cl_mem> {
     void storeProperties(const cl_mem_properties *properties);
     void setUsesSvm(bool usesSvm) { this->usesSvm = usesSvm; }
     bool getUsesSvm() const { return this->usesSvm; }
+    void setZeroCopy(bool zeroCopy) { this->zeroCopy = zeroCopy; }
+    bool isZeroCopy() const { return this->zeroCopy; }
     void addCallback(CallbackT callback, void *userData) {
         auto lock = this->takeOwnership();
         this->callbacks.emplace_back(callback, userData);
@@ -185,6 +187,7 @@ class MemObj : public BaseObject<_cl_mem> {
     MemObj *associatedMemObject = nullptr;
     const bool externalHandle = false;
     bool usesSvm = false;
+    bool zeroCopy = false;
     const MemObjType memObjType;
 };
 

@@ -840,7 +840,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
-    if (pBuffer->getCpuPtr() != pBuffer->getUsmPtr() || pBuffer->getUsesSvm()) {
+    if ((pBuffer->getCpuPtr() != pBuffer->getUsmPtr() && !pBuffer->isZeroCopy()) || pBuffer->getUsesSvm()) {
         if (!pBuffer->getCpuPtr()) {
             errcodeHelper.set(pBuffer->createMapAllocation());
             if (errcodeHelper.localErrcode != CL_SUCCESS) {
@@ -1113,7 +1113,7 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
             cl_int tracingRetVal = clEnqueueSVMUnmap(commandQueue, mappedPtr, numEventsInWaitList, eventWaitList, event);
             TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
             return tracingRetVal;
-        } else if (pBuffer->getCpuPtr() != pBuffer->getUsmPtr() && !mapInfo.readOnly) {
+        } else if (pBuffer->getCpuPtr() != pBuffer->getUsmPtr() && !pBuffer->isZeroCopy() && !mapInfo.readOnly) {
             auto mappedOffset = mapInfo.offset[0];
             auto mappedSize = mapInfo.ptrLength;
             cl_int tracingRetVal = clEnqueueWriteBuffer(commandQueue, memObj, false, mappedOffset, mappedSize, mappedPtr, numEventsInWaitList, eventWaitList, event);

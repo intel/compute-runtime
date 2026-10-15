@@ -112,6 +112,35 @@ TEST_F(CreateBufferWithUnalignedHostPtrTest, givenPageUnalignedHostPtrWhenCreate
     EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(usmPtr));
 }
 
+TEST_F(CreateBufferWithUnalignedHostPtrTest, givenCacheLineAlignedHostPtrWhenCreateBufferWithUseHostPtrThenBufferAndItsSubBufferAreZeroCopy) {
+    cl_int retVal = CL_INVALID_VALUE;
+    auto clBuffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, unalignedHostPtr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, clBuffer);
+    EXPECT_TRUE(castToObject<Buffer>(clBuffer)->isZeroCopy());
+
+    cl_buffer_region region{0, MemoryConstants::cacheLineSize};
+    auto clSubBuffer = clCreateSubBuffer(clBuffer, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, clSubBuffer);
+    EXPECT_TRUE(castToObject<Buffer>(clSubBuffer)->isZeroCopy());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clSubBuffer));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clBuffer));
+}
+
+TEST_F(CreateBufferWithUnalignedHostPtrTest, givenHostPtrNotAlignedToCacheLineWhenCreateBufferWithUseHostPtrThenBufferIsNotZeroCopy) {
+    auto misalignedHostPtr = ptrOffset(basePtr, MemoryConstants::cacheLineSize / 2);
+
+    cl_int retVal = CL_INVALID_VALUE;
+    auto clBuffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, misalignedHostPtr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, clBuffer);
+    EXPECT_FALSE(castToObject<Buffer>(clBuffer)->isZeroCopy());
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clBuffer));
+}
+
 TEST_F(CreateBufferWithUnalignedHostPtrTest, givenPageAlignedHostPtrWhenCreateBufferThenApplicationStorageIsWrappedWithoutCopy) {
     cl_int retVal = CL_INVALID_VALUE;
     auto clBuffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, basePtr, &retVal);

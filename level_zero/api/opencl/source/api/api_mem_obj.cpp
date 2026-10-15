@@ -87,6 +87,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     bool copyFromHostPtr = memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr;
     bool hostMemoryAllocated = false;
     bool usesSvm = false;
+    bool zeroCopy = false;
 
     bool inputMemObjFound = false;
     auto inputMemObjHandle = NEO::LEO::MemObj::getMemObjProperties<uintptr_t>(properties, CL_MEM_L0_HANDLE_INTEL, &inputMemObjFound);
@@ -124,6 +125,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
             ptr = NEO::LEO::Buffer::tryImportUserPtr(pCtx, hostPtr, size, memoryProperties, useHostMemory);
             if (nullptr != ptr) {
                 copyFromHostPtr = false;
+                zeroCopy = true;
             } else {
                 hostMemoryAllocated = useHostMemory;
                 if (hostMemoryAllocated) {
@@ -184,6 +186,7 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     auto buffer = new NEO::LEO::Buffer(pContext, memoryProperties, flags, ptr, cpuPtr, size, inputMemObjFound);
     buffer->storeProperties(properties);
     buffer->setUsesSvm(usesSvm);
+    buffer->setZeroCopy(zeroCopy);
     cl_mem tracingRetVal = buffer;
     TRACING_EXIT(ClCreateBufferWithProperties, &tracingRetVal);
     return tracingRetVal;
