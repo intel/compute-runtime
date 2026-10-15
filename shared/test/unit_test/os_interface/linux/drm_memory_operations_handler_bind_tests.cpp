@@ -651,6 +651,50 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeRe
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenViewAllocationWhenMakeResidentWithinOsContextNonEvictableThenParentAllocationIsMarkedAsAlwaysResident) {
+    auto parentAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k});
+    std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(MemoryConstants::pageSize, MemoryConstants::pageSize));
+    auto viewAllocation = view.get();
+    auto osContext = device->getDefaultEngine().osContext;
+
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(&viewAllocation, 1), false, false, true), MemoryOperationsStatus::success);
+    EXPECT_TRUE(viewAllocation->isAlwaysResident(osContext->getContextId()));
+    EXPECT_TRUE(parentAllocation->isAlwaysResident(osContext->getContextId()));
+
+    view.reset();
+    memoryManager->freeGraphicsMemory(parentAllocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenViewAllocationWhenMakeResidentWithinOsContextEvictableThenParentAllocationIsNotMarkedAsAlwaysResident) {
+    auto parentAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k});
+    std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(MemoryConstants::pageSize, MemoryConstants::pageSize));
+    auto viewAllocation = view.get();
+    auto osContext = device->getDefaultEngine().osContext;
+
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(&viewAllocation, 1), true, false, true), MemoryOperationsStatus::success);
+    EXPECT_FALSE(viewAllocation->isAlwaysResident(osContext->getContextId()));
+    EXPECT_FALSE(parentAllocation->isAlwaysResident(osContext->getContextId()));
+
+    view.reset();
+    memoryManager->freeGraphicsMemory(parentAllocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenNonEvictableViewAllocationWhenEvictUnusedAllocationsThenParentAllocationIsNotUnbound) {
+    auto parentAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k});
+    std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(MemoryConstants::pageSize, MemoryConstants::pageSize));
+    auto viewAllocation = view.get();
+
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&viewAllocation, 1), false, false, true), MemoryOperationsStatus::success);
+    EXPECT_NE(mock->getMockIoctlHelper()->vmBindCalled, 0u);
+
+    operationHandler->evictUnusedAllocations(false, true);
+
+    EXPECT_EQ(mock->getMockIoctlHelper()->vmUnbindCalled, 0u);
+
+    view.reset();
+    memoryManager->freeGraphicsMemory(parentAllocation);
+}
+
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenChangingResidencyThenOperationIsHandledProperly) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 

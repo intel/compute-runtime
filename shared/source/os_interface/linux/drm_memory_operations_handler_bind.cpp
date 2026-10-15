@@ -129,6 +129,9 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
             }
             if (!evictable) {
                 drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
+                if (auto parentAllocation = drmAllocation->getParentAllocation()) {
+                    parentAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
+                }
             }
         }
     }
