@@ -233,6 +233,31 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenForkingToRegularOrSync
     EXPECT_EQ(ret2, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
 }
 
+TEST_F(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenRegularCmdlistWaitsOnNotRecordedEventsThenForkIsDetectedOnlyIfAnyEventIsRecorded) {
+    GraphsCleanupGuard graphCleanup;
+
+    Mock<CommandList> parentCmdList;
+    Mock<Event> recordedEvent;
+    auto signalEntry = std::make_shared<GraphInternalEventEntry>(GraphInternalEventEntry{.signalFrom = &parentCmdList});
+    recordedEvent.setRecordedSignalEntry(signalEntry);
+    Mock<Event> notRecordedEvent;
+
+    Mock<CommandList> mockCmdList;
+    auto hCmdList = mockCmdList.toHandle();
+    auto &cmdList = static_cast<Mock<CommandList>::BaseClass &>(mockCmdList);
+
+    processUsesGraphs.store(true);
+    EXPECT_FALSE(cmdList.isImmediateType());
+
+    ze_event_handle_t notRecordedOnly[] = {notRecordedEvent.toHandle()};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, cmdList.capture<CaptureApi::zeCommandListAppendBarrier>(hCmdList, nullptr, 1U, notRecordedOnly));
+    EXPECT_NE(0u, notRecordedEvent.getRecordedSignalFromCalled);
+
+    ze_event_handle_t notRecordedFirst[] = {notRecordedEvent.toHandle(), recordedEvent.toHandle()};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, cmdList.capture<CaptureApi::zeCommandListAppendBarrier>(hCmdList, nullptr, 2U, notRecordedFirst));
+    EXPECT_NE(0u, recordedEvent.getRecordedSignalFromCalled);
+}
+
 TEST_F(GraphTestApiCaptureBeginEnd, GivenRegularCommandListWithFlatCaptureWhenAppendingBarrierThenApiCallIsRecorded) {
     GraphsCleanupGuard graphCleanup;
 

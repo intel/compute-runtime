@@ -58,10 +58,14 @@ class MyMockCommandContainer : public CommandContainer {
 
     GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory) override {
         allocateCommandBufferCalled[!!forceHostMemory]++;
+        if (forceHostMemory && failHostMemoryCommandBufferAllocation) {
+            return nullptr;
+        }
         return CommandContainer::allocateCommandBuffer(forceHostMemory);
     }
 
     uint32_t allocateCommandBufferCalled[2] = {0, 0};
+    bool failHostMemoryCommandBufferAllocation = false;
 };
 
 struct CommandContainerHeapStateTests : public ::testing::Test {
@@ -369,10 +373,13 @@ TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemor
 }
 
 TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenAllocateSecondaryCmdStreamFailsDuringInitializeThenErrorIsReturned) {
-    CommandContainer cmdContainer;
-    static_cast<MockMemoryManager *>(pDevice->getMemoryManager())->maxSuccessAllocatedGraphicsMemoryIndex = 7;
+    MyMockCommandContainer cmdContainer;
+    cmdContainer.failHostMemoryCommandBufferAllocation = true;
     auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, true);
     EXPECT_EQ(CommandContainer::ErrorCode::outOfDeviceMemory, status);
+    EXPECT_EQ(1u, cmdContainer.allocateCommandBufferCalled[0]);
+    EXPECT_EQ(1u, cmdContainer.allocateCommandBufferCalled[1]);
+    EXPECT_EQ(1u, cmdContainer.cmdBufferAllocations.size());
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndResetThenCmdBufferAllocIsReused) {
