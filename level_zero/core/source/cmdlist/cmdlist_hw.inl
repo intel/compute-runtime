@@ -1861,7 +1861,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
         dstPtrAlloc, dstPtr,
         srcPtrAlloc, srcPtr,
         {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0},
-        0, 0, 0, 0, clearColorAllocation, memoryCopyParams.isDstRemote);
+        0, 0, 0, 0, clearColorAllocation, memoryCopyParams.isDstSystemOrRemote);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
 
@@ -1928,7 +1928,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         dstAllocationData->alloc, dstPtr,
         srcAllocationData->alloc, srcPtr,
         dstPtrOffset, srcPtrOffset, copySizeModified,
-        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation, isRemoteAlloc(dstAllocationData->svmAllocData));
+        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation, isDstSystemOrRemoteAlloc(dstAllocationData->svmAllocData));
 
     this->addResidency(dstAllocationData->alloc, srcAllocationData->alloc, clearColorAllocation);
 
@@ -2399,8 +2399,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     auto dstAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstptr), allocSize, dstAllocInfo, {.sharedSystemEnabled = sharedSystemEnabled, .copyOffload = isCopyOffloadEnabled()});
     auto srcAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcptr), allocSize, srcAllocInfo, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true, .copyOffload = isCopyOffloadEnabled()});
 
-    memoryCopyParams.isDstRemote = isRemoteAlloc(dstAllocationStruct.svmAllocData);
-    bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || memoryCopyParams.isDstRemote;
+    memoryCopyParams.isDstSystemOrRemote = isDstSystemOrRemoteAlloc(dstAllocationStruct.svmAllocData);
+    bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || isRemoteAlloc(dstAllocationStruct.svmAllocData);
 
     if (memoryCopyParams.bscSplitEnabled) {
         dstAllocationStruct.offset += ptrDiff(dstptr, memoryCopyParams.bcsSplitBaseDstPtr);
@@ -4842,6 +4842,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::isRemoteAlloc(NEO::SvmAllocationData 
     }
 
     return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isDstSystemOrRemoteAlloc(NEO::SvmAllocationData *allocData) const {
+    const bool isHostUsm = allocData && allocData->memoryType == InternalMemoryType::hostUnifiedMemory;
+    return isHostUsm || isRemoteAlloc(allocData);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

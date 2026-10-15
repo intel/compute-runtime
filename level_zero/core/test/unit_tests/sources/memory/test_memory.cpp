@@ -4904,7 +4904,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledByDebugFlagAnd
 
         CmdListMemoryCopyParams copyParams = {};
         ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams));
-        EXPECT_EQ(isImportedAllocation, copyParams.isDstRemote);
+        EXPECT_EQ(isImportedAllocation, copyParams.isDstSystemOrRemote);
 
         auto cmdStream = commandList->getCmdContainer().getCommandStream();
         GenCmdList cmdList;
@@ -4926,6 +4926,106 @@ HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledByDebugFlagAnd
     }
 
     dstAllocData->isImportedAllocation = false;
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledAndHostUsmDstWithCpuInaccessiblePoolOnSecondRootWhenAppendingMemoryCopyThenCopyIsSplitInto2MBChunksEachFollowedByFlush, IsCRI) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    L0::Device *device1 = driverHandle->devices[1];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    const size_t numChunks = 2;
+    const size_t size = numChunks * BlitterConstants::writeSplitChunkSize;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device1->toHandle(), &deviceDesc, size, 1, &srcPtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 1, &dstPtr));
+
+    auto srcAllocData = svmManager->getSVMAlloc(srcPtr);
+    auto dstAllocData = svmManager->getSVMAlloc(dstPtr);
+    ASSERT_NE(nullptr, srcAllocData);
+    ASSERT_NE(nullptr, dstAllocData);
+    auto rootDeviceIndex = device1->getRootDeviceIndex();
+    auto dstAllocation = dstAllocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    ASSERT_NE(nullptr, dstAllocation);
+    static_cast<NEO::MemoryAllocation *>(srcAllocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex))->overrideMemoryPool(MemoryPool::localMemory);
+    static_cast<NEO::MemoryAllocation *>(dstAllocation)->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device1, NEO::EngineGroupType::copy, 0u));
+
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(copyParams.isDstSystemOrRemote);
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+    auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(numChunks, blits.size());
+    for (size_t i = 0; i < blits.size(); i++) {
+        EXPECT_EQ(128u, genCmdCast<XY_COPY_BLT *>(*blits[i])->getDestinationY2CoordinateBottom());
+        auto nextBlit = (i + 1 < blits.size()) ? blits[i + 1] : cmdList.end();
+        EXPECT_NE(nextBlit, find<MI_FLUSH_DW *>(blits[i], nextBlit));
+    }
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledAndHostUsmDstWithCpuInaccessiblePoolOnSecondRootWhenAppendingMemoryCopyRegionThenEachBlitIsFollowedByFlush, IsCRI) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    L0::Device *device1 = driverHandle->devices[1];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    constexpr uint32_t width = 16384;
+    constexpr uint32_t height = 256;
+    const size_t size = static_cast<size_t>(width) * height;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device1->toHandle(), &deviceDesc, size, 1, &srcPtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 1, &dstPtr));
+
+    auto rootDeviceIndex = device1->getRootDeviceIndex();
+    auto srcAllocation = svmManager->getSVMAlloc(srcPtr)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    auto dstAllocation = svmManager->getSVMAlloc(dstPtr)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    ASSERT_NE(nullptr, srcAllocation);
+    ASSERT_NE(nullptr, dstAllocation);
+    static_cast<NEO::MemoryAllocation *>(srcAllocation)->overrideMemoryPool(MemoryPool::localMemory);
+    static_cast<NEO::MemoryAllocation *>(dstAllocation)->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device1, NEO::EngineGroupType::copy, 0u));
+
+    ze_copy_region_t region = {0, 0, 0, width, height, 1};
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &region, width, 0, srcPtr, &region, width, 0, nullptr, 0, nullptr, copyParams));
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+    auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_LT(1u, blits.size());
+    for (size_t i = 0; i < blits.size(); i++) {
+        auto nextBlit = (i + 1 < blits.size()) ? blits[i + 1] : cmdList.end();
+        EXPECT_NE(nextBlit, find<MI_FLUSH_DW *>(blits[i], nextBlit));
+    }
+
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
 }

@@ -418,6 +418,7 @@ struct CommandListCoreFamily : public CommandList {
     bool isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size, NEO::TransferDirection &directionOut);
     bool isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut, bool remoteCopy);
     bool isRemoteAlloc(NEO::SvmAllocationData *allocData) const;
+    bool isDstSystemOrRemoteAlloc(NEO::SvmAllocationData *allocData) const;
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                   const void **pRanges);

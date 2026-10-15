@@ -69,7 +69,7 @@ struct BlitProperties {
         const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
         size_t srcRowPitch, size_t srcSlicePitch,
         size_t dstRowPitch, size_t dstSlicePitch,
-        GraphicsAllocation *clearColorAllocation, bool isDstRemote);
+        GraphicsAllocation *clearColorAllocation, bool isDstSystemOrRemote);
 
     static BlitProperties constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
                                                                GraphicsAllocation *allocation, GraphicsAllocation *clearColorAllocation);

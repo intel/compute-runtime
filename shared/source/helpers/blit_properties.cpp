@@ -115,7 +115,7 @@ BlitProperties BlitProperties::constructPropertiesForCopy(
     const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
     size_t srcRowPitch, size_t srcSlicePitch,
     size_t dstRowPitch, size_t dstSlicePitch,
-    GraphicsAllocation *clearColorAllocation, bool isDstRemote) {
+    GraphicsAllocation *clearColorAllocation, bool isDstSystemOrRemote) {
 
     copySize.y = copySize.y ? copySize.y : 1;
     copySize.z = copySize.z ? copySize.z : 1;
@@ -129,7 +129,7 @@ BlitProperties BlitProperties::constructPropertiesForCopy(
     bool sysMem = (!dstAllocation || !srcAllocation)
                       ? true
                       : MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool());
-    bool dstSystemOrRemoteMem = isDstRemote || !dstAllocation || MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool());
+    bool dstSystemOrRemoteMem = isDstSystemOrRemote || !dstAllocation || MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool());
 
     return {
         .blitSyncProperties = {},

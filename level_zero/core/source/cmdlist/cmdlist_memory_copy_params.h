@@ -41,7 +41,7 @@ struct CmdListMemoryCopyParams {
     bool copyOffloadAllowed = false;
     bool taskCountUpdateRequired = false;
     bool bscSplitEnabled = false;
-    bool isDstRemote = false;
+    bool isDstSystemOrRemote = false;
     CmdListMemoryCopyParamsExt paramsExt{};
     CmdListWaitEventParameters waitEventsParameters{};
     MemAllocInfo dstAllocInfo{};
