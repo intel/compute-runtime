@@ -3320,20 +3320,27 @@ int main(int argc, char *argv[]) {
         casePass = testAppendMemoryCopy(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestStandardMemoryCopy, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestStandardMemoryCopyMultigraph)) {
-        currentTest = "Standard Memory Copy - multigraph";
-        LevelZeroBlackBoxTests::printTestHeader(currentTest);
-        casePass = testMultiGraph(context, device0, aubMode, graphDumpSettings);
-        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
-        boxPass &= casePass;
+        if (testSubMask.test(0)) {
+            currentTest = "Standard Memory Copy - multigraph";
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
+            casePass = testMultiGraph(context, device0, aubMode, graphDumpSettings);
+            LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+            boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestStandardMemoryCopyMultigraph, 0);
+        }
 
-        currentTest = "Standard Memory Copy - multigraph post-join trailing synchronization";
-        LevelZeroBlackBoxTests::printTestHeader(currentTest);
-        casePass = testMultiGraphPostJoinTrailingSync(context, device0, aubMode, graphDumpSettings);
-        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
-        boxPass &= casePass;
+        if (testSubMask.test(1)) {
+            currentTest = "Standard Memory Copy - multigraph post-join trailing synchronization";
+            LevelZeroBlackBoxTests::printTestHeader(currentTest);
+            casePass = testMultiGraphPostJoinTrailingSync(context, device0, aubMode, graphDumpSettings);
+            LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+            boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestStandardMemoryCopyMultigraph, 1);
+        }
     }
 
     if (testMask.test(bitNumberTestAppendLaunchKernel)) {
@@ -3342,6 +3349,7 @@ int main(int argc, char *argv[]) {
         casePass = testAppendLaunchKernel(context, device0, kernelsMap, false, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestAppendLaunchKernel, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestAppendLaunchKernelIndirect)) {
@@ -3350,6 +3358,7 @@ int main(int argc, char *argv[]) {
         casePass = testAppendLaunchKernel(context, device0, kernelsMap, true, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestAppendLaunchKernelIndirect, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestAppendLaunchMultipleKernelsIndirect)) {
@@ -3358,6 +3367,7 @@ int main(int argc, char *argv[]) {
         casePass = testAppendLaunchMultipleKernelsIndirect(context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestAppendLaunchMultipleKernelsIndirect, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestMultipleExecution)) {
@@ -3366,6 +3376,7 @@ int main(int argc, char *argv[]) {
         casePass = testMultipleGraphExecution(context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestMultipleExecution, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestExternalCbEvents)) {
@@ -3375,6 +3386,7 @@ int main(int argc, char *argv[]) {
             casePass = testExternalGraphCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalCbEvents, 0);
         }
         if (testSubMask.test(1)) {
             std::string testTitle = "External Graph CB Events multiple execution";
@@ -3391,6 +3403,7 @@ int main(int argc, char *argv[]) {
             casePass = testExternalGraphCbEventsMultiExecution(context, device0, kernelsMap, executionCount, aubMode, graphDumpSettings);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalCbEvents, 1);
         }
         if (testSubMask.test(2)) {
             std::string testTitle = "External Wait CB Events using immediate for input/output";
@@ -3400,6 +3413,7 @@ int main(int argc, char *argv[]) {
             casePass = testExternalWaitCbEventsImmediate(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalCbEvents, 2);
         }
         if (testSubMask.test(3)) {
             std::string testTitle = "External Wait CB Events using graphs for input/output";
@@ -3409,6 +3423,7 @@ int main(int argc, char *argv[]) {
             casePass = testExternalWaitCbEventsGraphs(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, 2, false);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalCbEvents, 3);
         }
         if (testSubMask.test(4)) {
             std::string testTitle = "Appended Empty External Wait CB Events signaled after graph creation";
@@ -3425,6 +3440,7 @@ int main(int argc, char *argv[]) {
             casePass = testEmptyExternalWaitCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, executionCount, false);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalCbEvents, 4);
         }
         if (testSubMask.test(5)) {
             std::string testTitle = "External Wait CB Events with device timestamp signaled before graph capture";
@@ -3438,6 +3454,7 @@ int main(int argc, char *argv[]) {
             casePass = testEmptyExternalWaitCbEvents(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, executionCount, true);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalCbEvents, 5);
         }
         if (testSubMask.test(6)) {
             std::string testTitle = "External Wait CB Events with device timestamp signaled before graph capture using graphs for input/output";
@@ -3451,6 +3468,7 @@ int main(int argc, char *argv[]) {
             casePass = testExternalWaitCbEventsGraphs(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers, executionCount, true);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalCbEvents, 6);
         }
     }
 
@@ -3469,6 +3487,7 @@ int main(int argc, char *argv[]) {
         casePass = testMultipleLevelGraph(nullptr, context, device0, kernelsMap, aubMode, graphDumpSettings, immediate, false);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestMultiLevelGraph, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestMultiJoinGraph)) {
@@ -3499,6 +3518,7 @@ int main(int argc, char *argv[]) {
                 casePass = testMultipleForkJoinsGraph(context, device0, kernelsMap, aubMode, graphDumpSettings, reuse);
                 LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
                 boxPass &= casePass;
+                LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestMultiJoinGraph, 0);
             }
         }
         if (testSubMask.test(1)) {
@@ -3510,6 +3530,7 @@ int main(int argc, char *argv[]) {
             casePass = testSingleForkMultipleJoinsGraph(context, device0, kernelsMap, aubMode, graphDumpSettings, forkCount, executionCount, validateBetweenExecutions);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestMultiJoinGraph, 1);
         }
     }
 
@@ -3528,6 +3549,7 @@ int main(int argc, char *argv[]) {
         casePass = testForkedGraphMultipleExecutionEventSync(context, device0, kernelsMap, aubMode, graphDumpSettings, executionCount);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestMultiExecForkedGraph, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestWrappedMultipleEngines)) {
@@ -3564,6 +3586,7 @@ int main(int argc, char *argv[]) {
                 casePass = testWrappedMultipleEngines(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, pairCount, currentForkPolicy, useInOrder);
                 LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
                 boxPass &= casePass;
+                LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestWrappedMultipleEngines, 0);
             }
         }
         if (testSubMask.test(1)) {
@@ -3581,6 +3604,7 @@ int main(int argc, char *argv[]) {
             casePass = testSingleWrappedEngineDeepFork(context, device0, kernelsMap, aubMode, graphDumpSettings, engineCount, useInOrder);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestWrappedMultipleEngines, 1);
         }
     }
 
@@ -3590,6 +3614,7 @@ int main(int argc, char *argv[]) {
         casePass = testCopyEngineSimpleGraph(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestCopyEngineSimpleGraph, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestVisitGraph)) {
@@ -3602,6 +3627,7 @@ int main(int argc, char *argv[]) {
             casePass = testMultipleLevelGraph(&visitApi, context, device0, kernelsMap, aubMode, graphDumpSettings, false, true);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestVisitGraph, LevelZeroBlackBoxTests::undefinedTestNumber);
         }
     }
 
@@ -3611,6 +3637,7 @@ int main(int argc, char *argv[]) {
         casePass = testPauseResumeCapture(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestPauseResume, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     if (testMask.test(bitNumberTestTransitiveForkJoins)) {
@@ -3620,6 +3647,7 @@ int main(int argc, char *argv[]) {
             casePass = testTransitiveForkJoinsGraph(context, device0, aubMode, graphDumpSettings);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestTransitiveForkJoins, 0);
         }
 
         if (testSubMask.test(1)) {
@@ -3628,6 +3656,7 @@ int main(int argc, char *argv[]) {
             casePass = testTransitiveForkJoinsGraphNegative(context, device0, aubMode, graphDumpSettings);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestTransitiveForkJoins, 1);
         }
     }
 
@@ -3640,6 +3669,7 @@ int main(int argc, char *argv[]) {
             casePass = testExternalFlagCbEventsImmediate(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalFlagEvents, 0);
         }
         if (testSubMask.test(1)) {
             std::string testTitle = "External Flag CB Events using graphs for input/output";
@@ -3649,6 +3679,7 @@ int main(int argc, char *argv[]) {
             casePass = testExternalFlagCbEventsGraphs(context, device0, kernelsMap, aubMode, graphDumpSettings, useCopyEngineForMemoryTransfers);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalFlagEvents, 1);
         }
         auto getCaseNameForkJoinExternalFlag = [](std::string &testTitle, uint32_t executionCount, bool validateBetweenExecutions) -> std::string {
             std::ostringstream caseName;
@@ -3663,6 +3694,7 @@ int main(int argc, char *argv[]) {
             casePass = testForkJoinExternalFlagSignalHostSynchronize(context, device0, aubMode, validateBetweenExecutions, graphDumpSettings, executionCount);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalFlagEvents, 2);
         }
         if (testSubMask.test(3)) {
             std::string testTitle = "Fork/Join External Flag Wait - Before Memory Copy";
@@ -3671,15 +3703,17 @@ int main(int argc, char *argv[]) {
             casePass = testForkJoinExternalFlagWaitBeforeMemoryCopy(context, device0, aubMode, validateBetweenExecutions, graphDumpSettings, executionCount);
             LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
             boxPass &= casePass;
+            LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestExternalFlagEvents, 3);
         }
     }
 
     if (testMask.test(bitNumberTestDestroyNonExternalCbEventsBeforeCaptureEnd)) {
         currentTest = "Destroy Non-External CB Events Before Capture End";
-        std::cout << "Starting test: " << currentTest << std::endl;
+        LevelZeroBlackBoxTests::printTestHeader(currentTest);
         casePass = testDestroyNonExternalCbEventsBeforeCaptureEnd(context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
+        LevelZeroBlackBoxTests::addFailedCase(casePass, currentTest, bitNumberTestDestroyNonExternalCbEventsBeforeCaptureEnd, LevelZeroBlackBoxTests::undefinedTestNumber);
     }
 
     for (auto kernel : kernelsMap) {
@@ -3687,8 +3721,7 @@ int main(int argc, char *argv[]) {
     }
     SUCCESS_OR_TERMINATE(zeModuleDestroy(moduleTestKernels));
 
-    int mainRetCode = aubMode ? 0 : (boxPass ? 0 : 1);
-    std::string finalStatus = (mainRetCode != 0) ? " FAILED" : " SUCCESS";
-    std::cerr << blackBoxName << finalStatus << std::endl;
+    int mainRetCode = LevelZeroBlackBoxTests::printTestResult(boxPass, aubMode, blackBoxName);
+    LevelZeroBlackBoxTests::printFailedCases();
     return mainRetCode;
 }

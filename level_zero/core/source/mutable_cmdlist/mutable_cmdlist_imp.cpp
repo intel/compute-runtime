@@ -548,6 +548,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t co
         UNRECOVERABLE_IF(mutableWaitEventDesc.waitEventIndex != eventNum);
         auto waitEventHandle = phWaitEvents[eventNum];
         auto inputEvent = Event::fromHandle(waitEventHandle);
+        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL event number: %u old wait event: %p\n", eventNum, mutableWaitEventDesc.event);
         if (mutableWaitEventDesc.event == inputEvent && !mutableWaitEventDesc.eventVariable->getDesc().eventValue.counterBasedEvent) {
             continue;
         }
@@ -559,7 +560,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t co
         } else {
             return retCode;
         }
-        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL event number: %u new wait event handle: %p\n", eventNum, waitEventHandle);
+        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL event number: %u new wait event: %p\n", eventNum, inputEvent);
     }
     if (base->getFlatCapture()) {
         base->getFlatCapture()->updateWaitEvents(commandId, numWaitEvents, phWaitEvents);

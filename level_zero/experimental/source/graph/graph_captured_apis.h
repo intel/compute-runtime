@@ -349,10 +349,54 @@ class GraphInternalEvents {
 
 using SubstitutedWaitEvents = StackVec<ze_event_handle_t, 8>;
 
+struct StoredCbEventState {
+    StoredCbEventState() {
+        inOrderExecEventHelper.initializeLocalTempStorage();
+    }
+
+    void storeFromEvent(L0::Event *event) {
+        auto &eventInOrderHelper = event->getInOrderExecEventHelper();
+
+        if (eventInOrderHelper.isDataAssigned()) {
+            eventInOrderHelper.copyData(this->inOrderExecEventHelper);
+            this->inOrderExecEventHelper.assignPatchPreambleData(eventInOrderHelper.getPatchPreambleCounter(),
+                                                                 eventInOrderHelper.getPatchPreambleHostAddress(),
+                                                                 eventInOrderHelper.getPatchPreambleHostGpuAddress(),
+                                                                 eventInOrderHelper.getPatchPreambleHostAllocation(),
+                                                                 eventInOrderHelper.getPatchPreambleDeviceGpuAddress(),
+                                                                 eventInOrderHelper.getPatchPreambleDeviceAllocation());
+        } else {
+            this->inOrderExecEventHelper.unsetInOrderExecInfo();
+        }
+        this->apiRequiredSignalEvent = event->getApiRequiredGraphExternalEvent();
+    }
+
+    void restoreToEvent(L0::Event *event) {
+        auto &eventInOrderHelper = event->getInOrderExecEventHelper();
+
+        if (this->inOrderExecEventHelper.isDataAssigned()) {
+            this->inOrderExecEventHelper.copyData(eventInOrderHelper);
+            eventInOrderHelper.assignPatchPreambleData(this->inOrderExecEventHelper.getPatchPreambleCounter(),
+                                                       this->inOrderExecEventHelper.getPatchPreambleHostAddress(),
+                                                       this->inOrderExecEventHelper.getPatchPreambleHostGpuAddress(),
+                                                       this->inOrderExecEventHelper.getPatchPreambleHostAllocation(),
+                                                       this->inOrderExecEventHelper.getPatchPreambleDeviceGpuAddress(),
+                                                       this->inOrderExecEventHelper.getPatchPreambleDeviceAllocation());
+        } else {
+            eventInOrderHelper.unsetInOrderExecInfo();
+        }
+        event->setApiRequiredGraphExternalEvent(this->apiRequiredSignalEvent);
+    }
+
+    NEO::InOrderExecEventHelper inOrderExecEventHelper;
+    bool apiRequiredSignalEvent = false;
+};
+
 struct CbExternalEventInstantiateContext {
     ExternalCbEventInfoContainer *cbEventInfoContainer = nullptr;
     L0::CommandList *executorCommandList = nullptr;
     const GraphInternalEvents *internalEvents = nullptr;
+    StoredCbEventState storedCbEventState;
 };
 
 struct ClosureExternalStorage {

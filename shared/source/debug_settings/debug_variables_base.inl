@@ -446,6 +446,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PrintL0MetricLogs, 0, "L0 Metrics logs mask. 0 -
 DECLARE_DEBUG_VARIABLE(bool, PrintL0SetKernelArg, false, "Print L0 Set Kernel Arg data")
 DECLARE_DEBUG_VARIABLE(bool, LogIndirectDetectionKernelDetails, false, "Log information for indirect detection for each kernel")
 DECLARE_DEBUG_VARIABLE(bool, PrintMclData, false, "Print all parameters used for MCL");
+DECLARE_DEBUG_VARIABLE(bool, PrintGraphData, false, "Print all parameters used for Graph");
 DECLARE_DEBUG_VARIABLE(bool, PrintSecondaryContextEngineInfo, false, "Print info about used secondary contexts engine");
 DECLARE_DEBUG_VARIABLE(bool, PrintLateMidThreadPreemptionStartInfo, false, "Print info related to late mid thread preemption start feature")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintExternalSemaphoreOperationResults, false, "Print results of wait/signal external semaphore operations")

@@ -17,6 +17,11 @@
 #endif
 
 namespace LevelZeroBlackBoxTests {
+
+bool isStringEndsWithNewline(const std::string &str) {
+    return !str.empty() && str.back() == '\n';
+}
+
 struct LoadedDriverExtensions {
     std::vector<ze_driver_extension_properties_t> extensions;
     bool loaded = false;
@@ -259,7 +264,7 @@ void getErrorMax(int argc, char *argv[]) {
 }
 
 void printTestHeader(const std::string_view currentTest) {
-    const bool endsWithNewline = !currentTest.empty() && currentTest.back() == '\n';
+    const bool endsWithNewline = isStringEndsWithNewline(std::string(currentTest));
     std::cout << std::endl
               << "Starting test case: " << std::endl
               << "***" << std::endl
@@ -273,17 +278,23 @@ void printTestHeader(const std::string_view currentTest) {
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string_view blackBoxName, const std::string_view currentTest) {
     std::cout << std::endl
               << blackBoxName;
+    bool needExtraSpace = true;
     if (!currentTest.empty()) {
         std::cout << " " << currentTest;
+        needExtraSpace = !isStringEndsWithNewline(std::string(currentTest));
+    }
+
+    if (needExtraSpace) {
+        std::cout << " ";
     }
 
     if (aubMode == false) {
-        std::cout << " Results validation "
+        std::cout << "Results validation "
                   << (outputValidationSuccessful ? "PASSED" : "FAILED")
                   << std::endl
                   << std::endl;
     } else {
-        std::cout << " Results validation disabled in aub mode."
+        std::cout << "Results validation disabled in aub mode."
                   << std::endl
                   << std::endl;
     }
@@ -953,6 +964,54 @@ TestDuration::~TestDuration() {
         std::cerr << "Unknown time unit for test duration" << std::endl;
         break;
     }
+}
+
+static std::vector<std::string> failedCases;
+
+void addFailedCase(bool caseResult, const std::string &caseName, uint32_t testNumber, uint32_t subTestNumber) {
+    if (!caseResult) {
+        std::stringstream stream;
+
+        stream << "Test mask bit " << testNumber;
+        if (subTestNumber != undefinedTestNumber) {
+            stream << " subtest mask bit " << subTestNumber;
+        }
+        stream << " :" << std::endl
+               << caseName;
+
+        failedCases.push_back(stream.str());
+    }
+}
+
+void printFailedCases() {
+    if (failedCases.empty()) {
+        return;
+    }
+    size_t failedCount = failedCases.size();
+    std::cerr << "Failed cases:" << std::endl;
+    for (size_t i = 0; i < failedCount; i++) {
+        const bool endsWithNewline = isStringEndsWithNewline(failedCases[i]);
+        std::cerr << failedCases[i];
+        if (!endsWithNewline) {
+            std::cerr << std::endl;
+        }
+        if (i + 1 != failedCount) {
+            std::cerr << "-----------------------------------" << std::endl;
+        }
+    }
+    std::cerr << "===================================" << std::endl;
+}
+
+int printTestResult(bool boxTestPass, bool aubMode, const std::string &blackBoxName) {
+    int mainRetCode = aubMode ? 0 : (boxTestPass ? 0 : 1);
+    const bool endsWithNewline = isStringEndsWithNewline(blackBoxName);
+    std::string finalStatus = (mainRetCode != 0) ? "FAILED" : " SUCCESS";
+    std::cerr << blackBoxName;
+    if (!endsWithNewline) {
+        std::cerr << " ";
+    }
+    std::cerr << finalStatus << std::endl;
+    return mainRetCode;
 }
 
 } // namespace LevelZeroBlackBoxTests

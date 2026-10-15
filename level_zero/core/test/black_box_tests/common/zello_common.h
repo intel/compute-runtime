@@ -443,4 +443,9 @@ struct TestDuration {
     Units units;
 };
 
+constexpr uint32_t undefinedTestNumber = std::numeric_limits<uint32_t>::max();
+void addFailedCase(bool caseResult, const std::string &caseName, uint32_t testNumber, uint32_t subTestNumber);
+void printFailedCases();
+int printTestResult(bool boxTestPass, bool aubMode, const std::string &blackBoxName);
+
 } // namespace LevelZeroBlackBoxTests

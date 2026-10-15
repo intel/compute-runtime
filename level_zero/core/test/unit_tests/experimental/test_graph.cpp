@@ -2851,7 +2851,8 @@ TEST_F(GraphInternalEventTest, givenCbEventsDestroyedBeforeCaptureEndWhenGraphIs
     EXPECT_EQ(hJoinClone, execGraph.getInternalEvents().getInternal(hJoinEvent));
 }
 
-TEST_F(GraphInternalEventTest, givenGraphExternalFlagPassedToSignalEventWithParametersWhenCapturedThenInternalEventIsNotCreated) {
+TEST_F(GraphInternalEventTest,
+       givenExternalFlagPassedToSignalEventAndUsedOnlyAsSuchWhenCapturedThenInternalEventIsNotCreatedButPreviousStateRestored) {
     GraphsCleanupGuard graphCleanup;
 
     auto hEvent = createCounterBasedEvent(context, device, false);
@@ -2867,8 +2868,50 @@ TEST_F(GraphInternalEventTest, givenGraphExternalFlagPassedToSignalEventWithPara
     EXPECT_EQ(hEvent, srcGraph->getInternalEvents().getInternal(hEvent));
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
 
+    ExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*(srcGraph.get())));
+    auto hExecGraph = execGraph.toHandle();
+
+    auto event = L0::Event::fromHandle(hEvent);
+    EXPECT_FALSE(event->getApiRequiredGraphExternalEvent());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListAppendGraphExt(hCmdList, hExecGraph, nullptr, nullptr, 0, nullptr));
+    EXPECT_TRUE(event->getApiRequiredGraphExternalEvent());
+
     srcGraph.reset();
-    L0::Event::fromHandle(hEvent)->destroy();
+    event->destroy();
+}
+
+TEST_F(GraphInternalEventTest,
+       givenEventUsedAsBothExternalFlagAndInternalSignalEventWhenCapturedThenInternalEventIsCreatedButExternalStateIsSetAtExecution) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto hEvent = createCounterBasedEvent(context, device, false);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hGraph = srcGraph->toHandle();
+    auto hCmdList = inOrderCmdList->toHandle();
+    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC};
+    eventFlagsDesc.flags = ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(hCmdList, hEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(hCmdList, &eventFlagsDesc, hEvent));
+    EXPECT_NE(hEvent, srcGraph->getInternalEvents().getInternal(hEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
+
+    ExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*(srcGraph.get())));
+    auto hExecGraph = execGraph.toHandle();
+
+    auto event = L0::Event::fromHandle(hEvent);
+    EXPECT_FALSE(event->getApiRequiredGraphExternalEvent());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListAppendGraphExt(hCmdList, hExecGraph, nullptr, nullptr, 0, nullptr));
+    EXPECT_TRUE(event->getApiRequiredGraphExternalEvent());
+
+    srcGraph.reset();
+    event->destroy();
 }
 
 TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledOutsideGraphWhenWaitedOnDuringCaptureThenGraphInternalEventReturned) {
@@ -3123,7 +3166,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInst
     event->destroy();
 }
 
-TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExecuteTwoGraphsThenRecordedExternalCbEventAttachedToLatestExecutedGraph) {
+TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExecuteTwoGraphsThenRecordedExternalCbEventAttachedToStateBeforeInstantiationOfDataUnassignedAndGraphStateAfterExecution) {
     GraphsCleanupGuard graphCleanup;
 
     ze_result_t returnValue;
@@ -3170,8 +3213,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     ASSERT_NE(nullptr, graphExecHelper);
     // 1st executable graph, event attached during instantiation
     NEO::InOrderExecEventHelper *currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
-    EXPECT_EQ(currentEventInOrderExecHelper->getBaseDeviceAddress(), graphExecHelper->getBaseDeviceAddress());
-    EXPECT_EQ(currentEventInOrderExecHelper->getEventData()->counterValue, graphExecHelper->getEventData()->counterValue);
+    EXPECT_FALSE(currentEventInOrderExecHelper->isDataAssigned());
 
     ExecutableGraph execGraph2;
     execGraph2.instantiateFrom(*(srcGraph.get()));
@@ -3189,8 +3231,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
 
     // 2nd executable graph, event attached during instantiation
     currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
-    EXPECT_EQ(currentEventInOrderExecHelper->getBaseDeviceAddress(), graphExecHelper2->getBaseDeviceAddress());
-    EXPECT_EQ(currentEventInOrderExecHelper->getEventData()->counterValue, graphExecHelper2->getEventData()->counterValue);
+    EXPECT_FALSE(currentEventInOrderExecHelper->isDataAssigned());
 
     // 1st executable graph execution, event should be attached to 1st graphExecInfo
     returnValue = execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
@@ -3207,6 +3248,221 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
     EXPECT_EQ(currentEventInOrderExecHelper->getBaseDeviceAddress(), graphExecHelper2->getBaseDeviceAddress());
     EXPECT_EQ(currentEventInOrderExecHelper->getEventData()->counterValue, graphExecHelper2->getEventData()->counterValue);
+
+    srcGraph.reset();
+    event->destroy();
+}
+
+TEST_F(GraphTestInstantiationTest,
+       givenExternalCreatedCbEventUsedOnImmediateCommandListWhenInstantiatedOnExecutableGraphThenAfterInstantiationAttachedStatePointsToImmediateCommandList) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandle, 0, nullptr));
+
+    auto immediateEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    auto immediateEventDeviceAddress = immediateEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto immediateEventCounterValue = immediateEventInOrderExecHelper->getEventData()->counterValue;
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+    ze_group_count_t groupCount = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*(srcGraph.get()));
+
+    NEO::InOrderExecEventHelper *currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    EXPECT_EQ(immediateEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    EXPECT_EQ(immediateEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
+
+    auto res = execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+
+    const NEO::InOrderExecEventHelper *graphExecHelper = nullptr;
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    for (const auto &entry : externalCbSignalEventContainer) {
+        if (event == entry.event) {
+            graphExecHelper = &entry.inOrderExecEventHelper;
+            break;
+        }
+    }
+    ASSERT_NE(nullptr, graphExecHelper);
+    auto graphEventDeviceAddress = graphExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto graphEventCounterValue = graphExecHelper->getEventData()->counterValue;
+    EXPECT_EQ(graphEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    EXPECT_EQ(graphEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
+
+    srcGraph.reset();
+    event->destroy();
+}
+
+TEST_F(GraphTestInstantiationTest,
+       givenCbEventUsedOnGraphAsExternalFlagWhenInstantiatedOnExecutableGraphAsExternalFlagThenAfterInstantiationAttachedStatePointsToPreviousGraph) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+
+    std::unique_ptr<L0::Graph> otherGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t otherGraphHandle = otherGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExt(commandListHandle, otherGraphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(commandListHandle, &eventFlagsDesc, eventHandle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &otherGraphHandle, nullptr));
+
+    ExecutableGraph otherExecGraph;
+    auto ret = otherExecGraph.instantiateFrom(*(otherGraph.get()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_FALSE(event->getInOrderExecEventHelper().isDataAssigned());
+    EXPECT_FALSE(event->getApiRequiredGraphExternalEvent());
+
+    ret = otherExecGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_TRUE(event->getInOrderExecEventHelper().isDataAssigned());
+    EXPECT_TRUE(event->getApiRequiredGraphExternalEvent());
+
+    auto otherGraphEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    auto otherGraphEventDeviceAddress = otherGraphEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto otherGraphEventCounterValue = otherGraphEventInOrderExecHelper->getEventData()->counterValue;
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExt(commandListHandle, graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(commandListHandle, &eventFlagsDesc, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    ret = execGraph.instantiateFrom(*(srcGraph.get()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    NEO::InOrderExecEventHelper *currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    EXPECT_EQ(otherGraphEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    EXPECT_EQ(otherGraphEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
+
+    ret = execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+
+    const NEO::InOrderExecEventHelper *graphExecHelper = nullptr;
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    for (const auto &entry : externalCbSignalEventContainer) {
+        if (event == entry.event) {
+            graphExecHelper = &entry.inOrderExecEventHelper;
+            break;
+        }
+    }
+    ASSERT_NE(nullptr, graphExecHelper);
+    auto graphEventDeviceAddress = graphExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto graphEventCounterValue = graphExecHelper->getEventData()->counterValue;
+    EXPECT_EQ(graphEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    EXPECT_EQ(graphEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
+
+    srcGraph.reset();
+    otherGraph.reset();
+    event->destroy();
+}
+
+TEST_F(GraphTestInstantiationTest,
+       givenCbEventUsedOnImmediateCommandListWhenInstantiatedOnExecutableGraphAsExternalFlagThenAfterInstantiationAttachedStatePointsToImmediateCommandList) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandle, 0, nullptr));
+
+    auto immediateEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    auto immediateEventDeviceAddress = immediateEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto immediateEventCounterValue = immediateEventInOrderExecHelper->getEventData()->counterValue;
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExt(commandListHandle, graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(commandListHandle, &eventFlagsDesc, eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    auto ret = execGraph.instantiateFrom(*(srcGraph.get()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    NEO::InOrderExecEventHelper *currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    EXPECT_EQ(immediateEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    EXPECT_EQ(immediateEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
+
+    ret = execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+
+    const NEO::InOrderExecEventHelper *graphExecHelper = nullptr;
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    for (const auto &entry : externalCbSignalEventContainer) {
+        if (event == entry.event) {
+            graphExecHelper = &entry.inOrderExecEventHelper;
+            break;
+        }
+    }
+    ASSERT_NE(nullptr, graphExecHelper);
+    auto graphEventDeviceAddress = graphExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto graphEventCounterValue = graphExecHelper->getEventData()->counterValue;
+    EXPECT_EQ(graphEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    EXPECT_EQ(graphEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
 
     srcGraph.reset();
     event->destroy();

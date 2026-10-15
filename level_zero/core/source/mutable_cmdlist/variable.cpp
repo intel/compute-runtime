@@ -762,6 +762,13 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
         }
     }
 
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL old event patch preamble address %" PRIx64 " value %" PRIu64 "\n",
+                 this->desc.eventValue.patchPreambleCounterDeviceGpuAddress,
+                 this->desc.eventValue.patchPreambleCounterValue);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL new event patch preamble address %" PRIx64 " value %" PRIu64 "\n",
+                 newPatchPreambleCounterGpuAddress,
+                 newPatchPreambleCounterValue);
+
     bool oldNooped = this->desc.eventValue.noopState;
     if (this->desc.eventValue.event != nullptr) {
         oldEventAllocation = this->desc.eventValue.eventPoolAllocation;
@@ -828,6 +835,12 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
 
 void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation, uint64_t waitAddress, NEO::InOrderExecEventHelper *eventInOrderHelper,
                                              uint64_t patchPreambleCounter, uint64_t patchPreambleGpuAddress, bool newPatchPreambleNoop) {
+    uint64_t waitValue = eventInOrderHelper == nullptr ? 0u : eventInOrderHelper->getEventData()->counterValue;
+
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL new CB event wait address %" PRIx64 " value %" PRIu64 "\n",
+                 waitAddress,
+                 waitValue);
+
     for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
         if (mutableSemWait->getType() != MutableSemaphoreWait::cbEventWaitPatchPreambleCounter) {
             if (operation == CbWaitEventOperationType::set) {
@@ -838,9 +851,9 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                 mutableSemWait->restoreWithSemaphoreAddress(waitAddress);
             }
 
-            if (!this->desc.eventValue.qwordIndirect && eventInOrderHelper) {
+            if (!this->desc.eventValue.qwordIndirect) {
                 if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                    mutableSemWait->setSemaphoreValue(eventInOrderHelper->getEventData()->counterValue);
+                    mutableSemWait->setSemaphoreValue(waitValue);
                 }
             }
         } else {
@@ -857,12 +870,10 @@ void Variable::setCbWaitEventUpdateOperation(CbWaitEventOperationType operation,
                     mutableLoadRegImm->restore();
                 }
 
-                if (eventInOrderHelper) {
-                    if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
-                        // check if cmdIndex is even - there can be multiple lri pairs, even takes lower, odd takes higher part of 64b value
-                        uint32_t waitValue = ((cmdIndex & 1u) == 0u) ? getLowPart(eventInOrderHelper->getEventData()->counterValue) : getHighPart(eventInOrderHelper->getEventData()->counterValue);
-                        mutableLoadRegImm->setValue(waitValue);
-                    }
+                if (operation == CbWaitEventOperationType::set || operation == CbWaitEventOperationType::restore) {
+                    // check if cmdIndex is even - there can be multiple lri pairs, even takes lower, odd takes higher part of 64b value
+                    uint32_t waitValuePart = ((cmdIndex & 1u) == 0u) ? getLowPart(waitValue) : getHighPart(waitValue);
+                    mutableLoadRegImm->setValue(waitValuePart);
                 }
             } else {
                 setCbWaitEventPatchPreambleLoadRegImmOperation(operation, mutableLoadRegImm, patchPreambleCounter, cmdIndex, newPatchPreambleNoop);

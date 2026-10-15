@@ -1092,6 +1092,10 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
                 WaitEventVariableDescriptor mutableWaitEventDesc = {};
                 Event *event = Event::fromHandle(phWaitEvents[i]);
 
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store wait event %p at index %u\n",
+                             event,
+                             i);
+
                 Variable *variable = nullptr;
                 InterfaceVariableDescriptor varDesc = {};
                 varDesc.asyncMutation = CommandListCoreFamily<gfxCoreFamily>::isPatchPreambleEnabled();
