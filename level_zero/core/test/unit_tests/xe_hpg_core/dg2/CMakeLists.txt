@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,7 +10,6 @@ if(TESTS_DG2)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cache_flush_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdqueue_dg2.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_excludes_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_kernel_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_module_dg2.cpp
   )

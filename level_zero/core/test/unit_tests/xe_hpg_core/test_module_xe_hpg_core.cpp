@@ -1,22 +1,18 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/device/device.h"
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace L0 {
@@ -56,19 +52,6 @@ HWTEST2_F(KernelPropertyTest, givenKernelExtendedPropertiesStructureWhenKernelPr
     EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::localMinMax);
     EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::globalAdd);
     EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::localAdd);
-}
-
-HWTEST2_F(KernelPropertyTest, givenDG2WhenGetInternalOptionsThenWriteBackBuildOptionIsSet, IsDG2) {
-    auto pMockCompilerInterface = new MockCompilerInterface;
-    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
-    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
-    MockModuleTranslationUnit mockTranslationUnit(this->device);
-    mockTranslationUnit.processUnpackedBinaryCallBase = false;
-    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    result = mockTranslationUnit.buildFromSpirV("", 0U, nullptr, "", nullptr);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(mockTranslationUnit.processUnpackedBinaryCalled, 1u);
-    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=7 -cl-load-cache-default=4"), std::string::npos);
 }
 
 } // namespace ult

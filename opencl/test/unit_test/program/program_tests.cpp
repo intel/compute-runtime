@@ -1977,7 +1977,7 @@ HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInterna
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=18 -cl-load-cache-default=18"));
 }
 
-HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsWithinXeCoreAndXe3Core) {
+HWTEST2_F(ProgramTests, givenDefaultL1CachePolicyWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsWithinXeCoreAndXe3Core) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
     if (pClDevice->getProductHelper().getL1CachePolicy(false) == 0) {
@@ -1987,7 +1987,7 @@ HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBu
     }
 }
 
-HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3pCore) {
+HWTEST2_F(ProgramTests, givenDefaultL1CachePolicyWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3pCore) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=30 -cl-load-cache-default=25"));

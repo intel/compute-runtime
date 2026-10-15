@@ -4944,7 +4944,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedW
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=18 -cl-load-cache-default=18"), std::string::npos);
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsWithinXeCoreAndXe3Core) {
+HWTEST2_F(ModuleTranslationUnitTest, givenDefaultL1CachePolicyWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsWithinXeCoreAndXe3Core) {
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
@@ -4961,7 +4961,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptions
     }
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3pCore) {
+HWTEST2_F(ModuleTranslationUnitTest, givenDefaultL1CachePolicyWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3pCore) {
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
