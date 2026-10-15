@@ -1457,6 +1457,34 @@ TEST_F(LeoBufferMemoryTest, givenDiscreteDeviceAndDefaultLeoBufferMemoryWhenCrea
     EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
+struct LeoPooledBufferMemoryTest : public LeoBufferMemoryTest {
+    void SetUp() override {
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+        debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+        debugManager.flags.EnableHostUsmAllocationPool.set(1);
+        LeoBufferMemoryTest::SetUp();
+    }
+
+    static constexpr size_t pooledBufferSize = MemoryConstants::pageSize;
+};
+
+TEST_F(LeoPooledBufferMemoryTest, givenBufferInDeviceUsmPoolWhenCreatingMapAllocationThenItIsHostUsmPoolChunkOfBufferSizeFreedOnRelease) {
+    cl_int errcode = CL_INVALID_VALUE;
+    auto buffer = castToObject<Buffer>(clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE, pooledBufferSize, nullptr, &errcode));
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_TRUE(driverHandle->getUsmPoolOwningPtr(buffer->getUsmPtr(), svmManager->getSVMAlloc(buffer->getUsmPtr())).isAllocatedInPool());
+
+    EXPECT_EQ(CL_SUCCESS, buffer->createMapAllocation());
+    auto cpuPtr = buffer->getCpuPtr();
+    auto hostPoolLookup = driverHandle->getHostUsmPoolOwningPtr(cpuPtr);
+    ASSERT_TRUE(hostPoolLookup.isAllocatedInPool());
+    EXPECT_EQ(cpuPtr, hostPoolLookup.pooledAllocationBasePtr);
+    EXPECT_EQ(pooledBufferSize, hostPoolLookup.pooledAllocationSize);
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+    EXPECT_FALSE(driverHandle->getHostUsmPoolOwningPtr(cpuPtr).isAllocatedInPool());
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO

@@ -218,7 +218,7 @@ cl_int Buffer::createMapAllocation() {
         void *cpuPtr = nullptr;
         ret = L0ToClResultMapper(zeMemAllocHost(this->context->getL0ContextHandle(),
                                                 &hostDesc,
-                                                this->getAllocData()->size,
+                                                this->getApiSize(),
                                                 1,
                                                 &cpuPtr));
         this->setCpuPtr(cpuPtr);
