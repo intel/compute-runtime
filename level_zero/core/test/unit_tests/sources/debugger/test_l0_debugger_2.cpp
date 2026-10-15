@@ -246,8 +246,10 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, commandList->getCsr(false)->getCS().getCpuBase(), commandList->getCsr(false)->getCS().getUsed()));
 
-    auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), sipItor);
+    if (neoDevice->getGfxCoreHelper().isStateSipRequired()) {
+        auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), sipItor);
+    }
     commandList->destroy();
 }
 
