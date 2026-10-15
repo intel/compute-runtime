@@ -28,6 +28,8 @@
 #include "encode_surface_state_args.h"
 #include "test_traits_common.h"
 
+#include <array>
+
 using namespace NEO;
 #include "shared/test/common/test_macros/heapless_matchers.h"
 
@@ -92,8 +94,10 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
+    alignas(16) std::array<uint8_t, 0x40 + sizeof(typename FamilyType::SAMPLER_STATE)> dynamicStateHeap{};
+    memcpy_s(dynamicStateHeap.data(), dynamicStateHeap.size(), &samplerState, sizeof(samplerState));
     auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
-    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
+    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, dynamicStateHeap.data(), pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
     auto expectedValue = pDevice->getBindlessHeapsHelper()->getDefaultBorderColorOffset();
 
     auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(dsh->getGraphicsAllocation()->getUnderlyingBuffer());
@@ -206,8 +210,10 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRe
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
     samplerState.setBorderColorRed(0.5);
+    alignas(16) std::array<uint8_t, 0x40 + sizeof(typename FamilyType::SAMPLER_STATE)> dynamicStateHeap{};
+    memcpy_s(dynamicStateHeap.data(), dynamicStateHeap.size(), &samplerState, sizeof(samplerState));
     auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
-    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
+    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, dynamicStateHeap.data(), pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGreenChanelIsNotZeroThenExceptionThrown) {
@@ -225,8 +231,10 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGr
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
     samplerState.setBorderColorGreen(0.5);
+    alignas(16) std::array<uint8_t, 0x40 + sizeof(typename FamilyType::SAMPLER_STATE)> dynamicStateHeap{};
+    memcpy_s(dynamicStateHeap.data(), dynamicStateHeap.size(), &samplerState, sizeof(samplerState));
     auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
-    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
+    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, dynamicStateHeap.data(), pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBlueChanelIsNotZeroThenExceptionThrown) {
@@ -244,8 +252,10 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBl
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
     samplerState.setBorderColorBlue(0.5);
+    alignas(16) std::array<uint8_t, 0x40 + sizeof(typename FamilyType::SAMPLER_STATE)> dynamicStateHeap{};
+    memcpy_s(dynamicStateHeap.data(), dynamicStateHeap.size(), &samplerState, sizeof(samplerState));
     auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
-    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
+    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, dynamicStateHeap.data(), pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAlphaChanelIsNotZeroOrOneThenExceptionThrown) {
@@ -263,8 +273,10 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAl
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
     samplerState.setBorderColorAlpha(0.5);
+    alignas(16) std::array<uint8_t, 0x40 + sizeof(typename FamilyType::SAMPLER_STATE)> dynamicStateHeap{};
+    memcpy_s(dynamicStateHeap.data(), dynamicStateHeap.size(), &samplerState, sizeof(samplerState));
     auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
-    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
+    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, dynamicStateHeap.data(), pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput) {
