@@ -2893,6 +2893,7 @@ HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitia
 }
 
 TEST(DrmTest, whenGettingDeviceDescriptorThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 

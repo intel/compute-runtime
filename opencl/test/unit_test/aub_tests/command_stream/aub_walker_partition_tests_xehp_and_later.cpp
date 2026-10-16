@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -386,8 +386,7 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
         thirdLevelBatchStream = std::make_unique<LinearStream>(thirdLevelBatch);
     };
     void tearDown() {
-        debugManager.flags.AubDumpAddMmioRegistersList.getRef() = "unk";
-        debugManager.flags.AubDumpAddMmioRegistersList.getRef().shrink_to_fit();
+        debugManager.flags.AubDumpAddMmioRegistersList.set("unk");
 
         auto memoryManager = this->device->getMemoryManager();
         memoryManager->freeGraphicsMemory(thirdLevelBatch);

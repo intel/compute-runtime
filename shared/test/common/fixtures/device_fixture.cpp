@@ -66,6 +66,7 @@ template GfxCoreHelper &DeviceFixture::getHelper<GfxCoreHelper>() const;
 template CompilerProductHelper &DeviceFixture::getHelper<CompilerProductHelper>() const;
 
 void DeviceWithoutSipFixture::setUp() {
+    DebugManagerStateRestore restorer;
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
     DeviceFixture::setUp();
 
@@ -74,7 +75,6 @@ void DeviceWithoutSipFixture::setUp() {
             EXPECT_EQ(nullptr, sipKernel);
         }
     }
-    debugManager.flags.ForcePreemptionMode.set(dbgRestorer.debugVarSnapshot.ForcePreemptionMode.get());
 }
 
 void DeviceWithoutSipFixture::tearDown() {

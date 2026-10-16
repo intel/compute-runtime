@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -87,7 +88,8 @@ HWTEST_F(CreateImage3DTest, WhenCreatingImageThenPropertiesAreSetCorrectly) {
 }
 
 HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropertiesAreSetCorrectly) {
-    bool defaultTiling = debugManager.flags.ForceLinearImages.get();
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceLinearImages.set(false);
     imageDesc.image_height = 1;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat);
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
@@ -113,7 +115,7 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
 
     delete image;
 
-    debugManager.flags.ForceLinearImages.set(!defaultTiling);
+    debugManager.flags.ForceLinearImages.set(true);
 
     // query again
     surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat);
@@ -137,5 +139,4 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
     EXPECT_EQ(image->getQPitch(), imgInfo.qPitch);
 
     delete image;
-    debugManager.flags.ForceLinearImages.set(defaultTiling);
 }

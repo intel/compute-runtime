@@ -1143,7 +1143,7 @@ TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncach
 
 TEST_F(GmmHelperTests, whenGmmIsCreatedAndForceAllResourcesUncachedIsSetThenResourceUsageIsSetToUncachedSurface) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForceAllResourcesUncached = true;
+    debugManager.flags.ForceAllResourcesUncached.set(true);
 
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;

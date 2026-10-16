@@ -1049,7 +1049,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCs
 
 struct MultiDeviceCreateCommandQueueFixture : MultiDeviceFixture {
     void setUp() {
-        debugManager.flags.EnableImplicitScaling = false;
+        debugManager.flags.EnableImplicitScaling.set(false);
         MultiDeviceFixture::setUp();
     }
 };

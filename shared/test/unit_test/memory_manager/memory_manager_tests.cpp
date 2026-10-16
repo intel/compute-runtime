@@ -2019,13 +2019,12 @@ TEST(OsAgnosticMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCre
 }
 
 TEST(OsAgnosticMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
-    bool defaultEnableDeferredDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
+    DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferredDeleter.set(false);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    debugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCreatedThenAlignedto64KbAllocationIsReturned) {

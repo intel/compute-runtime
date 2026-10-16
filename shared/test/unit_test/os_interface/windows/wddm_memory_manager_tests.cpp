@@ -4864,12 +4864,11 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabledAsyncDeleterFlagWhenMemoryManagerI
 
 TEST_F(MockWddmMemoryManagerTest, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     wddm->init();
-    bool defaultEnableDeferredDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
+    DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferredDeleter.set(false);
     WddmMemoryManager memoryManager(executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    debugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThenUseWddmToMap) {

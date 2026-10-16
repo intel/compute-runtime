@@ -40,7 +40,6 @@ struct DeviceFixture {
 struct DeviceWithoutSipFixture : DeviceFixture {
     void setUp();
     void tearDown();
-    DebugManagerStateRestore dbgRestorer;
 };
 
 } // namespace NEO
