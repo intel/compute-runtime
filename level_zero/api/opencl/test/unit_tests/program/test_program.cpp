@@ -168,6 +168,46 @@ TEST_F(ClProgramCompileLinkTests, givenSpirvIlProgramsWhenLinkProgramThenOclVers
     clReleaseContext(clContext);
 }
 
+TEST_F(ClProgramCompileLinkTests, givenSpecConstantsSetAroundCompileWhenLinkProgramThenEachInputIsLinkedWithValuesFromItsLastCompile) {
+    auto *mockCompiler = new L0::ult::MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(1u);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+    const cl_uint specId = mockCompiler->moduleSpecConstantsIds[0];
+
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    auto program1 = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    auto program2 = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    auto compileWithSpecConstant = [&](cl_program program, uint64_t value) {
+        EXPECT_EQ(CL_SUCCESS, clSetProgramSpecializationConstant(program, specId, sizeof(value), &value));
+        EXPECT_EQ(CL_SUCCESS, clCompileProgram(program, 1, &clDeviceId, nullptr, 0, nullptr, nullptr, nullptr, nullptr));
+    };
+    compileWithSpecConstant(program1, 7u);
+    compileWithSpecConstant(program1, 1u);
+    compileWithSpecConstant(program2, 2u);
+    const uint64_t setAfterCompile = 999u;
+    EXPECT_EQ(CL_SUCCESS, clSetProgramSpecializationConstant(program1, specId, sizeof(setAfterCompile), &setAfterCompile));
+
+    cl_program inputPrograms[] = {program1, program2};
+    auto linkedProgram = clLinkProgram(clContext, 1, &clDeviceId, nullptr, 2, inputPrograms, nullptr, nullptr, &errcode);
+
+    auto linkedSpecConstants = mockCompiler->getLinkedSpecConstantsPerSpirV();
+    ASSERT_EQ(2u, linkedSpecConstants.size());
+    EXPECT_EQ((specConstValuesMap{{specId, 1u}}), linkedSpecConstants[0]);
+    EXPECT_EQ((specConstValuesMap{{specId, 2u}}), linkedSpecConstants[1]);
+
+    if (linkedProgram != nullptr) {
+        clReleaseProgram(linkedProgram);
+    }
+    clReleaseProgram(program1);
+    clReleaseProgram(program2);
+    clReleaseContext(clContext);
+}
+
 TEST_F(ClProgramCompileLinkTests, givenSpirvIlProgramWhenCompileProgramThenNoModuleIsBuiltAndStaysCompiledObject) {
     cl_device_id clDeviceId = nullptr;
     cl_context clContext = createOclContext(platform, clDeviceId);

@@ -104,6 +104,16 @@ class Program : public BaseObject<_cl_program> {
                    void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
 
   protected:
+    // ze_module_constants_t together with the arrays it points at; L0 takes each value by pointer.
+    struct ModuleConstants : NonCopyableClass {
+        explicit ModuleConstants(const specConstValuesMap &specConstantsValues);
+        std::vector<uint32_t> ids;
+        std::vector<uint64_t> values;
+        std::vector<const void *> valuesPtrs;
+        ze_module_constants_t desc{};
+    };
+    ModuleConstants getCompiledModuleConstants();
+
     // buildFailureCode is the CL error this build action reports when L0 fails the module build/link
     // (clBuildProgram/clCompileProgram/clLinkProgram each have a distinct one); other L0 errors map
     // through the generic L0ToClResultMapper.
@@ -115,14 +125,11 @@ class Program : public BaseObject<_cl_program> {
     // Reads the per-device program binary (native gen binary for EXECUTABLE, IR otherwise).
     // outSize always receives the size; when outBinary is non-null the bytes are copied out.
     cl_int getDeviceBinary(uint32_t rootDeviceIndex, size_t *outSize, unsigned char *outBinary);
-    // Fills the L0 module spec-constant descriptor from specConstantsValues into caller-owned
-    // storage (which must outlive the build). Caller must hold specializationConstantsMutex.
-    bool populateModuleConstants(ze_module_constants_t &moduleConstants,
-                                 std::vector<uint32_t> &constantsIds,
-                                 std::vector<const void *> &constantsValuesPtrs);
     void resetModules();
 
     specConstValuesMap specConstantsValues;
+    // Snapshot taken by clCompileProgram; clLinkProgram uses it instead of the current values.
+    specConstValuesMap compiledSpecConstantsValues;
     std::mutex specializationConstantsMutex;
     std::string source{};
     std::string options{};

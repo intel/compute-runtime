@@ -1015,9 +1015,14 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
         result = module->initialize(&combinedModuleDesc, neoDevice);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
-        for (uint32_t i = 0; i < mockCompiler->moduleNumSpecConstants / 2; i++) {
-            EXPECT_EQ(static_cast<uint64_t>(module->translationUnit->specConstantsValues[mockCompiler->moduleSpecConstantsIds[2 * i]]), static_cast<uint64_t>(mockCompiler->moduleSpecConstantsValuesT2[i]));
-            EXPECT_EQ(static_cast<uint64_t>(module->translationUnit->specConstantsValues[mockCompiler->moduleSpecConstantsIds[2 * i + 1]]), static_cast<uint64_t>(mockCompiler->moduleSpecConstantsValuesT1[i]));
+        auto linkedSpecConstants = mockCompiler->getLinkedSpecConstantsPerSpirV();
+        ASSERT_EQ(2u, linkedSpecConstants.size());
+        for (auto &moduleSpecConstants : linkedSpecConstants) {
+            EXPECT_EQ(mockCompiler->moduleNumSpecConstants, moduleSpecConstants.size());
+            for (uint32_t i = 0; i < mockCompiler->moduleNumSpecConstants / 2; i++) {
+                EXPECT_EQ(static_cast<uint64_t>(moduleSpecConstants[mockCompiler->moduleSpecConstantsIds[2 * i]]), static_cast<uint64_t>(mockCompiler->moduleSpecConstantsValuesT2[i]));
+                EXPECT_EQ(static_cast<uint64_t>(moduleSpecConstants[mockCompiler->moduleSpecConstantsIds[2 * i + 1]]), static_cast<uint64_t>(mockCompiler->moduleSpecConstantsValuesT1[i]));
+            }
         }
         module->destroy();
     }
@@ -1171,6 +1176,43 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWithLongSize
 using ModuleSpecConstantsCharTests = ModuleSpecConstantsTests<char, uint32_t>;
 TEST_F(ModuleSpecConstantsCharTests, givenSpecializationConstantsSetWithCharSizeInExpDescriptorThenStaticLinkedModuleCorrectlyPassesThemToTheCompiler) {
     runTestStatic();
+}
+
+TEST_F(ModuleSpecConstantsLongTests, givenSameSpecConstantIdWithDifferentValuePerModuleWhenStaticLinkingThenEachModuleGetsItsOwnValue) {
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
+    zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
+    const auto &src = zebinData->storage;
+
+    const uint32_t specConstantId = mockCompiler->moduleSpecConstantsIds[0];
+    const uint64_t module1Value = 1u;
+    const uint64_t module2Value = 2u;
+    const void *module1ValuePtr = &module1Value;
+    const void *module2ValuePtr = &module2Value;
+    const ze_module_constants_t module1Constants = {1u, &specConstantId, &module1ValuePtr};
+    const ze_module_constants_t module2Constants = {1u, &specConstantId, &module2ValuePtr};
+
+    std::vector<const uint8_t *> inputSpirVs = {src.data(), src.data()};
+    std::vector<size_t> inputSizes = {src.size(), src.size()};
+    std::vector<const ze_module_constants_t *> specConstantsArray = {&module1Constants, &module2Constants};
+
+    ze_module_program_exp_desc_t staticLinkModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    staticLinkModuleDesc.count = 2;
+    staticLinkModuleDesc.inputSizes = inputSizes.data();
+    staticLinkModuleDesc.pInputModules = inputSpirVs.data();
+    staticLinkModuleDesc.pConstants = specConstantsArray.data();
+    ze_module_desc_t combinedModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    combinedModuleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    combinedModuleDesc.pNext = &staticLinkModuleDesc;
+
+    auto module = std::make_unique<Module>(device, nullptr, ModuleType::user);
+    module->translationUnit.reset(mockTranslationUnit);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module->initialize(&combinedModuleDesc, neoDevice));
+
+    auto linkedSpecConstants = mockCompiler->getLinkedSpecConstantsPerSpirV();
+    ASSERT_EQ(2u, linkedSpecConstants.size());
+    EXPECT_EQ((NEO::specConstValuesMap{{specConstantId, module1Value}}), linkedSpecConstants[0]);
+    EXPECT_EQ((NEO::specConstValuesMap{{specConstantId, module2Value}}), linkedSpecConstants[1]);
 }
 
 TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompilerReturnsErrorFromStaticLinkThenModuleInitFails) {
@@ -4748,7 +4790,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenSpirVInputWhenCallingGenerateElfFromSpi
     std::vector<uint32_t> inputSizes = {static_cast<uint32_t>(sizeof(dummySpirV))};
 
     auto elfViaWrapper = moduleTu.generateElfFromSpirV(inputSpirVs, inputSizes);
-    auto elfViaNewFunction = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSizes, {}, {});
+    auto elfViaNewFunction = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSizes, {}, {}, {});
 
     EXPECT_FALSE(elfViaWrapper.empty());
     EXPECT_EQ(elfViaWrapper, elfViaNewFunction);
@@ -4764,8 +4806,8 @@ HWTEST_F(ModuleTranslationUnitTest, GivenSpirVAndLlvmBcInputsWhenGeneratingElfTh
     std::vector<const char *> inputLlvmBcs = {dummyLlvmBc};
     std::vector<uint32_t> inputLlvmBcSizes = {static_cast<uint32_t>(sizeof(dummyLlvmBc))};
 
-    auto elfSpirVOnly = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes, {}, {});
-    auto elfSpirVAndLlvmBc = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes,
+    auto elfSpirVOnly = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes, {}, {}, {});
+    auto elfSpirVAndLlvmBc = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes, {},
                                                                     inputLlvmBcs, inputLlvmBcSizes);
 
     EXPECT_FALSE(elfSpirVAndLlvmBc.empty());
@@ -4787,9 +4829,9 @@ HWTEST_F(ModuleTranslationUnitTest, GivenMultipleLlvmBcInputsWhenGeneratingElfTh
     std::vector<uint32_t> twoLlvmBcsSz = {static_cast<uint32_t>(sizeof(dummyLlvmBc1)),
                                           static_cast<uint32_t>(sizeof(dummyLlvmBc2))};
 
-    auto elfOneLlvmBc = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes,
+    auto elfOneLlvmBc = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes, {},
                                                                oneLlvmBc, oneLlvmBcSz);
-    auto elfTwoLlvmBcs = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes,
+    auto elfTwoLlvmBcs = moduleTu.generateElfFromSpirVAndLlvmBc(inputSpirVs, inputSpirVSizes, {},
                                                                 twoLlvmBcs, twoLlvmBcsSz);
 
     EXPECT_FALSE(elfOneLlvmBc.empty());

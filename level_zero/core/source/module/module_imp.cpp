@@ -149,12 +149,14 @@ std::vector<uint8_t> ModuleTranslationUnit::generateElfFromSpirV(const std::vect
                                                                  const std::vector<uint32_t> &inputModuleSizes) {
     return generateElfFromSpirVAndLlvmBc(inputSpirVs,
                                          inputModuleSizes,
+                                         {}, // empty, no specialization constants
                                          {}, // empty, no LLVM BCs
                                          {});
 }
 
 std::vector<uint8_t> ModuleTranslationUnit::generateElfFromSpirVAndLlvmBc(const std::vector<const char *> &inputSpirVs,
                                                                           const std::vector<uint32_t> &inputModuleSizes,
+                                                                          const std::vector<NEO::specConstValuesMap> &inputSpecConstantsValues,
                                                                           const std::vector<const char *> &inputLlvmBcs,
                                                                           const std::vector<uint32_t> &inputLlvmBcSizes) {
     NEO::Elf::ElfEncoder<> elfEncoder(true, false, 1U);
@@ -163,12 +165,13 @@ std::vector<uint8_t> ModuleTranslationUnit::generateElfFromSpirVAndLlvmBc(const 
     StackVec<uint32_t, 64> specConstIds;
     StackVec<uint64_t, 64> specConstValues;
     for (uint32_t i = 0; i < static_cast<uint32_t>(inputSpirVs.size()); i++) {
-        if (specConstantsValues.size() > 0) {
+        if (i < inputSpecConstantsValues.size() && inputSpecConstantsValues[i].size() > 0) {
+            const auto &moduleSpecConstantsValues = inputSpecConstantsValues[i];
             specConstIds.clear();
             specConstValues.clear();
-            specConstIds.reserve(specConstantsValues.size());
-            specConstValues.reserve(specConstantsValues.size());
-            for (const auto &specConst : specConstantsValues) {
+            specConstIds.reserve(moduleSpecConstantsValues.size());
+            specConstValues.reserve(moduleSpecConstantsValues.size());
+            for (const auto &specConst : moduleSpecConstantsValues) {
                 specConstIds.push_back(specConst.first);
                 specConstValues.push_back(specConst.second);
             }
@@ -218,7 +221,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
 }
 
 bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize,
-                                                    IGC::CodeType::CodeType_t srcCodeType) {
+                                                    IGC::CodeType::CodeType_t srcCodeType, NEO::specConstValuesMap &outSpecConstantsValues) {
     if (pConstants && pConstants->numConstants > 0) {
         NEO::SpecConstantInfo specConstInfo;
         auto retVal = compilerInterface->getSpecConstantsInfo(*device->getNEODevice(), ArrayRef<const char>(input, inputSize), specConstInfo, srcCodeType);
@@ -241,7 +244,7 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
             }
             memcpy_s(&specConstantValue, sizeof(uint64_t),
                      const_cast<void *>(pConstants->pConstantValues[i]), atributeSize);
-            specConstantsValues[specConstantId] = specConstantValue;
+            outSpecConstantsValues[specConstantId] = specConstantValue;
         }
     }
     return true;
@@ -331,8 +334,9 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirVAndLlvmBc(const std::vector<co
     }
 
     std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
+    std::vector<NEO::specConstValuesMap> inputSpecConstantsValues(specConstants.size());
     for (uint32_t i = 0; i < static_cast<uint32_t>(specConstants.size()); i++) {
-        auto specConstantResult = this->processSpecConstantInfo(compilerInterface, specConstants[i], inputSpirVs[i], inputModuleSizes[i]);
+        auto specConstantResult = this->processSpecConstantInfo(compilerInterface, specConstants[i], inputSpirVs[i], inputModuleSizes[i], IGC::CodeType::spirV, inputSpecConstantsValues[i]);
         if (!specConstantResult) {
             driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
@@ -346,7 +350,7 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirVAndLlvmBc(const std::vector<co
         compileMode = CompilationMode::createLibrary;
     }
 
-    auto spirvElfSource = generateElfFromSpirVAndLlvmBc(inputSpirVs, inputModuleSizes, inputLlvmBcs, inputLlvmBcSizes);
+    auto spirvElfSource = generateElfFromSpirVAndLlvmBc(inputSpirVs, inputModuleSizes, inputSpecConstantsValues, inputLlvmBcs, inputLlvmBcSizes);
 
     linkInputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(spirvElfSource.data()), spirvElfSource.size());
     linkInputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
@@ -420,7 +424,7 @@ ze_result_t ModuleTranslationUnit::buildFromIntermediate(IGC::CodeType::CodeType
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
-    auto specConstantResult = this->processSpecConstantInfo(compilerInterface, pConstants, input, inputSize, intermediateType);
+    auto specConstantResult = this->processSpecConstantInfo(compilerInterface, pConstants, input, inputSize, intermediateType, this->specConstantsValues);
     if (!specConstantResult) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;

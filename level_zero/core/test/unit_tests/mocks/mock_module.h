@@ -8,6 +8,9 @@
 #pragma once
 
 #include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/mocks/mock_cif.h"
@@ -231,10 +234,40 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
     NEO::TranslationErrorCode link(const NEO::Device &device,
                                    const NEO::TranslationInput &input,
                                    NEO::TranslationOutput &output) override {
-
-        EXPECT_EQ(moduleNumSpecConstants, input.specializedValues.size());
-
+        receivedLinkInput.assign(input.src.begin(), input.src.end());
         return NEO::TranslationErrorCode::success;
+    }
+
+    // For each SPIR-V module of the link input, in order: the constants from the SC sections preceding it.
+    std::vector<NEO::specConstValuesMap> getLinkedSpecConstantsPerSpirV() const {
+        std::string errors;
+        std::string warnings;
+        auto elf = NEO::Elf::decodeElf(ArrayRef<const uint8_t>::fromAny(receivedLinkInput.data(), receivedLinkInput.size()), errors, warnings);
+        EXPECT_NE(nullptr, elf.elfFileHeader) << errors;
+
+        std::vector<NEO::specConstValuesMap> specConstantsPerSpirV;
+        ArrayRef<const uint8_t> ids;
+        ArrayRef<const uint8_t> values;
+        for (const auto &section : elf.sectionHeaders) {
+            if (NEO::Elf::SHT_OPENCL_SPIRV_SC_IDS == section.header->type) {
+                ids = section.data;
+            } else if (NEO::Elf::SHT_OPENCL_SPIRV_SC_VALUES == section.header->type) {
+                values = section.data;
+            } else if (NEO::Elf::SHT_OPENCL_SPIRV == section.header->type) {
+                auto &specConstants = specConstantsPerSpirV.emplace_back();
+                EXPECT_EQ(ids.size() / sizeof(uint32_t), values.size() / sizeof(uint64_t));
+                for (size_t i = 0; i < ids.size() / sizeof(uint32_t); i++) {
+                    uint32_t id = 0u;
+                    uint64_t value = 0u;
+                    memcpy_s(&id, sizeof(id), ids.begin() + i * sizeof(id), sizeof(id));
+                    memcpy_s(&value, sizeof(value), values.begin() + i * sizeof(value), sizeof(value));
+                    specConstants[id] = value;
+                }
+                ids = {};
+                values = {};
+            }
+        }
+        return specConstantsPerSpirV;
     }
 
     NEO::TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
@@ -251,6 +284,7 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
         return NEO::TranslationErrorCode::success;
     }
     IGC::CodeType::CodeType_t receivedSpecConstantsCodeType = IGC::CodeType::invalid;
+    std::vector<char> receivedLinkInput;
     uint32_t getSpecConstantsInfoCalled = 0u;
     uint32_t moduleNumSpecConstants = 0u;
     const std::vector<uint32_t> moduleSpecConstantsIds{2, 0, 1, 3, 5, 4};

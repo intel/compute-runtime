@@ -285,23 +285,21 @@ cl_int Program::buildFromSource(const char *options) {
     return ret;
 }
 
-bool Program::populateModuleConstants(ze_module_constants_t &moduleConstants,
-                                      std::vector<uint32_t> &constantsIds,
-                                      std::vector<const void *> &constantsValuesPtrs) {
-    DEBUG_BREAK_IF(this->specConstantsValues.size() > std::numeric_limits<uint32_t>::max());
-    if (this->specConstantsValues.empty()) {
-        return false;
+Program::ModuleConstants::ModuleConstants(const specConstValuesMap &specConstantsValues) {
+    DEBUG_BREAK_IF(specConstantsValues.size() > std::numeric_limits<uint32_t>::max());
+    this->ids.reserve(specConstantsValues.size());
+    this->values.reserve(specConstantsValues.size());
+    for (const auto &[id, value] : specConstantsValues) {
+        this->ids.push_back(id);
+        this->values.push_back(value);
     }
-    moduleConstants.numConstants = static_cast<uint32_t>(this->specConstantsValues.size());
-    constantsIds.reserve(moduleConstants.numConstants);
-    constantsValuesPtrs.reserve(moduleConstants.numConstants);
-    for (const auto &[id, value] : this->specConstantsValues) {
-        constantsIds.push_back(id);
-        constantsValuesPtrs.push_back(&value);
+    this->valuesPtrs.reserve(this->values.size());
+    for (const auto &value : this->values) {
+        this->valuesPtrs.push_back(&value);
     }
-    moduleConstants.pConstantIds = constantsIds.data();
-    moduleConstants.pConstantValues = constantsValuesPtrs.data();
-    return true;
+    this->desc.numConstants = static_cast<uint32_t>(this->ids.size());
+    this->desc.pConstantIds = this->ids.data();
+    this->desc.pConstantValues = this->valuesPtrs.data();
 }
 
 std::string Program::computeOclCContractInternalOptions(const std::string &buildOptions) const {
@@ -320,15 +318,10 @@ cl_int Program::buildFromIL(const char *options) {
 
     ze_module_desc_t moduleDescription = {ZE_STRUCTURE_TYPE_MODULE_DESC, &oclExtensionsDesc, ZE_MODULE_FORMAT_IL_SPIRV, this->irBinarySize, reinterpret_cast<uint8_t *>(this->irBinary.get()), options, nullptr};
 
-    // constantsIds / constantsValuesPtrs back the descriptor and must outlive the build call;
-    // the lock is held across the build so the values they point at stay valid.
-    ze_module_constants_t moduleConstants;
-    std::vector<uint32_t> constantsIds;
-    std::vector<const void *> constantsValuesPtrs;
-    auto lock = std::lock_guard(this->specializationConstantsMutex);
-    if (populateModuleConstants(moduleConstants, constantsIds, constantsValuesPtrs)) {
-        moduleDescription.pConstants = &moduleConstants;
-    }
+    std::unique_lock lock(this->specializationConstantsMutex);
+    const ModuleConstants moduleConstants(this->specConstantsValues);
+    lock.unlock();
+    moduleDescription.pConstants = &moduleConstants.desc;
 
     cl_int ret = buildModulesForContextDevices(moduleDescription, CL_BUILD_PROGRAM_FAILURE);
     if (CL_SUCCESS == ret) {
@@ -373,7 +366,9 @@ cl_int Program::compile(const char *options, cl_uint numInputHeaders,
     if (this->createdFrom == CreatedFrom::source) {
         retVal = this->compileFromSourceWithHeaders(options, numInputHeaders, inputHeaders, headerIncludeNames);
     } else if (this->createdFrom == CreatedFrom::il) {
-        // An IL program is already a compiled object - no-op, keep the binary type set at creation.
+        // An IL program is already a compiled object - only capture its specialization constants.
+        auto lock = std::lock_guard(this->specializationConstantsMutex);
+        this->compiledSpecConstantsValues = this->specConstantsValues;
         retVal = CL_SUCCESS;
     }
     if (CL_SUCCESS == retVal) {
@@ -398,6 +393,7 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
     // binaries) are not linkable.
     std::vector<const uint8_t *> spirvBinaries;
     std::vector<size_t> spirvBinariesSizes;
+    std::vector<ModuleConstants> spirvModuleConstants;
     std::vector<const uint8_t *> llvmbcBinaries;
     std::vector<size_t> llvmbcBinariesSizes;
     for (uint32_t i = 0; i < numInputPrograms; ++i) {
@@ -413,6 +409,7 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
         if (inProgram->getIsSpirv()) {
             spirvBinaries.push_back(irBinary);
             spirvBinariesSizes.push_back(irBinarySize);
+            spirvModuleConstants.push_back(inProgram->getCompiledModuleConstants());
         } else {
             llvmbcBinaries.push_back(irBinary);
             llvmbcBinariesSizes.push_back(irBinarySize);
@@ -426,6 +423,11 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
     moduleProgDesc.inputSizes = spirvBinariesSizes.data();
     moduleProgDesc.pInputModules = spirvBinaries.data();
     moduleProgDesc.count = static_cast<uint32_t>(spirvBinaries.size());
+    std::vector<const ze_module_constants_t *> spirvModuleConstantsDescs;
+    for (const auto &moduleConstants : spirvModuleConstants) {
+        spirvModuleConstantsDescs.push_back(&moduleConstants.desc);
+    }
+    moduleProgDesc.pConstants = spirvModuleConstantsDescs.data();
     moduleDesc.pNext = &moduleProgDesc;
     L0::ze_module_program_llvmbc_exp_desc_t llvmBcDesc;
     if (!llvmbcBinaries.empty()) {
@@ -479,6 +481,11 @@ cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize
     auto lock = std::lock_guard(this->specializationConstantsMutex);
     specConstantsValues[specId] = value;
     return CL_SUCCESS;
+}
+
+Program::ModuleConstants Program::getCompiledModuleConstants() {
+    auto lock = std::lock_guard(this->specializationConstantsMutex);
+    return ModuleConstants(this->compiledSpecConstantsValues);
 }
 
 cl_int Program::getDeviceBinary(uint32_t rootDeviceIndex, size_t *outSize, unsigned char *outBinary) {

@@ -91,10 +91,11 @@ struct ModuleTranslationUnit {
                                               const std::vector<uint32_t> &inputModuleSizes);
     std::vector<uint8_t> generateElfFromSpirVAndLlvmBc(const std::vector<const char *> &inputSpirVs,
                                                        const std::vector<uint32_t> &inputModuleSizes,
+                                                       const std::vector<NEO::specConstValuesMap> &inputSpecConstantsValues,
                                                        const std::vector<const char *> &inputLlvmBcs,
                                                        const std::vector<uint32_t> &inputLlvmBcSizes);
     bool processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize,
-                                 IGC::CodeType::CodeType_t srcCodeType = IGC::CodeType::spirV);
+                                 IGC::CodeType::CodeType_t srcCodeType, NEO::specConstValuesMap &outSpecConstantsValues);
     std::string generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions);
     MOCKABLE_VIRTUAL ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, CompilationMode compilationMode);
     void updateBuildLog(const std::string &newLogEntry);
