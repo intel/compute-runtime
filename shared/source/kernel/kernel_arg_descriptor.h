@@ -106,6 +106,18 @@ struct ArgDescImage final {
     } metadataPayload;
     NEOImageType imageType;
     uint8_t size = undefined<uint8_t>;
+
+    bool isMsaa() const {
+        switch (this->imageType) {
+        case NEOImageType::imageType2DMSAA:
+        case NEOImageType::imageType2DMSAADepth:
+        case NEOImageType::imageType2DArrayMSAA:
+        case NEOImageType::imageType2DArrayMSAADepth:
+            return true;
+        default:
+            return false;
+        }
+    }
 };
 
 inline constexpr uint32_t samplerSnapWaValue = std::numeric_limits<uint32_t>::max();

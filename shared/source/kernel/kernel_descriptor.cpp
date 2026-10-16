@@ -28,17 +28,8 @@ bool KernelDescriptor::isBindlessAddressingKernel(const KernelDescriptor &desc) 
 
 bool KernelDescriptor::hasMsaaImageArg(const KernelDescriptor &desc) {
     for (const auto &arg : desc.payloadMappings.explicitArgs) {
-        if (arg.type != ArgDescriptor::ArgType::argTImage) {
-            continue;
-        }
-        switch (arg.as<ArgDescImage>().imageType) {
-        case NEOImageType::imageType2DMSAA:
-        case NEOImageType::imageType2DMSAADepth:
-        case NEOImageType::imageType2DArrayMSAA:
-        case NEOImageType::imageType2DArrayMSAADepth:
+        if (arg.type == ArgDescriptor::ArgType::argTImage && arg.as<ArgDescImage>().isMsaa()) {
             return true;
-        default:
-            break;
         }
     }
     return false;

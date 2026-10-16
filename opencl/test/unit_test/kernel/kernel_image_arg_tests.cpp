@@ -140,6 +140,38 @@ TEST_F(KernelImageArgTest, givenImageWithNumSamplesWhenSetArgIsCalledThenPatchNu
     sampleImg->release();
 }
 
+TEST_F(KernelImageArgTest, givenMsaaImageArgAndSingleSampleImageWhenSetKernelArgThenInvalidMemObjectIsReturnedAndArgIsNotSet) {
+    const NEOImageType msaaTypes[] = {NEOImageType::imageType2DMSAA, NEOImageType::imageType2DMSAADepth,
+                                      NEOImageType::imageType2DArrayMSAA, NEOImageType::imageType2DArrayMSAADepth};
+    ASSERT_GE(1u, image->getImageDesc().num_samples);
+    cl_mem memObj = image.get();
+
+    for (auto imageType : msaaTypes) {
+        pKernelInfo->argAsImg(0).imageType = imageType;
+
+        EXPECT_EQ(CL_INVALID_MEM_OBJECT, clSetKernelArg(pMultiDeviceKernel.get(), 0, sizeof(memObj), &memObj)) << "imageType=" << static_cast<int>(imageType);
+        EXPECT_EQ(nullptr, pKernel->getKernelArg(0));
+    }
+}
+
+TEST_F(KernelImageArgTest, givenMsaaImageArgAndMultisampleImageWhenSetKernelArgThenImageIsSet) {
+    cl_image_format imgFormat = {CL_RGBA, CL_UNORM_INT8};
+    cl_image_desc imgDesc = {};
+    imgDesc.num_samples = 4;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imgDesc.image_width = 5;
+    imgDesc.image_height = 5;
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    std::unique_ptr<Image> msaaImage(Image::create(context.get(), memoryProperties, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    pKernelInfo->argAsImg(0).imageType = NEOImageType::imageType2DMSAA;
+    cl_mem memObj = msaaImage.get();
+
+    EXPECT_EQ(CL_SUCCESS, clSetKernelArg(pMultiDeviceKernel.get(), 0, sizeof(memObj), &memObj));
+    EXPECT_EQ(memObj, pKernel->getKernelArg(0));
+}
+
 TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckCorrectImageAccessQualifierIsCalledThenRetValNotValid) {
     cl_image_format imgFormat = {CL_RGBA, CL_UNORM_INT8};
     cl_image_desc imgDesc = {};
