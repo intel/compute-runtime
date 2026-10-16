@@ -14,6 +14,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing.h"
 
+#include <atomic>
 #include <map>
 #include <memory>
 
@@ -156,7 +157,7 @@ class Context : public BaseObject<_cl_context> {
     std::mutex internalCmdListsCreationMtx;
 
     bool interopUserSync = false;
-    bool executionTerminated = false;
+    std::atomic<bool> executionTerminated = false;
     bool externalHandle = false;
 };
 

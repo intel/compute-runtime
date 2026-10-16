@@ -187,19 +187,22 @@ GlArbSyncEvent *GlArbSyncEvent::create(Event &baseEvent) {
 }
 
 void GlArbSyncEvent::unblockGlArbEvent(cl_event event, cl_int status, void *userData) {
-    auto alreadyCompletedData = reinterpret_cast<bool *>(userData);
+    std::unique_ptr<bool> alreadyCompletedData(reinterpret_cast<bool *>(userData));
 
     auto pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(event);
+
+    // Commands waiting on a failed user event still complete, only the context is marked as terminated
+    if (status < 0 || pEvent->getContext()->isTerminated()) {
+        return;
+    }
 
     if (*alreadyCompletedData) {
         auto lock = pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().commandStreamReceiver->obtainUniqueOwnership();
         pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().commandStreamReceiver->stopDirectSubmission(true, true);
     }
 
-    pEvent->getContext()->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSignal(*pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().osContext, *pEvent->getGlArbSyncEvent()->getSyncInfo(), status == CL_COMPLETE);
+    pEvent->getContext()->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSignal(*pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().osContext, *pEvent->getGlArbSyncEvent()->getSyncInfo(), true);
     pEvent->getContext()->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectWaitServer(*pEvent->getL0Object()->getDevice()->getNEODevice()->getDefaultEngine().commandStreamReceiver->getOSInterface(), *pEvent->getGlArbSyncEvent()->getSyncInfo(), *alreadyCompletedData);
-
-    delete alreadyCompletedData;
 }
 
 } // namespace LEO

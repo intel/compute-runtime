@@ -80,12 +80,17 @@ TEST_F(LeoGlArbSyncEventWindowsTest, givenUserEventWhenItCompletesThenGlArbSyncO
     EXPECT_TRUE(StubGlArbSyncSharingFunctionsWindows::lastSignalAtSubmission);
 }
 
-TEST_F(LeoGlArbSyncEventWindowsTest, givenUserEventWhenItTerminatesThenGlArbSyncObjectIsNotSignalledAtSubmission) {
-    StubGlArbSyncSharingFunctionsWindows::lastSignalAtSubmission = true;
+TEST_F(LeoGlArbSyncEventWindowsTest, givenUserEventWhenItTerminatesThenGlArbSyncObjectIsNotSignalled) {
     createArbSyncEventAndSetUserEventStatus(-1);
 
-    EXPECT_EQ(1u, StubGlArbSyncSharingFunctionsWindows::signalCount);
-    EXPECT_FALSE(StubGlArbSyncSharingFunctionsWindows::lastSignalAtSubmission);
+    EXPECT_EQ(0u, StubGlArbSyncSharingFunctionsWindows::signalCount);
+}
+
+TEST_F(LeoGlArbSyncEventWindowsTest, givenTerminatedContextWhenEventCompletesThenGlArbSyncObjectIsNotSignalled) {
+    castToObject<Context>(clContext)->terminateExecution();
+    createArbSyncEventAndSetUserEventStatus(CL_COMPLETE);
+
+    EXPECT_EQ(0u, StubGlArbSyncSharingFunctionsWindows::signalCount);
 }
 
 struct LeoGlArbSyncEventOsTest : public ::testing::Test {
