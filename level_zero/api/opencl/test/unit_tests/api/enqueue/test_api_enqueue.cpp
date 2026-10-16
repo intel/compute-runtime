@@ -27,7 +27,9 @@
 #include "CL/cl_ext.h"
 
 #include <array>
+#include <cstdint>
 #include <limits>
+#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -363,6 +365,7 @@ struct EnqueueMapImageFixture : public Test<LeoCaptureFixture> {
 
     static constexpr size_t width = 16;
     static constexpr size_t height = 16;
+    static constexpr size_t elementSize = 4 * sizeof(float);
     cl_mem image = nullptr;
     Image *leoImage = nullptr;
 };
@@ -394,11 +397,80 @@ TEST_F(EnqueueMapImageFixture, givenRegionReachingImageEndWhenClEnqueueMapImageT
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, mappedPtr);
 
-    const auto &imgInfo = leoImage->getL0Object()->getImageInfo();
     const auto mappedOffset = ptrDiff(mappedPtr, leoImage->getCpuPtr());
-    const auto mappedEnd = mappedOffset + (region[1] - 1) * imgInfo.rowPitch + region[0] * imgInfo.surfaceFormat->imageElementSizeInBytes;
+    const auto mappedEnd = mappedOffset + (region[1] - 1) * width * elementSize + region[0] * elementSize;
 
     EXPECT_EQ(leoImage->getHostptrSize(), mappedEnd);
+}
+
+struct EnqueueMapHostBackedImageFixture : public EnqueueMapImageFixture {
+    void SetUp() override {
+        EnqueueMapImageFixture::SetUp();
+        if (IsSkipped()) {
+            return;
+        }
+        hostStorage.resize(unalignedWidth * elementSize * height);
+
+        cl_image_format format{CL_RGBA, CL_FLOAT};
+        cl_image_desc desc{};
+        desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        desc.image_width = unalignedWidth;
+        desc.image_height = height;
+
+        cl_int errcode = CL_INVALID_VALUE;
+        hostPtrImage = clCreateImage(clContext, CL_MEM_READ_WRITE, &format, &desc, nullptr, &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        ASSERT_NE(nullptr, hostPtrImage);
+        castToObject<MemObj>(hostPtrImage)->setCpuPtr(hostStorage.data());
+    }
+
+    void TearDown() override {
+        if (hostPtrImage != nullptr) {
+            castToObject<MemObj>(hostPtrImage)->setCpuPtr(nullptr);
+            EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(hostPtrImage));
+        }
+        EnqueueMapImageFixture::TearDown();
+    }
+
+    static constexpr size_t unalignedWidth = 329;
+    std::vector<uint8_t> hostStorage{};
+    cl_mem hostPtrImage = nullptr;
+};
+
+TEST_F(EnqueueMapHostBackedImageFixture, givenHostBackedImageWithUnalignedWidthWhenClEnqueueMapImageThenMappedPtrAndPitchesFollowHostPtrLayout) {
+    size_t origin[3] = {3, height - 1, 0};
+    size_t region[3] = {unalignedWidth - origin[0], 1, 1};
+    size_t rowPitch = 0;
+    size_t slicePitch = std::numeric_limits<size_t>::max();
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto mappedPtr = clEnqueueMapImage(getCommandQueue(), hostPtrImage, CL_FALSE, CL_MAP_READ, origin, region,
+                                       &rowPitch, &slicePitch, 0, nullptr, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(ptrOffset(hostStorage.data(), origin[1] * unalignedWidth * elementSize + origin[0] * elementSize), mappedPtr);
+    EXPECT_EQ(unalignedWidth * elementSize, rowPitch);
+    EXPECT_EQ(0u, slicePitch);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), hostPtrImage, mappedPtr, 0, nullptr, nullptr));
+}
+
+TEST_F(EnqueueMapHostBackedImageFixture, givenMappedHostBackedImageWithUnalignedWidthWhenClEnqueueUnmapMemObjectThenWriteBackUsesHostRowPitch) {
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {unalignedWidth, height, 1};
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto mappedPtr = clEnqueueMapImage(getCommandQueue(), hostPtrImage, CL_FALSE, CL_MAP_WRITE, origin, region,
+                                       nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    capturingCmdList.clearCaptures();
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), hostPtrImage, mappedPtr, 0, nullptr, nullptr));
+
+    ASSERT_EQ(1u, capturingCmdList.appendImageCopyFromMemoryExtArgs.count());
+    const auto &writeBack = capturingCmdList.appendImageCopyFromMemoryExtArgs[0];
+    EXPECT_EQ(hostStorage.data(), writeBack.srcptr);
+    EXPECT_EQ(unalignedWidth * elementSize, writeBack.srcRowPitch);
 }
 
 } // namespace ult

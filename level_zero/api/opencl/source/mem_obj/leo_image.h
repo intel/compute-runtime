@@ -38,6 +38,9 @@ class Image : public MemObj {
 
     size_t calculateTotalSizeForImage(const std::array<size_t, 3> &sizes) const;
     size_t calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes) const;
+    size_t calculateHostPtrOffsetForImage(const std::array<size_t, 3> &origin) const;
+    size_t getHostRowPitch() const;
+    size_t getHostSlicePitch() const;
 
     void getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
 

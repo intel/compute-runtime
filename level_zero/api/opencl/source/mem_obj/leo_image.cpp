@@ -357,25 +357,14 @@ cl_int Image::getImageInfo(cl_image_info paramName,
         imageDepth = std::max(imageDepth, static_cast<size_t>(1));
     }
 
-    size_t hostRowPitch = hostPtrRowPitch ? hostPtrRowPitch : imgInfo.imgDesc.imageWidth * elementSize;
-
     size_t rowPitch;
     if (numSamples > 1) {
         rowPitch = imgInfo.imgDesc.imageWidth * elementSize * numSamples;
     } else {
-        rowPitch = hostRowPitch;
+        rowPitch = this->getHostRowPitch();
     }
 
-    size_t slicePitch = 0;
-    if (!(imgInfo.imgDesc.imageType == ImageType::image2D ||
-          imgInfo.imgDesc.imageType == ImageType::image1D ||
-          imgInfo.imgDesc.imageType == ImageType::image1DBuffer)) {
-        size_t hostImageHeight = (imgInfo.imgDesc.imageType == ImageType::image3D ||
-                                  imgInfo.imgDesc.imageType == ImageType::image2DArray)
-                                     ? imgInfo.imgDesc.imageHeight
-                                     : 1u;
-        slicePitch = hostPtrSlicePitch ? hostPtrSlicePitch : hostRowPitch * hostImageHeight;
-    }
+    size_t slicePitch = this->getHostSlicePitch();
 
     cl_mem bufferMem = static_cast<cl_mem>(this->associatedMemObject);
     std::vector<ze_image_handle_t> l0Handles{};
@@ -508,29 +497,51 @@ size_t Image::getApiSize() const {
 }
 
 size_t Image::calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes) const {
-    auto l0Image = getL0Object();
-    const auto &l0ImgInfo = l0Image->getImageInfo();
-    auto retSize = l0ImgInfo.surfaceFormat->imageElementSizeInBytes * sizes[0];
-    auto rowPitch = l0ImgInfo.rowPitch;
-    auto slicePitch = l0ImgInfo.slicePitch;
     const size_t precedingRows = sizes[1] > 0u ? sizes[1] - 1u : 0u;
     const size_t precedingSlices = sizes[2] > 0u ? sizes[2] - 1u : 0u;
+    return this->calculateHostPtrOffsetForImage({sizes[0], precedingRows, precedingSlices});
+}
+
+size_t Image::calculateHostPtrOffsetForImage(const std::array<size_t, 3> &origin) const {
+    const auto &l0ImgInfo = getL0Object()->getImageInfo();
+    auto offset = l0ImgInfo.surfaceFormat->imageElementSizeInBytes * origin[0];
 
     switch (l0ImgInfo.imgDesc.imageType) {
     case NEO::ImageType::image1DArray:
-        retSize += slicePitch * precedingRows;
+        offset += this->getHostSlicePitch() * origin[1];
         break;
     case NEO::ImageType::image2D:
-        retSize += rowPitch * precedingRows;
+        offset += this->getHostRowPitch() * origin[1];
         break;
     case NEO::ImageType::image2DArray:
     case NEO::ImageType::image3D:
-        retSize += rowPitch * precedingRows + slicePitch * precedingSlices;
+        offset += this->getHostRowPitch() * origin[1] + this->getHostSlicePitch() * origin[2];
         break;
     default:
         break;
     }
-    return retSize;
+    return offset;
+}
+
+size_t Image::getHostRowPitch() const {
+    if (this->hostPtrRowPitch != 0) {
+        return this->hostPtrRowPitch;
+    }
+    const auto &l0ImgInfo = getL0Object()->getImageInfo();
+    return l0ImgInfo.imgDesc.imageWidth * l0ImgInfo.surfaceFormat->imageElementSizeInBytes;
+}
+
+size_t Image::getHostSlicePitch() const {
+    const auto imageType = getL0Object()->getImageInfo().imgDesc.imageType;
+    switch (imageType) {
+    case NEO::ImageType::image1DArray:
+        return this->hostPtrSlicePitch != 0 ? this->hostPtrSlicePitch : this->getHostRowPitch();
+    case NEO::ImageType::image2DArray:
+    case NEO::ImageType::image3D:
+        return this->hostPtrSlicePitch != 0 ? this->hostPtrSlicePitch : this->getHostRowPitch() * getL0Object()->getImageInfo().imgDesc.imageHeight;
+    default:
+        return 0u;
+    }
 }
 
 size_t Image::getHostptrSize() const {

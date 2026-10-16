@@ -131,11 +131,12 @@ struct ImageHostPtrSizeTest : public Test<OclFixture> {
         return static_cast<Image *>(castToObject<MemObj>(createdImage));
     }
 
-    static size_t expectedHostPtrSize(const Image &image, size_t rows, size_t slices) {
-        const auto &imgInfo = image.getL0Object()->getImageInfo();
-        return (slices - 1) * imgInfo.slicePitch + (rows - 1) * imgInfo.rowPitch + width * imgInfo.surfaceFormat->imageElementSizeInBytes;
+    static size_t expectedHostPtrSize(size_t rows, size_t slices) {
+        const size_t rowPitch = width * pixelSize;
+        return (slices - 1) * rowPitch * rows + (rows - 1) * rowPitch + width * pixelSize;
     }
 
+    static constexpr size_t pixelSize = 4;
     static constexpr size_t width = 16;
     static constexpr size_t height = 8;
     static constexpr size_t depth = 4;
@@ -155,7 +156,7 @@ TEST_F(ImageHostPtrSizeTest, given2dImageWhenQueryingHostPtrSizeThenTrailingRowI
     auto image = createImage(desc);
     ASSERT_NE(nullptr, image);
 
-    EXPECT_EQ(expectedHostPtrSize(*image, height, 1u), image->getHostptrSize());
+    EXPECT_EQ(expectedHostPtrSize(height, 1u), image->getHostptrSize());
 }
 
 TEST_F(ImageHostPtrSizeTest, given3dImageWhenQueryingHostPtrSizeThenTrailingRowAndSliceAreNotIncluded) {
@@ -168,7 +169,7 @@ TEST_F(ImageHostPtrSizeTest, given3dImageWhenQueryingHostPtrSizeThenTrailingRowA
     auto image = createImage(desc);
     ASSERT_NE(nullptr, image);
 
-    EXPECT_EQ(expectedHostPtrSize(*image, height, depth), image->getHostptrSize());
+    EXPECT_EQ(expectedHostPtrSize(height, depth), image->getHostptrSize());
 }
 
 TEST_F(ImageHostPtrSizeTest, given2dImageArrayWhenQueryingHostPtrSizeThenArraySizeDrivesSliceCount) {
@@ -181,7 +182,7 @@ TEST_F(ImageHostPtrSizeTest, given2dImageArrayWhenQueryingHostPtrSizeThenArraySi
     auto image = createImage(desc);
     ASSERT_NE(nullptr, image);
 
-    EXPECT_EQ(expectedHostPtrSize(*image, height, arraySize), image->getHostptrSize());
+    EXPECT_EQ(expectedHostPtrSize(height, arraySize), image->getHostptrSize());
 }
 
 TEST_F(ImageHostPtrSizeTest, given1dImageArrayWhenQueryingHostPtrSizeThenArraySizeDrivesSlicePitchCount) {
@@ -193,8 +194,7 @@ TEST_F(ImageHostPtrSizeTest, given1dImageArrayWhenQueryingHostPtrSizeThenArraySi
     auto image = createImage(desc);
     ASSERT_NE(nullptr, image);
 
-    const auto &imgInfo = image->getL0Object()->getImageInfo();
-    const auto expectedSize = (arraySize - 1) * imgInfo.slicePitch + width * imgInfo.surfaceFormat->imageElementSizeInBytes;
+    const auto expectedSize = (arraySize - 1) * width * pixelSize + width * pixelSize;
 
     EXPECT_EQ(expectedSize, image->getHostptrSize());
 }
@@ -322,6 +322,68 @@ TEST_F(ImageGetInfoPitchTest, given3dImageWithHostPtrRowPitchOnlyWhenQueryingSli
 
     EXPECT_EQ(hostRowPitch, queryInfo(*image, CL_IMAGE_ROW_PITCH));
     EXPECT_EQ(hostRowPitch * height, queryInfo(*image, CL_IMAGE_SLICE_PITCH));
+}
+
+TEST_F(ImageGetInfoPitchTest, given2dImageWithUnalignedWidthWhenCalculatingHostPtrOffsetAndSizeThenHostRowPitchIsUsed) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    desc.image_width = unalignedWidth;
+    desc.image_height = height;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t hostRowPitch = unalignedWidth * elementSize;
+    EXPECT_EQ(2 * hostRowPitch + 3 * elementSize, image->calculateHostPtrOffsetForImage({3u, 2u, 0u}));
+    EXPECT_EQ((height - 1) * hostRowPitch + unalignedWidth * elementSize, image->getHostptrSize());
+}
+
+TEST_F(ImageGetInfoPitchTest, given3dImageWithUnalignedWidthWhenCalculatingHostPtrOffsetAndSizeThenHostPitchesAreUsed) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    desc.image_width = unalignedWidth;
+    desc.image_height = height;
+    desc.image_depth = depth;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t hostRowPitch = unalignedWidth * elementSize;
+    const size_t hostSlicePitch = hostRowPitch * height;
+    EXPECT_EQ(2 * hostSlicePitch + 1 * hostRowPitch + 5 * elementSize, image->calculateHostPtrOffsetForImage({5u, 1u, 2u}));
+    EXPECT_EQ((depth - 1) * hostSlicePitch + (height - 1) * hostRowPitch + unalignedWidth * elementSize, image->getHostptrSize());
+}
+
+TEST_F(ImageGetInfoPitchTest, given1dImageArrayWithUnalignedWidthWhenCalculatingHostPtrOffsetAndSizeThenHostRowPitchSeparatesLayers) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
+    desc.image_width = unalignedWidth;
+    desc.image_array_size = arraySize;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t hostRowPitch = unalignedWidth * elementSize;
+    EXPECT_EQ(3 * hostRowPitch + 7 * elementSize, image->calculateHostPtrOffsetForImage({7u, 3u, 0u}));
+    EXPECT_EQ((arraySize - 1) * hostRowPitch + unalignedWidth * elementSize, image->getHostptrSize());
+}
+
+TEST_F(ImageGetInfoPitchTest, given2dImageArrayWithHostPtrPitchesWhenCalculatingHostPtrOffsetThenHostPtrPitchesAreUsed) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    desc.image_width = unalignedWidth;
+    desc.image_height = height;
+    desc.image_array_size = arraySize;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t hostRowPitch = unalignedWidth * elementSize + 12;
+    const size_t hostSlicePitch = hostRowPitch * height + 36;
+    image->setHostPtrRowPitch(hostRowPitch);
+    image->setHostPtrSlicePitch(hostSlicePitch);
+
+    EXPECT_EQ(3 * hostSlicePitch + 2 * hostRowPitch + 1 * elementSize, image->calculateHostPtrOffsetForImage({1u, 2u, 3u}));
 }
 
 TEST(ImageFormatConversionTest, givenPackedYuvChannelOrderWhenConvertingToL0FormatThenLayoutIsMapped) {

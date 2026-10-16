@@ -959,8 +959,10 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
     NEO::LEO::MemObjSizeArray sizes{region[0], region[1], region[2]};
     NEO::LEO::MemObjOffsetArray offsets{origin[0], origin[1], origin[2]};
 
-    size_t size = pImage->calculateTotalSizeForImage(sizes);
-    size_t offset = pImage->calculateTotalSizeForImage(offsets);
+    const size_t size = pImage->calculateHostPtrSizeForImage(sizes);
+    const size_t offset = pImage->calculateHostPtrOffsetForImage(offsets);
+    const size_t hostRowPitch = pImage->getHostRowPitch();
+    const size_t hostSlicePitch = pImage->getHostSlicePitch();
 
     if (NEO::isValueSet(mapFlags, CL_MAP_WRITE_INVALIDATE_REGION)) {
         errcodeHelper.set(clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event));
@@ -969,18 +971,8 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
 
         auto mipDesc = createZeImageRegionWithMipLevel(pImage, origin, region);
 
-        uint32_t mapRowPitch = 0;
-        uint32_t mapSlicePitch = 0;
-        if (pImage->getHostPtrRowPitch() != 0) {
-            mapRowPitch = static_cast<uint32_t>(pImage->getHostPtrRowPitch());
-        } else {
-            mapRowPitch = static_cast<uint32_t>(static_cast<L0::ImageImp *>(L0::Image::fromHandle(pImage->getL0Handle()))->getImageInfo().rowPitch);
-        }
-        if (pImage->getHostPtrSlicePitch() != 0) {
-            mapSlicePitch = static_cast<uint32_t>(pImage->getHostPtrSlicePitch());
-        } else {
-            mapSlicePitch = static_cast<uint32_t>(static_cast<L0::ImageImp *>(L0::Image::fromHandle(pImage->getL0Handle()))->getImageInfo().slicePitch);
-        }
+        const auto mapRowPitch = static_cast<uint32_t>(hostRowPitch);
+        const auto mapSlicePitch = static_cast<uint32_t>(hostSlicePitch);
 
         {
             auto lock = pCommandQueue->takeOwnership();
@@ -1012,13 +1004,11 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
     }
 
     if (imageRowPitch) {
-        auto hostPtrRowPitch = pImage->getHostPtrRowPitch();
-        *imageRowPitch = hostPtrRowPitch != 0 ? hostPtrRowPitch : static_cast<L0::ImageImp *>(L0::Image::fromHandle(pImage->getL0Handle()))->getImageInfo().rowPitch;
+        *imageRowPitch = hostRowPitch;
     }
 
     if (imageSlicePitch) {
-        auto hostPtrSlicePitch = pImage->getHostPtrSlicePitch();
-        *imageSlicePitch = hostPtrSlicePitch != 0 ? hostPtrSlicePitch : static_cast<L0::ImageImp *>(L0::Image::fromHandle(pImage->getL0Handle()))->getImageInfo().slicePitch;
+        *imageSlicePitch = hostSlicePitch;
     }
 
     void *tracingRetVal = ptrOffset(pImage->getCpuPtr(), offset);
@@ -1082,18 +1072,13 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
             }
         }
 
-        size_t unmapRowPitch = pImage->getHostPtrRowPitch() != 0 ? pImage->getHostPtrRowPitch()
-                                                                 : static_cast<L0::ImageImp *>(L0::Image::fromHandle(pImage->getL0Handle()))->getImageInfo().rowPitch;
-        size_t unmapSlicePitch = pImage->getHostPtrSlicePitch() != 0 ? pImage->getHostPtrSlicePitch()
-                                                                     : static_cast<L0::ImageImp *>(L0::Image::fromHandle(pImage->getL0Handle()))->getImageInfo().slicePitch;
-
         cl_int tracingRetVal = clEnqueueWriteImage(commandQueue,
                                                    memObj,
                                                    false,
                                                    origin,
                                                    region,
-                                                   unmapRowPitch,
-                                                   unmapSlicePitch,
+                                                   pImage->getHostRowPitch(),
+                                                   pImage->getHostSlicePitch(),
                                                    mappedPtr,
                                                    numEventsInWaitList,
                                                    eventWaitList,
