@@ -38,7 +38,10 @@ class PageFaultManagerLinux : public virtual CpuPageFaultManager {
 
     std::vector<struct sigaction> previousPageFaultHandlers;
 
-    int handlerIndex = 0;
+    // Depth of the handler chain on the calling thread. SIGSEGV can be delivered to several
+    // threads at the same time, and a chained handler may block until the others arrive
+    // (e.g. a managed runtime's GC safepoint handler).
+    inline static thread_local int handlerIndex = 0;
 };
 
 class CpuPageFaultManagerLinux final : public PageFaultManagerLinux {};
