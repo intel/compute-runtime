@@ -286,9 +286,9 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
 struct DrmCommandStreamUllsLightTest : public DrmCommandStreamEnhancedTest {
     template <typename GfxFamily>
     void setUpT() {
-        debugManager.flags.EnableDirectSubmission.set(1u);
         debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
         DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
+        debugManager.flags.EnableDirectSubmission.set(1u);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
             std::make_unique<DrmMemoryOperationsHandlerDefault>(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], rootDeviceIndex);
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
