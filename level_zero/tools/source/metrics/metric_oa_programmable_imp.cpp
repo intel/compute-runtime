@@ -309,9 +309,10 @@ ze_result_t OaMetricFromProgrammable::destroy() {
 MetricGroup *OaMetricGroupUserDefined::create(zet_metric_group_properties_t &properties,
                                               MetricsDiscovery::IMetricSet_1_13 &metricSet,
                                               MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
+                                              const uint32_t concurrentGroupIndex,
                                               MetricSource &metricSource) {
 
-    auto pMetricGroup = new OaMetricGroupUserDefined(properties, metricSet, concurrentGroup, metricSource);
+    auto pMetricGroup = new OaMetricGroupUserDefined(properties, metricSet, concurrentGroup, concurrentGroupIndex, metricSource);
     UNRECOVERABLE_IF(pMetricGroup == nullptr);
     pMetricGroup->addMetricGroupType(ZET_METRIC_GROUP_TYPE_EXP_FLAG_USER_CREATED);
 
@@ -355,6 +356,15 @@ ze_result_t OaMetricGroupUserDefined::addMetric(zet_metric_handle_t hMetric, siz
         std::string errorString("MetricGroup does not support Metric's samplingtype ");
         MetricGroupUserDefined::updateErrorString(errorString, errorStringSize, pErrorString);
         METRICS_LOG_ERR("%s", "MetricGroup does not support Metric's sampling type");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    // Metric prototypes can only be added to a metric set of their own concurrent group.
+    if (metricFromProgrammable->getDomain() != concurrentGroupIndex) {
+
+        std::string errorString("MetricGroup does not support Metric's domain");
+        MetricGroupUserDefined::updateErrorString(errorString, errorStringSize, pErrorString);
+        METRICS_LOG_ERR("%s", "MetricGroup does not support Metric's domain");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

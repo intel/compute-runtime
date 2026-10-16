@@ -62,8 +62,8 @@ class OaMetricSourceImp : public MetricSource {
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
     static std::unique_ptr<OaMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
     ze_result_t metricGroupCreateFromMetric(MetricGroupDescription *metricGroupDesc,
-                                            zet_metric_group_sampling_type_flags_t samplingType, zet_metric_handle_t hMetric,
-                                            zet_metric_group_handle_t *phMetricGroup);
+                                            zet_metric_group_sampling_type_flags_t samplingType, const uint32_t domain,
+                                            zet_metric_handle_t hMetric, zet_metric_group_handle_t *phMetricGroup);
     ze_result_t createMetricGroupsFromMetrics(std::vector<zet_metric_handle_t> &metricList,
                                               MetricGroupDescription *metricGroupDesc,
                                               uint32_t *maxMetricGroupCount,
@@ -71,6 +71,7 @@ class OaMetricSourceImp : public MetricSource {
     ze_result_t appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) override;
     virtual void metricGroupCreate(MetricGroupDescription *metricGroupDesc,
                                    zet_metric_group_sampling_type_flag_t samplingType,
+                                   const uint32_t domain,
                                    zet_metric_group_handle_t *pMetricGroupHandle);
     ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                     zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
