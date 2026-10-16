@@ -415,7 +415,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     }
     DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Free allocation, gpu address = ", std::hex, gfxAllocation->getGpuAddress());
 
-    logFreeAllocation(fileLoggerInstance(), gfxAllocation);
+    logFreeAllocation(allocationLoggerInstance(), gfxAllocation);
     getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), rootDevIdx)->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
     freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
 }
@@ -854,7 +854,7 @@ GraphicsAllocation *MemoryManager::allocatePhysicalGraphicsMemory(const Allocati
         return nullptr;
     }
 
-    logAllocation(fileLoggerInstance(), allocation, this);
+    logAllocation(allocationLoggerInstance(), allocation, this);
     registerAllocationInOs(allocation);
     return allocation;
 }
@@ -907,7 +907,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
         isAligned(allocation->getGpuAddress(), MemoryConstants::pageSize2M) &&
         isAligned(allocation->getUnderlyingBufferSize(), MemoryConstants::pageSize2M));
 
-    logAllocation(fileLoggerInstance(), allocation, this);
+    logAllocation(allocationLoggerInstance(), allocation, this);
     registerAllocationInOs(allocation);
     return allocation;
 }

@@ -19,7 +19,65 @@ namespace NEO {
 
 template <DebugFunctionalityLevel debugLevel>
 ClFileLogger<debugLevel>::ClFileLogger(FileLogger<debugLevel> &baseLoggerIn, const DebugVariables &flags) : baseLogger(baseLoggerIn) {
-    dumpKernelArgsEnabled = flags.DumpKernelArgs.get();
+    this->dumpKernels = flags.DumpKernels.get();
+    this->logApiCalls = flags.LogApiCalls.get();
+    this->dumpKernelArgsEnabled = flags.DumpKernelArgs.get();
+}
+
+template <DebugFunctionalityLevel debugLevel>
+void ClFileLogger<debugLevel>::dumpKernel(const std::string &name, const std::string &src) {
+    if (false == this->baseLogger.enabled()) {
+        return;
+    }
+
+    if (this->dumpKernels) {
+        DBG_LOG(LogApiCalls, "Kernel size", src.size(), src.c_str());
+        this->baseLogger.writeToFile(name + ".txt", src.c_str(), src.size(), std::ios::trunc);
+    }
+}
+
+template <DebugFunctionalityLevel debugLevel>
+void ClFileLogger<debugLevel>::logApiCall(const char *function, bool enter, int32_t errorCode) {
+    if (false == this->baseLogger.enabled()) {
+        return;
+    }
+
+    if (this->logApiCalls) {
+        std::thread::id thisThread = std::this_thread::get_id();
+
+        std::stringstream ss;
+        ss << "ThreadID: " << thisThread << " ";
+        if (enter) {
+            ss << "Function Enter: ";
+        } else {
+            ss << "Function Leave (" << errorCode << "): ";
+        }
+        ss << function << std::endl;
+
+        this->baseLogger.logDebugString(true, ss.str());
+    }
+}
+
+template <DebugFunctionalityLevel debugLevel>
+size_t ClFileLogger<debugLevel>::getInput(const size_t *input, int32_t index) {
+    if (this->baseLogger.enabled() == false) {
+        return 0;
+    }
+    return input != nullptr ? input[index] : 0;
+}
+
+template <DebugFunctionalityLevel debugLevel>
+void ClFileLogger<debugLevel>::dumpBinaryProgram(int32_t numDevices, const size_t *lengths, const unsigned char **binaries) {
+    if (false == this->baseLogger.enabled()) {
+        return;
+    }
+
+    if (this->dumpKernels) {
+        if (lengths != nullptr && binaries != nullptr &&
+            lengths[0] != 0 && binaries[0] != nullptr) {
+            this->baseLogger.writeToFile("programBinary.bin", reinterpret_cast<const char *>(binaries[0]), lengths[0], std::ios::trunc | std::ios::binary);
+        }
+    }
 }
 
 ClFileLogger<globalDebugFunctionalityLevel> &getClFileLogger() {

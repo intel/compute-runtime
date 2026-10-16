@@ -10,7 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/logger.h"
+#include "shared/source/utilities/allocation_logger.h"
 
 #include <sstream>
 
@@ -18,7 +18,7 @@
 namespace NEO {
 
 template <DebugFunctionalityLevel level>
-void logAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphicsAllocation, MemoryManager const *memoryManager) {
+void logAllocation(AllocationLogger<level> &logger, GraphicsAllocation const *graphicsAllocation, MemoryManager const *memoryManager) {
     if (logger.shouldLogAllocationType()) {
         PRINT_STRING(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
     }
@@ -31,7 +31,8 @@ void logAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphics
                                    graphicsAllocation->getUnderlyingBufferSize(), isLocalMemory);
     }
 
-    if (!logger.enabled() && !logger.shouldLogAllocationToStdout()) {
+    auto &fileLogger = logger.getFileLogger();
+    if (!fileLogger.enabled() && !logger.shouldLogAllocationToStdout()) {
         return;
     }
 
@@ -74,14 +75,12 @@ void logAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphics
             return;
         }
 
-        if (logger.enabled()) {
-            logger.writeToFile(logger.getLogFileNameString(), str.c_str(), str.size(), std::ios::app);
-        }
+        fileLogger.logDebugString(true, str);
     }
 }
 
 template <DebugFunctionalityLevel level>
-void logFreeAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphicsAllocation) {
+void logFreeAllocation(AllocationLogger<level> &logger, GraphicsAllocation const *graphicsAllocation) {
     if (logger.shouldLogAllocationSummaryReport()) {
         const bool isLocalMemory = graphicsAllocation->getMemoryPool() == MemoryPool::localMemory;
         logger.untrackLiveAllocation(getAllocationTypeString(graphicsAllocation),

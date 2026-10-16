@@ -12,9 +12,12 @@
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/memory_management.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -26,6 +29,7 @@
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/logger_tests.h"
 
 #include "level_zero/api/core/ze_graph_api_entrypoints.h"
 #include "level_zero/api/internal/l0_internal.h"
@@ -33,6 +37,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/driver/kernel_dispatch_stats_reporter.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
@@ -696,6 +701,45 @@ TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
 
     delete driverHandle;
     globalDriverHandles->clear();
+}
+
+TEST_F(DriverImpTest, givenLogKernelDispatchStatsWhenDriverImpIsInitializedThenInitializationSucceeds) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.LogKernelDispatchStats.set(true);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    Driver driver;
+    driver.initialize(&result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_FALSE(globalDriverHandles->empty());
+    auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
+
+    delete driverHandle;
+    globalDriverHandles->clear();
+}
+
+TEST(KernelDispatchStatsReporterTest, givenTrackedDispatchesWhenReporterIsDestroyedThenReportWithTrackedDispatchesIsWritten) {
+    const auto reportFileName = NEO::getKernelDispatchStatsFileName();
+    removeVirtualFile(reportFileName);
+    TestFileLogger<globalDebugFunctionalityLevel> fileLogger(std::string("testfile"));
+
+    {
+        KernelDispatchStatsReporter reporter(fileLogger);
+        NEO::KernelDispatchStats stats{};
+        stats.kernelName = "reportedKernel";
+        reporter.getKernelDispatchStats().trackDispatch(stats);
+    }
+
+    if (NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()) {
+        ASSERT_TRUE(virtualFileExists(reportFileName));
+        const auto report = NEO::virtualFileList[reportFileName].str();
+        EXPECT_TRUE(report.starts_with("kernelName,"));
+        EXPECT_NE(std::string::npos, report.find("\"reportedKernel\","));
+    } else {
+        EXPECT_FALSE(virtualFileExists(reportFileName));
+    }
+    removeVirtualFile(reportFileName);
 }
 
 TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpThenGlobalDriverHandleIsNull) {

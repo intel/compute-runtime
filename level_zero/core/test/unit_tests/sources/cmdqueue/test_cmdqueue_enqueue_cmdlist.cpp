@@ -11,7 +11,6 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/utilities/kernel_dispatch_stats.h"
-#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -24,6 +23,7 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"
+#include "level_zero/core/source/driver/kernel_dispatch_stats_reporter.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -161,14 +161,8 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncach
 }
 
 struct KernelDispatchStatsQueueTest : public CommandQueueExecuteCommandLists {
-    // the collection target is the process-wide logger, which outlives every test,
-    // so construct it here - SetUpTestSuite runs before the leak listener arms
-    static void SetUpTestSuite() {
-        NEO::fileLoggerInstance();
-    }
-
     void TearDown() override {
-        NEO::fileLoggerInstance().clearKernelDispatchStats();
+        L0::kernelDispatchStatsReporter().getKernelDispatchStats().clear();
         CommandQueueExecuteCommandLists::TearDown();
     }
 
@@ -189,7 +183,7 @@ struct KernelDispatchStatsQueueTest : public CommandQueueExecuteCommandLists {
 
 HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenRegularCommandListIsExecutedTwiceThenEachExecutionIsCounted) {
     debugManager.flags.LogKernelDispatchStats.set(true);
-    NEO::fileLoggerInstance().clearKernelDispatchStats();
+    L0::kernelDispatchStatsReporter().getKernelDispatchStats().clear();
 
     auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->getCmdContainer().obtainKernelDispatchStats().trackDispatch(createStats("regularListKernel"));
@@ -209,7 +203,7 @@ HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenRegularCom
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
 
-    const auto report = NEO::fileLoggerInstance().createKernelDispatchStatsReport();
+    const auto report = L0::kernelDispatchStatsReporter().getKernelDispatchStats().createReport();
     EXPECT_TRUE(findRow(report, "regularListKernel").ends_with(",2"));
     EXPECT_FALSE(commandList->getCmdContainer().peekKernelDispatchStats()->isEmpty());
 
@@ -218,7 +212,7 @@ HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenRegularCom
 
 HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenImmediateCommandListIsExecutedThenItsStatsAreCleared) {
     debugManager.flags.LogKernelDispatchStats.set(true);
-    NEO::fileLoggerInstance().clearKernelDispatchStats();
+    L0::kernelDispatchStatsReporter().getKernelDispatchStats().clear();
 
     auto commandList = CommandList::whiteboxCast(CommandList::fromHandle(commandLists[0]));
     commandList->cmdListType = CommandList::CommandListType::typeImmediate;
@@ -238,7 +232,7 @@ HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenImmediateC
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
 
-    const auto report = NEO::fileLoggerInstance().createKernelDispatchStatsReport();
+    const auto report = L0::kernelDispatchStatsReporter().getKernelDispatchStats().createReport();
     EXPECT_TRUE(findRow(report, "immediateListKernel").ends_with(",1"));
     EXPECT_TRUE(commandList->getCmdContainer().peekKernelDispatchStats()->isEmpty());
 
@@ -248,7 +242,7 @@ HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsWhenImmediateC
 
 HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsDisabledWhenCommandListIsExecutedThenNothingIsCounted) {
     debugManager.flags.LogKernelDispatchStats.set(false);
-    NEO::fileLoggerInstance().clearKernelDispatchStats();
+    L0::kernelDispatchStatsReporter().getKernelDispatchStats().clear();
 
     auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->getCmdContainer().obtainKernelDispatchStats().trackDispatch(createStats("notCountedKernel"));
@@ -267,7 +261,7 @@ HWTEST_F(KernelDispatchStatsQueueTest, givenLogKernelDispatchStatsDisabledWhenCo
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandLists[0], nullptr, internalOptions));
 
-    EXPECT_EQ(std::string::npos, NEO::fileLoggerInstance().createKernelDispatchStatsReport().find("notCountedKernel"));
+    EXPECT_EQ(std::string::npos, L0::kernelDispatchStatsReporter().getKernelDispatchStats().createReport().find("notCountedKernel"));
     commandQueue->destroy();
 }
 

@@ -22,6 +22,8 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/extension_injector.h
                ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/kernel_dispatch_stats_reporter.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/kernel_dispatch_stats_reporter.h
 )
 
 if(UNIX)

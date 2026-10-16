@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/tests_configuration.h"
 
+#include "level_zero/core/source/driver/kernel_dispatch_stats_reporter.h"
 #include "level_zero/core/test/common/ult_config_listener_l0.h"
 
 #include <map>
@@ -46,6 +47,7 @@ void applyWorkarounds() {
     }
     L0::globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
     L0::globalDriverHandles->reserve(1);
+    L0::kernelDispatchStatsReporter();
     debugManager.flags.EnableUsmPoolLazyInit.set(1);
 }
 

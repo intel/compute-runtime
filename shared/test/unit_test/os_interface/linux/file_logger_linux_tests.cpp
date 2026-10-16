@@ -22,7 +22,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     std::string testFile = "testfile";
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledAllocationLogger fileLogger(testFile, flags);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -90,7 +90,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(true);
     flags.LogAllocationStdout.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledAllocationLogger fileLogger(testFile, flags);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -152,7 +152,7 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     std::string testFile = "testfile";
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledAllocationLogger fileLogger(testFile, flags);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -189,7 +189,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     std::string testFile = "testfile";
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(false);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledAllocationLogger fileLogger(testFile, flags);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -225,7 +225,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportFlagWhenSysMemAllocationLoggedTh
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocation, nullptr);
     }
     std::string output = capture.getCapturedStdout();
@@ -249,7 +249,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportFlagWhenLocalMemAllocationLogged
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocation, nullptr);
     }
     std::string output = capture.getCapturedStdout();
@@ -275,7 +275,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportFlagWhenMultipleTypesLoggedThenA
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocBuffer, nullptr);
         logAllocation(fileLogger, &allocLinearStream, nullptr);
     }
@@ -299,7 +299,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportFlagNotSetWhenDestructorCalledTh
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocation, nullptr);
     }
     std::string output = capture.getCapturedStdout();
@@ -318,7 +318,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenAllocationFreedThenPeakMatch
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocation, nullptr);
         logFreeAllocation(fileLogger, &allocation);
     }
@@ -343,7 +343,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenMultipleAllocationsFreedThen
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocA, nullptr);
         logAllocation(fileLogger, &allocB, nullptr);
         logFreeAllocation(fileLogger, &allocA);
@@ -369,7 +369,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenNoAllocationsFreedThenPeakEq
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocA, nullptr);
         logAllocation(fileLogger, &allocB, nullptr);
     }
@@ -396,7 +396,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenLocalMemAllocatedAndFreedThe
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocation, nullptr);
         logFreeAllocation(fileLogger, &allocation);
     }
@@ -422,7 +422,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenBothSysAndLocalAllocatedThen
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocSys, nullptr);
         logAllocation(fileLogger, &allocLocal, nullptr);
     }
@@ -447,7 +447,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenSysPartialFreeAndSmallerReAl
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocA, nullptr);
         logAllocation(fileLogger, &allocB, nullptr);
         logFreeAllocation(fileLogger, &allocA);
@@ -474,7 +474,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenLocalPartialFreeAndSmallerRe
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocA, nullptr);
         logAllocation(fileLogger, &allocB, nullptr);
         logFreeAllocation(fileLogger, &allocA);
@@ -497,7 +497,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenFreeExceedsAllocatedSizeThen
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocation, nullptr);
         fileLogger.untrackLiveAllocation("BUFFER", 200u, false);
     }
@@ -518,7 +518,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenFreeCalledForUntrackedTypeTh
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &allocation, nullptr);
         fileLogger.untrackLiveAllocation("LINEAR_STREAM", 512u, false);
         fileLogger.untrackLiveAllocation("KERNEL_ISA", 512u, true);
@@ -541,7 +541,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportDisabledWhenLogFreeAllocationCal
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logFreeAllocation(fileLogger, &allocation);
     }
     std::string output = capture.getCapturedStdout();

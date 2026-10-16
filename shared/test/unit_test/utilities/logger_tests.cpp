@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/os_interface/sys_calls_common.h"
+#include "shared/source/utilities/kernel_dispatch_stats.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -32,86 +33,31 @@
 using namespace NEO;
 
 TEST(FileLogger, GivenFullyEnabledFileLoggerIsCreatedThenItIsEnabled) {
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(std::string(""), flags);
+    FullyEnabledFileLogger fileLogger(std::string(""));
 
     EXPECT_TRUE(fileLogger.enabled());
 }
 
 TEST(FileLogger, GivenReleseInternalFileLoggerIsCreatedThenItIsEnabled) {
-    DebugVariables flags;
-    ReleaseInternalFileLogger fileLogger(std::string(""), flags);
+    ReleaseInternalFileLogger fileLogger(std::string(""));
 
     EXPECT_TRUE(fileLogger.enabled());
 }
 
 TEST(FileLogger, GivenFullyDisabledFileLoggerIsCreatedThenItIsDisabled) {
-    DebugVariables flags;
-    FullyDisabledFileLogger fileLogger(std::string(""), flags);
+    FullyDisabledFileLogger fileLogger(std::string(""));
 
     EXPECT_FALSE(fileLogger.enabled());
 }
 
 TEST(FileLogger, GivenFileLoggerWhenSettingFileNameThenCorrectFilenameIsSet) {
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(std::string(""), flags);
+    FullyEnabledFileLogger fileLogger(std::string(""));
     fileLogger.setLogFileName("new_filename");
     EXPECT_STREQ("new_filename", fileLogger.getLogFileName());
 }
 
-TEST(FileLogger, GivenEnabledDebugFunctinalityWhenLoggingApiCallsThenDumpToFile) {
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-    FullyEnabledFileLogger fileLogger(std::string("test.log"), flags);
-
-    fileLogger.logApiCall("searchString", true, 0);
-    fileLogger.logApiCall("searchString2", false, 0);
-    fileLogger.logInputs("searchString3", "any");
-    fileLogger.logInputs("searchString3", "any", "and more");
-    fileLogger.log(false, "searchString4");
-
-    // Log file not created
-    EXPECT_TRUE(fileLogger.wasFileCreated(fileLogger.getLogFileName()));
-
-    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
-        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
-        EXPECT_TRUE(str.find("searchString") != std::string::npos);
-        EXPECT_TRUE(str.find("searchString2") != std::string::npos);
-        EXPECT_TRUE(str.find("searchString3") != std::string::npos);
-        EXPECT_FALSE(str.find("searchString4") != std::string::npos);
-    }
-
-    fileLogger.log(true, "searchString4");
-
-    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
-        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
-        EXPECT_TRUE(str.find("searchString4") != std::string::npos);
-    }
-}
-
-TEST(FileLogger, GivenDisabledDebugFunctinalityWhenLoggingApiCallsThenFileIsNotCreated) {
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-
-    FullyDisabledFileLogger fileLogger(std::string("  "), flags);
-
-    // Log file not created
-    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
-    EXPECT_FALSE(logFileCreated);
-
-    fileLogger.logApiCall("searchString", true, 0);
-    fileLogger.logApiCall("searchString2", false, 0);
-    fileLogger.logInputs("searchString3", "any");
-    fileLogger.logInputs("searchString3", "any", "and more");
-    fileLogger.log(false, "searchString4");
-
-    EXPECT_FALSE(fileLogger.wasFileCreated(fileLogger.getLogFileName()));
-}
-
 TEST(FileLogger, GivenIncorrectFilenameFileWhenLoggingApiCallsThenFileIsNotCreated) {
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-    FullyEnabledFileLogger fileLogger(std::string("test.log"), flags);
+    FullyEnabledFileLogger fileLogger(std::string("test.log"));
     fileLogger.writeToFile("", "", 0, std::ios_base::in | std::ios_base::out);
 
     EXPECT_FALSE(fileLogger.wasFileCreated(fileLogger.getLogFileName()));
@@ -120,8 +66,7 @@ TEST(FileLogger, GivenIncorrectFilenameFileWhenLoggingApiCallsThenFileIsNotCreat
 
 TEST(FileLogger, GivenCorrectFilenameFileWhenLoggingApiCallsThenFileIsCreated) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
     fileLogger.writeToFile(testFile, "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
@@ -132,227 +77,30 @@ TEST(FileLogger, GivenCorrectFilenameFileWhenLoggingApiCallsThenFileIsCreated) {
 
 TEST(FileLogger, GivenSameFileNameWhenCreatingNewInstanceThenOldFileIsRemoved) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
     fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
-    FullyEnabledFileLogger fileLogger2(testFile, flags);
+    FullyEnabledFileLogger fileLogger2(testFile);
     EXPECT_FALSE(virtualFileExists(fileLogger.getLogFileName()));
 }
 
 TEST(FileLogger, GivenSameFileNameWhenCreatingNewFullyDisabledLoggerThenOldFileIsNotRemoved) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
     fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
-    FullyDisabledFileLogger fileLogger2(testFile, flags);
+    FullyDisabledFileLogger fileLogger2(testFile);
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
     if (virtualFileExists(fileLogger.getLogFileName())) {
         removeVirtualFile(fileLogger.getLogFileName());
     }
 }
 
-TEST(FileLogger, GivenFlagIsFalseWhenLoggingThenOnlyCustomLogsAreDumped) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.LogApiCalls.set(false);
-
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-
-    // Log file not created
-    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
-    EXPECT_FALSE(logFileCreated);
-
-    fileLogger.logApiCall("searchString", true, 0);
-    fileLogger.logApiCall("searchString2", false, 0);
-    fileLogger.logInputs("searchString3", "any");
-    fileLogger.logInputs("searchString3", "any", "and more");
-    fileLogger.log(false, "searchString4");
-
-    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
-        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
-        EXPECT_FALSE(str.find("searchString\n") != std::string::npos);
-        EXPECT_FALSE(str.find("searchString2\n") != std::string::npos);
-        EXPECT_FALSE(str.find("searchString3") != std::string::npos);
-        EXPECT_FALSE(str.find("searchString4") != std::string::npos);
-    }
-
-    // Log still works
-    fileLogger.log(true, "searchString4");
-
-    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
-        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
-        EXPECT_TRUE(str.find("searchString4") != std::string::npos);
-    }
-}
-
-TEST(FileLogger, WhenGettingInputThenCorrectValueIsReturned) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-
-    // getInput returns 0
-    size_t input = 5;
-    size_t output = fileLogger.getInput(&input, 0);
-    EXPECT_EQ(input, output);
-}
-
-TEST(FileLogger, GivenNullInputWhenGettingInputThenZeroIsReturned) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-    // getInput returns 0
-    size_t output = fileLogger.getInput(nullptr, 2);
-    EXPECT_EQ(0u, output);
-}
-
-TEST(FileLogger, WhenGettingSizesThenCorrectValueIsReturned) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-    // getSizes returns string
-    uintptr_t input[3] = {1, 2, 3};
-    std::string lwsSizes = fileLogger.getSizes(input, 3, true);
-    std::string gwsSizes = fileLogger.getSizes(input, 3, false);
-    std::string lwsExpected = "localWorkSize[0]: \t1\nlocalWorkSize[1]: \t2\nlocalWorkSize[2]: \t3\n";
-    std::string gwsExpected = "globalWorkSize[0]: \t1\nglobalWorkSize[1]: \t2\nglobalWorkSize[2]: \t3\n";
-    EXPECT_EQ(lwsExpected, lwsSizes);
-    EXPECT_EQ(gwsExpected, gwsSizes);
-}
-
-TEST(FileLogger, GivenNullInputWhenGettingSizesThenZeroIsReturned) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-    // getSizes returns string
-    std::string lwsSizes = fileLogger.getSizes(nullptr, 3, true);
-    std::string gwsSizes = fileLogger.getSizes(nullptr, 3, false);
-
-    EXPECT_EQ(0u, lwsSizes.size());
-    EXPECT_EQ(0u, gwsSizes.size());
-}
-
-TEST(FileLogger, GivenDisabledDebugFunctionalityWhenGettingSizesThenEmptyStringIsReturned) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-
-    FullyDisabledFileLogger fileLogger(testFile, flags);
-    uintptr_t input[3] = {1, 2, 3};
-    std::string lwsSizes = fileLogger.getSizes(input, 3, true);
-    std::string gwsSizes = fileLogger.getSizes(input, 3, false);
-    EXPECT_EQ(0u, lwsSizes.size());
-    EXPECT_EQ(0u, gwsSizes.size());
-}
-
-TEST(FileLogger, WhenDumpingKernelThenFileIsCreated) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.DumpKernels.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-    std::string kernelDumpFile = "testDumpKernel";
-
-    // test kernel dumping
-    fileLogger.dumpKernel(kernelDumpFile, "kernel source here");
-    EXPECT_TRUE(fileLogger.wasFileCreated(kernelDumpFile.append(".txt")));
-}
-
-TEST(FileLogger, GivenDisabledDebugFunctionalityWhenDumpingKernelThenFileIsNotCreated) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.DumpKernels.set(false);
-    std::string kernelDumpFile = "testDumpKernel";
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-
-    // test kernel dumping
-    fileLogger.dumpKernel(kernelDumpFile, "kernel source here");
-    EXPECT_FALSE(fileLogger.wasFileCreated(kernelDumpFile.append(".txt")));
-}
-
-TEST(FileLogger, WhenDumpingBinaryFileThenFileIsCreated) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.DumpKernels.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-    std::string programDumpFile = "programBinary.bin";
-    size_t length = 4;
-    unsigned char binary[4];
-    const unsigned char *ptrBinary = binary;
-    fileLogger.dumpBinaryProgram(1, &length, &ptrBinary);
-
-    EXPECT_TRUE(fileLogger.wasFileCreated(programDumpFile));
-}
-
-TEST(FileLogger, GivenNullPointerWhenDumpingBinaryFileThenFileIsNotCreated) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.DumpKernels.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-
-    std::string programDumpFile = "programBinary.bin";
-    size_t length = 4;
-    fileLogger.dumpBinaryProgram(1, &length, nullptr);
-
-    EXPECT_FALSE(fileLogger.wasFileCreated(programDumpFile));
-}
-
-TEST(FileLogger, GivenNullsWhenDumpingKernelArgsThenFileIsNotCreated) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.DumpKernels.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-    size_t length = 1;
-    unsigned char binary[4];
-    const unsigned char *ptrBinary = binary;
-    fileLogger.dumpBinaryProgram(1, nullptr, nullptr);
-    fileLogger.dumpBinaryProgram(1, nullptr, &ptrBinary);
-    fileLogger.dumpBinaryProgram(1, &length, nullptr);
-    length = 0;
-    fileLogger.dumpBinaryProgram(1, &length, &ptrBinary);
-    fileLogger.dumpBinaryProgram(1, &length, nullptr);
-
-    EXPECT_EQ(fileLogger.createdFilesCount(), 0);
-}
-
-TEST(FileLogger, WhenConvertingInfoPointerToStringThenCorrectStringIsReturned) {
-    std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
-
-    uint64_t value64bit = 64;
-    std::string string64bit = fileLogger.infoPointerToString(&value64bit, sizeof(uint64_t));
-    uint32_t value32bit = 32;
-    std::string string32bit = fileLogger.infoPointerToString(&value32bit, sizeof(uint32_t));
-    uint8_t value8bit = 0;
-    std::string string8bit = fileLogger.infoPointerToString(&value8bit, sizeof(uint8_t));
-
-    EXPECT_STREQ("64", string64bit.c_str());
-    EXPECT_STREQ("32", string32bit.c_str());
-    EXPECT_STREQ("0", string8bit.c_str());
-
-    std::string stringNonValue = fileLogger.infoPointerToString(nullptr, 56);
-    EXPECT_STREQ("", stringNonValue.c_str());
-
-    char valueChar = 0;
-    stringNonValue = fileLogger.infoPointerToString(&valueChar, 56);
-    EXPECT_STREQ("", stringNonValue.c_str());
-}
-
 TEST(FileLogger, givenDisabledDebugFunctionalityWhenLogLazyEvaluateArgsIsCalledThenCallToLambdaIsDropped) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyDisabledFileLogger fileLogger(testFile, flags);
+    FullyDisabledFileLogger fileLogger(testFile);
 
     bool wasCalled = false;
     fileLogger.logLazyEvaluateArgs(true, [&] { wasCalled = true; });
@@ -361,8 +109,7 @@ TEST(FileLogger, givenDisabledDebugFunctionalityWhenLogLazyEvaluateArgsIsCalledT
 
 TEST(FileLogger, givenDisabledPredicateWhenLogLazyEvaluateArgsIsCalledThenCallToLambdaIsDropped) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     bool wasCalled = false;
     fileLogger.logLazyEvaluateArgs(false, [&] { wasCalled = true; });
@@ -371,8 +118,7 @@ TEST(FileLogger, givenDisabledPredicateWhenLogLazyEvaluateArgsIsCalledThenCallTo
 
 TEST(FileLogger, givenEnabledPredicateWhenLogLazyEvaluateArgsIsCalledThenCallToLambdaIsExecuted) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
     bool wasCalled = false;
     fileLogger.logLazyEvaluateArgs(true, [&] { wasCalled = true; });
     EXPECT_TRUE(wasCalled);
@@ -390,9 +136,7 @@ struct DummyEvaluator {
 
 TEST(FileLogger, givenDisabledPredicateWhenDbgLogLazyEvaluateArgsIsCalledThenInputParametersAreNotEvaluated) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.LogApiCalls.set(false);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     bool wasCalled = false;
     DBG_LOG_LAZY_EVALUATE_ARGS(fileLogger, false, log, true, DummyEvaluator(wasCalled));
@@ -401,9 +145,7 @@ TEST(FileLogger, givenDisabledPredicateWhenDbgLogLazyEvaluateArgsIsCalledThenInp
 
 TEST(FileLogger, givenEnabledPredicateWhenDbgLogLazyEvaluateArgsIsCalledThenInputParametersAreEvaluated) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    flags.LogApiCalls.set(true);
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     bool wasCalled = false;
     DBG_LOG_LAZY_EVALUATE_ARGS(fileLogger, true, log, true, DummyEvaluator(wasCalled));
@@ -412,24 +154,21 @@ TEST(FileLogger, givenEnabledPredicateWhenDbgLogLazyEvaluateArgsIsCalledThenInpu
 
 TEST(FileLogger, whenDisabledThenDebugFunctionalityIsNotAvailableAtCompileTime) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FileLogger<DebugFunctionalityLevel::none> fileLogger(testFile, flags);
+    FileLogger<DebugFunctionalityLevel::none> fileLogger(testFile);
 
     static_assert(false == fileLogger.enabled(), "");
 }
 
 TEST(FileLogger, whenFullyEnabledThenAllDebugFunctionalityIsAvailableAtCompileTime) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FileLogger<DebugFunctionalityLevel::full> fileLogger(testFile, flags);
+    FileLogger<DebugFunctionalityLevel::full> fileLogger(testFile);
 
     static_assert(true == fileLogger.enabled(), "");
 }
 
 TEST(FileLogger, givenEnabledLogWhenLogDebugStringCalledThenStringIsWrittenToFile) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     fileLogger.logDebugString(true, "test log");
     EXPECT_EQ(std::string("test log"), fileLogger.getFileString(testFile));
@@ -437,12 +176,20 @@ TEST(FileLogger, givenEnabledLogWhenLogDebugStringCalledThenStringIsWrittenToFil
 
 TEST(FileLogger, givenDisabledLogWhenLogDebugStringCalledThenStringIsNotWrittenToFile) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     fileLogger.logDebugString(false, "test log");
     EXPECT_EQ(0u, fileLogger.getFileString(testFile).size());
 }
+
+TEST(FileLogger, givenDisabledFileLoggerWhenLogDebugStringCalledThenFileIsNotCreated) {
+    std::string testFile = "testfile";
+    FullyDisabledFileLogger fileLogger(testFile);
+
+    fileLogger.logDebugString(true, "test log");
+    EXPECT_FALSE(fileLogger.wasFileCreated(testFile));
+}
+
 TEST(FileLogger, GivenFileLoggerInstanceWhenCreatedThenFileNameContainsProcessId) {
     auto &logger = NEO::fileLoggerInstance();
     auto logFileName = logger.getLogFileName();
@@ -489,8 +236,7 @@ TEST(FileLogger, givenFileNameOverrideWhenQueryingFileLoggerFileNameThenOverridd
 
 TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThenCorrectStringIsReturned) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     std::array<std::pair<NEO::AllocationType, const char *>, 41> allocationTypeValues = {
         {{AllocationType::buffer, "BUFFER"},
@@ -545,8 +291,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
 
 TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStringIllegalValueThenILLEGAL_VALUEIsReturned) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 
@@ -557,8 +302,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
 
 TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenSupportAll) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
@@ -576,7 +320,7 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
     DebugVariables flags;
     flags.LogAllocationType.set(1);
 
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledAllocationLogger fileLogger(testFile, flags);
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
@@ -595,7 +339,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
     DebugVariables flags;
     flags.LogAllocationType.set(1);
 
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledAllocationLogger fileLogger(testFile, flags);
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
@@ -622,8 +366,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
 
 TEST(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrectStringIsReturned) {
     std::string testFile = "testfile";
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledFileLogger fileLogger(testFile);
 
     std::array<std::pair<MemoryPool, const char *>, 7> memoryPoolValues = {
         {{MemoryPool::memoryNull, "MemoryNull"},
@@ -647,7 +390,7 @@ TEST(CpuGpuVaLogging, givenAllocationWithCpuVaWhenLoggingAllocationThenCpuVaRang
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(1);
 
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledAllocationLogger fileLogger(testFile, flags);
 
     char buffer[4096];
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::buffer, buffer, reinterpret_cast<uint64_t>(buffer), 0, MemoryPool::system4KBPages, MemoryManager::maxOsContextCount, sizeof(buffer));
@@ -669,7 +412,7 @@ TEST(CpuGpuVaLogging, givenAllocationWithoutCpuVaWhenLoggingAllocationThenNullIs
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(1);
 
-    FullyEnabledFileLogger fileLogger(testFile, flags);
+    FullyEnabledAllocationLogger fileLogger(testFile, flags);
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0x1000, 0, MemoryPool::localMemory, MemoryManager::maxOsContextCount, 4096);
 
@@ -715,7 +458,7 @@ template <>
 struct NEO::FileLoggerProxy<false> {
 
     static constexpr std::string_view logFileName = "mock_igdrcl.log";
-    ::FullyEnabledFileLogger virtualFileLogger = {std::string(logFileName), NEO::debugManager.flags};
+    ::FullyEnabledFileLogger virtualFileLogger = {std::string(logFileName)};
 
     void logString(std::string_view data) {
         this->virtualFileLogger.logDebugString(true, data);
@@ -755,7 +498,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenSysAndLocalAllocationsTracke
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         fileLogger.trackAllocationForSummary("BUFFER", 1024, false);
         fileLogger.trackAllocationForSummary("LINEAR_STREAM", 512, false);
         fileLogger.trackAllocationForSummary("KERNEL_ISA", 2048, true);
@@ -782,7 +525,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenOnlyLocalLiveAllocationsTrac
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         fileLogger.trackAllocationForSummary("KERNEL_ISA", 2048, true);
         fileLogger.trackLiveAllocation("KERNEL_ISA", 2048, true);
     }
@@ -801,7 +544,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenUntrackExceedsTrackedThenSys
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         fileLogger.trackAllocationForSummary("BUFFER", 100, false);
         fileLogger.trackLiveAllocation("BUFFER", 100, false);
         fileLogger.untrackLiveAllocation("BUFFER", 50, false);
@@ -821,7 +564,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenNoLiveAllocationsTrackedThen
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         fileLogger.trackAllocationForSummary("BUFFER", 1024, false);
     }
     std::string output = capture.getCapturedStdout();
@@ -838,7 +581,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenSysLiveAllocBelowPeakThenPea
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         fileLogger.trackAllocationForSummary("BUFFER", 100, false);
         fileLogger.trackLiveAllocation("BUFFER", 100, false);
         fileLogger.untrackLiveAllocation("BUFFER", 90, false);
@@ -859,7 +602,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenNoSummaryAllocationsTrackedT
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         fileLogger.trackLiveAllocation("BUFFER", 100, false);
     }
     std::string output = capture.getCapturedStdout();
@@ -875,7 +618,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenLocalLiveBelowPeakAndUnderfl
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         fileLogger.trackAllocationForSummary("KERNEL_ISA", 100, true);
         fileLogger.trackLiveAllocation("KERNEL_ISA", 100, true);
         fileLogger.untrackLiveAllocation("KERNEL_ISA", 200, true);
@@ -895,7 +638,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenLocalUntrackWithinBudgetThen
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         fileLogger.trackAllocationForSummary("KERNEL_ISA", 200, true);
         fileLogger.trackLiveAllocation("KERNEL_ISA", 200, true);
         fileLogger.untrackLiveAllocation("KERNEL_ISA", 50, true);
@@ -917,7 +660,7 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenFreeAllocationCalledWithRepo
     StreamCapture capture;
     capture.captureStdout();
     {
-        FullyEnabledFileLogger fileLogger(testFile, flags);
+        FullyEnabledAllocationLogger fileLogger(testFile, flags);
         logAllocation(fileLogger, &sysAllocation, nullptr);
         logFreeAllocation(fileLogger, &sysAllocation);
     }
@@ -925,66 +668,6 @@ TEST(FileLogger, givenLogAllocationSummaryReportWhenFreeAllocationCalledWithRepo
 
     EXPECT_TRUE(output.find("Peak System Memory") != std::string::npos);
     EXPECT_TRUE(output.find("BUFFER") != std::string::npos);
-}
-
-KernelDispatchStats createKernelDispatchStats(const std::string &kernelName) {
-    KernelDispatchStats stats{};
-    stats.kernelName = kernelName;
-    stats.globalWorkSize[0] = 256;
-    stats.localWorkSize[0] = 64;
-    stats.simdSize = 32;
-    stats.numGrfRequired = 128;
-    stats.slmInlineSize = 1024;
-    stats.slmTotalSizePerThreadGroup = 2048;
-    stats.barrierCount = 1;
-    stats.perThreadScratchSize[0] = 512;
-    stats.threadsPerThreadGroup = 2;
-    stats.threadGroupCount = 4;
-    return stats;
-}
-
-TEST(FileLogger, givenCommandListStatsWhenCollectingWithoutConsumingThenSourceKeepsItsCounts) {
-    KernelDispatchStatsTracker collectedStats;
-    KernelDispatchStatsTracker commandListStats;
-    commandListStats.trackDispatch(createKernelDispatchStats("keptKernel"));
-
-    collectKernelDispatchStats(collectedStats, &commandListStats, false);
-    collectKernelDispatchStats(collectedStats, &commandListStats, false);
-
-    EXPECT_FALSE(commandListStats.isEmpty());
-    EXPECT_NE(std::string::npos, collectedStats.createReport().find("\"keptKernel\",256,0,0,64,0,0,32,128,1024,2048,1,512,0,2,4,0,0,2\n"));
-}
-
-TEST(FileLogger, givenCommandListStatsWhenCollectingWithConsumingThenSourceIsCleared) {
-    KernelDispatchStatsTracker collectedStats;
-    KernelDispatchStatsTracker commandListStats;
-    commandListStats.trackDispatch(createKernelDispatchStats("consumedKernel"));
-
-    collectKernelDispatchStats(collectedStats, &commandListStats, true);
-    collectKernelDispatchStats(collectedStats, &commandListStats, true);
-
-    EXPECT_TRUE(commandListStats.isEmpty());
-    EXPECT_NE(std::string::npos, collectedStats.createReport().find("\"consumedKernel\",256,0,0,64,0,0,32,128,1024,2048,1,512,0,2,4,0,0,1\n"));
-}
-
-TEST(FileLogger, givenNoCommandListStatsWhenCollectingThenNothingIsReported) {
-    KernelDispatchStatsTracker collectedStats;
-
-    collectKernelDispatchStats(collectedStats, nullptr, true);
-
-    EXPECT_TRUE(collectedStats.isEmpty());
-}
-
-TEST(FileLogger, givenKernelDispatchStatsEnabledOnDisabledFileLoggerWhenDestroyedThenReportFileIsNotWritten) {
-    DebugVariables flags;
-    flags.LogKernelDispatchStats.set(true);
-    removeVirtualFile(getKernelDispatchStatsFileName());
-
-    {
-        FullyDisabledFileLogger fileLogger(std::string("testfile"), flags);
-    }
-
-    EXPECT_FALSE(virtualFileExists(getKernelDispatchStatsFileName()));
 }
 
 TEST(FileLogger, givenKernelDispatchStatsEnabledWhenUsmReusePerfLoggerIsDestroyedThenReportFileIsNotWritten) {
@@ -997,74 +680,4 @@ TEST(FileLogger, givenKernelDispatchStatsEnabledWhenUsmReusePerfLoggerIsDestroye
     }
 
     EXPECT_FALSE(virtualFileExists(getKernelDispatchStatsFileName()));
-}
-
-TEST(FileLogger, givenFileLoggerWithCollectedStatsWhenClearedThenItsReportHasHeaderOnly) {
-    DebugVariables flags;
-    FullyEnabledFileLogger fileLogger(std::string("testfile"), flags);
-
-    KernelDispatchStatsTracker commandListStats;
-    commandListStats.trackDispatch(createKernelDispatchStats("clearedKernel"));
-    fileLogger.getKernelDispatchStats().merge(commandListStats);
-    ASSERT_NE(std::string::npos, fileLogger.createKernelDispatchStatsReport().find("\"clearedKernel\","));
-
-    fileLogger.clearKernelDispatchStats();
-
-    EXPECT_EQ(std::string::npos, fileLogger.createKernelDispatchStatsReport().find("\"clearedKernel\","));
-    EXPECT_TRUE(fileLogger.createKernelDispatchStatsReport().starts_with("kernelName,"));
-}
-
-TEST(FileLogger, givenKernelDispatchStatsDisabledWhenFileLoggerIsDestroyedThenReportFileIsNotCreated) {
-    DebugVariables flags;
-    removeVirtualFile(getKernelDispatchStatsFileName());
-
-    {
-        FullyEnabledFileLogger fileLogger(std::string("testfile"), flags);
-    }
-
-    EXPECT_FALSE(virtualFileExists(getKernelDispatchStatsFileName()));
-}
-
-TEST(FileLogger, givenKernelDispatchStatsEnabledAndNoTrackedDispatchesWhenFileLoggerIsDestroyedThenStaleReportIsOverwritten) {
-    DebugVariables flags;
-    flags.LogKernelDispatchStats.set(true);
-    const auto reportFileName = getKernelDispatchStatsFileName();
-
-    {
-        FullyEnabledFileLogger staleRunLogger(std::string("testfile"), flags);
-        KernelDispatchStatsTracker trackedDispatches;
-        trackedDispatches.trackDispatch(createKernelDispatchStats("staleKernel"));
-        staleRunLogger.getKernelDispatchStats().merge(trackedDispatches);
-    }
-    ASSERT_NE(std::string::npos, NEO::virtualFileList[reportFileName].str().find("\"staleKernel\","));
-
-    {
-        FullyEnabledFileLogger fileLogger(std::string("testfile"), flags);
-    }
-
-    ASSERT_TRUE(virtualFileExists(reportFileName));
-    const auto report = NEO::virtualFileList[reportFileName].str();
-    EXPECT_TRUE(report.starts_with("kernelName,"));
-    EXPECT_EQ(std::string::npos, report.find("\"staleKernel\","));
-    removeVirtualFile(reportFileName);
-}
-
-TEST(FileLogger, givenTrackedKernelDispatchesWhenFileLoggerIsDestroyedThenReportFileHasHeaderAndRow) {
-    DebugVariables flags;
-    flags.LogKernelDispatchStats.set(true);
-    removeVirtualFile(getKernelDispatchStatsFileName());
-
-    KernelDispatchStatsTracker trackedDispatches;
-    trackedDispatches.trackDispatch(createKernelDispatchStats("myKernel"));
-
-    {
-        FullyEnabledFileLogger fileLogger(std::string("testfile"), flags);
-        fileLogger.getKernelDispatchStats().merge(trackedDispatches);
-    }
-
-    ASSERT_TRUE(virtualFileExists(getKernelDispatchStatsFileName()));
-    const auto report = NEO::virtualFileList[getKernelDispatchStatsFileName()].str();
-    EXPECT_TRUE(report.starts_with("kernelName,gwsX,gwsY,gwsZ,lwsX,lwsY,lwsZ,simd,grf,slmInline,slmPerThreadGroup,barriers,scratchSlot0,scratchSlot1,threadsPerThreadGroup,threadGroupCount,systolic,indirect,dispatchCount\n"));
-    EXPECT_NE(std::string::npos, report.find("\"myKernel\","));
-    removeVirtualFile(getKernelDispatchStatsFileName());
 }

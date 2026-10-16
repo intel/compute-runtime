@@ -208,8 +208,8 @@ cl_int CL_API_CALL clGetGLTextureInfo(cl_mem memobj, cl_gl_texture_info paramNam
     cl_int retValue = CL_SUCCESS;
     API_ENTER(&retValue);
     DBG_LOG_INPUTS("memobj", memobj, "paramName", paramName, "paramValueSize", paramValueSize, "paramValueSize",
-                   fileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
-                   fileLoggerInstance().getInput(paramValueSizeRet, 0));
+                   getClFileLogger().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
+                   getClFileLogger().getInput(paramValueSizeRet, 0));
     retValue = validateObjects(memobj);
     if (retValue == CL_SUCCESS) {
         auto pMemObj = castToObject<MemObj>(memobj);
@@ -311,8 +311,8 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("properties", properties, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue",
-                   fileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
-                   fileLoggerInstance().getInput(paramValueSizeRet, 0));
+                   getClFileLogger().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
+                   getClFileLogger().getInput(paramValueSizeRet, 0));
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     uint32_t glHglrcHandle = 0;

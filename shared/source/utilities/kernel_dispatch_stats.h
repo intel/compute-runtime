@@ -13,7 +13,11 @@
 #include <string>
 #include <unordered_map>
 
+enum class DebugFunctionalityLevel;
+
 namespace NEO {
+template <DebugFunctionalityLevel debugLevel>
+class FileLogger;
 
 struct KernelDispatchStats {
     std::string kernelName;
@@ -48,5 +52,11 @@ class KernelDispatchStatsTracker : NEO::NonCopyableAndNonMovableClass {
     DispatchCounts dispatchCounts;
 };
 static_assert(NEO::NonCopyableAndNonMovable<KernelDispatchStatsTracker>);
+
+std::string getKernelDispatchStatsFileName();
+void collectKernelDispatchStats(KernelDispatchStatsTracker &target, KernelDispatchStatsTracker *commandListStats, bool consumeStats);
+
+template <DebugFunctionalityLevel debugLevel>
+void writeKernelDispatchStatsReport(FileLogger<debugLevel> &fileLogger, KernelDispatchStatsTracker &tracker);
 
 } // namespace NEO

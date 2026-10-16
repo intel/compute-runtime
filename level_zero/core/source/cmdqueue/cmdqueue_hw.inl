@@ -36,7 +36,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/unified_memory/unified_memory.h"
-#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -47,6 +46,7 @@
 #include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/driver/kernel_dispatch_stats_reporter.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
@@ -166,7 +166,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (NEO::debugManager.flags.LogKernelDispatchStats.get() && (ret == ZE_RESULT_SUCCESS)) {
         for (auto i = 0u; i < numCommandLists; i++) {
             auto commandList = CommandList::fromHandle(phCommandLists[i]);
-            NEO::collectKernelDispatchStats(NEO::fileLoggerInstance().getKernelDispatchStats(), commandList->getCmdContainer().peekKernelDispatchStats(), commandList->isImmediateType());
+            NEO::collectKernelDispatchStats(kernelDispatchStatsReporter().getKernelDispatchStats(), commandList->getCmdContainer().peekKernelDispatchStats(), commandList->isImmediateType());
         }
     }
 

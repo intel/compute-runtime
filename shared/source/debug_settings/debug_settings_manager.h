@@ -41,10 +41,6 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
 #endif
 
 namespace NEO {
-template <DebugFunctionalityLevel debugLevel>
-class FileLogger;
-extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
-
 template <typename StreamT, typename... Args>
 void flushDebugStream(StreamT stream, Args &&...args) {
     IoFunctions::fflushPtr(stream);

@@ -15,11 +15,11 @@
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
-#include "shared/source/utilities/logger.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
+#include "opencl/source/utilities/cl_logger.h"
 
 #include <map>
 #include <vector>
@@ -95,10 +95,10 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         }
         errcodeRet = retVal;
 
-        if (fileLoggerInstance().enabled()) {
+        if (FileLogger<globalDebugFunctionalityLevel>::enabled()) {
             std::string source;
             program->getSource(source);
-            fileLoggerInstance().dumpKernel(kernelInfo.kernelDescriptor.kernelMetadata.kernelName, source);
+            getClFileLogger().dumpKernel(kernelInfo.kernelDescriptor.kernelMetadata.kernelName, source);
         }
 
         return pKernel;

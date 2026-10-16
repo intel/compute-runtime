@@ -30,7 +30,6 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/cpuintrinsics.h"
-#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
@@ -41,6 +40,7 @@
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/driver/kernel_dispatch_stats_reporter.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
 #include "level_zero/core/source/image/image.h"
@@ -599,7 +599,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     this->handlePostSubmissionState();
 
     if (NEO::debugManager.flags.LogKernelDispatchStats.get()) {
-        NEO::collectKernelDispatchStats(NEO::fileLoggerInstance().getKernelDispatchStats(), this->commandContainer.peekKernelDispatchStats(), true);
+        NEO::collectKernelDispatchStats(kernelDispatchStatsReporter().getKernelDispatchStats(), this->commandContainer.peekKernelDispatchStats(), true);
     }
 
     if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1 || NEO::debugManager.flags.PauseOnBlitCopy.get() != -1) [[unlikely]] {

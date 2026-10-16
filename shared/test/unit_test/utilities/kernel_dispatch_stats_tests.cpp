@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/utilities/kernel_dispatch_stats.h"
+#include "shared/test/common/utilities/logger_tests.h"
 
 #include "gtest/gtest.h"
 
@@ -121,4 +122,80 @@ TEST(KernelDispatchStatsTracker, givenTrackedDispatchesWhenClearedThenReportHasH
 
     EXPECT_TRUE(tracker.isEmpty());
     EXPECT_EQ(1u, countRows(tracker.createReport()));
+}
+
+TEST(KernelDispatchStatsTracker, givenCommandListStatsWhenCollectingWithoutConsumingThenSourceKeepsItsCounts) {
+    KernelDispatchStatsTracker collectedStats;
+    KernelDispatchStatsTracker commandListStats;
+    commandListStats.trackDispatch(createKernelDispatchStats("keptKernel"));
+
+    collectKernelDispatchStats(collectedStats, &commandListStats, false);
+    collectKernelDispatchStats(collectedStats, &commandListStats, false);
+
+    EXPECT_FALSE(commandListStats.isEmpty());
+    EXPECT_NE(std::string::npos, collectedStats.createReport().find("\"keptKernel\",256,0,0,64,0,0,32,128,1024,2048,1,512,0,2,4,0,0,2\n"));
+}
+
+TEST(KernelDispatchStatsTracker, givenCommandListStatsWhenCollectingWithConsumingThenSourceIsCleared) {
+    KernelDispatchStatsTracker collectedStats;
+    KernelDispatchStatsTracker commandListStats;
+    commandListStats.trackDispatch(createKernelDispatchStats("consumedKernel"));
+
+    collectKernelDispatchStats(collectedStats, &commandListStats, true);
+    collectKernelDispatchStats(collectedStats, &commandListStats, true);
+
+    EXPECT_TRUE(commandListStats.isEmpty());
+    EXPECT_NE(std::string::npos, collectedStats.createReport().find("\"consumedKernel\",256,0,0,64,0,0,32,128,1024,2048,1,512,0,2,4,0,0,1\n"));
+}
+
+TEST(KernelDispatchStatsTracker, givenNoCommandListStatsWhenCollectingThenNothingIsReported) {
+    KernelDispatchStatsTracker collectedStats;
+
+    collectKernelDispatchStats(collectedStats, nullptr, true);
+
+    EXPECT_TRUE(collectedStats.isEmpty());
+}
+
+TEST(KernelDispatchStatsReport, givenDisabledFileLoggerWhenWritingReportThenReportFileIsNotWritten) {
+    removeVirtualFile(getKernelDispatchStatsFileName());
+    FullyDisabledFileLogger fileLogger(std::string("testfile"));
+    KernelDispatchStatsTracker trackedDispatches;
+    trackedDispatches.trackDispatch(createKernelDispatchStats("myKernel"));
+
+    writeKernelDispatchStatsReport(fileLogger, trackedDispatches);
+
+    EXPECT_FALSE(virtualFileExists(getKernelDispatchStatsFileName()));
+}
+
+TEST(KernelDispatchStatsReport, givenNoTrackedDispatchesWhenWritingReportThenStaleReportIsOverwritten) {
+    const auto reportFileName = getKernelDispatchStatsFileName();
+    FullyEnabledFileLogger fileLogger(std::string("testfile"));
+    KernelDispatchStatsTracker staleRunDispatches;
+    staleRunDispatches.trackDispatch(createKernelDispatchStats("staleKernel"));
+    writeKernelDispatchStatsReport(fileLogger, staleRunDispatches);
+    ASSERT_NE(std::string::npos, NEO::virtualFileList[reportFileName].str().find("\"staleKernel\","));
+
+    KernelDispatchStatsTracker noDispatches;
+    writeKernelDispatchStatsReport(fileLogger, noDispatches);
+
+    ASSERT_TRUE(virtualFileExists(reportFileName));
+    const auto report = NEO::virtualFileList[reportFileName].str();
+    EXPECT_TRUE(report.starts_with("kernelName,"));
+    EXPECT_EQ(std::string::npos, report.find("\"staleKernel\","));
+    removeVirtualFile(reportFileName);
+}
+
+TEST(KernelDispatchStatsReport, givenTrackedKernelDispatchesWhenWritingReportThenReportFileHasHeaderAndRow) {
+    removeVirtualFile(getKernelDispatchStatsFileName());
+    FullyEnabledFileLogger fileLogger(std::string("testfile"));
+    KernelDispatchStatsTracker trackedDispatches;
+    trackedDispatches.trackDispatch(createKernelDispatchStats("myKernel"));
+
+    writeKernelDispatchStatsReport(fileLogger, trackedDispatches);
+
+    ASSERT_TRUE(virtualFileExists(getKernelDispatchStatsFileName()));
+    const auto report = NEO::virtualFileList[getKernelDispatchStatsFileName()].str();
+    EXPECT_TRUE(report.starts_with("kernelName,gwsX,gwsY,gwsZ,lwsX,lwsY,lwsZ,simd,grf,slmInline,slmPerThreadGroup,barriers,scratchSlot0,scratchSlot1,threadsPerThreadGroup,threadGroupCount,systolic,indirect,dispatchCount\n"));
+    EXPECT_NE(std::string::npos, report.find("\"myKernel\","));
+    removeVirtualFile(getKernelDispatchStatsFileName());
 }

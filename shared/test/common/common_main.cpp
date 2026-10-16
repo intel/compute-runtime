@@ -13,6 +13,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/stdio.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/utilities/allocation_logger.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
@@ -156,8 +157,9 @@ void applyCommonWorkarounds() {
         };
     }
 
-    // Create FileLogger to prevent false memory leaks
+    // Create loggers to prevent false memory leaks
     NEO::fileLoggerInstance();
+    NEO::allocationLoggerInstance();
 
     // Force initialization of inverted compatibility mapping here so its allocations happen before memory-leak listener is enabled.
     // This prevents false-positive leak reports.

@@ -7,6 +7,9 @@
 
 #include "shared/source/utilities/kernel_dispatch_stats.h"
 
+#include "shared/source/os_interface/sys_calls_common.h"
+#include "shared/source/utilities/logger.h"
+
 #include <algorithm>
 #include <sstream>
 #include <utility>
@@ -101,6 +104,34 @@ std::string KernelDispatchStatsTracker::createReport() {
         report << row << "," << dispatchCount << "\n";
     }
     return report.str();
+}
+
+std::string getKernelDispatchStatsFileName() {
+    return "kernel_dispatch_stats_" + std::to_string(SysCalls::getProcessId()) + ".csv";
+}
+
+template <DebugFunctionalityLevel debugLevel>
+void writeKernelDispatchStatsReport(FileLogger<debugLevel> &fileLogger, KernelDispatchStatsTracker &tracker) {
+    if (!fileLogger.enabled()) {
+        return;
+    }
+    const auto report = tracker.createReport();
+    fileLogger.writeToFile(getKernelDispatchStatsFileName(), report.c_str(), report.size(), std::ios::trunc);
+}
+
+template void writeKernelDispatchStatsReport<DebugFunctionalityLevel::none>(FileLogger<DebugFunctionalityLevel::none> &fileLogger, KernelDispatchStatsTracker &tracker);
+template void writeKernelDispatchStatsReport<DebugFunctionalityLevel::regKeys>(FileLogger<DebugFunctionalityLevel::regKeys> &fileLogger, KernelDispatchStatsTracker &tracker);
+template void writeKernelDispatchStatsReport<DebugFunctionalityLevel::full>(FileLogger<DebugFunctionalityLevel::full> &fileLogger, KernelDispatchStatsTracker &tracker);
+
+void collectKernelDispatchStats(KernelDispatchStatsTracker &target, KernelDispatchStatsTracker *commandListStats, bool consumeStats) {
+    if (commandListStats == nullptr) {
+        return;
+    }
+
+    target.merge(*commandListStats);
+    if (consumeStats) {
+        commandListStats->clear();
+    }
 }
 
 } // namespace NEO

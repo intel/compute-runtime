@@ -800,7 +800,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
         return nullptr;
     }
 
-    logAllocation(fileLoggerInstance(), allocation.get(), this);
+    logAllocation(allocationLoggerInstance(), allocation.get(), this);
     return allocation.release();
 }
 

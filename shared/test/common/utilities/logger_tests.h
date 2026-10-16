@@ -8,11 +8,13 @@
 #pragma once
 
 #include "shared/source/helpers/string_helpers.h"
+#include "shared/source/utilities/allocation_logger.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 
 #include <map>
+#include <utility>
 
 namespace NEO {
 extern std::map<std::string, std::stringstream> virtualFileList;
@@ -21,9 +23,7 @@ extern std::map<std::string, std::stringstream> virtualFileList;
 template <DebugFunctionalityLevel debugLevel>
 class TestFileLogger : public NEO::FileLogger<debugLevel> {
   public:
-    using NEO::FileLogger<debugLevel>::FileLogger;
-
-    TestFileLogger(std::string filename, const NEO::DebugVariables &flags) : NEO::FileLogger<debugLevel>(filename, flags) {
+    TestFileLogger(std::string filename) : NEO::FileLogger<debugLevel>(std::move(filename)) {
         if (NEO::FileLogger<debugLevel>::enabled() && virtualFileExists(this->getLogFileName())) {
             removeVirtualFile(this->getLogFileName());
         }
@@ -33,13 +33,6 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
         if (virtualFileExists(this->getLogFileName())) {
             removeVirtualFile(this->getLogFileName());
         }
-    }
-
-    void writeToFile(std::string filename,
-                     const char *str,
-                     size_t length,
-                     std::ios_base::openmode mode) override {
-        NEO::writeDataToFile(filename.c_str(), std::string_view(str, length), (mode & std::ios::app) != 0);
     }
 
     int32_t createdFilesCount() {
@@ -55,6 +48,15 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
     }
 };
 
+template <DebugFunctionalityLevel debugLevel>
+class TestAllocationLogger : public TestFileLogger<debugLevel>, public NEO::AllocationLogger<debugLevel> {
+  public:
+    TestAllocationLogger(std::string filename, const NEO::DebugVariables &flags)
+        : TestFileLogger<debugLevel>(std::move(filename)), NEO::AllocationLogger<debugLevel>(*this, flags) {}
+};
+
 using FullyEnabledFileLogger = TestFileLogger<DebugFunctionalityLevel::full>;
 using FullyDisabledFileLogger = TestFileLogger<DebugFunctionalityLevel::none>;
 using ReleaseInternalFileLogger = TestFileLogger<DebugFunctionalityLevel::regKeys>;
+
+using FullyEnabledAllocationLogger = TestAllocationLogger<DebugFunctionalityLevel::full>;

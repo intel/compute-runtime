@@ -16,6 +16,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/driver/kernel_dispatch_stats_reporter.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <mutex>
@@ -32,6 +33,10 @@ void Driver::initialize(ze_result_t *result) {
     pid = NEO::SysCalls::getCurrentProcessId();
 
     auto &flags = NEO::debugManager.flags;
+
+    if (flags.LogKernelDispatchStats.get()) {
+        kernelDispatchStatsReporter();
+    }
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
