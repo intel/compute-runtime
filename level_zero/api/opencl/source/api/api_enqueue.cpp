@@ -1520,6 +1520,14 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
         return retVal;
     }
 
+    const auto dstStart = reinterpret_cast<uintptr_t>(dstPtr);
+    const auto srcStart = reinterpret_cast<uintptr_t>(srcPtr);
+    if ((srcStart < dstStart + size) && (dstStart < srcStart + size)) [[unlikely]] {
+        cl_int tracingRetVal = CL_MEM_COPY_OVERLAP;
+        TRACING_EXIT(ClEnqueueMemcpyINTEL, &tracingRetVal);
+        return tracingRetVal;
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MEMCPY_INTEL, pCommandQueue);
 
     auto lock = pCommandQueue->takeOwnership();

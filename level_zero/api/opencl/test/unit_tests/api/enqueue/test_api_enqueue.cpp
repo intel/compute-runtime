@@ -313,6 +313,34 @@ TEST_F(EnqueueSvmFixture, givenInvalidDstPtrWhenClEnqueueSVMMemcpyThenUserProvid
     EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
 }
 
+TEST_F(EnqueueSvmFixture, givenOverlappingRegionsWhenClEnqueueSVMMemcpyThenCopyOverlapIsReturnedAndNothingIsEnqueued) {
+    constexpr size_t size = 16u;
+    std::array<uint8_t, 2 * size> storage{};
+    auto base = storage.data();
+    const std::array<std::pair<uint8_t *, uint8_t *>, 3> dstSrcPairs = {{{base + size / 2, base},
+                                                                         {base, base + size / 2},
+                                                                         {base, base}}};
+
+    for (const auto &[dst, src] : dstSrcPairs) {
+        cl_event event = notAnEvent();
+
+        EXPECT_EQ(CL_MEM_COPY_OVERLAP, clEnqueueSVMMemcpy(getCommandQueue(), CL_FALSE, dst, src, size, 0, nullptr, &event));
+
+        EXPECT_EQ(notAnEvent(), event);
+    }
+    EXPECT_FALSE(capturingCmdList.appendMemoryCopyArgs.wasCalled());
+}
+
+TEST_F(EnqueueSvmFixture, givenAdjacentRegionsWhenClEnqueueSVMMemcpyThenCopyIsEnqueued) {
+    constexpr size_t size = 16u;
+    std::array<uint8_t, 2 * size> storage{};
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMemcpy(getCommandQueue(), CL_FALSE, storage.data() + size, storage.data(), size, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clEnqueueSVMMemcpy(getCommandQueue(), CL_FALSE, storage.data(), storage.data() + size, size, 0, nullptr, nullptr));
+
+    EXPECT_EQ(2u, capturingCmdList.appendMemoryCopyArgs.count());
+}
+
 TEST_F(EnqueueSvmFixture, givenUserProvidedEventWhenClEnqueueSVMMemFillThenCommandTypeIsSvmMemFill) {
     cl_event event = nullptr;
 
