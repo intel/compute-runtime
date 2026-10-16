@@ -24,6 +24,17 @@ extern "C" {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Module format is PISA intermediate representation
+///
+/// @details
+///     - In addition to the formats listed in ze_module_program_exp_desc_t,
+///       ZE_MODULE_FORMAT_PISA is accepted in ze_module_desc_t::format when
+///       ze_module_program_exp_desc_t is chained to ze_module_desc_t.
+///     - Each PISA unit of the program is finalized separately and the results
+///       are dynamically linked; PISA units are not statically linked.
+///     - When ZE_MODULE_FORMAT_PISA is used with ze_module_program_exp_desc_t,
+///       specialization constants are applied per unit: if
+///       ze_module_program_exp_desc_t::pConstants is not nullptr, element i
+///       is used when finalizing PISA unit i.
 #if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 19)
 #define ZE_MODULE_FORMAT_PISA static_cast<ze_module_format_t>(2U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 #define ZE_MODULE_FORMAT_OCLC static_cast<ze_module_format_t>(3U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)

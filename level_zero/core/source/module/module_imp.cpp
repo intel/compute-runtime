@@ -2157,7 +2157,7 @@ FORCE_NOINLINE void ModuleImp::dumpKernelInfoToAubComments() {
 }
 
 ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
-    UNRECOVERABLE_IF(ZE_MODULE_FORMAT_NATIVE != desc->format);
+    UNRECOVERABLE_IF(ZE_MODULE_FORMAT_NATIVE != desc->format && ZE_MODULE_FORMAT_PISA != desc->format);
     StackVec<ze_module_desc_t, 32> unitsInPackage;
 
     L0::PNextRange exts{desc->pNext};
@@ -2182,14 +2182,14 @@ ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device
         }
         this->setNativeBinary(std::span(desc->pInputModule, desc->inputSize));
     } else {
-        if (moduleProgamExt->pConstants) {
+        if (ZE_MODULE_FORMAT_NATIVE == desc->format && moduleProgamExt->pConstants) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
         for (decltype(moduleProgamExt->count) i = 0, e = moduleProgamExt->count; i != e; ++i) {
             auto baseDesc = *desc;
             baseDesc.pBuildFlags = nullptr;
-            baseDesc.pConstants = nullptr;
+            baseDesc.pConstants = moduleProgamExt->pConstants ? moduleProgamExt->pConstants[i] : nullptr;
             baseDesc.pInputModule = moduleProgamExt->pInputModules[i];
             baseDesc.inputSize = moduleProgamExt->inputSizes[i];
             if (moduleProgamExt->pBuildFlags && moduleProgamExt->pBuildFlags[i]) {
@@ -2306,13 +2306,17 @@ void ModulesPackage::setNativeBinary(std::span<const uint8_t> binary) {
 }
 
 bool ModulesPackage::isModulesPackageInput(const ze_module_desc_t *desc) {
-    if (desc->format != ZE_MODULE_FORMAT_NATIVE) {
+    if (desc->format != ZE_MODULE_FORMAT_NATIVE && desc->format != ZE_MODULE_FORMAT_PISA) {
         return false;
     }
 
     L0::PNextRange exts{desc->pNext};
     if (exts.contains(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC)) {
         return true;
+    }
+
+    if (desc->format != ZE_MODULE_FORMAT_NATIVE) {
+        return false;
     }
 
     auto binary = std::span<const uint8_t>(desc->pInputModule, desc->inputSize);

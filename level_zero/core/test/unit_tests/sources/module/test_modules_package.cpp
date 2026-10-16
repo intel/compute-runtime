@@ -22,6 +22,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include <string>
 #include <string_view>
@@ -133,6 +134,43 @@ TEST(IsModulesPackageInput, WhenFormatIsNativeButModuleProgramDescriptorIsNotPre
     EXPECT_TRUE(ModulesPackage::isModulesPackageInput(&desc));
 }
 
+TEST(IsModulesPackageInput, WhenFormatIsPisaAndModuleProgramDescriptorPresentThenReturnsTrue) {
+    ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.format = ZE_MODULE_FORMAT_PISA;
+
+    ze_module_program_exp_desc_t modProgDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    desc.pNext = &modProgDesc;
+
+    EXPECT_TRUE(ModulesPackage::isModulesPackageInput(&desc));
+}
+
+TEST(IsModulesPackageInput, WhenFormatIsPisaAndModuleProgramDescriptorIsNotPresentThenReturnsFalseWithoutLookingAtTheBinary) {
+    ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.format = ZE_MODULE_FORMAT_PISA;
+
+    ModulesPackageBinary package;
+    auto packageBinary = package.encode();
+    desc.pInputModule = packageBinary.data();
+    desc.inputSize = packageBinary.size();
+    EXPECT_FALSE(ModulesPackage::isModulesPackageInput(&desc));
+}
+
+TEST(ModuleCreateModulesPackage, GivenPisaModulesInModuleProgramDescThenCreatesAModulesPackage) {
+    MockDevice device;
+    ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.format = ZE_MODULE_FORMAT_PISA;
+
+    ze_module_program_exp_desc_t moduleProgramDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    desc.pNext = &moduleProgramDesc;
+
+    ze_result_t res = {};
+    auto module = L0::Module::create(&device, &desc, nullptr, L0::ModuleType::user, &res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, module);
+    EXPECT_TRUE(module->isModulesPackage());
+    module->destroy();
+}
+
 TEST(ModuleCreateModulesPackage, GivenNativeBinariesInModuleProgramDescThenCreatesAModulesPackage) {
     MockDevice device;
     ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
@@ -169,6 +207,81 @@ TEST_F(ModulesPackageInitWithDevice, GivenAListOfBinaryModulesThenCreatesAPackag
     auto res = mp.initialize(&desc, device->getNEODevice());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(2U, mp.modules.size());
+}
+
+TEST_F(ModulesPackageInitWithDevice, GivenAListOfPisaModulesThenEachUnitIsInitializedWithItsOwnInputAndPisaFormatAndUnitsAreDynamicallyLinked) {
+    struct RecordingModule : MockModule {
+        using MockModule::MockModule;
+        ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) override {
+            descsSeen->push_back(*desc);
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t performDynamicLink(uint32_t numModules,
+                                       ze_module_handle_t *phModules,
+                                       ze_module_build_log_handle_t *phLinkLog) override {
+            *numModulesLinked = numModules;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        std::vector<ze_module_desc_t> *descsSeen = nullptr;
+        uint32_t *numModulesLinked = nullptr;
+    };
+
+    std::vector<ze_module_desc_t> descsSeen;
+    uint32_t numModulesLinked = 0;
+    MockModulesPackage<RecordingModule> mp{this->device};
+    mp.moduleUnitFactory = [&](L0::Device *device, ModuleBuildLog *buildLog, ModuleType type) {
+        auto ret = std::make_unique<RecordingModule>(device, buildLog, type);
+        ret->descsSeen = &descsSeen;
+        ret->numModulesLinked = &numModulesLinked;
+        return ret;
+    };
+
+    const char pisa0[] = "pisa unit 0";
+    const char pisa1[] = "pisa unit 1 is longer";
+
+    ze_module_desc_t desc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    desc.format = ZE_MODULE_FORMAT_PISA;
+
+    ze_module_program_exp_desc_t moduleProgramDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    desc.pNext = &moduleProgramDesc;
+
+    moduleProgramDesc.count = 2;
+    size_t inputSizes[2] = {sizeof(pisa0), sizeof(pisa1)};
+    moduleProgramDesc.inputSizes = inputSizes;
+    const uint8_t *inputModules[2] = {reinterpret_cast<const uint8_t *>(pisa0), reinterpret_cast<const uint8_t *>(pisa1)};
+    moduleProgramDesc.pInputModules = inputModules;
+
+    // placeholder values, ignored when the program extension is used
+    desc.inputSize = 1;
+    desc.pInputModule = reinterpret_cast<const uint8_t *>(1);
+
+    auto res = mp.initialize(&desc, device->getNEODevice());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(2U, mp.modules.size());
+
+    ASSERT_EQ(2U, descsSeen.size());
+    for (size_t i = 0; i < descsSeen.size(); ++i) {
+        EXPECT_EQ(ZE_MODULE_FORMAT_PISA, descsSeen[i].format);
+        EXPECT_EQ(inputModules[i], descsSeen[i].pInputModule);
+        EXPECT_EQ(inputSizes[i], descsSeen[i].inputSize);
+        EXPECT_EQ(nullptr, descsSeen[i].pConstants);
+    }
+    EXPECT_EQ(2U, numModulesLinked);
+
+    // per-unit specialization constants
+    ze_module_constants_t unitConstants[2] = {};
+    const ze_module_constants_t *programConstants[2] = {&unitConstants[0], nullptr};
+    moduleProgramDesc.pConstants = programConstants;
+    desc.pConstants = &unitConstants[1]; // base desc pConstants is ignored
+    descsSeen.clear();
+
+    res = mp.initialize(&desc, device->getNEODevice());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_EQ(2U, descsSeen.size());
+    EXPECT_EQ(&unitConstants[0], descsSeen[0].pConstants);
+    EXPECT_EQ(nullptr, descsSeen[1].pConstants);
 }
 
 TEST_F(ModulesPackageInitWithDevice, GivenBaseModuleAndAListOfBinaryModulesThenCreatesAPackageModuleThanEncompasesAllInputModulesExceptBaseDesc) {
