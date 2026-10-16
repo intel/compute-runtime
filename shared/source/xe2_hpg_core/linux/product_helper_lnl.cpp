@@ -27,10 +27,6 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
     enableBlitterOperationsSupport(hwInfo);
 
-    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
-    kmdNotifyProperties.enableKmdNotify = true;
-    kmdNotifyProperties.delayKmdNotifyMicroseconds = 5000;
-
     return 0;
 }
 
