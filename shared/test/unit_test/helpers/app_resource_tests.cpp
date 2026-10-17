@@ -71,6 +71,7 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::kernelIsa, "KERNLISA"},
     {AllocationType::kernelIsaInternal, "KRLISAIN"},
     {AllocationType::linearStream, "LINRSTRM"},
+    {AllocationType::bindlessHeap, "BNDLHEAP"},
     {AllocationType::mapAllocation, "MAPALLOC"},
     {AllocationType::mcs, "MCS"},
     {AllocationType::preemption, "PRMPTION"},

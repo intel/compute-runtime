@@ -126,6 +126,7 @@ struct DispatchFlags {
     bool isStallingCommandsOnNextFlushRequired = false;
     bool isDcFlushRequiredOnStallingCommandsOnNextFlush = false;
     bool isWalkerWithProfilingEnqueued = false;
+    bool useBindlessImages = false; 
 };
 
 struct CsrSizeRequestFlags {

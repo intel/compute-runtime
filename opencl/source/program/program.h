@@ -193,6 +193,10 @@ class Program : public BaseObject<_cl_program> {
         return isSpirV;
     }
 
+    bool usesBindlessImages(uint32_t rootDeviceIndex) const {
+        return buildInfos[rootDeviceIndex].useBindlessImages;
+    }
+
     void freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &buffer);
 
     NEO::SharedPoolAllocation *getConstantSurface(uint32_t rootDeviceIndex) const;
@@ -381,6 +385,8 @@ class Program : public BaseObject<_cl_program> {
         std::unique_ptr<char[]> debugData;
         size_t debugDataSize = 0U;
         size_t kernelMiscInfoPos = std::string::npos;
+
+        bool useBindlessImages = false;
     };
 
     std::vector<BuildInfo> buildInfos;

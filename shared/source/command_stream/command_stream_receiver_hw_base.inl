@@ -1690,7 +1690,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
                                                                         bool stateBaseAddressDirty) {
 
     const auto bindlessHeapsHelper = device.getBindlessHeapsHelper();
-    const bool useGlobalHeaps = bindlessHeapsHelper != nullptr;
+
+    const bool useGlobalHeaps = bindlessHeapsHelper != nullptr && ApiSpecificConfig::getBindlessMode(device);
+
+    const bool useGlobalImageDescriptors = bindlessHeapsHelper != nullptr && (useGlobalHeaps || dispatchFlags.useBindlessImages);
 
     auto &hwInfo = this->peekHwInfo();
 
@@ -1699,7 +1702,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
     size_t dynamicStateSize = 0;
     if (hasDsh) {
         dynamicStateBaseAddress = NEO::getStateBaseAddress(*dsh, useGlobalHeaps);
-        dynamicStateSize = NEO::getStateSize(*dsh, bindlessHeapsHelper);
+        dynamicStateSize = NEO::getStateSize(*dsh, useGlobalHeaps);
     }
 
     int64_t surfaceStateBaseAddress = 0;
@@ -1735,7 +1738,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
                                                                                       surfaceStateBaseAddress, surfaceStateSize);
     }
 
-    bool isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
+    const bool imageHeapSelectionChanged = useGlobalImageDescriptors != lastUseGlobalImageDescriptors;
+    bool isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty || imageHeapSelectionChanged;
+
     handleStateBaseAddressStateTransition(dispatchFlags, isStateBaseAddressDirty);
 
     // reprogram state base address command if required
@@ -1786,7 +1791,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const 
                                   commandStreamCSR,
                                   bindingTableBaseAddressRequired,
                                   dispatchFlags.areMultipleSubDevicesInContext,
-                                  true);
+                                  true,
+                                  dispatchFlags.useBindlessImages);
     bindingTableBaseAddressRequired = false;
 
     setGSBAStateDirty(false);
@@ -1806,7 +1812,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
     LinearStream &csrCommandStream,
     bool dispatchBindingTableCommand,
     bool areMultipleSubDevicesInContext,
-    bool setGeneralStateBaseAddress) {
+    bool setGeneralStateBaseAddress,
+    bool useBindlessImages) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
@@ -1821,10 +1828,20 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
     auto globalHeapsBase = 0ull;
     bool useGlobalSshAndDsh = false;
 
-    if (device.getBindlessHeapsHelper()) {
-        bindlessSurfStateBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
-        globalHeapsBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+
+    auto *helper = device.getBindlessHeapsHelper();
+
+    const bool useGlobalHeaps = helper != nullptr && ApiSpecificConfig::getBindlessMode(device);
+
+    const bool useGlobalImageDescriptors = helper != nullptr && (useGlobalHeaps || useBindlessImages);
+
+    if (useGlobalHeaps) {
+        globalHeapsBase = helper->getGlobalHeapsBase();
         useGlobalSshAndDsh = true;
+    }
+
+    if (useGlobalImageDescriptors) {
+        bindlessSurfStateBase = helper->getGlobalHeapsBase();
     }
 
     STATE_BASE_ADDRESS stateBaseAddressCmd;
@@ -1857,6 +1874,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
     };
 
     StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, csrCommandStream);
+
+    lastUseGlobalImageDescriptors = useGlobalImageDescriptors;
 
     bool sbaTrackingEnabled = debuggingEnabled;
     if (sbaTrackingEnabled) {
@@ -2182,7 +2201,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushStateBaseAddressC
     if (flushData.stateBaseAddressDirty) {
         bool btCommandNeeded = this->streamProperties.stateBaseAddress.bindingTablePoolBaseAddress.value != StreamProperty64::initValue;
         programStateBaseAddressCommon(nullptr, nullptr, nullptr, &this->streamProperties.stateBaseAddress,
-                                      0, 0, flushData.pipelineSelectArgs, device, csrStream, btCommandNeeded, device.getNumGenericSubDevices() > 1, false);
+                                      0, 0, flushData.pipelineSelectArgs, device, csrStream, btCommandNeeded, device.getNumGenericSubDevices() > 1, false,false);
         this->streamProperties.stateBaseAddress.clearIsDirty();
     }
 }
