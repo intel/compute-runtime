@@ -6473,6 +6473,51 @@ HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushTaskC
     commandStreamReceiver.getMemoryManager()->freeGraphicsMemoryImpl(commandBuffer);
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenUcResourceRequiresTagUpdateAndFullTaskStreamWithEpilogueStreamWhenFlushTaskCalledThenTagUpdateIsDispatchedIntoEpilogueStream) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+
+    GraphicsAllocation *commandBuffer = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream epilogueStream(commandBuffer);
+
+    flushTaskFlags.optionalEpilogueCmdStream = &epilogueStream;
+    commandStreamReceiver.ucResourceRequiresTagUpdate = true;
+
+    // a regular command list dispatched as the primary batch buffer fills the task stream
+    commandStream.getSpace(commandStream.getAvailableSpace());
+
+    EXPECT_NO_THROW(commandStreamReceiver.flushTask(commandStream,
+                                                    0,
+                                                    &dsh,
+                                                    &ioh,
+                                                    nullptr,
+                                                    taskLevel,
+                                                    flushTaskFlags,
+                                                    *pDevice));
+    EXPECT_EQ(commandStream.getMaxAvailableSpace(), commandStream.getUsed());
+    EXPECT_FALSE(commandStreamReceiver.ucResourceRequiresTagUpdate);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(epilogueStream, 0);
+    auto ucTagAddress = commandStreamReceiver.getUcTagGPUAddress();
+    bool ucTagUpdateFound = false;
+    for (auto &cmd : findAll<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end())) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*cmd);
+        uint64_t address = pipeControl->getAddressHigh();
+        address <<= 32;
+        address |= pipeControl->getAddress();
+        ucTagUpdateFound |= (address == ucTagAddress);
+    }
+    EXPECT_TRUE(ucTagUpdateFound);
+
+    commandStreamReceiver.getMemoryManager()->freeGraphicsMemoryImpl(commandBuffer);
+}
+
 HWTEST2_F(CommandStreamReceiverHwTest, givenSpecialPipelineSelectModeChangedWhenGetCmdSizeForPielineSelectIsCalledThenCorrectSizeIsReturned, IsAtMostXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

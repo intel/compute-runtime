@@ -466,8 +466,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     if (detectInitProgrammingFlagsRequired(dispatchFlags)) {
         initProgrammingFlags();
     }
+
+    // a regular command list dispatched as the primary batch buffer has no space left in
+    // the task stream, so commands following the task go into the epilogue stream
+    LinearStream &epilogueCommandStream = dispatchFlags.optionalEpilogueCmdStream != nullptr ? *dispatchFlags.optionalEpilogueCmdStream : commandStreamTask;
+
     if (this->ucResourceRequiresTagUpdate) {
-        this->emitTagUpdateWithoutDCFlush(commandStreamTask);
+        this->emitTagUpdateWithoutDCFlush(epilogueCommandStream);
     }
     const auto &hwInfo = peekHwInfo();
 
@@ -478,7 +483,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
                                      dispatchFlags.textureCacheFlush ||
                                      this->heapStorageRequiresRecyclingTag;
     if (barrierWithPostSyncNeeded) {
-        LinearStream &epilogueCommandStream = dispatchFlags.optionalEpilogueCmdStream != nullptr ? *dispatchFlags.optionalEpilogueCmdStream : commandStreamTask;
         processBarrierWithPostSync(epilogueCommandStream, dispatchFlags, levelClosed, currentPipeControlForNooping,
                                    epiloguePipeControlLocation, hasStallingCmdsOnTaskStream, args);
     }
