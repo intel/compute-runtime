@@ -210,15 +210,6 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
         }
     }
 
-    if (argDescriptor.type == NEO::ArgDescriptor::argTImage && argDescriptor.as<NEO::ArgDescImage>().isMsaa() && argValue && argSize == sizeof(cl_mem)) {
-        auto pImage = NEO::LEO::castToObject<NEO::LEO::Image>(*reinterpret_cast<const cl_mem *>(argValue));
-        if (pImage && pImage->getL0Object()->getImageInfo().imgDesc.numSamples <= 1) {
-            cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
-            TRACING_EXIT(ClSetKernelArg, &tracingRetVal);
-            return tracingRetVal;
-        }
-    }
-
     pKernel->markArgAsSet(argIndex);
     pKernel->clearImageArg(argIndex);
     pKernel->clearSharedObjArg(argIndex);

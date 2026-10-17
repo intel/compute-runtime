@@ -1706,10 +1706,6 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
     auto pImage = castToObject<Image>(clMemObj);
 
     if (pImage && argSize == sizeof(cl_mem *)) {
-        if (argAsImg.isMsaa() && pImage->getImageDesc().num_samples <= 1) {
-            return CL_INVALID_MEM_OBJECT;
-        }
-
         if (pImage->peekSharingHandler()) {
             usingSharedObjArgs = true;
         }

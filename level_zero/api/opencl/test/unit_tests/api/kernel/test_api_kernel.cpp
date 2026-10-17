@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
-#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -22,12 +21,10 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
-#include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/image/image_imp.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
@@ -931,114 +928,6 @@ TEST_F(SharedObjKernelArgFixture, givenNoSharedObjArgsWhenResetSharedObjectsPatc
     kernel->resetSharedObjectsPatchAddresses();
 
     EXPECT_TRUE(l0Kernel->passedArgumentValues[0].empty());
-}
-
-struct MockL0ImageWithSamples : public L0::ImageImp {
-    MockL0ImageWithSamples(uint32_t numSamples) {
-        this->imgInfo.surfaceFormat = &mockSurfaceFormat;
-        this->imgInfo.imgDesc.imageType = NEO::ImageType::image2D;
-        this->imgInfo.imgDesc.numSamples = numSamples;
-    }
-
-    ze_result_t initialize(L0::Device *device, const ze_image_desc_t *desc) override {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    void copySurfaceStateToSSH(void *surfaceStateHeap, uint32_t surfaceStateOffset, uint32_t bindlessSlot,
-                               bool isMediaBlockArg, uint32_t mipLevel) override {}
-
-    NEO::SurfaceFormatInfo mockSurfaceFormat{};
-};
-
-struct ImageKernelArgFixture : public Test<OclFixture> {
-    void SetUp() override {
-        Test<OclFixture>::SetUp();
-        clDevice = platform->getDevices()[0].get();
-        cl_device_id clDeviceId = clDevice;
-        context = std::make_unique<Context>(nullptr, nullptr, 1, &clDeviceId, true);
-        program = std::make_unique<Program>(context.get());
-
-        l0Kernel = std::make_unique<L0::ult::Mock<L0::KernelImp>>();
-        l0Kernel->privateState.kernelArgHandlers.resize(1);
-        l0Kernel->checkPassedArgumentValues = true;
-        l0Kernel->passedArgumentValues.resize(1);
-        auto &explicitArgs = l0Kernel->descriptor.payloadMappings.explicitArgs;
-        explicitArgs.resize(1);
-        explicitArgs[0] = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
-
-        std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
-        kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
-    }
-
-    void TearDown() override {
-        kernel.reset();
-        l0Kernel.release();
-        program.reset();
-        context.reset();
-        Test<OclFixture>::TearDown();
-    }
-
-    void setArgImageType(NEO::NEOImageType imageType) {
-        l0Kernel->descriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescImage>().imageType = imageType;
-    }
-
-    std::unique_ptr<Image> createImage(uint32_t numSamples) {
-        auto l0Image = new MockL0ImageWithSamples(numSamples);
-        auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_ONLY, 0, 0, &clDevice->getDevice());
-        cl_image_format format{CL_RGBA, CL_UNSIGNED_INT8};
-        return std::make_unique<Image>(context.get(), memoryProperties, CL_MEM_READ_ONLY, l0Image->toHandle(), nullptr, nullptr,
-                                       false, format, nullptr);
-    }
-
-    ClDevice *clDevice = nullptr;
-    std::unique_ptr<Context> context;
-    std::unique_ptr<Program> program;
-    std::unique_ptr<L0::ult::Mock<L0::KernelImp>> l0Kernel;
-    std::unique_ptr<Kernel> kernel;
-};
-
-TEST_F(ImageKernelArgFixture, givenMsaaImageArgAndSingleSampleImageWhenSetKernelArgThenInvalidMemObjectIsReturnedAndArgIsNotSet) {
-    const NEO::NEOImageType msaaTypes[] = {NEO::NEOImageType::imageType2DMSAA, NEO::NEOImageType::imageType2DMSAADepth,
-                                           NEO::NEOImageType::imageType2DArrayMSAA, NEO::NEOImageType::imageType2DArrayMSAADepth};
-    auto image = createImage(0u);
-    cl_mem clMem = image.get();
-
-    for (auto imageType : msaaTypes) {
-        setArgImageType(imageType);
-
-        EXPECT_EQ(CL_INVALID_MEM_OBJECT, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &clMem)) << "imageType=" << static_cast<int>(imageType);
-        EXPECT_FALSE(kernel->areAllArgsSet());
-        EXPECT_TRUE(kernel->getImageArgs().empty());
-        EXPECT_TRUE(l0Kernel->passedArgumentValues[0].empty());
-    }
-}
-
-TEST_F(ImageKernelArgFixture, givenMsaaImageArgSetWhenSetKernelArgWithSingleSampleImageThenInvalidMemObjectIsReturnedAndPreviousImageIsKept) {
-    setArgImageType(NEO::NEOImageType::imageType2DMSAA);
-    auto msaaImage = createImage(4u);
-    auto singleSampleImage = createImage(0u);
-    cl_mem msaaMem = msaaImage.get();
-    cl_mem singleSampleMem = singleSampleImage.get();
-    ASSERT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &msaaMem));
-
-    EXPECT_EQ(CL_INVALID_MEM_OBJECT, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &singleSampleMem));
-
-    EXPECT_TRUE(kernel->areAllArgsSet());
-    ASSERT_EQ(1u, kernel->getImageArgs().count(0));
-    EXPECT_EQ(msaaImage.get(), kernel->getImageArgs().at(0));
-    ASSERT_EQ(sizeof(ze_image_handle_t), l0Kernel->passedArgumentValues[0].size());
-    EXPECT_EQ(msaaImage->getL0Handle(), *reinterpret_cast<ze_image_handle_t *>(l0Kernel->passedArgumentValues[0].data()));
-}
-
-TEST_F(ImageKernelArgFixture, givenMsaaImageArgAndMultisampleImageWhenSetKernelArgThenImageIsPassedToL0) {
-    setArgImageType(NEO::NEOImageType::imageType2DMSAA);
-    auto image = createImage(4u);
-    cl_mem clMem = image.get();
-
-    EXPECT_EQ(CL_SUCCESS, clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &clMem));
-
-    ASSERT_EQ(sizeof(ze_image_handle_t), l0Kernel->passedArgumentValues[0].size());
-    EXPECT_EQ(image->getL0Handle(), *reinterpret_cast<ze_image_handle_t *>(l0Kernel->passedArgumentValues[0].data()));
 }
 
 struct MockL0KernelForSchedulingHint : public L0::ult::Mock<L0::KernelImp> {
