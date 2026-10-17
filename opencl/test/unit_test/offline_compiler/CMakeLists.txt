@@ -157,7 +157,7 @@ string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
 target_compile_definitions(ocloc_tests PUBLIC
                            MOCKABLE_VIRTUAL=virtual
                            $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS>
-                           ${TESTED_CORE_FLAGS_DEFINITONS}
+                           ${TESTED_CORE_FLAGS_DEFINITIONS}
                            NEO_OCLOC_CURRENT_LIB_NAME="ocloc-current"
                            NEO_OCLOC_FORMER_LIB_NAME="ocloc-former"
                            DEFAULT_TEST_PLATFORM_NAME="${CLOC_LIB_DEFAULT_DEVICE}"
