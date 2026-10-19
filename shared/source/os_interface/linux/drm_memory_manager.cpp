@@ -2167,7 +2167,7 @@ uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
 
 double DrmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
     if (isLocalMemorySupported(rootDeviceIndex)) {
-        return 0.95;
+        return getDrm(rootDeviceIndex).getIoctlHelper()->isLocalMemorySizeNetOfKmdReservations() ? 0.98 : 0.95;
     }
     return 0.94;
 }

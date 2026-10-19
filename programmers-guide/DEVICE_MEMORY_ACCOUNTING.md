@@ -98,12 +98,16 @@ ECC carveout itself.
 On discrete GPUs the driver advertises only a fraction of the KMD-usable size as the
 device total (`ze_device_memory_properties_t.totalSize`), holding the remainder back for
 its own internal allocations - command buffers, ring and semaphore buffers, kernel ISA,
-internal heaps, and debug surfaces. The fraction is product- and OS-specific:
+internal heaps, and debug surfaces. The fraction depends on the OS and the kernel driver:
 
 | Path | Discrete (local memory) | Integrated (system memory) |
 |------|-------------------------|----------------------------|
-| Linux / DRM | 0.95 | 0.94 |
+| Linux / Xe | 0.98 | 0.94 |
+| Linux / i915 | 0.95 | 0.94 |
 | Windows / WDDM | 0.98 | 0.94 |
+
+The Xe KMD reports the region size already net of the firmware and ECC
+reservations, so on Xe the same fraction as on Windows is applied.
 
 The headroom factor can be overridden for experimentation with the
 `ClDeviceGlobalMemSizeAvailablePercent` debug key. On integrated devices (no local
@@ -168,7 +172,7 @@ systems the two are equal. This matters when device memory is mapped on the host
 
 **Windows (WDDM):** on Windows the kernel-mode driver is the WDDM display driver. The UMD
 takes the device-memory size from WDDM (dedicated video memory) and applies the same
-headroom factor as on Linux (0.98 discrete, 0.94 integrated). Unlike the Xe KMD,
+headroom factor as on Linux with the Xe KMD (0.98 discrete, 0.94 integrated). Unlike the Xe KMD,
 `zesMemoryGetProperties().physicalSize` on Windows reports the true physical capacity (the
 installed system memory on integrated parts), so the layer 1 -> 2 "physical minus usable"
 calculation is meaningful there. `zesMemoryGetState()` reports `.size` (the KMD-reported

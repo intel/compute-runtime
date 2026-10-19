@@ -294,6 +294,7 @@ class IoctlHelper {
     virtual bool hasContextFreqHint() { return false; }
     virtual void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) { return; }
     virtual bool isSmallBarConfigAllowed() const = 0;
+    virtual bool isLocalMemorySizeNetOfKmdReservations() const { return false; }
     virtual bool overrideMaxSlicesSupported() const { return false; }
     virtual bool is2MBSizeAlignmentRequired(AllocationType allocationType) const { return false; }
     virtual uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) { return 0; }

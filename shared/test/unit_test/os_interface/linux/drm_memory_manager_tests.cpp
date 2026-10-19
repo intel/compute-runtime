@@ -7353,7 +7353,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenCustomAlignmentWhenWddmMemoryManag
     }
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryAndI915IoctlHelperWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
     TestedDrmMemoryManager memoryManager(true, false, false, *executionEnvironment);
     uint32_t rootDeviceIndex = 0u;
     EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.95);
