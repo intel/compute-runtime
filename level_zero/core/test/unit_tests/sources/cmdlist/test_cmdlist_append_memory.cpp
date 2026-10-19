@@ -1565,7 +1565,7 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingThenDontImportAl
     }
 }
 
-HWTEST_F(StagingBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListWithPendingWorkWhenAppendMemoryCopyThenStagingNotUsed) {
+HWTEST_F(StagingBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListWithPendingWorkWhenAppendMemoryCopyThenStagingUsed) {
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities, 0xf};
@@ -1581,68 +1581,13 @@ HWTEST_F(StagingBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListWithPen
     size_t src[size] = {};
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
-}
-
-HWTEST_F(StagingBuffersFixture, givenSharedSystemNotAllowedAndInOrderCmdListWithPendingWorkWhenAppendMemoryCopyThenStagingUsed) {
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
-    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities, 0};
-
-    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.callBaseExecute = true;
-    cmdList.cmdQImmediate = queue.get();
-    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
-    cmdList.enableInOrderExecution();
-    cmdList.inOrderExecInfo->addCounterValue(1);
-    *cmdList.inOrderExecInfo->getBaseHostAddress() = 0;
-
-    size_t src[size] = {};
-    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
 }
 
-HWTEST_F(StagingBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListWithCompletedWorkWhenAppendMemoryCopyThenStagingUsed) {
+HWTEST_F(StagingBuffersFixture, givenSharedSystemAllowedAndCmdListWithDependenciesPresentWhenAppendMemoryCopyThenStagingUsed) {
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities, 0xf};
-
-    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.callBaseExecute = true;
-    cmdList.cmdQImmediate = queue.get();
-    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
-    cmdList.enableInOrderExecution();
-    cmdList.inOrderExecInfo->addCounterValue(1);
-    *cmdList.inOrderExecInfo->getBaseHostAddress() = cmdList.inOrderExecInfo->getCounterValue();
-
-    size_t src[size] = {};
-    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
-}
-
-HWTEST_F(StagingBuffersFixture, givenSharedSystemAllowedAndCmdListWithDependenciesPresentWhenAppendMemoryCopyThenStagingNotUsed) {
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
-    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities, 0xf};
-
-    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.callBaseExecute = true;
-    cmdList.cmdQImmediate = queue.get();
-    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
-    cmdList.dependenciesPresent = true;
-
-    size_t src[size] = {};
-    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
-}
-
-HWTEST_F(StagingBuffersFixture, givenSharedSystemNotAllowedAndCmdListWithDependenciesPresentWhenAppendMemoryCopyThenStagingUsed) {
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
-    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities, 0};
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.callBaseExecute = true;

@@ -867,7 +867,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
         ret = this->device->bcsSplit->template appendImmediateSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
 
-    } else if (!hasExplicitAllocs && this->isValidForStagingTransfer(cpuMemCopyInfo, hasDependenciesForStaging(numWaitEvents))) {
+    } else if (!hasExplicitAllocs && this->isValidForStagingTransfer(cpuMemCopyInfo, numWaitEvents > 0)) {
         return this->appendStagingMemoryCopy(cpuMemCopyInfo, hSignalEvent, memoryCopyParams);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
