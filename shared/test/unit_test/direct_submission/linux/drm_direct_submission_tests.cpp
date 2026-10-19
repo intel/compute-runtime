@@ -31,6 +31,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 
 #include <memory>
 
@@ -142,6 +143,24 @@ using namespace NEO;
 struct MockDrmMemoryManagerForcePin : public DrmMemoryManager {
     using DrmMemoryManager::forcePinEnabled;
 };
+
+HWTEST2_F(DrmDirectSubmissionTest, givenProductRequiringTimeoutOverrideOnLinuxWhenRegisteringCsrThenControllerTimeoutsAreOverridden, IsLNL) {
+    auto csr = device->getDefaultEngine().commandStreamReceiver;
+    DirectSubmissionControllerMock controller;
+    controller.registerDirectSubmission(csr);
+    EXPECT_EQ(1000, controller.timeout.count());
+    EXPECT_EQ(1000, controller.maxTimeout.count());
+    controller.unregisterDirectSubmission(csr);
+}
+
+HWTEST2_F(DrmDirectSubmissionTest, givenProductNotRequiringTimeoutOverrideOnLinuxWhenRegisteringCsrThenControllerTimeoutsAreNotChanged, IsNotLNL) {
+    auto csr = device->getDefaultEngine().commandStreamReceiver;
+    DirectSubmissionControllerMock controller;
+    controller.registerDirectSubmission(csr);
+    EXPECT_EQ(5000, controller.timeout.count());
+    EXPECT_EQ(5000, controller.maxTimeout.count());
+    controller.unregisterDirectSubmission(csr);
+}
 
 HWTEST_F(DrmDirectSubmissionTest, whenCreateDrmDirectSubmissionLightThenDisableForcePin) {
     EXPECT_TRUE(static_cast<MockDrmMemoryManagerForcePin *>(executionEnvironment.memoryManager.get())->forcePinEnabled);

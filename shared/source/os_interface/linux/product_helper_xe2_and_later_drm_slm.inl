@@ -14,4 +14,8 @@ uint32_t ProductHelperHw<gfxProduct>::getAvailableSlmSizePerSubslice(const RootD
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return hwInfo.gtSystemInfo.SLMSizeInKb;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+}
 } // namespace NEO

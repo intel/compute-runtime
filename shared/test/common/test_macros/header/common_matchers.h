@@ -233,6 +233,7 @@ using IsARL = IsProduct<IGFX_ARROWLAKE>;
 using IsBMG = IsProduct<IGFX_BMG>;
 using IsNotBMG = IsNotWithinProducts<IGFX_BMG, IGFX_BMG>;
 using IsLNL = IsProduct<IGFX_LUNARLAKE>;
+using IsNotLNL = IsNotWithinProducts<IGFX_LUNARLAKE, IGFX_LUNARLAKE>;
 using IsPTL = IsProduct<IGFX_PTL>;
 using IsNVLS = IsProduct<IGFX_NVL_XE3G>;
 using IsNVLP = IsProduct<IGFX_NVL>;

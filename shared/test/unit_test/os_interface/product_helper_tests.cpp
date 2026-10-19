@@ -1239,22 +1239,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperBeforeXe2WhenOverrideDirectSubmis
     EXPECT_EQ(5000ull, maxTimeoutUs);
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenOverrideDirectSubmissionTimeoutsThenTimeoutsAdjusted, IsAtLeastXe2HpgCore) {
-    DebugManagerStateRestore restorer;
-
-    uint64_t timeoutUs{5000};
-    uint64_t maxTimeoutUs{5000};
-    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
-    EXPECT_EQ(1000ull, timeoutUs);
-    EXPECT_EQ(1000ull, maxTimeoutUs);
-
-    debugManager.flags.DirectSubmissionControllerTimeout.set(10000);
-    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(10000);
-    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
-    EXPECT_EQ(10000ull, timeoutUs);
-    EXPECT_EQ(10000ull, maxTimeoutUs);
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsExposingSubdevicesAllowedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isExposingSubdevicesAllowed());
 }

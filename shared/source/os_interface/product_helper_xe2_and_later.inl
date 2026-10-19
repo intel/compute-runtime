@@ -55,18 +55,6 @@ bool ProductHelperHw<gfxProduct>::isNonCoherentTimestampsModeEnabled() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
-    timeoutUs = 1'000;
-    maxTimeoutUs = 1'000;
-    if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
-        timeoutUs = debugManager.flags.DirectSubmissionControllerTimeout.get();
-    }
-    if (debugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
-        maxTimeoutUs = debugManager.flags.DirectSubmissionControllerMaxTimeout.get();
-    }
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
     return true;
 }

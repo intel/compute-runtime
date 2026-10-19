@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_lnl.h"
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
@@ -52,6 +53,22 @@ LNLTEST_F(LnlProductHelperLinux, GivenLnlWhenConfigureHardwareCustomThenKmdNotif
     OSInterface osIface;
     productHelper->configureHardwareCustom(&pInHwInfo, &osIface);
     EXPECT_FALSE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
+}
+
+LNLTEST_F(LnlProductHelperLinux, givenOverrideDirectSubmissionTimeoutsCalledThenTimeoutsAreOverridden) {
+    uint64_t timeoutUs{5'000};
+    uint64_t maxTimeoutUs = timeoutUs;
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    EXPECT_EQ(timeoutUs, 1'000ull);
+    EXPECT_EQ(maxTimeoutUs, 1'000ull);
+
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.DirectSubmissionControllerTimeout.set(2'000);
+    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(3'000);
+
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    EXPECT_EQ(timeoutUs, 2'000ull);
+    EXPECT_EQ(maxTimeoutUs, 3'000ull);
 }
 
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnTrue) {
