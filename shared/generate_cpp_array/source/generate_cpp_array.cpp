@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,45 +7,36 @@
 
 #include <chrono>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <string>
 #include <thread>
+#include <vector>
 
-constexpr int minArgCount = 7;
 constexpr int maxRetryCount = 3;
 constexpr auto retryDelay = std::chrono::milliseconds(20);
 
 static void showUsage(std::string name) {
-    std::cerr << "Usage " << name << "<option(s)> - ALL BUT -p, --platform MUST BE SPECIFIED\n"
+    std::cerr << "Usage " << name << "<option(s)> - ALL BUT -d, --device MUST BE SPECIFIED\n"
               << "Options :\n"
-              << "\t -f, --file\t\tA file which content will be parsed into a uint32_t array in a .cpp file\n"
+              << "\t -l, --list\t\tA file with one input file per line, each input file content will be parsed into a uint32_t array named after the file in a single .cpp file\n"
               << "\t -o, --output\t\t.Cpp output file name\n"
-              << "\t -d, --device\t\tOPTIONAL - device ip version in format <major>_<minor>_<revision>\n"
-              << "\t -a, --array\t\tName of an uin32_t type array containing parsed input file" << std::endl;
+              << "\t -d, --device\t\tOPTIONAL - device ip version in format <major>_<minor>_<revision>" << std::endl;
 }
-std::string parseToCharArray(std::unique_ptr<uint8_t[]> &binary, size_t size, std::string &builtinName, std::string &deviceIp, bool isSpirV) {
+
+std::string parseToCharArray(std::unique_ptr<uint8_t[]> &binary, size_t size, const std::string &builtinName, const std::string &deviceIp, bool isSpirV) {
     std::ostringstream out;
 
-    bool deviceIpPresent = !deviceIp.empty();
-    out << "#include <cstddef>\n";
-    out << "#include <cstdint>\n\n";
-    out << "size_t " << builtinName;
-    if (deviceIpPresent) {
-        out << "BinarySize_" << deviceIp;
-    } else {
-        out << "BinarySize";
-    }
-    out << " = " << size << ";\n";
-    out << "uint32_t " << builtinName;
-    if (deviceIpPresent) {
-        out << "Binary_" << deviceIp;
-    } else {
-        out << "Binary";
-    }
-    out << "[" << (size + 3) / 4 << "] = {"
+    std::string suffix = deviceIp.empty() ? "" : "_" + deviceIp;
+    std::string sizeName = builtinName + "BinarySize" + suffix;
+    std::string arrayName = builtinName + "Binary" + suffix;
+
+    out << "size_t " << sizeName << " = " << size << ";\n";
+    out << "uint32_t " << arrayName << "[" << (size + 3) / 4 << "] = {"
         << std::endl
         << "    ";
     uint32_t *binaryUint = reinterpret_cast<uint32_t *>(binary.get());
@@ -71,86 +62,108 @@ std::string parseToCharArray(std::unique_ptr<uint8_t[]> &binary, size_t size, st
     }
     out << "};" << std::endl;
 
-    out << std::endl
-        << "#include \"shared/source/built_ins/registry/built_ins_registry.h\"\n"
-        << std::endl;
+    out << std::endl;
     out << "namespace NEO {" << std::endl;
     out << "static RegisterEmbeddedResource register" << builtinName;
-    isSpirV ? out << "Ir(" : out << "Bin(";
-    out << std::endl;
+    isSpirV ? out << "Ir" : out << "Bin";
+    out << suffix << "(" << std::endl;
     out << "    \"";
     deviceIp != "" ? out << deviceIp << "_" << builtinName : out << builtinName;
     isSpirV ? out << ".builtin_kernel.spv\"," : out << ".builtin_kernel.bin\",";
     out << std::endl;
-    out << "    (const char *)" << builtinName;
-    if (deviceIpPresent) {
-        out << "Binary_" << deviceIp;
-    } else {
-        out << "Binary";
-    }
-    out << "," << std::endl;
-    out << "    " << builtinName;
-    if (deviceIpPresent) {
-        out << "BinarySize_" << deviceIp;
-    } else {
-        out << "BinarySize";
-    }
-    out << ");" << std::endl;
+    out << "    (const char *)" << arrayName << "," << std::endl;
+    out << "    " << sizeName << ");" << std::endl;
     out << "}" << std::endl;
 
     return out.str();
 }
 
-int main(int argc, char *argv[]) {
-    if (argc < minArgCount) {
-        showUsage(argv[0]);
-        return 1;
-    }
-    std::string fileName;
-    std::string cppOutputName;
-    std::string arrayName;
-    std::string deviceIp = "";
-    size_t size = 0;
+bool parseInputFile(const std::string &fileName, const std::string &deviceIp, std::ostringstream &out) {
     std::fstream inputFile;
-    bool isSpirV;
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
-        if ((arg == "-f") || (arg == "--file")) {
-            fileName = argv[++i];
-        } else if ((arg == "-o") || (arg == "--output")) {
-            cppOutputName = argv[++i];
-        } else if ((arg == "-a") || (arg == "--array")) {
-            arrayName = argv[++i];
-        } else if ((arg == "-d") || (arg == "--device")) {
-            deviceIp = argv[++i];
-        } else {
-            return 1;
-        }
-    }
-    if (fileName.empty() || cppOutputName.empty() || arrayName.empty()) {
-        std::cerr << "All three: fileName, cppOutputName and arrayName must be specified!" << std::endl;
-        return 1;
-    }
-
     for (int retry = 0; retry < maxRetryCount; retry++) {
         inputFile.open(fileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
         if (inputFile.is_open()) {
-            size = static_cast<size_t>(inputFile.tellg());
+            size_t size = static_cast<size_t>(inputFile.tellg());
             std::unique_ptr<uint8_t[]> memblock = std::make_unique<uint8_t[]>(size);
             inputFile.clear();
             inputFile.seekg(0, std::ios::beg);
             inputFile.read(reinterpret_cast<char *>(memblock.get()), size);
             inputFile.close();
-            isSpirV = fileName.find(".spv") != std::string::npos;
-            std::string cpp = parseToCharArray(memblock, size, arrayName, deviceIp, isSpirV);
-            std::fstream(cppOutputName.c_str(), std::ios::out | std::ios::binary).write(cpp.c_str(), cpp.size());
-
-            return 0;
+            std::filesystem::path path(fileName);
+            bool isSpirV = path.extension() == ".spv";
+            out << std::endl
+                << parseToCharArray(memblock, size, path.stem().string(), deviceIp, isSpirV);
+            return true;
         }
 
         std::cerr << "Cannot open input file: " << fileName << std::endl;
         std::this_thread::sleep_for(retryDelay);
     }
     std::cerr << "Failed to open file after retrying." << fileName << std::endl;
-    return 1;
+    return false;
+}
+
+bool parseListFile(const std::string &listFileName, std::vector<std::string> &fileNames) {
+    std::ifstream listFile(listFileName);
+    if (!listFile.is_open()) {
+        std::cerr << "Cannot open list file: " << listFileName << std::endl;
+        return false;
+    }
+    std::string line;
+    while (std::getline(listFile, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        if (!line.empty()) {
+            fileNames.push_back(line);
+        }
+    }
+    return true;
+}
+
+int main(int argc, char *argv[]) {
+    std::string listFileName;
+    std::string cppOutputName;
+    std::string deviceIp = "";
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (i + 1 == argc) {
+            showUsage(argv[0]);
+            return 1;
+        }
+        if ((arg == "-l") || (arg == "--list")) {
+            listFileName = argv[++i];
+        } else if ((arg == "-o") || (arg == "--output")) {
+            cppOutputName = argv[++i];
+        } else if ((arg == "-d") || (arg == "--device")) {
+            deviceIp = argv[++i];
+        } else {
+            showUsage(argv[0]);
+            return 1;
+        }
+    }
+    if (listFileName.empty() || cppOutputName.empty()) {
+        std::cerr << "Both: listFileName and cppOutputName must be specified!" << std::endl;
+        showUsage(argv[0]);
+        return 1;
+    }
+
+    std::vector<std::string> fileNames;
+    if (!parseListFile(listFileName, fileNames)) {
+        return 1;
+    }
+
+    std::ostringstream out;
+    out << "#include \"shared/source/built_ins/registry/built_ins_registry.h\"\n\n";
+    out << "#include <cstddef>\n";
+    out << "#include <cstdint>\n";
+    for (const auto &fileName : fileNames) {
+        if (!parseInputFile(fileName, deviceIp, out)) {
+            return 1;
+        }
+    }
+
+    std::string cpp = out.str();
+    std::fstream(cppOutputName.c_str(), std::ios::out | std::ios::binary).write(cpp.c_str(), cpp.size());
+    return 0;
 }
