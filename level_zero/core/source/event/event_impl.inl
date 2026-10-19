@@ -707,10 +707,6 @@ void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAlloca
 
 template <typename TagSizeT>
 void EventImp<TagSizeT>::downloadTbxAllocationsForQuery() {
-    if (!this->tbxMode) {
-        return;
-    }
-
     bool downloadedAllocation = (this->getAllocation(this->device) == nullptr);
     bool downloadedInOrdedAllocation = (inOrderExecHelper.getDeviceCounterAllocation() == nullptr);
     bool downloadedPatchPreambleAllocation = (inOrderExecHelper.getPatchPreambleHostAllocation() == nullptr);
@@ -735,7 +731,9 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
         hostEventSetValue(metricNotification->getNotificationState());
     }
 
-    downloadTbxAllocationsForQuery();
+    if (this->tbxMode) {
+        downloadTbxAllocationsForQuery();
+    }
 
     if (!this->isFromIpcPool && isAlreadyCompleted()) {
         return true;
@@ -1220,7 +1218,9 @@ void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
     uint64_t timeDiff = 0;
 
     do {
-        downloadTbxAllocationsForQuery();
+        if (this->tbxMode) {
+            downloadTbxAllocationsForQuery();
+        }
         assignKernelEventCompletionData(getHostAddress());
         calculateProfilingData();
 
