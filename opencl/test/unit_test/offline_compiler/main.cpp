@@ -22,6 +22,7 @@
 
 #include <fstream>
 #include <igfxfmid.h>
+#include <regex>
 
 Environment *gEnvironment;
 extern PRODUCT_FAMILY productFamily;

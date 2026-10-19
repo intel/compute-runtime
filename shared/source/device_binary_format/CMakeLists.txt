@@ -34,6 +34,7 @@ set(NEO_DEVICE_BINARY_FORMAT
     ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo_decoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo_decoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo_enum_lookup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo_l1_cache_policy.h
 )
 set_property(GLOBAL PROPERTY NEO_DEVICE_BINARY_FORMAT ${NEO_DEVICE_BINARY_FORMAT})
 

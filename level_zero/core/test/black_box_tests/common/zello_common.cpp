@@ -7,6 +7,8 @@
 
 #include "zello_common.h"
 
+#include "zello_test_duration.h"
+
 #include <bitset>
 #include <cstring>
 #include <iomanip>

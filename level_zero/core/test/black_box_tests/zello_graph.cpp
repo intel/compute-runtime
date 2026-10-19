@@ -7,6 +7,7 @@
 
 #include "zello_common.h"
 #include "zello_compile.h"
+#include "zello_test_duration.h"
 
 #include <algorithm>
 #include <cstring>

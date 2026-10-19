@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_l1_cache_policy.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/mem_lifetime.h"
@@ -325,22 +326,6 @@ struct Version {
     uint32_t major = 0U;
     uint32_t minor = 0U;
 };
-
-namespace L1CachePolicy {
-enum L1CachePolicy : uint8_t {
-    L1CachePolicyUnknown = 0,
-    L1CachePolicyWriteBypass = 1,
-    L1CachePolicyUncached,
-    L1CachePolicyWriteBack,
-    L1CachePolicyWriteThrough,
-    L1CachePolicyWriteStreaming,
-    L1CachePolicyMax
-};
-
-namespace Defaults {
-inline constexpr L1CachePolicy l1CachePolicy = L1CachePolicyUnknown;
-} // namespace Defaults
-} // namespace L1CachePolicy
 
 namespace Kernel {
 namespace ExecutionEnv {

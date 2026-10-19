@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/preprocessor.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"

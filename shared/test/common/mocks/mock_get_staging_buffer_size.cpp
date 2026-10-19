@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/utilities/staging_buffer_manager.h"
+#include "shared/source/helpers/constants.h"
 
 namespace NEO {
 size_t getDefaultStagingBufferSize() {

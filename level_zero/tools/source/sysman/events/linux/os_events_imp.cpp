@@ -17,6 +17,7 @@
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+#include "level_zero/tools/source/sysman/sysman_steady_clock.h"
 
 namespace L0 {
 const std::string LinuxEventsUtil::add("add");

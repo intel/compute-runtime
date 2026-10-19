@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 
 using namespace NEO;

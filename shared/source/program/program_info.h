@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/device_binary_format/zebin/zeinfo.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_l1_cache_policy.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 

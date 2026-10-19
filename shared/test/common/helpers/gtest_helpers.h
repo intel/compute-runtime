@@ -9,7 +9,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include <regex>
 #include <string>
 
 #define EXPECT_EQ_VAL(a, b)      \
@@ -63,8 +62,4 @@ inline bool hasSubstr(const std::string &str, const std::string &subStr) {
 
 inline bool isEmpty(const std::string &str) {
     return str.empty();
-}
-
-inline bool containsRegex(const std::string &str, const std::string &regex) {
-    return std::regex_search(str, std::regex(regex));
 }

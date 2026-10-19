@@ -13,6 +13,7 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
